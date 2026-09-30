@@ -1,4 +1,4 @@
-# intent.md (v36, awaiting final confirmation)
+# intent.md (v40, awaiting final confirmation)
 
 ## Problem
 I have no single place to see what I own across bank/cash accounts and investments, how it is split, or how it has changed over time.
@@ -43,7 +43,26 @@ One user: me. No sharing, no multi-user accounts.
 - Exported backup file may be plain (unencrypted); I store it somewhere safe
 - Budget: free tools and free price data only
 
+## Views needed (first version)
+What I need to see; layout and navigation are decided in Design.
+- Home (first thing after unlocking): net worth plus an allocation summary, and net worth plus each portfolio with its gain/loss.
+- Net worth overview, combined and per portfolio.
+- Portfolios and their holdings.
+- Allocation breakdowns (asset type, portfolio, holding, sector/geography).
+- Realized gains (per sale, per holding, overall total).
+- Holding detail: lots, cost, gain/loss, and that holding's transactions.
+- Cash account: balance and cash entries, including a cash line for each buy and sell, filterable by date range.
+- Transaction history, viewable only within a portfolio (no cross-portfolio history), filterable by ticker, date range and type (buy, sell, split, cash). Cash entries are viewed in the cash account.
+- List of closed or hidden holdings.
+
 ## Decisions made
+- The cash account list shows the cash moved by each buy and sell as a cash line.
+- When a portfolio is deleted, its trade-driven cash lines stay in the cash account, labeled with the deleted portfolio's name.
+- No data export beyond the backup file.
+- Portfolios can be created, renamed, and deleted even when they have transactions.
+- Deleting a portfolio deletes its transactions but leaves the cash balance exactly as it is. Consequence: this is an exception to permanent transactions; the only way back is restoring a backup.
+- Deleting a portfolio needs typed confirmation only (no forced backup).
+- The cash account's entry list can be filtered by date range.
 - Tapping a lot prefills its full remaining quantity; I edit the quantity only for a partial lot.
 - A sell can only use lots in its own portfolio, never lots from another portfolio.
 - A sell may consume only lots bought on or before the sell's date. For same-date lots, the buy must have been entered before the sell that uses it (consistent with entry-order checking).
@@ -131,3 +150,4 @@ None remaining in Plan.
 ## Deferred to Design (carried forward, not blocking)
 - CSV format: columns, date and number formats, and how rows are recognized as buys, sells, splits and cash movements. To be settled with a sample file when the spec is written.
 - Opening balance vs CSV: the opening balance must be the earliest cash entry, so the CSV history and the opening balance must line up. Whether the CSV contains an opening-balance row is unknown; check against the sample file.
+- Deleting a portfolio and past net worth history: whether past values are recalculated or must stay is undecided; settle it when the performance-over-time feature is planned.
