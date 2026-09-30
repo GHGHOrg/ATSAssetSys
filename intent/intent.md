@@ -1,4 +1,4 @@
-# intent.md (v28, awaiting final confirmation)
+# intent.md (v36, awaiting final confirmation)
 
 ## Problem
 I have no single place to see what I own across bank/cash accounts and investments, how it is split, or how it has changed over time.
@@ -26,6 +26,7 @@ One user: me. No sharing, no multi-user accounts.
 - Liabilities (loans, mortgages, credit cards)
 - Crypto, property, vehicles and other assets
 - Notifications, alerts and reminders
+- Tax reporting (tax lots, wash sales, tax owed): realized gains are informational only
 - Per-holding dividend tracking and separate fee tracking (dividends are recorded only as cash entries; fees are folded into trade totals)
 - Multi-currency reporting and currency conversion (only base-currency instruments are held)
 - Bank/broker account syncing
@@ -43,12 +44,31 @@ One user: me. No sharing, no multi-user accounts.
 - Budget: free tools and free price data only
 
 ## Decisions made
-- Per-holding cost and unrealized gain/loss (average cost) are part of the first version.
-- Average cost is computed per portfolio; the combined view adds portfolios up.
-- Realized gains from sells are shown as well, computed with the same average cost.
+- Tapping a lot prefills its full remaining quantity; I edit the quantity only for a partial lot.
+- A sell can only use lots in its own portfolio, never lots from another portfolio.
+- A sell may consume only lots bought on or before the sell's date. For same-date lots, the buy must have been entered before the sell that uses it (consistent with entry-order checking).
+- In the CSV import, a lot is matched by date and cost per share when the buy date alone is ambiguous; rows that still cannot be matched are rejected and listed in the preview.
+- When picking lots, I type a quantity for each lot I pick.
+- My CSV identifies the lots each sell consumed, by buy date or lot id.
+- The under-30-seconds goal applies to sells too: lots are shown ready to tap, and there is a "sell all" shortcut.
+- When I pick a lot, it shows purchase date, quantity remaining, cost per share, and the lot's unrealized gain/loss.
+- My broker uses specific-lot identification, so the app has one lot method for the whole app: I pick the lots on every sell. There is no default method and no per-portfolio setting.
+- Lot picking is wanted so the app's gains match how my broker reports them. Lots are used everywhere: realized and unrealized gain both come from lots.
+- A sell shows the same quick review screen as a buy before saving.
+- Sells are not sanity-checked against the market price; I trust what I type.
+- A total loss (worthless or delisted stock) is recorded as a sell with zero proceeds. Zero proceeds are allowed on sells only, and the realized loss equals the cost of the lots consumed.
+- Only fully sold holdings can be hidden. I can unhide them, and a new buy of a hidden ticker shows it again.
+- A sell has a "sell all" shortcut that fills the exact remaining quantity.
+- Tax reporting is out of scope; realized gains are informational only and may differ from tax figures (for example broker wash-sale adjustments are not modelled).
+- Cash moves on the trade date, immediately, for both buys and sells (no settlement delay).
+- A holding stays visible after all its shares are sold, until I hide it.
+- Realized gains are shown per sale, as a total per holding, and as an overall total.
+- Per-holding cost and unrealized gain/loss (lot-based) are part of the first version.
+- Lots are tracked per portfolio; the combined view adds portfolios up.
+- Realized gains from sells are shown as well, computed from the lots each sell consumes.
 - Blocking rules for same-date entries are checked strictly in the order I entered them.
 - Buys are not sanity-checked against the market price; I trust what I type.
-- Each holding shows cost paid and unrealized gain/loss using average cost.
+- Each holding shows cost paid and unrealized gain/loss, computed from tax lots (supersedes the earlier average-cost decision).
 - A buy for a ticker the app has not verified before is blocked until I'm online.
 - I enter every stock split myself (no automatic split data). Consequence: a forgotten split leaves holdings wrong until I enter it.
 - A buy shows a quick review screen before saving.
