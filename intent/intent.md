@@ -1,4 +1,4 @@
-# intent.md (v44, awaiting final confirmation)
+# intent.md (v45, awaiting final confirmation)
 
 ## Problem
 I have no single place to see what I own across bank/cash accounts and investments, how it is split, or how it has changed over time.
@@ -155,7 +155,6 @@ What I need to see; layout and navigation are decided in Design.
 - If a price cannot be fetched, the last known price is shown and marked as stale.
 - Sending ticker symbols to an outside price source is acceptable.
 - The app works offline with last known prices.
-- Sector and geography come automatically from the data source when available, and are entered manually otherwise.
 
 ### CSV import
 - My existing CSV covers one portfolio, so a single import loads its investment rows and all its cash rows.
