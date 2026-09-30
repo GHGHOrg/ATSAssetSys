@@ -1,4 +1,4 @@
-# intent.md (v40, awaiting final confirmation)
+# intent.md (v43, awaiting final confirmation)
 
 ## Problem
 I have no single place to see what I own across bank/cash accounts and investments, how it is split, or how it has changed over time.
@@ -51,17 +51,21 @@ What I need to see; layout and navigation are decided in Design.
 - Allocation breakdowns (asset type, portfolio, holding, sector/geography).
 - Realized gains (per sale, per holding, overall total).
 - Holding detail: lots, cost, gain/loss, and that holding's transactions.
-- Cash account: balance and cash entries, including a cash line for each buy and sell, filterable by date range.
+- Cash account: balance and cash entries, including a cash line for each buy and sell, filterable by date range. Deleting a portfolio removes the cash lines its trades produced.
 - Transaction history, viewable only within a portfolio (no cross-portfolio history), filterable by ticker, date range and type (buy, sell, split, cash). Cash entries are viewed in the cash account.
 - List of closed or hidden holdings.
 
 ## Decisions made
+- After a portfolio is deleted, past net worth history is recalculated as if the portfolio never existed.
+- For the later performance-over-time feature, past values are rebuilt from my transactions and historical prices, back to my first transaction (no stored snapshots).
+- Reasons to delete a portfolio: created by mistake or no longer needed, tidying up, or the real-world account was closed.
 - The cash account list shows the cash moved by each buy and sell as a cash line.
-- When a portfolio is deleted, its trade-driven cash lines stay in the cash account, labeled with the deleted portfolio's name.
 - No data export beyond the backup file.
 - Portfolios can be created, renamed, and deleted even when they have transactions.
-- Deleting a portfolio deletes its transactions but leaves the cash balance exactly as it is. Consequence: this is an exception to permanent transactions; the only way back is restoring a backup.
-- Deleting a portfolio needs typed confirmation only (no forced backup).
+- Deleting a portfolio with transactions deletes its transactions and undoes their cash effect; it is blocked if the cash rules would break. Its realized gains disappear with it. Consequence: this is an exception to permanent transactions; the only way back is restoring a backup. (Supersedes the earlier "leave the cash balance as is" decision.)
+- Deleting a portfolio needs a typed confirmation plus a summary of what will be removed (no forced backup).
+- If undoing the cash effect is blocked, the deletion stays blocked. I fix the cash first (for example with a backdated deposit adjustment that carries a note), then delete.
+- The last remaining portfolio can be deleted; I can delete every portfolio.
 - The cash account's entry list can be filtered by date range.
 - Tapping a lot prefills its full remaining quantity; I edit the quantity only for a partial lot.
 - A sell can only use lots in its own portfolio, never lots from another portfolio.
@@ -150,4 +154,5 @@ None remaining in Plan.
 ## Deferred to Design (carried forward, not blocking)
 - CSV format: columns, date and number formats, and how rows are recognized as buys, sells, splits and cash movements. To be settled with a sample file when the spec is written.
 - Opening balance vs CSV: the opening balance must be the earliest cash entry, so the CSV history and the opening balance must line up. Whether the CSV contains an opening-balance row is unknown; check against the sample file.
-- Deleting a portfolio and past net worth history: whether past values are recalculated or must stay is undecided; settle it when the performance-over-time feature is planned.
+- Blocked deletion: the app should tell me why deletion is blocked and how much cash (and from which date) is missing, so I can fix it. Wording and presentation are Design.
+- Historical prices: rebuilding past values needs historical prices back to my first transaction from a free source. Availability, limits and split adjustment are unverified; check in Design. Because I enter splits myself, price history that is already split-adjusted must be reconciled with my as-traded lots.
