@@ -1,4 +1,4 @@
-# intent.md (v19, awaiting final confirmation)
+# intent.md (v24, awaiting final confirmation)
 
 ## Problem
 I have no single place to see what I own across bank/cash accounts and investments, how it is split, or how it has changed over time.
@@ -26,7 +26,7 @@ One user: me. No sharing, no multi-user accounts.
 - Liabilities (loans, mortgages, credit cards)
 - Crypto, property, vehicles and other assets
 - Notifications, alerts and reminders
-- Dividends and fees (so performance figures will exclude them)
+- Per-holding dividend tracking and separate fee tracking (dividends are recorded only as cash entries; fees are folded into trade totals)
 - Multi-currency reporting and currency conversion (only base-currency instruments are held)
 - Bank/broker account syncing
 
@@ -43,6 +43,17 @@ One user: me. No sharing, no multi-user accounts.
 - Budget: free tools and free price data only
 
 ## Decisions made
+- Share quantities may have up to 8 decimal places.
+- Dividends and interest received are cash-only entries, not linked to any holding.
+- Trading fees are included in the total cost of a trade; there is no separate fee field.
+- When entering a buy or sell, I type the quantity and the total amount (fees included). Price per share is derived, and cash moves by the total amount.
+- Each cash entry has a type label (deposit, withdrawal, interest/dividend, adjustment, opening balance), an amount, a date and an optional note.
+- There is only one opening balance entry. It must be the earliest cash entry (nothing dated before it). It is not reversed or replaced; later fixes use adjustments.
+- The note is required on adjustment entries and optional on all other cash entries.
+- A cash balance that differs from the real balance is corrected with an adjustment deposit or withdrawal carrying a note.
+- Direct cash transactions are: deposits, withdrawals, and interest or dividends received.
+- A cash withdrawal larger than the cash balance is blocked, same as buys.
+- The cash balance starts from a dated opening balance entry.
 - My existing CSV covers one portfolio, so a single import loads its investment rows and all its cash rows.
 - If rows look like duplicates of existing transactions, the import warns me and lets me decide.
 - The auto-lock setting offers four choices: lock every time I leave the app, after 1 minute idle, after 5 minutes idle, or only when the phone locks or the app restarts. The default is the strictest (lock every time I leave the app).
@@ -87,3 +98,4 @@ None remaining in Plan.
 
 ## Deferred to Design (carried forward, not blocking)
 - CSV format: columns, date and number formats, and how rows are recognized as buys, sells, splits and cash movements. To be settled with a sample file when the spec is written.
+- Opening balance vs CSV: the opening balance must be the earliest cash entry, so the CSV history and the opening balance must line up. Whether the CSV contains an opening-balance row is unknown; check against the sample file.
