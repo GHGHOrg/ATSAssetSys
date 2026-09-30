@@ -1,4 +1,4 @@
-# intent.md (v24, awaiting final confirmation)
+# intent.md (v28, awaiting final confirmation)
 
 ## Problem
 I have no single place to see what I own across bank/cash accounts and investments, how it is split, or how it has changed over time.
@@ -43,6 +43,18 @@ One user: me. No sharing, no multi-user accounts.
 - Budget: free tools and free price data only
 
 ## Decisions made
+- Per-holding cost and unrealized gain/loss (average cost) are part of the first version.
+- Average cost is computed per portfolio; the combined view adds portfolios up.
+- Realized gains from sells are shown as well, computed with the same average cost.
+- Blocking rules for same-date entries are checked strictly in the order I entered them.
+- Buys are not sanity-checked against the market price; I trust what I type.
+- Each holding shows cost paid and unrealized gain/loss using average cost.
+- A buy for a ticker the app has not verified before is blocked until I'm online.
+- I enter every stock split myself (no automatic split data). Consequence: a forgotten split leaves holdings wrong until I enter it.
+- A buy shows a quick review screen before saving.
+- Buys: I type a ticker and the app checks that it exists (requires internet).
+- A buy carries a date only. Same-day entries are ordered by when I entered them.
+- For a buy dated before a stock split, I enter the quantity as originally traded and the app applies later splits automatically.
 - Share quantities may have up to 8 decimal places.
 - Dividends and interest received are cash-only entries, not linked to any holding.
 - Trading fees are included in the total cost of a trade; there is no separate fee field.
