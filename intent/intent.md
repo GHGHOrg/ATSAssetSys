@@ -1,4 +1,4 @@
-# intent.md (v45, awaiting final confirmation)
+# intent.md (v51, awaiting final confirmation)
 
 ## Problem
 I have no single place to see what I own across bank/cash accounts and investments, how it is split, or how it has changed over time.
@@ -39,19 +39,19 @@ One user: me. No sharing, no multi-user accounts.
 - Works offline, showing last known prices; price refresh needs internet
 - Timeline: ASAP
 - Installation: directly on my own phone (sideloaded), for me only; no Play Store release
-- Price freshness: live or near-real-time (see open question 1)
+- Price freshness: live or near-real-time
 - Exported backup file may be plain (unencrypted); I store it somewhere safe
 - Budget: free tools and free price data only
 
 ## Views needed (first version)
 What I need to see; layout and navigation are decided in Design.
 - Home (first thing after unlocking): net worth plus an allocation summary, and net worth plus each portfolio with its gain/loss.
-- Net worth overview, combined and per portfolio.
+- Net worth overview.
 - Portfolios and their holdings.
 - Allocation breakdowns (asset type, portfolio, holding, sector/geography).
 - Realized gains (per sale, per holding, overall total).
 - Holding detail: lots, cost, gain/loss, and that holding's transactions.
-- Cash account: balance and cash entries, including a cash line for each buy and sell, filterable by date range. Deleting a portfolio removes the cash lines its trades produced.
+- Cash account: balance and cash entries, including a cash line for each buy and sell, filterable by date range.
 - Transaction history, viewable only within a portfolio (no cross-portfolio history), filterable by ticker, date range and type (buy, sell, split, cash). Cash entries are viewed in the cash account.
 - List of closed or hidden holdings.
 
@@ -73,7 +73,7 @@ What I need to see; layout and navigation are decided in Design.
 ### Portfolios
 - Portfolios can be created, renamed, and deleted even when they have transactions.
 - Reasons to delete a portfolio: created by mistake or no longer needed, tidying up, or the real-world account was closed.
-- Deleting a portfolio with transactions deletes its transactions and undoes their cash effect; it is blocked if the cash rules would break. Its realized gains disappear with it. Consequence: this is an exception to permanent transactions; the only way back is restoring a backup. (Supersedes the earlier "leave the cash balance as is" decision.)
+- Deleting a portfolio with transactions deletes its transactions and undoes their cash effect (their cash lines disappear from the cash account); it is blocked if the cash rules would break. Its realized gains disappear with it. Consequence: this is an exception to permanent transactions; the only way back is restoring a backup. (Supersedes the earlier "leave the cash balance as is" decision.)
 - Deleting a portfolio needs a typed confirmation plus a summary of what will be removed (no forced backup).
 - If undoing the cash effect is blocked, the deletion stays blocked. I fix the cash first (for example with a backdated deposit adjustment that carries a note), then delete.
 - The last remaining portfolio can be deleted; I can delete every portfolio.
@@ -89,15 +89,13 @@ What I need to see; layout and navigation are decided in Design.
 - There is only one opening balance entry. It must be the earliest cash entry (nothing dated before it). It is not reversed or replaced; later fixes use adjustments.
 - The note is required on adjustment entries and optional on all other cash entries.
 - A cash balance that differs from the real balance is corrected with an adjustment deposit or withdrawal carrying a note.
-- Direct cash transactions are: deposits, withdrawals, and interest or dividends received.
+- Direct cash transactions are: deposits, withdrawals, interest or dividends received, adjustments, and the single opening balance.
 - A cash withdrawal larger than the cash balance is blocked, same as buys.
-- The cash balance starts from a dated opening balance entry.
 
 ### Buys
 - A buy that costs more than the available cash balance is blocked.
-- Buys: I type a ticker and the app checks that it exists (requires internet).
-- A buy for a ticker the app has not verified before is blocked until I'm online.
-- A buy carries a date only. Same-day entries are ordered by when I entered them.
+- I type a ticker and the app checks that it exists (requires internet). A buy for a ticker the app has not verified before is blocked until I'm online.
+- A buy carries a date only.
 - For a buy dated before a stock split, I enter the quantity as originally traded and the app applies later splits automatically.
 - A buy shows a quick review screen before saving.
 - Buys are not sanity-checked against the market price; I trust what I type.
@@ -119,18 +117,17 @@ What I need to see; layout and navigation are decided in Design.
 - I enter every stock split myself (no automatic split data). Consequence: a forgotten split leaves holdings wrong until I enter it.
 
 ### Lots
-- Tapping a lot prefills its full remaining quantity; I edit the quantity only for a partial lot.
+- Each lot I pick on a sell has its own quantity, prefilled with the lot's full remaining quantity; I edit it only for a partial lot.
 - A sell can only use lots in its own portfolio, never lots from another portfolio.
 - A sell may consume only lots bought on or before the sell's date. For same-date lots, the buy must have been entered before the sell that uses it (consistent with entry-order checking).
-- When picking lots, I type a quantity for each lot I pick.
 - When I pick a lot, it shows purchase date, quantity remaining, cost per share, and the lot's unrealized gain/loss.
 - My broker uses specific-lot identification, so the app has one lot method for the whole app: I pick the lots on every sell. There is no default method and no per-portfolio setting.
 - Lot picking is wanted so the app's gains match how my broker reports them. Lots are used everywhere: realized and unrealized gain both come from lots.
 - Lots are tracked per portfolio; the combined view adds portfolios up.
-- The under-30-seconds goal applies to sells too: lots are shown ready to tap, and there is a "sell all" shortcut.
+- The under-30-seconds goal applies to sells too: lots are shown ready to tap.
 
 ### Dates, ordering and corrections
-- Blocking rules for same-date entries are checked strictly in the order I entered them.
+- Same-date entries are ordered by when I entered them, and blocking rules are checked strictly in that order.
 - A future-dated transaction affects net worth only from its date onward.
 - For a backdated transaction, cash and share rules are checked at that date and every later date.
 - Manually entered transactions may be backdated or future-dated.
@@ -140,8 +137,7 @@ What I need to see; layout and navigation are decided in Design.
 
 ### Gains, cost, tax and performance
 - Realized gains are shown per sale, as a total per holding, and as an overall total.
-- Realized gains from sells are shown as well, computed from the lots each sell consumes.
-- Each holding shows cost paid and unrealized gain/loss, computed from tax lots (supersedes the earlier average-cost decision).
+- Each holding shows cost paid and unrealized gain/loss, computed from lots (supersedes the earlier average-cost decision).
 - Tax reporting is out of scope; realized gains are informational only and may differ from tax figures (for example broker wash-sale adjustments are not modelled).
 - Performance (later version) means total value change over time. Note: this figure moves with deposits and withdrawals, so it does not isolate investment returns.
 - For the later performance-over-time feature, past values are rebuilt from my transactions and historical prices, back to my first transaction (no stored snapshots).
@@ -168,10 +164,8 @@ What I need to see; layout and navigation are decided in Design.
 
 ### Backup, restore and security
 - Restoring from a backup asks me each time whether to replace or merge.
-- Backup means export plus restore from the exported file.
 - No data export beyond the backup file.
 - The auto-lock setting offers four choices: lock every time I leave the app, after 1 minute idle, after 5 minutes idle, or only when the phone locks or the app restarts. The default is the strictest (lock every time I leave the app).
-- Auto-lock timing is a setting I choose myself.
 
 ## Open questions
 None remaining in Plan.
