@@ -1,0 +1,7 @@
+row_type,date,ticker,quantity,total_amount,lot_id,lot_picks,split_ratio,cash_type,note
+cash,2026-01-01,,,10000.00,,,,opening_balance,
+buy,2026-01-02,AAPL,10,1000.00,L1,,,,
+buy,2026-02-01,AAPL,10,1500.00,L2,,,,
+sell,2026-03-01,AAPL,12,2100.00,,L1:10;L2:2,,,
+split,2026-04-01,AAPL,,,,,2:1,,
+cash,2026-04-15,,,25.00,,,,interest_dividend,Dividend
