@@ -37,7 +37,7 @@ Single-user Android app (sideloaded). Local-only data. Tracks one shared cash ac
 - **Transaction** (per portfolio): `id`, `date`, `entered_seq`, `type` in {buy, sell, split}, ticker.
   - Buy/sell: `quantity` (up to 8 decimals), `total_amount` (fees included, derived price per share = total / quantity).
   - Split: ratio (e.g. 2:1, 1:10), fractional shares allowed.
-  - Optional `reverses_id`.
+  - Optional `reverses_id`. An entry with `reverses_id` is a reversal of a buy, sell or split and is shown as such. Its effect is defined by 4.6, not by the normal buy and sell input rules in 4.3 and 4.4 (for example, it has no lot picking). It still follows the blocking rules in 4.1.
 - **Lot**: created by a buy. `portfolio`, `ticker`, `buy_date`, `original_qty`, `remaining_qty`, `cost_per_share`. Splits adjust quantity and cost per share, never total cost.
 - **Sell allocation**: sell id, lot id, quantity taken from that lot.
 - Quantities are stored as originally traded, with splits applied by the splits recorded. No stored value snapshots.
@@ -118,7 +118,7 @@ Result: the holding is **30 shares** with total cost **$1,500** (20 shares from 
 
 **Example D: buried mistake.** Buy 10 shares on Jan 2, sell all 10 on Jan 3. Reversing the Jan 2 buy is blocked (shares would be −10 on Jan 3). You must first reverse the Jan 3 sell, then the buy.
 
-**Example E: blocked portfolio deletion.** Opening $1,000 Jan 1. Portfolio Q sells shares for $500 on Feb 1. Direct withdrawal of $1,200 on Feb 10 (allowed, balance $300 after). Deleting Q removes the $500, so on Feb 10 the balance would be −$200. Deletion is blocked: "Cash would be negative from Feb 10 by $200. Add a deposit adjustment of at least $200 dated on or before Feb 10."
+**Example E: blocked portfolio deletion.** Opening $1,000 Jan 1. Portfolio Q buys shares for $400 on Jan 5 (cash $600) and sells them for $900 on Feb 1 (cash $1,500). Direct withdrawal of $1,200 on Feb 10 (allowed, balance $300 after). Deleting Q removes both cash lines (−$400 and +$900), so on Feb 10 the balance would be $1,000 − $1,200 = −$200. Deletion is blocked: "Cash would be negative from Feb 10 by $200. Add a deposit adjustment of at least $200 dated on or before Feb 10."
 
 ## 6. Views (first version)
 Layout and navigation are decided by the screens listed below. Exact navigation is a plan.md item.
