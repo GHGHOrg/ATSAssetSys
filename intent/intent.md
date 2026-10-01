@@ -1,4 +1,4 @@
-# intent.md (v51, awaiting final confirmation)
+# intent.md (v51, final)
 
 ## Problem
 I have no single place to see what I own across bank/cash accounts and investments, how it is split, or how it has changed over time.

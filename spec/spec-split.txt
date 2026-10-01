@@ -1,0 +1,85 @@
+spec-split.txt
+Stage: Design. Status: PROPOSAL ONLY. spec.md has NOT been split.
+Applies to: spec/spec.md (draft v1, 207 lines, 14 sections)
+Last updated against: spec.md with sections 1 to 14 (section 14 Components added).
+
+DECISION MADE
+Option 1: keep working on a single spec.md until the user says "final".
+Then decide whether to split, using the approach below.
+
+WHY NOT SPLIT NOW
+- The one remaining open item that can change several sections is the CSV sample (D1).
+  Earlier open items (D2, D3, D4, C3 to C5, components) are now resolved.
+- One file means one approval gate (Ruleset A: approve spec.md before Build).
+- The file is small enough to review in one sitting today. Context-window fit has not
+  been measured.
+
+PROPOSED SPLIT (apply only after "final", and only if still worth it)
+
+  spec.md (short index, the file the user approves)
+    Section 1  Summary
+    Section 2  Concerns and conflicts (C1-C14)
+    Section 10 Out of scope
+    Section 11 Acceptance criteria
+    Section 12 Proposed slices
+    Section 13 Open design points
+    Section 14 Components and responsibilities (K1-K9)
+    Plus: a list of pointers to the files below.
+    Why 14 stays here: it is short, cross-cutting, and cites sections and slices
+    from every other file. Alternative: put it in spec/domain-rules.md.
+
+  spec/domain-rules.md
+    Section 3  Domain model
+    Section 4  Business rules (4.1 to 4.8)
+    Section 5  Worked examples (A to E)
+
+  spec/csv-import.md
+    Section 8  CSV import
+
+  spec/views.md
+    Section 6  Views
+
+  spec/prices.md
+    Section 7  Prices and market data
+
+  spec/backup-security.md
+    Section 9  Backup, restore, security
+
+SPLIT RULES
+1. Never separate sections 3, 4 and 5. Deletion (4.7) depends on 4.1, 4.2 and C5, and
+   the examples test those rules. Reversals (4.6) also depend on 4.1 and Example D.
+2. Keep the concerns table (C1-C14) in the index. Other files cite concerns by ID
+   (for example "see C6") and rule numbers (for example "see 4.1").
+3. Move text without changing it. Replace each moved section in the index with a
+   pointer. Any content change is a separate, visible edit.
+4. Do not split by build slice. Rules cut across slices. Each slice file in the plan
+   cites the spec sections it needs instead.
+5. Keep section numbers and concern/example/component IDs (C, A to E, K) stable so
+   references in other files stay valid.
+6. Section 14 rule 1 (every write goes through K1) must stay visible in the index,
+   because the CSV, restore and entry-flow files all depend on it.
+
+MINIMAL ALTERNATIVE (recommended if a split is wanted)
+Split out only spec/csv-import.md, once the user's sample CSV makes section 8 grow.
+Keep everything else in spec.md. This is the one section where size and uncertainty
+are both real. If done before "final", the user approves the index plus that file.
+
+TRIGGERS FOR SPLITTING
+- The user asks for it, or
+- spec.md becomes uncomfortable to review in one sitting, or
+- the CSV section grows large after the sample file arrives (minimal alternative).
+
+AFTER A SPLIT
+- Re-confirm cross-references (C-IDs, K-IDs, rule numbers, example letters, section
+  numbers).
+- The user re-approves the index, since the approved file changes shape.
+- plan.md slice files cite specific spec sections (for example "slice 4 uses 4.1, 4.2,
+  4.6, 4.7 and Example E").
+
+KNOWN LIMITS
+- Current section sizes in lines (measured with wc, spec.md = 207 lines):
+  index sections 1, 2, 10 to 14 about 75 lines; domain-rules (3 to 5) about 90 lines;
+  views (6) 16; prices (7) 7; csv-import (8) 10, but still partial; backup-security
+  (9) 10. These are line counts, not context tokens.
+- Section 8 is partial until the sample CSV (D1) arrives, so its final size is unknown.
+- Sections 7 and 9 are short and may stay in the index instead of getting own files.
