@@ -37,7 +37,7 @@ Single-user Android app (sideloaded). Local-only data. Tracks one shared cash ac
 - **Transaction** (per portfolio): `id`, `date`, `entered_seq`, `type` in {buy, sell, split}, ticker.
   - Buy/sell: `quantity` (up to 8 decimals), `total_amount` (fees included, derived price per share = total / quantity).
   - Split: ratio (e.g. 2:1, 1:10), fractional shares allowed.
-  - Optional `reverses_id`. An entry with `reverses_id` is a reversal of a buy, sell or split and is shown as such. Its effect is defined by 4.6, not by the normal buy and sell input rules in 4.3 and 4.4 (for example, it has no lot picking). It still follows the blocking rules in 4.1.
+  - Optional `reverses_id`. An entry with `reverses_id` is a reversal of a buy, sell or split and is shown as such. Its effect is defined by 4.6, not by the normal buy and sell input rules in 4.3 and 4.4 (for example, it has no lot picking), including split adjustment for the dates between original and reversal. It still follows the blocking rules in 4.1.
 - **Lot**: created by a buy. `portfolio`, `ticker`, `buy_date`, `original_qty`, `remaining_qty`, `cost_per_share`. Splits adjust quantity and cost per share, never total cost.
 - **Sell allocation**: sell id, lot id, quantity taken from that lot.
 - Quantities are stored as originally traded, with splits applied by the splits recorded. No stored value snapshots.
@@ -80,6 +80,7 @@ Single-user Android app (sideloaded). Local-only data. Tracks one shared cash ac
 - A reversal cannot itself be reversed. If you reversed something by mistake, re-enter the original as a new entry.
 - **Amount:** fixed to the original; not typed.
 - **Date:** defaults to the original date. You may pick another date (for example today); the original's effect then stays in place between the two dates.
+- **Splits between the original and the reversal:** a reversal's quantity is the original's quantity as originally traded, and any split dated after the original and on or before the reversal is applied to it, the same as-traded rule as 4.3. The reversal therefore removes or restores the same economic shares, and total cost and cash amounts are unchanged. Reversing a buy removes the original lot's whole remaining piece from that buy, now split-adjusted. Reversing a sell restores the exact lots it consumed, with quantities and cost per share adjusted by the splits since the sell date. Reversing a cash entry or a split is not affected.
 - **Reversing a buy:** takes the shares back out of the original lot (no lot picking). Realized gain/loss is 0. Its cash line returns the original total. Blocked if any of those shares were sold; reverse the later sells first (Example D).
 - **Reversing a sell:** puts back the exact lots and quantities the sell consumed, at their original cost per share. Removes the proceeds from cash and cancels the sell's realized gain/loss. Blocked if cash would go negative on any date (4.1).
 - **Reversing a split:** applies the inverse ratio for that ticker and portfolio, dated per the date rule above.
@@ -119,6 +120,13 @@ Result: the holding is **30 shares** with total cost **$1,500** (20 shares from 
 **Example D: buried mistake.** Buy 10 shares on Jan 2, sell all 10 on Jan 3. Reversing the Jan 2 buy is blocked (shares would be −10 on Jan 3). You must first reverse the Jan 3 sell, then the buy.
 
 **Example E: blocked portfolio deletion.** Opening $1,000 Jan 1. Portfolio Q buys shares for $400 on Jan 5 (cash $600) and sells them for $900 on Feb 1 (cash $1,500). Direct withdrawal of $1,200 on Feb 10 (allowed, balance $300 after). Deleting Q removes both cash lines (−$400 and +$900), so on Feb 10 the balance would be $1,000 − $1,200 = −$200. Deletion is blocked: "Cash would be negative from Feb 10 by $200. Add a deposit adjustment of at least $200 dated on or before Feb 10."
+
+**Example F: reversal after a split.** Opening balance $10,000 on Jan 1.
+1. Jan 2: buy 10 shares, total $1,000 → lot of 10 shares at $100/share. Cash $9,000.
+2. Mar 1: you record a 2:1 split. The lot becomes 20 shares at $50/share. Total cost is still $1,000.
+3. Apr 1: you reverse the Jan 2 buy. The reversal's quantity is the original 10, with the Mar 1 split applied, so it removes **20 shares**. Its cash line returns **$1,000**.
+
+Result: the lot has 0 shares, cash is **$10,000**, and realized gain/loss is **0**. Without the split rule, 10 shares would remain while the cash came back.
 
 ## 6. Views (first version)
 Layout and navigation are decided by the screens listed below. Exact navigation is a plan.md item.
@@ -206,14 +214,14 @@ As in intent.md: liabilities, other asset classes, notifications, tax reporting,
 
 ## 11. Acceptance criteria (first version)
 1. Net worth and allocation show correctly from your real data (after import).
-2. Examples A to E behave as written, as automated tests.
+2. Examples A to F behave as written, as automated tests.
 3. A buy or sell can be entered in under 30 seconds.
 4. Backup then restore on a clean install reproduces identical net worth and holdings.
 5. Offline use shows last prices marked with their age.
 6. App locks per the chosen auto-lock setting.
 
 ## 12. Proposed slices (input to plan.md)
-1. Data model, cash account, rules engine with tests (Examples A to E).
+1. Data model, cash account, rules engine with tests (Examples A to F).
 2. Buy/sell/split entry, lot picker, holdings, cost and gains.
 3. Prices, net worth, home and allocation.
 4. Portfolio management and deletion rules.
@@ -247,4 +255,4 @@ Added as section 14 so existing section numbers stay stable. Language, framework
 **Dependency rules**
 1. Every write to transactions or cash entries goes through K1: entry flows, CSV import, restore merge and portfolio deletion. No component bypasses it.
 2. K3 and K9 only read data. K4 only writes prices and instrument data.
-3. K1 has no knowledge of screens, network or file formats, so Examples A to E can be tested on K1 alone.
+3. K1 has no knowledge of screens, network or file formats, so Examples A to F can be tested on K1 alone.
