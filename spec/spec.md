@@ -107,7 +107,12 @@ Single-user Android app (sideloaded). Local-only data. Tracks one shared cash ac
 
 Cost consumed = $1,000 + 2 × $150 = $1,300. Realized gain = $2,100 − $1,300 = **$800**. Remaining: lot 2 with 8 shares, cost $1,200. If AAPL is $160, unrealized = 8 × $160 − $1,200 = **$80**.
 
-**Example B: split.** Jan 2 buy 10 shares for $1,000. Mar 1 split 2:1 recorded. Holding becomes 20 shares at $50/share, cost still $1,000. A later entry of a buy dated Feb 15 for 5 shares, $500, is typed as 5 shares, and is stored as 5 shares which the Mar 1 split turns into 10 shares at $50/share.
+**Example B: split.** Assume there is enough cash throughout.
+1. Jan 2: buy 10 shares, total $1,000 → 10 shares at $100/share.
+2. Mar 1: you record a 2:1 split. The holding becomes 20 shares at $50/share. Total cost is still $1,000.
+3. Afterwards you enter a buy you forgot, dated Feb 15: 5 shares, total $500. You type 5, the quantity as originally traded. It is stored as 5 shares, and the Mar 1 split is applied automatically, so it counts as 10 shares at $50/share with cost $500.
+
+Result: the holding is **30 shares** with total cost **$1,500** (20 shares from step 2 plus 10 from step 3).
 
 **Example C: backdated block.** Opening balance $1,000 on Jan 1. Buy for $800 on Jan 10. You try a withdrawal of $300 dated Jan 5. On Jan 5 the balance would be $700 (fine), but on Jan 10 it would be 700 − 800 = **−$100**, so the withdrawal is **blocked**.
 
@@ -138,7 +143,7 @@ Targets: adding a buy or sell takes under 30 seconds, with lots shown ready to t
 - The price source is behind an interface so it can be replaced. **[UNVERIFIED]** Source, limits and whether it provides sector/geography are to be checked in the plan stage.
 - Historical prices are needed only for the later performance feature. **[UNVERIFIED]** Availability, limits and split adjustment are unchecked. Because splits are user-entered, any split-adjusted history would have to be converted back to as-traded values before use. Verify before the performance milestone, not before v1.
 
-## 8. CSV import (PARTIAL, blocked on sample file)
+## 8. CSV import
 Fixed by intent:
 - One portfolio chosen per import; one file holds trades and cash rows.
 - Preview and confirmation before saving; valid rows load, rejected rows are listed with reasons (C7).
@@ -146,7 +151,45 @@ Fixed by intent:
 - Possible duplicates are flagged and you decide.
 - Import follows all blocking rules in 4.1 and the opening-balance rule.
 
-**Not specified until I see your sample file:** columns, date/number formats, row-type recognition, lot id format, and whether the file contains an opening-balance row.
+**File format (approved).** You have no existing CSV, so this format was designed in this stage, not taken from a sample. Preparing the file from broker statements (by hand or in a spreadsheet) happens outside the app.
+- Plain CSV, UTF-8, comma-separated, first line is the header, one row per event. Standard CSV quoting (a note containing a comma goes in double quotes).
+- Columns, in this order: `row_type, date, ticker, quantity, total_amount, lot_id, lot_picks, split_ratio, cash_type, note`. Unused columns are left empty. A header that does not match rejects the whole file.
+- Dates are `YYYY-MM-DD`. Numbers use `.` as the decimal mark, with no thousands separators or currency symbols. `quantity` has up to 8 decimals; `total_amount` is in dollars with up to 2 decimals.
+- `row_type` is one of `buy`, `sell`, `split`, `cash`:
+
+| row_type | Required columns | Rules |
+|----------|------------------|-------|
+| buy | date, ticker, quantity, total_amount | Total is more than 0 (fees included). Optional `lot_id`: your own label, unique within the file, must not look like a date. |
+| sell | date, ticker, quantity, total_amount, lot_picks | Total may be 0 (total loss). |
+| split | date, ticker, split_ratio | `2:1` means 2 new shares for each old share. `1:10` is a reverse split. |
+| cash | date, cash_type, total_amount | Signed: positive = money in, negative = money out. `cash_type` is `opening_balance`, `deposit`, `withdrawal`, `interest_dividend` or `adjustment`. Opening balance, deposit and interest/dividend must be positive; withdrawal must be negative; adjustment may be either and needs a `note`. |
+
+- `lot_picks` is a semicolon-separated list of `reference:quantity`. Every pick has a quantity, and the quantities add up to the sell quantity. A reference is one of:
+  - a `lot_id` from a buy row or from earlier data (for example `L1:10`);
+  - a buy date, accepted only if exactly one lot in the portfolio with shares remaining was bought that day (`2026-02-01:2`);
+  - a buy date plus cost per share when the date alone is ambiguous (`2026-02-01@150.00:2`). Cost per share is compared rounded to the cent.
+  - A reference that matches no lot, or more than one, rejects the row.
+
+**Import rules**
+1. Rows are processed in date order, then file order. File order is the entry order for same-date rows, so a buy must appear above a same-date sell that uses it.
+2. Each row is checked against 4.1 to 4.4 as if entered by hand. Rejected rows drop out and later rows are rechecked, which can reject dependent rows (C7).
+3. A file may contain at most one `opening_balance` row, and none is required. It is rejected if an opening balance already exists or if any cash entry (existing or earlier in the file) is dated before it.
+4. Every ticker is verified before commit. If the phone is offline and any ticker is unverified, the whole import is blocked (C8). A ticker that does not exist rejects its rows.
+5. Duplicates are checked against existing data only, not within the file (two identical rows in one file can be legitimate). A buy or sell is flagged if the chosen portfolio already has the same type, date, ticker, quantity and total. A split is flagged for the same date, ticker and ratio. A cash row is flagged for the same date, type and amount. You choose skip or import for each flagged row, with a bulk skip.
+6. The preview shows counts per row type, rejected rows (row number and reason), flagged rows, and the resulting cash balance and holdings. After you confirm, the valid rows are saved together or not at all. Before saving, the app offers a backup export (C3).
+7. Rejection reasons include: wrong header, unknown row type, bad date or number, missing required value, too many decimals, wrong sign, zero total on a buy, lot pick not found or not summing to the sell quantity, blocked by 4.1 to 4.4, unknown ticker, adjustment without a note, and "depends on rejected row N".
+
+**Example file** (dummy values; reproduces Example A, then a split and a dividend):
+```
+row_type,date,ticker,quantity,total_amount,lot_id,lot_picks,split_ratio,cash_type,note
+cash,2026-01-01,,,10000.00,,,,opening_balance,
+buy,2026-01-02,AAPL,10,1000.00,L1,,,,
+buy,2026-02-01,AAPL,10,1500.00,L2,,,,
+sell,2026-03-01,AAPL,12,2100.00,,L1:10;L2:2,,,
+split,2026-04-01,AAPL,,,,,2:1,,
+cash,2026-04-15,,,25.00,,,,interest_dividend,Dividend
+```
+After this file, cash is $9,625 and AAPL is 16 shares (8 shares of L2 doubled) at $75/share, cost $1,200.
 
 ## 9. Backup, restore, security
 - Data stored on the phone only, in app-private storage.
@@ -175,11 +218,11 @@ As in intent.md: liabilities, other asset classes, notifications, tax reporting,
 3. Prices, net worth, home and allocation.
 4. Portfolio management and deletion rules.
 5. Lock, backup and restore.
-6. CSV import (after sample file).
+6. CSV import (format in section 8).
 7. Realized gains view, sector/geography (kept in v1 per D2; built last).
 
 ## 13. Open design points
-- D1 CSV format and opening balance row (needs sample file).
+- D1 RESOLVED: CSV format and opening-balance handling are in section 8 (approved). There was no existing CSV, so the format was designed here.
 - D2 RESOLVED: realized gains and sector/geography stay in v1.
 - D3 RESOLVED: meaning of "merge" on restore (section 9).
 - D4 RESOLVED: a reversal cannot itself be reversed (4.6).
