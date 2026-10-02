@@ -1,6 +1,6 @@
 spec-split.txt
 Stage: Design. Status: PROPOSAL ONLY. spec.md has NOT been split.
-Applies to: spec/spec.md (draft v1, 275 lines, 14 sections)
+Applies to: spec/spec.md (draft v1, 285 lines, 14 sections)
 Last updated against: spec.md with sections 1 to 14, after the CSV format (section 8) was
 approved and Example B was rewritten, and after Example F and the 4.6 rule for splits
 between an original and its reversal were added (finding 3), and after the Status column
@@ -9,7 +9,8 @@ were added, and the CSV online-only rule (C8; sections 2, 6, 8, 11, 14) was appl
 the date-field note and time zone suffix rule (sections 6, 11, 14) was added, and
 the cross-file double-counting known limit (C6, section 8) was added, and
 the transaction history cash filter rule (finding 11; sections 6, 11) was added, and
-findings 6 and 8 (buy total rule in 4.3; acceptance criteria 11 and 12) were applied.
+findings 6 and 8 (buy total rule in 4.3; acceptance criteria 11 and 12) were applied, and
+finding 5 (navigation outline, section 6; criterion 13) was applied.
 
 DECISION MADE
 Option 1: keep working on a single spec.md until the user says "final".
@@ -91,8 +92,8 @@ AFTER A SPLIT
   4.6, 4.7 and Example E").
 
 KNOWN LIMITS
-- Current section sizes in lines (measured with wc and awk, spec.md = 275 lines):
-  index sections 1, 2, 10 to 14 about 79 lines; domain-rules (3 to 5) about 105 lines;
-  views (6) 18; prices (7) 12; csv-import (8) 50; backup-security (9) 10. These are
+- Current section sizes in lines (measured with wc and awk, spec.md = 285 lines):
+  index sections 1, 2, 10 to 14 about 80 lines; domain-rules (3 to 5) about 105 lines;
+  views (6) 27; prices (7) 12; csv-import (8) 50; backup-security (9) 10. These are
   line counts, not context tokens.
 - Sections 7 and 9 are short and may stay in the index instead of getting own files.
