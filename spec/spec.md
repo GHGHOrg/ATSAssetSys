@@ -22,7 +22,7 @@ Single-user Android app (sideloaded). Local-only data. Tracks one shared cash ac
 | C10 | Low | **Realized gains can differ from broker/tax figures** (wash sales not modelled). | Label realized gains "informational" in the UI. Decision: No label is added. | Closed, not a concern |
 | C11 | Low | **"Performance" moves with deposits/withdrawals**, so it is not investment return. | Label it "Total value change" in the later version. | Approved |
 | C12 | Low | **"Allocation by holding" is ambiguous across portfolios.** | Per-portfolio view: one slice per holding in that portfolio. Combined view: same ticker in several portfolios is merged into one slice. | Approved |
-| C13 | Low | **Dates and time zones.** You are in Tokyo, markets are in New York. | Transactions carry a calendar date you pick. No time zone conversion. Entry order is the tie-breaker within a day. |  |
+| C13 | Low | **Dates and time zones.** You are in Tokyo, markets are in New York. | Entries carry a calendar date only, no time. All dates (buy, sell, split and cash entries) use the US market time zone (New York), not the device's. The app does no time zone conversion: the date is stored as picked. The date field defaults to today's date in New York. Entry order is the tie-breaker within a day. |  |
 | C14 | Low | **Sector/geography for ETFs** is often missing from free sources **[UNVERIFIED]**. | Manual override per holding. Unclassified holdings show as "Unclassified". | Approved |
 
 ## 3. Domain model
@@ -46,6 +46,7 @@ Single-user Android app (sideloaded). Local-only data. Tracks one shared cash ac
 
 ### 4.1 Ordering and checking
 - Global order is `date`, then `entered_seq` (order of entry).
+- Dates are calendar dates with no time. All dates (buys, sells, splits and cash entries) are US market dates (New York). "Today" (the default date in entry forms, and the line between past and future-dated entries) is the current date in New York.
 - On any save (including reversals and CSV rows), the app replays cash and share balances from that date through all later dates. Any date where cash < 0 or shares < 0 blocks the save.
 - Future-dated entries count in net worth only from their date.
 
@@ -167,7 +168,7 @@ Fixed by intent:
 **File format (approved).** You have no existing CSV, so this format was designed in this stage, not taken from a sample. Preparing the file from broker statements (by hand or in a spreadsheet) happens outside the app.
 - Plain CSV, UTF-8, comma-separated, first line is the header, one row per event. Standard CSV quoting (a note containing a comma goes in double quotes).
 - Columns, in this order: `row_type, date, ticker, quantity, total_amount, lot_id, lot_picks, split_ratio, cash_type, note`. Unused columns are left empty. A header that does not match rejects the whole file.
-- Dates are `YYYY-MM-DD`. Numbers use `.` as the decimal mark, with no thousands separators or currency symbols. `quantity` has up to 8 decimals; `total_amount` is in dollars with up to 2 decimals.
+- Dates are `YYYY-MM-DD`. On every row type they are US market (New York) dates. Numbers use `.` as the decimal mark, with no thousands separators or currency symbols. `quantity` has up to 8 decimals; `total_amount` is in dollars with up to 2 decimals.
 - `row_type` is one of `buy`, `sell`, `split`, `cash`:
 
 | row_type | Required columns | Rules |
