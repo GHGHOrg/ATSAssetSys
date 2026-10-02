@@ -1,8 +1,19 @@
 spec-split.txt
 Stage: Design. Status: PROPOSAL ONLY. spec.md has NOT been split.
-Applies to: spec/spec.md (draft v1, 250 lines, 14 sections)
+Applies to: spec/spec.md (draft v1, 292 lines, 14 sections)
 Last updated against: spec.md with sections 1 to 14, after the CSV format (section 8) was
-approved and Example B was rewritten.
+approved and Example B was rewritten, and after Example F and the 4.6 rule for splits
+between an original and its reversal were added (finding 3), and after the Status column
+in section 2 and the user-configurable price source setting (sections 6, 7, 11, 12, 14)
+were added, and the CSV online-only rule (C8; sections 2, 6, 8, 11, 14) was applied, and the date-only, New York market date rule (C13; sections 2, 4.1, 8) was added, and
+the date-field note and time zone suffix rule (sections 6, 11, 14) was added, and
+the cross-file double-counting known limit (C6, section 8) was added, and
+the transaction history cash filter rule (finding 11; sections 6, 11) was added, and
+findings 6 and 8 (buy total rule in 4.3; acceptance criteria 11 and 12) were applied, and
+finding 5 (navigation outline, section 6; criterion 13) was applied, and
+views 1 and 2 were renamed (Overall; Net Worth (Total)) with a naming note in section 6, and
+finding 7 (lot picker fields and order, 4.4; criterion 14) was applied, and
+finding 9 (ticker check owned by K5 and K6; 4.3, section 14, criterion 15) was applied.
 
 DECISION MADE
 Option 1: keep working on a single spec.md until the user says "final".
@@ -32,7 +43,7 @@ PROPOSED SPLIT (apply only after "final", and only if still worth it)
   spec/domain-rules.md
     Section 3  Domain model
     Section 4  Business rules (4.1 to 4.8)
-    Section 5  Worked examples (A to E)
+    Section 5  Worked examples (A to F)
 
   spec/csv-import.md
     Section 8  CSV import (file format, import rules, example file)
@@ -55,7 +66,7 @@ SPLIT RULES
    pointer. Any content change is a separate, visible edit.
 4. Do not split by build slice. Rules cut across slices. Each slice file in the plan
    cites the spec sections it needs instead.
-5. Keep section numbers and concern/example/component IDs (C, A to E, K) stable so
+5. Keep section numbers and concern/example/component IDs (C, A to F, K) stable so
    references in other files stay valid.
 6. Section 14 rule 1 (every write goes through K1) must stay visible in the index,
    because the CSV, restore and entry-flow files all depend on it.
@@ -63,7 +74,7 @@ SPLIT RULES
    section 8 (or spec/csv-import.md) and that file together.
 
 MINIMAL ALTERNATIVE (recommended if a split is wanted)
-Split out only spec/csv-import.md. Section 8 grew from about 10 to about 48 lines once
+Split out only spec/csv-import.md. Section 8 grew from about 10 to about 50 lines once
 the format was written, so it is now the second-largest block after sections 3 to 5.
 Its content is settled, but it cites 4.1 to 4.4, C3, C6, C7 and C8 by ID. Keep
 everything else in spec.md. If done before "final", the user approves the index plus
@@ -84,8 +95,8 @@ AFTER A SPLIT
   4.6, 4.7 and Example E").
 
 KNOWN LIMITS
-- Current section sizes in lines (measured with wc, spec.md = 250 lines):
-  index sections 1, 2, 10 to 14 about 75 lines; domain-rules (3 to 5) about 95 lines;
-  views (6) 16; prices (7) 7; csv-import (8) 48; backup-security (9) 10. These are
+- Current section sizes in lines (measured with wc and awk, spec.md = 292 lines):
+  index sections 1, 2, 10 to 14 about 83 lines; domain-rules (3 to 5) about 107 lines;
+  views (6) 29; prices (7) 12; csv-import (8) 50; backup-security (9) 10. These are
   line counts, not context tokens.
 - Sections 7 and 9 are short and may stay in the index instead of getting own files.
