@@ -8,22 +8,22 @@ Single-user Android app (sideloaded). Local-only data. Tracks one shared cash ac
 
 ## 2. Concerns and conflicts (read first)
 
-| # | Severity | Concern | Proposed handling (needs your approval) |
-|---|----------|---------|------------------------------------------|
-| C1 | High | **"Live or near-real-time" price freshness vs "free data only".** Free sources are usually delayed, rate-limited, or unofficial and can break. Constraints and Decisions already differ: Decisions says near-real-time is best effort. | Spec treats freshness as best effort. Every price shows its age and a stale marker. The price source sits behind an interface so it can be swapped. Source choice happens in plan.md after a real check **[UNVERIFIED: no free source has been tested]**. |
-| C2 | High | **First version is large for "ASAP"**: 9 views plus many interacting rules. | Build in the slices in section 12. Decision D2: realized gains and sector/geography stay in v1 (you accepted the schedule risk). They are built last, so the rest can be used first. |
-| C3 | High | **Permanent transactions plus one-time import.** A bad import cannot be edited away. Only restoring a backup undoes it. | The preview is the main guard. Proposal: before an import is committed, the app offers (not forces) to export a backup first. |
-| C4 | Medium | **Cash lines made by buys and sells have no type among the five cash types.** | Add a system-only type `trade`. It cannot be entered by hand. It appears in the cash list and filters. |
-| C5 | Medium | **How a reversal is represented is not defined.** A mistaken buy is offset by a sell-like entry, which could create a realized gain/loss and must pick lots. | A reversal is a normal entry carrying a link "reverses #id" and follows all normal blocking rules. Full rules for reversing a buy, sell, split or cash entry, plus the date and amount rules, are in 4.6. |
-| C6 | Medium | **CSV import targets one portfolio, but cash rows belong to the shared cash account.** | Trade rows go to the chosen portfolio. Direct cash rows go to the shared cash account and are not removed if that portfolio is later deleted. Only the cash lines of its trades are removed. |
-| C7 | Medium | **Row rejection can cascade.** If a buy is rejected, later sells of those shares are also rejected. | Rows are processed in date order, then file order. Each rejection lists its reason, and cascaded rejections say "depends on rejected row N". |
-| C8 | Medium | **Ticker check needs internet.** A CSV with unseen tickers cannot be validated offline. | Import with unverified tickers is blocked until online, same as a manual buy. |
-| C9 | Medium | **Split handling is manual.** A forgotten split silently distorts holdings, cost per share and gains. | No automation (per intent). The holding detail shows the split history so omissions are easy to spot. Optional later: warn when the latest price differs sharply from the cost per share. |
-| C10 | Low | **Realized gains can differ from broker/tax figures** (wash sales not modelled). | Label realized gains "informational" in the UI. |
-| C11 | Low | **"Performance" moves with deposits/withdrawals**, so it is not investment return. | Label it "Total value change" in the later version. |
-| C12 | Low | **"Allocation by holding" is ambiguous across portfolios.** | Per-portfolio view: one slice per holding in that portfolio. Combined view: same ticker in several portfolios is merged into one slice. |
-| C13 | Low | **Dates and time zones.** You are in Tokyo, markets are in New York. | Transactions carry a calendar date you pick. No time zone conversion. Entry order is the tie-breaker within a day. |
-| C14 | Low | **Sector/geography for ETFs** is often missing from free sources **[UNVERIFIED]**. | Manual override per holding. Unclassified holdings show as "Unclassified". |
+| # | Severity | Concern | Proposed handling (needs your approval) | Status |
+|---|----------|---------|------------------------------------------|--------|
+| C1 | High | **"Live or near-real-time" price freshness vs "free data only".** Free sources are usually delayed, rate-limited, or unofficial and can break. Constraints and Decisions already differ: Decisions says near-real-time is best effort. | Spec treats freshness as best effort. Every price shows its age and a stale marker. The price source sits behind an interface so it can be swapped. Source choice happens in plan.md after a real check **[UNVERIFIED: no free source has been tested]**. |  |
+| C2 | High | **First version is large for "ASAP"**: 9 views plus many interacting rules. | Build in the slices in section 12. Decision D2: realized gains and sector/geography stay in v1 (you accepted the schedule risk). They are built last, so the rest can be used first. | Approved |
+| C3 | High | **Permanent transactions plus one-time import.** A bad import cannot be edited away. Only restoring a backup undoes it. | The preview is the main guard. Proposal: before an import is committed, the app offers (not forces) to export a backup first. | Approved |
+| C4 | Medium | **Cash lines made by buys and sells have no type among the five cash types.** | Add a system-only type `trade`. It cannot be entered by hand. It appears in the cash list and filters. | Approved |
+| C5 | Medium | **How a reversal is represented is not defined.** A mistaken buy is offset by a sell-like entry, which could create a realized gain/loss and must pick lots. | A reversal is a normal entry carrying a link "reverses #id" and follows all normal blocking rules. Full rules for reversing a buy, sell, split or cash entry, plus the date and amount rules, are in 4.6. | Approved |
+| C6 | Medium | **CSV import targets one portfolio, but cash rows belong to the shared cash account.** | Trade rows go to the chosen portfolio. Direct cash rows go to the shared cash account and are not removed if that portfolio is later deleted. Only the cash lines of its trades are removed. |  |
+| C7 | Medium | **Row rejection can cascade.** If a buy is rejected, later sells of those shares are also rejected. | Rows are processed in date order, then file order. Each rejection lists its reason, and cascaded rejections say "depends on rejected row N". |  |
+| C8 | Medium | **Ticker check needs internet.** A CSV with unseen tickers cannot be validated offline. | Import with unverified tickers is blocked until online, same as a manual buy. |  |
+| C9 | Medium | **Split handling is manual.** A forgotten split silently distorts holdings, cost per share and gains. | No automation (per intent). The holding detail shows the split history so omissions are easy to spot. Optional later: warn when the latest price differs sharply from the cost per share. |  |
+| C10 | Low | **Realized gains can differ from broker/tax figures** (wash sales not modelled). | Label realized gains "informational" in the UI. |  |
+| C11 | Low | **"Performance" moves with deposits/withdrawals**, so it is not investment return. | Label it "Total value change" in the later version. |  |
+| C12 | Low | **"Allocation by holding" is ambiguous across portfolios.** | Per-portfolio view: one slice per holding in that portfolio. Combined view: same ticker in several portfolios is merged into one slice. |  |
+| C13 | Low | **Dates and time zones.** You are in Tokyo, markets are in New York. | Transactions carry a calendar date you pick. No time zone conversion. Entry order is the tie-breaker within a day. |  |
+| C14 | Low | **Sector/geography for ETFs** is often missing from free sources **[UNVERIFIED]**. | Manual override per holding. Unclassified holdings show as "Unclassified". |  |
 
 ## 3. Domain model
 
