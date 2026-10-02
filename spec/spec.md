@@ -132,8 +132,8 @@ Result: the lot has 0 shares, cash is **$10,000**, and realized gain/loss is **0
 
 ## 6. Views (first version)
 Layout and navigation are decided by the screens listed below and the navigation outline after them.
-1. **Home**: net worth + allocation summary; net worth + each portfolio with gain/loss.
-2. **Net worth overview**
+1. **Overall**: net worth + allocation summary; net worth + each portfolio with gain/loss.
+2. **Net Worth (Total)**
 3. **Portfolios and holdings**
 4. **Allocation** (asset type, portfolio, holding, sector/geography)
 5. **Realized gains** (per sale, per holding, total)
@@ -142,14 +142,16 @@ Layout and navigation are decided by the screens listed below and the navigation
 8. **Transaction history** (per portfolio only): filters ticker, date range, type (buy, sell, split, cash). Cash means the cash lines of that portfolio's trades; direct cash entries are viewed in the cash account. Each buy or sell shows its cash effect and can open its cash line. A reversal links to the original, and its cash line points to the reversal, so the full chain is traceable.
 9. **Closed/hidden holdings**
 
+Naming note: intent.md v51 calls view 1 "Home" and view 2 "Net worth overview". This spec renames them "Overall" and "Net Worth (Total)". Intent.md is left at v51, so use these spec names from here on.
+
 Plus entry flows: buy, sell (lot picker), split, cash entry, CSV import (online only), backup/restore, settings (auto-lock, price source, tab order).
 
 **Navigation outline.**
-- After unlock, the app opens on the Overall tab, which shows the Home view (1). A bottom bar with four tabs is always visible. The default order, left to right, is: More, Cash, Portfolios, Overall. You can reorder the tabs in settings.
-- **Overall** (Home, 1): tap the net worth figure for the Net worth overview (2); tap the allocation summary for Allocation (4); tap a portfolio for its holdings (3).
+- After unlock, the app opens on the Overall tab (view 1). A bottom bar with four tabs is always visible. The default order, left to right, is: More, Cash, Portfolios, Overall. You can reorder the tabs in settings.
+- **Overall** (1): tap the net worth figure for Net Worth (Total) (2); tap the allocation summary for Allocation (4); tap a portfolio for its holdings (3).
 - **Portfolios** (3): the list of portfolios. Tapping one shows its holdings. A holding opens Holding detail (6). From a portfolio you reach its Transaction history (8) and its Closed/hidden holdings (9). Portfolio create, rename and delete (4.7) are here.
 - **Cash** (7): the cash account, with its entries and date-range filter. A `trade` line opens the linked transaction (section 6, item 7). Cash entry (deposit, withdrawal, interest/dividend, adjustment) starts here.
-- **More:** Allocation (4), Realized gains (5), CSV import, Backup/restore, Settings (auto-lock, price source, tab order). Net worth overview (2) is also reachable here.
+- **More:** Allocation (4), Realized gains (5), CSV import, Backup/restore, Settings (auto-lock, price source, tab order). Net Worth (Total) (2) is also reachable here.
 - **Buy/Sell button:** Overall, Portfolios and Cash show a Buy/Sell button that opens a short menu: Buy, Sell. Holding detail also offers Buy and Sell with the ticker already filled in, and starts a split. A reversal starts from the transaction or cash entry it reverses (4.6).
 - Android's back button returns to the previous screen. Auto-lock (section 9) can cover any screen.
 
@@ -250,7 +252,7 @@ As in intent.md: liabilities, other asset classes, notifications, tax reporting,
 ## 12. Proposed slices (input to plan.md)
 1. Data model, cash account, rules engine with tests (Examples A to F).
 2. Buy/sell/split entry, lot picker, holdings, cost and gains.
-3. Prices (including the price source setting and sweep), net worth, home and allocation.
+3. Prices (including the price source setting and sweep), net worth, the Overall view and allocation.
 4. Portfolio management and deletion rules.
 5. Lock, backup and restore.
 6. CSV import (format in section 8).
