@@ -10,7 +10,7 @@ Single-user Android app (sideloaded). Local-only data. Tracks one shared cash ac
 
 | # | Severity | Concern | Proposed handling (needs your approval) | Status |
 |---|----------|---------|------------------------------------------|--------|
-| C1 | High | **"Live or near-real-time" price freshness vs "free data only".** Free sources are usually delayed, rate-limited, or unofficial and can break. Constraints and Decisions already differ: Decisions says near-real-time is best effort. | Spec treats freshness as best effort. Every price shows its age and a stale marker. The price source sits behind an interface so it can be swapped. Source choice happens in plan.md after a real check **[UNVERIFIED: no free source has been tested]**. |  |
+| C1 | High | **"Live or near-real-time" price freshness vs "free data only".** Free sources are usually delayed, rate-limited, or unofficial and can break. Constraints and Decisions already differ: Decisions says near-real-time is best effort. | Spec treats freshness as best effort. Every price shows its age and a stale marker. The price source sits behind an interface so it can be swapped, and you can switch it in settings (section 7). Source choice happens in plan.md after a real check **[UNVERIFIED: no free source has been tested]**. |  |
 | C2 | High | **First version is large for "ASAP"**: 9 views plus many interacting rules. | Build in the slices in section 12. Decision D2: realized gains and sector/geography stay in v1 (you accepted the schedule risk). They are built last, so the rest can be used first. | Approved |
 | C3 | High | **Permanent transactions plus one-time import.** A bad import cannot be edited away. Only restoring a backup undoes it. | The preview is the main guard. Proposal: before an import is committed, the app offers (not forces) to export a backup first. | Approved |
 | C4 | Medium | **Cash lines made by buys and sells have no type among the five cash types.** | Add a system-only type `trade`. It cannot be entered by hand. It appears in the cash list and filters. | Approved |
@@ -140,7 +140,7 @@ Layout and navigation are decided by the screens listed below. Exact navigation 
 8. **Transaction history** (per portfolio only): filters ticker, date range, type (buy, sell, split, cash). Each buy or sell shows its cash effect and can open its cash line. A reversal links to the original, and its cash line points to the reversal, so the full chain is traceable.
 9. **Closed/hidden holdings**
 
-Plus entry flows: buy, sell (lot picker), split, cash entry, CSV import, backup/restore, settings (auto-lock).
+Plus entry flows: buy, sell (lot picker), split, cash entry, CSV import, backup/restore, settings (auto-lock, price source).
 
 Targets: adding a buy or sell takes under 30 seconds, with lots shown ready to tap.
 
@@ -149,6 +149,11 @@ Targets: adding a buy or sell takes under 30 seconds, with lots shown ready to t
 - Each price shows its timestamp. Failure keeps the last price, marked stale.
 - Sending tickers to an outside source is accepted. Free tier only.
 - The price source is behind an interface so it can be replaced. **[UNVERIFIED]** Source, limits and whether it provides sector/geography are to be checked in the plan stage.
+- **Price source setting.** In settings you choose the price source from the sources the app ships with (the list is decided in plan.md). The app starts on a default source.
+- **Sweep on change.** After you confirm a change of source while online, the app runs a price sweep: it fetches the latest price for every instrument the app holds (hidden holdings included) from the new source, and updates all prices. Net worth, gains and allocation then show the new market values.
+- **Changing the source while offline is allowed.** The app shows a warning that prices were not refreshed, selects the new source, and skips the sweep. Prices stay as they are until the next refresh (automatic when online, or pull-to-refresh), which uses the new source.
+- **Failures during the sweep.** A ticker the new source cannot price keeps its last price, marked stale (the rule above). When the sweep ends, the app lists the tickers it could not price. The new source stays selected.
+- **What a source change never touches:** transactions, cash entries, lots, the verified flag, and manually entered sector/geography. Source-supplied sector/geography is refreshed from the new source where it provides them.
 - Historical prices are needed only for the later performance feature. **[UNVERIFIED]** Availability, limits and split adjustment are unchecked. Because splits are user-entered, any split-adjusted history would have to be converted back to as-traded values before use. Verify before the performance milestone, not before v1.
 
 ## 8. CSV import
@@ -219,11 +224,12 @@ As in intent.md: liabilities, other asset classes, notifications, tax reporting,
 4. Backup then restore on a clean install reproduces identical net worth and holdings.
 5. Offline use shows last prices marked with their age.
 6. App locks per the chosen auto-lock setting.
+7. Changing the price source in settings, while online, fetches all prices again and updates market values; tickers the new source cannot price keep the last price, marked stale. While offline, the change shows a warning and skips the sweep.
 
 ## 12. Proposed slices (input to plan.md)
 1. Data model, cash account, rules engine with tests (Examples A to F).
 2. Buy/sell/split entry, lot picker, holdings, cost and gains.
-3. Prices, net worth, home and allocation.
+3. Prices (including the price source setting and sweep), net worth, home and allocation.
 4. Portfolio management and deletion rules.
 5. Lock, backup and restore.
 6. CSV import (format in section 8).
@@ -245,7 +251,7 @@ Added as section 14 so existing section numbers stay stable. Language, framework
 | K1 | **Rules engine** | Holds the ordering and replay checks (4.1), cash rules (4.2), lots and gains (4.4), splits (4.5), reversals (4.6) and the portfolio deletion check (4.7). Pure logic: no screens, no network. Answers "is this save allowed, and if not, which date and amount fail?" | 3, 4, 5 | 1, 2, 4 |
 | K2 | **Storage** | Keeps all records in app-private storage on the phone. A save and its linked cash line are written together or not at all. Loads data at start. | 3, 9 | 1 |
 | K3 | **Valuation and reporting** | Net worth, unrealized and realized gains, allocation (combined and per portfolio). Reads records and prices; never writes them. | 4.8, 6 | 3, 7 |
-| K4 | **Price service** | Fetches latest prices through a replaceable source, verifies tickers, marks prices stale, supplies sector/geography when the source has it. Only updates instrument data, never transactions. | 7, C1, C8, C14 | 3, 7 |
+| K4 | **Price service** | Fetches latest prices through a replaceable source, verifies tickers, marks prices stale, supplies sector/geography when the source has it. Only updates instrument data, never transactions. Owns the selected-source setting and runs the sweep when it changes. K9 asks K4 to switch the source. | 7, C1, C8, C14 | 3, 7 |
 | K5 | **Entry flows** | Buy, sell (with lot picker), split, cash entry, reversal and portfolio management. Shows the review screen, then asks K1 to validate and save. | 4.3 to 4.7, 6 | 2, 4 |
 | K6 | **CSV importer** | Reads the file, maps rows, builds the preview, flags duplicates, lists rejected rows. Commits only through K1. | 8, C6, C7, C8 | 6 |
 | K7 | **Backup and restore** | Exports one file; restores by replace or merge. Merge validation goes through K1. | 9 | 5 |
