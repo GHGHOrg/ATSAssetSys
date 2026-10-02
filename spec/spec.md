@@ -59,7 +59,8 @@ Single-user Android app (sideloaded). Local-only data. Tracks one shared cash ac
 ### 4.3 Buys
 - Input: ticker, date, quantity, total amount. Quick review screen before saving.
 - The total amount (fees included) must be more than 0. Zero is allowed on sells only (4.4).
-- Blocked if total exceeds cash (checked per 4.1) or if the ticker has never been verified and the phone is offline.
+- Blocked if total exceeds cash (checked per 4.1).
+- Blocked if the ticker has never been verified and the phone is offline. When online, the ticker is checked before saving, and a ticker that does not exist is blocked. The entry flow (K5) enforces this using the verified flag that the price service (K4) maintains. The rules engine (K1) does not know about the network.
 - No check against market price.
 - A buy dated before a recorded split: quantity entered as originally traded, later splits applied automatically.
 
@@ -250,6 +251,7 @@ As in intent.md: liabilities, other asset classes, notifications, tax reporting,
 12. Each holding shows its sector and geography. The source supplies them when it can, and you can override them by hand. A holding with neither shows "Unclassified". Allocation by sector/geography uses these values.
 13. Every view and entry flow in section 6 can be reached by the navigation outline. A buy or sell can be started from Overall in two taps (Buy/Sell button, then Buy or Sell). The tab order can be changed in settings.
 14. The sell lot picker lists the lots of the ticker in that portfolio, oldest first, each with purchase date, quantity remaining, cost per share and unrealized gain/loss. Lots that fail the lot rules for the entered sell date are greyed out with a reason and cannot be picked. For Example A, before the Mar 1 sale at a price of $160, the picker shows a gain of $600 for lot 1 and $100 for lot 2.
+15. A manual buy of a never-verified ticker is blocked while the phone is offline. Online, a ticker that does not exist is rejected, and a valid one is saved.
 
 ## 12. Proposed slices (input to plan.md)
 1. Data model, cash account, rules engine with tests (Examples A to F).
@@ -277,7 +279,7 @@ Added as section 14 so existing section numbers stay stable. Language, framework
 | K2 | **Storage** | Keeps all records in app-private storage on the phone. A save and its linked cash line are written together or not at all. Loads data at start. | 3, 9 | 1 |
 | K3 | **Valuation and reporting** | Net worth, unrealized and realized gains, allocation (combined and per portfolio). Reads records and prices; never writes them. | 4.8, 6 | 3, 7 |
 | K4 | **Price service** | Fetches latest prices through a replaceable source, verifies tickers, marks prices stale, supplies sector/geography when the source has it. Only updates instrument data, never transactions. Owns the selected-source setting and runs the sweep when it changes. K9 asks K4 to switch the source. | 7, C1, C8, C14 | 3, 7 |
-| K5 | **Entry flows** | Buy, sell (with lot picker), split, cash entry, reversal and portfolio management. Shows the review screen, then asks K1 to validate and save. | 4.3 to 4.7, 6 | 2, 4 |
+| K5 | **Entry flows** | Buy, sell (with lot picker), split, cash entry, reversal and portfolio management. Shows the review screen, enforces the ticker check of 4.3 using K4's verified flag, then asks K1 to validate and save. | 4.3 to 4.7, 6 | 2, 4 |
 | K6 | **CSV importer** | Refuses to start while the phone is offline (C8), verifies tickers through K4, reads the file, maps rows, builds the preview, flags duplicates, lists rejected rows. Commits only through K1. | 8, C6, C7, C8 | 6 |
 | K7 | **Backup and restore** | Exports one file; restores by replace or merge. Merge validation goes through K1. | 9 | 5 |
 | K8 | **App lock** | Biometric or PIN and the auto-lock policy. Guards every screen. | 9 | 5 |
@@ -287,3 +289,4 @@ Added as section 14 so existing section numbers stay stable. Language, framework
 1. Every write to transactions or cash entries goes through K1: entry flows, CSV import, restore merge and portfolio deletion. No component bypasses it.
 2. K3 and K9 only read data. K4 only writes prices and instrument data.
 3. K1 has no knowledge of screens, network or file formats, so Examples A to F can be tested on K1 alone.
+4. Checks that need the network, such as ticker verification, are enforced by K5 (manual entry) and K6 (CSV import) using K4. They are not part of K1.
