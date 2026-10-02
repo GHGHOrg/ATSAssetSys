@@ -1,6 +1,6 @@
 spec-split.txt
 Stage: Design. Status: PROPOSAL ONLY. spec.md has NOT been split.
-Applies to: spec/spec.md (draft v1, 292 lines, 14 sections)
+Applies to: spec/spec.md (draft v2, 292 lines, 14 sections)
 Last updated against: spec.md with sections 1 to 14, after the CSV format (section 8) was
 approved and Example B was rewritten, and after Example F and the 4.6 rule for splits
 between an original and its reversal were added (finding 3), and after the Status column
@@ -13,7 +13,8 @@ findings 6 and 8 (buy total rule in 4.3; acceptance criteria 11 and 12) were app
 finding 5 (navigation outline, section 6; criterion 13) was applied, and
 views 1 and 2 were renamed (Overall; Net Worth (Total)) with a naming note in section 6, and
 finding 7 (lot picker fields and order, 4.4; criterion 14) was applied, and
-finding 9 (ticker check owned by K5 and K6; 4.3, section 14, criterion 15) was applied.
+finding 9 (ticker check owned by K5 and K6; 4.3, section 14, criterion 15) was applied, and
+the spec version was raised from v1 to v2.
 
 DECISION MADE
 Option 1: keep working on a single spec.md until the user says "final".

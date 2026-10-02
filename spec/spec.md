@@ -1,4 +1,4 @@
-# spec.md (DRAFT v1, awaiting approval)
+# spec.md (DRAFT v2, awaiting approval)
 
 Source: intent/intent.md v51 (final). Stage: Design.
 Nothing in this file has been built, run or verified against real data. Items marked **[UNVERIFIED]** rest on my memory or assumptions, not on checks done in this session.
