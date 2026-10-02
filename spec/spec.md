@@ -15,14 +15,14 @@ Single-user Android app (sideloaded). Local-only data. Tracks one shared cash ac
 | C3 | High | **Permanent transactions plus one-time import.** A bad import cannot be edited away. Only restoring a backup undoes it. | The preview is the main guard. Proposal: before an import is committed, the app offers (not forces) to export a backup first. | Approved |
 | C4 | Medium | **Cash lines made by buys and sells have no type among the five cash types.** | Add a system-only type `trade`. It cannot be entered by hand. It appears in the cash list and filters. | Approved |
 | C5 | Medium | **How a reversal is represented is not defined.** A mistaken buy is offset by a sell-like entry, which could create a realized gain/loss and must pick lots. | A reversal is a normal entry carrying a link "reverses #id" and follows all normal blocking rules. Full rules for reversing a buy, sell, split or cash entry, plus the date and amount rules, are in 4.6. | Approved |
-| C6 | Medium | **CSV import targets one portfolio, but cash rows belong to the shared cash account.** | Trade rows go to the chosen portfolio. Direct cash rows go to the shared cash account and are not removed if that portfolio is later deleted. Only the cash lines of its trades are removed. |  |
+| C6 | Medium | **CSV import targets one portfolio, but cash rows belong to the shared cash account.** | Trade rows go to the chosen portfolio. Direct cash rows go to the shared cash account and are not removed if that portfolio is later deleted. Only the cash lines of its trades are removed. Decision: kept as is. Imported cash rows are shared and carry no link to an import or portfolio. Known limit: cross-file double counting (section 8). | Approved |
 | C7 | Medium | **Row rejection can cascade.** If a buy is rejected, later sells of those shares are also rejected. | Rows are processed in date order, then file order. Each rejection lists its reason, and cascaded rejections say "depends on rejected row N". | Approved |
 | C8 | Medium | **Ticker check needs internet.** A CSV with unseen tickers cannot be validated offline, so import needs internet. | CSV import is allowed only when the phone is online. This is stricter than a manual buy (4.3), which is blocked only for a ticker never verified. | Approved |
 | C9 | Medium | **Split handling is manual.** A forgotten split silently distorts holdings, cost per share and gains. | No automation (per intent). The holding detail shows the split history so omissions are easy to spot. No price-based warning is needed. | Approved |
 | C10 | Low | **Realized gains can differ from broker/tax figures** (wash sales not modelled). | Label realized gains "informational" in the UI. Decision: No label is added. | Closed, not a concern |
 | C11 | Low | **"Performance" moves with deposits/withdrawals**, so it is not investment return. | Label it "Total value change" in the later version. | Approved |
 | C12 | Low | **"Allocation by holding" is ambiguous across portfolios.** | Per-portfolio view: one slice per holding in that portfolio. Combined view: same ticker in several portfolios is merged into one slice. | Approved |
-| C13 | Low | **Dates and time zones.** You are in Tokyo, markets are in New York. | Entries carry a calendar date only, no time. All dates (buy, sell, split and cash entries) use the US market time zone (New York), not the device's. The app does no time zone conversion: the date is stored as picked. The date field defaults to today's date in New York. Entry order is the tie-breaker within a day. |  |
+| C13 | Low | **Dates and time zones.** You are in Tokyo, markets are in New York. | Entries carry a calendar date only, no time. All dates (buy, sell, split and cash entries) use the US market time zone (New York), not the device's. The app does no time zone conversion: the date is stored as picked. The date field defaults to today's date in New York. Entry order is the tie-breaker within a day. | Approved |
 | C14 | Low | **Sector/geography for ETFs** is often missing from free sources **[UNVERIFIED]**. | Manual override per holding. Unclassified holdings show as "Unclassified". | Approved |
 
 ## 3. Domain model
@@ -138,10 +138,12 @@ Layout and navigation are decided by the screens listed below. Exact navigation 
 5. **Realized gains** (per sale, per holding, total)
 6. **Holding detail**: lots, cost, gain/loss, split history, its transactions
 7. **Cash account**: balance, entries incl. trade lines, date-range filter. Each `trade` line shows buy or sell, ticker and portfolio name besides date and amount. Tapping it opens the linked transaction (with its lots and any reversal link).
-8. **Transaction history** (per portfolio only): filters ticker, date range, type (buy, sell, split, cash). Each buy or sell shows its cash effect and can open its cash line. A reversal links to the original, and its cash line points to the reversal, so the full chain is traceable.
+8. **Transaction history** (per portfolio only): filters ticker, date range, type (buy, sell, split, cash). Cash means the cash lines of that portfolio's trades; direct cash entries are viewed in the cash account. Each buy or sell shows its cash effect and can open its cash line. A reversal links to the original, and its cash line points to the reversal, so the full chain is traceable.
 9. **Closed/hidden holdings**
 
 Plus entry flows: buy, sell (lot picker), split, cash entry, CSV import (online only), backup/restore, settings (auto-lock, price source).
+
+Date fields: every screen that asks for a date shows the note "Enter date in US market time (New York)" next to the input. This covers buy, sell, split and cash entry, the reversal date, and the date-range filters in the cash account and transaction history. The CSV import screen shows the same note next to its date format help (section 8). Dates that are only shown (lists, detail screens, review screens, import preview) carry no note. They show the time zone suffix "ET" after the date, for example "2026-03-01 ET".
 
 Targets: adding a buy or sell takes under 30 seconds, with lots shown ready to tap.
 
@@ -193,6 +195,8 @@ Fixed by intent:
 6. The preview shows counts per row type, rejected rows (row number and reason), flagged rows, and the resulting cash balance and holdings. After you confirm, the valid rows are saved together or not at all. Before saving, the app offers a backup export (C3).
 7. Rejection reasons include: wrong header, unknown row type, bad date or number, missing required value, too many decimals, wrong sign, zero total on a buy, lot pick not found or not summing to the sell quantity, blocked by 4.1 to 4.4, unknown ticker, adjustment without a note, and "depends on rejected row N".
 
+Known limit: imported cash rows are shared and carry no link to an import or portfolio. The duplicate check (rule 5) flags a cash row only when an existing entry has the same date, type and amount. The same real-world deposit or dividend that appears in two imported files with a different date or amount is not flagged and is counted twice. Check the preview's resulting cash balance against your real balance, and fix any difference with an adjustment (4.2). A bad import can be undone only by restoring a backup (C3).
+
 **Example file** (dummy values; reproduces Example A, then a split and a dividend):
 ```
 row_type,date,ticker,quantity,total_amount,lot_id,lot_picks,split_ratio,cash_type,note
@@ -227,6 +231,8 @@ As in intent.md: liabilities, other asset classes, notifications, tax reporting,
 6. App locks per the chosen auto-lock setting.
 7. Changing the price source in settings, while online, fetches all prices again and updates market values; tickers the new source cannot price keep the last price, marked stale. While offline, the change shows a warning and skips the sweep.
 8. CSV import cannot be started while the phone is offline. Online, every ticker is verified before the import is committed.
+9. Every screen that asks for a date shows the note that dates are US market (New York) dates next to the input. Every date that is only shown has the time zone suffix "ET" and no note.
+10. In a portfolio's transaction history, the cash filter shows only the cash lines of that portfolio's buys and sells, never direct cash entries.
 
 ## 12. Proposed slices (input to plan.md)
 1. Data model, cash account, rules engine with tests (Examples A to F).
@@ -258,7 +264,7 @@ Added as section 14 so existing section numbers stay stable. Language, framework
 | K6 | **CSV importer** | Refuses to start while the phone is offline (C8), verifies tickers through K4, reads the file, maps rows, builds the preview, flags duplicates, lists rejected rows. Commits only through K1. | 8, C6, C7, C8 | 6 |
 | K7 | **Backup and restore** | Exports one file; restores by replace or merge. Merge validation goes through K1. | 9 | 5 |
 | K8 | **App lock** | Biometric or PIN and the auto-lock policy. Guards every screen. | 9 | 5 |
-| K9 | **Screens** | The nine views and the settings screen. Call K3 to read and K5 to change data; never write directly. | 6 | 2, 3, 7 |
+| K9 | **Screens** | The nine views and the settings screen. Call K3 to read and K5 to change data; never write directly. Shows the date-field note on every date input and the time zone suffix on every shown date (section 6). | 6 | 2, 3, 7 |
 
 **Dependency rules**
 1. Every write to transactions or cash entries goes through K1: entry flows, CSV import, restore merge and portfolio deletion. No component bypasses it.
