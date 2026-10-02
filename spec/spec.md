@@ -58,6 +58,7 @@ Single-user Android app (sideloaded). Local-only data. Tracks one shared cash ac
 
 ### 4.3 Buys
 - Input: ticker, date, quantity, total amount. Quick review screen before saving.
+- The total amount (fees included) must be more than 0. Zero is allowed on sells only (4.4).
 - Blocked if total exceeds cash (checked per 4.1) or if the ticker has never been verified and the phone is offline.
 - No check against market price.
 - A buy dated before a recorded split: quantity entered as originally traded, later splits applied automatically.
@@ -233,6 +234,8 @@ As in intent.md: liabilities, other asset classes, notifications, tax reporting,
 8. CSV import cannot be started while the phone is offline. Online, every ticker is verified before the import is committed.
 9. Every screen that asks for a date shows the note that dates are US market (New York) dates next to the input. Every date that is only shown has the time zone suffix "ET" and no note.
 10. In a portfolio's transaction history, the cash filter shows only the cash lines of that portfolio's buys and sells, never direct cash entries.
+11. The realized gains view shows the gain per sale, per holding and as an overall total. For Example A, the sale shows a realized gain of $800.
+12. Each holding shows its sector and geography. The source supplies them when it can, and you can override them by hand. A holding with neither shows "Unclassified". Allocation by sector/geography uses these values.
 
 ## 12. Proposed slices (input to plan.md)
 1. Data model, cash account, rules engine with tests (Examples A to F).
