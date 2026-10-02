@@ -10,20 +10,20 @@ Single-user Android app (sideloaded). Local-only data. Tracks one shared cash ac
 
 | # | Severity | Concern | Proposed handling (needs your approval) | Status |
 |---|----------|---------|------------------------------------------|--------|
-| C1 | High | **"Live or near-real-time" price freshness vs "free data only".** Free sources are usually delayed, rate-limited, or unofficial and can break. Constraints and Decisions already differ: Decisions says near-real-time is best effort. | Spec treats freshness as best effort. Every price shows its age and a stale marker. The price source sits behind an interface so it can be swapped, and you can switch it in settings (section 7). Source choice happens in plan.md after a real check **[UNVERIFIED: no free source has been tested]**. |  |
+| C1 | High | **"Live or near-real-time" price freshness vs "free data only".** Free sources are usually delayed, rate-limited, or unofficial and can break. Constraints and Decisions already differ: Decisions says near-real-time is best effort. | Spec treats freshness as best effort. Every price shows its age and a stale marker. The price source sits behind an interface so it can be swapped, and you can switch it in settings (section 7). Source choice happens in plan.md after a real check **[UNVERIFIED: no free source has been tested]**. | Approved |
 | C2 | High | **First version is large for "ASAP"**: 9 views plus many interacting rules. | Build in the slices in section 12. Decision D2: realized gains and sector/geography stay in v1 (you accepted the schedule risk). They are built last, so the rest can be used first. | Approved |
 | C3 | High | **Permanent transactions plus one-time import.** A bad import cannot be edited away. Only restoring a backup undoes it. | The preview is the main guard. Proposal: before an import is committed, the app offers (not forces) to export a backup first. | Approved |
 | C4 | Medium | **Cash lines made by buys and sells have no type among the five cash types.** | Add a system-only type `trade`. It cannot be entered by hand. It appears in the cash list and filters. | Approved |
 | C5 | Medium | **How a reversal is represented is not defined.** A mistaken buy is offset by a sell-like entry, which could create a realized gain/loss and must pick lots. | A reversal is a normal entry carrying a link "reverses #id" and follows all normal blocking rules. Full rules for reversing a buy, sell, split or cash entry, plus the date and amount rules, are in 4.6. | Approved |
 | C6 | Medium | **CSV import targets one portfolio, but cash rows belong to the shared cash account.** | Trade rows go to the chosen portfolio. Direct cash rows go to the shared cash account and are not removed if that portfolio is later deleted. Only the cash lines of its trades are removed. |  |
-| C7 | Medium | **Row rejection can cascade.** If a buy is rejected, later sells of those shares are also rejected. | Rows are processed in date order, then file order. Each rejection lists its reason, and cascaded rejections say "depends on rejected row N". |  |
-| C8 | Medium | **Ticker check needs internet.** A CSV with unseen tickers cannot be validated offline. | Import with unverified tickers is blocked until online, same as a manual buy. |  |
-| C9 | Medium | **Split handling is manual.** A forgotten split silently distorts holdings, cost per share and gains. | No automation (per intent). The holding detail shows the split history so omissions are easy to spot. Optional later: warn when the latest price differs sharply from the cost per share. |  |
+| C7 | Medium | **Row rejection can cascade.** If a buy is rejected, later sells of those shares are also rejected. | Rows are processed in date order, then file order. Each rejection lists its reason, and cascaded rejections say "depends on rejected row N". | Approved |
+| C8 | Medium | **Ticker check needs internet.** A CSV with unseen tickers cannot be validated offline, so import needs internet. | CSV import is allowed only when the phone is online. This is stricter than a manual buy (4.3), which is blocked only for a ticker never verified. | Approved |
+| C9 | Medium | **Split handling is manual.** A forgotten split silently distorts holdings, cost per share and gains. | No automation (per intent). The holding detail shows the split history so omissions are easy to spot. No price-based warning is needed. | Approved |
 | C10 | Low | **Realized gains can differ from broker/tax figures** (wash sales not modelled). | Label realized gains "informational" in the UI. |  |
-| C11 | Low | **"Performance" moves with deposits/withdrawals**, so it is not investment return. | Label it "Total value change" in the later version. |  |
-| C12 | Low | **"Allocation by holding" is ambiguous across portfolios.** | Per-portfolio view: one slice per holding in that portfolio. Combined view: same ticker in several portfolios is merged into one slice. |  |
+| C11 | Low | **"Performance" moves with deposits/withdrawals**, so it is not investment return. | Label it "Total value change" in the later version. | Approved |
+| C12 | Low | **"Allocation by holding" is ambiguous across portfolios.** | Per-portfolio view: one slice per holding in that portfolio. Combined view: same ticker in several portfolios is merged into one slice. | Approved |
 | C13 | Low | **Dates and time zones.** You are in Tokyo, markets are in New York. | Transactions carry a calendar date you pick. No time zone conversion. Entry order is the tie-breaker within a day. |  |
-| C14 | Low | **Sector/geography for ETFs** is often missing from free sources **[UNVERIFIED]**. | Manual override per holding. Unclassified holdings show as "Unclassified". |  |
+| C14 | Low | **Sector/geography for ETFs** is often missing from free sources **[UNVERIFIED]**. | Manual override per holding. Unclassified holdings show as "Unclassified". | Approved |
 
 ## 3. Domain model
 
@@ -140,7 +140,7 @@ Layout and navigation are decided by the screens listed below. Exact navigation 
 8. **Transaction history** (per portfolio only): filters ticker, date range, type (buy, sell, split, cash). Each buy or sell shows its cash effect and can open its cash line. A reversal links to the original, and its cash line points to the reversal, so the full chain is traceable.
 9. **Closed/hidden holdings**
 
-Plus entry flows: buy, sell (lot picker), split, cash entry, CSV import, backup/restore, settings (auto-lock, price source).
+Plus entry flows: buy, sell (lot picker), split, cash entry, CSV import (online only), backup/restore, settings (auto-lock, price source).
 
 Targets: adding a buy or sell takes under 30 seconds, with lots shown ready to tap.
 
@@ -187,7 +187,7 @@ Fixed by intent:
 1. Rows are processed in date order, then file order. File order is the entry order for same-date rows, so a buy must appear above a same-date sell that uses it.
 2. Each row is checked against 4.1 to 4.4 as if entered by hand. Rejected rows drop out and later rows are rechecked, which can reject dependent rows (C7).
 3. A file may contain at most one `opening_balance` row, and none is required. It is rejected if an opening balance already exists or if any cash entry (existing or earlier in the file) is dated before it.
-4. Every ticker is verified before commit. If the phone is offline and any ticker is unverified, the whole import is blocked (C8). A ticker that does not exist rejects its rows.
+4. CSV import can only be started while the phone is online; offline, it is blocked (C8). Every ticker is verified before commit. A ticker that does not exist rejects its rows.
 5. Duplicates are checked against existing data only, not within the file (two identical rows in one file can be legitimate). A buy or sell is flagged if the chosen portfolio already has the same type, date, ticker, quantity and total. A split is flagged for the same date, ticker and ratio. A cash row is flagged for the same date, type and amount. You choose skip or import for each flagged row, with a bulk skip.
 6. The preview shows counts per row type, rejected rows (row number and reason), flagged rows, and the resulting cash balance and holdings. After you confirm, the valid rows are saved together or not at all. Before saving, the app offers a backup export (C3).
 7. Rejection reasons include: wrong header, unknown row type, bad date or number, missing required value, too many decimals, wrong sign, zero total on a buy, lot pick not found or not summing to the sell quantity, blocked by 4.1 to 4.4, unknown ticker, adjustment without a note, and "depends on rejected row N".
@@ -225,6 +225,7 @@ As in intent.md: liabilities, other asset classes, notifications, tax reporting,
 5. Offline use shows last prices marked with their age.
 6. App locks per the chosen auto-lock setting.
 7. Changing the price source in settings, while online, fetches all prices again and updates market values; tickers the new source cannot price keep the last price, marked stale. While offline, the change shows a warning and skips the sweep.
+8. CSV import cannot be started while the phone is offline. Online, every ticker is verified before the import is committed.
 
 ## 12. Proposed slices (input to plan.md)
 1. Data model, cash account, rules engine with tests (Examples A to F).
@@ -253,7 +254,7 @@ Added as section 14 so existing section numbers stay stable. Language, framework
 | K3 | **Valuation and reporting** | Net worth, unrealized and realized gains, allocation (combined and per portfolio). Reads records and prices; never writes them. | 4.8, 6 | 3, 7 |
 | K4 | **Price service** | Fetches latest prices through a replaceable source, verifies tickers, marks prices stale, supplies sector/geography when the source has it. Only updates instrument data, never transactions. Owns the selected-source setting and runs the sweep when it changes. K9 asks K4 to switch the source. | 7, C1, C8, C14 | 3, 7 |
 | K5 | **Entry flows** | Buy, sell (with lot picker), split, cash entry, reversal and portfolio management. Shows the review screen, then asks K1 to validate and save. | 4.3 to 4.7, 6 | 2, 4 |
-| K6 | **CSV importer** | Reads the file, maps rows, builds the preview, flags duplicates, lists rejected rows. Commits only through K1. | 8, C6, C7, C8 | 6 |
+| K6 | **CSV importer** | Refuses to start while the phone is offline (C8), verifies tickers through K4, reads the file, maps rows, builds the preview, flags duplicates, lists rejected rows. Commits only through K1. | 8, C6, C7, C8 | 6 |
 | K7 | **Backup and restore** | Exports one file; restores by replace or merge. Merge validation goes through K1. | 9 | 5 |
 | K8 | **App lock** | Biometric or PIN and the auto-lock policy. Guards every screen. | 9 | 5 |
 | K9 | **Screens** | The nine views and the settings screen. Call K3 to read and K5 to change data; never write directly. | 6 | 2, 3, 7 |
