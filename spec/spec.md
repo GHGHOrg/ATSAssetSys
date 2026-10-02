@@ -66,6 +66,7 @@ Single-user Android app (sideloaded). Local-only data. Tracks one shared cash ac
 ### 4.4 Sells
 - Input: ticker, date, quantity, total amount (zero allowed), and lot picks. Quick review screen before saving.
 - Lot rules: same portfolio only; lot bought on or before the sell date; same-date lot must have been entered earlier. Each lot pick has its own quantity, prefilled with the lot's remaining quantity.
+- The lot picker lists each lot of that ticker in the portfolio that still has shares, with: purchase date, quantity remaining, cost per share, and the lot's unrealized gain/loss. Quantity and cost per share include splits recorded so far. Unrealized gain/loss = remaining quantity × latest price − remaining cost of that lot (4.8). If the price is stale it carries the stale marker. If the holding has no price at all, the lot shows "no price" instead of a gain/loss. A lot that fails the lot rules for the sell date you entered is shown greyed out with the reason (for example "bought after the sell date") and cannot be picked. Changing the date updates the list. Lots are listed oldest first by purchase date (lots bought on the same date in the order they were entered), and greyed-out lots keep their place in that order.
 - The picked quantities must add up to the sell quantity. "Sell all" fills the exact remaining quantity.
 - Selling more than the portfolio holds is blocked.
 - Realized gain per lot piece = proceeds share minus cost share. Proceeds are split across lots in proportion to quantity.
@@ -248,6 +249,7 @@ As in intent.md: liabilities, other asset classes, notifications, tax reporting,
 11. The realized gains view shows the gain per sale, per holding and as an overall total. For Example A, the sale shows a realized gain of $800.
 12. Each holding shows its sector and geography. The source supplies them when it can, and you can override them by hand. A holding with neither shows "Unclassified". Allocation by sector/geography uses these values.
 13. Every view and entry flow in section 6 can be reached by the navigation outline. A buy or sell can be started from Overall in two taps (Buy/Sell button, then Buy or Sell). The tab order can be changed in settings.
+14. The sell lot picker lists the lots of the ticker in that portfolio, oldest first, each with purchase date, quantity remaining, cost per share and unrealized gain/loss. Lots that fail the lot rules for the entered sell date are greyed out with a reason and cannot be picked. For Example A, before the Mar 1 sale at a price of $160, the picker shows a gain of $600 for lot 1 and $100 for lot 2.
 
 ## 12. Proposed slices (input to plan.md)
 1. Data model, cash account, rules engine with tests (Examples A to F).
