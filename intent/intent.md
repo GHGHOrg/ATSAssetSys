@@ -39,6 +39,7 @@ One user: me. No sharing, no multi-user accounts.
 **Planned for later versions**
 - Performance over time (historical prices from a free source are unverified)
 - Per-holding dividends: a dividend entry that optionally names a ticker and portfolio
+- ETF look-through: splitting an ETF's allocation by the sectors or geographies it holds (manual weights or from a data source, which is unverified). In the first version each holding has one sector and one geography.
 
 ## Constraints
 - Platform: Android phone
@@ -194,7 +195,7 @@ What I need to see; layout and navigation are decided in Design.
 - The auto-lock setting offers four choices: lock every time I leave the app, after 1 minute idle, after 5 minutes idle, or only when the phone locks or the app restarts. The default is the strictest (lock every time I leave the app).
 
 ## Open questions
-- ETF look-through: breaking an ETF into the sectors or geographies it holds. Not decided, and not out of scope. It depends on whether a free source supplies holdings data.
+None remaining in Plan.
 
 ## Deferred to Design (carried forward, not blocking)
 - Backup-file format: columns or structure, date and number formats, how reversals and lot labels are written, and a format version so a future field (for example per-holding dividends) can be added without breaking old files.
