@@ -4,7 +4,7 @@ Source: intent/intent.md v51 (final). Stage: Design.
 Nothing in this file has been built, run or verified against real data. Items marked **[UNVERIFIED]** rest on my memory or assumptions, not on checks done in this session.
 
 ## 1. Summary
-Single-user Android app (sideloaded). Local-only data. Tracks one shared cash account plus multiple US stock/ETF portfolios in USD. First version delivers net worth, allocation, lot-based cost and gains, transaction entry, CSV import, backup/restore and app lock. Performance over time comes after v1, but all transactions are stored from day one.
+Single-user Android app (sideloaded). Local-only data. Tracks one shared cash account plus multiple US stock/ETF portfolios in USD. First version delivers net worth, allocation, lot-based cost and gains, transaction entry, backup/restore (the only way data enters or leaves the app) and app lock. Performance over time comes after v1, but all transactions are stored from day one.
 
 ## 2. Concerns and conflicts (read first)
 
@@ -12,12 +12,12 @@ Single-user Android app (sideloaded). Local-only data. Tracks one shared cash ac
 |---|----------|---------|------------------------------------------|--------|
 | C1 | High | **"Live or near-real-time" price freshness vs "free data only".** Free sources are usually delayed, rate-limited, or unofficial and can break. Constraints and Decisions already differ: Decisions says near-real-time is best effort. | Spec treats freshness as best effort. Every price shows its age and a stale marker. The price source sits behind an interface so it can be swapped, and you can switch it in settings (section 7). Source choice happens in plan.md after a real check **[UNVERIFIED: no free source has been tested]**. | Approved |
 | C2 | High | **First version is large for "ASAP"**: 9 views plus many interacting rules. | Build in the slices in section 12. Decision D2: realized gains and sector/geography stay in v1 (you accepted the schedule risk). They are built last, so the rest can be used first. | Approved |
-| C3 | High | **Permanent transactions plus one-time import.** A bad import cannot be edited away. Only restoring a backup undoes it. | The preview is the main guard. Proposal: before an import is committed, the app offers (not forces) to export a backup first. | Approved |
+| C3 | High | **Permanent transactions plus a one-time load of a hand-prepared file.** A bad load cannot be edited away. Only restoring a backup undoes it. | The whole file is validated before anything is deleted, and every error is listed with its row and reason. If validation fails, nothing changes. If the app holds data, it shows a count summary, offers a backup export first and requires a typed confirmation (section 8). | Revised, needs approval |
 | C4 | Medium | **Cash lines made by buys and sells have no type among the five cash types.** | Add a system-only type `trade`. It cannot be entered by hand. It appears in the cash list and filters. | Approved |
 | C5 | Medium | **How a reversal is represented is not defined.** A mistaken buy is offset by a sell-like entry, which could create a realized gain/loss and must pick lots. | A reversal is a normal entry carrying a link "reverses #id" and follows all normal blocking rules. Full rules for reversing a buy, sell, split or cash entry, plus the date and amount rules, are in 4.6. | Approved |
-| C6 | Medium | **CSV import targets one portfolio, but cash rows belong to the shared cash account.** | Trade rows go to the chosen portfolio. Direct cash rows go to the shared cash account and are not removed if that portfolio is later deleted. Only the cash lines of its trades are removed. Decision: kept as is. Imported cash rows are shared and carry no link to an import or portfolio. Known limit: cross-file double counting (section 8). | Approved |
-| C7 | Medium | **Row rejection can cascade.** If a buy is rejected, later sells of those shares are also rejected. | Rows are processed in date order, then file order. Each rejection lists its reason, and cascaded rejections say "depends on rejected row N". | Approved |
-| C8 | Medium | **Ticker check needs internet.** A CSV with unseen tickers cannot be validated offline, so import needs internet. | CSV import is allowed only when the phone is online. This is stricter than a manual buy (4.3), which is blocked only for a ticker never verified. | Approved |
+| C6 | Medium | **Withdrawn (v52).** There is no CSV import, so no per-import portfolio target and no cross-file double counting. Cash entries are records in the restore file; trade cash lines are rebuilt by replay. ID kept so references stay valid. | n/a | Withdrawn |
+| C7 | Medium | **Error reports can cascade.** In a hand-made file, one bad buy also makes later sells of those shares fail. | The restore is all-or-nothing, so nothing is saved either way. Records are replayed in date order, then file order. The report lists every error, and dependent ones say "depends on row N" so you fix root causes first. | Revised, needs approval |
+| C8 | Medium | **Ticker check needs internet.** A hand-prepared file cannot be fully validated offline. | The restore needs internet. Every ticker with shares left at the end of the file is verified before anything is deleted; one that fails blocks the restore. Sold-out tickers stay unverified, and a later manual buy of one is blocked until verified online (4.3). Whether verification must use the selected price source is open (D6). | Revised, needs approval |
 | C9 | Medium | **Split handling is manual.** A forgotten split silently distorts holdings, cost per share and gains. | No automation (per intent). The holding detail shows the split history so omissions are easy to spot. No price-based warning is needed. | Approved |
 | C10 | Low | **Realized gains can differ from broker/tax figures** (wash sales not modelled). | Label realized gains "informational" in the UI. Decision: No label is added. | Closed, not a concern |
 | C11 | Low | **"Performance" moves with deposits/withdrawals**, so it is not investment return. | Label it "Total value change" in the later version. | Approved |
@@ -47,7 +47,7 @@ Single-user Android app (sideloaded). Local-only data. Tracks one shared cash ac
 ### 4.1 Ordering and checking
 - Global order is `date`, then `entered_seq` (order of entry).
 - Dates are calendar dates with no time. All dates (buys, sells, splits and cash entries) are US market dates (New York). "Today" (the default date in entry forms, and the line between past and future-dated entries) is the current date in New York.
-- On any save (including reversals and CSV rows), the app replays cash and share balances from that date through all later dates. Any date where cash < 0 or shares < 0 blocks the save.
+- On any save (including reversals) and on every restore replay, the app replays cash and share balances from that date through all later dates. Any date where cash < 0 or shares < 0 blocks the save.
 - Future-dated entries count in net worth only from their date.
 
 ### 4.2 Cash
@@ -146,18 +146,18 @@ Layout and navigation are decided by the screens listed below and the navigation
 
 Naming note: intent.md v51 calls view 1 "Home" and view 2 "Net worth overview". This spec renames them "Overall" and "Net Worth (Total)". Intent.md is left at v51, so use these spec names from here on.
 
-Plus entry flows: buy, sell (lot picker), split, cash entry, CSV import (online only), backup/restore, settings (auto-lock, price source, tab order).
+Plus entry flows: buy, sell (lot picker), split, cash entry, backup/restore (restore needs internet), settings (auto-lock, price source, tab order).
 
 **Navigation outline.**
 - After unlock, the app opens on the Overall tab (view 1). A bottom bar with four tabs is always visible. The default order, left to right, is: More, Cash, Portfolios, Overall. You can reorder the tabs in settings.
 - **Overall** (1): tap the net worth figure for Net Worth (Total) (2); tap the allocation summary for Allocation (4); tap a portfolio for its holdings (3).
 - **Portfolios** (3): the list of portfolios. Tapping one shows its holdings. A holding opens Holding detail (6). From a portfolio you reach its Transaction history (8) and its Closed/hidden holdings (9). Portfolio create, rename and delete (4.7) are here.
 - **Cash** (7): the cash account, with its entries and date-range filter. A `trade` line opens the linked transaction (section 6, item 7). Cash entry (deposit, withdrawal, interest/dividend, adjustment) starts here.
-- **More:** Allocation (4), Realized gains (5), CSV import, Backup/restore, Settings (auto-lock, price source, tab order). Net Worth (Total) (2) is also reachable here.
+- **More:** Allocation (4), Realized gains (5), Backup/restore, Settings (auto-lock, price source, tab order). Net Worth (Total) (2) is also reachable here.
 - **Buy/Sell button:** Overall, Portfolios and Cash show a Buy/Sell button that opens a short menu: Buy, Sell. Holding detail also offers Buy and Sell with the ticker already filled in, and starts a split. A reversal starts from the transaction or cash entry it reverses (4.6).
 - Android's back button returns to the previous screen. Auto-lock (section 9) can cover any screen.
 
-Date fields: every screen that asks for a date shows the note "Enter date in US market time (New York)" next to the input. This covers buy, sell, split and cash entry, the reversal date, and the date-range filters in the cash account and transaction history. The CSV import screen shows the same note next to its date format help (section 8). Dates that are only shown (lists, detail screens, review screens, import preview) carry no note. They show the time zone suffix "ET" after the date, for example "2026-03-01 ET".
+Date fields: every screen that asks for a date shows the note "Enter date in US market time (New York)" next to the input. This covers buy, sell, split and cash entry, the reversal date, and the date-range filters in the cash account and transaction history. The restore screen shows the same note next to its date format help (section 8). Dates that are only shown (lists, detail screens, review screens, restore summary) carry no note. They show the time zone suffix "ET" after the date, for example "2026-03-01 ET".
 
 Targets: adding a buy or sell takes under 30 seconds, with lots shown ready to tap.
 
@@ -173,78 +173,56 @@ Targets: adding a buy or sell takes under 30 seconds, with lots shown ready to t
 - **What a source change never touches:** transactions, cash entries, lots, the verified flag, and manually entered sector/geography. Source-supplied sector/geography is refreshed from the new source where it provides them.
 - Historical prices are needed only for the later performance feature. **[UNVERIFIED]** Availability, limits and split adjustment are unchecked. Because splits are user-entered, any split-adjusted history would have to be converted back to as-traded values before use. Verify before the performance milestone, not before v1.
 
-## 8. CSV import
-Fixed by intent:
-- One portfolio chosen per import; one file holds trades and cash rows.
-- Preview and confirmation before saving; valid rows load, rejected rows are listed with reasons (C7).
-- Sells identify lots by buy date or lot id; if the date alone is ambiguous, match by date + cost per share; otherwise reject.
-- Possible duplicates are flagged and you decide.
-- Import follows all blocking rules in 4.1 and the opening-balance rule.
+## 8. Backup file and restore (App initialization)
+Fixed by intent v52:
+- The backup file is the only way data enters or leaves the app. No CSV import, no CSV export, no merge.
+- App initialization = delete all settings and data, then load the file, as one confirmed action. The file has no other use.
+- The app's own backups and your hand-prepared file use one format. Preparing the file from broker statements happens outside the app.
+- The restore is all-or-nothing.
 
-**File format (approved).** You have no existing CSV, so this format was designed in this stage, not taken from a sample. Preparing the file from broker statements (by hand or in a spreadsheet) happens outside the app.
-- Plain CSV, UTF-8, comma-separated, first line is the header, one row per event. Standard CSV quoting (a note containing a comma goes in double quotes).
-- Columns, in this order: `row_type, date, ticker, quantity, total_amount, lot_id, lot_picks, split_ratio, cash_type, note`. Unused columns are left empty. A header that does not match rejects the whole file.
-- Dates are `YYYY-MM-DD`. On every row type they are US market (New York) dates. Numbers use `.` as the decimal mark, with no thousands separators or currency symbols. `quantity` has up to 8 decimals; `total_amount` is in dollars with up to 2 decimals.
-- `row_type` is one of `buy`, `sell`, `split`, `cash`:
+**File contents**
+- In the file: portfolios; all transactions (buys, sells, splits, and reversals with their links); all cash entries (reversals with their links); hidden holdings; manual sector/geography overrides; the sector and geography lists; all settings (auto-lock, price source, tab order).
+- Not in the file: lots, trade cash lines, holdings, prices, the phone's PIN or biometric, the screenshot window. The app rebuilds lots, trade cash lines and holdings by replay.
+- Lot labels in the file tie each sell to its buys. They mean nothing outside the file. After a successful restore the app generates its own unique lot IDs.
+- Layout, date and number formats, how reversals and lot labels are written, and a format version: open (D5).
 
-| row_type | Required columns | Rules |
-|----------|------------------|-------|
-| buy | date, ticker, quantity, total_amount | Total is more than 0 (fees included). Optional `lot_id`: your own label, unique within the file, must not look like a date. |
-| sell | date, ticker, quantity, total_amount, lot_picks | Total may be 0 (total loss). |
-| split | date, ticker, split_ratio | `2:1` means 2 new shares for each old share. `1:10` is a reverse split. |
-| cash | date, cash_type, total_amount | Signed: positive = money in, negative = money out. `cash_type` is `opening_balance`, `deposit`, `withdrawal`, `interest_dividend` or `adjustment`. Opening balance, deposit and interest/dividend must be positive; withdrawal must be negative; adjustment may be either and needs a `note`. |
+**Restore steps**
+1. Online only. Offline, the restore cannot be started (C8).
+2. The whole file is read and validated. Records are replayed in date order, then file order (4.1), each checked against 4.1 to 4.6 as if entered by hand. Every error is collected with its row and reason (C7). Nothing is deleted yet.
+3. Every ticker with shares left at the end of the file is verified through K4. One that cannot be verified blocks the restore. Sold-out tickers are not verified (C8).
+4. If any check fails, nothing changes and the report is shown.
+5. A summary shows counts of portfolios, transactions and cash entries, now versus in the file. [PROPOSED ADDITION, not in intent: also the resulting cash balance and number of holdings, to compare with real life.]
+6. If the app holds data, it offers a backup export first, then requires a typed confirmation.
+7. Delete and load happen as one action, so the app is never left empty in between. The app then generates its own IDs. Holdings show "no price" until the first successful price refresh (4.8).
 
-- `lot_picks` is a semicolon-separated list of `reference:quantity`. Every pick has a quantity, and the quantities add up to the sell quantity. A reference is one of:
-  - a `lot_id` from a buy row or from earlier data (for example `L1:10`);
-  - a buy date, accepted only if exactly one lot in the portfolio with shares remaining was bought that day (`2026-02-01:2`);
-  - a buy date plus cost per share when the date alone is ambiguous (`2026-02-01@150.00:2`). Cost per share is compared rounded to the cent.
-  - A reference that matches no lot, or more than one, rejects the row.
+**Rules carried over from the CSV design** [needs your confirmation]
+- At most one opening balance, none required. If present, it must be the earliest cash entry (4.2).
+- Reasons a file is rejected include: wrong format version or layout, unknown record type, bad date or number, missing required value, too many decimals, wrong sign, zero total on a buy, lot label not found or picks not summing to the sell quantity, blocked by 4.1 to 4.6, bad reversal link, adjustment without a note, a held ticker that cannot be verified, and "depends on row N".
 
-**Import rules**
-1. Rows are processed in date order, then file order. File order is the entry order for same-date rows, so a buy must appear above a same-date sell that uses it.
-2. Each row is checked against 4.1 to 4.4 as if entered by hand. Rejected rows drop out and later rows are rechecked, which can reject dependent rows (C7).
-3. A file may contain at most one `opening_balance` row, and none is required. It is rejected if an opening balance already exists or if any cash entry (existing or earlier in the file) is dated before it.
-4. CSV import can only be started while the phone is online; offline, it is blocked (C8). Every ticker is verified before commit. A ticker that does not exist rejects its rows.
-5. Duplicates are checked against existing data only, not within the file (two identical rows in one file can be legitimate). A buy or sell is flagged if the chosen portfolio already has the same type, date, ticker, quantity and total. A split is flagged for the same date, ticker and ratio. A cash row is flagged for the same date, type and amount. You choose skip or import for each flagged row, with a bulk skip.
-6. The preview shows counts per row type, rejected rows (row number and reason), flagged rows, and the resulting cash balance and holdings. After you confirm, the valid rows are saved together or not at all. Before saving, the app offers a backup export (C3).
-7. Rejection reasons include: wrong header, unknown row type, bad date or number, missing required value, too many decimals, wrong sign, zero total on a buy, lot pick not found or not summing to the sell quantity, blocked by 4.1 to 4.4, unknown ticker, adjustment without a note, and "depends on rejected row N".
-
-Known limit: imported cash rows are shared and carry no link to an import or portfolio. The duplicate check (rule 5) flags a cash row only when an existing entry has the same date, type and amount. The same real-world deposit or dividend that appears in two imported files with a different date or amount is not flagged and is counted twice. Check the preview's resulting cash balance against your real balance, and fix any difference with an adjustment (4.2). A bad import can be undone only by restoring a backup (C3).
-
-**Example file** (dummy values; reproduces Example A, then a split and a dividend):
-```
-row_type,date,ticker,quantity,total_amount,lot_id,lot_picks,split_ratio,cash_type,note
-cash,2026-01-01,,,10000.00,,,,opening_balance,
-buy,2026-01-02,AAPL,10,1000.00,L1,,,,
-buy,2026-02-01,AAPL,10,1500.00,L2,,,,
-sell,2026-03-01,AAPL,12,2100.00,,L1:10;L2:2,,,
-split,2026-04-01,AAPL,,,,,2:1,,
-cash,2026-04-15,,,25.00,,,,interest_dividend,Dividend
-```
-After this file, cash is $9,625 and AAPL is 16 shares (8 shares of L2 doubled) at $75/share, cost $1,200.
+**Known limits**
+- Depends on a free third-party source (C1, unverified), may hit rate limits on a large file, and is slower.
+- A restored lock setting can be weaker than the one on the new install.
+- A bad file that loads cleanly can be undone only by restoring a backup (C3).
 
 ## 9. Backup, restore, security
 - Data stored on the phone only, in app-private storage.
 - Lock: biometric or PIN. Auto-lock choices: every time you leave the app (default), after 1 min idle, after 5 min idle, only when the phone locks or the app restarts.
-- Backup: export one file to a location you choose. Unencrypted allowed. No other export.
-- Restore: asks every time to replace or merge.
-  - **Replace:** the backup file replaces all current data.
-  - **Merge:** adds only records not already present (matched by ID). It never alters or removes existing records. The whole merge is rejected if the merged result would break a cash or share rule (4.1); the message names the failing date and amount.
-  - Known limit: a backup from a different install may give the same real-world trade a different ID, so merge would add it as a duplicate. Merge has no duplicate detection.
-- Works offline with last known prices.
+- Backup: export one file, in the format of section 8, to a location you choose. Unencrypted allowed. It is the only way data leaves the app.
+- Restore: replaces all current data from one file, per section 8. There is no merge. It needs internet.
+- Works offline with last known prices. Price refresh and restore need internet.
 
 ## 10. Out of scope
-As in intent.md: liabilities, other asset classes, notifications, tax reporting, per-holding dividends, separate fees, multi-currency, account syncing, Play Store release.
+As in intent.md: liabilities, other asset classes, notifications, tax reporting, per-holding dividends, separate fees, multi-currency, account syncing, Play Store release, CSV import, CSV export and merging data.
 
 ## 11. Acceptance criteria (first version)
-1. Net worth and allocation show correctly from your real data (after import).
+1. Net worth and allocation show correctly from your real data (after restoring your prepared file).
 2. Examples A to F behave as written, as automated tests.
 3. A buy or sell can be entered in under 30 seconds.
-4. Backup then restore on a clean install reproduces identical net worth and holdings.
+4. Backup then restore on a clean install reproduces identical portfolios, transactions, cash entries, lots, cash balance and holdings. Net worth matches after the first successful price refresh (holdings show "no price" until then).
 5. Offline use shows last prices marked with their age.
 6. App locks per the chosen auto-lock setting.
 7. Changing the price source in settings, while online, fetches all prices again and updates market values; tickers the new source cannot price keep the last price, marked stale. While offline, the change shows a warning and skips the sweep.
-8. CSV import cannot be started while the phone is offline. Online, every ticker is verified before the import is committed.
+8. Restore cannot be started while the phone is offline. Online, every ticker still held at the end of the file is verified before anything is deleted, and one that fails blocks the restore.
 9. Every screen that asks for a date shows the note that dates are US market (New York) dates next to the input. Every date that is only shown has the time zone suffix "ET" and no note.
 10. In a portfolio's transaction history, the cash filter shows only the cash lines of that portfolio's buys and sells, never direct cash entries.
 11. The realized gains view shows the gain per sale, per holding and as an overall total. For Example A, the sale shows a realized gain of $800.
@@ -252,21 +230,24 @@ As in intent.md: liabilities, other asset classes, notifications, tax reporting,
 13. Every view and entry flow in section 6 can be reached by the navigation outline. A buy or sell can be started from Overall in two taps (Buy/Sell button, then Buy or Sell). The tab order can be changed in settings.
 14. The sell lot picker lists the lots of the ticker in that portfolio, oldest first, each with purchase date, quantity remaining, cost per share and unrealized gain/loss. Lots that fail the lot rules for the entered sell date are greyed out with a reason and cannot be picked. For Example A, before the Mar 1 sale at a price of $160, the picker shows a gain of $600 for lot 1 and $100 for lot 2.
 15. A manual buy of a never-verified ticker is blocked while the phone is offline. Online, a ticker that does not exist is rejected, and a valid one is saved.
+16. A file with errors changes nothing, and the report lists every error with its row and reason.
+17. Restoring onto an app that holds data shows the count summary, offers a backup export first and requires a typed confirmation.
 
 ## 12. Proposed slices (input to plan.md)
 1. Data model, cash account, rules engine with tests (Examples A to F).
 2. Buy/sell/split entry, lot picker, holdings, cost and gains.
 3. Prices (including the price source setting and sweep), net worth, the Overall view and allocation.
 4. Portfolio management and deletion rules.
-5. Lock, backup and restore.
-6. CSV import (format in section 8).
-7. Realized gains view, sector/geography (kept in v1 per D2; built last).
+5. Lock, backup and restore (format in section 8; the only way your real data gets in).
+6. Realized gains view, sector/geography (kept in v1 per D2; built last).
 
 ## 13. Open design points
-- D1 RESOLVED: CSV format and opening-balance handling are in section 8 (approved). There was no existing CSV, so the format was designed here.
+- D1 SUPERSEDED by v52: no CSV import. The backup-file format is D5.
 - D2 RESOLVED: realized gains and sector/geography stay in v1.
-- D3 RESOLVED: meaning of "merge" on restore (section 9).
+- D3 SUPERSEDED by v52: no merge.
 - D4 RESOLVED: a reversal cannot itself be reversed (4.6).
+- D5 OPEN: backup-file format: layout, date and number formats, how reversals and lot labels are written, a format version, where remembered source texts are kept, whether the last-backup date is in the file, and a sample file. The v2 CSV layout may be a starting point, but it covers only trades and cash.
+- D6 OPEN: must ticker verification use the currently selected price source (K4)?
 - Blocked-deletion message: RESOLVED. Wording in 4.7 and Example E approved.
 - Historical prices: deferred past v1 (section 7).
 
@@ -276,17 +257,17 @@ Added as section 14 so existing section numbers stay stable. Language, framework
 | # | Component | Responsibility | Spec refs | Slices |
 |---|-----------|----------------|-----------|--------|
 | K1 | **Rules engine** | Holds the ordering and replay checks (4.1), cash rules (4.2), lots and gains (4.4), splits (4.5), reversals (4.6) and the portfolio deletion check (4.7). Pure logic: no screens, no network. Answers "is this save allowed, and if not, which date and amount fail?" | 3, 4, 5 | 1, 2, 4 |
-| K2 | **Storage** | Keeps all records in app-private storage on the phone. A save and its linked cash line are written together or not at all. Loads data at start. | 3, 9 | 1 |
-| K3 | **Valuation and reporting** | Net worth, unrealized and realized gains, allocation (combined and per portfolio). Reads records and prices; never writes them. | 4.8, 6 | 3, 7 |
-| K4 | **Price service** | Fetches latest prices through a replaceable source, verifies tickers, marks prices stale, supplies sector/geography when the source has it. Only updates instrument data, never transactions. Owns the selected-source setting and runs the sweep when it changes. K9 asks K4 to switch the source. | 7, C1, C8, C14 | 3, 7 |
+| K2 | **Storage** | Keeps all records in app-private storage on the phone. A save and its linked cash line are written together or not at all. A restore (delete and load) is also all or nothing. Loads data at start. | 3, 9 | 1 |
+| K3 | **Valuation and reporting** | Net worth, unrealized and realized gains, allocation (combined and per portfolio). Reads records and prices; never writes them. | 4.8, 6 | 3, 6 |
+| K4 | **Price service** | Fetches latest prices through a replaceable source, verifies tickers, marks prices stale, supplies sector/geography when the source has it. Only updates instrument data, never transactions. Owns the selected-source setting and runs the sweep when it changes. K9 asks K4 to switch the source. | 7, C1, C8, C14 | 3, 6 |
 | K5 | **Entry flows** | Buy, sell (with lot picker), split, cash entry, reversal and portfolio management. Shows the review screen, enforces the ticker check of 4.3 using K4's verified flag, then asks K1 to validate and save. | 4.3 to 4.7, 6 | 2, 4 |
-| K6 | **CSV importer** | Refuses to start while the phone is offline (C8), verifies tickers through K4, reads the file, maps rows, builds the preview, flags duplicates, lists rejected rows. Commits only through K1. | 8, C6, C7, C8 | 6 |
-| K7 | **Backup and restore** | Exports one file; restores by replace or merge. Merge validation goes through K1. | 9 | 5 |
+| K6 | **Backup and restore** | Exports one file. Restore refuses to start offline, validates the whole file by replaying it through K1 and collecting every error, verifies held tickers through K4, shows the summary, offers an export and requires typed confirmation when data exists, then deletes and loads in one action. | 8, 9, C3, C7, C8 | 5 |
+| K7 | (Withdrawn: merged into K6; ID kept stable.) | | | |
 | K8 | **App lock** | Biometric or PIN and the auto-lock policy. Guards every screen. | 9 | 5 |
-| K9 | **Screens** | The nine views and the settings screen. Call K3 to read and K5 to change data; never write directly. Shows the date-field note on every date input and the time zone suffix on every shown date (section 6). | 6 | 2, 3, 7 |
+| K9 | **Screens** | The nine views and the settings screen. Call K3 to read and K5 to change data; never write directly. Shows the date-field note on every date input and the time zone suffix on every shown date (section 6). | 6 | 2, 3, 6 |
 
 **Dependency rules**
-1. Every write to transactions or cash entries goes through K1: entry flows, CSV import, restore merge and portfolio deletion. No component bypasses it.
+1. Every write to transactions or cash entries goes through K1: entry flows, restore and portfolio deletion. No component bypasses it.
 2. K3 and K9 only read data. K4 only writes prices and instrument data.
 3. K1 has no knowledge of screens, network or file formats, so Examples A to F can be tested on K1 alone.
-4. Checks that need the network, such as ticker verification, are enforced by K5 (manual entry) and K6 (CSV import) using K4. They are not part of K1.
+4. Checks that need the network, such as ticker verification, are enforced by K5 (manual entry) and K6 (restore) using K4. They are not part of K1.
