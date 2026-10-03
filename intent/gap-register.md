@@ -1,7 +1,7 @@
-# gap-register.md (Plan stage, all items OPEN)
+# gap-register.md (Plan stage, all nine gaps decided; recorded in intent.md v52 final)
 
 Purpose: candidate requirements found by asking "what is missing for this to be a good app?". Nothing here is a requirement until you decide it. Each item gets a decision, then (if accepted) goes into a new intent.md version.
-Source: intent/intent.md v51 (final), spec/spec.md draft v2.
+Source: intent/intent.md v51 (final) at the time of writing; now superseded by v52 (final). spec/spec.md draft v2.
 Honest limit: these are my judgment from reading the files. Nothing was tested with real use, and nothing has been built.
 
 Status values: OPEN, ACCEPTED, REJECTED, DEFERRED.
@@ -11,7 +11,7 @@ Status values: OPEN, ACCEPTED, REJECTED, DEFERRED.
 - You said the backup file is the only way data enters or leaves the app ("App initialization": delete all data, then restore from the file), and that your existing transactions would reach the app through a file you prepare in that format (reading 2). There is no separate CSV import, no CSV export, and no merge.
 - This amends intent.md v51 (CSV import scope and decisions, and "replace or merge").
 - Timing: intent.md is updated to v52 once, AFTER all gaps (G1 to G9) are discussed, so the accepted changes go in together.
-- Update: all nine gaps are discussed. intent.md v52 is written as a DRAFT (11 hunks approved, with the "Last backup" line on the More tab). It becomes final when you say so. ETF look-through (G5) is listed there as a planned later item, and the draft has no open questions.
+- Update: all nine gaps are discussed. intent.md v52 is written and approved as FINAL (11 hunks approved, with the "Last backup" line on the More tab). ETF look-through (G5) is listed there as a planned later item, and the draft has no open questions.
 - Still open inside G1: all-or-nothing loading, validation before deleting, the offline rule for restoring a hand-prepared file, and what the file contains.
 - spec.md finding 4 (CSV `lot_id`) and finding 10 stay on hold until v52 is settled. spec.md is brought in line after v52.
 
@@ -75,7 +75,7 @@ Status values: OPEN, ACCEPTED, REJECTED, DEFERRED.
 - Limit: it saves typing, not rules. A buried mistake with later dependent transactions is still blocked until the later ones are reversed.
 
 ## G5. Sector/geography: override flow and ETFs
-- Status: ACCEPTED. The override flow, the two lists and the source-value rules are accepted, and ETF look-through is deferred to a later version (option a). Written into intent.md v52 (draft).
+- Status: ACCEPTED. The override flow, the two lists and the source-value rules are accepted, and ETF look-through is deferred to a later version (option a). Written into intent.md v52 (final).
 - Gap: criterion 12 mentions a hand override, but section 6 has no screen or flow for it. A global ETF counts as one sector or geography, with no look-through.
 - DECIDED: the override is edited on Holding detail, with two fields, sector and geography. A manual value wins over the source's value until you clear it. Clearing it returns to the source's value, or "Unclassified" if there is none.
 - DECIDED: the value is picked from a list, not typed freely. The list is maintained in the app settings.
