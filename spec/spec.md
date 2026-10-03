@@ -1,6 +1,6 @@
-# spec.md (DRAFT v2, awaiting approval)
+# spec.md (DRAFT v3, awaiting approval)
 
-Source: intent/intent.md v51 (final). Stage: Design.
+Source: intent/intent.md v52 (final). Stage: Design.
 Nothing in this file has been built, run or verified against real data. Items marked **[UNVERIFIED]** rest on my memory or assumptions, not on checks done in this session.
 
 ## 1. Summary
@@ -33,7 +33,7 @@ Single-user Android app (sideloaded). Local-only data. Tracks one shared cash ac
   - Note is required for adjustments, optional for all others.
   - `trade` entries are created only by buys/sells: exactly one per buy or sell (reversals included), none for splits.
 - **Portfolio**: `id`, `name`.
-- **Holding**: a ticker within a portfolio. Has `hidden` flag. Derived from transactions.
+- **Holding**: a ticker within a portfolio. Its shares, lots and cost are derived from transactions. Two fields are stored: the `hidden` flag and the optional manual sector/geography override (see Holding classification below).
 - **Instrument**: ticker, name, asset type (stock or ETF), source sector, source geography (as the source supplies them, may be missing), verified flag, latest price, price timestamp, stale flag.
 - **Holding classification**: optional manual `sector` and `geography` override on a holding (a ticker within a portfolio), each a value from the matching list. Effective value = override, else the source value (via the list, 4.9), else "Unclassified".
 - **Lists**: a sector list and a geography list. Each value has a name and may carry remembered source texts (the source's original text from before a rename, 4.9).
@@ -166,8 +166,6 @@ Layout and navigation are decided by the screens listed below and the navigation
 7. **Cash account**: balance, entries incl. trade lines, date-range filter. Each `trade` line shows buy or sell, ticker and portfolio name besides date and amount. Tapping it opens the linked transaction (with its lots and any reversal link).
 8. **Transaction history** (per portfolio only): filters ticker, date range, type (buy, sell, split, cash). Cash means the cash lines of that portfolio's trades; direct cash entries are viewed in the cash account. Each buy or sell shows its cash effect and can open its cash line. A reversal links to the original, and its cash line points to the reversal, so the full chain is traceable.
 9. **Closed/hidden holdings**
-
-Naming note: intent.md v51 calls view 1 "Home" and view 2 "Net worth overview". This spec renames them "Overall" and "Net Worth (Total)". Intent.md is left at v51, so use these spec names from here on.
 
 Plus entry flows: buy, sell (lot picker), split, cash entry, backup/restore (restore needs internet), settings (auto-lock, price source, tab order, sector and geography lists, screenshot window).
 
