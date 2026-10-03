@@ -11,6 +11,7 @@ Status values: OPEN, ACCEPTED, REJECTED, DEFERRED.
 - You said the backup file is the only way data enters or leaves the app ("App initialization": delete all data, then restore from the file), and that your existing transactions would reach the app through a file you prepare in that format (reading 2). There is no separate CSV import, no CSV export, and no merge.
 - This amends intent.md v51 (CSV import scope and decisions, and "replace or merge").
 - Timing: intent.md is updated to v52 once, AFTER all gaps (G1 to G9) are discussed, so the accepted changes go in together.
+- Update: all nine gaps are discussed. intent.md v52 is written as a DRAFT (11 hunks approved, with the "Last backup" line on the More tab). It becomes final when you say so. ETF look-through (G5) is listed there as an open question.
 - Still open inside G1: all-or-nothing loading, validation before deleting, the offline rule for restoring a hand-prepared file, and what the file contains.
 - spec.md finding 4 (CSV `lot_id`) and finding 10 stay on hold until v52 is settled. spec.md is brought in line after v52.
 
