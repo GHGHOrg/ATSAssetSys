@@ -1,6 +1,6 @@
 spec-split.txt
 Stage: Design. Status: PROPOSAL ONLY. spec.md has NOT been split.
-Applies to: spec/spec.md (draft v3, 315 lines, 14 sections)
+Applies to: spec/spec.md (draft v3, 317 lines, 14 sections)
 Last updated against: spec.md with sections 1 to 14, after the CSV format (section 8) was
 approved and Example B was rewritten, and after Example F and the 4.6 rule for splits
 between an original and its reversal were added (finding 3), and after the Status column
@@ -23,6 +23,12 @@ in 4.6, first-launch and empty state in section 6, privacy, last backup and remi
 section 9, criteria 18 to 23, K10, D7 and D8), and
 items 1 to 5 of group 3 were applied (title raised to draft v3, source set to intent v52,
 naming note removed from section 6, Holding wording fixed in section 3 for finding 10), and
+items 6 to 9 of group 3 were applied (C3, C7, C8 and C15 approved, C15 changed to the
+device time zone abbreviation, 13 of 14 [PROPOSED] markers resolved, the section 8
+heading renamed), and
+D6 to D8 were resolved (verification uses the selected price source, source text matching
+ignores case and spaces, cash with no portfolio keeps the normal screens; sections 4.3, 4.9,
+6, 7, 8, 11, 13, 14), and
 the spec version was raised from v1 to v2 and then to v3.
 
 DECISION MADE
@@ -31,13 +37,11 @@ Then decide whether to split, using the approach below.
 
 WHY NOT SPLIT NOW
 - Design is not finished. Groups 1 and 2 of the v52 rework are applied, and group 3 is
-  partly applied (items 1 to 5: header, version, naming note, Holding wording). Still
-  open in group 3: the status and [PROPOSED] marker decisions, and the checks. D5
-  (backup-file format), D6 (ticker verification source), D7 (source text matching) and
-  D8 (cash with no portfolio) are also open. After that, the user's approval of spec.md
-  as a whole remains.
+  partly applied (items 1 to 9 and D6 to D8: header, version, naming note, Holding
+  wording, statuses, markers, three design points). Still open in group 3: D5 (backup-file
+  format) and the checks. After that, the user's approval of spec.md as a whole remains.
 - One file means one approval gate (Ruleset A: approve spec.md before Build).
-- The file (315 lines) is small enough to review in one sitting. Context-window fit has
+- The file (317 lines) is small enough to review in one sitting. Context-window fit has
   not been measured.
 
 PROPOSED SPLIT (apply only after "final", and only if still worth it)
@@ -113,9 +117,9 @@ AFTER A SPLIT
   4.6, 4.7 and Example E").
 
 KNOWN LIMITS
-- Current section sizes in lines (measured with wc and awk, spec.md = 315 lines):
-  index sections 1, 2, 10 to 14 = 93 lines (98 with the 5 header lines before section 1);
-  domain-rules (3 to 5) = 129 lines; views (6) 32; prices (7) 12; backup-restore (8) 31;
+- Current section sizes in lines (measured with wc and awk, spec.md = 317 lines):
+  index sections 1, 2, 10 to 14 = 94 lines (99 with the 5 header lines before section 1);
+  domain-rules (3 to 5) = 129 lines; views (6) 32; prices (7) 13; backup-restore (8) 31;
   backup-security (9) 13. Each count runs from a section's heading to the line before the
   next heading, so it includes the blank line. These are line counts, not context tokens.
 - Group 3 of the rework will change these sizes. They are recomputed after it.
