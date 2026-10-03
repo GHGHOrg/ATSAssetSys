@@ -1,4 +1,4 @@
-# intent.md (v51, final)
+# intent.md (v52, final)
 
 ## Problem
 I have no single place to see what I own across bank/cash accounts and investments, how it is split, or how it has changed over time.
@@ -18,25 +18,36 @@ One user: me. No sharing, no multi-user accounts.
 - Multiple stock/ETF portfolios, each with its own holdings and transactions
 - Stocks and ETFs on US markets (NYSE, NASDAQ), quoted in USD (no mutual funds)
 - Investments recorded as individual events: buys, sells and stock splits (dates, quantities)
-- One-time CSV import of my existing investment transactions and direct cash transactions
+- Setting up the app, including moving my existing data in, through one backup-format file (see Setup, backup and restore)
+- A "last backup" indicator and an in-app backup reminder
+- A guided empty state on first launch
+- Screenshot, screen-recording and recent-apps privacy
 - Automatic price updates for investments; manual entry for transactions
 - Single currency: USD
 
 **Out of scope (for now)**
 - Liabilities (loans, mortgages, credit cards)
 - Crypto, property, vehicles and other assets
-- Notifications, alerts and reminders
+- System notifications and alerts (the in-app backup reminder is in scope)
+- CSV import, CSV export and merging data (the backup-format file is the only way data enters or leaves the app)
+- Manual price entry (a holding the source cannot price is valued at cost and flagged "no price")
 - Tax reporting (tax lots, wash sales, tax owed): realized gains are informational only
 - Per-holding dividend tracking and separate fee tracking (dividends are recorded only as cash entries; fees are folded into trade totals)
 - Multi-currency reporting and currency conversion (only base-currency instruments are held)
 - Bank/broker account syncing
 
+**Planned for later versions**
+- Performance over time (historical prices from a free source are unverified)
+- Per-holding dividends: a dividend entry that optionally names a ticker and portfolio
+- ETF look-through: splitting an ETF's allocation by the sectors or geographies it holds (manual weights or from a data source, which is unverified). In the first version each holding has one sector and one geography.
+
 ## Constraints
 - Platform: Android phone
 - Data lives on the phone
 - Protected by a biometric or PIN lock
-- Backup by exporting to a file in storage I control, and restoring from that file
-- Works offline, showing last known prices; price refresh needs internet
+- Content is hidden from screenshots, screen recording and the recent-apps preview by default
+- Backup by exporting to a file in storage I control. The backup file is used for one purpose only, App initialization (delete all settings and data, then load the file)
+- Works offline, showing last known prices; price refresh needs internet. Restoring from the backup file also needs internet
 - Timeline: ASAP
 - Installation: directly on my own phone (sideloaded), for me only; no Play Store release
 - Price freshness: live or near-real-time
@@ -45,15 +56,16 @@ One user: me. No sharing, no multi-user accounts.
 
 ## Views needed (first version)
 What I need to see; layout and navigation are decided in Design.
-- Home (first thing after unlocking): net worth plus an allocation summary, and net worth plus each portfolio with its gain/loss.
-- Net worth overview.
+- Overall (first thing after unlocking): net worth plus an allocation summary, and net worth plus each portfolio with gain/loss. It also shows the backup reminder when due, and the guided empty state when the app holds no data.
+- Net Worth (Total).
 - Portfolios and their holdings.
 - Allocation breakdowns (asset type, portfolio, holding, sector/geography).
-- Realized gains (per sale, per holding, overall total).
-- Holding detail: lots, cost, gain/loss, and that holding's transactions.
+- Realized gains (per sale, per holding, overall total), filterable by date range.
+- Holding detail: lots, cost, gain/loss, that holding's transactions, and the sector and geography with a manual override.
 - Cash account: balance and cash entries, including a cash line for each buy and sell, filterable by date range.
 - Transaction history, viewable only within a portfolio (no cross-portfolio history), filterable by ticker, date range and type (buy, sell, split, cash). Cash entries are viewed in the cash account.
 - List of closed or hidden holdings.
+- Settings: auto-lock, price source, the sector and geography lists, and the screenshot window.
 
 ## Decisions made
 
@@ -67,7 +79,9 @@ What I need to see; layout and navigation are decided in Design.
 - First version delivers the net-worth snapshot and allocation breakdown. Performance over time comes after, but transactions are recorded from the start so history is not lost.
 - Investments are tracked as individual transactions, which enables performance over time.
 - Per-holding cost and unrealized gain/loss (lot-based) are part of the first version.
-- Sector and geography allocation is part of the first version (automatic from the data source when available, manual otherwise).
+- Sector and geography allocation is part of the first version. The source supplies them when available. I can override them per holding on Holding detail by picking from a list; there are two separate lists (sectors, geographies), kept in settings.
+- Renaming a list value updates every holding that uses it, and the app remembers the source's original text so a refresh does not add it again. Deleting a value is blocked while any holding uses it.
+- A sector or geography from the source that is not on the list is added to the list automatically.
 - Adding a transaction should take under 30 seconds.
 
 ### Portfolios
@@ -133,10 +147,12 @@ What I need to see; layout and navigation are decided in Design.
 - Manually entered transactions may be backdated or future-dated.
 - Reversal transactions follow the same blocking rules (enough cash, enough shares). Consequence: a mistake buried under later dependent transactions can only be undone by reversing the later ones first.
 - Mistakes are corrected by adding an offsetting (reversal) transaction.
+- A "Reverse and re-enter" shortcut starts from a transaction or cash entry, opens a new entry prefilled with the original values, and saves the reversal and the new entry together as one confirmed action. If either part is blocked, neither is saved.
 - Saved transactions are permanent (no edit or delete).
 
 ### Gains, cost, tax and performance
 - Realized gains are shown per sale, as a total per holding, and as an overall total.
+- The realized gains view can be filtered by date range. It stays informational only.
 - Each holding shows cost paid and unrealized gain/loss, computed from lots (supersedes the earlier average-cost decision).
 - Tax reporting is out of scope; realized gains are informational only and may differ from tax figures (for example broker wash-sale adjustments are not modelled).
 - Performance (later version) means total value change over time. Note: this figure moves with deposits and withdrawals, so it does not isolate investment returns.
@@ -152,26 +168,38 @@ What I need to see; layout and navigation are decided in Design.
 - Sending ticker symbols to an outside price source is acceptable.
 - The app works offline with last known prices.
 
-### CSV import
-- My existing CSV covers one portfolio, so a single import loads its investment rows and all its cash rows.
-- If rows look like duplicates of existing transactions, the import warns me and lets me decide.
-- Each CSV import targets one portfolio that I choose when importing.
-- My existing data is a single CSV containing both investment and cash transactions.
-- CSV import shows a preview and asks for confirmation before saving.
-- CSV import loads valid rows and lists rejected rows.
-- In the CSV import, a lot is matched by date and cost per share when the buy date alone is ambiguous; rows that still cannot be matched are rejected and listed in the preview.
-- My CSV identifies the lots each sell consumed, by buy date or lot id.
+### Setup, backup and restore (App initialization)
+- App initialization is two steps: delete all settings and data in the app, then load the backup file to restore all settings and data. The backup file has no other use.
+- There is no CSV import, no CSV export and no merge. No data export beyond the backup file.
+- My existing transactions reach the app through a file in the backup format that I prepare by hand from broker statements.
+- The restore loads all-or-nothing. The app validates the whole file first and only then deletes; if validation fails, nothing changes. The report lists every error with its row and reason. If the app already holds data, it offers a backup export first.
+- Confirmation: a summary shows what will be replaced (counts of portfolios, transactions and cash entries, now versus in the file). If the app holds data, a typed confirmation is also required. Delete and load are one confirmed action.
+- The restore needs internet. Every ticker still held at the end of the file is verified, and if one cannot be verified the restore is blocked. Tickers with no shares left are not verified and stay unverified; a later buy of one is blocked until it is verified online.
+- The file contains portfolios, all transactions (reversals with their links), cash entries, hidden holdings, manual sector/geography overrides, the sector and geography lists, and all settings (including price source and lock settings). It does not contain lots, trade cash lines, holdings or prices; the app rebuilds them by replaying the records through the rules.
+- Lot references in the file are temporary labels that tie each sell to its buys. After a successful restore the app generates its own unique lot IDs. The phone's PIN or biometric is set by Android and is not in the file.
+- Prices are not in the file, so holdings show "no price" until the first successful price refresh.
+
+### Backup reminder
+- The More tab shows "Last backup: date", or "never backed up".
+- An in-app reminder (not an Android notification) appears as a banner on Overall when the last backup is older than 7 days, or when there is no backup and the app holds data. I can dismiss it until the next time the app opens. Only a completed export counts as a backup.
+
+### Privacy
+- By default the app blocks screenshots and screen recording and hides its content in the recent-apps preview.
+- A setting turns on a screenshot window for a fixed 3 minutes, after a biometric or phone PIN check. The preview stays hidden. The window ends after 3 minutes or when I leave the app, never survives a restart, and is not part of the backup file.
+
+### First launch
+- When the app holds no data, Overall shows a short sequence of steps: set the opening balance, create a portfolio, enter a buy. The lock is confirmed first.
+- App initialization from the backup file is offered only in More, not on this screen.
 
 ### Backup, restore and security
-- Restoring from a backup asks me each time whether to replace or merge.
-- No data export beyond the backup file.
 - The auto-lock setting offers four choices: lock every time I leave the app, after 1 minute idle, after 5 minutes idle, or only when the phone locks or the app restarts. The default is the strictest (lock every time I leave the app).
 
 ## Open questions
 None remaining in Plan.
 
 ## Deferred to Design (carried forward, not blocking)
-- CSV format: columns, date and number formats, and how rows are recognized as buys, sells, splits and cash movements. To be settled with a sample file when the spec is written.
-- Opening balance vs CSV: the opening balance must be the earliest cash entry, so the CSV history and the opening balance must line up. Whether the CSV contains an opening-balance row is unknown; check against the sample file.
+- Backup-file format: columns or structure, date and number formats, how reversals and lot labels are written, and a format version so a future field (for example per-holding dividends) can be added without breaking old files.
+- Opening balance vs the file: it must be the earliest cash entry, and the file's history must line up with it.
+- Details noted in the gap register for G2, G4, G5, G6 and G7 (reminder wording, the pair check for "Reverse and re-enter", where the remembered source texts are kept, the minimum Android version, and when the guided empty state ends).
 - Blocked deletion: the app should tell me why deletion is blocked and how much cash (and from which date) is missing, so I can fix it. Wording and presentation are Design.
 - Historical prices: rebuilding past values needs historical prices back to my first transaction from a free source. Availability, limits and split adjustment are unverified; check in Design. Because I enter splits myself, price history that is already split-adjusted must be reconciled with my as-traded lots.
