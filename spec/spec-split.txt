@@ -23,6 +23,9 @@ in 4.6, first-launch and empty state in section 6, privacy, last backup and remi
 section 9, criteria 18 to 23, K10, D7 and D8), and
 items 1 to 5 of group 3 were applied (title raised to draft v3, source set to intent v52,
 naming note removed from section 6, Holding wording fixed in section 3 for finding 10), and
+items 6 to 9 of group 3 were applied (C3, C7, C8 and C15 approved, C15 changed to the
+device time zone abbreviation, 13 of 14 [PROPOSED] markers resolved, the section 8
+heading renamed), and
 the spec version was raised from v1 to v2 and then to v3.
 
 DECISION MADE
@@ -31,11 +34,11 @@ Then decide whether to split, using the approach below.
 
 WHY NOT SPLIT NOW
 - Design is not finished. Groups 1 and 2 of the v52 rework are applied, and group 3 is
-  partly applied (items 1 to 5: header, version, naming note, Holding wording). Still
-  open in group 3: the status and [PROPOSED] marker decisions, and the checks. D5
-  (backup-file format), D6 (ticker verification source), D7 (source text matching) and
-  D8 (cash with no portfolio) are also open. After that, the user's approval of spec.md
-  as a whole remains.
+  partly applied (items 1 to 9: header, version, naming note, Holding wording, statuses,
+  markers). Still open in group 3: the checks. D5 (backup-file format), D6 (ticker
+  verification source), D7 (source text matching) and D8 (cash with no portfolio, which
+  has the last [PROPOSED] marker) are also open. After that, the user's approval of
+  spec.md as a whole remains.
 - One file means one approval gate (Ruleset A: approve spec.md before Build).
 - The file (315 lines) is small enough to review in one sitting. Context-window fit has
   not been measured.
