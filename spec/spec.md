@@ -160,6 +160,18 @@ Result: the holding is **30 shares** with total cost **$1,500** (20 shares from 
 
 Result: the lot has 0 shares, cash is **$10,000**, and realized gain/loss is **0**. Without the split rule, 10 shares would remain while the cash came back.
 
+**Example G: Reverse and re-enter.** Opening balance $10,000 on Jan 1. Portfolio P.
+1. Jan 2: you enter a buy of 10 AAPL, total $1,000. The real trade was 100 shares for $1,000. Cash $9,000.
+2. On that buy you choose Reverse and re-enter. The form opens with the original values (Jan 2, 10 shares, $1,000). You change the quantity to 100 and confirm once. The app saves a reversal dated Jan 2 and a new buy dated Jan 2, as one action.
+
+Result: three records stay (the original buy, the reversal, the new buy). The first lot has 0 shares, the new lot has 100 shares at $10 per share, cash is **$9,000**, and realized gain/loss is **0**.
+
+*Both or neither.* Same start, but in step 2 you change the total to $10,500. After the reversal cash would be $10,000, and the new buy of $10,500 would take it to **−$500** on Jan 2, so the pair is **blocked**. Nothing is saved: the original buy stays, and you are not left with a reversal and no new buy.
+
+*Blocked by the original.* Buy 10 shares on Jan 2, sell all 10 on Jan 3. Reverse and re-enter on the Jan 2 buy is **blocked** (the reversal would take shares to −10 on Jan 3, as in Example D). Nothing is saved. Reverse the Jan 3 sell first (a plain reversal), then the buy.
+
+*A sell.* After Example A (cash $9,600), you use Reverse and re-enter on the Mar 1 sell and change the total from $2,100 to $2,200. The lot picks start as lot 1 × 10 and lot 2 × 2, and the new sell must still pass the lot rules with them. The reversal puts the lots back and takes $2,100 out of cash ($7,500), then the new sell puts $2,200 in. Result: cash **$9,700**, cost consumed still $1,300, realized gain **$900** (it was $800).
+
 ## 6. Views (first version)
 Layout and navigation are decided by the screens listed below and the navigation outline after them.
 1. **Overall**: net worth + allocation summary; net worth + each portfolio with gain/loss. Also the backup reminder banner when due (section 9) and, when the app holds no data, the guided empty state (below).
@@ -307,7 +319,7 @@ Planned for later versions: performance over time, per-holding dividends (a divi
 
 ## 11. Acceptance criteria (first version)
 1. Net worth and allocation show correctly from your real data (after restoring your prepared file).
-2. Examples A to F behave as written, as automated tests.
+2. Examples A to G behave as written, as automated tests.
 3. A buy or sell can be entered in under 30 seconds.
 4. Backup then restore on a clean install reproduces identical portfolios, transactions, cash entries, lots, cash balance and holdings. Net worth matches after the first successful price refresh (holdings show "no price" until then). After the restore, More shows "never backed up".
 5. Offline use shows last prices marked with their age.
@@ -334,7 +346,7 @@ Planned for later versions: performance over time, per-holding dividends (a divi
 26. A portfolio name that matches an existing one (ignoring case and spaces) is refused on create and rename. An amount with more than 2 decimals is refused in the entry screens.
 
 ## 12. Proposed slices (input to plan.md)
-1. Data model (including classification fields, lists and remembered texts), cash account, rules engine with tests (Examples A to F).
+1. Data model (including classification fields, lists and remembered texts), cash account, rules engine with tests (Examples A to G).
 2. Buy/sell/split entry, lot picker, holdings, cost and gains, Reverse and re-enter.
 3. Prices (including the price source setting and sweep), net worth, the Overall view and allocation.
 4. Portfolio management and deletion rules, guided empty state (needs the entry flows of slice 2).
@@ -372,5 +384,5 @@ Added as section 14 so existing section numbers stay stable. Language, framework
 **Dependency rules**
 1. Every write to transactions or cash entries goes through K1: entry flows, restore and portfolio deletion. No component bypasses it.
 2. K3 and K9 only read data. K4 only writes prices and instrument data. K10 is the only writer of the lists, remembered source texts and overrides.
-3. K1 has no knowledge of screens, network or file formats, so Examples A to F can be tested on K1 alone.
+3. K1 has no knowledge of screens, network or file formats, so Examples A to G can be tested on K1 alone.
 4. Checks that need the network, such as ticker verification, are enforced by K5 (manual entry) and K6 (restore) using K4. They are not part of K1.

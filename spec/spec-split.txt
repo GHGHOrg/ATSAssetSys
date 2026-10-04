@@ -1,6 +1,6 @@
 spec-split.txt
 Stage: Design. Status: PROPOSAL ONLY. spec.md has NOT been split.
-Applies to: spec/spec.md (draft v3, 376 lines, 14 sections)
+Applies to: spec/spec.md (draft v3, 388 lines, 14 sections)
 Last updated against: spec.md with sections 1 to 14, after the CSV format (section 8) was
 approved and Example B was rewritten, and after Example F and the 4.6 rule for splits
 between an original and its reversal were added (finding 3), and after the Status column
@@ -35,6 +35,8 @@ in 4.2, 4.6, 4.7, 4.9, 6, 9, 11, 13, 14), and
 the sample files were made (spec/example-backup.csv, spec/example-backup-expected.md,
 spec/template-backup.csv) and view 9 was renamed Hidden holdings, with the restore summary
 counts defined (sections 6 and 8, criterion 25), and
+Example G (Reverse and re-enter) was added to section 5 and "Examples A to F" became
+"Examples A to G" in criterion 2, slice 1 and dependency rule 3, and
 the spec version was raised from v1 to v2 and then to v3.
 
 DECISION MADE
@@ -48,7 +50,7 @@ WHY NOT SPLIT NOW
   group 3: the checks (items 16 to 19). After that, the user's approval of spec.md as a
   whole remains.
 - One file means one approval gate (Ruleset A: approve spec.md before Build).
-- The file (376 lines) is small enough to review in one sitting. Context-window fit has
+- The file (388 lines) is small enough to review in one sitting. Context-window fit has
   not been measured.
 
 PROPOSED SPLIT (apply only after "final", and only if still worth it)
@@ -68,7 +70,7 @@ PROPOSED SPLIT (apply only after "final", and only if still worth it)
   spec/domain-rules.md
     Section 3  Domain model
     Section 4  Business rules (4.1 to 4.9)
-    Section 5  Worked examples (A to F)
+    Section 5  Worked examples (A to G)
 
   spec/backup-restore.md
     Section 8  Backup file and restore (file contents, restore steps, known limits;
@@ -92,7 +94,7 @@ SPLIT RULES
    pointer. Any content change is a separate, visible edit.
 4. Do not split by build slice. Rules cut across slices. Each slice file in the plan
    cites the spec sections it needs instead.
-5. Keep section numbers and concern/example/component IDs (C, A to F, K) stable so
+5. Keep section numbers and concern/example/component IDs (C, A to G, K) stable so
    references in other files stay valid.
 6. Section 14 rule 1 (every write goes through K1) must stay visible in the index,
    because the restore and entry-flow files both depend on it.
@@ -125,9 +127,9 @@ AFTER A SPLIT
   4.6, 4.7 and Example E").
 
 KNOWN LIMITS
-- Current section sizes in lines (measured with wc and awk, spec.md = 376 lines):
+- Current section sizes in lines (measured with wc and awk, spec.md = 388 lines):
   index sections 1, 2, 10 to 14 = 97 lines (102 with the 5 header lines before section 1);
-  domain-rules (3 to 5) = 133 lines; views (6) 32; prices (7) 13; backup-restore (8) 83;
+  domain-rules (3 to 5) = 145 lines; views (6) 32; prices (7) 13; backup-restore (8) 83;
   backup-security (9) 13. Each count runs from a section's heading to the line before the
   next heading, so it includes the blank line. These are line counts, not context tokens.
 - Group 3 of the rework will change these sizes. They are recomputed after it.
