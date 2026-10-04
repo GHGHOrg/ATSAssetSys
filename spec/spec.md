@@ -80,7 +80,9 @@ Single-user Android app (sideloaded). Local-only data. Tracks one shared cash ac
 - Selling more than the portfolio holds is blocked.
 - Realized gain per lot piece = proceeds share minus cost share. Proceeds are split across lots in proportion to quantity.
 - A total loss is a sell with zero proceeds (realized loss = cost of the lots consumed).
-- A holding with zero shares stays visible until you hide it. Only fully sold holdings can be hidden. A new buy of a hidden ticker unhides it.
+- A holding with zero shares stays visible until you hide it. Only fully sold holdings can be hidden.
+- Hide is a button on Holding detail, offered only at 0 shares, with no confirmation (Unhide undoes it). Unhide is a button in Hidden holdings (view 9). A hidden holding is left out of the normal holdings list and shows only in view 9. A new buy of a hidden ticker unhides it.
+- Hiding is not a transaction and has no cash effect. The hidden flag is stored on the holding and is part of the backup file (section 8, `hidden` row).
 
 ### 4.5 Splits
 - Entered by hand: date, ticker, ratio. Applies to all lots of that ticker in that portfolio held on that date. Total cost per lot is unchanged.
@@ -179,10 +181,10 @@ Layout and navigation are decided by the screens listed below and the navigation
 3. **Portfolios and holdings**
 4. **Allocation** (asset type, portfolio, holding, sector/geography)
 5. **Realized gains** (per sale, per holding, total), filterable by date range (the sale date). Informational only. A sale cancelled by a reversal (4.6) is left out of the figures whatever the range; transaction history still shows both entries.
-6. **Holding detail**: lots, cost, gain/loss, split history, its transactions, and sector and geography with the manual override (4.9)
+6. **Holding detail**: lots, cost, gain/loss, split history, its transactions, and sector and geography with the manual override (4.9). A Hide button appears only when the holding has 0 shares (4.4).
 7. **Cash account**: balance, entries incl. trade lines, date-range filter. Each `trade` line shows buy or sell, ticker and portfolio name besides date and amount. Tapping it opens the linked transaction (with its lots and any reversal link).
 8. **Transaction history** (per portfolio only): filters ticker, date range, type (buy, sell, split, cash). Cash means the cash lines of that portfolio's trades; direct cash entries are viewed in the cash account. Each buy or sell shows its cash effect and can open its cash line. A reversal links to the original, and its cash line points to the reversal, so the full chain is traceable.
-9. **Hidden holdings**: the holdings you have hidden (only a fully sold holding can be hidden, 4.4). A fully sold holding that is not hidden stays in the normal holdings list. A holding can be unhidden from here.
+9. **Hidden holdings**: the holdings you have hidden (only a fully sold holding can be hidden, 4.4). A fully sold holding that is not hidden stays in the normal holdings list. Hidden holdings do not appear in the normal holdings list. Each one has an Unhide button here, with no confirmation.
 
 Plus entry flows: buy, sell (lot picker), split, cash entry, backup/restore (restore needs internet), settings (auto-lock, price source, tab order, sector and geography lists, screenshot window).
 
@@ -344,6 +346,7 @@ Planned for later versions: performance over time, per-holding dividends (a divi
 24. With cash and no portfolio, Overall shows the normal screens with 100% cash and a Create a portfolio button. Buy says "Create a portfolio first" and returns to Buy after the portfolio is created. Sell says "Nothing to sell yet".
 25. spec/example-backup.csv restores with the results listed in spec/example-backup-expected.md (cash balance, holdings, lots, realized gain). The same file saved as CSV UTF-8 from Excel and re-saved from Notepad (with or without a byte-order mark, LF or CRLF) restores the same way.
 26. A portfolio name that matches an existing one (ignoring case and spaces) is refused on create and rename. An amount with more than 2 decimals is refused in the entry screens.
+27. Hide is offered on Holding detail only when the holding has 0 shares, and asks no confirmation. A hidden holding leaves the normal holdings list and appears in Hidden holdings, where Unhide returns it to the list. A new buy of a hidden ticker unhides it. After a backup and restore the same holdings are still hidden (sample file: OLDCO).
 
 ## 12. Proposed slices (input to plan.md)
 1. Data model (including classification fields, lists and remembered texts), cash account, rules engine with tests (Examples A to G).
