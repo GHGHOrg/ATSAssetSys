@@ -1,6 +1,6 @@
 spec-split.txt
 Stage: Design. Status: PROPOSAL ONLY. spec.md has NOT been split.
-Applies to: spec/spec.md (draft v3, 317 lines, 14 sections)
+Applies to: spec/spec.md (draft v3, 376 lines, 14 sections)
 Last updated against: spec.md with sections 1 to 14, after the CSV format (section 8) was
 approved and Example B was rewritten, and after Example F and the 4.6 rule for splits
 between an original and its reversal were added (finding 3), and after the Status column
@@ -29,6 +29,9 @@ heading renamed), and
 D6 to D8 were resolved (verification uses the selected price source, source text matching
 ignores case and spaces, cash with no portfolio keeps the normal screens; sections 4.3, 4.9,
 6, 7, 8, 11, 13, 14), and
+D5 was resolved (the backup-file format written into section 8: flat CSV, 19 columns, format
+version 1, rejection reasons, error report; new C16 for the Copy report button; additions
+in 4.2, 4.6, 4.7, 4.9, 6, 9, 11, 13, 14), and
 the spec version was raised from v1 to v2 and then to v3.
 
 DECISION MADE
@@ -37,11 +40,12 @@ Then decide whether to split, using the approach below.
 
 WHY NOT SPLIT NOW
 - Design is not finished. Groups 1 and 2 of the v52 rework are applied, and group 3 is
-  partly applied (items 1 to 9 and D6 to D8: header, version, naming note, Holding
-  wording, statuses, markers, three design points). Still open in group 3: D5 (backup-file
-  format) and the checks. After that, the user's approval of spec.md as a whole remains.
+  partly applied (items 1 to 9 and D5 to D8: header, version, naming note, Holding
+  wording, statuses, markers, all four design points). Still open in group 3: the checks
+  (items 16 to 19) and the two sample files. After that, the user's approval of spec.md as
+  a whole remains.
 - One file means one approval gate (Ruleset A: approve spec.md before Build).
-- The file (317 lines) is small enough to review in one sitting. Context-window fit has
+- The file (376 lines) is small enough to review in one sitting. Context-window fit has
   not been measured.
 
 PROPOSED SPLIT (apply only after "final", and only if still worth it)
@@ -90,22 +94,23 @@ SPLIT RULES
 6. Section 14 rule 1 (every write goes through K1) must stay visible in the index,
    because the restore and entry-flow files both depend on it.
 7. spec/example-import.csv is STALE: it describes the CSV import that v52 removed, and
-   spec.md no longer refers to it. Whether it is replaced by a sample backup file is open
-   under D5. Until then it stays unchanged. If a sample backup file is added, update
-   section 8 (or spec/backup-restore.md) and that file together.
+   spec.md no longer refers to it. It is replaced by spec/example-backup.csv and
+   spec/template-backup.csv (section 8; not yet created). The old file stays unchanged
+   until you remove it. If the format changes, update section 8 (or
+   spec/backup-restore.md) and both sample files together.
 
 MINIMAL ALTERNATIVE (recommended if a split is wanted)
-Split out only spec/backup-restore.md. Section 8 is about 31 lines now (it was about 50
-as the CSV section), and the file format (D5) is not written yet, so it is likely to
-grow. Its content is NOT settled (D5 and D6 are open). It cites 4.1 to 4.6, C3, C7 and
-C8 by ID. Keep everything else in spec.md. If done before "final", the user approves the
-index plus that file. The case for splitting is weaker than before: the block is smaller
-and unsettled.
+Split out only spec/backup-restore.md. Section 8 is about 83 lines now (it was 31 before
+the file format was written, and about 50 as the old CSV section), the second-largest
+block after sections 3 to 5. Its content is settled (D5 and D6 are resolved). It cites
+4.1 to 4.6, 4.9, C3, C7, C8, C13 and C16 by ID. Keep everything else in spec.md. If done
+before "final", the user approves the index plus that file. The case for splitting is
+stronger than before, because section 8 grew as expected.
 
 TRIGGERS FOR SPLITTING
 - The user asks for it, or
 - spec.md becomes uncomfortable to review in one sitting, or
-- a section keeps growing (section 8 is the likeliest, once D5 is written), or
+- a section keeps growing (section 8 did grow, from 31 to 83 lines once D5 was written), or
 - the plan slices are worked one at a time and the full spec no longer fits comfortably
   next to the code in context.
 
@@ -117,9 +122,9 @@ AFTER A SPLIT
   4.6, 4.7 and Example E").
 
 KNOWN LIMITS
-- Current section sizes in lines (measured with wc and awk, spec.md = 317 lines):
-  index sections 1, 2, 10 to 14 = 94 lines (99 with the 5 header lines before section 1);
-  domain-rules (3 to 5) = 129 lines; views (6) 32; prices (7) 13; backup-restore (8) 31;
+- Current section sizes in lines (measured with wc and awk, spec.md = 376 lines):
+  index sections 1, 2, 10 to 14 = 97 lines (102 with the 5 header lines before section 1);
+  domain-rules (3 to 5) = 133 lines; views (6) 32; prices (7) 13; backup-restore (8) 83;
   backup-security (9) 13. Each count runs from a section's heading to the line before the
   next heading, so it includes the blank line. These are line counts, not context tokens.
 - Group 3 of the rework will change these sizes. They are recomputed after it.
