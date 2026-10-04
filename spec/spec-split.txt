@@ -40,6 +40,7 @@ Example G (Reverse and re-enter) was added to section 5 and "Examples A to F" be
 the Hide and Unhide rule was added (views 6 and 9, 4.4, criterion 27), and
 the ticker type check was added (mutual fund, exchange, currency; 4.3, 7, 8, criterion 15), and
 the opening balance rule was made strict (4.2, sections 3, 6 and 8, criteria 16 and 19), and
+the slice columns of K1, K2, K9 and K10 were corrected (section 14), and
 the spec version was raised from v1 to v2 and then to v3.
 
 DECISION MADE
