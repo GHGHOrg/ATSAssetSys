@@ -32,6 +32,9 @@ ignores case and spaces, cash with no portfolio keeps the normal screens; sectio
 D5 was resolved (the backup-file format written into section 8: flat CSV, 19 columns, format
 version 1, rejection reasons, error report; new C16 for the Copy report button; additions
 in 4.2, 4.6, 4.7, 4.9, 6, 9, 11, 13, 14), and
+the sample files were made (spec/example-backup.csv, spec/example-backup-expected.md,
+spec/template-backup.csv) and view 9 was renamed Hidden holdings, with the restore summary
+counts defined (sections 6 and 8, criterion 25), and
 the spec version was raised from v1 to v2 and then to v3.
 
 DECISION MADE
@@ -41,9 +44,9 @@ Then decide whether to split, using the approach below.
 WHY NOT SPLIT NOW
 - Design is not finished. Groups 1 and 2 of the v52 rework are applied, and group 3 is
   partly applied (items 1 to 9 and D5 to D8: header, version, naming note, Holding
-  wording, statuses, markers, all four design points). Still open in group 3: the checks
-  (items 16 to 19) and the two sample files. After that, the user's approval of spec.md as
-  a whole remains.
+  wording, statuses, markers, all four design points, the sample files). Still open in
+  group 3: the checks (items 16 to 19). After that, the user's approval of spec.md as a
+  whole remains.
 - One file means one approval gate (Ruleset A: approve spec.md before Build).
 - The file (376 lines) is small enough to review in one sitting. Context-window fit has
   not been measured.
@@ -94,10 +97,10 @@ SPLIT RULES
 6. Section 14 rule 1 (every write goes through K1) must stay visible in the index,
    because the restore and entry-flow files both depend on it.
 7. spec/example-import.csv is STALE: it describes the CSV import that v52 removed, and
-   spec.md no longer refers to it. It is replaced by spec/example-backup.csv and
-   spec/template-backup.csv (section 8; not yet created). The old file stays unchanged
-   until you remove it. If the format changes, update section 8 (or
-   spec/backup-restore.md) and both sample files together.
+   spec.md no longer refers to it. It is replaced by spec/example-backup.csv,
+   spec/example-backup-expected.md and spec/template-backup.csv (section 8). The old file
+   stays unchanged until you remove it. If the format changes, update section 8 (or
+   spec/backup-restore.md) and the three sample files together.
 
 MINIMAL ALTERNATIVE (recommended if a split is wanted)
 Split out only spec/backup-restore.md. Section 8 is about 83 lines now (it was 31 before

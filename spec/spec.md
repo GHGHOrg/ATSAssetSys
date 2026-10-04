@@ -170,7 +170,7 @@ Layout and navigation are decided by the screens listed below and the navigation
 6. **Holding detail**: lots, cost, gain/loss, split history, its transactions, and sector and geography with the manual override (4.9)
 7. **Cash account**: balance, entries incl. trade lines, date-range filter. Each `trade` line shows buy or sell, ticker and portfolio name besides date and amount. Tapping it opens the linked transaction (with its lots and any reversal link).
 8. **Transaction history** (per portfolio only): filters ticker, date range, type (buy, sell, split, cash). Cash means the cash lines of that portfolio's trades; direct cash entries are viewed in the cash account. Each buy or sell shows its cash effect and can open its cash line. A reversal links to the original, and its cash line points to the reversal, so the full chain is traceable.
-9. **Closed/hidden holdings**
+9. **Hidden holdings**: the holdings you have hidden (only a fully sold holding can be hidden, 4.4). A fully sold holding that is not hidden stays in the normal holdings list. A holding can be unhidden from here.
 
 Plus entry flows: buy, sell (lot picker), split, cash entry, backup/restore (restore needs internet), settings (auto-lock, price source, tab order, sector and geography lists, screenshot window).
 
@@ -182,7 +182,7 @@ Plus entry flows: buy, sell (lot picker), split, cash entry, backup/restore (res
 **Navigation outline.**
 - After unlock, the app opens on the Overall tab (view 1). A bottom bar with four tabs is always visible. The default order, left to right, is: More, Cash, Portfolios, Overall. You can reorder the tabs in settings.
 - **Overall** (1): tap the net worth figure for Net Worth (Total) (2); tap the allocation summary for Allocation (4); tap a portfolio for its holdings (3). The backup reminder banner is shown here; its button starts a backup export.
-- **Portfolios** (3): the list of portfolios, in the order they were created. Tapping one shows its holdings. A holding opens Holding detail (6). From a portfolio you reach its Transaction history (8) and its Closed/hidden holdings (9). Portfolio create, rename and delete (4.7) are here.
+- **Portfolios** (3): the list of portfolios, in the order they were created. Tapping one shows its holdings. A holding opens Holding detail (6). From a portfolio you reach its Transaction history (8) and its Hidden holdings (9). Portfolio create, rename and delete (4.7) are here.
 - **Cash** (7): the cash account, with its entries and date-range filter. A `trade` line opens the linked transaction (section 6, item 7). Cash entry (deposit, withdrawal, interest/dividend, adjustment) starts here.
 - **More:** a line "Last backup: <date> <zone>" (the zone abbreviation, C15) or "never backed up", Allocation (4), Realized gains (5), Backup/restore, Settings (auto-lock, price source, tab order, sector and geography lists, screenshot window). Net Worth (Total) (2) is also reachable here.
 - **Buy/Sell button:** Overall, Portfolios and Cash show a Buy/Sell button that opens a short menu: Buy, Sell. Holding detail also offers Buy and Sell with the ticker already filled in, and starts a split. A reversal, and Reverse and re-enter, start from the transaction or cash entry they apply to (4.6). With no portfolio, Buy says "Create a portfolio first" with a button, and after the portfolio is created the app returns to the Buy entry. Sell says "Nothing to sell yet", with no button.
@@ -259,7 +259,7 @@ Fixed by intent v52:
 2. The whole file is read and validated. Records are replayed in date order, then file order (4.1), each checked against 4.1 to 4.6 as if entered by hand. Every error is collected with its line and reason (C7). Nothing is deleted yet. A file-level failure (not UTF-8, header, version) stops here.
 3. Only if steps 1 and 2 found no errors, every ticker with shares left at the end of the file is verified through K4, using the price source selected before the restore, not the one named in the file (D6). One that cannot be verified blocks the restore. Sold-out tickers are not verified (C8). A first round of fixes can therefore be followed by a second round naming unverifiable tickers.
 4. If any check fails, nothing changes and the report is shown, with a Copy report button (C16).
-5. A summary shows counts of portfolios, transactions and cash entries, now versus in the file. Also shown: the resulting cash balance and number of holdings, to compare with real life (an addition to intent v52, approved in Design).
+5. A summary shows counts of portfolios, transactions and cash entries, now versus in the file. Transactions are buys, sells, splits and reversals of them. Cash entries are cash entries and reversals of them; the trade cash lines the app rebuilds are not counted, in the file or now. Also shown: the resulting cash balance and the number of holdings with shares, to compare with real life (an addition to intent v52, approved in Design).
 6. If the app holds data (section 3), it offers a backup export first, then requires a typed confirmation.
 7. Delete and load happen as one action, so the app is never left empty in between. The app then generates its own IDs. The price source in the file becomes the selected source, and the first refresh uses it. Holdings show "no price" until the first successful price refresh (4.8). The last-backup state is reset: More shows "never backed up" until the next export.
 
@@ -280,7 +280,7 @@ Every error is listed, with its line (the header is line 1, as Notepad shows it)
 **Preparing the file** (CSV cannot hold comments, so this note is here)
 - In Excel, format date columns as `yyyy-mm-dd` and ticker columns as Text, then save as CSV UTF-8. Excel may rewrite dates, numbers and text like `2:1` **[UNVERIFIED, from memory]**; that is why splits use two columns.
 - Open the file in Notepad to check it, with Word Wrap off and the status bar on, so line numbers match the report. Keep one record per line. Save as UTF-8; the file name and extension do not matter to the restore.
-- The app's own backups are named `backup-YYYY-MM-DD.csv` (the date in the device's time zone, C15). Samples: `spec/example-backup.csv` (valid, with its expected results) and `spec/template-backup.csv` (header and `format` row only).
+- The app's own backups are named `backup-YYYY-MM-DD.csv` (the date in the device's time zone, C15). Samples: `spec/example-backup.csv` (valid), `spec/example-backup-expected.md` (the results it should give) and `spec/template-backup.csv` (header and `format` row only).
 - Test the first real file with the restore report before relying on it.
 
 **Known limits**
@@ -330,7 +330,7 @@ Planned for later versions: performance over time, per-holding dividends (a divi
 22. Sector and geography: an override is picked from the list, and clearing it returns the source value or "Unclassified". A source text not on the list is added. Renaming a value updates the holdings and a refresh does not add the old text again. Deleting a value in use is blocked. Values and source texts that differ only in case or spaces count as the same.
 23. The realized gains view filters by date range. For Example A, a range containing Mar 1 shows $800, and a range of Apr 1 to Apr 30 shows no sale.
 24. With cash and no portfolio, Overall shows the normal screens with 100% cash and a Create a portfolio button. Buy says "Create a portfolio first" and returns to Buy after the portfolio is created. Sell says "Nothing to sell yet".
-25. spec/example-backup.csv restores with the results listed beside it (cash balance, holdings, lots, realized gain). The same file saved as CSV UTF-8 from Excel and re-saved from Notepad (with or without a byte-order mark, LF or CRLF) restores the same way.
+25. spec/example-backup.csv restores with the results listed in spec/example-backup-expected.md (cash balance, holdings, lots, realized gain). The same file saved as CSV UTF-8 from Excel and re-saved from Notepad (with or without a byte-order mark, LF or CRLF) restores the same way.
 26. A portfolio name that matches an existing one (ignoring case and spaces) is refused on create and rename. An amount with more than 2 decimals is refused in the entry screens.
 
 ## 12. Proposed slices (input to plan.md)
