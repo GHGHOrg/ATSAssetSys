@@ -15,12 +15,13 @@ ATS Asset System is an Android app for tracking personal cash, stock and ETF por
 
 ## Getting started
 
-On first launch, follow the setup flow to:
+On first launch, confirm your phone's biometric or PIN to unlock the app. The setup flow then guides you to:
 
-1. Choose how the app is locked.
-2. Enter your opening cash balance.
-3. Create a portfolio.
-4. Record an initial purchase, if you have one.
+1. Enter your opening cash balance. The app asks for this first, before a portfolio or any other entry.
+2. Create a portfolio.
+3. Record an initial purchase, if you have one.
+
+You can change the auto-lock setting later in **Settings**, under **More**. By default the app locks every time you leave it.
 
 If you already have a backup, initialize the app from that file using the option in **More**.
 
@@ -49,7 +50,7 @@ Create portfolios to keep different groups of investments separate. You can rena
 
 ## Recording investments
 
-This version supports US stocks and ETFs listed on the NYSE or NASDAQ and denominated in USD. Ticker symbols are verified online when necessary.
+This version supports US stocks and ETFs listed on a US national securities exchange (for example NYSE, NYSE Arca or NASDAQ) and denominated in USD. Mutual funds are not supported. Ticker symbols are verified online when necessary. A ticker that the price source says is a mutual fund, is listed on a non-US exchange or an OTC market, or is not quoted in USD is rejected, and the reason is shown.
 
 ### Buying
 
@@ -96,13 +97,10 @@ Gain figures are informational and are not tax calculations. Tax lots, wash-sale
 
 ### Allocation
 
-View allocation across the whole account or within an individual portfolio. Available breakdowns include:
+Allocation is shown at two levels:
 
-- Asset type
-- Portfolio
-- Holding
-- Sector
-- Geography
+- **Whole account (Net Worth screen):** the share of your net worth by asset type (cash, stocks, ETFs), portfolio, holding, and sector or geography. Cash appears as its own "Cash" slice in every breakdown.
+- **One portfolio (Allocation screen):** the share of that portfolio's value by asset type (stocks, ETFs), holding, and sector or geography. It does not include cash, because cash is one shared account.
 
 Each holding has one sector and one geography in this version. You can override these classifications manually.
 
@@ -130,11 +128,11 @@ A backup includes your portfolios, transactions, reversal relationships, cash en
 
 The app rebuilds holdings, lots, trade cash movements, balances, gains, and allocation from the saved records. Market prices and PIN or biometric credentials are not included in the backup.
 
-The Overall screen reminds you to back up if no backup has been completed or the last completed backup is more than seven days old. The reminder appears in the app, not as an Android notification. Dismissing it hides it until the next app launch. Only a completed export counts as a backup.
+The Overall screen reminds you to back up if the app holds data and no backup has been completed, or if the last completed backup is more than seven days old. The reminder appears in the app, not as an Android notification. Dismissing it hides it only until you next return to the app after leaving it, or restart it. Only a completed export counts as a backup.
 
 ### Restoring
 
-Restore initializes the app from a backup file and replaces existing financial data. If you already have data, consider exporting a backup before continuing.
+Restore initializes the app from a backup file. It deletes all current data and settings, then loads the file, so the settings stored in the file (auto-lock, price source and tab order) replace the current ones. A restore resets the last-backup date, so the backup reminder appears afterwards. If you already have data, the app offers to export a backup first.
 
 The restore process validates the complete file first. If validation fails, the app reports the errors and leaves existing data unchanged. Replacing existing data requires explicit confirmation, including typed confirmation. Held tickers must be verified online during restore.
 
