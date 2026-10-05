@@ -192,7 +192,7 @@ Plus entry flows: buy, sell (lot picker), split, cash entry, backup/restore (res
 **First launch and empty state.**
 - After the lock is confirmed (biometric or phone PIN, section 9), if the app holds no data (section 3), Overall shows three steps instead of zeros: set the opening balance, create a portfolio, enter a buy. Each step opens its entry flow. Until the opening balance exists, Create a portfolio, Buy and every other cash entry say "Set the opening balance first", with a button that opens it (4.2).
 - Restore is offered only in More, not here.
-- The guide ends as soon as the app holds data, and Overall then shows the normal screens. With cash but no portfolio (also after deleting every portfolio, 4.7), net worth equals the cash balance, the allocation on Overall and Net Worth (Total) shows 100% cash, and the portfolio section says "No portfolios yet" with a Create a portfolio button.
+- The guide ends as soon as the app holds data, and Overall then shows the normal screens. Because the opening balance comes first (4.2), the guide ends after step 1: until then steps 2 and 3 are shown but locked, and afterwards each missing next step has its own button or message (Create a portfolio, Buy), not a step list. With cash but no portfolio (also after deleting every portfolio, 4.7), net worth equals the cash balance, the allocation on Overall and Net Worth (Total) shows 100% cash, and the portfolio section says "No portfolios yet" with a Create a portfolio button.
 
 **Navigation outline.**
 - After unlock, the app opens on the Overall tab (view 1). A bottom bar with four tabs is always visible. The default order, left to right, is: More, Cash, Portfolios, Overall. You can reorder the tabs in settings.
