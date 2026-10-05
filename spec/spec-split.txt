@@ -1,6 +1,6 @@
 spec-split.txt
 Stage: Design. Status: PROPOSAL ONLY. spec.md has NOT been split.
-Applies to: spec/spec.md (draft v4, 396 lines, 14 sections)
+Applies to: spec/spec.md (draft v4, 400 lines, 14 sections)
 Last updated against: spec.md with sections 1 to 14, after the CSV format (section 8) was
 approved and Example B was rewritten, and after Example F and the 4.6 rule for splits
 between an original and its reversal were added (finding 3), and after the Status column
@@ -43,6 +43,8 @@ the opening balance rule was made strict (4.2, sections 3, 6 and 8, criteria 16 
 the slice columns of K1, K2, K9 and K10 were corrected (section 14), and
 the wording of the banner and the empty-state steps was deferred to Build (D9, section 13), and
 criteria 28 to 31 were added (portfolio deletion, cash date filter, review screen, 8 decimals; section 11), and
+the exchange check was changed to a US national securities exchange list kept in plan.md (4.3, 7, 8, criterion 15), and
+allocation was split into two levels (net worth level on Net Worth (Total), one portfolio on Allocation; C12, 4.8, section 6, criteria 32 to 34), and
 the spec version was raised from v1 to v2, then to v3, and then to v4 after the findings batch.
 
 DECISION MADE
@@ -54,7 +56,7 @@ WHY NOT SPLIT NOW
   findings (1 to 7) are applied. What remains is the user's approval of spec.md as a
   whole ("final").
 - One file means one approval gate (Ruleset A: approve spec.md before Build).
-- The file (396 lines) is small enough to review in one sitting. Context-window fit has
+- The file (400 lines) is small enough to review in one sitting. Context-window fit has
   not been measured.
 
 PROPOSED SPLIT (apply only after "final", and only if still worth it)
@@ -131,9 +133,9 @@ AFTER A SPLIT
   4.6, 4.7 and Example E").
 
 KNOWN LIMITS
-- Current section sizes in lines (measured with wc and awk, spec.md = 396 lines):
-  index sections 1, 2, 10 to 14 = 103 lines (108 with the 5 header lines before section 1);
-  domain-rules (3 to 5) = 147 lines; views (6) 32; prices (7) 13; backup-restore (8) 83;
+- Current section sizes in lines (measured with wc and awk, spec.md = 400 lines):
+  index sections 1, 2, 10 to 14 = 106 lines (111 with the 5 header lines before section 1);
+  domain-rules (3 to 5) = 148 lines; views (6) 32; prices (7) 13; backup-restore (8) 83;
   backup-security (9) 13. Each count runs from a section's heading to the line before the
   next heading, so it includes the blank line. These are line counts, not context tokens.
 - The sizes above were recomputed after the findings batch (draft v4).
