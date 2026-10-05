@@ -1,558 +1,155 @@
 # ATS Asset System
 
-A private, offline-first Android app for tracking personal financial assets, portfolios, cash, and investment performance.
+ATS Asset System is an Android app for tracking personal cash, stock and ETF portfolios, net worth, and investment gains. Enter transactions yourself; the app does not connect to your bank or brokerage. Your financial records are stored locally on your device.
 
-ATS Asset System gives you a single place to understand **what you own, how your assets are allocated, and how their value changes over time**—without connecting your bank or brokerage accounts.
+## Contents
 
-## Table of Contents
+- [Getting started](#getting-started)
+- [Your account and portfolios](#your-account-and-portfolios)
+- [Recording investments](#recording-investments)
+- [Viewing gains and allocation](#viewing-gains-and-allocation)
+- [Market prices and offline use](#market-prices-and-offline-use)
+- [Correcting transactions](#correcting-transactions)
+- [Backups and restore](#backups-and-restore)
+- [Privacy and supported assets](#privacy-and-supported-assets)
 
-- [Overview](#overview)
-- [Goals](#goals)
-- [Key Features](#key-features)
-  - [Net Worth](#net-worth)
-  - [Portfolios](#portfolios)
-  - [Shared Cash Account](#shared-cash-account)
-  - [Stocks and ETFs](#stocks-and-etfs)
-  - [Buying](#buying)
-  - [Selling](#selling)
-  - [Lot-Based Accounting](#lot-based-accounting)
-  - [Stock Splits](#stock-splits)
-- [Gains](#gains)
-  - [Realized Gains](#realized-gains)
-  - [Unrealized Gains](#unrealized-gains)
-- [Allocation](#allocation)
-- [Market Prices](#market-prices)
-- [Transaction Rules](#transaction-rules)
-- [Backup and Restore](#backup-and-restore)
-  - [Backup](#backup)
-  - [Restore](#restore)
-- [Backup Reminder](#backup-reminder)
-- [Privacy and Security](#privacy-and-security)
-  - [Auto-Lock](#auto-lock)
-  - [Temporary Screenshot Access](#temporary-screenshot-access)
-- [First Launch](#first-launch)
-- [Offline Operation](#offline-operation)
-- [Data Model Principles](#data-model-principles)
-- [Current Scope](#current-scope)
-  - [Included](#included)
-  - [Not Included](#not-included)
-- [Planned Features](#planned-features)
-  - [Historical Performance](#historical-performance)
-  - [Per-Holding Dividends](#per-holding-dividends)
-  - [ETF Look-Through](#etf-look-through)
-- [Design Principles](#design-principles)
-- [Status](#status)
-- [License](#license)
+## Getting started
 
-## Overview
+On first launch, follow the setup flow to:
 
-ATS Asset System is designed for one person managing their own financial assets.
+1. Choose how the app is locked.
+2. Enter your opening cash balance.
+3. Create a portfolio.
+4. Record an initial purchase, if you have one.
 
-It tracks:
+If you already have a backup, initialize the app from that file using the option in **More**.
 
-- A shared cash account
-- Multiple stock and ETF portfolios
-- Individual buy, sell, and stock-split transactions
-- Per-lot cost basis and gains
-- Net worth
-- Asset allocation
-- Portfolio and holding allocation
-- Sector and geography allocation
-- Realized and unrealized gains
-- Backup and restore of the complete application state
-- Automatic market-price updates
+## Your account and portfolios
 
-The application is designed to work **offline**, using the last known market prices when an internet connection is unavailable.
+### Overall view
 
-## Goals
+The Overall view summarizes your net worth, cash, stocks, ETFs, portfolios, and gains. Use it for a current snapshot of your assets and to see how they are allocated.
 
-The first version focuses on answering three questions:
+The app tracks a single shared cash account and multiple investment portfolios. Each portfolio keeps its holdings, transactions, lots, and realized gains separate. The same ticker can be held in more than one portfolio.
 
-1. **What is my total net worth?**
-2. **How is my net worth allocated?**
-3. **How much has each holding and portfolio gained or lost?**
+### Cash
 
-Investment history is recorded from the beginning so that historical performance can be added later without losing transaction data.
+Cash can be updated with an opening balance, deposits, withdrawals, interest or dividends, and adjustments. Investment purchases and sales also change cash automatically:
 
-## Key Features
+- A buy withdraws the total trade amount from cash.
+- A sale adds the sale proceeds to cash.
 
-### Net Worth
+Cash moves on the trade date. Settlement delays are not tracked.
 
-The Overall view provides a snapshot of total assets, including:
+Dividends are recorded as cash entries and are not assigned to an individual holding in this version.
 
-- Cash
-- Stocks
-- ETFs
-- Individual portfolios
-- Portfolio gains and losses
+### Managing portfolios
 
-The first version prioritizes an accurate current snapshot over historical performance.
+Create portfolios to keep different groups of investments separate. You can rename or delete a portfolio. Deleting one that contains transactions removes those records and reverses their cash effects, subject to validation. This is destructive; transactions are permanent, so make a backup first if you may need to recover the data.
 
-### Portfolios
+## Recording investments
 
-Create and manage multiple investment portfolios.
-
-Each portfolio has its own:
-
-- Holdings
-- Transactions
-- Lots
-- Realized gains
-
-The same ticker can be held in multiple portfolios.
-
-Portfolios can be created, renamed, and deleted. Deleting a portfolio with transactions removes its transactions and reverses their associated cash effects, subject to the application's validation rules.
-
-Because transactions are permanent, portfolio deletion is intentionally destructive and can only be recovered by restoring a backup.
-
-### Shared Cash Account
-
-The application uses one shared cash account instead of tracking individual bank accounts.
-
-Cash can change through:
-
-- Opening balance
-- Deposits
-- Withdrawals
-- Interest/dividends
-- Adjustments
-- Investment purchases
-- Investment sales
-
-Buying an investment automatically withdraws the trade total from cash.
-
-Selling an investment automatically adds the sale proceeds to cash.
-
-Cash moves on the trade date; settlement delays are not modeled.
-
-### Stocks and ETFs
-
-The first version supports:
-
-- US stocks
-- US ETFs
-- NYSE
-- NASDAQ
-- USD-denominated instruments
-
-Crypto, mutual funds, property, vehicles, and other asset classes are outside the current scope.
-
-Ticker symbols are verified online when necessary.
+This version supports US stocks and ETFs listed on the NYSE or NASDAQ and denominated in USD. Ticker symbols are verified online when necessary.
 
 ### Buying
 
-A buy transaction records:
+Enter the:
 
 - Ticker
 - Portfolio
-- Date
+- Trade date
 - Quantity
 - Total trade amount
 
-Trading fees are included in the total amount rather than stored as a separate field.
+Include trading fees in the total amount; fees are not entered separately. The app calculates the per-share price from the quantity and total. Review the purchase before saving.
 
-The price per share is calculated from the quantity and total amount.
-
-A purchase is blocked when:
-
-- There is insufficient cash
-- The ticker cannot be verified online when verification is required
-
-A quick review step is shown before a purchase is saved.
+A purchase is blocked if there is not enough cash or if a ticker that requires verification cannot be verified online.
 
 ### Selling
 
-Selling is based on **specific lots**.
-
-Before selling, the user selects which lots are being sold. The application shows information such as:
+Sales use specific lots. Before confirming a sale, select the lots and quantities to sell. The app shows each lot's:
 
 - Purchase date
 - Remaining quantity
 - Cost per share
-- Unrealized gain/loss
+- Unrealized gain or loss
 
-A sale cannot use:
+Use **Sell All** to fill in the complete remaining quantity. A sale cannot include shares from another portfolio, shares purchased after the sale date, or more shares than are available.
 
-- Shares from another portfolio
-- Shares purchased after the sale date
-- More shares than the portfolio owns
+Proceeds are added to cash on the trade date. You can record a total loss with zero proceeds, for example for a worthless or delisted investment.
 
-A **Sell All** shortcut fills in the complete remaining quantity.
+### Stock splits
 
-Selling can also record a total loss with zero proceeds, allowing worthless or delisted investments to be represented accurately.
+Forward and reverse stock splits are entered manually. Fractional shares are supported, with quantities recorded to up to eight decimal places.
 
-### Lot-Based Accounting
+For a trade made before a split, enter the original traded quantity. The app applies subsequent splits to calculate the current holding and available lots.
 
-ATS Asset System uses specific-lot identification throughout the application.
+## Viewing gains and allocation
 
-Lots are used to calculate:
+### Gains
 
-- Cost
-- Realized gain/loss
-- Unrealized gain/loss
+Each holding shows its total cost, current value, and unrealized gain or loss. Gains are calculated from the individual lots, not from average cost.
 
-There is no configurable default lot-selection method.
+Realized gains are available per sale, per holding, and as an overall total. You can filter realized gains by date range.
 
-This is intended to match brokers that use specific-lot identification.
+Gain figures are informational and are not tax calculations. Tax lots, wash-sale adjustments, and tax reporting are not supported.
 
-Lots are tracked independently within each portfolio.
+### Allocation
 
-### Stock Splits
-
-Both forward and reverse stock splits are supported.
-
-Fractional shares are supported, with quantities allowing up to eight decimal places.
-
-Stock splits are entered manually.
-
-For transactions that occurred before a split, the original traded quantity is entered and subsequent splits are applied automatically.
-
-## Gains
-
-### Realized Gains
-
-Realized gains are available:
-
-- Per sale
-- Per holding
-- As an overall total
-
-The realized-gains view can be filtered by date range.
-
-These values are informational and are **not intended to be tax calculations**.
-
-For example, tax-specific concepts such as wash-sale adjustments and tax lots are outside the scope of the application.
-
-### Unrealized Gains
-
-Each holding shows:
-
-- Total cost
-- Current value
-- Unrealized gain/loss
-
-Unrealized values are calculated from individual lots rather than average cost.
-
-## Allocation
-
-Allocation can be viewed by:
+View allocation across the whole account or within an individual portfolio. Available breakdowns include:
 
 - Asset type
 - Portfolio
-- Individual holding
+- Holding
 - Sector
 - Geography
 
-The allocation can be viewed across the entire account or within individual portfolios.
+Each holding has one sector and one geography in this version. You can override these classifications manually.
 
-Each holding has one sector and one geography in the first version.
+## Market prices and offline use
 
-Sector and geography values can be overridden manually.
+The app retrieves market prices from a free external source. Price updates are best-effort and may be delayed or unavailable.
 
-## Market Prices
+If a refresh fails, the app uses the last known price and marks it stale. If no price is available, the holding is valued at cost until a price is retrieved.
 
-Market prices are obtained from a free external price source.
+You can use the app offline to view existing records, see the last known prices, and work with locally stored transactions. An internet connection is needed to refresh prices, verify previously unknown tickers, and restore a backup.
 
-The application is designed for live or near-real-time pricing on a best-effort basis.
+## Correcting transactions
 
-Each price has an associated freshness state.
+Saved transactions cannot be edited or deleted. To correct a mistake, record a reversal. **Reverse and re-enter** lets you reverse a transaction and enter its replacement in one confirmed operation. Both steps must succeed together; if either is blocked, neither is saved.
 
-If a current price cannot be retrieved:
+Transactions can be backdated or future-dated. Transactions on the same day are ordered by entry time. When you add a backdated transaction, the app validates it at that point in history and checks the subsequent affected dates.
 
-- The last known price is used
-- The price is marked as stale
+## Backups and restore
 
-The application remains usable offline using the most recently available prices.
+The app's backup-format file is the only supported way to import or export data. CSV import/export and data merging are not available.
 
-A holding that cannot be priced is valued at cost and marked as having **no price** until a successful price update occurs.
+### Backing up
 
-## Transaction Rules
+A backup includes your portfolios, transactions, reversal relationships, cash entries, hidden holdings, classification overrides and lists, and app settings.
 
-Transactions are intentionally treated as permanent records.
+The app rebuilds holdings, lots, trade cash movements, balances, gains, and allocation from the saved records. Market prices and PIN or biometric credentials are not included in the backup.
 
-Saved transactions cannot be edited or deleted.
+The Overall screen reminds you to back up if no backup has been completed or the last completed backup is more than seven days old. The reminder appears in the app, not as an Android notification. Dismissing it hides it until the next app launch. Only a completed export counts as a backup.
 
-Mistakes are corrected by recording a reversal transaction.
+### Restoring
 
-A **Reverse and re-enter** workflow allows a transaction to be reversed and replaced in one confirmed operation.
+Restore initializes the app from a backup file and replaces existing financial data. If you already have data, consider exporting a backup before continuing.
 
-Both operations must succeed together; if either is blocked, neither is saved.
+The restore process validates the complete file first. If validation fails, the app reports the errors and leaves existing data unchanged. Replacing existing data requires explicit confirmation, including typed confirmation. Held tickers must be verified online during restore.
 
-Transactions may be:
+## Privacy and supported assets
 
-- Backdated
-- Future-dated
+ATS Asset System is designed for personal financial data:
 
-Same-day transactions are ordered by entry time.
+- Records are stored locally on your Android device.
+- The app supports biometric or PIN authentication.
+- The app locks automatically; available policies include locking when you leave, after one or five minutes of inactivity, or when the phone locks or the app restarts. Locking whenever you leave is the default.
+- Screenshots and screen recording are blocked by default, and app content is hidden from the recent-apps preview.
 
-When a transaction is backdated, the application's validation rules are applied at that point in history and to subsequent affected dates.
+Temporary screenshot access can be enabled after authentication. It lasts three minutes, ends when you leave the app, does not persist after an app restart, and is not included in backups.
 
-## Backup and Restore
-
-The application's only import/export mechanism is its **backup-format file**.
-
-There is deliberately no:
-
-- CSV import
-- CSV export
-- Data merge
-- Other data-export mechanism
-
-### Backup
-
-A backup contains the application's persistent configuration and financial records, including:
-
-- Portfolios
-- Transactions
-- Reversal relationships
-- Cash entries
-- Hidden holdings
-- Sector overrides
-- Geography overrides
-- Sector and geography lists
-- Application settings
-
-Derived data such as lots, holdings, trade cash lines, and prices is not stored directly. It is rebuilt by replaying the source records.
-
-The backup file does not contain the device's PIN or biometric credentials.
-
-Prices are also not stored in the backup.
-
-### Restore
-
-Restoring a backup is an **application initialization operation**.
-
-It:
-
-1. Validates the complete backup file.
-2. Reports all validation errors if validation fails.
-3. Makes no changes when validation fails.
-4. Optionally prompts the user to create a backup of existing data.
-5. Deletes the existing application data.
-6. Loads the backup.
-7. Rebuilds derived state by replaying the records.
-
-The operation is all-or-nothing.
-
-If the application already contains data, replacing it requires explicit confirmation, including a typed confirmation.
-
-Held tickers must be verified online during restore.
-
-## Backup Reminder
-
-The application shows the date of the last completed backup.
-
-If no backup exists, or the most recent backup is more than seven days old, a reminder banner is shown on the Overall screen.
-
-The reminder:
-
-- Appears inside the application
-- Is not an Android system notification
-- Can be dismissed until the next application launch
-
-Only a successfully completed export counts as a backup.
-
-## Privacy and Security
-
-ATS Asset System is designed for private personal financial data.
-
-The application:
-
-- Stores data locally on the Android device
-- Uses biometric or PIN authentication
-- Locks automatically
-- Blocks screenshots by default
-- Blocks screen recording by default
-- Hides application content from the recent-apps preview
-
-### Auto-Lock
-
-Available lock policies include:
-
-- Lock whenever the app is left
-- Lock after 1 minute of inactivity
-- Lock after 5 minutes of inactivity
-- Lock only when the phone locks or the app restarts
-
-The strictest option is the default.
-
-### Temporary Screenshot Access
-
-A screenshot window can be enabled after biometric or device-PIN authentication.
-
-The window:
-
-- Lasts for three minutes
-- Ends when the user leaves the application
-- Does not survive an application restart
-- Does not appear in the backup file
-- Does not expose content in the recent-apps preview
-
-## First Launch
-
-When no financial data exists, the application provides a guided setup flow.
-
-The initial sequence is:
-
-1. Confirm the application lock.
-2. Set the opening cash balance.
-3. Create a portfolio.
-4. Enter an initial purchase.
-
-Backup-file initialization is available separately from the **More** section.
-
-## Offline Operation
-
-The application is designed to work without an internet connection.
-
-Offline operation supports:
-
-- Viewing existing financial data
-- Viewing the last known market prices
-- Working with locally stored transactions
-
-Internet access is required for operations such as:
-
-- Refreshing market prices
-- Verifying previously unknown tickers
-- Restoring a backup file
-
-## Data Model Principles
-
-The application intentionally separates **source records** from derived financial state.
-
-The durable source of truth consists primarily of:
-
-- Transactions
-- Cash entries
-- Portfolio definitions
-- Configuration
-- Manual classification overrides
-
-From these records the application can rebuild:
-
-- Holdings
-- Lots
-- Trade cash movements
-- Current balances
-- Gains
-- Allocation
-
-This approach allows the application's state to be reconstructed consistently after backup restoration.
-
-## Current Scope
-
-### Included
-
-- Android phone
-- Single user
-- Local data storage
-- PIN/biometric protection
-- Offline operation
-- USD
-- US stocks and ETFs
-- Multiple portfolios
-- Shared cash account
-- Manual transaction entry
-- Buys and sells
-- Forward and reverse stock splits
-- Fractional shares
-- Specific-lot accounting
-- Net worth
-- Allocation
-- Realized gains
-- Unrealized gains
-- Automatic price updates
-- Backup and restore
-- Privacy protections
-- Backup reminders
-
-### Not Included
-
-The following are intentionally outside the current scope:
-
-- Liabilities
-- Loans
-- Mortgages
-- Credit cards
-- Crypto
-- Property
-- Vehicles
-- Mutual funds
-- Bank synchronization
-- Broker synchronization
-- CSV import/export
-- Data merging
-- Manual price entry
-- Tax reporting
-- Tax-lot reporting
-- Wash-sale calculations
-- Separate per-holding dividend tracking
-- Separate fee tracking
-- Multi-currency support
-- Currency conversion
-- Android system notifications
-- Play Store distribution
-- Multi-user accounts
-- Data sharing
-
-## Planned Features
-
-The following capabilities are planned for later versions:
-
-### Historical Performance
-
-Historical net-worth and portfolio values will be reconstructed from:
-
-- Recorded transactions
-- Historical market prices
-
-No periodic snapshots are required.
-
-Performance is intended to show changes in total value over time, although it will not independently isolate investment returns from deposits and withdrawals.
-
-### Per-Holding Dividends
-
-Future versions may allow a dividend entry to optionally identify:
-
-- Ticker
-- Portfolio
-
-The first version treats dividends as cash-only entries.
-
-### ETF Look-Through
-
-Future versions may break ETF allocation into the sectors and geographies represented by the ETF.
-
-The first version assigns one sector and one geography to each holding.
-
-## Design Principles
-
-ATS Asset System is built around several core principles:
-
-- **Local first** — financial data lives on the device.
-- **Offline first** — the application remains useful without connectivity.
-- **Explicit transactions** — investment activity is represented as individual events.
-- **Specific lots** — realized and unrealized gains are based on actual lots.
-- **Reconstructable state** — derived data can be rebuilt from durable records.
-- **Fail safely** — invalid restores and blocked financial operations do not partially modify data.
-- **Privacy by default** — sensitive financial information is hidden from screenshots and recent-app previews.
-- **Minimal external dependencies** — market data uses free sources and is treated as best-effort.
-- **Single-user simplicity** — the application is optimized for personal use rather than multi-user workflows.
-
-## Status
-
-ATS Asset System is a personal, Android-focused financial asset tracking application.
-
-The first milestone is considered complete when:
-
-- Real financial data can be represented
-- Net worth is calculated correctly
-- Allocation is displayed correctly
-- Transactions update holdings and cash correctly
-- Lot-based gains are calculated correctly
-- Updates are fast enough for normal use
-- Backup and restore work end-to-end
+This version is for one user on an Android phone. It supports USD cash and US stocks and ETFs. It does not support liabilities, loans, credit cards, crypto, property, vehicles, mutual funds, bank or broker synchronization, multi-currency accounts, tax reporting, or data sharing. Historical performance and per-holding dividends are not currently available.
 
 ## License
 
