@@ -65,7 +65,7 @@ Single-user Android app (sideloaded). Local-only data. Tracks one shared cash ac
 - A cash entry is never 0. In a file the amount is signed: positive for a deposit, interest/dividend and opening balance, negative for a withdrawal, either sign for an adjustment.
 
 ### 4.3 Buys
-- Input: ticker, date, quantity, total amount. Quick review screen before saving.
+- Input: ticker, date, quantity (up to 8 decimals), total amount. Quick review screen before saving.
 - The total amount (fees included) must be more than 0. Zero is allowed on sells only (4.4).
 - Blocked if total exceeds cash (checked per 4.1).
 - Blocked if the ticker has never been verified and the phone is offline. When online, the ticker is checked before saving, and a ticker that does not exist is blocked. The check also blocks a ticker that the source says is a mutual fund, reports an exchange that is not a US national securities exchange registered with the SEC, or is not quoted in USD (intent scope). The exchange names and their aliases are kept in plan.md, and a name is matched ignoring case and spaces as in 4.9. Intent names NYSE and NASDAQ; the spec reads them as examples of US exchanges. If the source does not say, the ticker is accepted. The message names the reason. The entry flow (K5) enforces this using the verified flag that the price service (K4) maintains. The check uses the price source selected at that moment (D6). The rules engine (K1) does not know about the network.
@@ -73,7 +73,7 @@ Single-user Android app (sideloaded). Local-only data. Tracks one shared cash ac
 - A buy dated before a recorded split: quantity entered as originally traded, later splits applied automatically.
 
 ### 4.4 Sells
-- Input: ticker, date, quantity, total amount (zero allowed), and lot picks. Quick review screen before saving.
+- Input: ticker, date, quantity (up to 8 decimals), total amount (zero allowed), and lot picks. Quick review screen before saving.
 - Lot rules: same portfolio only; lot bought on or before the sell date; same-date lot must have been entered earlier. Each lot pick has its own quantity, prefilled with the lot's remaining quantity.
 - The lot picker lists each lot of that ticker in the portfolio that still has shares, with: purchase date, quantity remaining, cost per share, and the lot's unrealized gain/loss. Quantity and cost per share include splits recorded so far. Unrealized gain/loss = remaining quantity × latest price − remaining cost of that lot (4.8). If the price is stale it carries the stale marker. If the holding has no price at all, the lot shows "no price" instead of a gain/loss. A lot that fails the lot rules for the sell date you entered is shown greyed out with the reason (for example "bought after the sell date") and cannot be picked. Changing the date updates the list. Lots are listed oldest first by purchase date (lots bought on the same date in the order they were entered), and greyed-out lots keep their place in that order.
 - The picked quantities must add up to the sell quantity. "Sell all" fills the exact remaining quantity.
@@ -105,7 +105,7 @@ Single-user Android app (sideloaded). Local-only data. Tracks one shared cash ac
   - The pair check: the replay in 4.1 runs once with both entries applied, so the pair is checked as a unit. A block that comes from the original itself still applies (a buy whose shares were sold cannot be reversed, Example D).
   - The reversal follows the date, amount and split rules above. The new entry starts with the original's values, including its date, gets the next entry order after the reversal, and is a normal entry under 4.3, 4.4 or 4.5, including the ticker check (K5).
   - For a sell, the lot picks start from the original picks. The new sell must still pass the lot rules (4.4).
-  - Not offered on the opening balance, on a reversal entry, or on a `trade` cash line (start from the buy or sell).
+  - Not offered on the opening balance, on a reversal entry, on an entry that already has a reversal, or on a `trade` cash line (start from the buy or sell).
   - It saves typing, not rules: a mistake buried under later dependent transactions is still blocked until those are reversed.
 
 ### 4.7 Portfolios
@@ -117,7 +117,7 @@ Single-user Android app (sideloaded). Local-only data. Tracks one shared cash ac
 - This is the only exception to permanent transactions. The way back is a backup restore.
 
 ### 4.8 Calculations
-- Net worth = cash balance + sum over open holdings of (shares × latest price).
+- Net worth = cash balance + sum over open holdings (holdings with shares) of (shares × latest price, or cost where there is no price, see the last bullet).
 - Cost of holding = sum of remaining lot cost. Unrealized gain/loss = market value − cost.
 - Allocation has two levels. **Net worth level** (Net Worth (Total), view 2): shares of net worth, by asset type (cash, stocks, ETFs), portfolio, holding (C12) and sector/geography. Cash is its own slice named "Cash" in every breakdown and never counts as "Unclassified". **Portfolio level** (Allocation, view 4): one portfolio at a time, as shares of that portfolio's value, by asset type (stocks, ETFs), holding and sector/geography. It has no cash and no breakdown by portfolio.
 - Portfolio value = sum over that portfolio's open holdings of (shares × latest price), or cost where there is no price (below). It is not a net worth: cash is one shared account and is not split by portfolio. Net worth = cash + the sum of all portfolio values. A holding with 0 shares has no slice.
@@ -200,7 +200,7 @@ Plus entry flows: buy, sell (lot picker), split, cash entry, backup/restore (res
 - **Portfolios** (3): the list of portfolios, in the order they were created. Tapping one shows its portfolio value, cost and gain/loss (4.8) and its holdings. A holding opens Holding detail (6). From a portfolio you reach its Allocation (4), its Transaction history (8) and its Hidden holdings (9). Portfolio create, rename and delete (4.7) are here.
 - **Cash** (7): the cash account, with its entries and date-range filter. A `trade` line opens the linked transaction (section 6, item 7). Cash entry (deposit, withdrawal, interest/dividend, adjustment) starts here.
 - **More:** a line "Last backup: <date> <zone>" (the zone abbreviation, C15) or "never backed up", Allocation (4, opens on the first portfolio), Realized gains (5), Backup/restore, Settings (auto-lock, price source, tab order, sector and geography lists, screenshot window). Net Worth (Total) (2) is also reachable here.
-- **Buy/Sell button:** Overall, Portfolios and Cash show a Buy/Sell button that opens a short menu: Buy, Sell. Holding detail also offers Buy and Sell with the ticker already filled in, and starts a split. A reversal, and Reverse and re-enter, start from the transaction or cash entry they apply to (4.6). With no portfolio, Buy says "Create a portfolio first" with a button, and after the portfolio is created the app returns to the Buy entry. Sell says "Nothing to sell yet", with no button.
+- **Buy/Sell button:** Overall, Portfolios and Cash show a Buy/Sell button that opens a short menu: Buy, Sell. Holding detail also offers Buy and Sell with the ticker already filled in, and starts a split. A reversal, and Reverse and re-enter, start from the transaction or cash entry they apply to (4.6). Before the opening balance exists, Buy says "Set the opening balance first" (4.2). Once it exists, with no portfolio, Buy says "Create a portfolio first" with a button, and after the portfolio is created the app returns to the Buy entry. Sell says "Nothing to sell yet", with no button.
 - Android's back button returns to the previous screen. Auto-lock (section 9) can cover any screen.
 
 Date fields: every screen that asks for a date shows the note "Enter date in US market time (New York)" next to the input. This covers buy, sell, split and cash entry, the reversal date, and the date-range filters in the cash account, transaction history and realized gains. The restore screen shows the same note next to its date format help (section 8). Dates that are only shown (lists, detail screens, review screens, restore summary) carry no note. They show the time zone suffix "ET" after the date, for example "2026-03-01 ET". The one exception is the last-backup date, which shows the device's time zone abbreviation, for example "2026-10-04 JST" (C15).
