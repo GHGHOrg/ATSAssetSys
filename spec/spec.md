@@ -21,7 +21,7 @@ Single-user Android app (sideloaded). Local-only data. Tracks one shared cash ac
 | C9 | Medium | **Split handling is manual.** A forgotten split silently distorts holdings, cost per share and gains. | No automation (per intent). The holding detail shows the split history so omissions are easy to spot. No price-based warning is needed. | Approved |
 | C10 | Low | **Realized gains can differ from broker/tax figures** (wash sales not modelled). | Label realized gains "informational" in the UI. Decision: No label is added. | Closed, not a concern |
 | C11 | Low | **"Performance" moves with deposits/withdrawals**, so it is not investment return. | Label it "Total value change" in the later version. | Approved |
-| C12 | Low | **"Allocation by holding" is ambiguous across portfolios.** | Per-portfolio view: one slice per holding in that portfolio. Combined view: same ticker in several portfolios is merged into one slice. | Approved |
+| C12 | Low | **"Allocation by holding" is ambiguous across portfolios.** | Allocation screen (one portfolio): one slice per holding in that portfolio. Net Worth screen (all portfolios): same ticker in several portfolios is merged into one slice. | Approved |
 | C13 | Low | **Dates and time zones.** You are in Tokyo, markets are in New York. | Entries carry a calendar date only, no time. All dates (buy, sell, split and cash entries) use the US market time zone (New York), not the device's. The app does no time zone conversion: the date is stored as picked. The date field defaults to today's date in New York. Entry order is the tie-breaker within a day. | Approved |
 | C14 | Low | **Sector/geography for ETFs** is often missing from free sources **[UNVERIFIED]**. | Manual override per holding. Unclassified holdings show as "Unclassified". | Approved |
 | C15 | Low | **The last-backup date has a time zone.** It is when you exported, not a market date, so the "ET" rule for market dates (C13) does not fit it, and the 7-day check must not depend on a time zone. | The app stores the exact moment of export. The 7-day check uses elapsed time. The shown date is that moment in the device's time zone, followed by the zone's abbreviation (for example "JST" in Tokyo). It is the only shown date not in New York time. The zone is the device's current one when the date is shown, and no zone is stored, so after travelling the same backup can show a different date and abbreviation. **[UNVERIFIED]** Some zones have no short name on Android and show an offset instead; the app shows what the platform gives. Check on the phone. | Approved |
@@ -119,7 +119,8 @@ Single-user Android app (sideloaded). Local-only data. Tracks one shared cash ac
 ### 4.8 Calculations
 - Net worth = cash balance + sum over open holdings of (shares × latest price).
 - Cost of holding = sum of remaining lot cost. Unrealized gain/loss = market value − cost.
-- Allocation: by asset type (cash, stocks, ETFs), portfolio, holding (C12), sector/geography. Combined and per portfolio.
+- Allocation has two levels. **Net worth level** (Net Worth (Total), view 2): shares of net worth, by asset type (cash, stocks, ETFs), portfolio, holding (C12) and sector/geography. Cash is its own slice named "Cash" in every breakdown and never counts as "Unclassified". **Portfolio level** (Allocation, view 4): one portfolio at a time, as shares of that portfolio's value, by asset type (stocks, ETFs), holding and sector/geography. It has no cash and no breakdown by portfolio.
+- Portfolio value = sum over that portfolio's open holdings of (shares × latest price), or cost where there is no price (below). It is not a net worth: cash is one shared account and is not split by portfolio. Net worth = cash + the sum of all portfolio values. A holding with 0 shares has no slice.
 - A price without a fresh quote uses the last known price and is marked stale. If no price has ever been fetched, that holding is valued at cost and flagged "no price".
 
 ### 4.9 Sector and geography
@@ -176,10 +177,10 @@ Result: three records stay (the original buy, the reversal, the new buy). The fi
 
 ## 6. Views (first version)
 Layout and navigation are decided by the screens listed below and the navigation outline after them.
-1. **Overall**: net worth + allocation summary; net worth + each portfolio with gain/loss. Also the backup reminder banner when due (section 9) and, when the app holds no data, the guided empty state (below).
-2. **Net Worth (Total)**
+1. **Overall**: net worth + allocation summary (net worth by asset type: cash, stocks, ETFs); net worth + each portfolio with gain/loss. Also the backup reminder banner when due (section 9) and, when the app holds no data, the guided empty state (below).
+2. **Net Worth (Total)**: net worth, its composition (cash and each portfolio's value, 4.8), and its allocation by asset type, portfolio, holding and sector/geography, with cash as its own slice (4.8).
 3. **Portfolios and holdings**
-4. **Allocation** (asset type, portfolio, holding, sector/geography)
+4. **Allocation** (one portfolio at a time, chosen at the top): that portfolio's value and its allocation by asset type (stocks, ETFs), holding and sector/geography, as shares of the portfolio value (4.8). No cash and no breakdown by portfolio; those are on Net Worth (Total) (2). It opens on the portfolio you came from, or on the first portfolio when opened from More. With no portfolio it says "No portfolios yet" with a Create a portfolio button.
 5. **Realized gains** (per sale, per holding, total), filterable by date range (the sale date). Informational only. A sale cancelled by a reversal (4.6) is left out of the figures whatever the range; transaction history still shows both entries.
 6. **Holding detail**: lots, cost, gain/loss, split history, its transactions, and sector and geography with the manual override (4.9). A Hide button appears only when the holding has 0 shares (4.4).
 7. **Cash account**: balance, entries incl. trade lines, date-range filter. Each `trade` line shows buy or sell, ticker and portfolio name besides date and amount. Tapping it opens the linked transaction (with its lots and any reversal link).
@@ -191,14 +192,14 @@ Plus entry flows: buy, sell (lot picker), split, cash entry, backup/restore (res
 **First launch and empty state.**
 - After the lock is confirmed (biometric or phone PIN, section 9), if the app holds no data (section 3), Overall shows three steps instead of zeros: set the opening balance, create a portfolio, enter a buy. Each step opens its entry flow. Until the opening balance exists, Create a portfolio, Buy and every other cash entry say "Set the opening balance first", with a button that opens it (4.2).
 - Restore is offered only in More, not here.
-- The guide ends as soon as the app holds data, and Overall then shows the normal screens. With cash but no portfolio (also after deleting every portfolio, 4.7), net worth equals the cash balance, the allocation shows 100% cash, and the portfolio section says "No portfolios yet" with a Create a portfolio button.
+- The guide ends as soon as the app holds data, and Overall then shows the normal screens. With cash but no portfolio (also after deleting every portfolio, 4.7), net worth equals the cash balance, the allocation on Overall and Net Worth (Total) shows 100% cash, and the portfolio section says "No portfolios yet" with a Create a portfolio button.
 
 **Navigation outline.**
 - After unlock, the app opens on the Overall tab (view 1). A bottom bar with four tabs is always visible. The default order, left to right, is: More, Cash, Portfolios, Overall. You can reorder the tabs in settings.
-- **Overall** (1): tap the net worth figure for Net Worth (Total) (2); tap the allocation summary for Allocation (4); tap a portfolio for its holdings (3). The backup reminder banner is shown here; its button starts a backup export.
-- **Portfolios** (3): the list of portfolios, in the order they were created. Tapping one shows its holdings. A holding opens Holding detail (6). From a portfolio you reach its Transaction history (8) and its Hidden holdings (9). Portfolio create, rename and delete (4.7) are here.
+- **Overall** (1): tap the net worth figure or the allocation summary for Net Worth (Total) (2); tap a portfolio for its holdings (3). The backup reminder banner is shown here; its button starts a backup export.
+- **Portfolios** (3): the list of portfolios, in the order they were created. Tapping one shows its portfolio value, cost and gain/loss (4.8) and its holdings. A holding opens Holding detail (6). From a portfolio you reach its Allocation (4), its Transaction history (8) and its Hidden holdings (9). Portfolio create, rename and delete (4.7) are here.
 - **Cash** (7): the cash account, with its entries and date-range filter. A `trade` line opens the linked transaction (section 6, item 7). Cash entry (deposit, withdrawal, interest/dividend, adjustment) starts here.
-- **More:** a line "Last backup: <date> <zone>" (the zone abbreviation, C15) or "never backed up", Allocation (4), Realized gains (5), Backup/restore, Settings (auto-lock, price source, tab order, sector and geography lists, screenshot window). Net Worth (Total) (2) is also reachable here.
+- **More:** a line "Last backup: <date> <zone>" (the zone abbreviation, C15) or "never backed up", Allocation (4, opens on the first portfolio), Realized gains (5), Backup/restore, Settings (auto-lock, price source, tab order, sector and geography lists, screenshot window). Net Worth (Total) (2) is also reachable here.
 - **Buy/Sell button:** Overall, Portfolios and Cash show a Buy/Sell button that opens a short menu: Buy, Sell. Holding detail also offers Buy and Sell with the ticker already filled in, and starts a split. A reversal, and Reverse and re-enter, start from the transaction or cash entry they apply to (4.6). With no portfolio, Buy says "Create a portfolio first" with a button, and after the portfolio is created the app returns to the Buy entry. Sell says "Nothing to sell yet", with no button.
 - Android's back button returns to the previous screen. Auto-lock (section 9) can cover any screen.
 
@@ -351,6 +352,9 @@ Planned for later versions: performance over time, per-holding dividends (a divi
 29. The cash account list filters by date range, with the date note of section 6. Trade lines show buy or sell, ticker and portfolio name, and open the linked transaction.
 30. A buy or sell shows a review screen before it is saved. Nothing is saved until you confirm on it.
 31. A quantity with up to 8 decimals is accepted in a buy or sell. A ninth decimal is refused.
+32. Net Worth (Total) shows net worth, its composition (cash and each portfolio's value) and the net worth allocation by asset type, portfolio, holding and sector/geography. Cash is its own "Cash" slice and is never "Unclassified". Each breakdown adds up to 100%. The same ticker held in two portfolios is one slice. For Example A at an AAPL price of $160, net worth is $10,880 (cash $9,600 plus $1,280), and the asset-type allocation is about 88.2% cash and 11.8% stocks.
+33. Allocation shows one portfolio at a time, chosen at the top, with that portfolio's value as the base: by asset type (stocks, ETFs), holding and sector/geography, with no cash and no breakdown by portfolio. It opens on the portfolio you came from, or on the first portfolio when opened from More. With no portfolio it says "No portfolios yet" with a Create a portfolio button. For Example A at $160, the portfolio value is $1,280 and AAPL is 100%.
+34. A portfolio's screen shows its portfolio value, cost and gain/loss and a way to open its Allocation. For Example A at $160: value $1,280, cost $1,200, gain/loss $80. Portfolio values plus cash equal the net worth on Net Worth (Total).
 
 ## 12. Proposed slices (input to plan.md)
 1. Data model (including classification fields, lists and remembered texts), cash account, rules engine with tests (Examples A to G).
