@@ -1,6 +1,6 @@
 spec-split.txt
 Stage: Design. Status: PROPOSAL ONLY. spec.md has NOT been split.
-Applies to: spec/spec.md (draft v3, 388 lines, 14 sections)
+Applies to: spec/spec.md (draft v4, 396 lines, 14 sections)
 Last updated against: spec.md with sections 1 to 14, after the CSV format (section 8) was
 approved and Example B was rewritten, and after Example F and the 4.6 rule for splits
 between an original and its reversal were added (finding 3), and after the Status column
@@ -37,27 +37,31 @@ spec/template-backup.csv) and view 9 was renamed Hidden holdings, with the resto
 counts defined (sections 6 and 8, criterion 25), and
 Example G (Reverse and re-enter) was added to section 5 and "Examples A to F" became
 "Examples A to G" in criterion 2, slice 1 and dependency rule 3, and
-the spec version was raised from v1 to v2 and then to v3.
+the Hide and Unhide rule was added (views 6 and 9, 4.4, criterion 27), and
+the ticker type check was added (mutual fund, exchange, currency; 4.3, 7, 8, criterion 15), and
+the opening balance rule was made strict (4.2, sections 3, 6 and 8, criteria 16 and 19), and
+the slice columns of K1, K2, K9 and K10 were corrected (section 14), and
+the wording of the banner and the empty-state steps was deferred to Build (D9, section 13), and
+criteria 28 to 31 were added (portfolio deletion, cash date filter, review screen, 8 decimals; section 11), and
+the spec version was raised from v1 to v2, then to v3, and then to v4 after the findings batch.
 
 DECISION MADE
 Option 1: keep working on a single spec.md until the user says "final".
 Then decide whether to split, using the approach below.
 
 WHY NOT SPLIT NOW
-- Design is not finished. Groups 1 and 2 of the v52 rework are applied, and group 3 is
-  partly applied (items 1 to 9 and D5 to D8: header, version, naming note, Holding
-  wording, statuses, markers, all four design points, the sample files). Still open in
-  group 3: the checks (items 16 to 19). After that, the user's approval of spec.md as a
-  whole remains.
+- Design is not finished. The v52 rework (groups 1 to 3) and the consistency-check
+  findings (1 to 7) are applied. What remains is the user's approval of spec.md as a
+  whole ("final").
 - One file means one approval gate (Ruleset A: approve spec.md before Build).
-- The file (388 lines) is small enough to review in one sitting. Context-window fit has
+- The file (396 lines) is small enough to review in one sitting. Context-window fit has
   not been measured.
 
 PROPOSED SPLIT (apply only after "final", and only if still worth it)
 
   spec.md (short index, the file the user approves)
     Section 1  Summary
-    Section 2  Concerns and conflicts (C1-C15; C6 is withdrawn, its ID stays)
+    Section 2  Concerns and conflicts (C1-C16; C6 is withdrawn, its ID stays)
     Section 10 Out of scope
     Section 11 Acceptance criteria
     Section 12 Proposed slices
@@ -73,8 +77,8 @@ PROPOSED SPLIT (apply only after "final", and only if still worth it)
     Section 5  Worked examples (A to G)
 
   spec/backup-restore.md
-    Section 8  Backup file and restore (file contents, restore steps, known limits;
-               the file format will be added under D5)
+    Section 8  Backup file and restore (file contents, file format, restore steps,
+               rejection reasons, known limits)
 
   spec/views.md
     Section 6  Views
@@ -88,7 +92,7 @@ PROPOSED SPLIT (apply only after "final", and only if still worth it)
 SPLIT RULES
 1. Never separate sections 3, 4 and 5. Deletion (4.7) depends on 4.1, 4.2 and C5, and
    the examples test those rules. Reversals (4.6) also depend on 4.1 and Example D.
-2. Keep the concerns table (C1-C15) in the index. Other files cite concerns by ID
+2. Keep the concerns table (C1-C16) in the index. Other files cite concerns by ID
    (for example "see C7") and rule numbers (for example "see 4.1").
 3. Move text without changing it. Replace each moved section in the index with a
    pointer. Any content change is a separate, visible edit.
@@ -127,12 +131,12 @@ AFTER A SPLIT
   4.6, 4.7 and Example E").
 
 KNOWN LIMITS
-- Current section sizes in lines (measured with wc and awk, spec.md = 388 lines):
-  index sections 1, 2, 10 to 14 = 97 lines (102 with the 5 header lines before section 1);
-  domain-rules (3 to 5) = 145 lines; views (6) 32; prices (7) 13; backup-restore (8) 83;
+- Current section sizes in lines (measured with wc and awk, spec.md = 396 lines):
+  index sections 1, 2, 10 to 14 = 103 lines (108 with the 5 header lines before section 1);
+  domain-rules (3 to 5) = 147 lines; views (6) 32; prices (7) 13; backup-restore (8) 83;
   backup-security (9) 13. Each count runs from a section's heading to the line before the
   next heading, so it includes the blank line. These are line counts, not context tokens.
-- Group 3 of the rework will change these sizes. They are recomputed after it.
+- The sizes above were recomputed after the findings batch (draft v4).
 - Section 9 grew from 7 to 13 lines (lock, privacy, screenshot window, last backup,
   reminder), so it holds more than backup and security now. Its file name may need to
   change if it is split out.

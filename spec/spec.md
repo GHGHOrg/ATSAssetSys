@@ -1,4 +1,4 @@
-# spec.md (DRAFT v3, awaiting approval)
+# spec.md (DRAFT v4, awaiting approval)
 
 Source: intent/intent.md v52 (final). Stage: Design.
 Nothing in this file has been built, run or verified against real data. Items marked **[UNVERIFIED]** rest on my memory or assumptions, not on checks done in this session.
@@ -39,7 +39,7 @@ Single-user Android app (sideloaded). Local-only data. Tracks one shared cash ac
 - **Holding classification**: optional manual `sector` and `geography` override on a holding (a ticker within a portfolio), each a value from the matching list. Effective value = override, else the source value (via the list, 4.9), else "Unclassified".
 - **Lists**: a sector list and a geography list. Each value has a name and may carry remembered source texts (the source's original text from before a rename, 4.9).
 - **Settings**: auto-lock, price source, tab order, and the two lists with their remembered source texts. Not settings: the screenshot window (never saved, section 9) and the last-backup moment (app state, set only by a completed export).
-- **"App holds data"** means at least one portfolio or cash entry exists. Settings and lists alone do not count. Used by the backup reminder (section 9), the typed confirmation on restore (section 8) and the guided empty state (section 6). Intent says "if the app holds data" without defining it, so this is the spec's definition. Consequence: restoring onto an app that holds only changed settings (no portfolio, no cash entry) needs no typed confirmation.
+- **"App holds data"** means at least one portfolio or cash entry exists. Settings and lists alone do not count. Because the opening balance comes first (4.2), this is the same as the opening balance existing. Used by the backup reminder (section 9), the typed confirmation on restore (section 8) and the guided empty state (section 6). Intent says "if the app holds data" without defining it, so this is the spec's definition. Consequence: restoring onto an app that holds only changed settings (no portfolio, no cash entry) needs no typed confirmation.
 - **Transaction** (per portfolio): `id`, `date`, `entered_seq`, `type` in {buy, sell, split}, ticker.
   - Buy/sell: `quantity` (up to 8 decimals), `total_amount` (fees included, derived price per share = total / quantity).
   - Split: ratio (e.g. 2:1, 1:10), fractional shares allowed.
@@ -59,7 +59,7 @@ Single-user Android app (sideloaded). Local-only data. Tracks one shared cash ac
 ### 4.2 Cash
 - Buy: cash out on the trade date, by the total amount. Sell: cash in on the trade date.
 - Withdrawal larger than the balance on that date or any later date is blocked.
-- Exactly one opening balance. It must be the earliest cash entry. It is never reversed or replaced.
+- The opening balance is the first thing entered. Until it exists, the app accepts no other cash entry, portfolio or transaction. After that there is exactly one: it must be the earliest cash entry, and it is never reversed or replaced. A restore file must contain it (section 8).
 - A cash difference vs reality is fixed with an adjustment deposit/withdrawal with a note.
 - Amounts have at most 2 decimals, in entry screens and in files. Quantities have up to 8 decimals (4.3).
 - A cash entry is never 0. In a file the amount is signed: positive for a deposit, interest/dividend and opening balance, negative for a withdrawal, either sign for an adjustment.
@@ -68,7 +68,7 @@ Single-user Android app (sideloaded). Local-only data. Tracks one shared cash ac
 - Input: ticker, date, quantity, total amount. Quick review screen before saving.
 - The total amount (fees included) must be more than 0. Zero is allowed on sells only (4.4).
 - Blocked if total exceeds cash (checked per 4.1).
-- Blocked if the ticker has never been verified and the phone is offline. When online, the ticker is checked before saving, and a ticker that does not exist is blocked. The entry flow (K5) enforces this using the verified flag that the price service (K4) maintains. The check uses the price source selected at that moment (D6). The rules engine (K1) does not know about the network.
+- Blocked if the ticker has never been verified and the phone is offline. When online, the ticker is checked before saving, and a ticker that does not exist is blocked. The check also blocks a ticker that the source says is a mutual fund, is not listed on NYSE or NASDAQ, or is not quoted in USD (intent scope). If the source does not say, the ticker is accepted. The message names the reason. The entry flow (K5) enforces this using the verified flag that the price service (K4) maintains. The check uses the price source selected at that moment (D6). The rules engine (K1) does not know about the network.
 - No check against market price.
 - A buy dated before a recorded split: quantity entered as originally traded, later splits applied automatically.
 
@@ -80,7 +80,9 @@ Single-user Android app (sideloaded). Local-only data. Tracks one shared cash ac
 - Selling more than the portfolio holds is blocked.
 - Realized gain per lot piece = proceeds share minus cost share. Proceeds are split across lots in proportion to quantity.
 - A total loss is a sell with zero proceeds (realized loss = cost of the lots consumed).
-- A holding with zero shares stays visible until you hide it. Only fully sold holdings can be hidden. A new buy of a hidden ticker unhides it.
+- A holding with zero shares stays visible until you hide it. Only fully sold holdings can be hidden.
+- Hide is a button on Holding detail, offered only at 0 shares, with no confirmation (Unhide undoes it). Unhide is a button in Hidden holdings (view 9). A hidden holding is left out of the normal holdings list and shows only in view 9. A new buy of a hidden ticker unhides it.
+- Hiding is not a transaction and has no cash effect. The hidden flag is stored on the holding and is part of the backup file (section 8, `hidden` row).
 
 ### 4.5 Splits
 - Entered by hand: date, ticker, ratio. Applies to all lots of that ticker in that portfolio held on that date. Total cost per lot is unchanged.
@@ -179,15 +181,15 @@ Layout and navigation are decided by the screens listed below and the navigation
 3. **Portfolios and holdings**
 4. **Allocation** (asset type, portfolio, holding, sector/geography)
 5. **Realized gains** (per sale, per holding, total), filterable by date range (the sale date). Informational only. A sale cancelled by a reversal (4.6) is left out of the figures whatever the range; transaction history still shows both entries.
-6. **Holding detail**: lots, cost, gain/loss, split history, its transactions, and sector and geography with the manual override (4.9)
+6. **Holding detail**: lots, cost, gain/loss, split history, its transactions, and sector and geography with the manual override (4.9). A Hide button appears only when the holding has 0 shares (4.4).
 7. **Cash account**: balance, entries incl. trade lines, date-range filter. Each `trade` line shows buy or sell, ticker and portfolio name besides date and amount. Tapping it opens the linked transaction (with its lots and any reversal link).
 8. **Transaction history** (per portfolio only): filters ticker, date range, type (buy, sell, split, cash). Cash means the cash lines of that portfolio's trades; direct cash entries are viewed in the cash account. Each buy or sell shows its cash effect and can open its cash line. A reversal links to the original, and its cash line points to the reversal, so the full chain is traceable.
-9. **Hidden holdings**: the holdings you have hidden (only a fully sold holding can be hidden, 4.4). A fully sold holding that is not hidden stays in the normal holdings list. A holding can be unhidden from here.
+9. **Hidden holdings**: the holdings you have hidden (only a fully sold holding can be hidden, 4.4). A fully sold holding that is not hidden stays in the normal holdings list. Hidden holdings do not appear in the normal holdings list. Each one has an Unhide button here, with no confirmation.
 
 Plus entry flows: buy, sell (lot picker), split, cash entry, backup/restore (restore needs internet), settings (auto-lock, price source, tab order, sector and geography lists, screenshot window).
 
 **First launch and empty state.**
-- After the lock is confirmed (biometric or phone PIN, section 9), if the app holds no data (section 3), Overall shows three steps instead of zeros: set the opening balance, create a portfolio, enter a buy. Each step opens its entry flow.
+- After the lock is confirmed (biometric or phone PIN, section 9), if the app holds no data (section 3), Overall shows three steps instead of zeros: set the opening balance, create a portfolio, enter a buy. Each step opens its entry flow. Until the opening balance exists, Create a portfolio, Buy and every other cash entry say "Set the opening balance first", with a button that opens it (4.2).
 - Restore is offered only in More, not here.
 - The guide ends as soon as the app holds data, and Overall then shows the normal screens. With cash but no portfolio (also after deleting every portfolio, 4.7), net worth equals the cash balance, the allocation shows 100% cash, and the portfolio section says "No portfolios yet" with a Create a portfolio button.
 
@@ -208,7 +210,7 @@ Targets: adding a buy or sell takes under 30 seconds, with lots shown ready to t
 - Automatic refresh when online, plus pull-to-refresh. Manual entry is for transactions only.
 - Each price shows its timestamp. Failure keeps the last price, marked stale.
 - Sending tickers to an outside source is accepted. Free tier only.
-- The price source is behind an interface so it can be replaced. **[UNVERIFIED]** Source, limits, whether it provides sector/geography and whether it tells a stock from an ETF are to be checked in the plan stage.
+- The price source is behind an interface so it can be replaced. **[UNVERIFIED]** Source, limits, whether it provides sector/geography and whether it tells a stock from an ETF, and whether it gives the instrument type (mutual fund or not), exchange and currency that the ticker check in 4.3 uses, are to be checked in the plan stage.
 - **Price source setting.** In settings you choose the price source from the sources the app ships with (the list is decided in plan.md). The app starts on a default source.
 - **Sweep on change.** After you confirm a change of source while online, the app runs a price sweep: it fetches the latest price for every instrument the app holds (hidden holdings included) from the new source, and updates all prices. Net worth, gains and allocation then show the new market values.
 - **Changing the source while offline is allowed.** The app shows a warning that prices were not refreshed, selects the new source, and skips the sweep. Prices stay as they are until the next refresh (automatic when online, or pull-to-refresh), which uses the new source.
@@ -246,8 +248,8 @@ Fixed by intent v52:
 | row_type | Columns it uses (the others stay empty) | Rules |
 |---|---|---|
 | `format` | `value` | See Format version. |
-| `portfolio` | `portfolio` | One row per portfolio. The file needs at least one `portfolio` or `cash` row. |
-| `cash` | `id` (optional), `date`, `cash_type`, `amount`, `note` | `cash_type`: `opening_balance`, `deposit`, `withdrawal`, `interest_dividend`, `adjustment` (case ignored); never `trade`. The note is required on an adjustment. At most one opening balance, and it is the earliest cash entry (4.2). Signs per 4.2. |
+| `portfolio` | `portfolio` | One row per portfolio. A file with no portfolio is allowed. |
+| `cash` | `id` (optional), `date`, `cash_type`, `amount`, `note` | `cash_type`: `opening_balance`, `deposit`, `withdrawal`, `interest_dividend`, `adjustment` (case ignored); never `trade`. The note is required on an adjustment. Exactly one opening balance row, and it is the earliest cash entry (4.2). Signs per 4.2. |
 | `buy` | `id` (optional), `portfolio`, `date`, `ticker`, `quantity`, `amount` | `amount` is the total, fees included, above 0. The `id` is the lot label; it is needed only if a sell picks the buy or a reversal points to it. |
 | `sell` | `id` (optional), `portfolio`, `date`, `ticker`, `quantity`, `amount`, `lot_picks` | `amount` may be 0. `lot_picks` is pieces of `id:quantity` separated by semicolons, for example `T1:10;T2:2.5`, with quantities as the lot picker shows them on the sell's date (4.4). They must add up to the sell quantity and pass the lot rules (4.4). |
 | `split` | `id` (optional), `portfolio`, `date`, `ticker`, `split_to`, `split_from` | Whole numbers above 0, not equal. A 2:1 split is 2 and 1; a 1:10 reverse split is 1 and 10. |
@@ -269,7 +271,7 @@ Fixed by intent v52:
 **Restore steps**
 1. Online only. Offline, the restore cannot be started (C8).
 2. The whole file is read and validated. Records are replayed in date order, then file order (4.1), each checked against 4.1 to 4.6 as if entered by hand. Every error is collected with its line and reason (C7). Nothing is deleted yet. A file-level failure (not UTF-8, header, version) stops here.
-3. Only if steps 1 and 2 found no errors, every ticker with shares left at the end of the file is verified through K4, using the price source selected before the restore, not the one named in the file (D6). One that cannot be verified blocks the restore. Sold-out tickers are not verified (C8). A first round of fixes can therefore be followed by a second round naming unverifiable tickers.
+3. Only if steps 1 and 2 found no errors, every ticker with shares left at the end of the file is verified through K4, using the price source selected before the restore, not the one named in the file (D6). Verified means the check of 4.3: the ticker exists and is not a mutual fund, not outside NYSE and NASDAQ, and not quoted in another currency. One that cannot be verified blocks the restore. Sold-out tickers are not verified (C8). A first round of fixes can therefore be followed by a second round naming unverifiable tickers.
 4. If any check fails, nothing changes and the report is shown, with a Copy report button (C16).
 5. A summary shows counts of portfolios, transactions and cash entries, now versus in the file. Transactions are buys, sells, splits and reversals of them. Cash entries are cash entries and reversals of them; the trade cash lines the app rebuilds are not counted, in the file or now. Also shown: the resulting cash balance and the number of holdings with shares, to compare with real life (an addition to intent v52, approved in Design).
 6. If the app holds data (section 3), it offers a backup export first, then requires a typed confirmation.
@@ -277,11 +279,11 @@ Fixed by intent v52:
 
 **Rejection reasons and the report**
 Every error is listed, with its line (the header is line 1, as Notepad shows it), its column when one applies, and the reason in plain words.
-- **File:** not valid UTF-8; no header; a missing, unknown or repeated column; a row with more or fewer cells than the header; a line break inside a cell; no `format` row first, or a version that is not a whole number or not known; no `portfolio` row and no `cash` row.
+- **File:** not valid UTF-8; no header; a missing, unknown or repeated column; a row with more or fewer cells than the header; a line break inside a cell; no `format` row first, or a version that is not a whole number or not known.
 - **Every row:** a missing or unknown `row_type`; a required value missing; a non-empty cell in a column the row type does not use.
 - **Dates and numbers:** a date not in `YYYY-MM-DD` or not a real date; a number in a form not allowed; a quantity of 0 or less or with more than 8 decimals; an amount with more than 2 decimals; a wrong sign; a zero cash amount; a buy with a zero total.
 - **Ids and portfolios:** a badly formed or duplicate id; an empty or duplicate portfolio name; a portfolio not found.
-- **Cash, tickers and splits:** an unknown cash type, or `trade`; an adjustment without a note; more than one opening balance, or one that is not the earliest cash entry; a ticker with bad characters; a held ticker that cannot be verified (D6); a split number that is not a whole number above 0, or two equal numbers.
+- **Cash, tickers and splits:** an unknown cash type, or `trade`; an adjustment without a note; no opening balance, more than one, or one that is not the earliest cash entry; a ticker with bad characters; a held ticker that cannot be verified or fails the type check of 4.3 (D6); a split number that is not a whole number above 0, or two equal numbers.
 - **Sells and picks:** missing or badly written picks; a pick of an id that is not found, not a buy, or in another portfolio; a lot bought after the sell date or entered after the sell on the same date; a pick of more than the lot holds; picks that do not add up to the sell quantity; picks on a row that is not a sell.
 - **Reversals:** the target is not found, is the opening balance or another reversal, is listed after the reversal, or is already reversed; the reversal is dated earlier than the original.
 - **State rows:** a hidden holding not found or with shares left; an override for a holding not found, with both values empty or with a value not on its list; a duplicate list value, remembered text, hidden row or override; an unknown list name; a remembered text pointing to a value not on the list; an unknown setting key or value, a key twice, or a tab order that is not each tab once.
@@ -332,11 +334,11 @@ Planned for later versions: performance over time, per-holding dividends (a divi
 12. Each holding shows its sector and geography. The source supplies them when it can, and you can override them by hand. A holding with neither shows "Unclassified". Allocation by sector/geography uses these values.
 13. Every view and entry flow in section 6 can be reached by the navigation outline. A buy or sell can be started from Overall in two taps (Buy/Sell button, then Buy or Sell). The tab order can be changed in settings.
 14. The sell lot picker lists the lots of the ticker in that portfolio, oldest first, each with purchase date, quantity remaining, cost per share and unrealized gain/loss. Lots that fail the lot rules for the entered sell date are greyed out with a reason and cannot be picked. For Example A, before the Mar 1 sale at a price of $160, the picker shows a gain of $600 for lot 1 and $100 for lot 2.
-15. A manual buy of a never-verified ticker is blocked while the phone is offline. Online, a ticker that does not exist is rejected, and a valid one is saved. The check uses the selected price source.
-16. A file with errors changes nothing. The report starts with "N errors in M lines" and lists every error with its line, its column when one applies, and the reason, covering every reason in section 8. A Copy report button copies that text; no other screen offers copy, share or export of data.
+15. A manual buy of a never-verified ticker is blocked while the phone is offline. Online, a ticker that does not exist is rejected, and so is one the source says is a mutual fund, is not on NYSE or NASDAQ, or is not quoted in USD, with the reason shown. A ticker whose type the source does not state is accepted, and a valid one is saved. The check uses the selected price source.
+16. A file with errors changes nothing. The report starts with "N errors in M lines" and lists every error with its line, its column when one applies, and the reason, covering every reason in section 8, including a file with no opening balance. A Copy report button copies that text; no other screen offers copy, share or export of data.
 17. Restoring onto an app that holds data shows the count summary, offers a backup export first and requires a typed confirmation.
 18. More shows "Last backup: <date> <zone>" or "never backed up". A completed export updates it, a cancelled or failed export does not. The Overall banner appears when the last backup is older than 7 days, or there is none and the app holds data. Dismissing it hides it until the app is next opened; the next return to the app shows it again while a backup is still due. Checked on the phone, because the abbreviation Android gives for some zones is unverified (C15). After a restore the banner shows, because the last-backup state is reset.
-19. With no data, after the lock is confirmed, Overall shows the three steps. Restore is offered only in More. Once a portfolio or cash entry exists, the normal screens replace the steps.
+19. With no data, after the lock is confirmed, Overall shows the three steps. Restore is offered only in More. Once a portfolio or cash entry exists, the normal screens replace the steps. Before the opening balance exists, creating a portfolio, a buy and any other cash entry are refused with "Set the opening balance first".
 20. By default, screenshots and recording are blocked and the recent-apps preview is hidden. The screenshot window needs a biometric or phone PIN check, lasts 3 minutes, ends early when you leave the app, is gone after a restart, and is not in the backup file. Checked by hand on the target phone, because the platform behaviour is unverified (section 9).
 21. Reverse and re-enter saves the reversal and the new entry together or neither. A blocked pair saves nothing and says why. It is not offered on the opening balance, a reversal, a `trade` line, or an entry that already has a reversal. For a buy with a wrong quantity, the result is the corrected buy only.
 22. Sector and geography: an override is picked from the list, and clearing it returns the source value or "Unclassified". A source text not on the list is added. Renaming a value updates the holdings and a refresh does not add the old text again. Deleting a value in use is blocked. Values and source texts that differ only in case or spaces count as the same.
@@ -344,6 +346,11 @@ Planned for later versions: performance over time, per-holding dividends (a divi
 24. With cash and no portfolio, Overall shows the normal screens with 100% cash and a Create a portfolio button. Buy says "Create a portfolio first" and returns to Buy after the portfolio is created. Sell says "Nothing to sell yet".
 25. spec/example-backup.csv restores with the results listed in spec/example-backup-expected.md (cash balance, holdings, lots, realized gain). The same file saved as CSV UTF-8 from Excel and re-saved from Notepad (with or without a byte-order mark, LF or CRLF) restores the same way.
 26. A portfolio name that matches an existing one (ignoring case and spaces) is refused on create and rename. An amount with more than 2 decimals is refused in the entry screens.
+27. Hide is offered on Holding detail only when the holding has 0 shares, and asks no confirmation. A hidden holding leaves the normal holdings list and appears in Hidden holdings, where Unhide returns it to the list. A new buy of a hidden ticker unhides it. After a backup and restore the same holdings are still hidden (sample file: OLDCO).
+28. Deleting a portfolio shows a summary (transaction count, trade cash lines, realized gains) and needs a typed confirmation. It removes the portfolio's transactions and their cash lines. For Example E, deletion is blocked with the message naming Feb 10 and the $200 shortfall, and succeeds after a deposit adjustment of at least $200 dated on or before Feb 10.
+29. The cash account list filters by date range, with the date note of section 6. Trade lines show buy or sell, ticker and portfolio name, and open the linked transaction.
+30. A buy or sell shows a review screen before it is saved. Nothing is saved until you confirm on it.
+31. A quantity with up to 8 decimals is accepted in a buy or sell. A ninth decimal is refused.
 
 ## 12. Proposed slices (input to plan.md)
 1. Data model (including classification fields, lists and remembered texts), cash account, rules engine with tests (Examples A to G).
@@ -362,6 +369,7 @@ Planned for later versions: performance over time, per-holding dividends (a divi
 - D6 RESOLVED: ticker verification uses the price source selected at that moment (4.3, sections 7 and 8). The restore uses the source selected before it, not the file's.
 - D7 RESOLVED: a source text is matched ignoring case and spaces (4.9).
 - D8 RESOLVED: with cash but no portfolio Overall keeps the normal screens; the Buy and Sell messages are in section 6.
+- D9 DEFERRED to Build: the wording of the backup banner, its button and the three guided-empty-state steps is decided in Build and shown to you for approval on the phone. The messages already quoted in this spec ("Create a portfolio first", "Nothing to sell yet", "Set the opening balance first", "No portfolios yet") stay as written. When, where and what each one does is fixed in sections 6 and 9.
 - Blocked-deletion message: RESOLVED. Wording in 4.7 and Example E approved.
 - Historical prices: deferred past v1 (section 7).
 
@@ -370,16 +378,16 @@ Added as section 14 so existing section numbers stay stable. Language, framework
 
 | # | Component | Responsibility | Spec refs | Slices |
 |---|-----------|----------------|-----------|--------|
-| K1 | **Rules engine** | Holds the ordering and replay checks (4.1), cash rules (4.2), lots and gains (4.4), splits (4.5), reversals (4.6) and the portfolio deletion check (4.7). Also validates a save of several entries as a unit (Reverse and re-enter, restore). Pure logic: no screens, no network. Answers "is this save allowed, and if not, which date and amount fail?" | 3, 4, 5 | 1, 2, 4 |
-| K2 | **Storage** | Keeps all records in app-private storage on the phone. A save and its linked cash line, and a Reverse and re-enter pair, are written together or not at all. A restore (delete and load) is also all or nothing. Loads data at start. | 3, 9 | 1 |
+| K1 | **Rules engine** | Holds the ordering and replay checks (4.1), cash rules (4.2), lots and gains (4.4), splits (4.5), reversals (4.6) and the portfolio deletion check (4.7). Also validates a save of several entries as a unit (Reverse and re-enter, restore). Pure logic: no screens, no network. Answers "is this save allowed, and if not, which date and amount fail?" | 3, 4, 5 | 1, 2, 4, 5 |
+| K2 | **Storage** | Keeps all records in app-private storage on the phone. A save and its linked cash line, and a Reverse and re-enter pair, are written together or not at all. A restore (delete and load) is also all or nothing. Loads data at start. | 3, 9 | 1, 2, 5 |
 | K3 | **Valuation and reporting** | Net worth, unrealized and realized gains (also for a date range), allocation (combined and per portfolio, sector/geography by effective value from K10). Reads records and prices; never writes them. | 4.8, 6 | 3, 6 |
 | K4 | **Price service** | Fetches latest prices through a replaceable source, verifies tickers, marks prices stale, supplies source sector/geography texts when the source has them and passes them to K10. Only updates instrument data, never transactions. Owns the selected-source setting and runs the sweep when it changes. K9 asks K4 to switch the source. Ticker verification uses the selected source. | 7, C1, C8, C14 | 3, 6 |
 | K5 | **Entry flows** | Buy, sell (with lot picker), split, cash entry, reversal, Reverse and re-enter and portfolio management. Shows the review screen, enforces the ticker check of 4.3 using K4's verified flag, then asks K1 to validate and save (the pair as a unit). | 4.3 to 4.7, 6 | 2, 4 |
 | K6 | **Backup and restore** | Exports one file and records the moment of each completed export. Supplies the reminder state (older than 7 days, or none and the app holds data). Restore refuses to start offline, validates the whole file by replaying it through K1 and collecting every error, verifies held tickers through K4, shows the summary, offers an export and requires typed confirmation when data exists, then deletes and loads in one action. Shows the error report with its Copy report button (C16) and resets the last-backup state after a restore. | 8, 9, C3, C7, C8 | 5 |
 | K7 | (Withdrawn: merged into K6; ID kept stable.) | | | |
 | K8 | **App lock** | Biometric or PIN, the auto-lock policy, first-launch lock confirmation, screenshot/recording/preview protection and the 3-minute window. Guards every screen. | 9 | 5 |
-| K9 | **Screens** | The nine views, the guided empty state, the banner and the settings screens. Call K3 to read and K5, K4, K6 or K10 to change data; never write directly. Shows the date-field note on every date input and the time zone suffix on every shown date (section 6). | 6 | 2, 3, 6 |
-| K10 | **Classification** | Owns the two lists, the remembered source texts and the manual overrides. Resolves a holding's effective sector and geography. Enforces add, rename (updates holdings, remembers the source text) and delete (blocked while in use). Adds an unlisted source text when K4 passes it. Pure logic: no screens, no network. | 3, 4.9, 6, C14 | 1, 6 |
+| K9 | **Screens** | The nine views, the guided empty state, the banner and the settings screens. Call K3 to read and K5, K4, K6 or K10 to change data; never write directly. Shows the date-field note on every date input and the time zone suffix on every shown date (section 6). | 6 | 2, 3, 4, 5, 6 |
+| K10 | **Classification** | Owns the two lists, the remembered source texts and the manual overrides. Resolves a holding's effective sector and geography. Enforces add, rename (updates holdings, remembers the source text) and delete (blocked while in use). Adds an unlisted source text when K4 passes it. Pure logic: no screens, no network. | 3, 4.9, 6, C14 | 1, 5, 6 |
 
 **Dependency rules**
 1. Every write to transactions or cash entries goes through K1: entry flows, restore and portfolio deletion. No component bypasses it.
