@@ -1,4 +1,4 @@
-# spec.md (DRAFT v3, awaiting approval)
+# spec.md (DRAFT v4, awaiting approval)
 
 Source: intent/intent.md v52 (final). Stage: Design.
 Nothing in this file has been built, run or verified against real data. Items marked **[UNVERIFIED]** rest on my memory or assumptions, not on checks done in this session.
@@ -347,6 +347,10 @@ Planned for later versions: performance over time, per-holding dividends (a divi
 25. spec/example-backup.csv restores with the results listed in spec/example-backup-expected.md (cash balance, holdings, lots, realized gain). The same file saved as CSV UTF-8 from Excel and re-saved from Notepad (with or without a byte-order mark, LF or CRLF) restores the same way.
 26. A portfolio name that matches an existing one (ignoring case and spaces) is refused on create and rename. An amount with more than 2 decimals is refused in the entry screens.
 27. Hide is offered on Holding detail only when the holding has 0 shares, and asks no confirmation. A hidden holding leaves the normal holdings list and appears in Hidden holdings, where Unhide returns it to the list. A new buy of a hidden ticker unhides it. After a backup and restore the same holdings are still hidden (sample file: OLDCO).
+28. Deleting a portfolio shows a summary (transaction count, trade cash lines, realized gains) and needs a typed confirmation. It removes the portfolio's transactions and their cash lines. For Example E, deletion is blocked with the message naming Feb 10 and the $200 shortfall, and succeeds after a deposit adjustment of at least $200 dated on or before Feb 10.
+29. The cash account list filters by date range, with the date note of section 6. Trade lines show buy or sell, ticker and portfolio name, and open the linked transaction.
+30. A buy or sell shows a review screen before it is saved. Nothing is saved until you confirm on it.
+31. A quantity with up to 8 decimals is accepted in a buy or sell. A ninth decimal is refused.
 
 ## 12. Proposed slices (input to plan.md)
 1. Data model (including classification fields, lists and remembered texts), cash account, rules engine with tests (Examples A to G).
@@ -365,6 +369,7 @@ Planned for later versions: performance over time, per-holding dividends (a divi
 - D6 RESOLVED: ticker verification uses the price source selected at that moment (4.3, sections 7 and 8). The restore uses the source selected before it, not the file's.
 - D7 RESOLVED: a source text is matched ignoring case and spaces (4.9).
 - D8 RESOLVED: with cash but no portfolio Overall keeps the normal screens; the Buy and Sell messages are in section 6.
+- D9 DEFERRED to Build: the wording of the backup banner, its button and the three guided-empty-state steps is decided in Build and shown to you for approval on the phone. The messages already quoted in this spec ("Create a portfolio first", "Nothing to sell yet", "Set the opening balance first", "No portfolios yet") stay as written. When, where and what each one does is fixed in sections 6 and 9.
 - Blocked-deletion message: RESOLVED. Wording in 4.7 and Example E approved.
 - Historical prices: deferred past v1 (section 7).
 
