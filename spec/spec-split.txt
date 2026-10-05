@@ -45,6 +45,7 @@ the wording of the banner and the empty-state steps was deferred to Build (D9, s
 criteria 28 to 31 were added (portfolio deletion, cash date filter, review screen, 8 decimals; section 11), and
 the exchange check was changed to a US national securities exchange list kept in plan.md (4.3, 7, 8, criterion 15), and
 allocation was split into two levels (net worth level on Net Worth (Total), one portfolio on Allocation; C12, 4.8, section 6, criteria 32 to 34), and
+the wording of four repeated rules was aligned (8 decimals in 4.3 and 4.4, Reverse and re-enter exclusions in 4.6, the net worth formula in 4.8, the Buy messages in section 6), and
 the spec version was raised from v1 to v2, then to v3, and then to v4 after the findings batch.
 
 DECISION MADE
