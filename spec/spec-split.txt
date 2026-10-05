@@ -43,6 +43,7 @@ the opening balance rule was made strict (4.2, sections 3, 6 and 8, criteria 16 
 the slice columns of K1, K2, K9 and K10 were corrected (section 14), and
 the wording of the banner and the empty-state steps was deferred to Build (D9, section 13), and
 criteria 28 to 31 were added (portfolio deletion, cash date filter, review screen, 8 decimals; section 11), and
+the exchange check was changed to a US national securities exchange list kept in plan.md (4.3, 7, 8, criterion 15), and
 the spec version was raised from v1 to v2, then to v3, and then to v4 after the findings batch.
 
 DECISION MADE
