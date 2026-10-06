@@ -1,6 +1,6 @@
 spec-split.txt
 Stage: Design. Status: PROPOSAL ONLY. spec.md has NOT been split.
-Applies to: spec/spec.md (draft v4, 400 lines, 14 sections)
+Applies to: spec/spec.md (draft v4, 401 lines, 14 sections)
 Last updated against: spec.md with sections 1 to 14, after the CSV format (section 8) was
 approved and Example B was rewritten, and after Example F and the 4.6 rule for splits
 between an original and its reversal were added (finding 3), and after the Status column
@@ -47,7 +47,9 @@ the exchange check was changed to a US national securities exchange list kept in
 allocation was split into two levels (net worth level on Net Worth (Total), one portfolio on Allocation; C12, 4.8, section 6, criteria 32 to 34), and
 the wording of four repeated rules was aligned (8 decimals in 4.3 and 4.4, Reverse and re-enter exclusions in 4.6, the net worth formula in 4.8, the Buy messages in section 6), and
 the guided-empty-state sentence was added (the guide ends after step 1; section 6), and
-the spec version was raised from v1 to v2, then to v3, and then to v4 after the findings batch.
+the spec version was raised from v1 to v2, then to v3, and then to v4 after the findings batch, and
+the minimum Android version (Android 13, API 33) was written into section 9 and C16 (H90, H91;
+the spec stays draft v4).
 
 DECISION MADE
 Option 1: keep working on a single spec.md until the user says "final".
@@ -58,7 +60,7 @@ WHY NOT SPLIT NOW
   findings (1 to 7) are applied. What remains is the user's approval of spec.md as a
   whole ("final").
 - One file means one approval gate (Ruleset A: approve spec.md before Build).
-- The file (400 lines) is small enough to review in one sitting. Context-window fit has
+- The file (401 lines) is small enough to review in one sitting. Context-window fit has
   not been measured.
 
 PROPOSED SPLIT (apply only after "final", and only if still worth it)
@@ -135,13 +137,14 @@ AFTER A SPLIT
   4.6, 4.7 and Example E").
 
 KNOWN LIMITS
-- Current section sizes in lines (measured with wc and awk, spec.md = 400 lines):
+- Current section sizes in lines (measured with wc and awk, spec.md = 401 lines):
   index sections 1, 2, 10 to 14 = 106 lines (111 with the 5 header lines before section 1);
   domain-rules (3 to 5) = 148 lines; views (6) 32; prices (7) 13; backup-restore (8) 83;
-  backup-security (9) 13. Each count runs from a section's heading to the line before the
+  backup-security (9) 14. Each count runs from a section's heading to the line before the
   next heading, so it includes the blank line. These are line counts, not context tokens.
-- The sizes above were recomputed after the findings batch (draft v4).
-- Section 9 grew from 7 to 13 lines (lock, privacy, screenshot window, last backup,
-  reminder), so it holds more than backup and security now. Its file name may need to
-  change if it is split out.
+- The sizes above were recomputed after the findings batch and again after the Android
+  minimum version (H90, H91); only section 9 changed (13 to 14).
+- Section 9 grew from 7 to 14 lines (lock, privacy, screenshot window, minimum Android
+  version, last backup, reminder), so it holds more than backup and security now. Its file
+  name may need to change if it is split out.
 - Sections 7 and 9 are short and may stay in the index instead of getting own files.
