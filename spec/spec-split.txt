@@ -1,6 +1,6 @@
 spec-split.txt
 Stage: Design. Status: PROPOSAL ONLY. spec.md has NOT been split.
-Applies to: spec/spec.md (draft v4, 401 lines, 14 sections)
+Applies to: spec/spec.md (draft v4, 403 lines, 14 sections)
 Last updated against: spec.md with sections 1 to 14, after the CSV format (section 8) was
 approved and Example B was rewritten, and after Example F and the 4.6 rule for splits
 between an original and its reversal were added (finding 3), and after the Status column
@@ -49,7 +49,9 @@ the wording of four repeated rules was aligned (8 decimals in 4.3 and 4.4, Rever
 the guided-empty-state sentence was added (the guide ends after step 1; section 6), and
 the spec version was raised from v1 to v2, then to v3, and then to v4 after the findings batch, and
 the minimum Android version (Android 13, API 33) was written into section 9 and C16 (H90, H91;
-the spec stays draft v4).
+the spec stays draft v4), and
+concern C17 (sideloading and developer verification, section 2) and criterion 35 (section 11)
+were added (H92, H93; the spec stays draft v4).
 
 DECISION MADE
 Option 1: keep working on a single spec.md until the user says "final".
@@ -60,14 +62,14 @@ WHY NOT SPLIT NOW
   findings (1 to 7) are applied. What remains is the user's approval of spec.md as a
   whole ("final").
 - One file means one approval gate (Ruleset A: approve spec.md before Build).
-- The file (401 lines) is small enough to review in one sitting. Context-window fit has
+- The file (403 lines) is small enough to review in one sitting. Context-window fit has
   not been measured.
 
 PROPOSED SPLIT (apply only after "final", and only if still worth it)
 
   spec.md (short index, the file the user approves)
     Section 1  Summary
-    Section 2  Concerns and conflicts (C1-C16; C6 is withdrawn, its ID stays)
+    Section 2  Concerns and conflicts (C1-C17; C6 is withdrawn, its ID stays)
     Section 10 Out of scope
     Section 11 Acceptance criteria
     Section 12 Proposed slices
@@ -98,7 +100,7 @@ PROPOSED SPLIT (apply only after "final", and only if still worth it)
 SPLIT RULES
 1. Never separate sections 3, 4 and 5. Deletion (4.7) depends on 4.1, 4.2 and C5, and
    the examples test those rules. Reversals (4.6) also depend on 4.1 and Example D.
-2. Keep the concerns table (C1-C16) in the index. Other files cite concerns by ID
+2. Keep the concerns table (C1-C17) in the index. Other files cite concerns by ID
    (for example "see C7") and rule numbers (for example "see 4.1").
 3. Move text without changing it. Replace each moved section in the index with a
    pointer. Any content change is a separate, visible edit.
@@ -137,13 +139,14 @@ AFTER A SPLIT
   4.6, 4.7 and Example E").
 
 KNOWN LIMITS
-- Current section sizes in lines (measured with wc and awk, spec.md = 401 lines):
-  index sections 1, 2, 10 to 14 = 106 lines (111 with the 5 header lines before section 1);
+- Current section sizes in lines (measured with wc and awk, spec.md = 403 lines):
+  index sections 1, 2, 10 to 14 = 108 lines (113 with the 5 header lines before section 1);
   domain-rules (3 to 5) = 148 lines; views (6) 32; prices (7) 13; backup-restore (8) 83;
   backup-security (9) 14. Each count runs from a section's heading to the line before the
   next heading, so it includes the blank line. These are line counts, not context tokens.
-- The sizes above were recomputed after the findings batch and again after the Android
-  minimum version (H90, H91); only section 9 changed (13 to 14).
+- The sizes above were recomputed after the findings batch, after the Android minimum
+  version (H90, H91; section 9 went from 13 to 14) and after C17 and criterion 35 (H92,
+  H93; section 2 went from 21 to 22 and section 11 from 36 to 37).
 - Section 9 grew from 7 to 14 lines (lock, privacy, screenshot window, minimum Android
   version, last backup, reminder), so it holds more than backup and security now. Its file
   name may need to change if it is split out.
