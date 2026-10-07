@@ -9,7 +9,7 @@ for both themes (spec.md section 6, Number format and color).
 |---|------|--------|--------|
 | 1 | 01-overall.html | Overall (view 1), with the empty state | Approved |
 | 2 | 02-net-worth.html | Net Worth (Total) (view 2) | Approved |
-| 3 | 03-portfolios.html | Portfolios and holdings (view 3) | Not drawn |
+| 3 | 03-portfolios.html | Portfolios and holdings (view 3) | Approved |
 | 4 | 04-allocation.html | Allocation, one portfolio (view 4) | Not drawn |
 | 5 | 05-realized-gains.html | Realized gains (view 5) | Not drawn |
 | 6 | 06-holding-detail.html | Holding detail (view 6) | Not drawn |

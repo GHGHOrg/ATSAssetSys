@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Wireframe 3: Portfolios and holdings (spec.md section 6, view 3)</title>
+<style>
+:root{--bg:#f6f6f4;--surface-1:#efefec;--surface-2:#ffffff;--border:#d9d9d4;--border-strong:#b9b9b2;--border-stronger:#8a8a84;--text:#1c1c1a;--text-2:#5a5a55;--text-muted:#8a8a84;--accent-bg:#e3edf8;--accent-text:#0c447c;--accent-line:#378add;--success:#2e6b1a}
+@media (prefers-color-scheme:dark){:root{--bg:#1b1b19;--surface-1:#262624;--surface-2:#2e2e2b;--border:#44443f;--border-strong:#66665f;--border-stronger:#9a9a92;--text:#ecece8;--text-2:#b4b4ac;--text-muted:#8a8a82;--accent-bg:#14304f;--accent-text:#b5d4f4;--accent-line:#85b7eb;--success:#8fd16a}}
+html{background:var(--bg)}
+body{margin:0;padding:24px 16px 48px;font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;color:var(--text);line-height:1.5}
+main{max-width:760px;margin:0 auto}
+h1{font-size:22px;font-weight:500;margin:0 0 4px}
+h2{font-size:18px;font-weight:500;margin:32px 0 4px}
+p,li{font-size:15px}
+.note{color:var(--text-2);margin:0 0 8px}
+.pair{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px;margin-top:16px}
+@media (max-width:640px){.pair{grid-template-columns:minmax(0,1fr)}}
+.cap{font-size:13px;color:var(--text-2);margin:0 0 6px;text-align:center}
+.ph{background:var(--surface-2);border:1px solid var(--border-strong);border-radius:20px;padding:12px;display:flex;flex-direction:column;gap:8px;min-height:640px}
+.bx{border:1px solid var(--border-strong);border-radius:8px;padding:8px 10px;position:relative;background:var(--surface-1)}
+.dash{border:1px dashed var(--border-stronger);border-radius:8px;padding:8px 10px;position:relative}
+.n{position:absolute;top:-8px;right:-6px;width:18px;height:18px;border-radius:50%;background:var(--accent-bg);color:var(--accent-text);font-size:11px;font-weight:500;display:flex;align-items:center;justify-content:center;border:1px solid var(--accent-line)}
+.lb{font-size:12px;color:var(--text-2);margin:0}
+.title{font-size:14px;font-weight:500;margin:0}
+.big{font-size:24px;font-weight:500;margin:0;line-height:1.2}
+.row{display:flex;justify-content:space-between;align-items:center;font-size:13px;padding:3px 0;margin:0}
+.btn{border:1px solid var(--border-strong);border-radius:8px;padding:4px 10px;font-size:12px;background:var(--surface-2);display:inline-block}
+.bar{display:flex;border:1px solid var(--border-strong);border-radius:8px;overflow:hidden;font-size:12px;margin-top:auto}
+.bar span{flex:1;text-align:center;padding:10px 0;border-right:1px solid var(--border)}
+.bar span:last-child{border-right:none;background:var(--accent-bg);color:var(--accent-text);font-weight:500}
+.mut{color:var(--text-muted)}
+.sw{display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:6px;border:1px solid var(--border-strong)}
+.good{color:var(--success)}
+select{font:inherit;font-size:13px;padding:4px 6px;border:1px solid var(--border-strong);border-radius:8px;background:var(--surface-2);color:var(--text);flex:1;min-width:0}
+.hd{font-size:13px;font-weight:500;margin:0 0 4px}
+.tot{border-top:1px solid var(--border-strong);margin-top:4px;padding-top:4px;font-weight:500}
+.dash{border:1px dashed var(--border-stronger);border-radius:8px;padding:8px 10px;position:relative}
+.two{display:flex;justify-content:space-between;align-items:flex-start;gap:8px}
+.r{text-align:right}
+.btn{border:1px solid var(--border-strong);border-radius:8px;padding:4px 10px;font-size:12px;background:var(--surface-2);display:inline-block}
+.bar span:nth-child(3){background:var(--accent-bg);color:var(--accent-text);font-weight:500}
+.bar span:last-child{background:none;color:inherit;font-weight:400}
+</style>
+</head>
+<body>
+<main>
+<h1>Wireframe 3: Portfolios and holdings (view 3)</h1>
+<p class="note">Status: approved. Companion to spec.md section 6, view 3. All wording is placeholder (D9, decided in Build). Colors are placeholders; the real ones are chosen in Build for both themes. Index of all wireframes: README.md in this folder. Figures are Example A at an AAPL price of $160.</p>
+<div class="pair">
+<div>
+<p class="cap">Frame A: Portfolios tab</p>
+<div class="ph" style="min-height:600px">
+<p class="title">Portfolios</p>
+<div class="bx"><span class="n">1</span>
+<div class="two"><div><p class="hd" style="margin:0">Portfolio P</p><p class="lb">1 holding</p></div>
+<div class="r"><p style="font-size:13px;margin:0">$1,280.00</p><p class="lb good">+$80.00 &nbsp;&gt;</p></div></div></div>
+<div class="bx">
+<div class="two"><div><p class="hd" style="margin:0">Retirement</p><p class="lb">no holdings</p></div>
+<div class="r"><p style="font-size:13px;margin:0">$0.00</p><p class="lb">&nbsp; &gt;</p></div></div></div>
+<div style="position:relative"><span class="btn">+ New portfolio</span><span class="n" style="top:-10px;right:auto;left:100px">2</span></div>
+<p class="lb mut" style="margin:0">With none: "No portfolios yet" and a Create a portfolio button.</p>
+<div style="flex:1"></div>
+<div style="text-align:right"><span class="btn" style="font-weight:500">Buy/Sell</span></div>
+<div class="bar"><span>More</span><span>Cash</span><span>Portfolios</span><span>Overall</span></div>
+</div></div>
+<div>
+<p class="cap">Frame B: one portfolio (tap a row in frame A)</p>
+<div class="ph" style="min-height:600px">
+<div class="two" style="position:relative"><p class="title">&lt; Portfolio P</p><span class="btn" style="padding:2px 10px">&#8942;</span><span class="n" style="top:-10px;right:-4px">3</span></div>
+<div class="bx" style="margin-left:auto;width:58%;padding:4px 10px"><p class="row">Rename</p><p class="row" style="border-top:1px solid var(--border-strong)">Delete</p></div>
+<div class="bx"><span class="n">4</span>
+<p class="lb">Portfolio value</p>
+<p class="big">$1,280.00</p>
+<p class="row" style="margin-top:4px"><span>Cost</span><span>$1,200.00</span></p>
+<p class="row"><span>Unrealized gain/loss</span><span class="good">+$80.00</span></p>
+<p class="lb" style="margin-top:2px">Prices updated 2 min ago</p></div>
+<div class="bx"><span class="n">5</span>
+<div class="two"><p class="hd">Holdings</p><p class="lb">Unrealized gain/loss</p></div>
+<div class="two"><div><p style="font-size:13px;font-weight:500;margin:0">AAPL</p><p class="lb">8 shares</p></div>
+<div class="r"><p style="font-size:13px;margin:0">$1,280.00</p><p class="lb good">+$80.00 &nbsp;&gt;</p></div></div></div>
+<div class="dash"><span class="n">6</span>
+<p class="lb" style="margin:0 0 4px">Format only, not in Example A:</p>
+<div class="two"><div><p style="font-size:13px;font-weight:500;margin:0">XYZ</p><p class="lb">5 shares</p></div>
+<div class="r"><p style="font-size:13px;margin:0">$500.00</p><p class="lb">no price, at cost</p></div></div></div>
+<div class="bx"><span class="n">7</span>
+<p class="row"><span>Allocation</span><span>&gt;</span></p>
+<p class="row"><span>Transaction history</span><span>&gt;</span></p>
+<p class="row"><span>Hidden holdings</span><span>&gt;</span></p></div>
+<div style="text-align:right"><span class="btn" style="font-weight:500">Buy/Sell</span></div>
+<div class="bar"><span>More</span><span>Cash</span><span>Portfolios</span><span>Overall</span></div>
+</div></div>
+</div>
+<h2>Markers</h2>
+<ol>
+<li>Portfolio row, in the order the portfolios were created. Name, number of holdings, value, and gain/loss (green with a plus sign for a gain, red with a minus sign for a loss, no color at zero). Tapping a row opens the portfolio screen. The "Retirement" row is illustrative only.</li>
+<li>New portfolio button. A name that matches another portfolio's name, ignoring case and spaces, is refused (4.7). With no portfolio, the tab says "No portfolios yet" with a Create a portfolio button.</li>
+<li>Menu with Rename and Delete. Their dialogs (rename, delete with summary and typed confirmation, and the blocked message, 4.7) are drawn with the entry flows in wireframe 10.</li>
+<li>Summary: portfolio value, cost and "Unrealized gain/loss" (4.8), and the price age line, which is the age of the oldest price used in this portfolio.</li>
+<li>Holdings list with the heading "Unrealized gain/loss" over its right column: ticker, shares, value, and the unrealized gain/loss since purchase. A fully sold holding that is not hidden stays in the list at 0 shares (4.4). Tapping a row opens Holding detail.</li>
+<li>Flags (format only): a stale price shows "stale" with its age; a holding with no price shows "no price, at cost" and no gain/loss (4.8).</li>
+<li>Links to Allocation (it opens on this portfolio), Transaction history and Hidden holdings. Hidden holdings is always listed; with none hidden its screen shows one plain line.</li>
+</ol>
+<p class="note">The gain/loss on this screen is the unrealized figure, counted since purchase. Realized gains are separate (view 5), dividends are not included, and no 1-day change is shown.</p>
+</main>
+</body>
+</html>
