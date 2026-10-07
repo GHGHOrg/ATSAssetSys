@@ -2,6 +2,8 @@
 
 ATS Asset System is an Android app for tracking personal cash, stock and ETF portfolios, net worth, and investment gains. Enter transactions yourself; the app does not connect to your bank or brokerage. Your financial records are stored locally on your device.
 
+The app is for personal use on Android 13 (API 33) or later and is installed directly on your phone.
+
 ## Contents
 
 - [Getting started](#getting-started)
@@ -15,7 +17,7 @@ ATS Asset System is an Android app for tracking personal cash, stock and ETF por
 
 ## Getting started
 
-On first launch, confirm your phone's biometric or PIN to unlock the app. The setup flow then guides you to:
+On first launch, confirm your phone's biometric or PIN to unlock the app. Then follow the setup steps:
 
 1. Enter your opening cash balance. The app asks for this first, before a portfolio or any other entry.
 2. Create a portfolio.
@@ -42,11 +44,15 @@ Cash can be updated with an opening balance, deposits, withdrawals, interest or 
 
 Cash moves on the trade date. Settlement delays are not tracked.
 
+Entry dates are calendar dates using the US market time zone (New York); transactions on the same date are ordered by entry time.
+
 Dividends are recorded as cash entries and are not assigned to an individual holding in this version.
 
 ### Managing portfolios
 
 Create portfolios to keep different groups of investments separate. You can rename or delete a portfolio. Deleting one that contains transactions removes those records and reverses their cash effects, subject to validation. This is destructive; transactions are permanent, so make a backup first if you may need to recover the data.
+
+The same ticker can be held in multiple portfolios. Each portfolio has its own holdings and transaction history. Fully sold holdings can be hidden from the regular holdings list and viewed or unhidden later.
 
 ## Recording investments
 
@@ -103,6 +109,7 @@ Allocation is shown at two levels:
 - **One portfolio (Allocation screen):** the share of that portfolio's value by asset type (stocks, ETFs), holding, and sector or geography. It does not include cash, because cash is one shared account.
 
 Each holding has one sector and one geography in this version. You can override these classifications manually.
+You can manage the sector and geography lists in Settings. Classifications not supplied by the price source appear as **Unclassified** unless you choose an override.
 
 ## Market prices and offline use
 
@@ -120,7 +127,9 @@ Transactions can be backdated or future-dated. Transactions on the same day are 
 
 ## Backups and restore
 
-The app's backup-format file is the only supported way to import or export data. CSV import/export and data merging are not available.
+The backup file is the only supported data-transfer format. It is a versioned CSV-formatted file for whole-app backup and restore, not a general-purpose CSV import/export feature. Restore replaces all current app data; partial imports and merging are not supported.
+
+To prepare a backup file, use the [backup template](spec/template-backup.csv) or review the [sample backup](spec/example-backup.csv) and its [expected restored data](spec/example-backup-expected.md). See the [backup file format and validation rules](spec/spec.md). Do not use [example-import.csv](spec/example-import.csv); it uses an older format that is no longer supported.
 
 ### Backing up
 
@@ -138,17 +147,23 @@ The restore process validates the complete file first. If validation fails, the 
 
 ## Privacy and supported assets
 
-ATS Asset System is designed for personal financial data:
+ATS Asset System protects your personal financial data:
 
 - Records are stored locally on your Android device.
+- App records are encrypted at rest. Android keeps the encryption key; it is not included in a backup. If the key is lost, restore your data from a backup file.
+- Android cloud backup and device-to-device transfer do not include app data. Keep exported backup files somewhere safe.
+- Price refreshes require internet. The app sends ticker symbols and price-source request details to the selected external price source. It does not send portfolio names, balances, quantities, notes, or transaction records.
+- The app does not use analytics or crash-reporting services.
 - The app supports biometric or PIN authentication.
 - The app locks automatically; available policies include locking when you leave, after one or five minutes of inactivity, or when the phone locks or the app restarts. Locking whenever you leave is the default.
 - Screenshots and screen recording are blocked by default, and app content is hidden from the recent-apps preview.
 
-Temporary screenshot access can be enabled after authentication. It lasts three minutes, ends when you leave the app, does not persist after an app restart, and is not included in backups.
+Temporary screenshot and screen-capture access can be enabled after authentication. It lasts three minutes, ends when you leave the app, does not persist after an app restart, and is not included in backups.
 
-This version is for one user on an Android phone. It supports USD cash and US stocks and ETFs. It does not support liabilities, loans, credit cards, crypto, property, vehicles, mutual funds, bank or broker synchronization, multi-currency accounts, tax reporting, or data sharing. Historical performance and per-holding dividends are not currently available.
+The app is for one user on an Android phone and supports USD cash and US stocks and ETFs. It does not support liabilities, loans, credit cards, crypto, property, vehicles, mutual funds, bank or broker synchronization, multi-currency accounts, tax reporting, or data sharing. Historical performance and per-holding dividends are not available.
+
+Performance over time, per-holding dividend tracking, and ETF look-through allocation are not currently available.
 
 ## License
 
-See the repository's license information for licensing terms.
+Licensing terms are not specified in this repository.
