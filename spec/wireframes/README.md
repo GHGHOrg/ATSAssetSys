@@ -11,7 +11,7 @@ for both themes (spec.md section 6, Number format and color).
 | 2 | 02-net-worth.html | Net Worth (Total) (view 2) | Approved |
 | 3 | 03-portfolios.html | Portfolios and holdings (view 3) | Approved |
 | 4 | 04-allocation.html | Allocation, one portfolio (view 4) | Approved |
-| 5 | 05-realized-gains.html | Realized gains (view 5) | Not drawn |
+| 5 | 05-realized-gains.html | Realized gains (view 5) | Approved |
 | 6 | 06-holding-detail.html | Holding detail (view 6) | Not drawn |
 | 7 | 07-cash.html | Cash account (view 7) | Not drawn |
 | 8 | 08-transaction-history.html | Transaction history (view 8) | Not drawn |
