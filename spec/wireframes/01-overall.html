@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Wireframe 1: Overall (spec.md section 6, view 1)</title>
+<style>
+:root{--bg:#f6f6f4;--surface-1:#efefec;--surface-2:#ffffff;--border:#d9d9d4;--border-strong:#b9b9b2;--border-stronger:#8a8a84;--text:#1c1c1a;--text-2:#5a5a55;--text-muted:#8a8a84;--accent-bg:#e3edf8;--accent-text:#0c447c;--accent-line:#378add;--success:#2e6b1a}
+@media (prefers-color-scheme:dark){:root{--bg:#1b1b19;--surface-1:#262624;--surface-2:#2e2e2b;--border:#44443f;--border-strong:#66665f;--border-stronger:#9a9a92;--text:#ecece8;--text-2:#b4b4ac;--text-muted:#8a8a82;--accent-bg:#14304f;--accent-text:#b5d4f4;--accent-line:#85b7eb;--success:#8fd16a}}
+html{background:var(--bg)}
+body{margin:0;padding:24px 16px 48px;font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;color:var(--text);line-height:1.5}
+main{max-width:760px;margin:0 auto}
+h1{font-size:22px;font-weight:500;margin:0 0 4px}
+h2{font-size:18px;font-weight:500;margin:32px 0 4px}
+p,li{font-size:15px}
+.note{color:var(--text-2);margin:0 0 8px}
+.pair{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px;margin-top:16px}
+@media (max-width:640px){.pair{grid-template-columns:minmax(0,1fr)}}
+.cap{font-size:13px;color:var(--text-2);margin:0 0 6px;text-align:center}
+.ph{background:var(--surface-2);border:1px solid var(--border-strong);border-radius:20px;padding:12px;display:flex;flex-direction:column;gap:8px;min-height:640px}
+.bx{border:1px solid var(--border-strong);border-radius:8px;padding:8px 10px;position:relative;background:var(--surface-1)}
+.dash{border:1px dashed var(--border-stronger);border-radius:8px;padding:8px 10px;position:relative}
+.n{position:absolute;top:-8px;right:-6px;width:18px;height:18px;border-radius:50%;background:var(--accent-bg);color:var(--accent-text);font-size:11px;font-weight:500;display:flex;align-items:center;justify-content:center;border:1px solid var(--accent-line)}
+.lb{font-size:12px;color:var(--text-2);margin:0}
+.title{font-size:14px;font-weight:500;margin:0}
+.big{font-size:24px;font-weight:500;margin:0;line-height:1.2}
+.row{display:flex;justify-content:space-between;align-items:center;font-size:13px;padding:3px 0;margin:0}
+.btn{border:1px solid var(--border-strong);border-radius:8px;padding:4px 10px;font-size:12px;background:var(--surface-2);display:inline-block}
+.bar{display:flex;border:1px solid var(--border-strong);border-radius:8px;overflow:hidden;font-size:12px;margin-top:auto}
+.bar span{flex:1;text-align:center;padding:10px 0;border-right:1px solid var(--border)}
+.bar span:last-child{border-right:none;background:var(--accent-bg);color:var(--accent-text);font-weight:500}
+.mut{color:var(--text-muted)}
+.sw{display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:6px;border:1px solid var(--border-strong)}
+.good{color:var(--success)}
+select{font:inherit;font-size:13px;padding:4px 6px;border:1px solid var(--border-strong);border-radius:8px;background:var(--surface-2);color:var(--text);flex:1;min-width:0}
+</style>
+</head>
+<body>
+<main>
+<h1>Wireframe 1: Overall (view 1)</h1>
+<p class="note">Status: approved. Companion to spec.md section 6, view 1. All wording is placeholder (D9, decided in Build). Colors are placeholders; the real ones are chosen in Build for both themes (section 6, Number format and color). Index of all wireframes: README.md in this folder.</p>
+<p class="note">Figures are Example A at an AAPL price of $160. Try the dropdown in State A.</p>
+
+<div class="pair">
+<div>
+<p class="cap">State A: the app holds data</p>
+<div class="ph">
+<p class="title">Overall</p>
+<div class="dash"><span class="n">1</span>
+<p class="lb" style="color:var(--text);margin:0 0 6px">Backup reminder text (D9)</p>
+<span class="btn">Back up</span> <span class="btn">Dismiss</span></div>
+<div class="bx"><span class="n">2</span>
+<p class="lb">Net worth</p>
+<p class="big">$10,880.00</p>
+<p class="lb" style="margin-top:2px">Prices updated 2 min ago</p></div>
+<div class="bx"><span class="n">3</span>
+<div style="display:flex;align-items:center;gap:8px;margin-bottom:6px"><label class="lb" for="dim" style="white-space:nowrap">Allocation by</label>
+<select id="dim">
+<option value="type">Asset type</option><option value="port">Portfolio</option><option value="hold">Holding</option><option value="sect">Sector</option><option value="geo">Geography</option></select></div>
+<div style="text-align:center"><svg id="dn" width="156" height="156" viewBox="0 0 156 156" role="img" aria-label="Allocation donut"></svg></div>
+<div id="rows" style="margin-top:4px"></div></div>
+<div class="bx"><span class="n">4</span>
+<p class="lb" style="margin-bottom:4px">Portfolios</p>
+<p class="row"><span>Portfolio P</span><span>$1,280.00 &nbsp;<span class="good">+$80.00</span> &nbsp;&gt;</span></p></div>
+<p class="lb" style="margin:0;position:relative"><span class="n" style="top:-4px;right:0">5</span>Price refresh failed. Showing last prices.</p>
+<div style="text-align:right;position:relative"><span class="btn" style="font-weight:500">Buy/Sell</span><span class="n" style="top:-10px;right:60px">6</span></div>
+<div class="bar"><span>More</span><span>Cash</span><span>Portfolios</span><span>Overall</span></div>
+</div></div>
+<div>
+<p class="cap">State B: the app holds no data (after the lock is confirmed)</p>
+<div class="ph">
+<p class="title">Overall</p>
+<div class="bx"><span class="n">7</span>
+<p class="row" style="font-weight:500"><span>1. Set the opening balance</span></p>
+<span class="btn">Set opening balance</span></div>
+<div class="bx"><p class="row mut"><span>2. Create a portfolio</span><span>locked</span></p></div>
+<div class="bx"><p class="row mut"><span>3. Enter a buy</span><span>locked</span></p></div>
+<p class="lb" style="margin:0;position:relative"><span class="n" style="top:-4px;right:0">8</span>Restore is in More only.</p>
+<div style="text-align:right"><span class="btn" style="font-weight:500">Buy/Sell</span></div>
+<div style="flex:1"></div>
+<div class="bar"><span>More</span><span>Cash</span><span>Portfolios</span><span>Overall</span></div>
+</div></div>
+</div>
+
+<h2>Markers</h2>
+<ol>
+<li>Backup reminder banner. Shown only when due (older than 7 days, or never backed up and the app holds data). The button starts the export. Dismiss hides it until the app is next opened (section 9).</li>
+<li>Net worth figure, with the age of the prices, or an "updating" indicator while a refresh runs. Tapping it opens Net Worth (Total).</li>
+<li>Allocation of net worth, with an "Allocation by" dropdown: Asset type (default), Portfolio, Holding, Sector, Geography. The choice is not saved, so Overall starts on Asset type each time the app is opened or unlocked. Drawn as a donut with a small gap between slices. A slice of 5% or more shows its percentage on the donut. A row in the list shows its percentage only for a slice under 5% (a 0.0% slice has no arc). Each row has a swatch, a name and an amount, and its TalkBack label reads the percentage in full. Cash is its own slice in every option. Asset type always lists cash, stocks and ETFs, even at 0.0%. The other options list only what has value. Tapping the donut or the list opens Net Worth (Total); the dropdown does not.</li>
+<li>Each portfolio with its value and gain/loss (green with a plus sign for a gain, red with a minus sign for a loss). Tapping a row opens that portfolio's holdings.</li>
+<li>One quiet line, shown only when a price refresh failed. No pop-up.</li>
+<li>Buy/Sell button. It opens the short menu Buy, Sell.</li>
+<li>Guided steps when the app holds no data. Only step 1 is active; steps 2 and 3 are shown but locked.</li>
+<li>Restore is offered only in More, not here.</li>
+</ol>
+</main>
+<script>
+var D={type:[["Cash","$9,600.00","88.2"],["Stocks","$1,280.00","11.8"],["ETFs","$0.00","0.0"]],
+port:[["Cash","$9,600.00","88.2"],["Portfolio P","$1,280.00","11.8"]],
+hold:[["Cash","$9,600.00","88.2"],["AAPL","$1,280.00","11.8"]],
+sect:[["Cash","$9,600.00","88.2"],["Technology","$1,280.00","11.8"]],
+geo:[["Cash","$9,600.00","88.2"],["United States","$1,280.00","11.8"]]};
+var sh=["var(--border-stronger)","var(--accent-line)","var(--border-strong)"];
+function draw(){var k=document.getElementById("dim").value,r=D[k],t="",s="",x="",R=52,C=2*Math.PI*R,off=0,cnt=0,i;
+for(i=0;i<r.length;i++){if(parseFloat(r[i][2])>0)cnt++;}
+var g=cnt>1?5:0;
+for(i=0;i<r.length;i++){var p=parseFloat(r[i][2]),pct=r[i][2]+"%";
+if(p>0){var L=C*p/100,a=L-g;
+s+='<circle cx="78" cy="78" r="'+R+'" fill="none" stroke-width="28" style="stroke:'+sh[i%3]+'" stroke-dasharray="'+a.toFixed(2)+' '+(C-a).toFixed(2)+'" stroke-dashoffset="'+(-(off+g/2)).toFixed(2)+'" transform="rotate(-90 78 78)"/>';
+if(p>=5){var an=-Math.PI/2+2*Math.PI*(off+L/2)/C;
+x+='<text x="'+(78+R*Math.cos(an)).toFixed(1)+'" y="'+(78+R*Math.sin(an)).toFixed(1)+'" text-anchor="middle" dominant-baseline="central" font-size="11" font-weight="500" style="fill:var(--text)">'+pct+'</text>';}
+off+=L;}
+t+='<p class="row" aria-label="'+r[i][0]+', '+r[i][1].replace("$","").replace(".00"," dollars")+', '+r[i][2]+' percent"><span><i class="sw" style="background:'+sh[i%3]+'"></i>'+r[i][0]+'</span><span>'+r[i][1]+(p<5?' &nbsp;'+pct:'')+'</span></p>';}
+document.getElementById("dn").innerHTML=s+x;document.getElementById("rows").innerHTML=t;}
+document.getElementById("dim").addEventListener("change",draw);draw();
+</script>
+</body>
+</html>
