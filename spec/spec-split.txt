@@ -1,6 +1,6 @@
 spec-split.txt
 Stage: Design. Status: PROPOSAL ONLY. spec.md has NOT been split.
-Applies to: spec/spec.md (draft v4, 426 lines, 14 sections)
+Applies to: spec/spec.md (draft v4, 427 lines, 14 sections)
 Last updated against: spec.md with sections 1 to 14, after the CSV format (section 8) was
 approved and Example B was rewritten, and after Example F and the 4.6 rule for splits
 between an original and its reversal were added (finding 3), and after the Status column
@@ -73,7 +73,10 @@ approved wireframe (H118 to H123; the spec stays draft v4; new folder spec/wiref
 01-overall.html and README.md), and
 the Net Worth (Total) screen rules (view 2, section 6), the age of the oldest price (4.8), a pointer
 wording that no longer states progress, and criterion 44 (section 11) were added with the second
-approved wireframe (H124 to H127; the spec stays draft v4; new file spec/wireframes/02-net-worth.html).
+approved wireframe (H124 to H127; the spec stays draft v4; new file spec/wireframes/02-net-worth.html), and
+the Portfolios and holdings rules (view 3, section 6), the meaning of gain/loss figures as unrealized and
+since purchase (4.8), the navigation wording and criterion 45 (section 11) were added with the third
+approved wireframe (H128 to H131; the spec stays draft v4; new file spec/wireframes/03-portfolios.html).
 
 DECISION MADE
 Option 1: keep working on a single spec.md until the user says "final".
@@ -84,7 +87,7 @@ WHY NOT SPLIT NOW
   findings (1 to 7) are applied. What remains is the user's approval of spec.md as a
   whole ("final").
 - One file means one approval gate (Ruleset A: approve spec.md before Build).
-- The file (426 lines) is small enough to review in one sitting. Context-window fit has
+- The file (427 lines) is small enough to review in one sitting. Context-window fit has
   not been measured.
 
 PROPOSED SPLIT (apply only after "final", and only if still worth it)
@@ -163,8 +166,8 @@ AFTER A SPLIT
   4.6, 4.7 and Example E").
 
 KNOWN LIMITS
-- Current section sizes in lines (measured with wc and awk, spec.md = 426 lines):
-  index sections 1, 2, 10 to 14 = 120 lines (125 with the 5 header lines before section 1);
+- Current section sizes in lines (measured with wc and awk, spec.md = 427 lines):
+  index sections 1, 2, 10 to 14 = 121 lines (126 with the 5 header lines before section 1);
   domain-rules (3 to 5) = 148 lines; views (6) 40; prices (7) 13; backup-restore (8) 83;
   backup-security (9) 17. Each count runs from a section's heading to the line before the
   next heading, so it includes the blank line. These are line counts, not context tokens.
@@ -186,7 +189,9 @@ KNOWN LIMITS
   Overall dropdown and wireframes pointer (H118 to H123; section 11 went from 44 to 45, and
   section 6 stays at 40 because H118 to H121 are edited in place) and after the
   Net Worth (Total) rules (H124 to H127; section 11 went from 45 to 46, and the other hunks are
-  edited in place).
+  edited in place) and after the
+  Portfolios and holdings rules (H128 to H131; section 11 went from 46 to 47, and the other hunks
+  are edited in place).
 - Section 9 grew from 7 to 17 lines (lock, privacy, screenshot window, minimum Android
   version, encryption at rest, no automatic copies, network and logging, last backup, reminder), so it holds more than backup and security now. Its file
   name may need to change if it is split out.
