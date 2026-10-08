@@ -16,6 +16,11 @@ for both themes (spec.md section 6, Number format and color).
 | 7 | 07-cash.html | Cash account (view 7) | Approved |
 | 8 | 08-transaction-history.html | Transaction history (view 8) | Approved |
 | 9 | 09-hidden-holdings.html | Hidden holdings (view 9) | Approved |
-| 10 | 10-entry-flows (may become several files) | Buy and sell with review, lot picker, split, cash entry, reversal and Reverse and re-enter, restore, settings, More tab | Not drawn |
+| 10a | 10a-buy-sell.html | Buy and Sell entry, review screens, lot picker, blocked-save messages | Approved |
+| 10b | 10b-split-cash-reversal | Split, cash entry (opening balance first), reversal date screen | Not drawn |
+| 10c | 10c-reverse-reenter | Reverse and re-enter | Not drawn |
+| 10d | 10d-portfolio-dialogs | Portfolio create, rename, delete (summary, typed confirmation, blocked message) | Not drawn |
+| 10e | 10e-backup-restore | Backup export, restore summary and typed confirmation, error report with Copy report | Not drawn |
+| 10f | 10f-more-settings | More tab, Settings (auto-lock, price source, tab order, lists, screenshot window), sector and geography Edit picker | Not drawn |
 
-Entry flows are many screens, so wireframe 10 may become several files. That is decided when we reach it.
+Wireframe 10 (entry flows) is split into six files, 10a to 10f, each approved one at a time.

@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Wireframe 10a: Buy and Sell entry (spec.md section 6, entry flows; 4.3, 4.4)</title>
+<style>
+:root{--bg:#f6f6f4;--surface-1:#efefec;--surface-2:#ffffff;--border:#d9d9d4;--border-strong:#b9b9b2;--border-stronger:#8a8a84;--text:#1c1c1a;--text-2:#5a5a55;--text-muted:#8a8a84;--accent-bg:#e3edf8;--accent-text:#0c447c;--accent-line:#378add;--success:#2e6b1a}
+@media (prefers-color-scheme:dark){:root{--bg:#1b1b19;--surface-1:#262624;--surface-2:#2e2e2b;--border:#44443f;--border-strong:#66665f;--border-stronger:#9a9a92;--text:#ecece8;--text-2:#b4b4ac;--text-muted:#8a8a82;--accent-bg:#14304f;--accent-text:#b5d4f4;--accent-line:#85b7eb;--success:#8fd16a}}
+html{background:var(--bg)}
+body{margin:0;padding:24px 16px 48px;font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;color:var(--text);line-height:1.5}
+main{max-width:760px;margin:0 auto}
+h1{font-size:22px;font-weight:500;margin:0 0 4px}
+h2{font-size:18px;font-weight:500;margin:32px 0 4px}
+p,li{font-size:15px}
+.note{color:var(--text-2);margin:0 0 8px}
+.pair{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px;margin-top:16px}
+@media (max-width:640px){.pair{grid-template-columns:minmax(0,1fr)}}
+.cap{font-size:13px;color:var(--text-2);margin:0 0 6px;text-align:center}
+.ph{background:var(--surface-2);border:1px solid var(--border-strong);border-radius:20px;padding:12px;display:flex;flex-direction:column;gap:8px}
+.bx{border:1px solid var(--border-strong);border-radius:8px;padding:8px 10px;position:relative;background:var(--surface-1)}
+.dash{border:1px dashed var(--border-stronger);border-radius:8px;padding:8px 10px;position:relative}
+.n{position:absolute;top:-8px;right:-6px;width:18px;height:18px;border-radius:50%;background:var(--accent-bg);color:var(--accent-text);font-size:11px;font-weight:500;display:flex;align-items:center;justify-content:center;border:1px solid var(--accent-line)}
+.lb{font-size:12px;color:var(--text-2);margin:0}
+.title{font-size:14px;font-weight:500;margin:0}
+.big{font-size:24px;font-weight:500;margin:0;line-height:1.2}
+.row{display:flex;justify-content:space-between;align-items:center;font-size:13px;padding:3px 0;margin:0}
+.two{display:flex;justify-content:space-between;align-items:flex-start;gap:8px}
+.r{text-align:right}
+.btn{border:1px solid var(--border-strong);border-radius:8px;padding:4px 10px;font-size:12px;background:var(--surface-2);display:inline-block}
+.btn.pri{background:var(--accent-bg);color:var(--accent-text);border-color:var(--accent-line);font-weight:500}
+.fld{border:1px solid var(--border-strong);border-radius:8px;padding:4px 8px;font-size:13px;background:var(--surface-2);min-width:0}
+.bar{display:flex;border:1px solid var(--border-strong);border-radius:8px;overflow:hidden;font-size:12px;margin-top:auto}
+.bar span{flex:1;text-align:center;padding:10px 0;border-right:1px solid var(--border)}
+.bar span:last-child{border-right:none;background:var(--accent-bg);color:var(--accent-text);font-weight:500}
+.mut{color:var(--text-muted)}
+.good{color:var(--success)}
+.hd{font-size:13px;font-weight:500;margin:0 0 4px}
+.t{font-size:13px;font-weight:500;margin:0}
+.a{font-size:13px;margin:0}
+.lot{border-top:1px solid var(--border);margin-top:6px;padding-top:6px}
+.lot:first-of-type{border-top:none;margin-top:0;padding-top:0}
+.ck{display:inline-block;width:14px;height:14px;border:1px solid var(--border-stronger);border-radius:3px;margin-right:6px;vertical-align:middle;text-align:center;font-size:11px;line-height:14px;background:var(--surface-2)}
+.off{color:var(--text-muted);border:1px dashed var(--border-stronger);border-radius:8px;padding:6px 8px;margin-top:6px}
+.msg{border:1px solid var(--border-stronger);border-radius:8px;padding:6px 8px;font-size:12px;margin:0 0 6px;background:var(--surface-2)}
+.tot{border-top:1px solid var(--border-strong);margin-top:4px;padding-top:4px;font-weight:500}
+</style>
+</head>
+<body>
+<main>
+<h1>Wireframe 10a: Buy and Sell entry (entry flows, part A)</h1>
+<p class="note">Status: approved. Companion to spec.md section 6 (entry flows) and rules 4.3 and 4.4. All wording is placeholder (D9, decided in Build). Colors are placeholders; the real ones are chosen in Build for both themes. Index of all wireframes: README.md in this folder. Figures are Example A at an AAPL price of $160 (Portfolio P). The bottom bar is shown because it is always visible (section 6); the highlighted tab is the one the flow was opened from (here Overall). Part A covers buy, sell, the lot picker, both review screens, blocked-save messages and the cases with nothing to enter. Split, cash entry and reversals are parts B and C.</p>
+<div class="pair">
+<div>
+<p class="cap">Frame A: Buy entry</p>
+<div class="ph">
+<p class="title">&lt; Buy</p>
+<div class="bx"><span class="n">1</span><p class="lb">Portfolio</p><div class="fld">Portfolio P &nbsp;v</div></div>
+<div class="bx"><span class="n">2</span><p class="lb">Ticker</p><div class="fld">AAPL</div></div>
+<div class="bx"><span class="n">3</span><p class="lb">Date</p><div class="fld">2026-02-01</div>
+<p class="lb" style="margin-top:4px">Enter date in US market time (New York)</p></div>
+<div class="bx"><span class="n">4</span>
+<div style="display:flex;gap:8px"><div style="flex:1"><p class="lb">Quantity</p><div class="fld">10</div></div><div style="flex:1"><p class="lb">Total amount, fees included</p><div class="fld">$1,500.00</div></div></div>
+<p class="lb" style="margin-top:4px"><span class="n" style="position:static;display:inline-flex;width:16px;height:16px;margin-right:4px">5</span>Price per share: $150.00</p></div>
+<div style="text-align:right;position:relative"><span class="btn pri">Review</span><span class="n" style="top:-10px;right:52px">6</span></div>
+<div style="flex:1"></div>
+<div class="bar"><span>More</span><span>Cash</span><span>Portfolios</span><span>Overall</span></div>
+</div></div>
+<div>
+<p class="cap">Frame B: Buy review</p>
+<div class="ph">
+<p class="title">&lt; Review buy</p>
+<div class="bx"><span class="n">7</span>
+<p class="row"><span>Portfolio</span><span>Portfolio P</span></p>
+<p class="row"><span>Ticker</span><span>AAPL</span></p>
+<p class="row"><span>Date</span><span>2026-02-01 ET</span></p>
+<p class="row"><span>Quantity</span><span>10</span></p>
+<p class="row"><span>Total amount</span><span>$1,500.00</span></p>
+<p class="row"><span>Price per share</span><span>$150.00</span></p>
+<p class="row tot"><span>Cash effect</span><span>&minus;$1,500.00</span></p></div>
+<p class="lb">Nothing is saved until you confirm.</p>
+<div><span class="btn pri">Confirm and save</span> <span class="btn">Back to edit</span></div>
+<div style="flex:1"></div>
+<div class="bar"><span>More</span><span>Cash</span><span>Portfolios</span><span>Overall</span></div>
+</div></div>
+<div>
+<p class="cap">Frame C: Sell entry, one scrolling screen</p>
+<div class="ph">
+<p class="title">&lt; Sell</p>
+<div class="bx"><span class="n">8</span>
+<div style="display:flex;gap:8px"><div style="flex:1"><p class="lb">Portfolio</p><div class="fld">Portfolio P &nbsp;v</div></div><div style="flex:1"><p class="lb">Ticker (held)</p><div class="fld">AAPL &nbsp;v</div></div></div>
+<p class="lb" style="margin-top:6px">Date</p><div class="fld">2026-03-01</div>
+<p class="lb" style="margin-top:4px">Enter date in US market time (New York)</p>
+<div style="display:flex;gap:8px;margin-top:6px"><div style="flex:1"><p class="lb">Quantity</p><div class="fld">12</div></div><div style="flex:1"><p class="lb">Total amount, zero allowed</p><div class="fld">$2,100.00</div></div></div>
+<p class="lb" style="margin-top:4px">Price per share: $175.00</p>
+<div style="margin-top:4px;position:relative"><span class="btn">Sell all</span><span class="n" style="top:-10px;right:auto;left:62px">9</span></div></div>
+<div class="bx"><span class="n">10</span>
+<p class="hd">Lots, oldest first</p>
+<div class="lot"><div class="two"><div><p class="t"><i class="ck">&#10003;</i>2026-01-02 ET</p><p class="lb">10 left, $100.00 per share</p></div><div class="r"><p class="a">Sell: 10</p><p class="lb good">+$600.00</p></div></div></div>
+<div class="lot"><div class="two"><div><p class="t"><i class="ck">&#10003;</i>2026-02-01 ET</p><p class="lb">10 left, $150.00 per share</p></div><div class="r"><p class="a">Sell: 2</p><p class="lb good">+$100.00</p></div></div></div>
+<p class="lb" style="margin-top:6px;position:relative"><span class="n" style="top:-4px;right:0">11</span>Picked 12 of 12 shares</p></div>
+<div style="text-align:right"><span class="btn pri">Review</span></div>
+<div class="bar"><span>More</span><span>Cash</span><span>Portfolios</span><span>Overall</span></div>
+</div></div>
+<div>
+<p class="cap">Frame D: lot states (format only) and a mismatch</p>
+<div class="ph">
+<div class="bx"><p class="lb" style="margin:0">Same screen, lots section. Date 2026-03-01, quantity 12.</p></div>
+<div class="bx"><span class="n">12</span>
+<div class="lot"><div class="two"><div><p class="t"><i class="ck">&#10003;</i>2026-01-02 ET</p><p class="lb">10 left, $100.00 per share</p></div><div class="r"><p class="a">Sell: 10</p><p class="lb">no price</p></div></div></div>
+<div class="lot"><div class="two"><div><p class="t"><i class="ck">&#10003;</i>2026-02-01 ET</p><p class="lb">10 left, $150.00 per share</p></div><div class="r"><p class="a">Sell: 0</p><p class="lb good">+$100.00 stale, 2 days</p></div></div></div>
+<div class="off"><span class="n" style="top:-8px">13</span><p class="t"><i class="ck"></i>2026-03-15 ET</p><p class="lb">5 left, $170.00 per share</p><p class="lb">Not available: bought after the sell date</p></div>
+<p class="lb" style="margin-top:6px">Picked 10 of 12 shares</p></div>
+<div class="msg" style="position:relative"><span class="n">14</span>Not saved yet. The picked lots add up to 10 shares, but the sell is for 12.</div>
+<div style="text-align:right"><span class="btn pri">Review</span></div>
+</div></div>
+<div>
+<p class="cap">Frame E: Sell review (Example A)</p>
+<div class="ph">
+<p class="title">&lt; Review sell</p>
+<div class="bx"><span class="n">15</span>
+<p class="row"><span>Portfolio</span><span>Portfolio P</span></p>
+<p class="row"><span>Ticker</span><span>AAPL</span></p>
+<p class="row"><span>Date</span><span>2026-03-01 ET</span></p>
+<p class="row"><span>Quantity</span><span>12</span></p>
+<p class="row"><span>Total amount</span><span>$2,100.00</span></p>
+<p class="row"><span>Price per share</span><span>$175.00</span></p>
+<p class="lb" style="margin-top:4px">Lots used</p>
+<p class="row"><span>2026-01-02 ET, 10 shares</span><span>cost $1,000.00</span></p>
+<p class="row"><span>2026-02-01 ET, 2 shares</span><span>cost $300.00</span></p>
+<p class="row"><span>Cost of lots used</span><span>$1,300.00</span></p>
+<p class="row"><span>Realized gain/loss</span><span class="good">+$800.00</span></p>
+<p class="row tot"><span>Cash effect</span><span>+$2,100.00</span></p></div>
+<p class="lb">Nothing is saved until you confirm.</p>
+<div><span class="btn pri">Confirm and save</span> <span class="btn">Back to edit</span></div>
+</div></div>
+<div>
+<p class="cap">Frame F: blocked saves (entry stays open)</p>
+<div class="ph">
+<div class="bx"><span class="n">16</span>
+<p class="msg">Not saved. Cash would be negative on 2026-02-01 by $500.00.</p>
+<p class="msg">Not saved. XYZ has not been verified, and the phone is offline.</p>
+<p class="msg">Not saved. ZZZZ is not on a US national securities exchange.</p>
+<p class="msg">Not saved. Portfolio P holds 8 shares of AAPL on 2026-04-01; the sell is for 12.</p>
+<p class="msg">Total amount: must be more than 0 on a buy.</p>
+<p class="msg">Quantity: up to 8 decimals. Total amount: up to 2 decimals.</p>
+<p class="lb" style="margin:0">Everything typed stays in the fields.</p></div>
+</div></div>
+<div>
+<p class="cap">Frame G: Buy/Sell menu and nothing to enter</p>
+<div class="ph">
+<div class="bx"><span class="n">17</span><p class="lb" style="margin:0 0 4px">Buy/Sell button opens:</p>
+<p class="row" style="border-top:1px solid var(--border-strong)"><span>Buy</span></p><p class="row" style="border-top:1px solid var(--border-strong)"><span>Sell</span></p></div>
+<div class="bx"><span class="n">18</span>
+<p class="row" style="font-weight:500"><span>Set the opening balance first</span></p><span class="btn">Set opening balance</span></div>
+<div class="bx"><p class="row" style="font-weight:500"><span>Create a portfolio first</span></p><span class="btn">Create a portfolio</span></div>
+<div class="bx"><p class="row" style="font-weight:500"><span>Nothing to sell yet</span></p></div>
+</div></div>
+</div>
+<h2>Markers</h2>
+<ol>
+<li>Portfolio: a dropdown of the portfolios in creation order. It opens on the portfolio you came from (a portfolio's screen or a holding), otherwise on the first one. Design addition, to confirm.</li>
+<li>Ticker: typed on a buy and in capitals. On Holding detail it is already filled in (navigation outline). The check of 4.3 runs when Review is tapped (marker 6).</li>
+<li>Date: defaults to today in New York, with the date note of section 6 beside the input (4.1, C13). A buy or sell may be backdated or future-dated.</li>
+<li>Quantity (up to 8 decimals) and total amount (up to 2 decimals), fees included, as in 4.3. A buy total must be more than 0. A ninth quantity decimal or a third amount decimal is refused with a line under the field (frame F).</li>
+<li>Price per share is derived (total divided by quantity) and shown as the field changes, in the number format of section 6. It is not typed.</li>
+<li>Review runs every check and shows the review screen only if the save would pass: the field rules, the ticker check of 4.3 (needs internet unless the ticker was verified before), the cash and share rules of 4.1, and for a sell the lot rules of 4.4. If one fails, the entry screen stays open with what you typed and a message names the rule, the date and the amount where it has them (section 6, error states). Confirm runs the checks again before saving. Design addition: when the checks run.</li>
+<li>Buy review: the entered values, the derived price per share and the cash effect with its sign and no color. Confirm and save is the only way to save (criterion 30); Back to edit returns with the values kept. No lot, no gain: a buy has none.</li>
+<li>Sell entry is one scrolling screen: the fields, then the lot list, then Review (4.4). The ticker is picked from the tickers held in the chosen portfolio, not typed. Design addition, to confirm. Total amount may be 0 (a total loss, 4.4).</li>
+<li>Sell all fills the quantity with the exact remaining quantity of that ticker in the portfolio and picks every lot that passes the lot rules, each at its full remaining quantity (4.4).</li>
+<li>Lot list: each lot of that ticker in this portfolio that still has shares, oldest first, same-date lots in entry order. Each shows purchase date with "ET", quantity left, cost per share and unrealized gain/loss (green with a plus sign, red with a minus sign, quantities and cost per share include splits recorded so far). Tapping a lot picks it, with its quantity prefilled with the full remaining quantity; you edit that number only for a partial lot (lot 2 above sells 2 of 10). Tapping again unpicks it. A lot that fails the lot rules is not offered here (marker 13).</li>
+<li>The line "Picked X of Y shares" compares the picked quantities with the sell quantity. They must be equal to save (4.4). Changing the date updates the lot list and the picks at once; a pick that no longer passes is dropped and the line says so. Design addition, to confirm: how a dropped pick is announced.</li>
+<li>Format only: a lot with no price shows "no price" instead of a gain/loss, and a lot with a stale price shows its gain/loss with the stale marker and its age (4.4, 4.8). It can still be picked. A lot whose quantity is 0 is not listed.</li>
+<li>Format only: a lot that fails the lot rules for the entered date (bought after the sell date, or same date but entered after the sell) stays in its place in the order, greyed out with a dashed outline and its reason in text, and cannot be picked (4.4, criterion 14).</li>
+<li>If the picks do not add up to the sell quantity, Review stays tappable and the message names both numbers. Nothing is saved.</li>
+<li>Sell review: the entered values and the derived price per share, then each lot used with its quantity and cost, the cost of lots used, the realized gain/loss (green or red with sign) and the cash effect. For Example A: cost $1,300.00, realized +$800.00, cash +$2,100.00. Realized gain and cost on the review are a Design addition, to confirm. Confirm and save is the only way to save (criterion 30).</li>
+<li>Blocked saves, wording placeholder (D9). Each message names the rule and, where the rule has them, the failing date and amount (4.1, 4.3, 4.4). Messages are plain text with a leading "Not saved", so meaning never rests on color. A message is read by TalkBack when it appears.</li>
+<li>The Buy/Sell button on Overall, Portfolios and Cash opens this short menu (navigation outline). Holding detail starts Buy and Sell directly with the ticker filled in.</li>
+<li>Cases with nothing to enter (section 6, 4.2). Before the opening balance exists, Buy says "Set the opening balance first" with a button that opens it. With cash but no portfolio, Buy says "Create a portfolio first" with a button, and after the portfolio is created the app returns to the Buy entry. Sell says "Nothing to sell yet", with no button, when nothing is held.</li>
+</ol>
+<p class="note">Touch targets are at least 48 dp and text follows the font size setting; the sketches are not to scale. Sell is meant to take under 30 seconds with lots ready to tap (criterion 3). Reverse and re-enter, which reopens these screens prefilled, is part C.</p>
+</main>
+</body>
+</html>
