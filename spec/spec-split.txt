@@ -1,6 +1,6 @@
 spec-split.txt
 Stage: Design. Status: PROPOSAL ONLY. spec.md has NOT been split.
-Applies to: spec/spec.md (draft v4, 430 lines, 14 sections)
+Applies to: spec/spec.md (draft v4, 431 lines, 14 sections)
 Last updated against: spec.md with sections 1 to 14, after the CSV format (section 8) was
 approved and Example B was rewritten, and after Example F and the 4.6 rule for splits
 between an original and its reversal were added (finding 3), and after the Status column
@@ -85,7 +85,10 @@ fifth approved wireframe (H134, H135; the spec stays draft v4; new file
 spec/wireframes/05-realized-gains.html), and
 the Holding detail screen rules (view 6, section 6) and criterion 48 (section 11) were added with the
 sixth approved wireframe (H136, H137; the spec stays draft v4; new file
-spec/wireframes/06-holding-detail.html).
+spec/wireframes/06-holding-detail.html), and
+the Cash account screen rules (view 7, section 6), the navigation wording and criterion 49 (section 11)
+were added with the seventh approved wireframe (H138 to H140; the spec stays draft v4; new file
+spec/wireframes/07-cash.html).
 
 DECISION MADE
 Option 1: keep working on a single spec.md until the user says "final".
@@ -96,7 +99,7 @@ WHY NOT SPLIT NOW
   findings (1 to 7) are applied. What remains is the user's approval of spec.md as a
   whole ("final").
 - One file means one approval gate (Ruleset A: approve spec.md before Build).
-- The file (430 lines) is small enough to review in one sitting. Context-window fit has
+- The file (431 lines) is small enough to review in one sitting. Context-window fit has
   not been measured.
 
 PROPOSED SPLIT (apply only after "final", and only if still worth it)
@@ -175,8 +178,8 @@ AFTER A SPLIT
   4.6, 4.7 and Example E").
 
 KNOWN LIMITS
-- Current section sizes in lines (measured with wc and awk, spec.md = 430 lines):
-  index sections 1, 2, 10 to 14 = 124 lines (129 with the 5 header lines before section 1);
+- Current section sizes in lines (measured with wc and awk, spec.md = 431 lines):
+  index sections 1, 2, 10 to 14 = 125 lines (130 with the 5 header lines before section 1);
   domain-rules (3 to 5) = 148 lines; views (6) 40; prices (7) 13; backup-restore (8) 83;
   backup-security (9) 17. Each count runs from a section's heading to the line before the
   next heading, so it includes the blank line. These are line counts, not context tokens.
@@ -203,7 +206,8 @@ KNOWN LIMITS
   are edited in place) and after the
   Allocation rules (H132, H133; section 11 went from 47 to 48, and view 4 is edited in place) and after the
   Realized gains rules (H134, H135; section 11 went from 48 to 49, and view 5 is edited in place) and after the
-  Holding detail rules (H136, H137; section 11 went from 49 to 50, and view 6 is edited in place).
+  Holding detail rules (H136, H137; section 11 went from 49 to 50, and view 6 is edited in place) and after the
+  Cash account rules (H138 to H140; section 11 went from 50 to 51, and view 7 and the navigation outline are edited in place).
 - Section 9 grew from 7 to 17 lines (lock, privacy, screenshot window, minimum Android
   version, encryption at rest, no automatic copies, network and logging, last backup, reminder), so it holds more than backup and security now. Its file
   name may need to change if it is split out.

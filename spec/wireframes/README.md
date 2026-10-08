@@ -13,7 +13,7 @@ for both themes (spec.md section 6, Number format and color).
 | 4 | 04-allocation.html | Allocation, one portfolio (view 4) | Approved |
 | 5 | 05-realized-gains.html | Realized gains (view 5) | Approved |
 | 6 | 06-holding-detail.html | Holding detail (view 6) | Approved |
-| 7 | 07-cash.html | Cash account (view 7) | Not drawn |
+| 7 | 07-cash.html | Cash account (view 7) | Approved |
 | 8 | 08-transaction-history.html | Transaction history (view 8) | Not drawn |
 | 9 | 09-hidden-holdings.html | Hidden holdings (view 9) | Not drawn |
 | 10 | 10-entry-flows (may become several files) | Buy and sell with review, lot picker, split, cash entry, reversal and Reverse and re-enter, restore, settings, More tab | Not drawn |
