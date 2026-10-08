@@ -15,7 +15,7 @@ for both themes (spec.md section 6, Number format and color).
 | 6 | 06-holding-detail.html | Holding detail (view 6) | Approved |
 | 7 | 07-cash.html | Cash account (view 7) | Approved |
 | 8 | 08-transaction-history.html | Transaction history (view 8) | Approved |
-| 9 | 09-hidden-holdings.html | Hidden holdings (view 9) | Not drawn |
+| 9 | 09-hidden-holdings.html | Hidden holdings (view 9) | Approved |
 | 10 | 10-entry-flows (may become several files) | Buy and sell with review, lot picker, split, cash entry, reversal and Reverse and re-enter, restore, settings, More tab | Not drawn |
 
 Entry flows are many screens, so wireframe 10 may become several files. That is decided when we reach it.
