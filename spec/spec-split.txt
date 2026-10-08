@@ -1,6 +1,6 @@
 spec-split.txt
 Stage: Design. Status: PROPOSAL ONLY. spec.md has NOT been split.
-Applies to: spec/spec.md (draft v4, 436 lines, 14 sections)
+Applies to: spec/spec.md (draft v4, 439 lines, 14 sections)
 Last updated against: spec.md with sections 1 to 14, after the CSV format (section 8) was
 approved and Example B was rewritten, and after Example F and the 4.6 rule for splits
 between an original and its reversal were added (finding 3), and after the Status column
@@ -97,7 +97,11 @@ ninth approved wireframe (H143, H144; the spec stays draft v4; new file
 spec/wireframes/09-hidden-holdings.html), and
 the Buy and sell entry paragraph (section 6) and criterion 52 (section 11) were added with the
 tenth wireframe, 10a (H145, H146; the spec stays draft v4; new file
-spec/wireframes/10a-buy-sell.html).
+spec/wireframes/10a-buy-sell.html), and
+the Cash, split and reversal entry paragraph (section 6) and criterion 53 (section 11) were added
+with the eleventh wireframe, 10b (H147, H149; H148 was dropped because the wording it would have
+changed is in the wireframe 07 and 08 files, not in spec.md; the spec stays draft v4; new file
+spec/wireframes/10b-split-cash-reversal.html).
 
 DECISION MADE
 Option 1: keep working on a single spec.md until the user says "final".
@@ -108,7 +112,7 @@ WHY NOT SPLIT NOW
   findings (1 to 7) are applied. What remains is the user's approval of spec.md as a
   whole ("final").
 - One file means one approval gate (Ruleset A: approve spec.md before Build).
-- The file (436 lines) is small enough to review in one sitting. Context-window fit has
+- The file (439 lines) is small enough to review in one sitting. Context-window fit has
   not been measured.
 
 PROPOSED SPLIT (apply only after "final", and only if still worth it)
@@ -187,9 +191,9 @@ AFTER A SPLIT
   4.6, 4.7 and Example E").
 
 KNOWN LIMITS
-- Current section sizes in lines (measured with wc and awk, spec.md = 436 lines):
-  index sections 1, 2, 10 to 14 = 128 lines (133 with the 5 header lines before section 1);
-  domain-rules (3 to 5) = 148 lines; views (6) 42; prices (7) 13; backup-restore (8) 83;
+- Current section sizes in lines (measured with wc and awk, spec.md = 439 lines):
+  index sections 1, 2, 10 to 14 = 129 lines (134 with the 5 header lines before section 1);
+  domain-rules (3 to 5) = 148 lines; views (6) 44; prices (7) 13; backup-restore (8) 83;
   backup-security (9) 17. Each count runs from a section's heading to the line before the
   next heading, so it includes the blank line. These are line counts, not context tokens.
 - The sizes above were recomputed after the findings batch, after the Android minimum
@@ -219,7 +223,8 @@ KNOWN LIMITS
   Cash account rules (H138 to H140; section 11 went from 50 to 51, and view 7 and the navigation outline are edited in place) and after the
   Transaction history rules (H141, H142; section 11 went from 51 to 52, and view 8 is edited in place) and after the
   Hidden holdings rules (H143, H144; section 11 went from 52 to 53, and view 9 is edited in place) and after the
-  Buy and sell entry paragraph and criterion 52 (H145, H146; section 6 went from 40 to 42 and section 11 from 53 to 54).
+  Buy and sell entry paragraph and criterion 52 (H145, H146; section 6 went from 40 to 42 and section 11 from 53 to 54) and after the
+  Cash, split and reversal entry paragraph and criterion 53 (H147, H149; section 6 went from 42 to 44 and section 11 from 54 to 55).
 - Section 9 grew from 7 to 17 lines (lock, privacy, screenshot window, minimum Android
   version, encryption at rest, no automatic copies, network and logging, last backup, reminder), so it holds more than backup and security now. Its file
   name may need to change if it is split out.

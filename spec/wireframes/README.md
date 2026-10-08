@@ -17,7 +17,7 @@ for both themes (spec.md section 6, Number format and color).
 | 8 | 08-transaction-history.html | Transaction history (view 8) | Approved |
 | 9 | 09-hidden-holdings.html | Hidden holdings (view 9) | Approved |
 | 10a | 10a-buy-sell.html | Buy and Sell entry, review screens, lot picker, blocked-save messages | Approved |
-| 10b | 10b-split-cash-reversal | Split, cash entry (opening balance first), reversal date screen | Not drawn |
+| 10b | 10b-split-cash-reversal.html | Cash entry (opening balance first), Split entry, transaction and cash entry detail with Reverse, reversal screen | Approved |
 | 10c | 10c-reverse-reenter | Reverse and re-enter | Not drawn |
 | 10d | 10d-portfolio-dialogs | Portfolio create, rename, delete (summary, typed confirmation, blocked message) | Not drawn |
 | 10e | 10e-backup-restore | Backup export, restore summary and typed confirmation, error report with Copy report | Not drawn |
