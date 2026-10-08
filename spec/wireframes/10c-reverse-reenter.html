@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Wireframe 10c: Reverse and re-enter (spec.md section 6, entry flows; 4.6)</title>
+<style>
+:root{--bg:#f6f6f4;--surface-1:#efefec;--surface-2:#ffffff;--border:#d9d9d4;--border-strong:#b9b9b2;--border-stronger:#8a8a84;--text:#1c1c1a;--text-2:#5a5a55;--text-muted:#8a8a84;--accent-bg:#e3edf8;--accent-text:#0c447c;--accent-line:#378add;--success:#2e6b1a}
+@media (prefers-color-scheme:dark){:root{--bg:#1b1b19;--surface-1:#262624;--surface-2:#2e2e2b;--border:#44443f;--border-strong:#66665f;--border-stronger:#9a9a92;--text:#ecece8;--text-2:#b4b4ac;--text-muted:#8a8a82;--accent-bg:#14304f;--accent-text:#b5d4f4;--accent-line:#85b7eb;--success:#8fd16a}}
+html{background:var(--bg)}
+body{margin:0;padding:24px 16px 48px;font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;color:var(--text);line-height:1.5}
+main{max-width:760px;margin:0 auto}
+h1{font-size:22px;font-weight:500;margin:0 0 4px}
+h2{font-size:18px;font-weight:500;margin:32px 0 4px}
+p,li{font-size:15px}
+.note{color:var(--text-2);margin:0 0 8px}
+.pair{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px;margin-top:16px}
+@media (max-width:640px){.pair{grid-template-columns:minmax(0,1fr)}}
+.cap{font-size:13px;color:var(--text-2);margin:0 0 6px;text-align:center}
+.ph{background:var(--surface-2);border:1px solid var(--border-strong);border-radius:20px;padding:12px;display:flex;flex-direction:column;gap:8px}
+.bx{border:1px solid var(--border-strong);border-radius:8px;padding:8px 10px;position:relative;background:var(--surface-1)}
+.dash{border:1px dashed var(--border-stronger);border-radius:8px;padding:8px 10px;position:relative}
+.n{position:absolute;top:-8px;right:-6px;width:18px;height:18px;border-radius:50%;background:var(--accent-bg);color:var(--accent-text);font-size:11px;font-weight:500;display:flex;align-items:center;justify-content:center;border:1px solid var(--accent-line)}
+.lb{font-size:12px;color:var(--text-2);margin:0}
+.title{font-size:14px;font-weight:500;margin:0}
+.row{display:flex;justify-content:space-between;align-items:center;font-size:13px;padding:3px 0;margin:0}
+.two{display:flex;justify-content:space-between;align-items:flex-start;gap:8px}
+.r{text-align:right}
+.btn{border:1px solid var(--border-strong);border-radius:8px;padding:4px 10px;font-size:12px;background:var(--surface-2);display:inline-block}
+.btn.pri{background:var(--accent-bg);color:var(--accent-text);border-color:var(--accent-line);font-weight:500}
+.fld{border:1px solid var(--border-strong);border-radius:8px;padding:4px 8px;font-size:13px;background:var(--surface-2);min-width:0}
+.chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px}
+.chip{border:1px solid var(--border-strong);border-radius:16px;padding:3px 10px;font-size:12px;background:var(--surface-2)}
+.chip.on{background:var(--accent-bg);color:var(--accent-text);border-color:var(--accent-line);font-weight:500}
+.bar{display:flex;border:1px solid var(--border-strong);border-radius:8px;overflow:hidden;font-size:12px;margin-top:auto}
+.bar span{flex:1;text-align:center;padding:10px 0;border-right:1px solid var(--border)}
+.bar span:last-child{border-right:none}
+.bar span:nth-child(2){background:var(--accent-bg);color:var(--accent-text);font-weight:500}
+.mut{color:var(--text-muted)}
+.t{font-size:13px;font-weight:500;margin:0}
+.msg{border:1px solid var(--border-stronger);border-radius:8px;padding:6px 8px;font-size:12px;margin:0 0 6px;background:var(--surface-2)}
+.tot{border-top:1px solid var(--border-strong);margin-top:4px;padding-top:4px;font-weight:500}
+.cl{border:1px dashed var(--border-stronger);border-radius:6px;padding:2px 8px;margin-top:4px;font-size:12px;color:var(--text-2);display:flex;justify-content:space-between}
+.ban{border:1px solid var(--accent-line);background:var(--accent-bg);color:var(--accent-text);border-radius:8px;padding:6px 10px;font-size:12px;position:relative}
+.ck{display:inline-block;width:14px;height:14px;border:1px solid var(--border-stronger);border-radius:3px;margin-right:6px;vertical-align:middle;text-align:center;font-size:11px;line-height:14px;background:var(--surface-2)}
+.good{color:var(--success)}
+.lot{border-top:1px solid var(--border);margin-top:6px;padding-top:6px}
+.a{font-size:13px;margin:0}
+</style>
+</head>
+<body>
+<main>
+<h1>Wireframe 10c: Reverse and re-enter (entry flows, part C)</h1>
+<p class="note">Status: approved. Companion to spec.md section 6 (entry flows), rule 4.6 and Examples G and A. All wording is placeholder (D9, decided in Build). Colors are placeholders; the real ones are chosen in Build for both themes. Index of all wireframes: README.md in this folder. Reverse and re-enter starts from the detail screens of wireframe 10b (frames G and H). It reuses the entry screens of 10a and 10b, then shows one combined review, and saves the reversal and the new entry together or not at all. The bottom bar is always visible (section 6); the highlighted tab is where the flow was opened from.</p>
+<div class="pair">
+<div>
+<p class="cap">Frame A: the entry screen, prefilled (a buy, Example G)</p>
+<div class="ph">
+<p class="title">&lt; Buy (replacing)</p>
+<div class="ban"><span class="n">1</span>Replacing the buy of 2026-01-02 ET: 10 AAPL, $1,000.00. Nothing changes until you confirm.</div>
+<div class="bx"><span class="n">3</span>
+<div style="display:flex;gap:8px"><div style="flex:1"><p class="lb">Portfolio</p><div class="fld">Portfolio P &nbsp;v</div></div><div style="flex:1"><p class="lb">Ticker</p><div class="fld">AAPL</div></div></div>
+<p class="lb" style="margin-top:6px">Date</p><div class="fld">2026-01-02</div>
+<p class="lb" style="margin-top:4px">Enter date in US market time (New York)</p>
+<div style="display:flex;gap:8px;margin-top:6px"><div style="flex:1"><p class="lb">Quantity</p><div class="fld">100</div><p class="lb" style="position:relative"><span class="n" style="top:0;right:0">2</span>Original: 10</p></div><div style="flex:1"><p class="lb">Total amount, fees included</p><div class="fld">$1,000.00</div></div></div>
+<p class="lb" style="margin-top:4px">Price per share: $10.00</p></div>
+<div style="text-align:right"><span class="btn pri">Review</span></div>
+<div style="flex:1"></div>
+<div class="bar"><span>More</span><span>Cash</span><span>Portfolios</span><span>Overall</span></div>
+</div></div>
+<div>
+<p class="cap">Frame B: combined review (buy, Example G)</p>
+<div class="ph">
+<p class="title">&lt; Review both</p>
+<div class="bx"><span class="n">4</span><p class="hd" style="font-size:13px;font-weight:500;margin:0 0 4px">1. Reverse the original</p>
+<p class="row"><span>Reverses</span><span>Buy, 2026-01-02 ET</span></p>
+<p class="row" style="position:relative"><span>Reversal date</span><span>2026-01-02 ET &nbsp;<span class="btn" style="padding:1px 8px">Change</span></span><span class="n" style="top:-6px;right:-6px">5</span></p>
+<p class="row"><span>Shares removed</span><span>10</span></p>
+<p class="row tot"><span>Cash effect</span><span>+$1,000.00</span></p></div>
+<div class="bx"><span class="n">6</span><p class="hd" style="font-size:13px;font-weight:500;margin:0 0 4px">2. Enter the replacement</p>
+<p class="row"><span>Buy AAPL, Portfolio P</span><span>2026-01-02 ET</span></p>
+<p class="row"><span>Quantity</span><span>100</span></p>
+<p class="row"><span>Total amount</span><span>$1,000.00</span></p>
+<p class="row"><span>Price per share</span><span>$10.00</span></p>
+<p class="row tot"><span>Cash effect</span><span>&minus;$1,000.00</span></p></div>
+<div class="bx"><span class="n">7</span><p class="row tot" style="border:none;margin:0;padding:0"><span>Combined cash effect</span><span>$0.00</span></p></div>
+<p class="lb">Both are saved together, or neither is.</p>
+<div style="position:relative"><span class="btn pri">Confirm and save both</span> <span class="btn">Back to edit</span><span class="n" style="top:-10px;right:auto;left:130px">8</span></div>
+</div></div>
+<div>
+<p class="cap">Frame C: the entry screen, prefilled (a sell, Example A)</p>
+<div class="ph">
+<p class="title">&lt; Sell (replacing)</p>
+<div class="ban">Replacing the sell of 2026-03-01 ET: 12 AAPL, $2,100.00. Nothing changes until you confirm.</div>
+<div class="bx">
+<div style="display:flex;gap:8px"><div style="flex:1"><p class="lb">Portfolio</p><div class="fld">Portfolio P &nbsp;v</div></div><div style="flex:1"><p class="lb">Ticker</p><div class="fld">AAPL &nbsp;v</div></div></div>
+<p class="lb" style="margin-top:6px">Date</p><div class="fld">2026-03-01</div>
+<div style="display:flex;gap:8px;margin-top:6px"><div style="flex:1"><p class="lb">Quantity</p><div class="fld">12</div></div><div style="flex:1"><p class="lb">Total amount</p><div class="fld">$2,200.00</div><p class="lb">Original: $2,100.00</p></div></div></div>
+<div class="bx"><span class="n">9</span>
+<p class="hd" style="font-size:13px;font-weight:500;margin:0 0 4px">Lots, as they will be after the reversal</p>
+<div class="lot" style="border-top:none;margin-top:0;padding-top:0"><div class="two"><div><p class="t"><i class="ck">&#10003;</i>2026-01-02 ET</p><p class="lb">10 left, $100.00 per share</p></div><div class="r"><p class="a">Sell: 10</p><p class="lb good">+$600.00</p></div></div></div>
+<div class="lot"><div class="two"><div><p class="t"><i class="ck">&#10003;</i>2026-02-01 ET</p><p class="lb">10 left, $150.00 per share</p></div><div class="r"><p class="a">Sell: 2</p><p class="lb good">+$100.00</p></div></div></div>
+<p class="lb" style="margin-top:6px">Picked 12 of 12 shares (the original's picks)</p></div>
+<div style="text-align:right"><span class="btn pri">Review</span></div>
+</div></div>
+<div>
+<p class="cap">Frame D: combined review (sell, Example G)</p>
+<div class="ph">
+<p class="title">&lt; Review both</p>
+<div class="bx"><p class="hd" style="font-size:13px;font-weight:500;margin:0 0 4px">1. Reverse the original</p>
+<p class="row"><span>Reverses</span><span>Sell, 2026-03-01 ET</span></p>
+<p class="row"><span>Lots put back</span><span>10 + 2 shares</span></p>
+<p class="row"><span>Realized gain removed</span><span>&minus;$800.00</span></p>
+<p class="row tot"><span>Cash effect</span><span>&minus;$2,100.00</span></p></div>
+<div class="bx"><span class="n">10</span><p class="hd" style="font-size:13px;font-weight:500;margin:0 0 4px">2. Enter the replacement</p>
+<p class="row"><span>Sell AAPL, Portfolio P</span><span>2026-03-01 ET</span></p>
+<p class="row"><span>Quantity, total</span><span>12, $2,200.00</span></p>
+<p class="row"><span>Lots used</span><span>10 + 2 shares</span></p>
+<p class="row"><span>Cost of lots used</span><span>$1,300.00</span></p>
+<p class="row"><span>Realized gain/loss</span><span class="good">+$900.00</span></p>
+<p class="row tot"><span>Cash effect</span><span>+$2,200.00</span></p></div>
+<div class="bx"><p class="row tot" style="border:none;margin:0;padding:0"><span>Combined cash effect</span><span>+$100.00</span></p></div>
+<div><span class="btn pri">Confirm and save both</span> <span class="btn">Back to edit</span></div>
+</div></div>
+<div>
+<p class="cap">Frame E: combined review (a cash entry)</p>
+<div class="ph">
+<p class="title">&lt; Review both</p>
+<div class="bx"><span class="n">11</span><p class="hd" style="font-size:13px;font-weight:500;margin:0 0 4px">1. Reverse the original</p>
+<p class="row"><span>Reverses</span><span>Deposit, 2026-04-20 ET</span></p>
+<p class="row"><span>Type</span><span>Adjustment</span></p>
+<p class="row"><span>Note</span><span>Reversal of #14</span></p>
+<p class="row tot"><span>Cash effect</span><span>&minus;$500.00</span></p></div>
+<div class="bx"><p class="hd" style="font-size:13px;font-weight:500;margin:0 0 4px">2. Enter the replacement</p>
+<p class="row"><span>Deposit, 2026-04-20 ET</span><span>+$50.00</span></p>
+<p class="row"><span>Note</span><span>Deposit</span></p>
+<p class="row tot"><span>Cash effect</span><span>+$50.00</span></p></div>
+<div class="bx"><p class="row tot" style="border:none;margin:0;padding:0"><span>Combined cash effect</span><span>&minus;$450.00</span></p></div>
+<div><span class="btn pri">Confirm and save both</span> <span class="btn">Back to edit</span></div>
+</div></div>
+<div>
+<p class="cap">Frame F: blocked pairs (screen stays open)</p>
+<div class="ph">
+<div class="bx"><span class="n">12</span>
+<p class="msg">Not saved. Nothing was changed. With the replacement, cash would be negative on 2026-01-02 by $500.00.</p>
+<p class="msg">Not saved. Nothing was changed. The reversal would make shares &minus;10 on 2026-01-03. Reverse the sell of 2026-01-03 first.</p>
+<p class="msg">Not saved. Nothing was changed. The lot of 2026-03-15 ET was bought after the sell date.</p>
+<p class="lb" style="margin:0">Everything typed stays in the fields.</p></div>
+</div></div>
+</div>
+<h2>Markers</h2>
+<ol>
+<li>Reverse and re-enter starts from a transaction or cash entry (wireframe 10b, frames G and H) and opens the normal entry screen of that kind (buy, sell, split or cash) with a banner naming what is being replaced. Back leaves everything as it was. The entry is a normal entry under 4.3, 4.4 or 4.5, including the ticker check when online (K5).</li>
+<li>The new entry starts with the original's values, including its date (4.6). A field you change shows the original value beneath it, as a small hint. Design addition, to confirm.</li>
+<li>Every field is editable, including portfolio and ticker, because the new entry is a normal entry. Review runs the same checks as in 10a and 10b, with the pair applied together (4.1, 4.6).</li>
+<li>Combined review, part 1: the reversal. It names the original by type and date, shows what the reversal does (shares removed, or lots put back and the realized gain removed, or the opposite cash amount) and its cash effect. Its amount, quantity, ticker and portfolio are fixed to the original (4.6).</li>
+<li>Reversal date: defaults to the original's date, as in Example G. Change opens the reversal date field of 10b (frame I), where a later date may be picked and an earlier one is refused. Design addition: a Change link on this screen, to confirm.</li>
+<li>Combined review, part 2: the new entry as in the review screens of 10a and 10b (values, price per share, cash effect). It gets the next entry order after the reversal (4.6).</li>
+<li>Combined cash effect: the sum of both parts, signed, with no color. For Example G (buy) it is $0.00. A line says both are saved together, or neither.</li>
+<li>Confirm and save both is the only way to save. The reversal and the new entry are written as one action (K2). The original, the reversal and the new entry stay as three permanent records (4.6, Example G). Back to edit keeps the values.</li>
+<li>Sell: the lot picks start from the original's picks, and the lot list shows the lots as they will be after the reversal, so the original's lots are available again. The new sell must still pass the lot rules (4.4). Design addition: the list shown as after the reversal, to confirm.</li>
+<li>Sell review: part 1 shows the lots put back and the realized gain removed; part 2 shows lots used, cost of lots used, the new realized gain and the cash effect. For Example G (sell, total $2,200): cost $1,300.00, realized +$900.00 (it was +$800.00), combined cash effect +$100.00.</li>
+<li>Cash entry: part 1 is an Adjustment of the opposite amount with the pre-filled note "Reversal of #id" (4.6, see 10b marker 19 for the id wording); part 2 is the corrected entry. A split works the same way: part 1 applies the inverse ratio, part 2 is the new split with its shares before and after.</li>
+<li>Blocked pairs, placeholder wording (D9). The pair is checked as a unit: nothing is saved if either part is blocked, and the message says "Nothing was changed" and names the part and the rule, with the date and amount where it has them (4.1, Example G). A block that comes from the original itself still applies, for example a buy whose shares were sold (Example D). Plain text with a leading "Not saved", so meaning never rests on color.</li>
+</ol>
+<p class="note">Not offered on the opening balance, on a reversal, on an entry that already has a reversal, or on a trade cash line (4.6, wireframe 10b marker 14). It saves typing, not rules: a mistake buried under later dependent transactions is still blocked until those are reversed. Touch targets are at least 48 dp and text follows the font size setting; the sketches are not to scale.</p>
+</main>
+</body>
+</html>
