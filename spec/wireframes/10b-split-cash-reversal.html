@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Wireframe 10b: Cash entry, Split, detail screens and Reverse (spec.md section 6, entry flows; 4.2, 4.5, 4.6)</title>
+<style>
+:root{--bg:#f6f6f4;--surface-1:#efefec;--surface-2:#ffffff;--border:#d9d9d4;--border-strong:#b9b9b2;--border-stronger:#8a8a84;--text:#1c1c1a;--text-2:#5a5a55;--text-muted:#8a8a84;--accent-bg:#e3edf8;--accent-text:#0c447c;--accent-line:#378add;--success:#2e6b1a}
+@media (prefers-color-scheme:dark){:root{--bg:#1b1b19;--surface-1:#262624;--surface-2:#2e2e2b;--border:#44443f;--border-strong:#66665f;--border-stronger:#9a9a92;--text:#ecece8;--text-2:#b4b4ac;--text-muted:#8a8a82;--accent-bg:#14304f;--accent-text:#b5d4f4;--accent-line:#85b7eb;--success:#8fd16a}}
+html{background:var(--bg)}
+body{margin:0;padding:24px 16px 48px;font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;color:var(--text);line-height:1.5}
+main{max-width:760px;margin:0 auto}
+h1{font-size:22px;font-weight:500;margin:0 0 4px}
+h2{font-size:18px;font-weight:500;margin:32px 0 4px}
+p,li{font-size:15px}
+.note{color:var(--text-2);margin:0 0 8px}
+.pair{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px;margin-top:16px}
+@media (max-width:640px){.pair{grid-template-columns:minmax(0,1fr)}}
+.cap{font-size:13px;color:var(--text-2);margin:0 0 6px;text-align:center}
+.ph{background:var(--surface-2);border:1px solid var(--border-strong);border-radius:20px;padding:12px;display:flex;flex-direction:column;gap:8px}
+.bx{border:1px solid var(--border-strong);border-radius:8px;padding:8px 10px;position:relative;background:var(--surface-1)}
+.dash{border:1px dashed var(--border-stronger);border-radius:8px;padding:8px 10px;position:relative}
+.n{position:absolute;top:-8px;right:-6px;width:18px;height:18px;border-radius:50%;background:var(--accent-bg);color:var(--accent-text);font-size:11px;font-weight:500;display:flex;align-items:center;justify-content:center;border:1px solid var(--accent-line)}
+.lb{font-size:12px;color:var(--text-2);margin:0}
+.title{font-size:14px;font-weight:500;margin:0}
+.row{display:flex;justify-content:space-between;align-items:center;font-size:13px;padding:3px 0;margin:0}
+.two{display:flex;justify-content:space-between;align-items:flex-start;gap:8px}
+.r{text-align:right}
+.btn{border:1px solid var(--border-strong);border-radius:8px;padding:4px 10px;font-size:12px;background:var(--surface-2);display:inline-block}
+.btn.pri{background:var(--accent-bg);color:var(--accent-text);border-color:var(--accent-line);font-weight:500}
+.fld{border:1px solid var(--border-strong);border-radius:8px;padding:4px 8px;font-size:13px;background:var(--surface-2);min-width:0}
+.chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px}
+.chip{border:1px solid var(--border-strong);border-radius:16px;padding:3px 10px;font-size:12px;background:var(--surface-2)}
+.chip.on{background:var(--accent-bg);color:var(--accent-text);border-color:var(--accent-line);font-weight:500}
+.bar{display:flex;border:1px solid var(--border-strong);border-radius:8px;overflow:hidden;font-size:12px;margin-top:auto}
+.bar span{flex:1;text-align:center;padding:10px 0;border-right:1px solid var(--border)}
+.bar span:last-child{border-right:none}
+.bar span:nth-child(2){background:var(--accent-bg);color:var(--accent-text);font-weight:500}
+.mut{color:var(--text-muted)}
+.t{font-size:13px;font-weight:500;margin:0}
+.msg{border:1px solid var(--border-stronger);border-radius:8px;padding:6px 8px;font-size:12px;margin:0 0 6px;background:var(--surface-2)}
+.tot{border-top:1px solid var(--border-strong);margin-top:4px;padding-top:4px;font-weight:500}
+.cl{border:1px dashed var(--border-stronger);border-radius:6px;padding:2px 8px;margin-top:4px;font-size:12px;color:var(--text-2);display:flex;justify-content:space-between}
+</style>
+</head>
+<body>
+<main>
+<h1>Wireframe 10b: Cash entry, Split, detail screens and Reverse (entry flows, part B)</h1>
+<p class="note">Status: approved. Companion to spec.md section 6 (entry flows) and rules 4.2, 4.5 and 4.6. All wording is placeholder (D9, decided in Build). Colors are placeholders; the real ones are chosen in Build for both themes. Index of all wireframes: README.md in this folder. Figures are Example A, C and F. Cash and sell figures are never colored here. The bottom bar is always visible (section 6); the highlighted tab is where the flow was opened from. Part B covers the cash entry (including the opening balance), the split entry, the detail screens of a transaction and of a cash entry (where Reverse starts, 4.6), and the reversal screen. Reverse and re-enter is part C.</p>
+<div class="pair">
+<div>
+<p class="cap">Frame A: Cash entry, deposit (Cash tab, Cash entry button)</p>
+<div class="ph">
+<p class="title">&lt; Cash entry</p>
+<div class="bx"><span class="n">1</span><p class="lb">Type</p>
+<div class="chips" style="margin-top:2px"><span class="chip on">Deposit</span><span class="chip">Withdrawal</span><span class="chip">Interest/dividend</span><span class="chip">Adjustment</span></div></div>
+<div class="bx"><span class="n">2</span><p class="lb">Date</p><div class="fld">2026-04-20</div>
+<p class="lb" style="margin-top:4px">Enter date in US market time (New York)</p></div>
+<div class="bx"><span class="n">3</span><p class="lb">Amount</p><div class="fld">$500.00</div>
+<p class="lb" style="margin-top:4px">A positive number. It is added to cash.</p></div>
+<div class="bx"><span class="n">4</span><p class="lb">Note (optional)</p><div class="fld">Deposit</div></div>
+<div style="text-align:right;position:relative"><span class="btn pri">Review</span><span class="n" style="top:-10px;right:52px">5</span></div>
+<div style="flex:1"></div>
+<div class="bar"><span>More</span><span>Cash</span><span>Portfolios</span><span>Overall</span></div>
+</div></div>
+<div>
+<p class="cap">Frame B: Cash entry, adjustment</p>
+<div class="ph">
+<p class="title">&lt; Cash entry</p>
+<div class="bx"><p class="lb">Type</p>
+<div class="chips" style="margin-top:2px"><span class="chip">Deposit</span><span class="chip">Withdrawal</span><span class="chip">Interest/dividend</span><span class="chip on">Adjustment</span></div></div>
+<div class="bx"><p class="lb">Date</p><div class="fld">2026-04-20</div>
+<p class="lb" style="margin-top:4px">Enter date in US market time (New York)</p></div>
+<div class="bx"><span class="n">6</span><p class="lb">Direction</p>
+<div class="chips" style="margin-top:2px"><span class="chip on">Deposit (+)</span><span class="chip">Withdrawal (&minus;)</span></div>
+<p class="lb" style="margin-top:6px">Amount</p><div class="fld">$200.00</div></div>
+<div class="bx"><span class="n">7</span><p class="lb">Note (required)</p><div class="fld">Match broker balance</div></div>
+<div style="text-align:right"><span class="btn pri">Review</span></div>
+<div style="flex:1"></div>
+<div class="bar"><span>More</span><span>Cash</span><span>Portfolios</span><span>Overall</span></div>
+</div></div>
+<div>
+<p class="cap">Frame C: Opening balance (first launch)</p>
+<div class="ph">
+<p class="title">&lt; Opening balance</p>
+<div class="bx"><span class="n">8</span><p class="lb">Type</p>
+<div class="chips" style="margin-top:2px"><span class="chip on">Opening balance</span></div>
+<p class="lb" style="margin-top:4px">Set this first. Nothing else can be entered before it.</p></div>
+<div class="bx"><p class="lb">Date</p><div class="fld">2026-01-01</div>
+<p class="lb" style="margin-top:4px">Enter date in US market time (New York)</p></div>
+<div class="bx"><p class="lb">Amount</p><div class="fld">$10,000.00</div></div>
+<div class="bx"><p class="lb">Note (optional)</p><div class="fld"></div></div>
+<div style="text-align:right"><span class="btn pri">Review</span></div>
+</div></div>
+<div>
+<p class="cap">Frame D: Cash review (withdrawal)</p>
+<div class="ph">
+<p class="title">&lt; Review cash entry</p>
+<div class="bx"><span class="n">9</span>
+<p class="row"><span>Type</span><span>Withdrawal</span></p>
+<p class="row"><span>Date</span><span>2026-01-10 ET</span></p>
+<p class="row"><span>Amount</span><span>&minus;$300.00</span></p>
+<p class="row"><span>Note</span><span class="mut">none</span></p>
+<p class="row tot"><span>Cash effect</span><span>&minus;$300.00</span></p></div>
+<p class="lb">Nothing is saved until you confirm.</p>
+<div><span class="btn pri">Confirm and save</span> <span class="btn">Back to edit</span></div>
+</div></div>
+<div>
+<p class="cap">Frame E: Split entry</p>
+<div class="ph">
+<p class="title">&lt; Split</p>
+<div class="bx"><span class="n">10</span>
+<div style="display:flex;gap:8px"><div style="flex:1"><p class="lb">Portfolio</p><div class="fld">Portfolio P &nbsp;v</div></div><div style="flex:1"><p class="lb">Ticker</p><div class="fld">AAPL &nbsp;v</div></div></div>
+<p class="lb" style="margin-top:6px">Date</p><div class="fld">2026-03-01</div>
+<p class="lb" style="margin-top:4px">Enter date in US market time (New York)</p>
+<p class="lb" style="margin-top:6px">Split</p>
+<div style="display:flex;gap:8px;align-items:center"><div class="fld" style="width:48px">2</div><span style="font-size:13px">for</span><div class="fld" style="width:48px">1</div></div>
+<p class="lb" style="margin-top:4px">Whole numbers. 2 for 1 doubles the shares; 1 for 10 is a reverse split.</p></div>
+<div style="text-align:right"><span class="btn pri">Review</span></div>
+<div style="flex:1"></div>
+<div class="bar"><span>More</span><span>Cash</span><span>Portfolios</span><span>Overall</span></div>
+</div></div>
+<div>
+<p class="cap">Frame F: Split review (Example B)</p>
+<div class="ph">
+<p class="title">&lt; Review split</p>
+<div class="bx"><span class="n">11</span>
+<p class="row"><span>Portfolio</span><span>Portfolio P</span></p>
+<p class="row"><span>Ticker</span><span>AAPL</span></p>
+<p class="row"><span>Date</span><span>2026-03-01 ET</span></p>
+<p class="row"><span>Split</span><span>2 for 1</span></p>
+<p class="row tot"><span>Shares on that date</span><span>10 &rarr; 20</span></p>
+<p class="lb">Total cost does not change. No cash effect.</p></div>
+<p class="lb">Nothing is saved until you confirm.</p>
+<div><span class="btn pri">Confirm and save</span> <span class="btn">Back to edit</span></div>
+</div></div>
+<div>
+<p class="cap">Frame G: Transaction detail (a buy, reached from a list)</p>
+<div class="ph">
+<p class="title">&lt; Buy AAPL</p>
+<div class="bx"><span class="n">12</span>
+<p class="row"><span>Portfolio</span><span>Portfolio P</span></p>
+<p class="row"><span>Date</span><span>2026-02-01 ET</span></p>
+<p class="row"><span>Quantity, as traded</span><span>10</span></p>
+<p class="row"><span>Total amount</span><span>$1,500.00</span></p>
+<p class="row"><span>Price per share</span><span>$150.00</span></p>
+<p class="row"><span>Lot</span><span>10 left</span></p>
+<div class="cl"><span>Cash &minus;$1,500.00</span><span>&gt;</span></div>
+<p class="lb" style="margin-top:4px">Not reversed.</p></div>
+<div style="position:relative"><span class="btn">Reverse</span> <span class="btn">Reverse and re-enter</span><span class="n" style="top:-10px;right:auto;left:176px">13</span></div>
+<div class="dash"><span class="n">14</span><p class="lb" style="margin:0 0 4px">Format only: other states of this screen</p>
+<p class="lb">Already reversed: "Reversed on 2026-04-05 ET &gt;", no buttons.</p>
+<p class="lb">A reversal: "Reversal of the buy of 2026-03-20 ET &gt;", no buttons.</p>
+<p class="lb">A sell also lists the lots it used. A split shows its ratio and has both buttons.</p></div>
+</div></div>
+<div>
+<p class="cap">Frame H: Cash entry detail (a direct entry)</p>
+<div class="ph">
+<p class="title">&lt; Deposit</p>
+<div class="bx"><span class="n">15</span>
+<p class="row"><span>Type</span><span>Deposit</span></p>
+<p class="row"><span>Date</span><span>2026-04-20 ET</span></p>
+<p class="row"><span>Amount</span><span>+$500.00</span></p>
+<p class="row"><span>Note</span><span>Deposit entered by mistake</span></p>
+<p class="lb" style="margin-top:4px">Not reversed.</p></div>
+<div><span class="btn">Reverse</span> <span class="btn">Reverse and re-enter</span></div>
+<div class="dash"><p class="lb" style="margin:0 0 4px">Format only: entries with no buttons</p>
+<p class="lb">Opening balance: "The opening balance cannot be reversed."</p>
+<p class="lb">A trade line: "Open the buy or sell to reverse it." with a link to it.</p>
+<p class="lb">A reversal or an entry already reversed: the link to the other entry.</p></div>
+</div></div>
+<div>
+<p class="cap">Frame I: Reversal of a buy after a split (Example F)</p>
+<div class="ph">
+<p class="title">&lt; Reverse buy AAPL</p>
+<div class="bx"><span class="n">16</span><p class="lb">Reverses</p>
+<p class="row"><span>Buy, 2026-01-02 ET</span><span>Portfolio P</span></p>
+<p class="row"><span>Quantity as traded</span><span>10</span></p>
+<p class="row"><span>Total amount</span><span>$1,000.00</span></p></div>
+<div class="bx"><span class="n">17</span><p class="lb">Reversal date</p><div class="fld">2026-04-01</div>
+<p class="lb" style="margin-top:4px">Enter date in US market time (New York). Not earlier than 2026-01-02.</p></div>
+<div class="bx"><span class="n">18</span>
+<p class="row"><span>Shares removed (split applied)</span><span>20</span></p>
+<p class="row tot"><span>Cash effect</span><span>+$1,000.00</span></p>
+<p class="lb">Realized gain/loss: $0.00</p></div>
+<div><span class="btn pri">Confirm and save</span> <span class="btn">Cancel</span></div>
+<div class="dash"><span class="n">19</span><p class="lb" style="margin:0 0 4px">Format only: reversing a cash entry</p>
+<p class="lb">Type: Adjustment (fixed). Amount: &minus;$500.00 (opposite, fixed).</p>
+<p class="lb">Note: Reversal of #14 (pre-filled)</p></div>
+</div></div>
+<div>
+<p class="cap">Frame J: blocked saves (screen stays open)</p>
+<div class="ph">
+<div class="bx"><span class="n">20</span>
+<p class="msg">Not saved. Cash would be negative on 2026-01-10 by $100.00.</p>
+<p class="msg">Not saved. Cash entries cannot be dated before the opening balance (2026-01-01).</p>
+<p class="msg">Not saved. Shares would be &minus;10 on 2026-01-03. Reverse the sell of 2026-01-03 first.</p>
+<p class="msg">Not saved. The opening balance already exists.</p>
+<p class="msg">Note: required for an adjustment.</p>
+<p class="msg">Amount: cannot be 0. Up to 2 decimals.</p>
+<p class="msg">Split: whole numbers above 0, and the two cannot be equal.</p>
+<p class="msg">Reversal date: not earlier than the original (2026-01-02).</p>
+<p class="lb" style="margin:0">Everything typed stays in the fields.</p></div>
+</div></div>
+</div>
+<h2>Markers</h2>
+<ol>
+<li>Cash entry is one form. The type is one chip at a time: Deposit (the default), Withdrawal, Interest/dividend, Adjustment. It starts from the Cash tab's Cash entry button (view 7). Interest/dividend is a cash-only entry, not linked to a holding (intent v52). Trade lines cannot be entered here (C4).</li>
+<li>Date defaults to today in New York, with the date note of section 6 (4.1, C13). A cash entry may be backdated or future-dated, but not before the opening balance (4.2).</li>
+<li>Amount is typed as a positive number with up to 2 decimals and is never 0 (4.2). The sign comes from the type: a deposit and interest/dividend add, a withdrawal takes out. The line under it says which. A withdrawal larger than the balance on that date or any later date is blocked (4.1, 4.2).</li>
+<li>Note is optional on every type except Adjustment.</li>
+<li>Review is always tappable and runs every check (field rules, 4.1 and 4.2) before showing the review screen, as on buy and sell (10a). If one fails, the entry stays open with what you typed and a message names the rule (frame J).</li>
+<li>Adjustment is the only type with a direction toggle, because an adjustment may be either sign (4.2). The amount is still typed as a positive number.</li>
+<li>Note is required on an adjustment (4.2). The field is labelled "required", and an empty note gives the message in frame J.</li>
+<li>Opening balance: until it exists it is the only type offered and nothing else can be entered (4.2, section 6 first launch). Once it exists, the chip is no longer offered and a second one is refused (frame J). It is reached from the guided empty state, the Cash entry button and the "Set the opening balance first" button (10a, frame G).</li>
+<li>Cash review (a Design addition: the spec asks for a review on buy and sell only): the entered values and the cash effect with its sign and no color. Confirm and save is the only way to save. Back to edit keeps the values.</li>
+<li>Split entry (4.5): portfolio, ticker, date, and the ratio as two whole numbers, "to for from" (2 for 1 doubles, 1 for 10 is a reverse split), matching the backup file columns (section 8). The ticker is picked from the tickers with a buy in that portfolio; opened from Holding detail it is already filled in. Whole numbers above 0 that are not equal: the file's rule applied to the screen, a Design addition. Fractional shares may result (4.4).</li>
+<li>Split review: the entered values and the shares held on that date before and after, so a wrong ratio is easy to see (C9). Total cost does not change and there is no cash effect (4.5). Confirm and save is the only way to save. The shares-before-and-after line is a Design addition.</li>
+<li>Transaction detail, reached from a row in Transaction history, Holding detail or a cash trade line. It shows the entered values, quantity as originally traded, the lots (a sell lists the lots it used), the link to its cash line and any reversal link, with the same chain wording as wireframe 8 (4.6). Amounts have a sign and no color.</li>
+<li>Reverse and Reverse and re-enter start here (4.6). Reverse opens the reversal screen (frame I). Reverse and re-enter is part C.</li>
+<li>Format only. Neither button is offered on an entry that is already reversed, on a reversal, or on an opening balance; a reversal cannot itself be reversed (4.6). The row says why in plain text.</li>
+<li>Cash entry detail: type, date with "ET", signed amount and note, with Reverse and Reverse and re-enter on a direct entry. Not offered on the opening balance, a reversal, an entry already reversed, or a trade line, which points to its buy or sell (4.6).</li>
+<li>Reversal screen: the original's values are fixed and are not typed: amount, ticker, portfolio and quantity as originally traded (4.6).</li>
+<li>Date defaults to the original date. A later date may be picked (the original's effect then stays between the two dates). An earlier date is refused. The date note applies.</li>
+<li>Effect line: shares removed with later splits applied, and the cash returned. For Example F the 10 shares as traded become 20 after the Mar 1 split, and $1,000.00 returns. Realized gain/loss is 0 for a buy. Reversing a sell shows the lots restored and the realized gain removed. A reversal has one screen and Confirm and save, with no separate review (a Design addition). If the save is blocked (for example Example D), the screen stays open with the message of frame J.</li>
+<li>Format only: a cash reversal has type Adjustment and the amount fixed to the opposite of the original. The note is pre-filled "Reversal of #id" (4.6). How the id is shown to you in the app is not decided here; it is left to Build with the wording (D9).</li>
+<li>Blocked saves, placeholder wording (D9). Each names the rule and, where it has them, the failing date and amount (4.1, 4.2, 4.5, 4.6). Messages are plain text with a leading "Not saved", so meaning never rests on color. Example C gives the first message, and Example D the third.</li>
+</ol>
+<p class="note">Touch targets are at least 48 dp and text follows the font size setting; the sketches are not to scale. The Reverse, Reverse and re-enter and detail screens are drawn here because wireframes 6, 7 and 8 point to them; the Rename and Delete dialogs of a portfolio are 10d.</p>
+</main>
+</body>
+</html>
