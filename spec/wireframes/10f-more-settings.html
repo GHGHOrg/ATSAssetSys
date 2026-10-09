@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Wireframe 10f: More and Settings (spec.md section 6, entry flows; 4.9, sections 7 and 9)</title>
+<style>
+:root{--bg:#f6f6f4;--surface-1:#efefec;--surface-2:#ffffff;--border:#d9d9d4;--border-strong:#b9b9b2;--border-stronger:#8a8a84;--text:#1c1c1a;--text-2:#5a5a55;--text-muted:#8a8a84;--accent-bg:#e3edf8;--accent-text:#0c447c;--accent-line:#378add}
+@media (prefers-color-scheme:dark){:root{--bg:#1b1b19;--surface-1:#262624;--surface-2:#2e2e2b;--border:#44443f;--border-strong:#66665f;--border-stronger:#9a9a92;--text:#ecece8;--text-2:#b4b4ac;--text-muted:#8a8a82;--accent-bg:#14304f;--accent-text:#b5d4f4;--accent-line:#85b7eb}}
+html{background:var(--bg)}
+body{margin:0;padding:24px 16px 48px;font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;color:var(--text);line-height:1.5}
+main{max-width:760px;margin:0 auto}
+h1{font-size:22px;font-weight:500;margin:0 0 4px}
+h2{font-size:18px;font-weight:500;margin:32px 0 4px}
+p,li{font-size:15px}
+.note{color:var(--text-2);margin:0 0 8px}
+.pair{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px;margin-top:16px}
+@media (max-width:640px){.pair{grid-template-columns:minmax(0,1fr)}}
+.cap{font-size:13px;color:var(--text-2);margin:0 0 6px;text-align:center}
+.ph{background:var(--surface-2);border:1px solid var(--border-strong);border-radius:20px;padding:12px;display:flex;flex-direction:column;gap:8px}
+.bx{border:1px solid var(--border-strong);border-radius:8px;padding:8px 10px;position:relative;background:var(--surface-1)}
+.dash{border:1px dashed var(--border-stronger);border-radius:8px;padding:8px 10px;position:relative}
+.n{position:absolute;top:-8px;right:-6px;width:18px;height:18px;border-radius:50%;background:var(--accent-bg);color:var(--accent-text);font-size:11px;font-weight:500;display:flex;align-items:center;justify-content:center;border:1px solid var(--accent-line)}
+.lb{font-size:12px;color:var(--text-2);margin:0}
+.title{font-size:14px;font-weight:500;margin:0}
+.hd{font-size:13px;font-weight:500;margin:0 0 4px}
+.row{display:flex;justify-content:space-between;align-items:center;font-size:13px;padding:3px 0;margin:0}
+.btn{border:1px solid var(--border-strong);border-radius:8px;padding:4px 10px;font-size:12px;background:var(--surface-2);display:inline-block}
+.btn.pri{background:var(--accent-bg);color:var(--accent-text);border-color:var(--accent-line);font-weight:500}
+.fld{border:1px solid var(--border-strong);border-radius:8px;padding:4px 8px;font-size:13px;background:var(--surface-2);min-width:0}
+.bar{display:flex;border:1px solid var(--border-strong);border-radius:8px;overflow:hidden;font-size:12px;margin-top:auto}
+.bar span{flex:1;text-align:center;padding:10px 0;border-right:1px solid var(--border)}
+.bar span:last-child{border-right:none}
+.bar span:first-child{background:var(--accent-bg);color:var(--accent-text);font-weight:500}
+.bar.pf span:first-child{background:none;color:inherit;font-weight:400}
+.bar.pf span:nth-child(3){background:var(--accent-bg);color:var(--accent-text);font-weight:500}
+.mut{color:var(--text-muted)}
+.msg{border:1px solid var(--border-stronger);border-radius:8px;padding:6px 8px;font-size:12px;margin:0 0 6px;background:var(--surface-2)}
+.rd{display:inline-block;width:12px;height:12px;border:1px solid var(--border-stronger);border-radius:50%;margin-right:6px;vertical-align:middle;background:var(--surface-2)}
+.rd.on{background:var(--accent-line)}
+.it{border-top:1px solid var(--border);padding-top:6px;margin-top:6px}
+.it:first-child{border-top:none;margin-top:0;padding-top:0}
+</style>
+</head>
+<body>
+<main>
+<h1>Wireframe 10f: More and Settings (entry flows, part F)</h1>
+<p class="note">Status: approved. Companion to spec.md section 6 (navigation outline and entry flows), rule 4.9 and sections 7 and 9. All wording is placeholder (D9, decided in Build). Colors are placeholders. Index of all wireframes: README.md in this folder. Settings is one scrolling screen with four sections. Only the rows that need it open a dialog or a sub-screen. The bottom bar is always visible; the highlighted tab is where the flow was opened from. Price source names are placeholders (the list is decided in plan.md). Figures are Example A and spec/example-backup.csv.</p>
+<div class="pair">
+<div>
+<p class="cap">Frame A: More tab</p>
+<div class="ph">
+<div class="row" style="padding:0"><p class="title">More</p><span style="position:relative"><span class="btn" role="img" aria-label="Settings" style="padding:6px 12px;font-size:14px">&#9881;</span><span class="n" style="top:-10px;right:-8px">2</span></span></div>
+<div class="bx"><span class="n">1</span><p class="lb" style="margin:0">Last backup: 2026-10-04 JST</p><p class="lb">Or "never backed up".</p></div>
+<div class="bx"><span class="n">2</span>
+<p class="row"><span>Net Worth (Total)</span><span>&gt;</span></p>
+<p class="row" style="border-top:1px solid var(--border)"><span>Allocation</span><span>&gt;</span></p>
+<p class="row" style="border-top:1px solid var(--border)"><span>Realized gains</span><span>&gt;</span></p>
+<p class="row" style="border-top:1px solid var(--border)"><span>Backup and restore</span><span>&gt;</span></p></div>
+<div style="flex:1"></div>
+<div class="bar"><span>More</span><span>Cash</span><span>Portfolios</span><span>Overall</span></div>
+</div></div>
+<div>
+<p class="cap">Frame B: Settings, one scrolling screen</p>
+<div class="ph">
+<p class="title">&lt; Settings</p>
+<div class="bx"><span class="n">3</span><p class="hd">Security</p>
+<p class="row"><span>Auto-lock</span><span>Every time I leave the app &gt;</span></p>
+<p class="row"><span>Screenshot window</span><span>Off &gt;</span></p></div>
+<div class="bx"><span class="n">4</span><p class="hd">Prices</p>
+<p class="row"><span>Price source</span><span>Source 1 (default) &gt;</span></p></div>
+<div class="bx"><span class="n">5</span><p class="hd">Navigation</p>
+<p class="row"><span>Tab order</span><span>More, Cash, Portfolios, Overall &gt;</span></p></div>
+<div class="bx"><span class="n">6</span><p class="hd">Lists</p>
+<p class="row"><span>Sectors</span><span>2 values &gt;</span></p>
+<p class="row"><span>Geographies</span><span>2 values &gt;</span></p></div>
+<div style="flex:1"></div>
+<div class="bar"><span>More</span><span>Cash</span><span>Portfolios</span><span>Overall</span></div>
+</div></div>
+<div>
+<p class="cap">Frame C: auto-lock and screenshot window</p>
+<div class="ph">
+<div class="bx"><span class="n">7</span><p class="hd">Auto-lock</p>
+<p class="row"><span><i class="rd on"></i>Every time I leave the app</span><span class="lb">default</span></p>
+<p class="row"><span><i class="rd"></i>After 1 minute idle</span></p>
+<p class="row"><span><i class="rd"></i>After 5 minutes idle</span></p>
+<p class="row"><span><i class="rd"></i>Only when the phone locks or the app restarts</span></p>
+<p class="lb">Takes effect at once. Saved.</p></div>
+<div class="bx"><span class="n">8</span><p class="hd">Screenshot window</p>
+<p class="lb">Off: screenshots and recording are blocked.</p>
+<div style="margin:4px 0"><span class="btn">Allow screenshots for 3 minutes</span></div>
+<p class="lb">Asks for your fingerprint or phone PIN each time.</p>
+<div class="it"><p class="lb">On, 2:41 left. Ends when you leave the app.</p><span class="btn">Turn off</span></div></div>
+</div></div>
+<div>
+<p class="cap">Frame D: price source</p>
+<div class="ph">
+<div class="bx"><span class="n">9</span><p class="hd">Price source</p>
+<p class="row"><span><i class="rd on"></i>Source 1</span><span class="lb">default</span></p>
+<p class="row"><span><i class="rd"></i>Source 2</span></p>
+<div style="margin-top:4px"><span class="btn pri">Use this source</span> <span class="btn">Cancel</span></div></div>
+<div class="bx"><span class="n">10</span>
+<p class="msg">Prices updated from Source 2. 2 tickers could not be priced and keep their last price, marked stale: XYZ, ABC.</p>
+<p class="msg">Source 2 selected. Prices were not refreshed because the phone is offline. The next refresh uses it.</p></div>
+</div></div>
+<div>
+<p class="cap">Frame E: tab order</p>
+<div class="ph">
+<p class="title">&lt; Tab order</p>
+<div class="bx"><span class="n">11</span>
+<div class="it"><p class="row"><span>1. More</span><span><span class="btn">Up</span> <span class="btn">Down</span></span></p></div>
+<div class="it"><p class="row"><span>2. Cash</span><span><span class="btn">Up</span> <span class="btn">Down</span></span></p></div>
+<div class="it"><p class="row"><span>3. Portfolios</span><span><span class="btn">Up</span> <span class="btn">Down</span></span></p></div>
+<div class="it"><p class="row"><span>4. Overall</span><span><span class="btn">Up</span> <span class="btn">Down</span></span></p></div>
+<p class="lb" style="margin-top:4px">Left to right in the bottom bar. Takes effect at once.</p></div>
+</div></div>
+<div>
+<p class="cap">Frame F: Sectors list (Geographies is the same)</p>
+<div class="ph">
+<p class="title">&lt; Sectors</p>
+<div class="bx"><span class="n">12</span>
+<div class="it"><p class="row"><span class="hd" style="margin:0">Technology</span><span><span class="btn">Rename</span> <span class="btn">Delete</span></span></p><p class="lb">Used by 1 holding. Also matches: Information Technology</p></div>
+<div class="it"><p class="row"><span class="hd" style="margin:0">Diversified</span><span><span class="btn">Rename</span> <span class="btn">Delete</span></span></p><p class="lb">Used by 0 holdings.</p></div></div>
+<div style="position:relative"><span class="btn pri">Add value</span><span class="n" style="top:-10px;right:auto;left:70px">13</span></div>
+<div style="flex:1"></div>
+<div class="bar"><span>More</span><span>Cash</span><span>Portfolios</span><span>Overall</span></div>
+</div></div>
+<div>
+<p class="cap">Frame G: add, rename and delete messages</p>
+<div class="ph">
+<div class="bx"><span class="n">14</span><p class="lb">Name</p><div class="fld">Tech</div>
+<div style="margin-top:4px"><span class="btn pri">Save</span> <span class="btn">Cancel</span></div></div>
+<div class="bx"><span class="n">15</span>
+<p class="msg">Not saved. A value named "Technology" already exists. Case and spaces are ignored.</p>
+<p class="msg">Not deleted. Technology is used by 1 holding (hidden holdings count). Change that holding first.</p>
+<p class="msg">Renamed. Source text "Tech" still maps to Technology.</p></div>
+</div></div>
+<div>
+<p class="cap">Frame H: Edit picker (Holding detail, Classification tab)</p>
+<div class="ph">
+<p class="title">&lt; Sector, AAPL</p>
+<div class="bx"><span class="n">16</span>
+<p class="row"><span><i class="rd on"></i>Technology</span></p>
+<p class="row"><span><i class="rd"></i>Diversified</span></p>
+<p class="lb" style="margin-top:4px">Choose from the list. To add a value, use Settings, Lists.</p>
+<div style="margin-top:4px"><span class="btn pri">Save</span> <span class="btn">Cancel</span></div></div>
+<div class="dash"><span class="n">17</span><p class="lb" style="margin:0">Format only: with an empty list, one plain line says "No sectors yet. Add one in Settings, Lists."</p></div>
+<div style="flex:1"></div>
+<div class="bar pf"><span>More</span><span>Cash</span><span>Portfolios</span><span>Overall</span></div>
+</div></div>
+</div>
+<h2>Markers</h2>
+<ol>
+<li>Last backup line (section 9, C15): the export moment with the device's time zone abbreviation, or "never backed up". It is information only; the export is in Backup and restore (10e).</li>
+<li>The More list, in this order: Net Worth (Total) (view 2), Allocation (view 4, opens on the first portfolio), Realized gains (view 5), Backup and restore (10e). Settings is not a list row: it is a gear icon at the top right of the More screen and opens Settings (frame B); the badge 2 marks both. The icon carries the label "Settings" for TalkBack, so its meaning does not rest on the picture, and its touch target is at least 48 dp (section 6, Accessibility). Allocation and Net Worth (Total) are reached here as well as from the other tabs (navigation outline).</li>
+<li>Security: Auto-lock and Screenshot window. Each row shows its current value and opens a dialog (frame C).</li>
+<li>Prices: the price source, with its current value (frame D).</li>
+<li>Navigation: tab order, with the current order as text.</li>
+<li>Lists: Sectors and Geographies, each with its number of values. Each opens its list screen (frame F).</li>
+<li>Auto-lock is one choice of four (section 9), the default marked. It takes effect at once and is saved as a setting. A restored file can set a weaker one (section 9, known limit).</li>
+<li>Screenshot window: always off at start. The button asks for a fingerprint or the phone PIN each time. While on, the row shows the time left and Turn off. It ends after 3 minutes or when you leave the app, never survives a restart and is not saved (section 9). It is not selective, so a line says anything can capture the screen during it.</li>
+<li>Price source: a pick from the sources the app ships (placeholders). Use this source confirms. Online, the app runs the sweep over every held instrument, hidden holdings included. Offline, the change is allowed with a warning and no sweep (section 7).</li>
+<li>Result lines, plain text with no pop-up: after a sweep, the tickers the new source could not price, which keep their last price marked stale; offline, the warning that prices were not refreshed. The new source stays selected either way. Transactions, lots, the verified flag and manual classification are not touched (section 7).</li>
+<li>Tab order: one row per tab with Up and Down buttons, not dragging, so it works with TalkBack. The bottom bar follows the new order at once. The order is a setting in the backup file (section 8).</li>
+<li>List screen (4.9): each value with the number of holdings that use it (hidden holdings count) and the source texts that map to it after a rename ("Also matches", read only; a Design addition). Rename updates every holding using the value and remembers the source's original text. Delete is offered on every value and is blocked while any holding uses it.</li>
+<li>Add value: a new value is picked from the list later; the source can also add values on its own (4.9).</li>
+<li>Add and Rename use the same Name field. A name that matches an existing value or remembered text, ignoring case and spaces (D7), is refused with the text kept in the field.</li>
+<li>Messages are plain text with a leading "Not saved" or "Not deleted", so meaning never rests on color. A blocked delete names the holdings count and says hidden holdings count (4.9). A rename confirms that the old source text still maps to the new name.</li>
+<li>Edit picker (view 6, marker 6): opened from Edit on the Classification tab, one pick from the matching list, no typing (4.9). Save sets the override; Clear override stays on the Classification tab. The line pointing to Settings is a Design addition.</li>
+<li>Format only: with an empty list the picker shows one plain line and no Save.</li>
+</ol>
+<p class="note">Touch targets are at least 48 dp and text follows the font size setting; the sketches are not to scale. TalkBack reads each row as its name and current value, and a radio choice as selected or not selected. Wording is placeholder (D9).</p>
+</main>
+</body>
+</html>

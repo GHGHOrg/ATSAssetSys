@@ -21,6 +21,6 @@ for both themes (spec.md section 6, Number format and color).
 | 10c | 10c-reverse-reenter.html | Reverse and re-enter (prefilled entry, combined review, blocked pairs) | Approved |
 | 10d | 10d-portfolio-dialogs.html | Portfolio create, rename, delete (summary, typed confirmation, blocked message) | Approved |
 | 10e | 10e-backup-restore.html | Backup export, restore wizard (pick file, checking, error report with Copy report, summary, typed confirmation, result) | Approved |
-| 10f | 10f-more-settings | More tab, Settings (auto-lock, price source, tab order, lists, screenshot window), sector and geography Edit picker | Not drawn |
+| 10f | 10f-more-settings.html | More tab, Settings (auto-lock, price source, tab order, lists, screenshot window), sector and geography Edit picker | Approved |
 
 Wireframe 10 (entry flows) is split into six files, 10a to 10f, each approved one at a time.
