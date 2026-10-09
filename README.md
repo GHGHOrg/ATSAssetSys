@@ -1,8 +1,8 @@
 # ATS Asset System
 
-ATS Asset System is an Android app for tracking personal cash, stock and ETF portfolios, net worth, and investment gains. Enter transactions yourself; the app does not connect to your bank or brokerage. Your financial records are stored locally on your device.
+ATS Asset System is a single-user Android app for tracking personal cash, stock and ETF portfolios, net worth, allocation, and lot-based investment gains. You enter transactions yourself; the app does not connect to your bank or brokerage. All app data stays on the device, and the backup file is the only supported way to transfer data in or out of the app.
 
-The app is for personal use on Android 13 (API 33) or later and is installed directly on your phone.
+The app is for personal use on Android 13 (API 33) or later and is intended to be installed directly on a phone.
 
 ## Contents
 
@@ -13,17 +13,17 @@ The app is for personal use on Android 13 (API 33) or later and is installed dir
 - [Market prices and offline use](#market-prices-and-offline-use)
 - [Correcting transactions](#correcting-transactions)
 - [Backups and restore](#backups-and-restore)
-- [Privacy and supported assets](#privacy-and-supported-assets)
+- [Privacy, app lock and supported assets](#privacy-app-lock-and-supported-assets)
 
 ## Getting started
 
 On first launch, confirm your phone's biometric or PIN to unlock the app. Then follow the setup steps:
 
 1. Enter your opening cash balance. The app asks for this first, before a portfolio or any other entry.
-2. Create a portfolio.
+2. Create one or more portfolios.
 3. Record an initial purchase, if you have one.
 
-You can change the auto-lock setting later in **Settings**, under **More**. By default the app locks every time you leave it.
+You can change the auto-lock setting later in **Settings** under **More**. By default the app locks every time you leave it.
 
 If you already have a backup, initialize the app from that file using the option in **More**.
 
@@ -31,20 +31,20 @@ If you already have a backup, initialize the app from that file using the option
 
 ### Overall view
 
-The Overall view summarizes your net worth, cash, stocks, ETFs, portfolios, and gains. Use it for a current snapshot of your assets and to see how they are allocated.
+The Overall view summarizes your net worth, cash, stocks, ETFs, portfolios, and gains. Use it as a current snapshot of your assets and to see how they are allocated.
 
-The app tracks a single shared cash account and multiple investment portfolios. Each portfolio keeps its holdings, transactions, lots, and realized gains separate. The same ticker can be held in more than one portfolio.
+The app tracks one shared cash account and multiple investment portfolios. Each portfolio keeps its holdings, transactions, lots, and realized gains separate. The same ticker can be held in more than one portfolio.
 
 ### Cash
 
-Cash can be updated with an opening balance, deposits, withdrawals, interest or dividends, and adjustments. Investment purchases and sales also change cash automatically:
+Cash can be updated with opening balance, deposits, withdrawals, interest or dividends, and adjustments. Investment purchases and sales also change cash automatically:
 
 - A buy withdraws the total trade amount from cash.
 - A sale adds the sale proceeds to cash.
 
 Cash moves on the trade date. Settlement delays are not tracked.
 
-Entry dates are calendar dates using the US market time zone (New York); transactions on the same date are ordered by entry time.
+Entry dates are calendar dates using the US market timezone (New York); transactions on the same date are ordered by entry time. The app stores dates as selected, without converting time zones.
 
 Dividends are recorded as cash entries and are not assigned to an individual holding in this version.
 
@@ -56,7 +56,7 @@ The same ticker can be held in multiple portfolios. Each portfolio has its own h
 
 ## Recording investments
 
-This version supports US stocks and ETFs listed on a US national securities exchange (for example NYSE, NYSE Arca or NASDAQ) and denominated in USD. Mutual funds are not supported. Ticker symbols are verified online when necessary. A ticker that the price source says is a mutual fund, is listed on a non-US exchange or an OTC market, or is not quoted in USD is rejected, and the reason is shown.
+This version supports US stocks and ETFs listed on a US national securities exchange (for example NYSE, NYSE Arca or NASDAQ) and denominated in USD. Mutual funds are not supported. Ticker symbols are verified online when necessary. A ticker that the price source says is a mutual fund, is listed on a non-US exchange or OTC market, or is not quoted in USD is rejected, and the reason is shown.
 
 ### Buying
 
@@ -83,13 +83,13 @@ Sales use specific lots. Before confirming a sale, select the lots and quantitie
 
 Use **Sell All** to fill in the complete remaining quantity. A sale cannot include shares from another portfolio, shares purchased after the sale date, or more shares than are available.
 
-Proceeds are added to cash on the trade date. You can record a total loss with zero proceeds, for example for a worthless or delisted investment.
+Proceeds are added to cash on the trade date. You can record a total loss with zero proceeds, such as for a worthless or delisted investment.
 
 ### Stock splits
 
 Forward and reverse stock splits are entered manually. Fractional shares are supported, with quantities recorded to up to eight decimal places.
 
-For a trade made before a split, enter the original traded quantity. The app applies subsequent splits to calculate the current holding and available lots.
+For a trade made before a split, enter the original traded quantity. The app applies subsequent splits to calculate the current holding and available lots. The holding detail includes split history so omissions are easy to spot.
 
 ## Viewing gains and allocation
 
@@ -108,26 +108,29 @@ Allocation is shown at two levels:
 - **Whole account (Net Worth screen):** the share of your net worth by asset type (cash, stocks, ETFs), portfolio, holding, and sector or geography. Cash appears as its own "Cash" slice in every breakdown.
 - **One portfolio (Allocation screen):** the share of that portfolio's value by asset type (stocks, ETFs), holding, and sector or geography. It does not include cash, because cash is one shared account.
 
-Each holding has one sector and one geography in this version. You can override these classifications manually.
-You can manage the sector and geography lists in Settings. Classifications not supplied by the price source appear as **Unclassified** unless you choose an override.
+Each holding has one sector and one geography in this version. You can override these classifications manually. You can manage the sector and geography lists in Settings. Classifications not supplied by the price source appear as **Unclassified** unless you choose an override.
 
 ## Market prices and offline use
 
-The app retrieves market prices from a free external source. Price updates are best-effort and may be delayed or unavailable.
+The app retrieves market prices from a free external source. Price updates are best-effort and may be delayed or unavailable. Each price shows its timestamp and stale state when the last refresh is older than expected or the source fails.
 
-If a refresh fails, the app uses the last known price and marks it stale. If no price is available, the holding is valued at cost until a price is retrieved.
+If a refresh fails, the app keeps the last known price and marks it stale. If no price is available, the holding is valued at cost until a price is retrieved.
 
 You can use the app offline to view existing records, see the last known prices, and work with locally stored transactions. An internet connection is needed to refresh prices, verify previously unknown tickers, and restore a backup.
+
+You can choose the active price source in Settings.
 
 ## Correcting transactions
 
 Saved transactions cannot be edited or deleted. To correct a mistake, record a reversal. **Reverse and re-enter** lets you reverse a transaction and enter its replacement in one confirmed operation. Both steps must succeed together; if either is blocked, neither is saved.
 
+To undo a mistake, you can reverse a transaction or cash entry. A reversal follows the same validation rules as a normal transaction and can be used to correct buys, sells, splits, and cash entries.
+
 Transactions can be backdated or future-dated. Transactions on the same day are ordered by entry time. When you add a backdated transaction, the app validates it at that point in history and checks the subsequent affected dates.
 
 ## Backups and restore
 
-The backup file is the only supported data-transfer format. It is a versioned CSV-formatted file for whole-app backup and restore, not a general-purpose CSV import/export feature. Restore replaces all current app data; partial imports and merging are not supported.
+The backup file is the only supported data-transfer format. It is a versioned UTF-8 CSV file for whole-app backup and restore, not a general-purpose CSV import/export feature. An app initialization or restore deletes all current settings and data before loading the file. Partial imports and merge operations are not supported.
 
 To prepare a backup file, use the [backup template](spec/template-backup.csv) or review the [sample backup](spec/example-backup.csv) and its [expected restored data](spec/example-backup-expected.md). See the [backup file format and validation rules](spec/spec.md). Do not use [example-import.csv](spec/example-import.csv); it uses an older format that is no longer supported.
 
@@ -135,17 +138,17 @@ To prepare a backup file, use the [backup template](spec/template-backup.csv) or
 
 A backup includes your portfolios, transactions, reversal relationships, cash entries, hidden holdings, classification overrides and lists, and app settings.
 
-The app rebuilds holdings, lots, trade cash movements, balances, gains, and allocation from the saved records. Market prices and PIN or biometric credentials are not included in the backup.
+The app rebuilds holdings, lots, trade cash movements, balances, gains, and allocation from the saved records. Market prices, the last-backup date, and the phone's PIN or biometric credentials are not included in the backup.
 
 The Overall screen reminds you to back up if the app holds data and no backup has been completed, or if the last completed backup is more than seven days old. The reminder appears in the app, not as an Android notification. Dismissing it hides it only until you next return to the app after leaving it, or restart it. Only a completed export counts as a backup.
 
 ### Restoring
 
-Restore initializes the app from a backup file. It deletes all current data and settings, then loads the file, so the settings stored in the file (auto-lock, price source and tab order) replace the current ones. A restore resets the last-backup date, so the backup reminder appears afterwards. If you already have data, the app offers to export a backup first.
+Restore initializes the app from a backup file. It validates the complete file first. If validation fails, the app reports the errors and leaves existing data unchanged. Replacing existing data requires explicit confirmation, including typed confirmation. Held tickers must be verified online during restore.
 
-The restore process validates the complete file first. If validation fails, the app reports the errors and leaves existing data unchanged. Replacing existing data requires explicit confirmation, including typed confirmation. Held tickers must be verified online during restore.
+The restore process is all-or-nothing. If the file is valid, the app deletes the current data and settings, loads the file, and the settings stored in the file (auto-lock, price source, and tab order) replace the current ones. A restore resets the last-backup date so the backup reminder appears afterwards. If you already have data, the app offers to export a backup first.
 
-## Privacy and supported assets
+## Privacy, app lock and supported assets
 
 ATS Asset System protects your personal financial data:
 
