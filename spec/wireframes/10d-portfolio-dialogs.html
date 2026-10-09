@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Wireframe 10d: Portfolio create, rename and delete (spec.md section 6, entry flows; 4.7)</title>
+<style>
+:root{--bg:#f6f6f4;--surface-1:#efefec;--surface-2:#ffffff;--border:#d9d9d4;--border-strong:#b9b9b2;--border-stronger:#8a8a84;--text:#1c1c1a;--text-2:#5a5a55;--text-muted:#8a8a84;--accent-bg:#e3edf8;--accent-text:#0c447c;--accent-line:#378add;--success:#2e6b1a}
+@media (prefers-color-scheme:dark){:root{--bg:#1b1b19;--surface-1:#262624;--surface-2:#2e2e2b;--border:#44443f;--border-strong:#66665f;--border-stronger:#9a9a92;--text:#ecece8;--text-2:#b4b4ac;--text-muted:#8a8a82;--accent-bg:#14304f;--accent-text:#b5d4f4;--accent-line:#85b7eb;--success:#8fd16a}}
+html{background:var(--bg)}
+body{margin:0;padding:24px 16px 48px;font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;color:var(--text);line-height:1.5}
+main{max-width:760px;margin:0 auto}
+h1{font-size:22px;font-weight:500;margin:0 0 4px}
+h2{font-size:18px;font-weight:500;margin:32px 0 4px}
+p,li{font-size:15px}
+.note{color:var(--text-2);margin:0 0 8px}
+.pair{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px;margin-top:16px}
+@media (max-width:640px){.pair{grid-template-columns:minmax(0,1fr)}}
+.cap{font-size:13px;color:var(--text-2);margin:0 0 6px;text-align:center}
+.ph{background:var(--surface-2);border:1px solid var(--border-strong);border-radius:20px;padding:12px;display:flex;flex-direction:column;gap:8px}
+.bx{border:1px solid var(--border-strong);border-radius:8px;padding:8px 10px;position:relative;background:var(--surface-1)}
+.dlg{border:2px solid var(--border-stronger);border-radius:12px;padding:10px;position:relative;background:var(--surface-2)}
+.dim{opacity:.45;display:flex;flex-direction:column;gap:8px}
+.n{position:absolute;top:-8px;right:-6px;width:18px;height:18px;border-radius:50%;background:var(--accent-bg);color:var(--accent-text);font-size:11px;font-weight:500;display:flex;align-items:center;justify-content:center;border:1px solid var(--accent-line)}
+.lb{font-size:12px;color:var(--text-2);margin:0}
+.title{font-size:14px;font-weight:500;margin:0}
+.hd{font-size:13px;font-weight:500;margin:0 0 4px}
+.row{display:flex;justify-content:space-between;align-items:center;font-size:13px;padding:3px 0;margin:0}
+.two{display:flex;justify-content:space-between;align-items:flex-start;gap:8px}
+.r{text-align:right}
+.btn{border:1px solid var(--border-strong);border-radius:8px;padding:4px 10px;font-size:12px;background:var(--surface-2);display:inline-block}
+.btn.pri{background:var(--accent-bg);color:var(--accent-text);border-color:var(--accent-line);font-weight:500}
+.btn.off{color:var(--text-muted);border-style:dashed;border-color:var(--border-stronger);background:none}
+.fld{border:1px solid var(--border-strong);border-radius:8px;padding:4px 8px;font-size:13px;background:var(--surface-2);min-width:0}
+.bar{display:flex;border:1px solid var(--border-strong);border-radius:8px;overflow:hidden;font-size:12px;margin-top:auto}
+.bar span{flex:1;text-align:center;padding:10px 0;border-right:1px solid var(--border)}
+.bar span:last-child{border-right:none}
+.bar span:nth-child(3){background:var(--accent-bg);color:var(--accent-text);font-weight:500}
+.mut{color:var(--text-muted)}
+.good{color:var(--success)}
+.msg{border:1px solid var(--border-stronger);border-radius:8px;padding:6px 8px;font-size:12px;margin:0 0 6px;background:var(--surface-2)}
+.tot{border-top:1px solid var(--border-strong);margin-top:4px;padding-top:4px;font-weight:500}
+.dash{border:1px dashed var(--border-stronger);border-radius:8px;padding:8px 10px;position:relative}
+</style>
+</head>
+<body>
+<main>
+<h1>Wireframe 10d: Portfolio create, rename and delete (entry flows, part D)</h1>
+<p class="note">Status: approved. Companion to spec.md section 6 (entry flows), rule 4.7 and Examples A and E. All wording is placeholder (D9, decided in Build). Colors are placeholders; the real ones are chosen in Build for both themes. Index of all wireframes: README.md in this folder. Figures are Example A (Portfolio P) for create, rename and the delete summary, and Example E (Portfolio Q) for the blocked message. "Retirement" is illustrative only, as in wireframe 3. Each dialog is drawn over the screen it opens from, dimmed. The bottom bar is always visible (section 6); the highlighted tab is Portfolios. Part D covers the dialogs that wireframe 3 points to (markers 2 and 3).</p>
+<div class="pair">
+<div>
+<p class="cap">Frame A: Create portfolio (New portfolio button)</p>
+<div class="ph">
+<div class="dim"><p class="title">Portfolios</p>
+<div class="bx"><div class="two"><div><p class="hd" style="margin:0">Portfolio P</p><p class="lb">1 holding</p></div><div class="r"><p style="font-size:13px;margin:0">$1,280.00</p><p class="lb">+$80.00</p></div></div></div>
+<div class="bx"><div class="two"><div><p class="hd" style="margin:0">Retirement</p><p class="lb">no holdings</p></div><div class="r"><p style="font-size:13px;margin:0">$0.00</p></div></div></div></div>
+<div class="dlg"><span class="n">1</span>
+<p class="hd">New portfolio</p>
+<p class="lb">Name</p><div class="fld">Growth</div>
+<p class="lb" style="margin-top:4px;position:relative"><span class="n" style="top:-4px;right:0">2</span>At least 3 characters, including a letter of any alphabet or script. Names are compared ignoring case and spaces.</p>
+<div style="margin-top:8px"><span class="btn pri">Create</span> <span class="btn">Cancel</span></div></div>
+<div style="flex:1"></div>
+<div class="bar"><span>More</span><span>Cash</span><span>Portfolios</span><span>Overall</span></div>
+</div></div>
+<div>
+<p class="cap">Frame B: Rename portfolio (menu on the portfolio screen)</p>
+<div class="ph">
+<div class="dim"><p class="title">&lt; Portfolio P</p>
+<div class="bx"><p class="lb">Portfolio value</p><p style="font-size:24px;font-weight:500;margin:0;line-height:1.2">$1,280.00</p></div></div>
+<div class="dlg"><span class="n">3</span>
+<p class="hd">Rename portfolio</p>
+<p class="lb">Name</p><div class="fld">Portfolio P</div>
+<p class="lb" style="margin-top:4px;position:relative"><span class="n" style="top:-4px;right:0">4</span>Only the name changes. Everything else stays as it is.</p>
+<div style="margin-top:8px"><span class="btn pri">Save</span> <span class="btn">Cancel</span></div></div>
+<div style="flex:1"></div>
+<div class="bar"><span>More</span><span>Cash</span><span>Portfolios</span><span>Overall</span></div>
+</div></div>
+<div>
+<p class="cap">Frame C: refused names (dialog stays open)</p>
+<div class="ph">
+<div class="bx"><span class="n">5</span>
+<p class="msg">Name: at least 3 characters.</p>
+<p class="msg">Name: must include a letter of any alphabet or script.</p>
+<p class="msg">Not saved. Another portfolio is already named "Retirement". Names are compared ignoring case and spaces.</p>
+<p class="lb" style="margin:0">Everything typed stays in the field.</p></div>
+<div class="dash"><p class="lb" style="margin:0 0 4px">Format only: before the opening balance exists, New portfolio shows this instead of the dialog</p>
+<p class="msg" style="margin:0 0 4px">Set the opening balance first.</p><span class="btn">Set opening balance</span></div>
+</div></div>
+<div>
+<p class="cap">Frame D: Delete portfolio (Example A, name not yet typed)</p>
+<div class="ph">
+<div class="dim"><p class="title">&lt; Portfolio P</p>
+<div class="bx"><p class="lb">Portfolio value</p><p style="font-size:24px;font-weight:500;margin:0;line-height:1.2">$1,280.00</p></div></div>
+<div class="dlg"><span class="n">6</span>
+<p class="hd">Delete Portfolio P?</p>
+<div class="bx" style="margin-bottom:6px"><span class="n">7</span>
+<p class="row"><span>Transactions removed</span><span>3</span></p>
+<p class="row"><span>Trade cash lines removed</span><span>3</span></p>
+<p class="row"><span>Realized gains removed</span><span class="good">+$800.00</span></p>
+<p class="row tot" style="position:relative"><span>Cash balance</span><span>$9,600.00 &rarr; $10,000.00</span><span class="n" style="top:-6px;right:-6px">8</span></p>
+<p class="lb" style="margin-top:2px">Past net worth is recalculated as if this portfolio never existed.</p></div>
+<p class="msg" style="position:relative"><span class="n">9</span>This cannot be undone in the app. The only way back is restoring a backup.</p>
+<p class="lb" style="position:relative"><span class="n" style="top:-6px;right:0">10</span>Type Portfolio P to confirm</p><div class="fld">&nbsp;</div>
+<p class="lb" style="margin-top:4px">Delete is available when the name matches.</p>
+<div style="margin-top:6px"><span class="btn off">Delete portfolio</span> <span class="btn">Cancel</span></div></div>
+</div></div>
+<div>
+<p class="cap">Frame E: Delete portfolio (name typed, Delete active)</p>
+<div class="ph">
+<div class="dim"><p class="title">&lt; Portfolio P</p></div>
+<div class="dlg"><span class="n">11</span>
+<p class="hd">Delete Portfolio P?</p>
+<div class="bx" style="margin-bottom:6px"><p class="lb" style="margin:0">Summary and warning as in frame D.</p></div>
+<p class="lb">Type Portfolio P to confirm</p><div class="fld">portfolio p</div>
+<p class="lb" style="margin-top:4px">The name matches.</p>
+<div style="margin-top:6px"><span class="btn pri">Delete portfolio</span> <span class="btn">Cancel</span></div></div>
+</div></div>
+<div>
+<p class="cap">Frame F: blocked deletion (Example E, Portfolio Q)</p>
+<div class="ph">
+<div class="dim"><p class="title">&lt; Portfolio Q</p></div>
+<div class="dlg"><span class="n">12</span>
+<p class="hd">Can't delete Portfolio Q</p>
+<p class="msg">Not deleted. Removing this portfolio's cash lines would make cash negative from 2026-02-10 ET. The largest shortfall is $200.00.</p>
+<p class="msg">To fix it, add a deposit adjustment of at least $200.00 dated on or before 2026-02-10, with a note. Then delete again.</p>
+<p class="lb">Nothing was changed.</p>
+<div style="margin-top:6px"><span class="btn pri">Close</span></div></div>
+</div></div>
+</div>
+<h2>Markers</h2>
+<ol>
+<li>Create portfolio: one field, Name, with Create and Cancel. It opens from the New portfolio button (wireframe 3, marker 2) and from every Create a portfolio button (the empty states and the "Create a portfolio first" message of 10a). Create is always tappable and runs the checks of 4.7 first (marker 5). On success the dialog closes and the new portfolio is last in the list (creation order). Opened from Buy, the app returns to the Buy entry (10a, marker 18); from any other button it returns to the screen it was opened from. Design addition: the return to the screen it was opened from, to confirm.</li>
+<li>Helper line: a name must have at least 3 Unicode characters and at least one letter of any alphabet or script (4.7), and is compared with the other names ignoring case and spaces (4.7, D7). The name keeps the casing typed, and leading and trailing spaces are removed on saving, as for a file cell (section 8). The length is counted in Unicode characters (code points) after that removal, and spaces inside the name count. Design reading, to confirm.</li>
+<li>Rename portfolio: opens from the menu on the portfolio screen (wireframe 3, marker 3). The field starts with the current name. Save and Cancel.</li>
+<li>Only the name changes. Transactions, lots, holdings, cash lines and history are untouched, and the next backup carries the new name. A new name that differs from the current one only in case or spaces is accepted, because it matches no other portfolio; saving the unchanged name closes the dialog and changes nothing. Design reading of 4.7, to confirm.</li>
+<li>Refused names, placeholder wording (D9). The checks run in this order and the first failure is shown: fewer than 3 Unicode characters (leading and trailing spaces not counted, so an empty name or only spaces fails here); no letter (for example "123" or "---"); a name that matches another portfolio, refused with a message that starts with "Not saved" and names that portfolio (4.7). Before the opening balance exists, New portfolio shows "Set the opening balance first" with a button instead of the dialog (4.2, section 6). Plain text under the field, read by TalkBack when it appears, and meaning never rests on color. The typed text stays. Design addition at your request: the length and letter rules, which also apply to a restore file (section 8). A letter here is a Unicode character of the category Letter: a letter of any alphabet (Latin, Greek, Cyrillic) or a character of a script such as kana, Han or Hangul. Digits, punctuation, symbols, emoji and spaces do not count, so "投資信託" passes, while "投資" (2 characters), "123" and "---" do not.</li>
+<li>Delete portfolio: opens from the menu on the portfolio screen (wireframe 3, marker 3). The app first runs the deletion check of 4.7 (marker 12). Only if it passes does this dialog open. The title names the portfolio.</li>
+<li>Summary of what will be removed (4.7): the number of transactions (buys, sells, splits and reversals, counted as in section 8), the number of trade cash lines (one per buy or sell, reversals included, none for a split, section 3), and the realized gains that go with the portfolio (a sale cancelled by a reversal is not counted, view 5). The gain is green with a plus sign, a loss red with a minus sign, zero uncolored (section 6). For Example A: 3 transactions, 3 trade cash lines, +$800.00.</li>
+<li>Cash balance, now and after the removal: a Design addition, to confirm. "After" is the balance on the latest date once the portfolio's cash lines are gone. For Example A, $9,600.00 becomes $10,000.00. The line under it repeats the intent that past net worth is recalculated as if the portfolio never existed (4.7).</li>
+<li>Warning in plain text: the deletion cannot be undone in the app, and the only way back is restoring a backup (4.7). No backup is forced (intent v52), and the dialog has no export button. Design reading, to confirm.</li>
+<li>Typed confirmation (4.7): the portfolio's name is shown and you type it. The match ignores case and spaces, as for portfolio names. Delete portfolio stays inactive until it matches: dashed outline, not tappable, read by TalkBack as unavailable, with one line saying why. Design addition: what is typed, to confirm. The summary and the typed confirmation are required even when the portfolio has no transactions (3 zeros): 4.7 has no exception.</li>
+<li>Name typed, Delete active. Tapping it runs the deletion check again, then removes the portfolio, its transactions and their trade cash lines as one action (K2) and recomputes history as if it never existed (4.7). The app returns to the Portfolios tab; after the last portfolio it shows "No portfolios yet" with a Create a portfolio button (wireframe 3). If the second check fails, the blocked message of frame F replaces the dialog and nothing is removed. Cancel changes nothing.</li>
+<li>Blocked deletion (Example E, Portfolio Q). The dialog never opens; this message replaces it. It names the first date cash would go negative, the largest shortfall and the fix: a deposit adjustment with a note, dated on or before that date, for at least the shortfall (4.7). Plain text with a leading "Not deleted". Close is the only button. You fix the cash on the Cash tab (Cash entry, Adjustment, 10b frame B) and delete again. No shortcut that prefills the adjustment: Design reading, to confirm.</li>
+</ol>
+<p class="note">This is the only flow that removes a portfolio's records, the one exception to permanent transactions (4.7). Touch targets are at least 48 dp and text follows the font size setting; the sketches are not to scale. Backup export and restore are 10e; the More tab and Settings are 10f.</p>
+</main>
+</body>
+</html>

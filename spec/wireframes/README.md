@@ -19,7 +19,7 @@ for both themes (spec.md section 6, Number format and color).
 | 10a | 10a-buy-sell.html | Buy and Sell entry, review screens, lot picker, blocked-save messages | Approved |
 | 10b | 10b-split-cash-reversal.html | Cash entry (opening balance first), Split entry, transaction and cash entry detail with Reverse, reversal screen | Approved |
 | 10c | 10c-reverse-reenter.html | Reverse and re-enter (prefilled entry, combined review, blocked pairs) | Approved |
-| 10d | 10d-portfolio-dialogs | Portfolio create, rename, delete (summary, typed confirmation, blocked message) | Not drawn |
+| 10d | 10d-portfolio-dialogs.html | Portfolio create, rename, delete (summary, typed confirmation, blocked message) | Approved |
 | 10e | 10e-backup-restore | Backup export, restore summary and typed confirmation, error report with Copy report | Not drawn |
 | 10f | 10f-more-settings | More tab, Settings (auto-lock, price source, tab order, lists, screenshot window), sector and geography Edit picker | Not drawn |
 
