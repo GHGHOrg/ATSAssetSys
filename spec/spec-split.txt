@@ -1,6 +1,6 @@
 spec-split.txt
 Stage: Design. Status: PROPOSAL ONLY. spec.md has NOT been split.
-Applies to: spec/spec.md (draft v4, 446 lines, 14 sections)
+Applies to: spec/spec.md (draft v4, 451 lines, 14 sections)
 Last updated against: spec.md with sections 1 to 14, after the CSV format (section 8) was
 approved and Example B was rewritten, and after Example F and the 4.6 rule for splits
 between an original and its reversal were added (finding 3), and after the Status column
@@ -108,7 +108,12 @@ spec/wireframes/10c-reverse-reenter.html), and
 the Portfolio create, rename and delete paragraph (section 6), rule 4.7 (with its section 3
 pointer), the restore-file portfolio rules (section 8) and criteria 26 and 55 (section 11) were
 added with the thirteenth wireframe, 10d (H152 to H156; the spec stays draft v4; new file
-spec/wireframes/10d-portfolio-dialogs.html).
+spec/wireframes/10d-portfolio-dialogs.html), and
+the Backup export and restore entry paragraph (section 6) and criterion 56 (section 11) were
+added with the fourteenth wireframe, 10e (H157, H158; the spec stays draft v4; new file
+spec/wireframes/10e-backup-restore.html), and
+the rule that Android's file screens do not lock the app (section 9) and criterion 57 (section 11)
+were added (H159, H160; the spec stays draft v4).
 
 DECISION MADE
 Option 1: keep working on a single spec.md until the user says "final".
@@ -119,7 +124,7 @@ WHY NOT SPLIT NOW
   findings (1 to 7) are applied. What remains is the user's approval of spec.md as a
   whole ("final").
 - One file means one approval gate (Ruleset A: approve spec.md before Build).
-- The file (446 lines) is small enough to review in one sitting. Context-window fit has
+- The file (451 lines) is small enough to review in one sitting. Context-window fit has
   not been measured.
 
 PROPOSED SPLIT (apply only after "final", and only if still worth it)
@@ -198,9 +203,9 @@ AFTER A SPLIT
   4.6, 4.7 and Example E").
 
 KNOWN LIMITS
-- Current section sizes in lines (measured with wc and awk, spec.md = 446 lines):
-  index sections 1, 2, 10 to 14 = 131 lines (136 with the 5 header lines before section 1);
-  domain-rules (3 to 5) = 149 lines; views (6) 48; prices (7) 13; backup-restore (8) 83;
+- Current section sizes in lines (measured with wc and awk, spec.md = 451 lines):
+  index sections 1, 2, 10 to 14 = 133 lines (138 with the 5 header lines before section 1);
+  domain-rules (3 to 5) = 149 lines; views (6) 50; prices (7) 13; backup-restore (8) 83;
   backup-security (9) 17. Each count runs from a section's heading to the line before the
   next heading, so it includes the blank line. These are line counts, not context tokens.
 - The sizes above were recomputed after the findings batch, after the Android minimum
@@ -233,8 +238,10 @@ KNOWN LIMITS
   Buy and sell entry paragraph and criterion 52 (H145, H146; section 6 went from 40 to 42 and section 11 from 53 to 54) and after the
   Cash, split and reversal entry paragraph and criterion 53 (H147, H149; section 6 went from 42 to 44 and section 11 from 54 to 55) and after the
   Reverse and re-enter entry paragraph and criterion 54 (H150, H151; section 6 went from 44 to 46 and section 11 from 55 to 56) and after the
-  Portfolio create, rename and delete paragraph, rule 4.7, the section 8 portfolio rules and criteria 26 and 55 (H152 to H156; section 4 went from 86 to 87, section 6 from 46 to 48 and section 11 from 56 to 57).
-- Section 9 grew from 7 to 17 lines (lock, privacy, screenshot window, minimum Android
+  Portfolio create, rename and delete paragraph, rule 4.7, the section 8 portfolio rules and criteria 26 and 55 (H152 to H156; section 4 went from 86 to 87, section 6 from 46 to 48 and section 11 from 56 to 57) and after the
+  Backup export and restore entry paragraph and criterion 56 (H157, H158; section 6 went from 48 to 50 and section 11 from 57 to 58) and after the
+  file-screen lock bullet and criterion 57 (H159, H160; section 9 went from 17 to 18 and section 11 from 58 to 59).
+- Section 9 grew from 7 to 18 lines (lock, file screens and lock, privacy, screenshot window, minimum Android
   version, encryption at rest, no automatic copies, network and logging, last backup, reminder), so it holds more than backup and security now. Its file
   name may need to change if it is split out.
 - Sections 7 and 9 are short and may stay in the index instead of getting own files.

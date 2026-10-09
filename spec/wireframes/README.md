@@ -20,7 +20,7 @@ for both themes (spec.md section 6, Number format and color).
 | 10b | 10b-split-cash-reversal.html | Cash entry (opening balance first), Split entry, transaction and cash entry detail with Reverse, reversal screen | Approved |
 | 10c | 10c-reverse-reenter.html | Reverse and re-enter (prefilled entry, combined review, blocked pairs) | Approved |
 | 10d | 10d-portfolio-dialogs.html | Portfolio create, rename, delete (summary, typed confirmation, blocked message) | Approved |
-| 10e | 10e-backup-restore | Backup export, restore summary and typed confirmation, error report with Copy report | Not drawn |
+| 10e | 10e-backup-restore.html | Backup export, restore wizard (pick file, checking, error report with Copy report, summary, typed confirmation, result) | Approved |
 | 10f | 10f-more-settings | More tab, Settings (auto-lock, price source, tab order, lists, screenshot window), sector and geography Edit picker | Not drawn |
 
 Wireframe 10 (entry flows) is split into six files, 10a to 10f, each approved one at a time.
