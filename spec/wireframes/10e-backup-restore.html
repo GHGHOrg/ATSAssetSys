@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Wireframe 10e: Backup export and restore (spec.md section 6, entry flows; sections 8 and 9)</title>
+<style>
+:root{--bg:#f6f6f4;--surface-1:#efefec;--surface-2:#ffffff;--border:#d9d9d4;--border-strong:#b9b9b2;--border-stronger:#8a8a84;--text:#1c1c1a;--text-2:#5a5a55;--text-muted:#8a8a84;--accent-bg:#e3edf8;--accent-text:#0c447c;--accent-line:#378add}
+@media (prefers-color-scheme:dark){:root{--bg:#1b1b19;--surface-1:#262624;--surface-2:#2e2e2b;--border:#44443f;--border-strong:#66665f;--border-stronger:#9a9a92;--text:#ecece8;--text-2:#b4b4ac;--text-muted:#8a8a82;--accent-bg:#14304f;--accent-text:#b5d4f4;--accent-line:#85b7eb}}
+html{background:var(--bg)}
+body{margin:0;padding:24px 16px 48px;font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;color:var(--text);line-height:1.5}
+main{max-width:760px;margin:0 auto}
+h1{font-size:22px;font-weight:500;margin:0 0 4px}
+h2{font-size:18px;font-weight:500;margin:32px 0 4px}
+p,li{font-size:15px}
+.note{color:var(--text-2);margin:0 0 8px}
+.pair{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px;margin-top:16px}
+@media (max-width:640px){.pair{grid-template-columns:minmax(0,1fr)}}
+.cap{font-size:13px;color:var(--text-2);margin:0 0 6px;text-align:center}
+.ph{background:var(--surface-2);border:1px solid var(--border-strong);border-radius:20px;padding:12px;display:flex;flex-direction:column;gap:8px}
+.bx{border:1px solid var(--border-strong);border-radius:8px;padding:8px 10px;position:relative;background:var(--surface-1)}
+.dash{border:1px dashed var(--border-stronger);border-radius:8px;padding:8px 10px;position:relative}
+.n{position:absolute;top:-8px;right:-6px;width:18px;height:18px;border-radius:50%;background:var(--accent-bg);color:var(--accent-text);font-size:11px;font-weight:500;display:flex;align-items:center;justify-content:center;border:1px solid var(--accent-line)}
+.lb{font-size:12px;color:var(--text-2);margin:0}
+.title{font-size:14px;font-weight:500;margin:0}
+.row{display:flex;justify-content:space-between;align-items:center;font-size:13px;padding:3px 0;margin:0}
+.btn{border:1px solid var(--border-strong);border-radius:8px;padding:4px 10px;font-size:12px;background:var(--surface-2);display:inline-block}
+.btn.pri{background:var(--accent-bg);color:var(--accent-text);border-color:var(--accent-line);font-weight:500}
+.btn.off{color:var(--text-muted);border-style:dashed;background:none}
+.fld{border:1px solid var(--border-strong);border-radius:8px;padding:4px 8px;font-size:13px;background:var(--surface-2);min-width:0}
+.bar{display:flex;border:1px solid var(--border-strong);border-radius:8px;overflow:hidden;font-size:12px;margin-top:auto}
+.bar span{flex:1;text-align:center;padding:10px 0;border-right:1px solid var(--border)}
+.bar span:last-child{border-right:none}
+.bar span:first-child{background:var(--accent-bg);color:var(--accent-text);font-weight:500}
+.mut{color:var(--text-muted)}
+.msg{border:1px solid var(--border-stronger);border-radius:8px;padding:6px 8px;font-size:12px;margin:0 0 6px;background:var(--surface-2)}
+.tot{border-top:1px solid var(--border-strong);margin-top:4px;padding-top:4px;font-weight:500}
+.t{font-size:13px;font-weight:500;margin:0}
+.col{display:grid;grid-template-columns:1.4fr 1fr 1fr;font-size:13px;padding:3px 0;margin:0}
+.col span:nth-child(n+2){text-align:right}
+.err{border-top:1px solid var(--border);padding-top:4px;margin-top:4px;font-size:12px}
+</style>
+</head>
+<body>
+<main>
+<h1>Wireframe 10e: Backup export and restore (entry flows, part E)</h1>
+<p class="note">Status: approved. Companion to spec.md section 6 (entry flows), section 8 (restore steps, rejection reasons, report) and section 9 (last backup, reminder). All wording is placeholder (D9, decided in Build). Colors are placeholders. Index of all wireframes: README.md in this folder. Restore is a short wizard, one screen per step. The bottom bar is always visible; the highlighted tab is More, where the flow starts. Figures: Example A is the app now, and spec/example-backup.csv is the file. The Android file pickers are system screens and are not drawn.</p>
+<div class="pair">
+<div>
+<p class="cap">Frame A: Backup/restore screen (More)</p>
+<div class="ph">
+<p class="title">&lt; Backup and restore</p>
+<div class="bx"><span class="n">1</span><p class="lb">Last backup</p><p class="t">2026-10-04 JST</p><p class="lb">Or "never backed up".</p></div>
+<div style="position:relative"><span class="btn pri">Back up now</span><span class="n" style="top:-10px;right:auto;left:90px">2</span></div>
+<div class="bx"><span class="n">3</span><p class="lb">Restore replaces all data and settings in the app with the contents of a backup file. Needs internet.</p>
+<div style="margin-top:6px"><span class="btn">Restore from backup file</span></div></div>
+<div class="dash"><span class="n">4</span><p class="lb" style="margin:0 0 4px">Format only: phone offline</p>
+<p class="lb">Restore needs internet. Connect and try again.</p>
+<div style="margin-top:4px"><span class="btn off">Restore from backup file</span></div></div>
+<div style="flex:1"></div>
+<div class="bar"><span>More</span><span>Cash</span><span>Portfolios</span><span>Overall</span></div>
+</div></div>
+<div>
+<p class="cap">Frame B: Back up now (export)</p>
+<div class="ph">
+<p class="title">&lt; Backup and restore</p>
+<div class="bx"><span class="n">5</span><p class="lb" style="margin:0">Android's file screen opens. You choose where to save. Suggested name: backup-2026-10-09.csv</p></div>
+<div class="bx"><span class="n">6</span>
+<p class="msg">Backup saved. Last backup: 2026-10-09 JST</p>
+<p class="msg">Backup not saved. The last backup date is unchanged.</p>
+<p class="lb" style="margin:0">One or the other, plain text. Only a completed export counts.</p></div>
+<div style="flex:1"></div>
+<div class="bar"><span>More</span><span>Cash</span><span>Portfolios</span><span>Overall</span></div>
+</div></div>
+<div>
+<p class="cap">Frame C: Restore step 1 of 5, pick the file</p>
+<div class="ph">
+<p class="title">&lt; Restore</p>
+<p class="lb">Step 1 of 5. Nothing is changed until step 5.</p>
+<div class="bx"><span class="n">7</span><span class="btn">Choose file</span>
+<p class="row" style="margin-top:4px"><span>File</span><span>backup-2026-10-04.csv</span></p>
+<div style="margin-top:4px"><span class="btn pri">Check file</span></div></div>
+<div class="bx"><span class="n">8</span><p class="lb" style="margin:0">Dates in the file are YYYY-MM-DD.</p>
+<p class="lb">Enter date in US market time (New York)</p></div>
+<div style="flex:1"></div>
+<div class="bar"><span>More</span><span>Cash</span><span>Portfolios</span><span>Overall</span></div>
+</div></div>
+<div>
+<p class="cap">Frame D: step 2 of 5, checking</p>
+<div class="ph">
+<p class="title">&lt; Restore</p>
+<p class="lb">Step 2 of 5. Nothing has been changed.</p>
+<div class="bx"><span class="n">9</span>
+<p class="row"><span>Reading the file and checking the rules</span><span>done</span></p>
+<p class="row"><span>Verifying held tickers (2 of 3)</span><span>running</span></p>
+<p class="lb">Price source: the one selected now. Needs internet.</p></div>
+<div><span class="btn">Cancel</span></div>
+<div style="flex:1"></div>
+<div class="bar"><span>More</span><span>Cash</span><span>Portfolios</span><span>Overall</span></div>
+</div></div>
+<div>
+<p class="cap">Frame E: error report (the screen scrolls)</p>
+<div class="ph">
+<p class="title">&lt; Restore</p>
+<div class="bx"><span class="n">10</span><p class="t">3 errors in 3 lines</p>
+<div class="err"><b>Line 14, quantity:</b> a quantity of 0 or less is not allowed.</div>
+<div class="err"><b>Line 17, lot_picks:</b> depends on line 14.</div>
+<div class="err"><b>Line 21:</b> cash would be negative on 2026-02-10 by $200.00.</div>
+<div class="err" style="position:relative"><span class="n" style="top:-2px">12</span><b>Line 9, ticker XYZ:</b> cannot be verified with the selected price source. Switch the source in Settings and try again.</div></div>
+<div style="position:relative"><span class="btn">Copy report</span> <span class="btn pri">Choose another file</span><span class="n" style="top:-10px;right:auto;left:80px">11</span></div>
+<p class="lb">Nothing was changed.</p>
+</div></div>
+<div>
+<p class="cap">Frame F: step 3 of 5, summary (the app holds data)</p>
+<div class="ph">
+<p class="title">&lt; Restore</p>
+<p class="lb">Step 3 of 5. Nothing has been changed.</p>
+<div class="bx"><span class="n">13</span>
+<p class="col lb"><span></span><span>Now</span><span>In the file</span></p>
+<p class="col"><span>Portfolios</span><span>1</span><span>2</span></p>
+<p class="col"><span>Transactions</span><span>3</span><span>8</span></p>
+<p class="col"><span>Cash entries</span><span>1</span><span>4</span></p>
+<div style="border-top:1px solid var(--border-strong);margin-top:4px;padding-top:4px;position:relative"><span class="n" style="top:2px">14</span>
+<p class="row"><span>Cash balance after the restore</span><span>$9,425.00</span></p>
+<p class="row"><span>Holdings with shares</span><span>1</span></p></div></div>
+<div><span class="btn pri">Continue</span> <span class="btn">Cancel</span></div>
+<div class="dash"><span class="n">15</span><p class="lb" style="margin:0">Format only, fresh install: no Now column, and Continue is "Restore". Four steps, no step 4.</p></div>
+</div></div>
+<div>
+<p class="cap">Frame G: step 4 of 5, confirm (the app holds data)</p>
+<div class="ph">
+<p class="title">&lt; Restore</p>
+<p class="lb">Step 4 of 5. Nothing has been changed.</p>
+<div class="bx"><span class="n">16</span><p class="t">Back up what is in the app now</p>
+<p class="lb">Optional. Recommended: restoring cannot be undone.</p>
+<div style="margin-top:4px"><span class="btn">Back up now</span></div></div>
+<div class="bx"><span class="n">17</span>
+<p class="lb" style="margin:0 0 4px">Everything in the app, data and settings, is deleted and replaced by the file. Only a backup restore brings it back.</p>
+<p class="lb">Type RESTORE to confirm (case and spaces ignored)</p><div class="fld">&nbsp;</div></div>
+<div><span class="btn off">Replace all data</span> <span class="btn">Cancel</span></div>
+<div style="flex:1"></div>
+<div class="bar"><span>More</span><span>Cash</span><span>Portfolios</span><span>Overall</span></div>
+</div></div>
+<div>
+<p class="cap">Frame H: step 5 of 5, result</p>
+<div class="ph">
+<p class="title">Restore</p>
+<div class="bx"><span class="n">18</span><p class="t">Restore complete</p>
+<p class="row"><span>Portfolios, transactions, cash entries</span><span>2, 8, 4</span></p>
+<p class="lb">Holdings show "no price" until the first price refresh. More shows "never backed up", so the backup reminder shows.</p></div>
+<div><span class="btn pri">Go to Overall</span></div>
+<div class="bx"><span class="n">19</span><p class="msg" style="margin:0">Not restored. Nothing was changed.</p><p class="lb" style="margin-top:4px">Close</p></div>
+</div></div>
+</div>
+<h2>Markers</h2>
+<ol>
+<li>Last backup line, as in More (section 9): the export moment in the device's time zone with its abbreviation (C15), or "never backed up".</li>
+<li>Back up now starts the export, the same action as the button on the Overall banner. Android's file screen lets you choose the location (frame B, marker 5).</li>
+<li>Restore from backup file starts the wizard at step 1. The line says it replaces everything and needs internet.</li>
+<li>Offline, Restore is inactive (dashed, not tappable, read by TalkBack as unavailable) and a line says why. The wizard cannot be started (section 8, step 1).</li>
+<li>The export writes one file in the format of section 8 to the place you choose. Suggested name backup-YYYY-MM-DD.csv (device time zone, C15).</li>
+<li>Result of an export: plain text. Only a completed export updates the last backup date; a cancelled or failed export says so and changes nothing (G2).</li>
+<li>Step 1: Choose file opens Android's file screen; the file name is shown, and Check file starts step 2. The app reads only the file you pick.</li>
+<li>The date note of section 6 sits next to the date format help. Design addition: the format help line.</li>
+<li>Step 2: two phases, reading and rule checks, then verifying every ticker still held at the end of the file with the price source selected before the restore (D6). Verification starts only if the first phase found no errors (section 8, steps 2 and 3). Cancel returns to step 1. Nothing is deleted.</li>
+<li>Error report (section 8): "N errors in M lines", then each error with its line, its column when one applies, and the reason; a dependent row says "depends on line N". It stays on screen and scrolls. Plain text, no meaning by color.</li>
+<li>Copy report copies the text shown and nothing else, and is the only copy action in the app (C16). It is not a backup. Choose another file returns to step 1.</li>
+<li>Ticker errors come in a second round and name the ticker and the source. A file-level failure (not UTF-8, header, version) uses the same layout with "File" in place of a line.</li>
+<li>Step 3: counts of portfolios, transactions and cash entries, now versus in the file (section 8, step 5). Transactions are buys, sells, splits and reversals; trade cash lines are not counted.</li>
+<li>The resulting cash balance and the number of holdings with shares, to compare with real life (approved addition to intent v52).</li>
+<li>Format only: on a fresh install there is nothing to replace, so only the file's summary shows and there is no export offer or typed confirmation (G1, decision 3). Continue becomes Restore.</li>
+<li>Step 4 export offer: Back up now is optional and starts the same export. A completed one shows "Backup saved" here. Design addition: the line that restoring cannot be undone.</li>
+<li>Typed confirmation: Replace all data stays inactive until the word matches. Delete and load then happen as one action, so the app is never left empty in between (section 8, step 7). Design addition: the word RESTORE.</li>
+<li>Step 5, success: the counts loaded, the "no price" note, and the reset last-backup state (section 8, step 7). Go to Overall opens the normal screens. There is no way back into the wizard.</li>
+<li>Step 5, failure: if the write itself fails, nothing is changed and the screen says so with a Close button only. Design addition.</li>
+</ol>
+<p class="note">Android's Back returns one step in steps 1 to 4 and leaves the wizard from step 1; nothing has been changed until Replace all data. A restart or an auto-lock relock ends the wizard, and it starts again from step 1 (a Design addition, to confirm). Touch targets are at least 48 dp and text follows the font size setting; the sketches are not to scale.</p>
+</main>
+</body>
+</html>
