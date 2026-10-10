@@ -425,10 +425,10 @@ Planned for later versions: performance over time, per-holding dividends (a divi
 - D6 RESOLVED: ticker verification uses the price source selected at that moment (4.3, sections 7 and 8). The restore uses the source selected before it, not the file's.
 - D7 RESOLVED: a source text is matched ignoring case and spaces (4.9).
 - D8 RESOLVED: with cash but no portfolio Overall keeps the normal screens; the Buy and Sell messages are in section 6.
-- D9 DEFERRED to Build: the wording of the backup banner, its button and the three guided-empty-state steps is decided in Build and shown to you for approval on the phone. The messages already quoted in this spec ("Create a portfolio first", "Nothing to sell yet", "Set the opening balance first", "No portfolios yet") stay as written. When, where and what each one does is fixed in sections 6 and 9.
+- D9 DECIDED (deliberate deferral to Build): the wording of the backup banner, its button and the three guided-empty-state steps is not written in Design. Reason: wording is judged on the phone, not on paper, and the wireframes use placeholder text. It is decided in Build and shown to you for approval on the phone. The messages already quoted in this spec ("Create a portfolio first", "Nothing to sell yet", "Set the opening balance first", "No portfolios yet") stay as written. When, where and what each one does is fixed in sections 6 and 9.
 - D10 OPEN: how calculated amounts are rounded (per-share cost and price, the proportional split of sell proceeds across lots in 4.4, cost per lot after a split). Section 6 fixes only how figures are shown. To be decided in Design before "final".
 - Blocked-deletion message: RESOLVED. Wording in 4.7 and Example E approved.
-- Historical prices: deferred past v1 (section 7).
+- D11 DECIDED (deliberate deferral past v1): historical prices are needed only for performance over time, which intent v52 lists as a later version (G3). Transactions are stored from day one, so nothing is lost by waiting. Condition before the performance milestone: check that a free source gives historical prices back to the first transaction, and how to convert split-adjusted prices back to as-traded values, because splits are entered by hand (section 7, [UNVERIFIED]). Not checked now.
 
 ## 14. Components and responsibilities (technology-neutral)
 Added as section 14 so existing section numbers stay stable. Language, framework, database and price source are plan.md decisions. This section only says what each part must do and what it may depend on.

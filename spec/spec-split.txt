@@ -116,7 +116,9 @@ the rule that Android's file screens do not lock the app (section 9) and criteri
 were added (H159, H160; the spec stays draft v4), and
 the More and Settings entry paragraph (section 6), criterion 58 (section 11) and the More line of
 the navigation outline (gear icon for Settings) were added with the fifteenth wireframe, 10f
-(H161 to H163; the spec stays draft v4; new file spec/wireframes/10f-more-settings.html).
+(H161 to H163; the spec stays draft v4; new file spec/wireframes/10f-more-settings.html), and
+the D9 and historical prices notes in section 13 were recorded as deliberate decisions (D9 reworded,
+new D11; H164; the spec stays draft v4).
 
 DECISION MADE
 Option 1: keep working on a single spec.md until the user says "final".
@@ -244,7 +246,8 @@ KNOWN LIMITS
   Portfolio create, rename and delete paragraph, rule 4.7, the section 8 portfolio rules and criteria 26 and 55 (H152 to H156; section 4 went from 86 to 87, section 6 from 46 to 48 and section 11 from 56 to 57) and after the
   Backup export and restore entry paragraph and criterion 56 (H157, H158; section 6 went from 48 to 50 and section 11 from 57 to 58) and after the
   file-screen lock bullet and criterion 57 (H159, H160; section 9 went from 17 to 18 and section 11 from 58 to 59) and after the
-  More and Settings entry paragraph, criterion 58 and the navigation outline line (H161 to H163; section 6 went from 50 to 52 and section 11 from 59 to 60).
+  More and Settings entry paragraph, criterion 58 and the navigation outline line (H161 to H163; section 6 went from 50 to 52 and section 11 from 59 to 60) and after the
+  D9 and D11 wording (H164; section 13 stays at 14 lines, edited in place).
 - Section 9 grew from 7 to 18 lines (lock, file screens and lock, privacy, screenshot window, minimum Android
   version, encryption at rest, no automatic copies, network and logging, last backup, reminder), so it holds more than backup and security now. Its file
   name may need to change if it is split out.
