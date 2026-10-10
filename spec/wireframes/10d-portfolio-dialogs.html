@@ -122,9 +122,13 @@ p,li{font-size:15px}
 <div class="dlg"><span class="n">12</span>
 <p class="hd">Can't delete Portfolio Q</p>
 <p class="msg">Not deleted. Removing this portfolio's cash lines would make cash negative from 2026-02-10 ET. The largest shortfall is $200.00.</p>
-<p class="msg">To fix it, add a deposit adjustment of at least $200.00 dated on or before 2026-02-10, with a note. Then delete again.</p>
+<p class="msg">To fix it, add a deposit adjustment of at least $200.00 dated before 2026-02-10, with a note. Then delete again.</p>
 <p class="lb">Nothing was changed.</p>
 <div style="margin-top:6px"><span class="btn pri">Close</span></div></div>
+<div class="dash"><span class="n">13</span>
+<p class="lb" style="margin:0 0 4px">Format only: the first negative date is the date of the opening balance</p>
+<p class="msg">Not deleted. Cash would be negative on 2026-01-01 ET by $300.00. That is the date of the opening balance, and nothing can be dated before it, so no adjustment can fix this. This portfolio cannot be deleted.</p>
+<span class="btn pri">Close</span></div>
 </div></div>
 </div>
 <h2>Markers</h2>
@@ -140,7 +144,8 @@ p,li{font-size:15px}
 <li>Warning in plain text: the deletion cannot be undone in the app, and the only way back is restoring a backup (4.7). No backup is forced (intent v52), and the dialog has no export button. Design reading, to confirm.</li>
 <li>Typed confirmation (4.7): the portfolio's name is shown and you type it. The match ignores case and spaces, as for portfolio names. Delete portfolio stays inactive until it matches: dashed outline, not tappable, read by TalkBack as unavailable, with one line saying why. Design addition: what is typed, to confirm. The summary and the typed confirmation are required even when the portfolio has no transactions (3 zeros): 4.7 has no exception.</li>
 <li>Name typed, Delete active. Tapping it runs the deletion check again, then removes the portfolio, its transactions and their trade cash lines as one action (K2) and recomputes history as if it never existed (4.7). The app returns to the Portfolios tab; after the last portfolio it shows "No portfolios yet" with a Create a portfolio button (wireframe 3). If the second check fails, the blocked message of frame F replaces the dialog and nothing is removed. Cancel changes nothing.</li>
-<li>Blocked deletion (Example E, Portfolio Q). The dialog never opens; this message replaces it. It names the first date cash would go negative, the largest shortfall and the fix: a deposit adjustment with a note, dated on or before that date, for at least the shortfall (4.7). Plain text with a leading "Not deleted". Close is the only button. You fix the cash on the Cash tab (Cash entry, Adjustment, 10b frame B) and delete again. No shortcut that prefills the adjustment: Design reading, to confirm.</li>
+<li>Blocked deletion (Example E, Portfolio Q). The dialog never opens; this message replaces it. It names the first date cash would go negative, the largest shortfall and the fix: a deposit adjustment with a note, dated before that date, for at least the shortfall (4.7). A deposit dated on that date itself is entered after the entries that make cash negative, so it does not help (4.1). Plain text with a leading "Not deleted". Close is the only button. You fix the cash on the Cash tab (Cash entry, Adjustment, 10b frame B) and delete again. No shortcut that prefills the adjustment: Design reading, to confirm.</li>
+<li>Format only: the first date cash would go negative is the date of the opening balance. No date before it exists, because nothing can be dated before the opening balance (4.2), so no adjustment or reversal can fix it. The message says so, states that the portfolio cannot be deleted, and has a Close button only (4.7, known limit). Plain text with a leading "Not deleted".</li>
 </ol>
 <p class="note">This is the only flow that removes a portfolio's records, the one exception to permanent transactions (4.7). Touch targets are at least 48 dp and text follows the font size setting; the sketches are not to scale. Backup export and restore are 10e; the More tab and Settings are 10f.</p>
 </main>
