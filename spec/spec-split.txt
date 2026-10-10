@@ -121,7 +121,10 @@ the D9 and historical prices notes in section 13 were recorded as deliberate dec
 new D11; H164; the spec stays draft v4), and
 D10 was resolved (new rule 4.10, Exact arithmetic and rounding: integer cents, exact decimals and
 exact fractions, rounding only for display, the full-lot rule for sells, with the matching edits in
-sections 3, 4.4, 4.6, 6, 8, 13 and 14 and new criterion 59; H165 to H174; the spec stays draft v4).
+sections 3, 4.4, 4.6, 6, 8, 13 and 14 and new criterion 59; H165 to H174; the spec stays draft v4), and
+the restore summary wording for a fresh install (section 8 step 5 and the section 6 backup paragraph)
+and the cash reversal note naming the original by type and date (4.6 and the section 6 cash paragraph)
+were aligned (H175, H176; the spec stays draft v4).
 
 DECISION MADE
 Option 1: keep working on a single spec.md until the user says "final".
@@ -252,7 +255,9 @@ KNOWN LIMITS
   More and Settings entry paragraph, criterion 58 and the navigation outline line (H161 to H163; section 6 went from 50 to 52 and section 11 from 59 to 60) and after the
   D9 and D11 wording (H164; section 13 stays at 14 lines, edited in place) and after the
   D10 rule 4.10 and criterion 59 (H165 to H174; section 4 went from 87 to 99 and section 11 from 60 to 61,
-  and sections 3, 6, 8, 13 and 14 are edited in place).
+  and sections 3, 6, 8, 13 and 14 are edited in place) and after the
+  restore summary wording and the cash reversal note (H175, H176; all four edits are in place, so no
+  section changed size).
 - Section 9 grew from 7 to 18 lines (lock, file screens and lock, privacy, screenshot window, minimum Android
   version, encryption at rest, no automatic copies, network and logging, last backup, reminder), so it holds more than backup and security now. Its file
   name may need to change if it is split out.
