@@ -150,7 +150,9 @@ State rows) (H198 to H201; the spec stays draft v4), and
 the same-date rule for a buy and a split was added (the order of 4.1 decides which comes first; 4.3, 4.5
 and 4.6) and the split review wording was aligned (section 6) (H202 to H205; the spec stays draft v4), and
 criterion 58 was extended (a Geographies case on the sample file, and the refusal of "Tech" after the
-rename; section 11) (H206, H207; the spec stays draft v4).
+rename; section 11) (H206, H207; the spec stays draft v4), and
+the Keystore line in section 9 was marked partly checked (Android's Keystore page and the owner's own
+checks; the rest stays unverified; H208; the spec stays draft v4).
 
 DECISION MADE
 Option 1: keep working on a single spec.md until the user says "final".
@@ -293,7 +295,8 @@ KNOWN LIMITS
   changed size) and after the Reversing a sell wording (H197; edited in place, so no section changed
   size) and after the list-name rule (H198 to H201; all four edits are in place, so no section changed
   size) and after the same-date rule (H202 to H205; all four edits are in place, so no section changed
-  size) and after the criterion 58 extension (H206, H207; edited in place, so no section changed size).
+  size) and after the criterion 58 extension (H206, H207; edited in place, so no section changed size)
+  and after the Keystore wording (H208; edited in place, so no section changed size).
 - Section 9 grew from 7 to 18 lines (lock, file screens and lock, privacy, screenshot window, minimum Android
   version, encryption at rest, no automatic copies, network and logging, last backup, reminder), so it holds more than backup and security now. Its file
   name may need to change if it is split out.
