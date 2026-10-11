@@ -194,7 +194,8 @@ p,li{font-size:15px}
 <div class="bx"><span class="n">20</span>
 <p class="msg">Not saved. Cash would be negative on 2026-01-10 by $100.00.</p>
 <p class="msg">Not saved. Cash entries cannot be dated before the opening balance (2026-01-01).</p>
-<p class="msg">Not saved. Shares would be &minus;10 on 2026-01-03. Reverse the sell of 2026-01-03 first.</p>
+<p class="msg">Not saved. Shares would be &minus;10 on 2026-01-03. Reverse the sell of 2026-01-03 first, then reverse this entry dated on or after that reversal.</p>
+<p class="msg">Not saved. Shares would be &minus;10 on 2026-01-03, because this reversal, dated 2026-01-02, is applied before the sell of 2026-01-03. Pick a reversal date of 2026-01-03 or later (the date the sell was reversed).</p>
 <p class="msg">Not saved. The opening balance already exists.</p>
 <p class="msg">Note: required for an adjustment.</p>
 <p class="msg">Amount: cannot be 0. Up to 2 decimals.</p>
@@ -224,7 +225,7 @@ p,li{font-size:15px}
 <li>Date defaults to the original date. A later date may be picked (the original's effect then stays between the two dates). An earlier date is refused. The date note applies.</li>
 <li>Effect line: shares removed with later splits applied, and the cash returned. For Example F the 10 shares as traded become 20 after the Mar 1 split, and $1,000.00 returns. Realized gain/loss is 0 for a buy. Reversing a sell shows the lots restored and the realized gain removed. A reversal has one screen and Confirm and save, with no separate review (a Design addition). If the save is blocked (for example Example D), the screen stays open with the message of frame J.</li>
 <li>Format only: a cash reversal has type Adjustment and the amount fixed to the opposite of the original. The note is pre-filled "Reversal of #id" (4.6). How the id is shown to you in the app is not decided here; it is left to Build with the wording (D9).</li>
-<li>Blocked saves, placeholder wording (D9). Each names the rule and, where it has them, the failing date and amount (4.1, 4.2, 4.5, 4.6). Messages are plain text with a leading "Not saved", so meaning never rests on color. Example C gives the first message, and Example D the third.</li>
+<li>Blocked saves, placeholder wording (D9). Each names the rule and, where it has them, the failing date and amount (4.1, 4.2, 4.5, 4.6). Messages are plain text with a leading "Not saved", so meaning never rests on color. Example C gives the first message, and Example D the third and fourth. The third applies while the sell is not yet reversed: reverse it first, then date this reversal on or after the sell's reversal (4.1 orders by date, so a reversal dated earlier is applied before the sell and still fails). The fourth applies once the sell is reversed: it names the earliest reversal date that works, which is the date the sell was reversed (2026-01-03 by default, a later date if the sell was reversed later). The default reversal date stays the original's (frame I, marker 17; Example G relies on it), and there is no button that fills the date.</li>
 </ol>
 <p class="note">Touch targets are at least 48 dp and text follows the font size setting; the sketches are not to scale. The Reverse, Reverse and re-enter and detail screens are drawn here because wireframes 6, 7 and 8 point to them; the Rename and Delete dialogs of a portfolio are 10d.</p>
 </main>
