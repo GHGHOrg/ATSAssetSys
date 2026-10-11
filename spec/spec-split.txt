@@ -143,7 +143,10 @@ criteria 21 and 54; wireframe 10c was reopened and re-approved with a second blo
 frame F) (H193 to H196; the spec stays draft v4), and
 the wording of Reversing a sell was aligned with the split rule (the lots are put back with the lot cost
 they had when sold; quantity and cost per share follow the splits since the sell date; 4.6) (H197; the spec
-stays draft v4).
+stays draft v4), and
+the list-name rule was aligned with the Settings screen (a value's name cannot match a remembered source
+text in its list, and "Tech" is refused after the rename to Technology; 4.9, section 8 `list_value` and
+State rows) (H198 to H201; the spec stays draft v4).
 
 DECISION MADE
 Option 1: keep working on a single spec.md until the user says "final".
@@ -284,6 +287,7 @@ KNOWN LIMITS
   reversal date rule (H188 to H192; all five edits are in place, so no section changed size) and after
   its extension to Reverse and re-enter (H193 to H196; all four edits are in place, so no section
   changed size) and after the Reversing a sell wording (H197; edited in place, so no section changed
+  size) and after the list-name rule (H198 to H201; all four edits are in place, so no section changed
   size).
 - Section 9 grew from 7 to 18 lines (lock, file screens and lock, privacy, screenshot window, minimum Android
   version, encryption at rest, no automatic copies, network and logging, last backup, reminder), so it holds more than backup and security now. Its file
