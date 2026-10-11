@@ -132,7 +132,15 @@ criterion 60 (H177 to H181; the spec stays draft v4), and
 the portfolio deletion fix was applied (a fixing deposit adjustment must be dated before the first
 negative date, and a shortfall on the opening balance date cannot be fixed; 4.7, Example E, the
 section 6 paragraph on portfolio dialogs, criteria 28 and 55; wireframe 10d was reopened and
-re-approved) (H182 to H186; the spec stays draft v4).
+re-approved) (H182 to H186; the spec stays draft v4), and
+the reversal date rule was added (a reversal takes effect on its own date, so a buy reversal must
+be dated on or after the date the sell was reversed; 4.6 Date and Reversing a buy, Example D, the
+section 6 paragraph on cash, split and reversal entry, criterion 53; wireframe 10b was reopened
+and re-approved with a second blocked message in frame J) (H188 to H192; the spec stays draft v4), and
+the reversal date rule was carried to Reverse and re-enter (the pair is checked per lot, so a new
+buy does not cover the original lot; Example G, the section 6 paragraph on Reverse and re-enter,
+criteria 21 and 54; wireframe 10c was reopened and re-approved with a second blocked message in
+frame F) (H193 to H196; the spec stays draft v4).
 
 DECISION MADE
 Option 1: keep working on a single spec.md until the user says "final".
@@ -269,7 +277,10 @@ KNOWN LIMITS
   business-rules review (H177 to H181; section 4 went from 99 to 100 and section 11
   from 61 to 62, and sections 6 and 8 are edited in place) and after the
   portfolio deletion fix (H182 to H186; section 4 went from 100 to 101, and Example E, the
-  section 6 paragraph on portfolio dialogs and criteria 28 and 55 are edited in place).
+  section 6 paragraph on portfolio dialogs and criteria 28 and 55 are edited in place) and after the
+  reversal date rule (H188 to H192; all five edits are in place, so no section changed size) and after
+  its extension to Reverse and re-enter (H193 to H196; all four edits are in place, so no section
+  changed size).
 - Section 9 grew from 7 to 18 lines (lock, file screens and lock, privacy, screenshot window, minimum Android
   version, encryption at rest, no automatic copies, network and logging, last backup, reminder), so it holds more than backup and security now. Its file
   name may need to change if it is split out.
