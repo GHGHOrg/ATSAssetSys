@@ -60,6 +60,7 @@ select{font:inherit;font-size:13px;padding:4px 6px;border:1px solid var(--border
 <div class="r"><p style="font-size:13px;margin:0">$0.00</p><p class="lb">&nbsp; &gt;</p></div></div></div>
 <div style="position:relative"><span class="btn">+ New portfolio</span><span class="n" style="top:-10px;right:auto;left:100px">2</span></div>
 <p class="lb mut" style="margin:0">With none: "No portfolios yet" and a Create a portfolio button.</p>
+<p class="lb" style="margin:0">Price refresh failed. Showing last prices.</p>
 <div style="flex:1"></div>
 <div style="text-align:right"><span class="btn" style="font-weight:500">Buy/Sell</span></div>
 <div class="bar"><span>More</span><span>Cash</span><span>Portfolios</span><span>Overall</span></div>
@@ -74,7 +75,8 @@ select{font:inherit;font-size:13px;padding:4px 6px;border:1px solid var(--border
 <p class="big">$1,280.00</p>
 <p class="row" style="margin-top:4px"><span>Cost</span><span>$1,200.00</span></p>
 <p class="row"><span>Unrealized gain/loss</span><span class="good">+$80.00</span></p>
-<p class="lb" style="margin-top:2px">Prices updated 2 min ago</p></div>
+<p class="lb" style="margin-top:2px">Prices updated 2 min ago</p>
+<p class="lb" style="margin-top:2px">Price refresh failed. Showing last prices.</p></div>
 <div class="bx"><span class="n">5</span>
 <div class="two"><p class="hd">Holdings</p><p class="lb">Unrealized gain/loss</p></div>
 <div class="two"><div><p style="font-size:13px;font-weight:500;margin:0">AAPL</p><p class="lb">8 shares</p></div>
@@ -93,10 +95,10 @@ select{font:inherit;font-size:13px;padding:4px 6px;border:1px solid var(--border
 </div>
 <h2>Markers</h2>
 <ol>
-<li>Portfolio row, in the order the portfolios were created. Name, number of holdings, value, and gain/loss (green with a plus sign for a gain, red with a minus sign for a loss, no color at zero). Tapping a row opens the portfolio screen. The "Retirement" row is illustrative only.</li>
+<li>Portfolio row, in the order the portfolios were created. Name, number of holdings, value, and gain/loss (green with a plus sign for a gain, red with a minus sign for a loss, no color at zero). Tapping a row opens the portfolio screen. The "Retirement" row is illustrative only. One quiet line shows under the list only when a price refresh failed, with no pop-up (section 6, error states).</li>
 <li>New portfolio button. It opens the create dialog drawn in wireframe 10d. A name is refused if it has fewer than 3 characters, has no letter, or matches another portfolio's name, ignoring case and spaces (4.7). Before the opening balance exists, the button shows "Set the opening balance first" instead of the dialog (4.2). With no portfolio, the tab says "No portfolios yet" with a Create a portfolio button.</li>
 <li>Menu with Rename and Delete. Their dialogs (rename, delete with summary and typed confirmation, and the blocked message, 4.7) are drawn in wireframe 10d.</li>
-<li>Summary: portfolio value, cost and "Unrealized gain/loss" (4.8), and the price age line, which is the age of the oldest price used in this portfolio.</li>
+<li>Summary: portfolio value, cost and "Unrealized gain/loss" (4.8), and the price age line, which is the age of the oldest price used in this portfolio. One quiet line under it shows only when a refresh failed, with no pop-up.</li>
 <li>Holdings list with the heading "Unrealized gain/loss" over its right column: ticker, shares, value, and the unrealized gain/loss since purchase. A fully sold holding that is not hidden stays in the list at 0 shares (4.4). Tapping a row opens Holding detail.</li>
 <li>Flags (format only): a stale price shows "stale" with its age; a holding with no price shows "no price, at cost" and no gain/loss (4.8).</li>
 <li>Links to Allocation (it opens on this portfolio), Transaction history and Hidden holdings. Hidden holdings is always listed; with none hidden its screen shows one plain line.</li>
