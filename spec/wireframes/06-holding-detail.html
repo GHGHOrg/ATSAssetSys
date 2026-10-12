@@ -57,7 +57,8 @@ p,li{font-size:15px}
 <p class="row" style="margin-top:4px"><span>Shares</span><span>8</span></p>
 <p class="row"><span>Cost</span><span>$1,200.00</span></p>
 <p class="row"><span>Unrealized gain/loss</span><span class="good">+$80.00</span></p>
-<p class="lb" style="margin-top:2px">Prices updated 2 min ago</p></div>
+<p class="lb" style="margin-top:2px">Prices updated 2 min ago</p>
+<p class="lb" style="margin-top:2px">Price refresh failed. Showing last prices.</p></div>
 <div style="position:relative"><span class="btn">Buy</span> <span class="btn">Sell</span> <span class="btn">Split</span><span class="n" style="top:-10px;right:auto;left:150px">2</span></div>
 <div class="tabs"><span class="on">Transactions</span><span>Lots</span><span>Classification</span><span class="n" style="top:-10px;right:-6px">3</span></div>
 <div class="bx"><span class="n">4</span>
@@ -108,15 +109,15 @@ p,li{font-size:15px}
 </div>
 <h2>Markers</h2>
 <ol>
-<li>Header, always visible: portfolio name, value, shares, cost, "Unrealized gain/loss" (4.8) and the price age line; a stale price or "no price, at cost" shows its flag, as on view 3. It is one holding, a ticker within one portfolio. A back arrow returns to where you came from.</li>
+<li>Header, always visible: portfolio name, value, shares, cost, "Unrealized gain/loss" (4.8) and the price age line; a stale price or "no price, at cost" shows its flag, as on view 3. One quiet line shows under the age line only when a refresh failed, with no pop-up. It is one holding, a ticker within one portfolio. A back arrow returns to where you came from.</li>
 <li>Buy and Sell open the entry with the ticker already filled in; Split starts a split entry for this ticker and portfolio (navigation outline). Whether the buttons are offered at 0 shares is left to the entry rules (4.4).</li>
 <li>Three tabs, left to right: Transactions, Lots, Classification. It opens on Transactions (the first tab); the tab is not saved.</li>
 <li>Transactions tab: this holding's buys, sells and splits, newest first, each with type, date and "ET", quantity and amount. A reversal shows as such and links to its original. Tapping a row opens the transaction, where Reverse and Reverse and re-enter start (4.6).</li>
-<li>Lots tab: each lot that still has shares, oldest first, with purchase date and "ET", quantity left, cost per share, lot cost and unrealized gain/loss (green or red with sign, "no price" instead when unpriced). Quantities and cost per share include splits recorded so far (4.4). Sold-out lots are not listed; they show in Transactions.</li>
-<li>Classification tab: effective sector and geography, each labelled "From the source", "Override" or "Unclassified" (4.9). Edit picks a value from the matching list (dialogs are drawn with the entry flows, wireframe 10). Clear override returns to the source value, or "Unclassified".</li>
+<li>Lots tab: each lot that still has shares, oldest first, with purchase date and "ET", quantity left, cost per share, lot cost and unrealized gain/loss (green or red with sign, "no price" instead when unpriced; a stale price keeps its gain/loss with the stale marker and its age). Quantities and cost per share include splits recorded so far (4.4). Sold-out lots are not listed; they show in Transactions.</li>
+<li>Classification tab: effective sector and geography, each labelled "From the source", "Override" or "Unclassified" (4.9). Edit picks a value from the matching list (the picker is drawn in wireframe 10f, frame H). Clear override returns to the source value, or "Unclassified".</li>
 <li>Split history: every split recorded for this holding, so a forgotten split is easier to spot (C9). With none, one plain line.</li>
 <li>Format only: a split row, shown as date and ratio (2 for 1).</li>
-<li>Hide button, shown only at 0 shares, no confirmation (4.4). Unhide is in Hidden holdings (view 9).</li>
+<li>Hide button, shown only at 0 shares, no confirmation (4.4). Unhide is in Hidden holdings (view 9). While the holding is hidden, neither Hide nor Unhide is shown here.</li>
 <li>A holding with no shares shows one plain line on the Lots tab. Its Transactions tab still lists everything.</li>
 </ol>
 <p class="note">Reached from a portfolio's holdings list, from Transaction history and from Hidden holdings. Realized gains for this holding are on view 5, not here.</p>
