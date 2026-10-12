@@ -88,16 +88,27 @@ p,li{font-size:15px}
 <div class="chips"><span class="chip on">All</span></div></div>
 <div class="bx"><span class="n">7</span><p class="row mut"><span>No entries match these filters</span></p></div>
 </div></div>
+<div>
+<p class="cap">Frame D: reversal line (sample file, Main, ticker AAPL and Buy)</p>
+<div class="ph">
+<div class="bx"><div class="chips" style="margin-top:0"><span class="chip">All</span><span class="chip off">Deposit</span><span class="chip off">Withdrawal</span><span class="chip off">Interest/dividend</span><span class="chip off">Adjustment</span><span class="chip on">Buy</span><span class="chip">Sell</span></div></div>
+<div class="bx"><span class="n">8</span>
+<div class="it"><div class="two"><div><p class="t">Reversal of buy AAPL</p><p class="lb">2026-04-05 ET, Main</p></div><div class="r"><p class="a">+$360.00</p><p class="lb">Balance $9,400.00</p></div></div></div>
+<div class="it"><div class="two"><div><p class="t">Buy AAPL</p><p class="lb">2026-03-20 ET, Main</p></div><div class="r"><p class="a">&minus;$360.00</p><p class="lb">Balance $9,040.00</p></div></div></div>
+<div class="it"><div class="two"><div><p class="t">Buy AAPL</p><p class="lb">2026-02-01 ET, Main</p></div><div class="r"><p class="a">&minus;$1,500.00</p><p class="lb">Balance $7,500.00</p></div></div></div>
+<div class="it"><div class="two"><div><p class="t">Buy AAPL</p><p class="lb">2026-01-02 ET, Main</p></div><div class="r"><p class="a">&minus;$1,000.00</p><p class="lb">Balance $9,000.00</p></div></div></div></div>
+</div></div>
 </div>
 <h2>Markers</h2>
 <ol>
 <li>Balance on the latest date, as in 4.2 (not colored), and the Cash entry button (deposit, withdrawal, interest/dividend, adjustment). Before the opening balance exists the button opens the opening balance and the list shows one plain line (4.2).</li>
 <li>Filters, all optional, all combined (an entry must match every filter), none saved. From and To are the entry date, both ends included, with the date note (section 6). Ticker is a pick from the tickers that have a buy or sell line, not typed. Clear filters (frame B) resets all three.</li>
-<li>Type chips, one at a time: All, Deposit, Withdrawal, Interest/dividend, Adjustment, Buy, Sell. Buy and Sell are the `trade` lines of buys and sells (C4); the opening balance shows under All only. Direct entries have no ticker (dividends are cash-only, intent v52), so with a ticker picked Deposit, Withdrawal, Interest/dividend and Adjustment are disabled: greyed with a dashed outline, not tappable, read by TalkBack as unavailable, and one line says why (frame B). Only All, Buy and Sell stay enabled. Picking a ticker while a disabled chip is on resets the chip to All; clearing the ticker enables the chips again.</li>
-<li>Entry list, newest first, same-date entries in entry order (4.1). Each row: a trade line shows Buy or Sell, ticker, portfolio name, date with "ET" and amount; a direct entry shows its type label, date and amount (note if any). Every row shows the balance after it, which is the real balance, not a sum of the rows shown. Amounts carry a sign, no color. A trade line opens the linked transaction (with its lots and any reversal link). A direct entry opens its detail, where Reverse and Reverse and re-enter start (4.6; not for the opening balance). Those screens are drawn with wireframe 10.</li>
+<li>Type chips, one at a time: All, Deposit, Withdrawal, Interest/dividend, Adjustment, Buy, Sell. Buy and Sell are the `trade` lines of buys and sells, reversals included under the chip of the entry reversed (C4, marker 8); the opening balance shows under All only, and with a ticker picked no direct entry shows. Direct entries have no ticker (dividends are cash-only, intent v52), so with a ticker picked Deposit, Withdrawal, Interest/dividend and Adjustment are disabled: greyed with a dashed outline, not tappable, read by TalkBack as unavailable, and one line says why (frame B). Only All, Buy and Sell stay enabled. Picking a ticker while a disabled chip is on resets the chip to All; clearing the ticker enables the chips again.</li>
+<li>Entry list, newest first, same-date entries in entry order (4.1). Each row: a trade line shows Buy or Sell, ticker, portfolio name, date with "ET" and amount; a direct entry shows its type label, date and amount (note if any). Every row shows the balance after it, which is the real balance, not a sum of the rows shown. Amounts carry a sign, no color. A trade line opens the linked transaction (with its lots and any reversal link). A direct entry opens its detail, where Reverse and Reverse and re-enter start (4.6; not for the opening balance). Those screens are drawn in wireframe 10b (frames G and H).</li>
 <li>Same controls with filters set. Ticker AAPL and Sell show only AAPL sales (the combination "specific ticker, sell"). Ticker AAPL and All shows its buys and sells together.</li>
 <li>A line says how many entries are shown. The balance under each row stays the real balance after that entry.</li>
 <li>No entry matches: one plain line replaces the list, with no step list.</li>
+<li>Reversal line (sample file, Main, ticker AAPL, Buy): the cash line of a reversal reads "Reversal of buy" or "Reversal of sell" with the ticker, portfolio name, date with "ET", signed amount and the balance after it. It opens the reversal. It sits under the Buy or Sell chip of the entry it reverses, as in Transaction history (wireframe 08), and under All. It is not under the opposite chip.</li>
 </ol>
 <p class="note">Buy/Sell button as on Overall and Portfolios (navigation outline). Per-holding dividends and a ticker on dividend entries are a planned later version.</p>
 </main>

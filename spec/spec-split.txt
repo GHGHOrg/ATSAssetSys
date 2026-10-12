@@ -163,7 +163,10 @@ stay unverified) (H210; the spec stays draft v4), and
 the quiet refresh-failed line was added to wireframes 03 and 06 and tested in criteria 45 and 48
 (section 11; H211, H212; the spec stays draft v4; wireframe 05 also lost its "Informational only."
 text to match C10, with no spec hunk; wireframes 03, 04 and 05 got pointer fixes, and 06 got
-pointer and wording fixes, all in the wireframe files only).
+pointer and wording fixes, all in the wireframe files only), and
+the Cash account screen rules were extended (a reversal's cash line and its chip, the Clear filters
+button and the entries-shown line; view 7, section 6, criterion 49; H213, H214; the spec stays draft v4;
+wireframe 07 got a frame D for the reversal line and pointer and wording fixes in the wireframe file).
 
 DECISION MADE
 Option 1: keep working on a single spec.md until the user says "final".
@@ -310,7 +313,8 @@ KNOWN LIMITS
   and after the Keystore wording (H208; edited in place, so no section changed size) and after the
   C17 wording (H209; edited in place, so no section changed size) and after the secure-window wording
   (H210; edited in place, so no section changed size) and after the quiet refresh-failed line
-  (H211, H212; both edited in place, so no section changed size).
+  (H211, H212; both edited in place, so no section changed size) and after the Cash account
+  rules (H213, H214; both edited in place, so no section changed size).
 - Section 9 grew from 7 to 18 lines (lock, file screens and lock, privacy, screenshot window, minimum Android
   version, encryption at rest, no automatic copies, network and logging, last backup, reminder), so it holds more than backup and security now. Its file
   name may need to change if it is split out.
