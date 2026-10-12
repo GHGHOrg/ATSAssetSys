@@ -94,8 +94,8 @@ select{font:inherit;font-size:13px;padding:4px 6px;border:1px solid var(--border
 <h2>Markers</h2>
 <ol>
 <li>Portfolio row, in the order the portfolios were created. Name, number of holdings, value, and gain/loss (green with a plus sign for a gain, red with a minus sign for a loss, no color at zero). Tapping a row opens the portfolio screen. The "Retirement" row is illustrative only.</li>
-<li>New portfolio button. A name that matches another portfolio's name, ignoring case and spaces, is refused (4.7). With no portfolio, the tab says "No portfolios yet" with a Create a portfolio button.</li>
-<li>Menu with Rename and Delete. Their dialogs (rename, delete with summary and typed confirmation, and the blocked message, 4.7) are drawn with the entry flows in wireframe 10.</li>
+<li>New portfolio button. It opens the create dialog drawn in wireframe 10d. A name is refused if it has fewer than 3 characters, has no letter, or matches another portfolio's name, ignoring case and spaces (4.7). Before the opening balance exists, the button shows "Set the opening balance first" instead of the dialog (4.2). With no portfolio, the tab says "No portfolios yet" with a Create a portfolio button.</li>
+<li>Menu with Rename and Delete. Their dialogs (rename, delete with summary and typed confirmation, and the blocked message, 4.7) are drawn in wireframe 10d.</li>
 <li>Summary: portfolio value, cost and "Unrealized gain/loss" (4.8), and the price age line, which is the age of the oldest price used in this portfolio.</li>
 <li>Holdings list with the heading "Unrealized gain/loss" over its right column: ticker, shares, value, and the unrealized gain/loss since purchase. A fully sold holding that is not hidden stays in the list at 0 shares (4.4). Tapping a row opens Holding detail.</li>
 <li>Flags (format only): a stale price shows "stale" with its age; a holding with no price shows "no price, at cost" and no gain/loss (4.8).</li>
