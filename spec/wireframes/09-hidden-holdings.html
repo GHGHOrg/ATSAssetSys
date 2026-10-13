@@ -63,7 +63,7 @@ p,li{font-size:15px}
 <ol>
 <li>The portfolio is named at the top; there is no chooser. The back arrow returns to that portfolio's screen. Hidden holdings is always listed there, even with none hidden.</li>
 <li>One row per hidden holding of this portfolio, in ticker order A to Z: ticker, "0 shares" and the date of its last transaction with "ET" (a holding can reach 0 shares by a reversal, so it may have no sale). Only a fully sold holding can be hidden (4.4), so every row is at 0 shares. Tapping the row opens Holding detail, which has no Hide button while the holding is hidden and does not offer Unhide.</li>
-<li>Unhide, on the row, with no confirmation. The row leaves this list at once, and the holding returns to the portfolio's holdings list at 0 shares (4.4). A new buy of a hidden ticker unhides it too. Hiding is not a transaction and has no cash effect.</li>
+<li>Unhide, on the row, with no confirmation. The row leaves this list at once, and the holding returns to the portfolio's holdings list at 0 shares (4.4). A save that leaves a hidden holding with shares unhides it too: a new buy of that ticker, or the reversal of a sell (4.4, 4.6). Hiding is not a transaction and has no cash effect.</li>
 <li>With none hidden, one plain line replaces the list, with no step list.</li>
 </ol>
 <p class="note">Hide is on Holding detail (view 6, only at 0 shares); Unhide is only here. Hidden holdings still count in sector and geography use (4.9) and in realized gains (view 5).</p>
