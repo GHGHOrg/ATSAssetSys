@@ -108,7 +108,7 @@ p,li{font-size:15px}
 <div class="bx"><p class="lb" style="margin:0">Same screen, lots section. Date 2026-03-01, quantity 12.</p></div>
 <div class="bx"><span class="n">12</span>
 <div class="lot"><div class="two"><div><p class="t"><i class="ck">&#10003;</i>2026-01-02 ET</p><p class="lb">10 left, $100.00 per share</p></div><div class="r"><p class="a">Sell: 10</p><p class="lb">no price</p></div></div></div>
-<div class="lot"><div class="two"><div><p class="t"><i class="ck">&#10003;</i>2026-02-01 ET</p><p class="lb">10 left, $150.00 per share</p></div><div class="r"><p class="a">Sell: 0</p><p class="lb good">+$100.00 stale, 2 days</p></div></div></div>
+<div class="lot"><div class="two"><div><p class="t"><i class="ck"></i>2026-02-01 ET</p><p class="lb">10 left, $150.00 per share</p></div><div class="r"><p class="lb good">+$100.00 stale, 2 days</p></div></div></div>
 <div class="off"><span class="n" style="top:-8px">13</span><p class="t"><i class="ck"></i>2026-03-15 ET</p><p class="lb">5 left, $170.00 per share</p><p class="lb">Not available: bought after the sell date</p></div>
 <p class="lb" style="margin-top:6px">Picked 10 of 12 shares</p></div>
 <div class="msg" style="position:relative"><span class="n">14</span>Not saved yet. The picked lots add up to 10 shares, but the sell is for 12.</div>
@@ -143,6 +143,7 @@ p,li{font-size:15px}
 <p class="msg">Not saved. ZZZZ is not on a US national securities exchange.</p>
 <p class="msg">Not saved. Portfolio P holds 8 shares of AAPL on 2026-04-01; the sell is for 12.</p>
 <p class="msg">Total amount: must be more than 0 on a buy.</p>
+<p class="msg">Quantity: must be more than 0.</p>
 <p class="msg">Quantity: up to 8 decimals. Total amount: up to 2 decimals.</p>
 <p class="lb" style="margin:0">Everything typed stays in the fields.</p></div>
 </div></div>
@@ -162,13 +163,13 @@ p,li{font-size:15px}
 <li>Portfolio: a dropdown of the portfolios in creation order. It opens on the portfolio you came from (a portfolio's screen or a holding), otherwise on the first one. Design addition, to confirm.</li>
 <li>Ticker: typed on a buy and in capitals. On Holding detail it is already filled in (navigation outline). The check of 4.3 runs when Review is tapped (marker 6).</li>
 <li>Date: defaults to today in New York, with the date note of section 6 beside the input (4.1, C13). A buy or sell may be backdated or future-dated.</li>
-<li>Quantity (up to 8 decimals) and total amount (up to 2 decimals), fees included, as in 4.3. A buy total must be more than 0. A ninth quantity decimal or a third amount decimal is refused with a line under the field (frame F).</li>
+<li>Quantity (up to 8 decimals) and total amount (up to 2 decimals), fees included, as in 4.3. A quantity must be more than 0, and so must a buy total. A ninth quantity decimal or a third amount decimal is refused with a line under the field (frame F).</li>
 <li>Price per share is derived (total divided by quantity) and shown as the field changes, in the number format of section 6. It is not typed.</li>
-<li>Review runs every check and shows the review screen only if the save would pass: the field rules, the ticker check of 4.3 (needs internet unless the ticker was verified before), the cash and share rules of 4.1, and for a sell the lot rules of 4.4. If one fails, the entry screen stays open with what you typed and a message names the rule, the date and the amount where it has them (section 6, error states). Confirm runs the checks again before saving. Design addition: when the checks run.</li>
+<li>Review runs every check and shows the review screen only if the save would pass: the field rules, the ticker check of 4.3 (buys only; needs internet unless the ticker was verified before), the cash and share rules of 4.1, and for a sell the lot rules of 4.4. If one fails, the entry screen stays open with what you typed and a message names the rule, the date and the amount where it has them (section 6, error states). Confirm runs the checks again before saving. Design addition: when the checks run.</li>
 <li>Buy review: the entered values, the derived price per share and the cash effect with its sign and no color. Confirm and save is the only way to save (criterion 30); Back to edit returns with the values kept. No lot, no gain: a buy has none.</li>
 <li>Sell entry is one scrolling screen: the fields, then the lot list, then Review (4.4). The ticker is picked from the tickers held in the chosen portfolio, not typed. Design addition, to confirm. Total amount may be 0 (a total loss, 4.4).</li>
-<li>Sell all fills the quantity with the exact remaining quantity of that ticker in the portfolio and picks every lot that passes the lot rules, each at its full remaining quantity (4.4).</li>
-<li>Lot list: each lot of that ticker in this portfolio that still has shares, oldest first, same-date lots in entry order. Each shows purchase date with "ET", quantity left, cost per share and unrealized gain/loss (green with a plus sign, red with a minus sign, quantities and cost per share include splits recorded so far). Tapping a lot picks it, with its quantity prefilled with the full remaining quantity; you edit that number only for a partial lot (lot 2 above sells 2 of 10). Tapping again unpicks it. A lot that fails the lot rules is not offered here (marker 13).</li>
+<li>Sell all picks every lot that passes the lot rules, each at its remaining quantity to 8 places, and fills the sell quantity with the sum of those picks (4.4, 4.10).</li>
+<li>Lot list: each lot of that ticker in this portfolio that still has shares, oldest first, same-date lots in entry order. Each shows purchase date with "ET", quantity left, cost per share and unrealized gain/loss (green with a plus sign, red with a minus sign, quantities and cost per share include splits recorded so far). Tapping a lot picks it, with its quantity prefilled with the full remaining quantity; you edit that number only for a partial lot (lot 2 above sells 2 of 10). Tapping again unpicks it. A lot that fails the lot rules stays in its place, greyed out, and cannot be picked (marker 13).</li>
 <li>The line "Picked X of Y shares" compares the picked quantities with the sell quantity. They must be equal to save (4.4). Changing the date updates the lot list and the picks at once; a pick that no longer passes is dropped and the line says so. Design addition, to confirm: how a dropped pick is announced.</li>
 <li>Format only: a lot with no price shows "no price" instead of a gain/loss, and a lot with a stale price shows its gain/loss with the stale marker and its age (4.4, 4.8). It can still be picked. A lot whose quantity is 0 is not listed.</li>
 <li>Format only: a lot that fails the lot rules for the entered date (bought after the sell date, or same date but entered after the sell) stays in its place in the order, greyed out with a dashed outline and its reason in text, and cannot be picked (4.4, criterion 14).</li>

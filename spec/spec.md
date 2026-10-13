@@ -63,7 +63,7 @@ Single-user Android app (sideloaded). Local-only data. Tracks one shared cash ac
 - Withdrawal larger than the balance on that date or any later date is blocked.
 - The opening balance is the first thing entered. Until it exists, the app accepts no other cash entry, portfolio or transaction. After that there is exactly one: it must be the earliest cash entry, and it is never reversed or replaced. A restore file must contain it (section 8).
 - A cash difference vs reality is fixed with an adjustment deposit/withdrawal with a note.
-- Amounts have at most 2 decimals, in entry screens and in files. Quantities have up to 8 decimals (4.3).
+- Amounts have at most 2 decimals, in entry screens and in files. Quantities are above 0 and have up to 8 decimals (4.3).
 - A cash entry is never 0. In a file the amount is signed: positive for a deposit, interest/dividend and opening balance, negative for a withdrawal, either sign for an adjustment.
 
 ### 4.3 Buys
