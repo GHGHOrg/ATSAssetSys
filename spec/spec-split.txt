@@ -140,7 +140,40 @@ and re-approved with a second blocked message in frame J) (H188 to H192; the spe
 the reversal date rule was carried to Reverse and re-enter (the pair is checked per lot, so a new
 buy does not cover the original lot; Example G, the section 6 paragraph on Reverse and re-enter,
 criteria 21 and 54; wireframe 10c was reopened and re-approved with a second blocked message in
-frame F) (H193 to H196; the spec stays draft v4).
+frame F) (H193 to H196; the spec stays draft v4), and
+the wording of Reversing a sell was aligned with the split rule (the lots are put back with the lot cost
+they had when sold; quantity and cost per share follow the splits since the sell date; 4.6) (H197; the spec
+stays draft v4), and
+the list-name rule was aligned with the Settings screen (a value's name cannot match a remembered source
+text in its list, and "Tech" is refused after the rename to Technology; 4.9, section 8 `list_value` and
+State rows) (H198 to H201; the spec stays draft v4), and
+the same-date rule for a buy and a split was added (the order of 4.1 decides which comes first; 4.3, 4.5
+and 4.6) and the split review wording was aligned (section 6) (H202 to H205; the spec stays draft v4), and
+criterion 58 was extended (a Geographies case on the sample file, and the refusal of "Tech" after the
+rename; section 11) (H206, H207; the spec stays draft v4), and
+the Keystore line in section 9 was marked partly checked (Android's Keystore page and the owner's own
+checks; the rest stays unverified; H208; the spec stays draft v4), and
+the C17 row in section 2 was updated after a check against Google's developer verification pages (the
+first enforcement phase covers participating stores in four other countries only, the three install
+routes are confirmed, and the owner's own Play Protect check of the phone is recorded; the rest
+stays unverified) (H209; the spec stays draft v4), and
+the secure-window bullet in section 9 was marked partly checked against Android's pages (FLAG_SECURE
+and the API 33 preview switch confirmed; screen recording, the recents preview and the 3-minute window
+stay unverified) (H210; the spec stays draft v4), and
+the quiet refresh-failed line was added to wireframes 03 and 06 and tested in criteria 45 and 48
+(section 11; H211, H212; the spec stays draft v4; wireframe 05 also lost its "Informational only."
+text to match C10, with no spec hunk; wireframes 03, 04 and 05 got pointer fixes, and 06 got
+pointer and wording fixes, all in the wireframe files only), and
+the Cash account screen rules were extended (a reversal's cash line and its chip, the Clear filters
+button and the entries-shown line; view 7, section 6, criterion 49; H213, H214; the spec stays draft v4;
+wireframe 07 got a frame D for the reversal line and pointer and wording fixes in the wireframe file), and
+the Transaction history cash label was aligned with the Cash account (a reversal's cash line reads
+"Reversal of buy" or "Reversal of sell"; view 8, section 6, criterion 50; H215, H216; the spec stays
+draft v4; wireframe 08 got a frame E for the Cash chip with a reversal, and pointer fixes in markers 3, 5
+and 7), and
+the unhide-by-save rule was added to Hidden holdings (a save that leaves a hidden holding with shares
+unhides it: a new buy, or the reversal of a sell; view 9, section 6; H217; the spec stays draft v4;
+wireframe 09 got the same wording in marker 3).
 
 DECISION MADE
 Option 1: keep working on a single spec.md until the user says "final".
@@ -280,7 +313,17 @@ KNOWN LIMITS
   section 6 paragraph on portfolio dialogs and criteria 28 and 55 are edited in place) and after the
   reversal date rule (H188 to H192; all five edits are in place, so no section changed size) and after
   its extension to Reverse and re-enter (H193 to H196; all four edits are in place, so no section
-  changed size).
+  changed size) and after the Reversing a sell wording (H197; edited in place, so no section changed
+  size) and after the list-name rule (H198 to H201; all four edits are in place, so no section changed
+  size) and after the same-date rule (H202 to H205; all four edits are in place, so no section changed
+  size) and after the criterion 58 extension (H206, H207; edited in place, so no section changed size)
+  and after the Keystore wording (H208; edited in place, so no section changed size) and after the
+  C17 wording (H209; edited in place, so no section changed size) and after the secure-window wording
+  (H210; edited in place, so no section changed size) and after the quiet refresh-failed line
+  (H211, H212; both edited in place, so no section changed size) and after the Cash account
+  rules (H213, H214; both edited in place, so no section changed size) and after the Transaction
+  history cash label (H215, H216; both edited in place, so no section changed size) and after the
+  Hidden holdings unhide wording (H217; edited in place, so no section changed size).
 - Section 9 grew from 7 to 18 lines (lock, file screens and lock, privacy, screenshot window, minimum Android
   version, encryption at rest, no automatic copies, network and logging, last backup, reminder), so it holds more than backup and security now. Its file
   name may need to change if it is split out.
