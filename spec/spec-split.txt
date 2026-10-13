@@ -170,7 +170,10 @@ wireframe 07 got a frame D for the reversal line and pointer and wording fixes i
 the Transaction history cash label was aligned with the Cash account (a reversal's cash line reads
 "Reversal of buy" or "Reversal of sell"; view 8, section 6, criterion 50; H215, H216; the spec stays
 draft v4; wireframe 08 got a frame E for the Cash chip with a reversal, and pointer fixes in markers 3, 5
-and 7).
+and 7), and
+the unhide-by-save rule was added to Hidden holdings (a save that leaves a hidden holding with shares
+unhides it: a new buy, or the reversal of a sell; view 9, section 6; H217; the spec stays draft v4;
+wireframe 09 got the same wording in marker 3).
 
 DECISION MADE
 Option 1: keep working on a single spec.md until the user says "final".
@@ -319,7 +322,8 @@ KNOWN LIMITS
   (H210; edited in place, so no section changed size) and after the quiet refresh-failed line
   (H211, H212; both edited in place, so no section changed size) and after the Cash account
   rules (H213, H214; both edited in place, so no section changed size) and after the Transaction
-  history cash label (H215, H216; both edited in place, so no section changed size).
+  history cash label (H215, H216; both edited in place, so no section changed size) and after the
+  Hidden holdings unhide wording (H217; edited in place, so no section changed size).
 - Section 9 grew from 7 to 18 lines (lock, file screens and lock, privacy, screenshot window, minimum Android
   version, encryption at rest, no automatic copies, network and logging, last backup, reminder), so it holds more than backup and security now. Its file
   name may need to change if it is split out.
