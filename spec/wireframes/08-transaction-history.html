@@ -89,15 +89,26 @@ p,li{font-size:15px}
 <div class="bx"><div style="display:flex;gap:8px"><div class="fld">2026-04-01</div><div class="fld">2026-04-30</div></div><div class="chips"><span class="chip on">All</span></div></div>
 <div class="bx"><span class="n">6</span><p class="row mut"><span>No transactions match these filters</span></p></div>
 </div></div>
+<div>
+<p class="cap">Frame E: Cash chip with a reversal (sample file, Main, ticker AAPL)</p>
+<div class="ph">
+<div class="bx"><p class="lb" style="margin:0 0 4px">Portfolio Main, ticker AAPL</p><div class="chips" style="margin-top:0"><span class="chip">All</span><span class="chip">Buy</span><span class="chip">Sell</span><span class="chip">Split</span><span class="chip on">Cash</span></div></div>
+<div class="bx"><span class="n">7</span>
+<div class="it"><div class="two"><div><p class="t">Reversal of buy AAPL</p><p class="lb">2026-04-05 ET</p></div><div class="r"><p class="a">+$360.00</p><p class="lb">&gt;</p></div></div></div>
+<div class="it"><div class="two"><div><p class="t">Cash line, buy AAPL</p><p class="lb">2026-03-20 ET</p></div><div class="r"><p class="a">&minus;$360.00</p><p class="lb">&gt;</p></div></div></div>
+<div class="it"><div class="two"><div><p class="t">Cash line, sell AAPL</p><p class="lb">2026-03-01 ET</p></div><div class="r"><p class="a">+$2,100.00</p><p class="lb">&gt;</p></div></div></div></div>
+<div class="bx"><p class="lb" style="margin:0">Older rows continue (the two buys, not drawn).</p></div>
+</div></div>
 </div>
 <h2>Markers</h2>
 <ol>
 <li>One portfolio, named at the top; there is no chooser and no cross-portfolio history. It opens from the portfolio's screen (view 3), and the back arrow returns there. Filters, all optional, combined, none saved: From and To (the transaction date, both ends included, with the date note of section 6), Ticker (picked from the tickers with a transaction in this portfolio), and the type chips.</li>
 <li>Type chips, one at a time: All, Buy, Sell, Split, Cash. Cash means the cash lines of this portfolio's buys and sells; direct cash entries are not here, they are in the Cash account (criterion 10). A reversal appears under the chip of the entry it reverses (a reversal of a buy under Buy), and its cash line appears under Cash. No chip is disabled: every combination can match.</li>
-<li>List, newest first, same-date rows in entry order (4.1). Each row: type, ticker, date with "ET", quantity as originally traded (splits are not applied to the figure), and the total amount. A buy or sell has a cash-effect line under it, with a sign and no color, which opens its cash line. Tapping a row opens the transaction (with its lots and any reversal link), where Reverse and Reverse and re-enter start (4.6).</li>
+<li>List, newest first, same-date rows in entry order (4.1). Each row: type, ticker, date with "ET", quantity as originally traded (splits are not applied to the figure), and the total amount. A buy or sell has a cash-effect line under it, with a sign and no color, which opens its cash line. Tapping a row opens the transaction (with its lots and any reversal link), where Reverse and Reverse and re-enter start (4.6; the screens are in wireframe 10b).</li>
 <li>Reversal chain. A reversal row reads "Reversal of" the original, named by type and date, and opens it. The original shows "Reversed on" the reversal's date and opens it. The reversal has its own cash line, so the chain original, reversal and both cash lines is traceable. A split has no cash line.</li>
-<li>Cash chip: one row per cash line of this portfolio's trades, naming buy or sell and the ticker, with date, signed amount and a link to the linked transaction.</li>
+<li>Cash chip: one row per cash line of this portfolio's trades, naming buy or sell and the ticker, with date, signed amount and a link to the linked transaction. The cash line of a reversal reads "Reversal of buy" or "Reversal of sell" with the ticker, as in the Cash account (wireframe 07, marker 8), and opens the reversal.</li>
 <li>No match: one plain line replaces the list, with no step list.</li>
+<li>Cash chip with a reversal (sample file, Main, ticker AAPL): the cash line of the Apr 5 reversal reads "Reversal of buy AAPL" with its date, +$360.00, and sits above the cash lines of the Mar 20 buy and the Mar 1 sell, newest first. It is the same cash line that frame B shows under the reversal row.</li>
 </ol>
 <p class="note">Reached from a portfolio's screen. Filters beyond those in intent v52 are a Design addition, as in view 7.</p>
 </main>
