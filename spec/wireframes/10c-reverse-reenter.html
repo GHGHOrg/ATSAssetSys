@@ -51,7 +51,7 @@ p,li{font-size:15px}
 <body>
 <main>
 <h1>Wireframe 10c: Reverse and re-enter (entry flows, part C)</h1>
-<p class="note">Status: approved. Companion to spec.md section 6 (entry flows), rule 4.6 and Examples G and A. All wording is placeholder (D9, decided in Build). Colors are placeholders; the real ones are chosen in Build for both themes. Index of all wireframes: README.md in this folder. Reverse and re-enter starts from the detail screens of wireframe 10b (frames G and H). It reuses the entry screens of 10a and 10b, then shows one combined review, and saves the reversal and the new entry together or not at all. The bottom bar is always visible (section 6); the highlighted tab is where the flow was opened from.</p>
+<p class="note">Status: approved. Companion to spec.md section 6 (entry flows), rule 4.6 and Examples G, A and D, and the sample backup file. All wording is placeholder (D9, decided in Build). Colors are placeholders; the real ones are chosen in Build for both themes. Index of all wireframes: README.md in this folder. Reverse and re-enter starts from the detail screens of wireframe 10b (frames G and H). It reuses the entry screens of 10a and 10b, then shows one combined review, and saves the reversal and the new entry together or not at all. The bottom bar is always visible (section 6); the highlighted tab is where the flow was opened from.</p>
 <div class="pair">
 <div>
 <p class="cap">Frame A: the entry screen, prefilled (a buy, Example G)</p>
@@ -129,7 +129,7 @@ p,li{font-size:15px}
 <div class="bx"><span class="n">11</span><p class="hd" style="font-size:13px;font-weight:500;margin:0 0 4px">1. Reverse the original</p>
 <p class="row"><span>Reverses</span><span>Deposit, 2026-04-20 ET</span></p>
 <p class="row"><span>Type</span><span>Adjustment</span></p>
-<p class="row"><span>Note</span><span>Reversal of #14</span></p>
+<p class="row"><span>Note</span><span>Reversal of the deposit of 2026-04-20 ET</span></p>
 <p class="row tot"><span>Cash effect</span><span>&minus;$500.00</span></p></div>
 <div class="bx"><p class="hd" style="font-size:13px;font-weight:500;margin:0 0 4px">2. Enter the replacement</p>
 <p class="row"><span>Deposit, 2026-04-20 ET</span><span>+$50.00</span></p>
@@ -151,7 +151,7 @@ p,li{font-size:15px}
 </div>
 <h2>Markers</h2>
 <ol>
-<li>Reverse and re-enter starts from a transaction or cash entry (wireframe 10b, frames G and H) and opens the normal entry screen of that kind (buy, sell, split or cash) with a banner naming what is being replaced. Back leaves everything as it was. The entry is a normal entry under 4.3, 4.4 or 4.5, including the ticker check when online (K5).</li>
+<li>Reverse and re-enter starts from a transaction or cash entry (wireframe 10b, frames G and H) and opens the normal entry screen of that kind (buy, sell, split or cash) with a banner naming what is being replaced. Back leaves everything as it was. The entry is a normal entry under 4.3, 4.4 or 4.5, including, for a buy, the ticker check of 4.3 when online (K5); a sell, a split or a cash entry never triggers it.</li>
 <li>The new entry starts with the original's values, including its date (4.6). A field you change shows the original value beneath it, as a small hint. Design addition, to confirm.</li>
 <li>Every field is editable, including portfolio and ticker, because the new entry is a normal entry. Review runs the same checks as in 10a and 10b, with the pair applied together (4.1, 4.6).</li>
 <li>Combined review, part 1: the reversal. It names the original by type and date, shows what the reversal does (shares removed, or lots put back and the realized gain removed, or the opposite cash amount) and its cash effect. Its amount, quantity, ticker and portfolio are fixed to the original (4.6).</li>
@@ -161,7 +161,7 @@ p,li{font-size:15px}
 <li>Confirm and save both is the only way to save. The reversal and the new entry are written as one action (K2). The original, the reversal and the new entry stay as three permanent records (4.6, Example G). Back to edit keeps the values.</li>
 <li>Sell: the lot picks start from the original's picks, and the lot list shows the lots as they will be after the reversal, so the original's lots are available again. The new sell must still pass the lot rules (4.4). Design addition: the list shown as after the reversal, to confirm.</li>
 <li>Sell review: part 1 shows the lots put back and the realized gain removed; part 2 shows lots used, cost of lots used, the new realized gain and the cash effect. For Example G (sell, total $2,200): cost $1,300.00, realized +$900.00 (it was +$800.00), combined cash effect +$100.00.</li>
-<li>Cash entry: part 1 is an Adjustment of the opposite amount with the pre-filled note "Reversal of #id" (4.6, see 10b marker 19 for the id wording); part 2 is the corrected entry. A split works the same way: part 1 applies the inverse ratio, part 2 is the new split with its shares before and after.</li>
+<li>Cash entry: part 1 is an Adjustment of the opposite amount with the pre-filled note naming the original by type and date (4.6, see 10b marker 19); part 2 is the corrected entry. A split works the same way: part 1 applies the inverse ratio, part 2 is the new split with its shares before and after.</li>
 <li>Blocked pairs, placeholder wording (D9). The pair is checked as a unit: nothing is saved if either part is blocked, and the message says "Nothing was changed" and names the part and the rule, with the date and amount where it has them (4.1, Example G). A block that comes from the original itself still applies, for example a buy whose shares were sold (Example D). Frame F shows two messages for a buy whose shares were sold: the first while the sell is not yet reversed, the second once it is, naming the earliest reversal date that works (the same rule as 10b, frame J, marker 20; 4.6). Plain text with a leading "Not saved", so meaning never rests on color.</li>
 </ol>
 <p class="note">Not offered on the opening balance, on a reversal, on an entry that already has a reversal, or on a trade cash line (4.6, wireframe 10b marker 14). It saves typing, not rules: a mistake buried under later dependent transactions is still blocked until those are reversed. Touch targets are at least 48 dp and text follows the font size setting; the sketches are not to scale.</p>

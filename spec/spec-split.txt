@@ -177,7 +177,12 @@ wireframe 09 got the same wording in marker 3), and
 the quantity rule was added to 4.2 (a quantity is above 0 and has up to 8 decimals, as section 8 already
 says for files; H218; the spec stays draft v4; wireframe 10a got the Sell all wording aligned with 4.4 and
 4.10, "buys only" in marker 6, the greyed-out lot wording in marker 10, a corrected lot in frame D, and a
-quantity message in frame F, in the wireframe file only).
+quantity message in frame F, in the wireframe file only), and
+criterion 31 was extended (a quantity of 0 or less is refused, like a ninth decimal; section 11; H219; the
+spec stays draft v4), and
+the shared $0.00 and holding-count rule was added (a breakdown whose base is $0.00 shows one plain line, on
+Net Worth (Total), Allocation and Overall; a portfolio's number of holdings is the rows in its holdings list;
+4.8, views 2, 3 and 4, criteria 44, 45 and 46; H220 to H226; the spec stays draft v4).
 
 DECISION MADE
 Option 1: keep working on a single spec.md until the user says "final".
@@ -328,7 +333,9 @@ KNOWN LIMITS
   rules (H213, H214; both edited in place, so no section changed size) and after the Transaction
   history cash label (H215, H216; both edited in place, so no section changed size) and after the
   Hidden holdings unhide wording (H217; edited in place, so no section changed size) and after the
-  quantity rule (H218; edited in place, so no section changed size).
+  quantity rule (H218; edited in place, so no section changed size) and after the
+  criterion 31 extension (H219; edited in place, so no section changed size) and after the $0.00 and
+  holding-count rule (H220 to H226; all seven edits are in place, so no section changed size).
 - Section 9 grew from 7 to 18 lines (lock, file screens and lock, privacy, screenshot window, minimum Android
   version, encryption at rest, no automatic copies, network and logging, last backup, reminder), so it holds more than backup and security now. Its file
   name may need to change if it is split out.
