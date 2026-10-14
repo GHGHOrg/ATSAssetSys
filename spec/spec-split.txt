@@ -182,7 +182,9 @@ criterion 31 was extended (a quantity of 0 or less is refused, like a ninth deci
 spec stays draft v4), and
 the shared $0.00 and holding-count rule was added (a breakdown whose base is $0.00 shows one plain line, on
 Net Worth (Total), Allocation and Overall; a portfolio's number of holdings is the rows in its holdings list;
-4.8, views 2, 3 and 4, criteria 44, 45 and 46; H220 to H226; the spec stays draft v4).
+4.8, views 2, 3 and 4, criteria 44, 45 and 46; H220 to H226; the spec stays draft v4), and
+the view 5 sentence "Informational only." was reworded so it reads as a rule about the figures and not as a
+label (C10; view 5, section 6; H227; the spec stays draft v4).
 
 DECISION MADE
 Option 1: keep working on a single spec.md until the user says "final".
@@ -335,7 +337,8 @@ KNOWN LIMITS
   Hidden holdings unhide wording (H217; edited in place, so no section changed size) and after the
   quantity rule (H218; edited in place, so no section changed size) and after the
   criterion 31 extension (H219; edited in place, so no section changed size) and after the $0.00 and
-  holding-count rule (H220 to H226; all seven edits are in place, so no section changed size).
+  holding-count rule (H220 to H226; all seven edits are in place, so no section changed size) and after the
+  view 5 rewording (H227; edited in place, so no section changed size).
 - Section 9 grew from 7 to 18 lines (lock, file screens and lock, privacy, screenshot window, minimum Android
   version, encryption at rest, no automatic copies, network and logging, last backup, reminder), so it holds more than backup and security now. Its file
   name may need to change if it is split out.
