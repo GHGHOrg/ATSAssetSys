@@ -75,14 +75,14 @@ select{font:inherit;font-size:13px;padding:4px 6px;border:1px solid var(--border
 <span class="btn">Create a portfolio</span></div>
 </div></div>
 <div>
-<p class="cap">Frame D: portfolio with no holdings</p>
+<p class="cap">Frame D: portfolio with value $0.00</p>
 <div class="ph" style="min-height:240px">
 <p class="title">&lt; Allocation</p>
 <div class="bx">
 <div style="display:flex;align-items:center;gap:8px"><label class="lb" style="white-space:nowrap">Portfolio</label>
 <select aria-label="Portfolio"><option>Retirement</option></select></div></div>
 <div class="bx"><p class="lb">Portfolio value</p><p class="big">$0.00</p></div>
-<div class="bx"><span class="n">5</span><p class="row mut"><span>No holdings in this portfolio</span></p></div>
+<div class="bx"><span class="n">5</span><p class="row mut"><span>No value to show in this portfolio</span></p></div>
 </div></div>
 </div>
 <h2>Markers</h2>
@@ -91,7 +91,7 @@ select{font:inherit;font-size:13px;padding:4px 6px;border:1px solid var(--border
 <li>Portfolio value, with the age of the oldest price used in this portfolio (4.8; a holding valued at cost with "no price" is not counted). While a refresh runs, an "updating" indicator shows on the price part only. A quiet line shows only when a refresh failed, with no pop-up.</li>
 <li>Four breakdowns stacked in this order: asset type, holding, sector, geography. Each has its own donut and rows, under the same rules as Net Worth (Total): a gap between slices, a percentage on a slice of 5% or more, a row percentage only for a slice under 5%, and a TalkBack label on every row that reads the percentage in full. The base is the portfolio value, so each breakdown adds up to 100.0%. There is no cash and no breakdown by portfolio (those are on Net Worth (Total)). Asset type always lists stocks and ETFs, even at 0.0%; the other breakdowns list only what has value. Sector and geography show an "Unclassified" slice for holdings with no value (C14).</li>
 <li>With no portfolio the screen says "No portfolios yet" with a Create a portfolio button. Before the opening balance exists, that button says "Set the opening balance first" instead of opening the dialog (4.2). The dialogs are drawn in wireframe 10d.</li>
-<li>A portfolio with no holdings shows $0.00 and one plain line in place of the four breakdowns, because every share of $0.00 is undefined (spec.md section 6, view 4).</li>
+<li>A portfolio whose value is $0.00 shows $0.00 and one plain line in place of the four breakdowns, because every share of $0.00 is undefined (4.8, spec.md section 6, view 4). This covers a portfolio with no holdings and one whose holdings are all fully sold; a fully sold holding that is not hidden still shows in the portfolio's holdings list (wireframe 3). Placeholder wording (D9).</li>
 </ol>
 <p class="note">A slice that fills the whole ring (100.0%) is drawn with no gap. The percentage on it follows the same rule as any slice of 5% or more.</p>
 </main>
