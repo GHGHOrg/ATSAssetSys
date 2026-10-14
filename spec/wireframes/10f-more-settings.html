@@ -90,7 +90,7 @@ p,li{font-size:15px}
 <p class="lb">Off: screenshots and recording are blocked.</p>
 <div style="margin:4px 0"><span class="btn">Allow screenshots for 3 minutes</span></div>
 <p class="lb">Asks for your fingerprint or phone PIN each time.</p>
-<div class="it"><p class="lb">On, 2:41 left. Ends when you leave the app.</p><span class="btn">Turn off</span></div></div>
+<div class="it"><p class="lb">On, 2:41 left. Ends when you leave the app.</p><p class="lb">Anything can capture the screen while it is on.</p><span class="btn">Turn off</span></div></div>
 </div></div>
 <div>
 <p class="cap">Frame D: price source</p>
@@ -132,6 +132,7 @@ p,li{font-size:15px}
 <div style="margin-top:4px"><span class="btn pri">Save</span> <span class="btn">Cancel</span></div></div>
 <div class="bx"><span class="n">15</span>
 <p class="msg">Not saved. A value named "Technology" already exists. Case and spaces are ignored.</p>
+<p class="msg">Not saved. "Tech" is already a remembered source text for Technology. Case and spaces are ignored.</p>
 <p class="msg">Not deleted. Technology is used by 1 holding (hidden holdings count). Change that holding first.</p>
 <p class="msg">Renamed. Source text "Tech" still maps to Technology.</p></div>
 </div></div>
@@ -157,7 +158,7 @@ p,li{font-size:15px}
 <li>Prices: the price source, with its current value (frame D).</li>
 <li>Navigation: tab order, with the current order as text.</li>
 <li>Lists: Sectors and Geographies, each with its number of values. Each opens its list screen (frame F).</li>
-<li>Auto-lock is one choice of four (section 9), the default marked. It takes effect at once and is saved as a setting. A restored file can set a weaker one (section 9, known limit).</li>
+<li>Auto-lock is one choice of four (section 9), the default marked. It takes effect at once and is saved as a setting. A restored file can set a weaker one (section 8, known limits).</li>
 <li>Screenshot window: always off at start. The button asks for a fingerprint or the phone PIN each time. While on, the row shows the time left and Turn off. It ends after 3 minutes or when you leave the app, never survives a restart and is not saved (section 9). It is not selective, so a line says anything can capture the screen during it.</li>
 <li>Price source: a pick from the sources the app ships (placeholders). Use this source confirms. Online, the app runs the sweep over every held instrument, hidden holdings included. Offline, the change is allowed with a warning and no sweep (section 7).</li>
 <li>Result lines, plain text with no pop-up: after a sweep, the tickers the new source could not price, which keep their last price marked stale; offline, the warning that prices were not refreshed. The new source stays selected either way. Transactions, lots, the verified flag and manual classification are not touched (section 7).</li>
@@ -165,7 +166,7 @@ p,li{font-size:15px}
 <li>List screen (4.9): each value with the number of holdings that use it (hidden holdings count) and the source texts that map to it after a rename ("Also matches", read only; a Design addition). Rename updates every holding using the value and remembers the source's original text. Delete is offered on every value and is blocked while any holding uses it.</li>
 <li>Add value: a new value is picked from the list later; the source can also add values on its own (4.9).</li>
 <li>Add and Rename use the same Name field. A name that matches an existing value or remembered text, ignoring case and spaces (D7), is refused with the text kept in the field.</li>
-<li>Messages are plain text with a leading "Not saved" or "Not deleted", so meaning never rests on color. A blocked delete names the holdings count and says hidden holdings count (4.9). A rename confirms that the old source text still maps to the new name.</li>
+<li>Messages are plain text with a leading "Not saved" or "Not deleted", so meaning never rests on color. A blocked delete names the holdings count and says hidden holdings count (4.9). A name that matches a remembered source text is refused the same way, naming the value it belongs to. A rename confirms that the old source text still maps to the new name.</li>
 <li>Edit picker (view 6, marker 6): opened from Edit on the Classification tab, one pick from the matching list, no typing (4.9). Save sets the override; Clear override stays on the Classification tab. The line pointing to Settings is a Design addition.</li>
 <li>Format only: with an empty list the picker shows one plain line and no Save.</li>
 </ol>
