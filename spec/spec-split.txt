@@ -187,7 +187,12 @@ the view 5 sentence "Informational only." was reworded so it reads as a rule abo
 label (C10; view 5, section 6; H227; the spec stays draft v4), and
 section 12 and the section 14 slice column were marked as a layered proposal superseded by plan.md, and the
 C2 row now says Build follows plan.md iterations that each end with something usable (C2, section 12 heading
-and note, section 14 intro and column header "Layered slices"; H228 to H230; the spec stays draft v4).
+and note, section 14 intro and column header "Layered slices"; H228 to H230; the spec stays draft v4), and
+the no-automatic-copies bullet in section 9 was marked partly checked against Android's Auto Backup page and its
+Android 12 behavior-changes page (allowBackup false does not stop device-to-device transfers on some devices, so
+dataExtractionRules with exclusions in both sections is needed; the release build must not be debuggable), and
+criterion 37 was extended with the manifest and debuggable checks (section 9, section 11; H231, H232; the spec
+stays draft v4).
 
 DECISION MADE
 Option 1: keep working on a single spec.md until the user says "final".
@@ -342,7 +347,8 @@ KNOWN LIMITS
   criterion 31 extension (H219; edited in place, so no section changed size) and after the $0.00 and
   holding-count rule (H220 to H226; all seven edits are in place, so no section changed size) and after the
   view 5 rewording (H227; edited in place, so no section changed size) and after the section 12 layering
-  wording (H228 to H230; H228 and H230 are edited in place, H229 adds 2 lines, so section 12 went from 8 to 10 lines).
+  wording (H228 to H230; H228 and H230 are edited in place, H229 adds 2 lines, so section 12 went from 8 to 10 lines) and after the
+  no-automatic-copies wording and criterion 37 (H231, H232; both edited in place, so no section changed size).
 - Section 9 grew from 7 to 18 lines (lock, file screens and lock, privacy, screenshot window, minimum Android
   version, encryption at rest, no automatic copies, network and logging, last backup, reminder), so it holds more than backup and security now. Its file
   name may need to change if it is split out.
