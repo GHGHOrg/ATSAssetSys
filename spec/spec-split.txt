@@ -1,6 +1,6 @@
 spec-split.txt
 Stage: Design. Status: PROPOSAL ONLY. spec.md has NOT been split.
-Applies to: spec/spec.md (draft v4, 470 lines, 14 sections)
+Applies to: spec/spec.md (draft v4, 472 lines, 14 sections)
 Last updated against: spec.md with sections 1 to 14, after the CSV format (section 8) was
 approved and Example B was rewritten, and after Example F and the 4.6 rule for splits
 between an original and its reversal were added (finding 3), and after the Status column
@@ -184,7 +184,10 @@ the shared $0.00 and holding-count rule was added (a breakdown whose base is $0.
 Net Worth (Total), Allocation and Overall; a portfolio's number of holdings is the rows in its holdings list;
 4.8, views 2, 3 and 4, criteria 44, 45 and 46; H220 to H226; the spec stays draft v4), and
 the view 5 sentence "Informational only." was reworded so it reads as a rule about the figures and not as a
-label (C10; view 5, section 6; H227; the spec stays draft v4).
+label (C10; view 5, section 6; H227; the spec stays draft v4), and
+section 12 and the section 14 slice column were marked as a layered proposal superseded by plan.md, and the
+C2 row now says Build follows plan.md iterations that each end with something usable (C2, section 12 heading
+and note, section 14 intro and column header "Layered slices"; H228 to H230; the spec stays draft v4).
 
 DECISION MADE
 Option 1: keep working on a single spec.md until the user says "final".
@@ -195,7 +198,7 @@ WHY NOT SPLIT NOW
   findings (1 to 7) are applied. What remains is the user's approval of spec.md as a
   whole ("final").
 - One file means one approval gate (Ruleset A: approve spec.md before Build).
-- The file (470 lines) is small enough to review in one sitting. Context-window fit has
+- The file (472 lines) is small enough to review in one sitting. Context-window fit has
   not been measured.
 
 PROPOSED SPLIT (apply only after "final", and only if still worth it)
@@ -263,7 +266,7 @@ TRIGGERS FOR SPLITTING
 - The user asks for it, or
 - spec.md becomes uncomfortable to review in one sitting, or
 - a section keeps growing (section 8 did grow, from 31 to 83 lines once D5 was written), or
-- the plan slices are worked one at a time and the full spec no longer fits comfortably
+- the plan.md iterations are worked one at a time and the full spec no longer fits comfortably
   next to the code in context.
 
 AFTER A SPLIT
@@ -274,8 +277,8 @@ AFTER A SPLIT
   4.6, 4.7 and Example E").
 
 KNOWN LIMITS
-- Current section sizes in lines (measured with wc and awk, spec.md = 470 lines):
-  index sections 1, 2, 10 to 14 = 136 lines (141 with the 5 header lines before section 1);
+- Current section sizes in lines (measured with wc and awk, spec.md = 472 lines):
+  index sections 1, 2, 10 to 14 = 138 lines (143 with the 5 header lines before section 1);
   domain-rules (3 to 5) = 163 lines; views (6) 52; prices (7) 13; backup-restore (8) 83;
   backup-security (9) 18. Each count runs from a section's heading to the line before the
   next heading, so it includes the blank line. These are line counts, not context tokens.
@@ -338,7 +341,8 @@ KNOWN LIMITS
   quantity rule (H218; edited in place, so no section changed size) and after the
   criterion 31 extension (H219; edited in place, so no section changed size) and after the $0.00 and
   holding-count rule (H220 to H226; all seven edits are in place, so no section changed size) and after the
-  view 5 rewording (H227; edited in place, so no section changed size).
+  view 5 rewording (H227; edited in place, so no section changed size) and after the section 12 layering
+  wording (H228 to H230; H228 and H230 are edited in place, H229 adds 2 lines, so section 12 went from 8 to 10 lines).
 - Section 9 grew from 7 to 18 lines (lock, file screens and lock, privacy, screenshot window, minimum Android
   version, encryption at rest, no automatic copies, network and logging, last backup, reminder), so it holds more than backup and security now. Its file
   name may need to change if it is split out.
