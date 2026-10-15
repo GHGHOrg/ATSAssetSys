@@ -106,7 +106,7 @@ p,li{font-size:15px}
 <div class="err"><b>Line 14, quantity:</b> a quantity of 0 or less is not allowed.</div>
 <div class="err"><b>Line 17, lot_picks:</b> depends on line 14.</div>
 <div class="err"><b>Line 21:</b> cash would be negative on 2026-02-10 by $200.00.</div>
-<div class="err" style="position:relative"><span class="n" style="top:-2px">12</span><b>Line 9, ticker XYZ:</b> cannot be verified with the selected price source. Switch the source in Settings and try again.</div></div>
+<div class="err" style="position:relative"><span class="n" style="top:-2px">12</span><b>Second round only, line 9, ticker XYZ:</b> cannot be verified with the selected price source. Switch the source in Settings and try again.</div></div>
 <div style="position:relative"><span class="btn">Copy report</span> <span class="btn pri">Choose another file</span><span class="n" style="top:-10px;right:auto;left:80px">11</span></div>
 <p class="lb">Nothing was changed.</p>
 </div></div>
@@ -174,7 +174,7 @@ p,li{font-size:15px}
 <li>Step 5, success: the counts loaded, the "no price" note, and the reset last-backup state (section 8, step 7). Go to Overall opens the normal screens. There is no way back into the wizard.</li>
 <li>Step 5, failure: if the write itself fails, nothing is changed and the screen says so with a Close button only. Design addition.</li>
 </ol>
-<p class="note">Android's Back returns one step in steps 1 to 4 and leaves the wizard from step 1; nothing has been changed until Replace all data. A restart or an auto-lock relock ends the wizard, and it starts again from step 1 (a Design addition, to confirm). Touch targets are at least 48 dp and text follows the font size setting; the sketches are not to scale.</p>
+<p class="note">Android's Back returns one step in steps 1 to 4 and leaves the wizard from step 1; nothing has been changed until Replace all data. While Android's own file screen is open for the export or for choosing the file, the auto-lock "every time you leave the app" does not apply, so returning does not lock the app (section 9, criterion 57). Any other lock (idle time, the phone locking, a restart) ends the wizard, and it starts again from step 1 with nothing changed (section 9). Touch targets are at least 48 dp and text follows the font size setting; the sketches are not to scale.</p>
 </main>
 </body>
 </html>

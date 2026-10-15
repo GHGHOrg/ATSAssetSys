@@ -46,7 +46,7 @@ p,li{font-size:15px}
 <body>
 <main>
 <h1>Wireframe 10b: Cash entry, Split, detail screens and Reverse (entry flows, part B)</h1>
-<p class="note">Status: approved. Companion to spec.md section 6 (entry flows) and rules 4.2, 4.5 and 4.6. All wording is placeholder (D9, decided in Build). Colors are placeholders; the real ones are chosen in Build for both themes. Index of all wireframes: README.md in this folder. Figures are Example A, C and F. Cash and sell figures are never colored here. The bottom bar is always visible (section 6); the highlighted tab is where the flow was opened from. Part B covers the cash entry (including the opening balance), the split entry, the detail screens of a transaction and of a cash entry (where Reverse starts, 4.6), and the reversal screen. Reverse and re-enter is part C.</p>
+<p class="note">Status: approved. Companion to spec.md section 6 (entry flows) and rules 4.2, 4.5 and 4.6. All wording is placeholder (D9, decided in Build). Colors are placeholders; the real ones are chosen in Build for both themes. Index of all wireframes: README.md in this folder. Figures are Examples A to D and F, and the sample backup file. Cash and sell figures are never colored here. The bottom bar is always visible (section 6); the highlighted tab is where the flow was opened from. Part B covers the cash entry (including the opening balance), the split entry, the detail screens of a transaction and of a cash entry (where Reverse starts, 4.6), and the reversal screen. Reverse and re-enter is part C.</p>
 <div class="pair">
 <div>
 <p class="cap">Frame A: Cash entry, deposit (Cash tab, Cash entry button)</p>
@@ -129,7 +129,7 @@ p,li{font-size:15px}
 <p class="row"><span>Ticker</span><span>AAPL</span></p>
 <p class="row"><span>Date</span><span>2026-03-01 ET</span></p>
 <p class="row"><span>Split</span><span>2 for 1</span></p>
-<p class="row tot"><span>Shares on that date</span><span>10 &rarr; 20</span></p>
+<p class="row tot"><span>Shares at this point</span><span>10 &rarr; 20</span></p>
 <p class="lb">Total cost does not change. No cash effect.</p></div>
 <p class="lb">Nothing is saved until you confirm.</p>
 <div><span class="btn pri">Confirm and save</span> <span class="btn">Back to edit</span></div>
@@ -186,7 +186,7 @@ p,li{font-size:15px}
 <div><span class="btn pri">Confirm and save</span> <span class="btn">Cancel</span></div>
 <div class="dash"><span class="n">19</span><p class="lb" style="margin:0 0 4px">Format only: reversing a cash entry</p>
 <p class="lb">Type: Adjustment (fixed). Amount: &minus;$500.00 (opposite, fixed).</p>
-<p class="lb">Note: Reversal of #14 (pre-filled)</p></div>
+<p class="lb">Note: Reversal of the deposit of 2026-04-20 ET (pre-filled)</p></div>
 </div></div>
 <div>
 <p class="cap">Frame J: blocked saves (screen stays open)</p>
@@ -214,17 +214,17 @@ p,li{font-size:15px}
 <li>Adjustment is the only type with a direction toggle, because an adjustment may be either sign (4.2). The amount is still typed as a positive number.</li>
 <li>Note is required on an adjustment (4.2). The field is labelled "required", and an empty note gives the message in frame J.</li>
 <li>Opening balance: until it exists it is the only type offered and nothing else can be entered (4.2, section 6 first launch). Once it exists, the chip is no longer offered and a second one is refused (frame J). It is reached from the guided empty state, the Cash entry button and the "Set the opening balance first" button (10a, frame G).</li>
-<li>Cash review (a Design addition: the spec asks for a review on buy and sell only): the entered values and the cash effect with its sign and no color. Confirm and save is the only way to save. Back to edit keeps the values.</li>
+<li>Cash review (a Design addition: intent v52 asks for a review on buy and sell only): the entered values and the cash effect with its sign and no color. Confirm and save is the only way to save. Back to edit keeps the values.</li>
 <li>Split entry (4.5): portfolio, ticker, date, and the ratio as two whole numbers, "to for from" (2 for 1 doubles, 1 for 10 is a reverse split), matching the backup file columns (section 8). The ticker is picked from the tickers with a buy in that portfolio; opened from Holding detail it is already filled in. Whole numbers above 0 that are not equal: the file's rule applied to the screen, a Design addition. Fractional shares may result (4.4).</li>
-<li>Split review: the entered values and the shares held on that date before and after, so a wrong ratio is easy to see (C9). Total cost does not change and there is no cash effect (4.5). Confirm and save is the only way to save. The shares-before-and-after line is a Design addition.</li>
+<li>Split review: the entered values and the shares held at that point in the order of 4.1 (an earlier date, or the same date entered earlier), before and after, so a wrong ratio is easy to see (C9). Total cost does not change and there is no cash effect (4.5). Confirm and save is the only way to save. The shares-before-and-after line is a Design addition.</li>
 <li>Transaction detail, reached from a row in Transaction history, Holding detail or a cash trade line. It shows the entered values, quantity as originally traded, the lots (a sell lists the lots it used), the link to its cash line and any reversal link, with the same chain wording as wireframe 8 (4.6). Amounts have a sign and no color.</li>
 <li>Reverse and Reverse and re-enter start here (4.6). Reverse opens the reversal screen (frame I). Reverse and re-enter is part C.</li>
 <li>Format only. Neither button is offered on an entry that is already reversed, on a reversal, or on an opening balance; a reversal cannot itself be reversed (4.6). The row says why in plain text.</li>
 <li>Cash entry detail: type, date with "ET", signed amount and note, with Reverse and Reverse and re-enter on a direct entry. Not offered on the opening balance, a reversal, an entry already reversed, or a trade line, which points to its buy or sell (4.6).</li>
 <li>Reversal screen: the original's values are fixed and are not typed: amount, ticker, portfolio and quantity as originally traded (4.6).</li>
 <li>Date defaults to the original date. A later date may be picked (the original's effect then stays between the two dates). An earlier date is refused. The date note applies.</li>
-<li>Effect line: shares removed with later splits applied, and the cash returned. For Example F the 10 shares as traded become 20 after the Mar 1 split, and $1,000.00 returns. Realized gain/loss is 0 for a buy. Reversing a sell shows the lots restored and the realized gain removed. A reversal has one screen and Confirm and save, with no separate review (a Design addition). If the save is blocked (for example Example D), the screen stays open with the message of frame J.</li>
-<li>Format only: a cash reversal has type Adjustment and the amount fixed to the opposite of the original. The note is pre-filled "Reversal of #id" (4.6). How the id is shown to you in the app is not decided here; it is left to Build with the wording (D9).</li>
+<li>Effect line: shares removed with later splits applied, and the cash returned. For Example F the 10 shares as traded become 20 after the Mar 1 split, and $1,000.00 returns. Realized gain/loss is 0 for a buy. Reversing a sell shows the lots restored and the realized gain removed. Reversing a split shows the inverse ratio and the shares before and after, with no cash effect (4.6). Design addition, to confirm. A reversal has one screen and Confirm and save, with no separate review (a Design addition). If the save is blocked (for example Example D), the screen stays open with the message of frame J.</li>
+<li>Format only: a cash reversal has type Adjustment and the amount fixed to the opposite of the original. The note is pre-filled and names the original by type and date, for example "Reversal of the deposit of 2026-04-20 ET" (4.6). The exact wording is left to Build (D9).</li>
 <li>Blocked saves, placeholder wording (D9). Each names the rule and, where it has them, the failing date and amount (4.1, 4.2, 4.5, 4.6). Messages are plain text with a leading "Not saved", so meaning never rests on color. Example C gives the first message, and Example D the third and fourth. The third applies while the sell is not yet reversed: reverse it first, then date this reversal on or after the sell's reversal (4.1 orders by date, so a reversal dated earlier is applied before the sell and still fails). The fourth applies once the sell is reversed: it names the earliest reversal date that works, which is the date the sell was reversed (2026-01-03 by default, a later date if the sell was reversed later). The default reversal date stays the original's (frame I, marker 17; Example G relies on it), and there is no button that fills the date.</li>
 </ol>
 <p class="note">Touch targets are at least 48 dp and text follows the font size setting; the sketches are not to scale. The Reverse, Reverse and re-enter and detail screens are drawn here because wireframes 6, 7 and 8 point to them; the Rename and Delete dialogs of a portfolio are 10d.</p>

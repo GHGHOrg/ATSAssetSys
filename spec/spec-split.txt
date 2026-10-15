@@ -1,6 +1,6 @@
 spec-split.txt
 Stage: Design. Status: PROPOSAL ONLY. spec.md has NOT been split.
-Applies to: spec/spec.md (draft v4, 470 lines, 14 sections)
+Applies to: spec/spec.md (draft v4, 472 lines, 14 sections)
 Last updated against: spec.md with sections 1 to 14, after the CSV format (section 8) was
 approved and Example B was rewritten, and after Example F and the 4.6 rule for splits
 between an original and its reversal were added (finding 3), and after the Status column
@@ -173,7 +173,26 @@ draft v4; wireframe 08 got a frame E for the Cash chip with a reversal, and poin
 and 7), and
 the unhide-by-save rule was added to Hidden holdings (a save that leaves a hidden holding with shares
 unhides it: a new buy, or the reversal of a sell; view 9, section 6; H217; the spec stays draft v4;
-wireframe 09 got the same wording in marker 3).
+wireframe 09 got the same wording in marker 3), and
+the quantity rule was added to 4.2 (a quantity is above 0 and has up to 8 decimals, as section 8 already
+says for files; H218; the spec stays draft v4; wireframe 10a got the Sell all wording aligned with 4.4 and
+4.10, "buys only" in marker 6, the greyed-out lot wording in marker 10, a corrected lot in frame D, and a
+quantity message in frame F, in the wireframe file only), and
+criterion 31 was extended (a quantity of 0 or less is refused, like a ninth decimal; section 11; H219; the
+spec stays draft v4), and
+the shared $0.00 and holding-count rule was added (a breakdown whose base is $0.00 shows one plain line, on
+Net Worth (Total), Allocation and Overall; a portfolio's number of holdings is the rows in its holdings list;
+4.8, views 2, 3 and 4, criteria 44, 45 and 46; H220 to H226; the spec stays draft v4), and
+the view 5 sentence "Informational only." was reworded so it reads as a rule about the figures and not as a
+label (C10; view 5, section 6; H227; the spec stays draft v4), and
+section 12 and the section 14 slice column were marked as a layered proposal superseded by plan.md, and the
+C2 row now says Build follows plan.md iterations that each end with something usable (C2, section 12 heading
+and note, section 14 intro and column header "Layered slices"; H228 to H230; the spec stays draft v4), and
+the no-automatic-copies bullet in section 9 was marked partly checked against Android's Auto Backup page and its
+Android 12 behavior-changes page (allowBackup false does not stop device-to-device transfers on some devices, so
+dataExtractionRules with exclusions in both sections is needed; the release build must not be debuggable), and
+criterion 37 was extended with the manifest and debuggable checks (section 9, section 11; H231, H232; the spec
+stays draft v4).
 
 DECISION MADE
 Option 1: keep working on a single spec.md until the user says "final".
@@ -184,7 +203,7 @@ WHY NOT SPLIT NOW
   findings (1 to 7) are applied. What remains is the user's approval of spec.md as a
   whole ("final").
 - One file means one approval gate (Ruleset A: approve spec.md before Build).
-- The file (470 lines) is small enough to review in one sitting. Context-window fit has
+- The file (472 lines) is small enough to review in one sitting. Context-window fit has
   not been measured.
 
 PROPOSED SPLIT (apply only after "final", and only if still worth it)
@@ -252,7 +271,7 @@ TRIGGERS FOR SPLITTING
 - The user asks for it, or
 - spec.md becomes uncomfortable to review in one sitting, or
 - a section keeps growing (section 8 did grow, from 31 to 83 lines once D5 was written), or
-- the plan slices are worked one at a time and the full spec no longer fits comfortably
+- the plan.md iterations are worked one at a time and the full spec no longer fits comfortably
   next to the code in context.
 
 AFTER A SPLIT
@@ -263,8 +282,8 @@ AFTER A SPLIT
   4.6, 4.7 and Example E").
 
 KNOWN LIMITS
-- Current section sizes in lines (measured with wc and awk, spec.md = 470 lines):
-  index sections 1, 2, 10 to 14 = 136 lines (141 with the 5 header lines before section 1);
+- Current section sizes in lines (measured with wc and awk, spec.md = 472 lines):
+  index sections 1, 2, 10 to 14 = 138 lines (143 with the 5 header lines before section 1);
   domain-rules (3 to 5) = 163 lines; views (6) 52; prices (7) 13; backup-restore (8) 83;
   backup-security (9) 18. Each count runs from a section's heading to the line before the
   next heading, so it includes the blank line. These are line counts, not context tokens.
@@ -323,7 +342,13 @@ KNOWN LIMITS
   (H211, H212; both edited in place, so no section changed size) and after the Cash account
   rules (H213, H214; both edited in place, so no section changed size) and after the Transaction
   history cash label (H215, H216; both edited in place, so no section changed size) and after the
-  Hidden holdings unhide wording (H217; edited in place, so no section changed size).
+  Hidden holdings unhide wording (H217; edited in place, so no section changed size) and after the
+  quantity rule (H218; edited in place, so no section changed size) and after the
+  criterion 31 extension (H219; edited in place, so no section changed size) and after the $0.00 and
+  holding-count rule (H220 to H226; all seven edits are in place, so no section changed size) and after the
+  view 5 rewording (H227; edited in place, so no section changed size) and after the section 12 layering
+  wording (H228 to H230; H228 and H230 are edited in place, H229 adds 2 lines, so section 12 went from 8 to 10 lines) and after the
+  no-automatic-copies wording and criterion 37 (H231, H232; both edited in place, so no section changed size).
 - Section 9 grew from 7 to 18 lines (lock, file screens and lock, privacy, screenshot window, minimum Android
   version, encryption at rest, no automatic copies, network and logging, last backup, reminder), so it holds more than backup and security now. Its file
   name may need to change if it is split out.

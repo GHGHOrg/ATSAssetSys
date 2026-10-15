@@ -40,7 +40,7 @@ select{font:inherit;font-size:13px;padding:4px 6px;border:1px solid var(--border
 <body>
 <main>
 <h1>Wireframe 2: Net Worth (Total) (view 2)</h1>
-<p class="note">Status: approved. Companion to spec.md section 6, view 2. All wording is placeholder (D9, decided in Build). Colors are placeholders; the real ones are chosen in Build for both themes. Index of all wireframes: README.md in this folder. Figures are Example A at an AAPL price of $160. One scrolling screen, drawn as two frames.</p>
+<p class="note">Status: approved. Companion to spec.md section 6, view 2. All wording is placeholder (D9, decided in Build). Colors are placeholders; the real ones are chosen in Build for both themes. Index of all wireframes: README.md in this folder. Figures are Example A at an AAPL price of $160, except frame C. One scrolling screen, drawn as two frames, plus the $0.00 case.</p>
 <div class="pair">
 <div>
 <p class="cap">Top of the screen</p>
@@ -72,6 +72,17 @@ select{font:inherit;font-size:13px;padding:4px 6px;border:1px solid var(--border
 <div style="text-align:center"><svg id="d4" width="156" height="156" viewBox="0 0 156 156" role="img" aria-label="By geography"></svg></div><div id="r4"></div></div>
 <div class="bar"><span>More</span><span>Cash</span><span>Portfolios</span><span>Overall</span></div>
 </div></div>
+<div>
+<p class="cap">Frame C: net worth of $0.00</p>
+<div class="ph" style="min-height:0">
+<p class="title">&lt; Net Worth (Total)</p>
+<div class="bx"><span class="n">6</span>
+<p class="lb">Net worth</p>
+<p class="big">$0.00</p></div>
+<div class="bx"><p class="row mut"><span>No net worth to show yet</span></p></div>
+<div style="flex:1"></div>
+<div class="bar"><span>More</span><span>Cash</span><span>Portfolios</span><span>Overall</span></div>
+</div></div>
 </div>
 <h2>Markers</h2>
 <ol>
@@ -80,6 +91,7 @@ select{font:inherit;font-size:13px;padding:4px 6px;border:1px solid var(--border
 <li>The five allocation breakdowns are stacked in the order of 4.8: by asset type, portfolio, holding, sector, geography. Each has its own donut and rows, with the same rules as Overall: a gap between slices, a percentage on a slice of 5% or more, a row percentage only for a slice under 5%, and a TalkBack label on every row that reads the percentage in full. Cash is its own slice in every breakdown and is never "Unclassified".</li>
 <li>By holding merges the same ticker held in several portfolios into one slice (C12).</li>
 <li>By sector and by geography show an "Unclassified" slice for holdings with no value (C14).</li>
+<li>Net worth of $0.00 (before the opening balance exists, or cash withdrawn to 0 with no holdings): the screen shows $0.00 and one plain line, with no composition and no donuts or rows, because every share of $0.00 is undefined (4.8). The same rule applies to Allocation and to the allocation summary on Overall. Plain text, read by TalkBack, and meaning never rests on color. Placeholder wording (D9).</li>
 </ol>
 </main>
 <script>
