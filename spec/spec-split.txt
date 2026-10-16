@@ -1,6 +1,6 @@
 spec-split.txt
 Stage: Design. Status: PROPOSAL ONLY. spec.md has NOT been split.
-Applies to: spec/spec.md (draft v4, 472 lines, 14 sections)
+Applies to: spec/spec.md (v4, final, 472 lines, 14 sections)
 Last updated against: spec.md with sections 1 to 14, after the CSV format (section 8) was
 approved and Example B was rewritten, and after Example F and the 4.6 rule for splits
 between an original and its reversal were added (finding 3), and after the Status column
@@ -192,11 +192,15 @@ the no-automatic-copies bullet in section 9 was marked partly checked against An
 Android 12 behavior-changes page (allowBackup false does not stop device-to-device transfers on some devices, so
 dataExtractionRules with exclusions in both sections is needed; the release build must not be debuggable), and
 criterion 37 was extended with the manifest and debuggable checks (section 9, section 11; H231, H232; the spec
-stays draft v4).
+stays draft v4), and
+spec.md was marked final by the user (title changed from "DRAFT v4, awaiting approval" to "v4, final";
+H233; 472 lines, 131,997 bytes).
 
 DECISION MADE
 Option 1: keep working on a single spec.md until the user says "final".
 Then decide whether to split, using the approach below.
+STATUS (2026-10-16): the user said "final" (H233). The split decision is still open and spec.md is
+still one file.
 
 WHY NOT SPLIT NOW
 - Design is not finished. The v52 rework (groups 1 to 3) and the consistency-check
@@ -348,7 +352,8 @@ KNOWN LIMITS
   holding-count rule (H220 to H226; all seven edits are in place, so no section changed size) and after the
   view 5 rewording (H227; edited in place, so no section changed size) and after the section 12 layering
   wording (H228 to H230; H228 and H230 are edited in place, H229 adds 2 lines, so section 12 went from 8 to 10 lines) and after the
-  no-automatic-copies wording and criterion 37 (H231, H232; both edited in place, so no section changed size).
+  no-automatic-copies wording and criterion 37 (H231, H232; both edited in place, so no section changed size) and after the
+  final marking (H233; line 1 edited in place, so no section changed size).
 - Section 9 grew from 7 to 18 lines (lock, file screens and lock, privacy, screenshot window, minimum Android
   version, encryption at rest, no automatic copies, network and logging, last backup, reminder), so it holds more than backup and security now. Its file
   name may need to change if it is split out.
