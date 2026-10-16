@@ -199,8 +199,12 @@ H233; 472 lines, 131,997 bytes).
 DECISION MADE
 Option 1: keep working on a single spec.md until the user says "final".
 Then decide whether to split, using the approach below.
-STATUS (2026-10-16): the user said "final" (H233). The split decision is still open and spec.md is
-still one file.
+STATUS (2026-10-16): the user said "final" (H233).
+DECIDED (2026-10-16, S86): Option A. spec.md stays ONE file and is not split. Reason: rules such as
+4.1 are shared across features, and stable IDs matter more than file layout. The feature-to-spec
+mapping goes into plan.md, as a reading list in each iteration file (spec sections, criteria,
+examples). Revisit only if a trigger under TRIGGERS FOR SPLITTING fires. The proposal below
+stays as a record and is not applied.
 
 WHY NOT SPLIT NOW
 - Design is not finished. The v52 rework (groups 1 to 3) and the consistency-check
