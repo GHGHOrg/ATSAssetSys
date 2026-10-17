@@ -1,8 +1,8 @@
-# plan/setup.md (DRAFT, all decisions merged)
+# plan/setup.md (all decisions merged)
 
-Stage: Build. Status: draft, not approved. Approved together with plan/plan.md.
+Stage: Build. Status: approved, together with plan/plan.md. Not yet run.
 Source: intent/intent.md v52 (final), spec/spec.md v4 (final), sections 9 and 14, C17.
-Nothing here has been run. Tool and library versions are NOT chosen in this draft: they
+Nothing here has been run. Tool and library versions are NOT chosen in this file: they
 are looked up and pinned on the day setup runs, never taken from memory.
 
 ## 1. Outcome
