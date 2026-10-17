@@ -1,6 +1,6 @@
-# plan/plan.md (DRAFT)
+# plan/plan.md
 
-Stage: Build. Status: draft, not approved. Approved together with plan/setup.md.
+Stage: Build. Status: approved, together with plan/setup.md. Not yet built or run.
 Source: intent/intent.md v52 (final), spec/spec.md v4 (final).
 Nothing here has been built, run or verified. Where this file says "my reading", it is
 an interpretation of spec.md that you approve, not a test.
@@ -198,8 +198,8 @@ when it adds a command, a convention or a pitfall.
 ## 11. Status
 | Item | Status |
 |---|---|
-| plan.md | draft |
-| setup.md | approved draft, not run |
+| plan.md | approved |
+| setup.md | approved, not run |
 | spikes/price-source.md | not written |
 | Iterations 01 to 35 | not started, files not written |
 
