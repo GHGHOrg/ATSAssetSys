@@ -196,7 +196,7 @@ one labelled placeholder. S4 manifest baseline: in setup. S5 data layer: Room wi
 SQLCipher. Design source: Figma for tokens only.
 
 ## 13. Setup run: departures and results (2026-10-18)
-Setup was run on branch `setup` (draft pull request #1). Departures from the text above, all
+Setup was run on branch `setup` (pull request #64, merged). Departures from the text above, all
 decided in the conversation:
 1. `.gitignore` names the signing files (`keystore.properties`, `signing.properties`, `*.jks`,
    `*.keystore`) instead of ignoring all `*.properties`, because `gradle.properties` and the
