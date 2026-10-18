@@ -218,7 +218,7 @@ when it adds a command, a convention or a pitfall.
 | Item | Status |
 |---|---|
 | plan.md | approved |
-| setup.md | approved, run 2026-10-18 on branch setup (pull request #1, draft) |
+| setup.md | approved, run 2026-10-18 on branch setup (pull request #64, merged) |
 | spikes/price-source.md | not written |
 | spikes/dependency-upgrade.md | not written |
 | Iterations 01 to 35 | not started, files not written |
