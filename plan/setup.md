@@ -1,6 +1,6 @@
 # plan/setup.md (all decisions merged)
 
-Stage: Build. Status: approved, together with plan/plan.md. Not yet run.
+Stage: Build. Status: approved, together with plan/plan.md. Run 2026-10-18 on branch setup; results and departures in section 13.
 Source: intent/intent.md v52 (final), spec/spec.md v4 (final), sections 9 and 14, C17.
 Nothing here has been run. Tool and library versions are NOT chosen in this file: they
 are looked up and pinned on the day setup runs, never taken from memory.
@@ -194,3 +194,34 @@ and the iteration files.
 S1 stack: native Kotlin, Compose, Gradle. S2 layout: `core/` and `app/`. S3 smoke test:
 one labelled placeholder. S4 manifest baseline: in setup. S5 data layer: Room with
 SQLCipher. Design source: Figma for tokens only.
+
+## 13. Setup run: departures and results (2026-10-18)
+Setup was run on branch `setup` (draft pull request #1). Departures from the text above, all
+decided in the conversation:
+1. `.gitignore` names the signing files (`keystore.properties`, `signing.properties`, `*.jks`,
+   `*.keystore`) instead of ignoring all `*.properties`, because `gradle.properties` and the
+   wrapper properties must be committed.
+2. The two template tests in `app/` (ExampleUnitTest, ExampleInstrumentedTest) were removed, so
+   the test report shows exactly 1 test (proof item 1).
+3. No `local.properties`: lint rejected the Windows SDK path form in it. `JAVA_HOME` and
+   `ANDROID_HOME` are user environment variables instead.
+4. `core/` pins its Java and Kotlin targets to 11. Studio's Java is 25 and Kotlin 2.2.10 only
+   targets up to 24. The project toolchain file asks for Java 25 (`gradle-daemon-jvm.properties`),
+   and CI uses Java 25.
+5. Step 7: lint is Android lint only. The Kotlin style checker is deferred to the
+   dependency-upgrade spike (plan/spikes/dependency-upgrade.md), which picks it together with the
+   Kotlin version. The 8 library-version lint notices stay until that spike. The other 9 template
+   warnings were fixed (unused colors, an obsolete SDK check, a redundant activity label).
+6. The CI runner is pinned to `ubuntu-24.04`, because `ubuntu-latest` moves to Ubuntu 26.04
+   between 2026-10-19 and 2026-11-19. Actions use major version tags (checkout v6, setup-java v5,
+   setup-gradle v6), not commit hashes.
+7. Added `.gitattributes` (gradlew LF, `*.bat` CRLF, wrapper jar binary) and set `gradlew`
+   executable (mode 100755).
+8. Versions are those Android Studio generated: AGP 9.4.1, Gradle 9.6.0, Kotlin 2.2.10, Compose BOM
+   2026.02.01, compileSdk and targetSdk 37, minSdk 33, package `app.ghghorg.atsassets`.
+9. `data_extraction_rules.xml` excludes the domains root, file, database, sharedpref and external
+   in both sections (syntax only partly checked). Iteration 02 tightens it. `fullBackupContent`
+   and `backup_rules.xml` were removed (minSdk 33).
+
+Proof items 1 to 6 were shown with real output on 2026-10-18. Not run: a release build and its
+install, the install-over-previous-build check (criterion 35), and any test in `app/` (it has none).
