@@ -221,7 +221,8 @@ when it adds a command, a convention or a pitfall.
 | setup.md | approved, run 2026-10-18 on branch setup (pull request #64, merged) |
 | spikes/price-source.md | not written |
 | spikes/dependency-upgrade.md | not written |
-| Iterations 01 to 35 | not started, files not written |
+| Iteration 01 | file written and approved 2026-10-19, not started (no branch, no code) |
+| Iterations 02 to 35 | not started, files not written |
 
 ## 12. Change log
 Each departure from this plan is recorded here with its date and the reason.
