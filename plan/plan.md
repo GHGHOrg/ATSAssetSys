@@ -1,8 +1,8 @@
 # plan/plan.md
 
-Stage: Build. Status: approved, together with plan/setup.md. Not yet built or run.
+Stage: Build. Status: approved, together with plan/setup.md. Setup run 2026-10-18 (setup.md section 13); no iteration started.
 Source: intent/intent.md v52 (final), spec/spec.md v4 (final).
-Nothing here has been built, run or verified. Where this file says "my reading", it is
+No iteration has been built, run or verified. Where this file says "my reading", it is
 an interpretation of spec.md that you approve, not a test.
 
 ## 1. Purpose and gate
@@ -20,6 +20,7 @@ plan/
   plan.md                      this file
   setup.md                     repo, stack, CI, manifest baseline, CLAUDE.md
   spikes/price-source.md       decision note, to be written and finished before iteration 09
+  spikes/dependency-upgrade.md decision note, to be written and finished after iteration 01 and before 02
   iterations/01-... to 35-...  one file per iteration (section 4)
 CLAUDE.md                      repo root, created by setup.md
 ```
@@ -48,21 +49,21 @@ Rules for the list:
 | # | File | After this you can... | Depends on | Spec refs |
 |---|---|---|---|---|
 | 01 | unlock-app | Unlock with biometric or PIN; screenshots and recents blocked | setup | 9, crit. 6, 20, 35 |
-| 02 | opening-balance | Set the opening balance; Overall and Cash show it | 01 | 4.1, 4.2, 4.10, crit. 19, 36, 37 |
+| 02 | opening-balance | Set the opening balance; Overall and Cash show it | 01, upgrade spike | 4.1, 4.2, 4.10, crit. 19, 36, 37 |
 | 03 | deposit-withdrawal | Add deposits and withdrawals; overdrafts blocked | 02 | 4.2, crit. 42, 53 |
 | 04 | interest-adjustment | Add interest/dividend and adjustment entries | 03 | 4.2, crit. 53 |
 | 05 | reverse-cash-entry | Reverse a cash entry | 04 | 4.6 (cash), crit. 53 |
 | 06 | cash-filters-date-type | Filter the cash list by date range and type | 02 | crit. 9, 29, 49 |
 | 07 | create-portfolio | Create portfolios | 02 | 4.7, crit. 26, 55 |
 | 08 | rename-portfolio | Rename a portfolio | 07 | 4.7, crit. 55 |
-| 09 | buy-stock | Buy a stock (verified ticker, review, cash line, lot) | 07, spike | 4.1, 4.3, crit. 15, 30, 31, 52 |
+| 09 | buy-stock | Buy a stock (verified ticker, review, cash line, lot) | 07, price spike | 4.1, 4.3, crit. 15, 30, 31, 52 |
 | 10 | holding-detail | Open a holding (header, Transactions, Lots) | 09 | view 6, crit. 48 |
 | 11 | sell-with-lots | Sell with lot picking and Sell all | 09 | 4.4, crit. 14, 52, 59 |
 | 12 | split | Record a stock split | 09 | 4.5, crit. 53 |
 | 13 | reverse-transaction | Reverse a buy, sell or split | 11, 12 | 4.6, crit. 53 |
 | 14 | reverse-and-reenter | Reverse and re-enter, trades and cash | 13, 05 | 4.6, crit. 21, 54, 60(b) |
 | 15 | hide-holdings | Hide and unhide sold-out holdings | 13 | 4.4, crit. 27, 51, 60(a) |
-| 16 | live-prices | See prices, their age, stale marker, unrealized gain/loss | 09, spike | 7, 4.8, crit. 5, 41, 42 |
+| 16 | live-prices | See prices, their age, stale marker, unrealized gain/loss | 09, price spike | 7, 4.8, crit. 5, 41, 42 |
 | 17 | net-worth-screen | Net Worth (Total) with composition | 16 | 4.8, crit. 34, 44 |
 | 18 | allocation-net-worth | Allocation by asset type, portfolio, holding (Overall, Net Worth) | 17 | crit. 32, 43 |
 | 19 | allocation-portfolio | Per-portfolio Allocation screen | 18 | crit. 33, 46 |
@@ -156,6 +157,22 @@ cannot start until it is finished. It must answer, with checks done on the day, 
 If the source does not supply sector and geography, iteration 23 is reduced to
 "Unclassified" plus the override path, and the change is recorded here.
 
+### Spike: dependency upgrade (plan/spikes/dependency-upgrade.md)
+Added 2026-10-18. Not an iteration. It runs after iteration 01 and before iteration 02, which
+cannot start until it is finished. Reason: Android lint reports 8 library-version notices on the
+versions Android Studio generated (Kotlin 2.2.10, Compose BOM 2026.02.01, AndroidX libraries),
+and those notices stay until this spike. It must answer, with checks done on the day:
+- which newer versions to move to, and whether AGP 9.4.1 and Gradle 9.6.0 support them
+  (for example the Kotlin version lint reports);
+- which Compose BOM and AndroidX versions work together;
+- whether the Java 11 target of core/ and app/ still builds;
+- which Kotlin style checker to use (deferred from setup step 7) and whether it supports the
+  chosen Kotlin version;
+- whether Dependabot's Gradle updates need grouping so AGP and Kotlin move together;
+- whether the CI runner moves from ubuntu-24.04 to ubuntu-26.04.
+Its proof includes re-running iteration 01's phone checks, because iteration 01 is built on the
+old versions.
+
 ## 8. Cross-cutting risks
 - Real data is unprotected until iteration 31: you can enter real data from 09, but there is
   no backup until 31 and no way to load a prepared file until 34. This is a risk, not a spec change.
@@ -170,6 +187,8 @@ If the source does not supply sector and geography, iteration 23 is reduced to
 - Secure window and recents preview (crit. 20): the order of setting and clearing the flags
   is planned and tested in iterations 01 and 21.
 - Auto-lock and Android's file screens (crit. 57): decided in 31 and 34, tested on the phone.
+- Iteration 01 is built on the library versions Android Studio generated. The dependency-upgrade
+  spike may break it, so the spike's proof re-runs 01's phone checks.
 - Unverified spec items stay unverified until their iteration checks them on the phone.
   The list is in spec.md ([UNVERIFIED] and [PARTLY CHECKED] markers).
 - Message wording is D9: shown and approved on the phone in each iteration.
@@ -199,12 +218,17 @@ when it adds a command, a convention or a pitfall.
 | Item | Status |
 |---|---|
 | plan.md | approved |
-| setup.md | approved, not run |
+| setup.md | approved, run 2026-10-18 on branch setup (pull request #1, draft) |
 | spikes/price-source.md | not written |
+| spikes/dependency-upgrade.md | not written |
 | Iterations 01 to 35 | not started, files not written |
 
 ## 12. Change log
-(Empty. Each departure from this plan is recorded here with its date and the reason.)
+Each departure from this plan is recorded here with its date and the reason.
+- 2026-10-18: added the spike plan/spikes/dependency-upgrade.md between iterations 01 and 02.
+  Iteration 02 now depends on it. In the iteration table, "spike" in rows 09 and 16 is renamed
+  "price spike". Reason: the library-version lint notices and the deferred Kotlin style checker
+  (setup.md section 13).
 
 ## 13. Out of scope for this plan
 Performance over time, per-holding dividends, ETF look-through, the next intent.md items,

@@ -1,0 +1,22 @@
+# Gradle and build outputs
+.gradle/
+build/
+.kotlin/
+
+# Android Studio / IDE
+.idea/
+*.iml
+captures/
+.externalNativeBuild/
+.cxx/
+
+# Machine-specific and secrets (C17)
+local.properties
+*.jks
+*.keystore
+keystore.properties
+signing.properties
+
+# OS
+.DS_Store
+Thumbs.db
