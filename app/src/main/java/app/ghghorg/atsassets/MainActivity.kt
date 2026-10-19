@@ -34,6 +34,7 @@ import app.ghghorg.atsassets.ui.theme.ATSAssetSystemTheme
 class MainActivity : FragmentActivity() {
     private val lock = AppLock()
     private var lockState by mutableStateOf(LockState.Locked)
+    private var windowFocused by mutableStateOf(false)
     private lateinit var prompt: BiometricPrompt
     private lateinit var promptInfo: BiometricPrompt.PromptInfo
 
@@ -73,10 +74,16 @@ class MainActivity : FragmentActivity() {
             ATSAssetSystemTheme {
                 Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
                     when (lockState) {
-                        LockState.Unlocked -> Greeting(
-                            name = "Android",
-                            modifier = Modifier.padding(innerPadding)
-                        )
+                        // Cover while the window is not focused (for example recents), so the
+                        // live card shows no content. Experiment after phone check 7.
+                        LockState.Unlocked -> if (windowFocused) {
+                            Greeting(
+                                name = "Android",
+                                modifier = Modifier.padding(innerPadding)
+                            )
+                        } else {
+                            CoverScreen(modifier = Modifier.padding(innerPadding))
+                        }
 
                         LockState.Locked -> LockedScreen(
                             onUnlock = { showPromptIfNeeded() },
@@ -90,6 +97,11 @@ class MainActivity : FragmentActivity() {
                 }
             }
         }
+    }
+
+    override fun onWindowFocusChanged(hasFocus: Boolean) {
+        super.onWindowFocusChanged(hasFocus)
+        windowFocused = hasFocus
     }
 
     override fun onStart() {
@@ -133,6 +145,20 @@ fun LockedScreen(onUnlock: () -> Unit, modifier: Modifier = Modifier) {
         ) {
             Text(text = stringResource(R.string.unlock_button))
         }
+    }
+}
+
+@Composable
+fun CoverScreen(modifier: Modifier = Modifier) {
+    Column(
+        modifier = modifier.fillMaxSize().padding(24.dp),
+        verticalArrangement = Arrangement.Center,
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        Text(
+            text = stringResource(R.string.app_name),
+            style = MaterialTheme.typography.headlineMedium
+        )
     }
 }
 

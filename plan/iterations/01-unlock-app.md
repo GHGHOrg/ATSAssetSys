@@ -40,6 +40,7 @@ Changed:
 4. Wire MainActivity in two parts.
    4a. AppLock logic (done: 12 tests pass, commit 9397262).
    4b. Switch from ComponentActivity to FragmentActivity (needed by the biometric prompt). In onCreate, before setContent: set FLAG_SECURE, call setRecentsScreenshotEnabled(false), and create the prompt (so its callback is attached again after a recreation). In onStart: check availability (only BIOMETRIC_SUCCESS counts as available), then show the prompt if AppLock asks for it. In onStop: cancel any showing prompt, then lock. No isChangingConfigurations exception, no prompt from onResume. The Unlock button goes through AppLock.shouldShowPrompt(). The error callback (not the single-failure callback) maps to a cancelled prompt. No content while locked.
+   4c. Experiment added after phone check 7 (2026-10-19): while unlocked, show a cover screen (the app name only) whenever the window is not focused, so the recents live card shows no content. Kept: the phone showed it helps (checks 14a to 14c, section 10).
 5. Placeholder wording for the locked screen and the "set up a screen lock" message (D9).
 6. Run build, tests and lint with real output, then CI.
 7. Phone checks (section 8).
@@ -52,6 +53,7 @@ Changed:
 - Whether "leaving the app" is detected the same way while the system prompt is open. Not checked.
 - Whether FLAG_SECURE alone blanks the recents preview, or setRecentsScreenshotEnabled(false) is also needed (spec section 9 marks this partly checked; the order of setting and clearing is tested here and in iteration 21).
 - Whether androidx.biometric builds cleanly with Kotlin 2.2.10 and AGP 9.4.1. Not checked.
+- Phone check 7 (2026-10-19): the stored recents preview was blank, but opening recents straight from the unlocked app showed the live content. My reading (not confirmed): the launcher shows the live window at that moment. Step 4c tries a cover shown while the window is not focused. It may flicker when the notification shade is pulled down, and it may not help if the window keeps focus when recents opens. Result (2026-10-19): it helped, see section 10.
 - Lint after step 4b shows the same 8 library-version notices as before; androidx.biometric 1.1.0 adds none (seen 2026-10-19). They are left for the dependency-upgrade spike, not silenced.
 - The dependency-upgrade spike runs right after this iteration and may break this code. Its proof re-runs the phone checks in section 8.
 - A recreation (rotation, theme or font-size change) builds a new AppLock, so the app re-locks and prompts again. Accepted for now (fail closed); keeping the unlock across a recreation needs a ViewModel and belongs to a later iteration, when forms must keep typed values (criterion 40).
@@ -83,6 +85,7 @@ By hand on the phone (Android 17), each result written back into this file as "c
 11. Rotate the phone while the prompt shows: no second prompt opens on top.
 12. Switch dark mode on or off while unlocked: record what happens (expected: the app locks and prompts again, see Risks).
 13. Open the recents screen and return to the app: record whether it is locked (the spec says every time the app is left).
+14. After step 4c: repeat check 7 (recents opened from inside the app, and again after switching to another app) and pull down the notification shade while unlocked. Record whether the cover shows, whether the content ever shows, and whether it flickers.
 
 ## 9. Decisions (all resolved, approved 2026-10-19)
 1. No PIN or biometric set up on the phone: block with a plain message.
@@ -90,7 +93,12 @@ By hand on the phone (Android 17), each result written back into this file as "c
 3. Cancelling the prompt: stay on a locked screen with an Unlock button.
 4. The locked screen shows only the app name and the Unlock button.
 5. Design readings (approved 2026-10-19): only BIOMETRIC_SUCCESS counts as "screen lock available"; the lifecycle rules in section 5, step 4b; FLAG_SECURE and setRecentsScreenshotEnabled(false) are permanent in this iteration.
+6. Recents live card (approved 2026-10-19, option 2): try the cover screen of step 4c as an experiment; fall back to recording the limit if it does not help.
 
 ## 10. Status and notes
-In progress (2026-10-19). Done: pin of androidx.biometric 1.1.0; AppLock logic with 12 passing tests (commits 81c7bb8 and 9397262); MainActivity wiring (4b) written. Local run on 2026-10-19: build green, 13 unit tests pass (1 in core, 12 in app), lint green with 8 library-version notices and nothing new. Not yet done: the commit of 4b, CI, and all phone checks. Nothing about the lock, the prompt or the secure window has been seen on a device.
+In progress (2026-10-19). Done: pin of androidx.biometric 1.1.0; AppLock logic with 12 passing tests (commits 81c7bb8 and 9397262); MainActivity wiring (4b, commit 6611587, pull request #70 as a draft). Local run: build green, 13 unit tests pass (1 in core, 12 in app), lint green with 8 library-version notices and nothing new. CI was reported green by you; I did not see its log.
+Step 4c (cover screen while the window is not focused) is built and passed the same local build, tests and lint.
+Phone results (2026-10-19, debug build of commit 6611587, then again with step 4c; these are your reports, I did not see the phone): 1 cold start shows the prompt first, yes. 2 cancel leaves the app name and an Unlock button, yes. 3 unlock shows "Hello Android!", yes. 4 Home then return prompts again, yes; Home while the prompt is open, then return, gives exactly one prompt. 5 screenshot blocked. 6 screen recording is black. 7 recents: before step 4c, opening recents straight from the unlocked app showed the live content (the stored card was blank); with step 4c the card shows the app name only (14a) and stays blank after switching to another app (14b). 9 install over the old build succeeded (data survival not testable yet, the app stores nothing). 11 rotating while the prompt shows gives one prompt. 12 switching dark mode while unlocked brings the prompt back (the app re-locks on recreation, as accepted in Risks). 13 recents then return: the prompt appears. 14 cover screen: app name only, no flicker when the notification shade was pulled down; unlocking still works after Home and return.
+Not run: 8 (no screen lock set up on the phone), 10 (largest font size, light and dark theme on the locked screen), and TalkBack on the locked screen.
+Left before done: check 10; deciding on TalkBack; a CLAUDE.md pitfall about the VS Code Kotlin extension's Java (clear a stuck daemon with gradlew --stop); the plan.md status row; your review of pull request #70.
 Definition of done: plan/plan.md section 9.
