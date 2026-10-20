@@ -1,3 +1,30 @@
+# Table of contents
+
+- [1. Summary](#1-summary)
+- [2. Concerns and conflicts (read first)](#2-concerns-and-conflicts-read-first)
+- [3. Domain model](#3-domain-model)
+- [4. Business rules](#4-business-rules)
+  - [4.1 Ordering and checking](#41-ordering-and-checking)
+  - [4.2 Cash](#42-cash)
+  - [4.3 Buys](#43-buys)
+  - [4.4 Sells](#44-sells)
+  - [4.5 Splits](#45-splits)
+  - [4.6 Corrections](#46-corrections)
+  - [4.7 Portfolios](#47-portfolios)
+  - [4.8 Calculations](#48-calculations)
+  - [4.9 Sector and geography](#49-sector-and-geography)
+  - [4.10 Exact arithmetic and rounding (D10)](#410-exact-arithmetic-and-rounding-d10)
+- [5. Worked examples (check my reading)](#5-worked-examples-check-my-reading)
+- [6. Views (first version)](#6-views-first-version)
+- [7. Prices and market data](#7-prices-and-market-data)
+- [8. Backup file and restore (App initialization)](#8-backup-file-and-restore-app-initialization)
+- [9. Backup, restore, security](#9-backup-restore-security)
+- [10. Out of scope](#10-out-of-scope)
+- [11. Acceptance criteria (first version)](#11-acceptance-criteria-first-version)
+- [12. Proposed slices (layered; superseded by plan.md)](#12-proposed-slices-layered-superseded-by-planmd)
+- [13. Open design points](#13-open-design-points)
+- [14. Components and responsibilities (technology-neutral)](#14-components-and-responsibilities-technology-neutral)
+
 # spec.md (v4, final)
 
 Source: intent/intent.md v52 (final). Stage: Design.
