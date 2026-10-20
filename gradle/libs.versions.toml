@@ -1,5 +1,6 @@
 [versions]
 agp = "9.4.1"
+biometric = "1.1.0"
 coreKtx = "1.10.1"
 junit = "4.13.2"
 junitVersion = "1.1.5"
@@ -10,6 +11,7 @@ kotlin = "2.2.10"
 composeBom = "2026.02.01"
 
 [libraries]
+androidx-biometric = { group = "androidx.biometric", name = "biometric", version.ref = "biometric" }
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
 junit = { group = "junit", name = "junit", version.ref = "junit" }
 androidx-junit = { group = "androidx.test.ext", name = "junit", version.ref = "junitVersion" }
