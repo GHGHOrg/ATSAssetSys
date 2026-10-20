@@ -1,6 +1,6 @@
 # plan/iterations/01-unlock-app.md
 
-Stage: Build. Status: approved by you on 2026-10-19 (draft plus the four decisions in section 9). Built and checked on the phone (2026-10-19); awaiting your review of pull request #70. See section 10.
+Stage: Build. Status: approved by you on 2026-10-19 (draft plus the four decisions in section 9). Built and checked on the phone (2026-10-19); merged as pull request #70 (merge commit 8a5703e). See section 10.
 Source: plan/plan.md section 4 (row 01), intent/intent.md v52 (final), spec/spec.md v4 (final).
 This iteration is built; what was run and checked, and what was not, is stated in section 10. Sections 1 to 9 are the plan as approved. "My reading" means an interpretation of spec.md that you approved, not a test.
 
@@ -99,11 +99,11 @@ By hand on the phone (Android 17), each result written back into this file as "c
 
 ### 10.1 Status
 - Built and checked on the phone (2026-10-19).
-- Done: pin of androidx.biometric 1.1.0; AppLock logic with 12 passing tests (commits 81c7bb8 and 9397262); MainActivity wiring (4b, commit 6611587, pull request #70 as a draft).
+- Done: pin of androidx.biometric 1.1.0; AppLock logic with 12 passing tests (commits 81c7bb8 and 9397262); MainActivity wiring (4b, commit 6611587, pull request #70, now merged as 8a5703e).
 - Step 4c (cover screen while the window is not focused) is built and passed the same local build, tests and lint.
 - Local run: build green, 13 unit tests pass (1 in core, 12 in app), lint green with 8 library-version notices and nothing new.
 - CI was reported green by you; I did not see its log.
-- Left before done: your review of pull request #70. The CLAUDE.md pitfall and the plan.md status row are committed. CI was reported green by you on commit 658a387; I did not see its log.
+- Left before done: nothing. You merged pull request #70 (merge commit 8a5703e). The CLAUDE.md pitfall and the plan.md status row are committed. CI was reported green by you on commit 658a387, and later on d707fd6, ebde744, e61d336, 769df85 and on main after the merge; I did not see any log.
 - Definition of done: plan/plan.md section 9.
 
 ### 10.2 Phone results
