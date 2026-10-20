@@ -24,8 +24,8 @@ There is no local.properties file on purpose (see pitfalls).
 - Lint:   .\gradlew.bat :app:lintDebug
 - All three, forced fresh: add --rerun-tasks
 - Install on the phone: & "$env:ANDROID_HOME\platform-tools\adb.exe" install -r app\build\outputs\apk\debug\app-debug.apk
-  (adb is not on PATH on this machine. The APK path is confirmed. The install itself has NOT been run yet;
-  setup proof item 4 runs it first.)
+  (adb is not on PATH on this machine. The APK path is confirmed. The install has been run on the phone:
+  setup proof item 4 (2026-10-18) and iteration 01 (2026-10-19).)
 CI (.github/workflows/ci.yml) runs the same three steps on ubuntu-24.04 with Java 25.
 
 ## 4. Conventions
@@ -51,6 +51,7 @@ CI (.github/workflows/ci.yml) runs the same three steps on ubuntu-24.04 with Jav
 - Message wording is D9: decided on the phone, not on paper.
 - The Compose theme file in app/ is the source of truth for colors and type. Figma is only the starting point.
 - Java: the project needs Java 25 (gradle/gradle-daemon-jvm.properties). Kotlin 2.2.10 only targets up to 24, so core/ pins Java and Kotlin to 11.
+- VS Code Kotlin extension (jetbrains.kotlin-server): after it was installed, the build failed with "jlink executable ... does not exist" under .vscode\extensions\jetbrains.kotlin-server-...\server\jbr. `.\gradlew.bat javaToolchains` showed two Java 25 installs: Android Studio's jbr (a JDK) and the extension's jbr ("Is JDK: false"). Fix that worked: `.\gradlew.bat --stop`, then rebuild. Cause is my reading, not proven: the daemon ran on the extension's Java. A property fix (org.gradle.java.installations.auto-detect=false plus .paths) is untested.
 - Do not create local.properties: lint rejects the Windows path form. Use ANDROID_HOME.
 - gradlew must stay LF and executable (.gitattributes, mode 100755). Do not retype it.
 - In PowerShell, do not use .Split('text') to count a substring: it splits on each character.

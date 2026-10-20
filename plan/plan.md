@@ -2,7 +2,7 @@
 
 Stage: Build. Status: approved, together with plan/setup.md. Setup run 2026-10-18 (setup.md section 13); no iteration started.
 Source: intent/intent.md v52 (final), spec/spec.md v4 (final).
-No iteration has been built, run or verified. Where this file says "my reading", it is
+Only iteration 01 has been built and checked on the phone (see its file). Where this file says "my reading", it is
 an interpretation of spec.md that you approve, not a test.
 
 ## 1. Purpose and gate
@@ -221,7 +221,7 @@ when it adds a command, a convention or a pitfall.
 | setup.md | approved, run 2026-10-18 on branch setup (pull request #64, merged) |
 | spikes/price-source.md | not written |
 | spikes/dependency-upgrade.md | not written |
-| Iteration 01 | file written and approved 2026-10-19, not started (no branch, no code) |
+| Iteration 01 | built and checked on the phone 2026-10-19; draft pull request #70 awaits your review (open items in its file) |
 | Iterations 02 to 35 | not started, files not written |
 
 ## 12. Change log
