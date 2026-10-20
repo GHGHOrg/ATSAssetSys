@@ -1,7 +1,7 @@
 [versions]
 agp = "9.4.1"
 biometric = "1.1.0"
-coreKtx = "1.10.1"
+coreKtx = "1.19.1"
 junit = "4.13.2"
 junitVersion = "1.1.5"
 espressoCore = "3.5.1"
