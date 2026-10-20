@@ -96,15 +96,64 @@ By hand on the phone (Android 17), each result written back into this file as "c
 6. Recents live card (approved 2026-10-19, option 2): try the cover screen of step 4c as an experiment; fall back to recording the limit if it does not help.
 
 ## 10. Status and notes
-Built and checked on the phone (2026-10-19). Done: pin of androidx.biometric 1.1.0; AppLock logic with 12 passing tests (commits 81c7bb8 and 9397262); MainActivity wiring (4b, commit 6611587, pull request #70 as a draft). Local run: build green, 13 unit tests pass (1 in core, 12 in app), lint green with 8 library-version notices and nothing new. CI was reported green by you; I did not see its log.
-Step 4c (cover screen while the window is not focused) is built and passed the same local build, tests and lint.
-Phone results (2026-10-19, debug build of commit 6611587, then again with step 4c; these are your reports, I did not see the phone): 1 cold start shows the prompt first, yes. 2 cancel leaves the app name and an Unlock button, yes. 3 unlock shows "Hello Android!", yes. 4 Home then return prompts again, yes; Home while the prompt is open, then return, gives exactly one prompt. 5 screenshot blocked. 6 screen recording is black. 7 recents: before step 4c, opening recents straight from the unlocked app showed the live content (the stored card was blank); with step 4c the card shows the app name only (14a) and stays blank after switching to another app (14b). 9 install over the old build succeeded (data survival not testable yet, the app stores nothing). 11 rotating while the prompt shows gives one prompt. 12 switching dark mode while unlocked brings the prompt back (the app re-locks on recreation, as accepted in Risks). 13 recents then return: the prompt appears. 14 cover screen: app name only, no flicker when the notification shade was pulled down; unlocking still works after Home and return.
-10 largest font size, light theme and dark theme on the locked screen: all readable and tappable. TalkBack on the locked screen: reads it fine (your report; I do not know the exact words it spoke).
-8 no screen lock set up: checked on the phone on 2026-10-20 (your report), on the debug build of commit 658a387, installed at 2026-10-20 15:24:09 phone time (Gradle reused the earlier APK, all 37 tasks up to date). After you removed the screen lock and fingerprints, the plain "set up a screen lock" message showed, with no Unlock button and no content. Home and return kept the message and nothing unlocked. After you set the lock again, the app prompted normally. An earlier run on an older build (which one is not known) is not counted.
-Review against the spec refs: done are the lock of section 9, the lock-first step of first launch, and the default privacy part of criterion 20, with criterion 6 for the fixed "every time I leave the app" policy. Not done, with reasons: the other three auto-lock choices (iteration 20), the 3-minute screenshot window (iteration 21), and criterion 35's data survival (the app stores nothing yet; checked in iteration 02). Several Android behaviours that spec section 9 marks as unverified were seen on one phone (Android 17) with both window protections set: one prompt for biometric or PIN, blocked screenshots and recording, and a blank stored recents card. The live recents card needed the cover screen of step 4c, which is not written in spec.md. Not seen: other phones or Android versions.
-For later iterations: iteration 21 must keep the cover-screen behaviour and check the order of the window flags; iteration 02 must add the data-survival check for updates; the dependency-upgrade spike must re-run checks 1 to 14.
-Not run or not verified, added 2026-10-20 (items already stated above are not repeated):
-Not run: a release build and its install (only debug builds were run; R8 optimization is switched on for release in app/build.gradle.kts, so what it does to the lock code was not seen); automated tests of MainActivity, the prompt wiring and the cover screen (only the AppLock logic has tests); other phones and Android versions 33 to 36 (one phone, Android 17; its exact model and build were not recorded); screen off then on, a phone with a PIN and no fingerprint, and other biometric types; the cover screen in split-screen, system dialogs and incoming-call banners (only the notification shade was tried); the cover screen at the largest font size, in dark theme and with TalkBack.
-Not verified: contrast ratios and touch-target sizes (check 10 was by eye); which of FLAG_SECURE and setRecentsScreenshotEnabled(false) does what (both were set together, the screen recorder used was not recorded, casting and screen sharing were not tried); the local build, test and lint counts above (they come from the earlier hand-off, not from output seen in this conversation); the androidx.biometric 1.1.0 pin (looked up on 2026-10-19, not re-checked); recreation by a font-size or language change (rotation and dark mode were tried).
-Left before done: your review of pull request #70. The CLAUDE.md pitfall and the plan.md status row are committed. CI was reported green by you on commit 658a387; I did not see its log.
-Definition of done: plan/plan.md section 9.
+
+### 10.1 Status
+- Built and checked on the phone (2026-10-19).
+- Done: pin of androidx.biometric 1.1.0; AppLock logic with 12 passing tests (commits 81c7bb8 and 9397262); MainActivity wiring (4b, commit 6611587, pull request #70 as a draft).
+- Step 4c (cover screen while the window is not focused) is built and passed the same local build, tests and lint.
+- Local run: build green, 13 unit tests pass (1 in core, 12 in app), lint green with 8 library-version notices and nothing new.
+- CI was reported green by you; I did not see its log.
+- Left before done: your review of pull request #70. The CLAUDE.md pitfall and the plan.md status row are committed. CI was reported green by you on commit 658a387; I did not see its log.
+- Definition of done: plan/plan.md section 9.
+
+### 10.2 Phone results
+Checks 1 to 7, 9 and 11 to 14 (2026-10-19, debug build of commit 6611587, then again with step 4c; these are your reports, I did not see the phone):
+- 1 cold start shows the prompt first, yes.
+- 2 cancel leaves the app name and an Unlock button, yes.
+- 3 unlock shows "Hello Android!", yes.
+- 4 Home then return prompts again, yes; Home while the prompt is open, then return, gives exactly one prompt.
+- 5 screenshot blocked.
+- 6 screen recording is black.
+- 7 recents: before step 4c, opening recents straight from the unlocked app showed the live content (the stored card was blank); with step 4c the card shows the app name only (14a) and stays blank after switching to another app (14b).
+- 9 install over the old build succeeded (data survival not testable yet, the app stores nothing).
+- 11 rotating while the prompt shows gives one prompt.
+- 12 switching dark mode while unlocked brings the prompt back (the app re-locks on recreation, as accepted in Risks).
+- 13 recents then return: the prompt appears.
+- 14 cover screen: app name only, no flicker when the notification shade was pulled down; unlocking still works after Home and return.
+
+Check 10 and TalkBack:
+- 10 largest font size, light theme and dark theme on the locked screen: all readable and tappable.
+- TalkBack on the locked screen: reads it fine (your report; I do not know the exact words it spoke).
+
+Check 8:
+- 8 no screen lock set up: checked on the phone on 2026-10-20 (your report), on the debug build of commit 658a387, installed at 2026-10-20 15:24:09 phone time (Gradle reused the earlier APK, all 37 tasks up to date). After you removed the screen lock and fingerprints, the plain "set up a screen lock" message showed, with no Unlock button and no content. Home and return kept the message and nothing unlocked. After you set the lock again, the app prompted normally. An earlier run on an older build (which one is not known) is not counted.
+
+### 10.3 Review against the spec refs
+- Done: the lock of section 9, the lock-first step of first launch, and the default privacy part of criterion 20, with criterion 6 for the fixed "every time I leave the app" policy.
+- Not done, with reasons: the other three auto-lock choices (iteration 20), the 3-minute screenshot window (iteration 21), and criterion 35's data survival (the app stores nothing yet; checked in iteration 02).
+- Several Android behaviours that spec section 9 marks as unverified were seen on one phone (Android 17) with both window protections set: one prompt for biometric or PIN, blocked screenshots and recording, and a blank stored recents card.
+- The live recents card needed the cover screen of step 4c, which is not written in spec.md.
+- Not seen: other phones or Android versions.
+
+### 10.4 Not run or not verified
+Added 2026-10-20 (items already stated in 10.2 and 10.3 are not repeated).
+
+Not run:
+- a release build and its install (only debug builds were run; R8 optimization is switched on for release in app/build.gradle.kts, so what it does to the lock code was not seen);
+- automated tests of MainActivity, the prompt wiring and the cover screen (only the AppLock logic has tests);
+- other phones and Android versions 33 to 36 (one phone, Android 17; its exact model and build were not recorded);
+- screen off then on, a phone with a PIN and no fingerprint, and other biometric types;
+- the cover screen in split-screen, system dialogs and incoming-call banners (only the notification shade was tried);
+- the cover screen at the largest font size, in dark theme and with TalkBack.
+
+Not verified:
+- contrast ratios and touch-target sizes (check 10 was by eye);
+- which of FLAG_SECURE and setRecentsScreenshotEnabled(false) does what (both were set together, the screen recorder used was not recorded, casting and screen sharing were not tried);
+- the local build, test and lint counts in 10.1 (they come from the earlier hand-off, not from output seen in this conversation);
+- the androidx.biometric 1.1.0 pin (looked up on 2026-10-19, not re-checked);
+- recreation by a font-size or language change (rotation and dark mode were tried).
+
+### 10.5 For later iterations
+- Iteration 21 must keep the cover-screen behaviour and check the order of the window flags.
+- Iteration 02 must add the data-survival check for updates.
+- The dependency-upgrade spike must re-run checks 1 to 14.
