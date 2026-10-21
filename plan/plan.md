@@ -220,7 +220,7 @@ when it adds a command, a convention or a pitfall.
 | plan.md | approved |
 | setup.md | approved, run 2026-10-18 on branch setup (pull request #64, merged) |
 | spikes/price-source.md | not written |
-| spikes/dependency-upgrade.md | note approved 2026-10-21 (decisions D1 to D7 open); not run |
+| spikes/dependency-upgrade.md | note approved 2026-10-21, decisions D1 to D7 settled; not run |
 | Iteration 01 | done: built and checked on the phone 2026-10-19 (check 8 on 2026-10-20); pull request #70 merged as 8a5703e, CI green on main (your report); not-run items are listed in its file |
 | Iterations 02 to 35 | not started, files not written |
 

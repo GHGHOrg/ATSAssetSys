@@ -1,6 +1,6 @@
 # plan/spikes/dependency-upgrade.md
 
-Stage: Build. Status: approved 2026-10-21 (note and leanings); decisions D1 to D7 open until you tell me. Nothing in sections 4 to 8 has been run.
+Stage: Build. Status: approved 2026-10-21 (note and leanings); decisions D1 to D7 settled 2026-10-21 (section 5). Nothing in sections 4 to 8 has been run.
 Source: plan/plan.md section 7 (the spike's question list), plan/setup.md section 13 (departures 4, 5, 6 and 8),
 plan/iterations/01-unlock-app.md sections 7, 8 and 10.5, spec/spec.md v4 (final).
 The look-ups were done on 2026-10-21. Versions here are facts of that day. They are checked again on the day the spike runs.
@@ -66,7 +66,7 @@ run is done, and its results are written into section 9. Dependabot's branch for
 - gradle/wrapper/gradle-wrapper.properties and gradle/gradle-daemon-jvm.properties were not seen.
 - Whether app/src/androidTest still holds any file (setup removed the template test).
 
-## 4. Proposed change set and order of work (pending section 5)
+## 4. Proposed change set and order of work (decisions of section 5 settled)
 Files:
 | File | Change |
 |---|---|
@@ -90,7 +90,11 @@ Order of work, on branch spike-dependency-upgrade from the updated main:
 If a step fails, I revert that commit and record it in section 9. A needed edit to a build file is a departure: I show it to you first.
 Nothing is pushed unless you say so.
 
-## 5. Decisions needed from you (all [Build])
+## 5. Decisions (all [Build]; settled by you on 2026-10-21)
+Settled: D1 2.4.21, with 2.4.20 as the fall-back if the branch build fails on 2.4.21. D2 no rule now, ages recorded in this note, revisited at Deploy.
+D3 upgrade both test libraries. D4 option (a): try ktlint 1.8.0, defer if it does not run cleanly. D5 option (a): one group for the Kotlin plugins only.
+D6 keep Java 11 on both modules, revisit the level for both together later. D7 try ubuntu-26.04 in its own commit, kept only if the run is green.
+The options below are kept as they were put to you.
 - D1 Kotlin version. Options: 2.4.21 (latest, 13 days old) or 2.4.20 (44 days old). Both sit in the same documented row. Leaning: 2.4.21, and fall back to 2.4.20 if the branch build fails on it.
 - D2 Minimum release age for new versions. Options: no rule, or at least 14 days. Under a 14-day rule, Kotlin 2.4.21 (13 days) fails and core-ktx 1.19.1 (14 days) just passes. Leaning: no rule now, record ages in this note, revisit at Deploy.
 - D3 The two test-only libraries (androidx.test ext junit, espresso-core). Options: upgrade to 1.3.0 and 3.7.0, or remove them from the catalog and app/build.gradle.kts. Leaning: upgrade, because removing is a design choice about future instrumented tests.
@@ -137,4 +141,4 @@ Anything that could not be run is stated as not run.
 Not run.
 
 ## 10. Status and notes
-Approved 2026-10-21 (note and leanings). Decisions D1 to D7 open until you tell me. Not run. No file in the repo has been changed.
+Approved 2026-10-21 (note and leanings). Decisions D1 to D7 settled 2026-10-21. Not run. Committed on branch spike-dependency-upgrade as 7a9ef90, not pushed. No build file or version has been changed.
