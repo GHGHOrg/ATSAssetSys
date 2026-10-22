@@ -9,6 +9,7 @@ lifecycleRuntimeKtx = "2.11.0"
 activityCompose = "1.13.0"
 kotlin = "2.4.21"
 composeBom = "2026.09.00"
+spotless = "8.10.4"
 
 [libraries]
 androidx-biometric = { group = "androidx.biometric", name = "biometric", version.ref = "biometric" }
@@ -33,3 +34,4 @@ kotlin-compose = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "ko
 
 
 kotlin-jvm = { id = "org.jetbrains.kotlin.jvm", version.ref = "kotlin" }
+spotless = { id = "com.diffplug.spotless", version.ref = "spotless" }
