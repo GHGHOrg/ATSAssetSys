@@ -43,7 +43,7 @@ class MainActivity : FragmentActivity() {
         // Default privacy (spec section 9): blocked screenshots and recording, hidden recents preview.
         window.setFlags(
             WindowManager.LayoutParams.FLAG_SECURE,
-            WindowManager.LayoutParams.FLAG_SECURE
+            WindowManager.LayoutParams.FLAG_SECURE,
         )
         setRecentsScreenshotEnabled(false)
         enableEdgeToEdge()
@@ -63,7 +63,7 @@ class MainActivity : FragmentActivity() {
                     lock.onAuthCancelledOrFailed()
                     lockState = lock.state
                 }
-            }
+            },
         )
         promptInfo = BiometricPrompt.PromptInfo.Builder()
             .setTitle(getString(R.string.prompt_title))
@@ -79,7 +79,7 @@ class MainActivity : FragmentActivity() {
                         LockState.Unlocked -> if (windowFocused) {
                             Greeting(
                                 name = "Android",
-                                modifier = Modifier.padding(innerPadding)
+                                modifier = Modifier.padding(innerPadding),
                             )
                         } else {
                             CoverScreen(modifier = Modifier.padding(innerPadding))
@@ -87,11 +87,11 @@ class MainActivity : FragmentActivity() {
 
                         LockState.Locked -> LockedScreen(
                             onUnlock = { showPromptIfNeeded() },
-                            modifier = Modifier.padding(innerPadding)
+                            modifier = Modifier.padding(innerPadding),
                         )
 
                         LockState.NoScreenLock -> NoScreenLockScreen(
-                            modifier = Modifier.padding(innerPadding)
+                            modifier = Modifier.padding(innerPadding),
                         )
                     }
                 }
@@ -133,15 +133,15 @@ fun LockedScreen(onUnlock: () -> Unit, modifier: Modifier = Modifier) {
     Column(
         modifier = modifier.fillMaxSize().padding(24.dp),
         verticalArrangement = Arrangement.Center,
-        horizontalAlignment = Alignment.CenterHorizontally
+        horizontalAlignment = Alignment.CenterHorizontally,
     ) {
         Text(
             text = stringResource(R.string.app_name),
-            style = MaterialTheme.typography.headlineMedium
+            style = MaterialTheme.typography.headlineMedium,
         )
         Button(
             onClick = onUnlock,
-            modifier = Modifier.padding(top = 24.dp)
+            modifier = Modifier.padding(top = 24.dp),
         ) {
             Text(text = stringResource(R.string.unlock_button))
         }
@@ -153,11 +153,11 @@ fun CoverScreen(modifier: Modifier = Modifier) {
     Column(
         modifier = modifier.fillMaxSize().padding(24.dp),
         verticalArrangement = Arrangement.Center,
-        horizontalAlignment = Alignment.CenterHorizontally
+        horizontalAlignment = Alignment.CenterHorizontally,
     ) {
         Text(
             text = stringResource(R.string.app_name),
-            style = MaterialTheme.typography.headlineMedium
+            style = MaterialTheme.typography.headlineMedium,
         )
     }
 }
@@ -167,11 +167,11 @@ fun NoScreenLockScreen(modifier: Modifier = Modifier) {
     Column(
         modifier = modifier.fillMaxSize().padding(24.dp),
         verticalArrangement = Arrangement.Center,
-        horizontalAlignment = Alignment.CenterHorizontally
+        horizontalAlignment = Alignment.CenterHorizontally,
     ) {
         Text(
             text = stringResource(R.string.no_screen_lock_message),
-            style = MaterialTheme.typography.bodyLarge
+            style = MaterialTheme.typography.bodyLarge,
         )
     }
 }
@@ -180,7 +180,7 @@ fun NoScreenLockScreen(modifier: Modifier = Modifier) {
 fun Greeting(name: String, modifier: Modifier = Modifier) {
     Text(
         text = "Hello $name!",
-        modifier = modifier
+        modifier = modifier,
     )
 }
 

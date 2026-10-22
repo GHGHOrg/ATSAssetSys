@@ -10,6 +10,9 @@ spotless {
     kotlin {
         target("core/src/**/*.kt", "app/src/**/*.kt")
         ktlint("1.8.0")
+            .editorConfigOverride(
+                mapOf<String, Any>("ktlint_function_naming_ignore_when_annotated_with" to "Composable"),
+            )
     }
     kotlinGradle {
         target("*.gradle.kts", "core/*.gradle.kts", "app/*.gradle.kts")

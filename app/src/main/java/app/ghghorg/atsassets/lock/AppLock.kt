@@ -28,8 +28,7 @@ class AppLock {
         }
     }
 
-    fun shouldShowPrompt(): Boolean =
-        state == LockState.Locked && screenLockAvailable && !promptShowing
+    fun shouldShowPrompt(): Boolean = state == LockState.Locked && screenLockAvailable && !promptShowing
 
     fun onPromptShown() {
         promptShowing = true
