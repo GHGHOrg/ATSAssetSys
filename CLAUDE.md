@@ -22,11 +22,12 @@ There is no local.properties file on purpose (see pitfalls).
 - Build:  .\gradlew.bat :core:assemble :app:assembleDebug
 - Test:   .\gradlew.bat :core:test :app:testDebugUnitTest
 - Lint:   .\gradlew.bat :app:lintDebug
+- Style:  .\gradlew.bat spotlessCheck (read-only; CI runs it first). .\gradlew.bat spotlessApply rewrites files: run it only when asked, and show the diff first.
 - All three, forced fresh: add --rerun-tasks
 - Install on the phone: & "$env:ANDROID_HOME\platform-tools\adb.exe" install -r app\build\outputs\apk\debug\app-debug.apk
   (adb is not on PATH on this machine. The APK path is confirmed. The install has been run on the phone:
-  setup proof item 4 (2026-10-18) and iteration 01 (2026-10-19).)
-CI (.github/workflows/ci.yml) runs the same three steps on ubuntu-24.04 with Java 25.
+  setup proof item 4 (2026-10-18), iteration 01 (2026-10-19) and the dependency-upgrade spike (2026-10-22).)
+CI (.github/workflows/ci.yml) runs the style check and then the same three steps on ubuntu-26.04 with Java 25 (Temurin).
 
 ## 4. Conventions
 - One branch per iteration: iter-NN-name. One pull request per iteration.
@@ -50,15 +51,17 @@ CI (.github/workflows/ci.yml) runs the same three steps on ubuntu-24.04 with Jav
 - [UNVERIFIED] items in spec.md are not facts. Check them on the phone before relying on them.
 - Message wording is D9: decided on the phone, not on paper.
 - The Compose theme file in app/ is the source of truth for colors and type. Figma is only the starting point.
-- Java: the project needs Java 25 (gradle/gradle-daemon-jvm.properties). Kotlin 2.2.10 only targets up to 24, so core/ pins Java and Kotlin to 11.
+- Java: the project needs Java 25 (gradle/gradle-daemon-jvm.properties). core/ and app/ both compile at Java 11. The first reason (Kotlin 2.2.10 stopped at Java 24) is gone with Kotlin 2.4.21. The level stays 11 because app will use core/ from iteration 02. Revisit both together, not one.
 - VS Code Kotlin extension (jetbrains.kotlin-server): after it was installed, the build failed with "jlink executable ... does not exist" under .vscode\extensions\jetbrains.kotlin-server-...\server\jbr. `.\gradlew.bat javaToolchains` showed two Java 25 installs: Android Studio's jbr (a JDK) and the extension's jbr ("Is JDK: false"). Fix that worked: `.\gradlew.bat --stop`, then rebuild. Cause is my reading, not proven: the daemon ran on the extension's Java. A property fix (org.gradle.java.installations.auto-detect=false plus .paths) is untested.
 - Do not create local.properties: lint rejects the Windows path form. Use ANDROID_HOME.
 - gradlew must stay LF and executable (.gitattributes, mode 100755). Do not retype it.
 - In PowerShell, do not use .Split('text') to count a substring: it splits on each character.
-- The CI runner is pinned to ubuntu-24.04. ubuntu-latest is moving to Ubuntu 26.04 (Oct 19 to Nov 19, 2026).
-- Lint currently shows 8 library-version notices. They are cleared by the dependency-upgrade spike, not by silencing the checks.
-- The Kotlin style checker is not chosen yet. The dependency-upgrade spike picks it together with the Kotlin version.
-- Planned spike: plan/spikes/dependency-upgrade.md, after iteration 01 and before iteration 02.
+- The CI runner is pinned to ubuntu-26.04 (moved from ubuntu-24.04 in the dependency-upgrade spike; CI green). Do not use ubuntu-latest.
+- Lint showed 0 findings after the dependency-upgrade spike. Do not silence a new notice: list it.
+- Style checker: Spotless 8.10.4 with ktlint 1.8.0, targets set by hand in the root build.gradle.kts. @Composable functions are exempt from ktlint's function-naming rule through an override there; the property name is supported only by its effect.
+- Dependabot has one group, kotlin (pattern org.jetbrains.kotlin.*). Whether it matches the Kotlin plugins is unverified until Dependabot has run once.
+- The message "Unable to strip ... libandroidx.graphics.path.so" appears in every build. It is known and not silenced.
+- Dependency-upgrade spike: plan/spikes/dependency-upgrade.md, run before iteration 02. Its section 9 holds the results and what was not verified.
 
 ## 7. Standing checks for every iteration's screens
 Criteria 9, 39 to 42, and the install-over-previous-build check (35).
