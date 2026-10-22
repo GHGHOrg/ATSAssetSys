@@ -1,6 +1,6 @@
 # plan/plan.md
 
-Stage: Build. Status: approved, together with plan/setup.md. Setup run 2026-10-18 (setup.md section 13). Iteration 01 is done. The dependency-upgrade spike has run on a branch and is not merged. Iterations 02 onward have not started.
+Stage: Build. Status: approved, together with plan/setup.md. Setup run 2026-10-18 (setup.md section 13). Iteration 01 is done. The dependency-upgrade spike has run and is merged (pull request 73, merge commit 7df2049). Iterations 02 onward have not started.
 Source: intent/intent.md v52 (final), spec/spec.md v4 (final).
 Only iteration 01 has been built, checked on the phone and merged (see its file). Where this file says "my reading", it is
 an interpretation of spec.md that you approve, not a test.
@@ -20,7 +20,7 @@ plan/
   plan.md                      this file
   setup.md                     repo, stack, CI, manifest baseline, CLAUDE.md
   spikes/price-source.md       decision note, to be written and finished before iteration 09
-  spikes/dependency-upgrade.md decision note, run after iteration 01 (results in its section 9); finished when its pull request is merged, before 02
+  spikes/dependency-upgrade.md decision note, run after iteration 01 (results in its section 9); finished: pull request 73 merged as 7df2049, before 02
   iterations/01-... to 35-...  one file per iteration (section 4)
 CLAUDE.md                      repo root, created by setup.md
 ```
@@ -176,6 +176,7 @@ Run 2026-10-21 to 2026-10-22 on branch spike-dependency-upgrade. The results, de
 was not verified are in the note's section 9. In short (your reports): Kotlin 2.4.21, 0 lint notices,
 Spotless with ktlint 1.8.0, runner ubuntu-26.04, Dependabot group kotlin (unverified until it runs),
 and all 14 phone checks of iteration 01 passed.
+Merged as 7df2049 (pull request 73); CI on main reported green by you.
 
 ## 8. Cross-cutting risks
 - Real data is unprotected until iteration 31: you can enter real data from 09, but there is
@@ -225,7 +226,7 @@ when it adds a command, a convention or a pitfall.
 | plan.md | approved |
 | setup.md | approved, run 2026-10-18 on branch setup (pull request #64, merged) |
 | spikes/price-source.md | not written |
-| spikes/dependency-upgrade.md | run 2026-10-21 to 2026-10-22 on branch spike-dependency-upgrade, draft pull request 73, not merged. CI green on d66cf27 (your report). Results in the note's section 9. Dependabot group unverified until it has run once |
+| spikes/dependency-upgrade.md | run 2026-10-21 to 2026-10-22 on branch spike-dependency-upgrade; pull request 73 merged as 7df2049, CI green on main (your report). Results in the note's section 9. Dependabot group unverified until it has run once |
 | Iteration 01 | done: built and checked on the phone 2026-10-19 (check 8 on 2026-10-20); pull request #70 merged as 8a5703e, CI green on main (your report); not-run items are listed in its file |
 | Iterations 02 to 35 | not started, files not written |
 
@@ -239,6 +240,9 @@ Each departure from this plan is recorded here with its date and the reason.
   section 9.8: the style checker was added to CI (a spotlessCheck step, approved by you) and the
   runner moved to ubuntu-26.04. Iteration 02 still depends on the spike, which is finished when
   its pull request is merged.
+- 2026-10-22: pull request 73 was merged as 7df2049 and CI on main was reported green by you. The spike
+  is finished and iteration 02 no longer waits on it. The status lines above were updated. The original
+  question list in section 7 is left as written, as the plan's record.
 
 ## 13. Out of scope for this plan
 Performance over time, per-holding dividends, ETF look-through, the next intent.md items,

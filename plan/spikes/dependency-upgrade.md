@@ -1,6 +1,6 @@
 # plan/spikes/dependency-upgrade.md
 
-Stage: Build. Status: approved 2026-10-21 (note and leanings); decisions D1 to D7 settled 2026-10-21 (section 5). Run on branch spike-dependency-upgrade 2026-10-21 to 2026-10-22; results in section 9. Not merged.
+Stage: Build. Status: approved 2026-10-21 (note and leanings); decisions D1 to D7 settled 2026-10-21 (section 5). Run on branch spike-dependency-upgrade 2026-10-21 to 2026-10-22; results in section 9. Merged as 7df2049 (merge commit of pull request 73).
 Source: plan/plan.md section 7 (the spike's question list), plan/setup.md section 13 (departures 4, 5, 6 and 8),
 plan/iterations/01-unlock-app.md sections 7, 8 and 10.5, spec/spec.md v4 (final).
 The look-ups were done on 2026-10-21. Versions here are facts of that day. They are checked again on the day the spike runs.
@@ -151,8 +151,10 @@ Every Gradle, Git, CI and phone result here is your report of pasted output or o
 | 9ab2e24 | D1: Spotless 8.10.4 with ktlint 1.8.0 wired in (D4). spotlessCheck fails until D2 | yes, with d66cf27 |
 | ad522bd | D2: formatting only, 9 files, 42 insertions, 37 deletions, plus the Composable naming config | yes, with d66cf27 |
 | d66cf27 | spotlessCheck step added to ci.yml before Build | yes, CI green (9.3) |
-| 1474fe2 | E: Dependabot group "kotlin" (D5) | local when this note was written |
-The draft pull request is number 73. It is not merged.
+| 1474fe2 | E: Dependabot group "kotlin" (D5) | yes, in pull request 73 |
+| 6038a10 | this note, sections 9 and 10 | yes, in pull request 73 |
+| a382a6c | CLAUDE.md and plan.md updates | yes, in pull request 73 |
+Pull request 73 was merged by you as merge commit 7df2049 (a real merge commit, not a squash). Your local main went from 6d3d7ea to 7df2049 by fast-forward. Both are your reports.
 
 ### 9.2 Build, tests, lint (local)
 | | Baseline (Kotlin 2.2.10) | Commit A | Commit B |
@@ -171,6 +173,7 @@ The strip message "Unable to strip ... libandroidx.graphics.path.so" appears in 
 - d66cf27 (with the Style check step): CI / build successful in 2m, both CodeQL checks passed. The Style check log was seen: ./gradlew spotlessCheck on Temurin 25.0.4, fresh daemon, no cached configuration, the four Spotless tasks and spotlessCheck executed, BUILD SUCCESSFUL in 31s. No line-ending finding appeared.
 - The CodeQL checks are not configured in ci.yml. Where they are configured was not found.
 - One run each. The Style check ran once on CI.
+- Merge commit 7df2049 on main (your report): CI / build (push) 2m, CodeQL / Analyze (actions) 44s, Dependabot config validation 1s. The pull request also had a "Code scanning results / CodeQL" check that is not in the list for main. My reading is that it appears only on pull requests. Not checked. I did not see any log of these runs.
 
 ### 9.4 Style checker (D4)
 - Adopted: Spotless Gradle plugin 8.10.4 with ktlint 1.8.0 (the version is pinned in the catalog and in the root build file). The plugin and ktlint resolved with the existing repository settings: settings.gradle.kts was not changed. No .editorconfig exists in the repo.
@@ -183,6 +186,7 @@ The strip message "Unable to strip ... libandroidx.graphics.path.so" appears in 
 ### 9.5 Dependabot (D5)
 - Commit E adds one group, kotlin, with the pattern org.jetbrains.kotlin.* under the gradle update. GitHub's groups page (you read) says patterns match dependency names, * is a wildcard, a dependency outside every group keeps its own pull request, and dependency-type is not listed for Gradle.
 - Not verified: how Dependabot names the two Kotlin plugins, so whether the pattern matches them. Whether the group changes anything, since both plugins read one version variable. Both are decided by the first Dependabot run after the push. The Compose BOM is outside the group.
+- After the merge (your report): the Dependabot config validation check passed on 7df2049, so GitHub accepts the file's syntax. No Dependabot activity had been seen since the push; the schedule is weekly. The pattern match and the effect of the group are still unverified. What happened to Dependabot's old Compose BOM 2026.09.00 branch (closed, deleted or still open) was not reported.
 - The pattern has a dot, so it would not match org.jetbrains.kotlinx libraries or a library written org.jetbrains.kotlin:kotlin-stdlib. The catalog has none today.
 
 ### 9.6 Phone
@@ -209,7 +213,7 @@ Not run:
 - the release APK on the phone, and R8's effect on the lock code;
 - other phones and Android versions, and the cover screen in split-screen, with incoming-call banners, at the largest font, in dark theme or with TalkBack (as in iteration 01 section 10.4);
 - a tests-from-scratch run of build and lint after D2 (only spotlessCheck and the tests were forced);
-- Dependabot after commit E.
+- Dependabot after commit E (merged in 7df2049; no run seen yet).
 Not verified:
 - the Gradle version (the wrapper file was never seen; 9.6.0 comes from the hand-off);
 - Spotless 8.10.4 and ktlint 1.8.0 release ages, and ktlint's Kotlin 2.4 support;
@@ -219,6 +223,6 @@ Not verified:
 - the phone model.
 
 ## 10. Status and notes
-Approved 2026-10-21 (note and leanings). Decisions D1 to D7 settled 2026-10-21. Run on branch spike-dependency-upgrade (commits in 9.1), draft pull request 73, not merged. Sections 4 to 8 are the plan as approved; section 9 records what was done and what differed.
-Left before the spike is done: CLAUDE.md and plan/plan.md updates in the same pull request, the push of commit E and the first Dependabot run (to see whether the kotlin group forms), your review, and the merge (yours). Iteration 02 cannot start until then.
-Do not merge Dependabot's Compose BOM 2026.09.00 branch: the same version is already in this branch (commit B).
+Approved 2026-10-21 (note and leanings). Decisions D1 to D7 settled 2026-10-21. Run on branch spike-dependency-upgrade (commits in 9.1), pull request 73, merged as 7df2049. Sections 4 to 8 are the plan as approved; section 9 records what was done and what differed.
+The spike is finished: the CLAUDE.md and plan.md updates were in the pull request, and you merged it. Iteration 02 no longer waits on it.
+Left open: the first Dependabot run (to see whether the kotlin group forms and whether its pattern matches the two Kotlin plugins), and the fate of Dependabot's old Compose BOM 2026.09.00 branch (not reported). That branch needs no merge: the same version is already on main (commit B).
