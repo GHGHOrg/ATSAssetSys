@@ -1,6 +1,6 @@
 # plan/plan.md
 
-Stage: Build. Status: approved, together with plan/setup.md. Setup run 2026-10-18 (setup.md section 13); no iteration started.
+Stage: Build. Status: approved, together with plan/setup.md. Setup run 2026-10-18 (setup.md section 13). Iteration 01 is done. The dependency-upgrade spike has run on a branch and is not merged. Iterations 02 onward have not started.
 Source: intent/intent.md v52 (final), spec/spec.md v4 (final).
 Only iteration 01 has been built, checked on the phone and merged (see its file). Where this file says "my reading", it is
 an interpretation of spec.md that you approve, not a test.
@@ -20,7 +20,7 @@ plan/
   plan.md                      this file
   setup.md                     repo, stack, CI, manifest baseline, CLAUDE.md
   spikes/price-source.md       decision note, to be written and finished before iteration 09
-  spikes/dependency-upgrade.md decision note, to be written and finished after iteration 01 and before 02
+  spikes/dependency-upgrade.md decision note, run after iteration 01 (results in its section 9); finished when its pull request is merged, before 02
   iterations/01-... to 35-...  one file per iteration (section 4)
 CLAUDE.md                      repo root, created by setup.md
 ```
@@ -172,6 +172,10 @@ and those notices stay until this spike. It must answer, with checks done on the
 - whether the CI runner moves from ubuntu-24.04 to ubuntu-26.04.
 Its proof includes re-running iteration 01's phone checks, because iteration 01 is built on the
 old versions.
+Run 2026-10-21 to 2026-10-22 on branch spike-dependency-upgrade. The results, departures and what
+was not verified are in the note's section 9. In short (your reports): Kotlin 2.4.21, 0 lint notices,
+Spotless with ktlint 1.8.0, runner ubuntu-26.04, Dependabot group kotlin (unverified until it runs),
+and all 14 phone checks of iteration 01 passed.
 
 ## 8. Cross-cutting risks
 - Real data is unprotected until iteration 31: you can enter real data from 09, but there is
@@ -188,7 +192,8 @@ old versions.
   is planned and tested in iterations 01 and 21.
 - Auto-lock and Android's file screens (crit. 57): decided in 31 and 34, tested on the phone.
 - Iteration 01 is built on the library versions Android Studio generated. The dependency-upgrade
-  spike may break it, so the spike's proof re-runs 01's phone checks.
+  spike may break it, so the spike's proof re-runs 01's phone checks. Re-run 2026-10-22: all 14
+  checks passed (your report; see the note's section 9).
 - Unverified spec items stay unverified until their iteration checks them on the phone.
   The list is in spec.md ([UNVERIFIED] and [PARTLY CHECKED] markers).
 - Message wording is D9: shown and approved on the phone in each iteration.
@@ -220,7 +225,7 @@ when it adds a command, a convention or a pitfall.
 | plan.md | approved |
 | setup.md | approved, run 2026-10-18 on branch setup (pull request #64, merged) |
 | spikes/price-source.md | not written |
-| spikes/dependency-upgrade.md | not written |
+| spikes/dependency-upgrade.md | run 2026-10-21 to 2026-10-22 on branch spike-dependency-upgrade, draft pull request 73, not merged. CI green on d66cf27 (your report). Results in the note's section 9. Dependabot group unverified until it has run once |
 | Iteration 01 | done: built and checked on the phone 2026-10-19 (check 8 on 2026-10-20); pull request #70 merged as 8a5703e, CI green on main (your report); not-run items are listed in its file |
 | Iterations 02 to 35 | not started, files not written |
 
@@ -230,6 +235,10 @@ Each departure from this plan is recorded here with its date and the reason.
   Iteration 02 now depends on it. In the iteration table, "spike" in rows 09 and 16 is renamed
   "price spike". Reason: the library-version lint notices and the deferred Kotlin style checker
   (setup.md section 13).
+- 2026-10-22: the dependency-upgrade spike ran. Departures from its own plan are in the note's
+  section 9.8: the style checker was added to CI (a spotlessCheck step, approved by you) and the
+  runner moved to ubuntu-26.04. Iteration 02 still depends on the spike, which is finished when
+  its pull request is merged.
 
 ## 13. Out of scope for this plan
 Performance over time, per-holding dividends, ETF look-through, the next intent.md items,
