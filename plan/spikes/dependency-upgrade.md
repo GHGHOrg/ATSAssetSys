@@ -1,6 +1,6 @@
 # plan/spikes/dependency-upgrade.md
 
-Stage: Build. Status: approved 2026-10-21 (note and leanings); decisions D1 to D7 settled 2026-10-21 (section 5). Nothing in sections 4 to 8 has been run.
+Stage: Build. Status: approved 2026-10-21 (note and leanings); decisions D1 to D7 settled 2026-10-21 (section 5). Run on branch spike-dependency-upgrade 2026-10-21 to 2026-10-22; results in section 9. Not merged.
 Source: plan/plan.md section 7 (the spike's question list), plan/setup.md section 13 (departures 4, 5, 6 and 8),
 plan/iterations/01-unlock-app.md sections 7, 8 and 10.5, spec/spec.md v4 (final).
 The look-ups were done on 2026-10-21. Versions here are facts of that day. They are checked again on the day the spike runs.
@@ -137,8 +137,88 @@ By hand on the phone (Android 17), each result written into section 9 as "checke
 - Check 9 is the install over the previous build.
 Anything that could not be run is stated as not run.
 
-## 9. Results (filled in after the run)
-Not run.
+## 9. Results (run 2026-10-21 to 2026-10-22 on branch spike-dependency-upgrade)
+Every Gradle, Git, CI and phone result here is your report of pasted output or of a check you did. I do not see your machine, GitHub or the phone. Where something was not run or not verified, it says so.
+
+### 9.1 Commits
+| Commit | What | Pushed, CI |
+|---|---|---|
+| 7a9ef90 | this note, plan.md status row | yes |
+| b3b5488 | decisions D1 to D7 recorded | yes |
+| 00f448a | A: Kotlin 2.2.10 to 2.4.21 (D1) | yes |
+| 6654f2e | B: Compose BOM 2026.09.00 and the five AndroidX lines (D3) | yes |
+| 7d08e78 | C: CI runner ubuntu-24.04 to ubuntu-26.04 (D7) | yes, CI green (9.3) |
+| 9ab2e24 | D1: Spotless 8.10.4 with ktlint 1.8.0 wired in (D4). spotlessCheck fails until D2 | yes, with d66cf27 |
+| ad522bd | D2: formatting only, 9 files, 42 insertions, 37 deletions, plus the Composable naming config | yes, with d66cf27 |
+| d66cf27 | spotlessCheck step added to ci.yml before Build | yes, CI green (9.3) |
+| 1474fe2 | E: Dependabot group "kotlin" (D5) | local when this note was written |
+The draft pull request is number 73. It is not merged.
+
+### 9.2 Build, tests, lint (local)
+| | Baseline (Kotlin 2.2.10) | Commit A | Commit B |
+|---|---|---|---|
+| Debug build | OK, 17s | OK, 1m 2s | OK, 57s, 37 of 37 tasks |
+| Tests | 13 | 13 | 13 (1 core, 12 app), none failing |
+| Lint | 8 notices | 6 notices | 0 notices, confirmed by a forced --rerun-tasks run (27 tasks executed) |
+| Configuration cache | reused | reused | reused on repeat runs |
+| Release build (no signing key) | not run | OK, 33s | OK, 39s, R8 9.4.24, min_api 33; unsigned APK 2,283,170 bytes; mapping.txt 20,837,956 bytes |
+I do not know which notices commit A still had, so the note says only "6 notices after the Kotlin bump" and "0 after the six bumps".
+After D2 (formatting): forced spotlessCheck green (4 tasks executed); build green, 31s, 37 tasks; tests forced, 27 tasks executed, 13 tests with fresh timestamps, none failing; lint 0 findings.
+The strip message "Unable to strip ... libandroidx.graphics.path.so" appears in every build (baseline, A, B, D2, CI). It is not silenced.
+
+### 9.3 CI
+- Commit C (at 7d08e78): runner ubuntu-26.04 (Ubuntu 26.04.1 LTS, image 20261012.163.1), Temurin 25.0.4. Build green 1m 52s (37 tasks), Unit tests green 5s, Lint green 20s, CI / build successful in 2m. Two CodeQL checks passed ("No new alerts"). Kept (D7).
+- d66cf27 (with the Style check step): CI / build successful in 2m, both CodeQL checks passed. The Style check log was seen: ./gradlew spotlessCheck on Temurin 25.0.4, fresh daemon, no cached configuration, the four Spotless tasks and spotlessCheck executed, BUILD SUCCESSFUL in 31s. No line-ending finding appeared.
+- The CodeQL checks are not configured in ci.yml. Where they are configured was not found.
+- One run each. The Style check ran once on CI.
+
+### 9.4 Style checker (D4)
+- Adopted: Spotless Gradle plugin 8.10.4 with ktlint 1.8.0 (the version is pinned in the catalog and in the root build file). The plugin and ktlint resolved with the existing repository settings: settings.gradle.kts was not changed. No .editorconfig exists in the repo.
+- Targets are set by hand, because Android sources are not detected automatically: core/src and app/src (*.kt) for the kotlin step, and the three .gradle.kts locations for the kotlinGradle step.
+- Spotless, ktlint 1.8.0 and Kotlin 2.4.21 parsed all sources together locally and on CI. Neither tool's release notes state Kotlin 2.4 support. What is known is that they ran cleanly.
+- ktlint reported rule standard:function-naming for the PascalCase @Composable functions (MainActivity.kt and Theme.kt). Settled with ktlint_function_naming_ignore_when_annotated_with set to Composable in the kotlin step of the root build file. The property name came from memory. It is supported only by behaviour: the two errors disappeared. I have not read ktlint's documentation for it.
+- D2 changed formatting only: trailing commas, final newlines, small re-wraps; no logic change (I read every diff). Theme.kt also got one blank line before an else branch and a one-space shift of a comment closer.
+- The style check is part of CI from d66cf27. CLAUDE.md gets the command in the same pull request.
+
+### 9.5 Dependabot (D5)
+- Commit E adds one group, kotlin, with the pattern org.jetbrains.kotlin.* under the gradle update. GitHub's groups page (you read) says patterns match dependency names, * is a wildcard, a dependency outside every group keeps its own pull request, and dependency-type is not listed for Gradle.
+- Not verified: how Dependabot names the two Kotlin plugins, so whether the pattern matches them. Whether the group changes anything, since both plugins read one version variable. Both are decided by the first Dependabot run after the push. The Compose BOM is outside the group.
+- The pattern has a dot, so it would not match org.jetbrains.kotlinx libraries or a library written org.jetbrains.kotlin:kotlin-stdlib. The catalog has none today.
+
+### 9.6 Phone
+- Debug build installed over the previous one with adb install -r: Success. The app started. Phone 52041FDAS000Z0 (Android 17). The model and build were not recorded.
+- The build command that preceded the install found all 37 tasks up to date, so the installed APK is the one built after D2, as far as I can tell. I did not see its timestamp.
+- Checks 1 to 14 of plan/iterations/01-unlock-app.md section 8, all YES (your report, 2026-10-22): prompt before content, cancel leaves the Unlock screen, unlock shows the greeting, Home and return prompts again (and one prompt only when Home is pressed during the prompt), screenshot blocked, recording black, recents hidden both ways, no-screen-lock message with no unlock (check 8, lock set up again afterwards), install over the old build, largest font in light and dark, rotation gives one prompt, dark-mode switch re-locks and prompts, recents then return is locked, cover screen with no flicker.
+- Check 9 shows that the install over works. Data survival is still untestable, because the app stores nothing yet (iteration 02).
+
+### 9.7 Answers settled by the run
+- Kotlin 2.4.21 builds with AGP 9.4.1 and Gradle 9.6.0 on one machine and on CI. No fall-back to 2.4.20 was needed. AGP above Kotlin's documented range did not break the build.
+- Gradle stays on 9.6.0.
+- core/ and app/ still compile at Java 11 on Kotlin 2.4.21 (D6 holds).
+- R8 9.4.24 is the version the release build used.
+- Not answered: the minimum compileSdk and AGP for the new Compose and AndroidX versions were never looked up. The build passes with compileSdk 37.
+- D2: no minimum-release-age rule. Kotlin 2.4.21 was 13 days old when decided. Revisited at Deploy.
+
+### 9.8 Departures from section 4
+- The style checker was committed in two steps (D1 wiring, D2 formatting) and its CI step in a third, d66cf27, which section 4 did not list. You approved the CI step on 2026-10-22.
+- Section 4 said the root build.gradle.kts, app/build.gradle.kts and core/build.gradle.kts would not change. The root build file changed (Spotless plugin, targets, naming config). The other two got a final newline from the formatter.
+- ci.yml was changed twice (the runner, then the Style check step).
+
+### 9.9 Not run or not verified
+Not run:
+- the release APK on the phone, and R8's effect on the lock code;
+- other phones and Android versions, and the cover screen in split-screen, with incoming-call banners, at the largest font, in dark theme or with TalkBack (as in iteration 01 section 10.4);
+- a tests-from-scratch run of build and lint after D2 (only spotlessCheck and the tests were forced);
+- Dependabot after commit E.
+Not verified:
+- the Gradle version (the wrapper file was never seen; 9.6.0 comes from the hand-off);
+- Spotless 8.10.4 and ktlint 1.8.0 release ages, and ktlint's Kotlin 2.4 support;
+- the naming property name beyond its effect;
+- Dependabot pattern names;
+- where CodeQL is configured;
+- the phone model.
 
 ## 10. Status and notes
-Approved 2026-10-21 (note and leanings). Decisions D1 to D7 settled 2026-10-21. Not run. Committed on branch spike-dependency-upgrade as 7a9ef90, not pushed. No build file or version has been changed.
+Approved 2026-10-21 (note and leanings). Decisions D1 to D7 settled 2026-10-21. Run on branch spike-dependency-upgrade (commits in 9.1), draft pull request 73, not merged. Sections 4 to 8 are the plan as approved; section 9 records what was done and what differed.
+Left before the spike is done: CLAUDE.md and plan/plan.md updates in the same pull request, the push of commit E and the first Dependabot run (to see whether the kotlin group forms), your review, and the merge (yours). Iteration 02 cannot start until then.
+Do not merge Dependabot's Compose BOM 2026.09.00 branch: the same version is already in this branch (commit B).
