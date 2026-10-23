@@ -185,8 +185,13 @@ The strip message "Unable to strip ... libandroidx.graphics.path.so" appears in 
 
 ### 9.5 Dependabot (D5)
 - Commit E adds one group, kotlin, with the pattern org.jetbrains.kotlin.* under the gradle update. GitHub's groups page (you read) says patterns match dependency names, * is a wildcard, a dependency outside every group keeps its own pull request, and dependency-type is not listed for Gradle.
-- Not verified: how Dependabot names the two Kotlin plugins, so whether the pattern matches them. Whether the group changes anything, since both plugins read one version variable. Both are decided by the first Dependabot run after the push. The Compose BOM is outside the group.
-- After the merge (your report): the Dependabot config validation check passed on 7df2049, so GitHub accepts the file's syntax. No Dependabot activity had been seen since the push; the schedule is weekly. The pattern match and the effect of the group are still unverified. What happened to Dependabot's old Compose BOM 2026.09.00 branch (closed, deleted or still open) was not reported.
+- Not verified: whether the group changes anything, since both plugins read one version variable. The Compose BOM is outside the group.
+- After the merge (your report): the Dependabot config validation check passed on 7df2049, so GitHub accepts the file's syntax. The schedule is weekly with no day or time set.
+- Dependabot runs seen after the merge (your paste of the Dependabot tab, then excerpts of the log of job 1644825257, 2026-10-22 about 09:02 UTC; I did not see the rest of that log):
+  - The log names the two plugins org.jetbrains.kotlin.jvm and org.jetbrains.kotlin.plugin.compose. It ran a specificity check for both against the group 'kotlin' (applies_to: version-updates). My reading: this shows the pattern org.jetbrains.kotlin.* matched both. I have not read Dependabot's documentation for that step.
+  - For both plugins it found 2.4.21 to be the latest stable version (2.5.0-Beta2 was the newest it parsed, pre-releases filtered out) and logged "No update needed". For the group it logged "Nothing to update for Dependency Group: 'kotlin'". So no group pull request was opened. This shows the group did no harm. It does not show what the group does when a new Kotlin version appears.
+  - The same log shows the Compose BOM at 2026.09.00 as the latest ("No update needed"). The log has a cooldown filter step that removed 0 versions. Whether that is a default or a setting was not shown.
+- Pull requests (your paste): #65 "bump androidx.compose:compose-bom from 2026.02.01 to 2026.09.00" and #66 "bump kotlin from 2.2.10 to 2.4.21" are closed (about 17 hours before the paste). Both versions are already on main. My reading: they closed for that reason; the excerpts do not show the closing. No remote Dependabot branch for the Compose BOM was seen in git branch -a. #67 "bump gradle-wrapper from 9.6.0 to 9.8.1" is open and not merged: Gradle stays on 9.6.0 (section 9.7) and a change needs its own look. #68 "bump androidx.core:core-ktx from 1.10.1 to 1.19.1" is open, marked out of date with the base branch, and asks for a version main already has (coreKtx 1.19.1). It is left alone, and Update branch is not used, to see whether the next run closes it.
 - The pattern has a dot, so it would not match org.jetbrains.kotlinx libraries or a library written org.jetbrains.kotlin:kotlin-stdlib. The catalog has none today.
 
 ### 9.6 Phone
@@ -213,16 +218,17 @@ Not run:
 - the release APK on the phone, and R8's effect on the lock code;
 - other phones and Android versions, and the cover screen in split-screen, with incoming-call banners, at the largest font, in dark theme or with TalkBack (as in iteration 01 section 10.4);
 - a tests-from-scratch run of build and lint after D2 (only spotlessCheck and the tests were forced);
-- Dependabot after commit E (merged in 7df2049; no run seen yet).
+- the effect of the kotlin group when a new Kotlin version appears (runs seen so far found nothing to update, 9.5);
+- #67 (Gradle wrapper 9.8.1) and #68 (core-ktx, already applied on main): both open, not acted on.
 Not verified:
 - the Gradle version (the wrapper file was never seen; 9.6.0 comes from the hand-off);
 - Spotless 8.10.4 and ktlint 1.8.0 release ages, and ktlint's Kotlin 2.4 support;
 - the naming property name beyond its effect;
-- Dependabot pattern names;
+- Dependabot's documentation for the specificity check (the pattern match rests on log lines only);
 - where CodeQL is configured;
 - the phone model.
 
 ## 10. Status and notes
 Approved 2026-10-21 (note and leanings). Decisions D1 to D7 settled 2026-10-21. Run on branch spike-dependency-upgrade (commits in 9.1), pull request 73, merged as 7df2049. Sections 4 to 8 are the plan as approved; section 9 records what was done and what differed.
 The spike is finished: the CLAUDE.md and plan.md updates were in the pull request, and you merged it. Iteration 02 no longer waits on it.
-Left open: the first Dependabot run (to see whether the kotlin group forms and whether its pattern matches the two Kotlin plugins), and the fate of Dependabot's old Compose BOM 2026.09.00 branch (not reported). That branch needs no merge: the same version is already on main (commit B).
+Left open: what the kotlin group does when a new Kotlin version appears, and the fate of pull requests #67 and #68 (9.5). The old Compose BOM pull request (#65) and the Kotlin one (#66) are closed, and the versions are already on main (commits A and B).
