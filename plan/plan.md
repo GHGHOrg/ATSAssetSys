@@ -1,6 +1,6 @@
 # plan/plan.md
 
-Stage: Build. Status: approved, together with plan/setup.md. Setup run 2026-10-18 (setup.md section 13). Iteration 01 is done. The dependency-upgrade spike has run and is merged (pull request 73, merge commit 7df2049). Iterations 02 onward have not started.
+Stage: Build. Status: approved, together with plan/setup.md. Setup run 2026-10-18 (setup.md section 13). Iteration 01 is done. The dependency-upgrade spike has run and is merged (pull request 73, merge commit 7df2049). Iteration 02 is split into 02a and 02b (section 12); 02a has a base file, nothing is built. Iterations 03 onward have not started.
 Source: intent/intent.md v52 (final), spec/spec.md v4 (final).
 Only iteration 01 has been built, checked on the phone and merged (see its file). Where this file says "my reading", it is
 an interpretation of spec.md that you approve, not a test.
@@ -49,7 +49,8 @@ Rules for the list:
 | # | File | After this you can... | Depends on | Spec refs |
 |---|---|---|---|---|
 | 01 | unlock-app | Unlock with biometric or PIN; screenshots and recents blocked | setup | 9, crit. 6, 20, 35 |
-| 02 | opening-balance | Set the opening balance; Overall and Cash show it | 01, upgrade spike | 4.1, 4.2, 4.10, crit. 19, 36, 37 |
+| 02a | opening-balance-stored | Set the opening balance; it is stored encrypted and Overall shows it as net worth | 01, upgrade spike | 3, 4.1, 4.2, 4.8, 4.10, crit. 19, 26, 35, 36, 37 |
+| 02b | bottom-bar-and-cash-tab | Use the four-tab bottom bar and a Cash tab showing the balance | 02a | 6 (navigation outline, view 7), crit. 9, 39 to 42, 49 (part) |
 | 03 | deposit-withdrawal | Add deposits and withdrawals; overdrafts blocked | 02 | 4.2, crit. 42, 53 |
 | 04 | interest-adjustment | Add interest/dividend and adjustment entries | 03 | 4.2, crit. 53 |
 | 05 | reverse-cash-entry | Reverse a cash entry | 04 | 4.6 (cash), crit. 53 |
@@ -86,15 +87,15 @@ Rules for the list:
 
 ### Examples as automated tests (K1, crit. 2; my reading)
 A in 11, B in 12, C in 09 (it needs a buy), D and F in 13, G in 14, E in 29. Criteria 59
-and 60 are tested in the iterations whose rules they cover (arithmetic from 02 and 11,
+and 60 are tested in the iterations whose rules they cover (integer-cent arithmetic from 02a, exact fractions from 09 and 11,
 60(a) in 15, 60(b) in 14, 60(c) in 17, 60(d) in 11).
 
 ### Where components first appear (my reading)
 | Component | First built | Grows in |
 |---|---|---|
-| K1 rules engine | 02 | 03 to 05, 09, 11 to 15, 29, 33 to 35 |
-| K2 storage | 02 | every iteration that adds a record type |
-| K3 valuation | 02 (cash only) | 09, 16 to 19, 23, 26 |
+| K1 rules engine | 02a | 03 to 05, 09, 11 to 15, 29, 33 to 35 |
+| K2 storage | 02a | every iteration that adds a record type |
+| K3 valuation | 02a (cash only) | 09, 16 to 19, 23, 26 |
 | K4 price service | 09 (verify only) | 16, 23, 30, 33 to 35 |
 | K5 entry flows | 03 | 04 to 05, 07 to 09, 11 to 15, 29 |
 | K6 backup and restore | 31 | 32 to 35 |
@@ -228,7 +229,9 @@ when it adds a command, a convention or a pitfall.
 | spikes/price-source.md | not written |
 | spikes/dependency-upgrade.md | run 2026-10-21 to 2026-10-22 on branch spike-dependency-upgrade; pull request 73 merged as 7df2049, CI green on main (your report). Results in the note's section 9. Dependabot group unverified until it has run once |
 | Iteration 01 | done: built and checked on the phone 2026-10-19 (check 8 on 2026-10-20); pull request #70 merged as 8a5703e, CI green on main (your report); not-run items are listed in its file |
-| Iterations 02 to 35 | not started, files not written |
+| Iteration 02a | base file plan/iterations/02a-opening-balance-stored.md approved 2026-10-23, decisions 1 to 3 settled; not started (wireframes 01 and 10b not yet read) |
+| Iteration 02b | not started, file not written |
+| Iterations 03 to 35 | not started, files not written |
 
 ## 12. Change log
 Each departure from this plan is recorded here with its date and the reason.
@@ -243,7 +246,21 @@ Each departure from this plan is recorded here with its date and the reason.
 - 2026-10-22: pull request 73 was merged as 7df2049 and CI on main was reported green by you. The spike
   is finished and iteration 02 no longer waits on it. The status lines above were updated. The original
   question list in section 7 is left as written, as the plan's record.
+- 2026-10-23: iteration 02 split into 02a (opening-balance-stored) and 02b (bottom-bar-and-cash-tab),
+  as section 5 requires when an iteration holds more than one capability. Reason: 02 held the opening
+  balance entry, the encrypted data layer (Room, SQLCipher, Keystore), the backup exclusions, and the
+  bottom bar with the Cash tab. In the Depends-on column of other rows, "02" means both parts.
+- 2026-10-23: 02a has no bottom bar (the spec says it is always visible; temporary until 02b) and no
+  Create a portfolio button (it arrives with 07). The exact-fraction type is not built in 02a: nothing
+  uses it before 09 (price per share), so "arithmetic from 02" is now integer cents from 02a and exact
+  fractions from 09 and 11.
+- 2026-10-23: data layer decisions for 02a (settled by you): Room 3.0.3 (androidx.room3) with
+  SQLCipherDriver, with the K2 interface in core/ using suspend functions; if Room 3 fails on the branch
+  I stop and show you before any fall-back to Room 2.8.5. Typed form values are kept by a ViewModel and
+  the app still re-locks on recreation. Versions come from pages you pasted on 2026-10-23.
+- 2026-10-23: the SQLCipher licence (BSD-style, three conditions, the binary one applies if the app is
+  passed on) is a Deploy item: a Licences screen, written then as a spec addition. Spec v4 is unchanged.
 
 ## 13. Out of scope for this plan
 Performance over time, per-holding dividends, ETF look-through, the next intent.md items,
-and the Deploy stage (review, install route, release signing), which follow Ruleset A rule 6.
+and the Deploy stage (review, install route, release signing), which follow Ruleset A rule 6. Deploy also carries the Licences screen (section 12).
