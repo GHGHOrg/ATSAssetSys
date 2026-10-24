@@ -1,15 +1,15 @@
 # plan/iterations/02a-opening-balance-stored.md
 
-Stage: Build. Status: base approved by you 2026-10-23; decisions 1 to 3 settled the same day (section 10). Not yet approved to start the branch: that waits for the wireframes and plan.md. Nothing is built.
+Stage: Build. Status: base approved by you 2026-10-23; decisions 1 to 3 settled the same day (section 10). Wireframes 01 and 10b, the wireframes README and the theme files were read on 2026-10-24, and you approved my reading of them (section 12). Not yet approved to start the branch: that waits for your go. Nothing is built.
 Source: plan/plan.md section 4 (row 02, split into 02a and 02b on 2026-10-23), intent/intent.md v52 (final), spec/spec.md v4 (final).
 Section 9 is "you read": pages you pasted on 2026-10-23. I did not see the pages. "My reading" is an interpretation, not a test. Versions are re-checked on the day the branch is made.
 
 ## 1. Outcome
-I unlock the app, set the opening balance (date and amount, with a review step), and Overall shows it as net worth. It is stored encrypted on the phone and is still there after a restart and after a new build is installed over the old one.
+I unlock the app, set the opening balance (date, amount and an optional note, with a review step), and Overall shows it as net worth. It is stored encrypted on the phone and is still there after a restart and after a new build is installed over the old one.
 
 ## 2. Spec refs
 - spec 3 (cash entry, "app holds data"), 4.1 (order, as-of date), 4.2 (opening balance first; amounts up to 2 decimals; never 0), 4.8 (net worth is the cash balance as of today; cash only here), 4.10 (integer cents, no floating point).
-- spec 6: first launch and empty state; Overall (view 1, cash only); cash entry with a review screen (wireframe 10b); date note and "ET" (C13); number format; error, empty and loading states; accessibility; theme. Wireframes 01-overall and 10b: not seen by me yet.
+- spec 6: first launch and empty state; Overall (view 1, cash only); cash entry with a review screen (wireframe 10b); date note and "ET" (C13); number format; error, empty and loading states; accessibility; theme. Wireframes 01-overall and 10b: read 2026-10-24; differences in section 12.
 - spec 9: encryption at rest, no automatic copies, nothing logged; the lock of iteration 01 stays.
 - spec 14: K1, K2, K3 (cash only), K9; C13, C17, C18.
 - Criteria: 19, 26 (amount part), 35 (data survival), 36, 37 (partly, section 8), 38 (first look only), 9, 39 to 42.
@@ -20,6 +20,7 @@ I unlock the app, set the opening balance (date and amount, with a review step),
 - The Licences screen for the SQLCipher notice: a Deploy item, decided 2026-10-23, no spec change.
 - Release signing and install route (C17). Figma tokens (the template theme stays).
 - Fraction type (exact quotients): no consumer until iteration 09 (price per share). plan.md says "arithmetic from 02"; this is a departure to record in plan.md (section 10).
+- Parts of wireframe 01 that a later iteration builds (section 12, items 1 to 4): the allocation donut and dropdown (18), the price lines (16), the backup banner (32), Net Worth (Total) on tap (17), the Buy/Sell button (09) and the "Restore is in More only" line (02b).
 
 ## 4. Files
 New, core/ (package app.ghghorg.atsassets.core, under core/src/main/kotlin/...):
@@ -38,7 +39,7 @@ Unchanged on purpose: AndroidManifest.xml (no INTERNET permission yet) and data_
 
 ## 5. Order of work
 1. Branch iter-02a-opening-balance-stored from the updated main.
-2. Read wireframes 01 and 10b (you upload them). List any difference from my reading here.
+2. Done 2026-10-24: wireframes 01 and 10b, their README and the theme files read; the differences are in section 12 and are approved.
 3. Baseline: build, tests, lint, spotlessCheck. Run the 16 KB check on the current debug APK (section 8) so any change is visible later.
 4. Write the core/ tests first (Money, OpeningBalance, Balance, MarketDate), see them fail, then implement. Replace PlaceholderTest in the same commit (CLAUDE.md exception).
 5. Add dependencies (versions in section 9, re-checked that day): KSP, Room 3 with its Gradle plugin, SQLCipher, lifecycle ViewModel, project(":core"). Build and lint. If the build fails, stop and show it (decision 1 fall-back).
@@ -68,6 +69,8 @@ Unchanged on purpose: AndroidManifest.xml (no INTERNET permission yet) and data_
 - Storage cannot be unit tested on the JVM (native library, Android). It is checked by hand; CI has no emulator.
 - Room 3.0.3 is 2 days old (2026-10-21). Spike decision D2 set no minimum-age rule.
 - A lost opening-balance form on theme change is the iteration 01 limit (re-lock on recreation); decision 3.
+- Dynamic color is always on (minSdk 33), so the colors come from the wallpaper and one phone cannot show that contrast holds. Check 11 is by eye only (section 12, item 10).
+- A future-dated opening balance is allowed (section 12, item 7). Net worth shows $0.00 until that date while the app already holds data. A test covers the rule; the phone behaviour is check 13.
 
 ## 8. Proof
 Commands (PowerShell, repo root), real output shown:
@@ -80,7 +83,7 @@ Commands (PowerShell, repo root), real output shown:
 - CI green on the pull request (your report).
 By hand on the phone (Android 17), each result written back as "checked on the phone" or "not checked":
 1. First launch after unlock shows the three steps; 2 and 3 are locked.
-2. Opening balance form: date prefilled in New York time with the note; 0, a third decimal and text are refused and the typed text stays.
+2. Opening balance form: date prefilled in New York time with the note; 0, a third decimal, text, a "$", a comma and a minus are refused and the typed text stays. The Note field takes one line only.
 3. A valid amount, review, confirm: Overall shows net worth, the steps are gone.
 4. Force stop, restart, unlock: the balance is still there.
 5. adb install -r of a newer build: the balance is still there (criterion 35).
@@ -89,8 +92,9 @@ By hand on the phone (Android 17), each result written back as "checked on the p
 8. Uninstall and reinstall: the app opens empty.
 9. Half-fill the form, switch dark mode: typed values are kept (decision 3).
 10. Logcat read while entering the balance: no amount.
-11. Largest font, TalkBack, light and dark theme on Overall and the form (criteria 39 to 42).
+11. Largest font, TalkBack, light and dark theme on Overall and the form (criteria 39 to 42), by eye only: the colors follow the wallpaper.
 12. Iteration 01 checks 1 to 14 on the final build, as the spike did.
+13. Opening balance dated in the future: Overall shows net worth $0.00 and the normal screens (the guide has ended).
 Criterion 37's phone test (no transfer, no cloud backup): method not decided. Android's backup testing page is not read; you paste it before this check.
 
 ## 9. Research (you read, 2026-10-23)
@@ -106,7 +110,35 @@ Settled by you on 2026-10-23:
 1. Room generation: (a) Room 3.0.3 with SQLCipherDriver. If it fails to build or run on the branch, I stop and show you before any fall-back to Room 2.8.5 with SupportOpenHelperFactory.
 2. K2 and coroutines: (a) suspend functions in the K2 interface; K1 stays plain functions. I believe declaring suspend needs no extra library in core/ (unchecked; the branch build shows it).
 3. Typed values across recreation: (a) a ViewModel keeps the form text and the app still re-locks on recreation, so iteration 01 check 12 stays valid. The text is in memory only and is lost if Android kills the app in the background.
-Leanings, not yet confirmed by you (I apply them unless you object): no StrongBox request; AES-256 GCM key without user authentication (C18); database opens after unlock; text date field "YYYY-MM-DD" instead of a date picker (a picker may shift dates by time zone; not checked); no navigation library yet; data_extraction_rules.xml unchanged; entity has all spec 3 cash fields; PlaceholderTest replaced.
+Leanings, not yet confirmed by you (I apply them unless you object): no StrongBox request; AES-256 GCM key without user authentication (C18); database opens after unlock; text date field "YYYY-MM-DD" instead of a date picker (a picker may shift dates by time zone; not checked); no navigation library yet; data_extraction_rules.xml unchanged; entity has all spec 3 cash fields; PlaceholderTest replaced. New message wording that the wireframes do not cover is written by me and shown to you before use (D9).
 
 ## 11. Status and notes
-Base approved, decisions settled (section 10). plan.md change log (02 split, Fraction departure, no bottom bar in 02a) is written when this file is saved and plan.md is uploaded again.
+Base approved, decisions settled (section 10), wireframe and theme reading approved 2026-10-24 (section 12). The plan.md change log has the 02 split, the Fraction departure and no bottom bar in 02a (merged in pull request 76); the wireframe reading is added on 2026-10-24. Next: your go to start the branch.
+
+## 12. Wireframe and theme reading (approved by you 2026-10-24)
+Files read, from your uploads of 2026-10-24. The hashes are from tool output. No earlier hash existed for them, so they identify what I read; they do not prove it equals the repo copy.
+| File | What | Lines | Bytes | SHA-256 |
+|---|---|---|---|---|
+| 01-overall.html | wireframe 1 | 118 | 9701 | 44b797ebcd8ca1be2bd4d4c5ad41a8ebcfea40346d3d6d48e1b9ffc8e29f6caa |
+| 10b-split-cash-reversal.html | wireframe 10b | 233 | 21045 | 889ef1fb9e5b31e7fc99f59dc3568372811ecc55942e7baf29000dd297b93a5e |
+| README.md | wireframes README | 26 | 1997 | 0b34112de77fd1973d338ea1f1d845cc9fdb41821ccfd8e5f3f869b9f203dd96 |
+| Color.kt | ui/theme | 11 | 286 | 1d3887a7b30a8b3a52b30d9d20ea7dd209d8b6010c14ddc81645d8353edba260 |
+| Theme.kt | ui/theme | 58 | 1636 | bf58aa7e18cbed2bc61a83743bd88f7bd8e4eb8821e9073297a9e52a687913cc |
+| Type.kt | ui/theme | 36 | 1038 | 9fa4fb82a688583b190798cd7004fed6f5c4d84b87fab67efca388e2cb6fed21 |
+
+Left out of 02a, because a later iteration builds it:
+1. Allocation donut and "Allocation by" dropdown (wireframe 01, marker 3): iteration 18. 02a shows net worth only, so criterion 24 (100% cash) is not in 02a.
+2. "Prices updated" and "refresh failed" lines (markers 2 and 5): there are no prices yet.
+3. Backup banner (marker 1, iteration 32), tap net worth for Net Worth (Total) (marker 2, 17), Buy/Sell button (marker 6, 09), "Restore is in More only" line (marker 8, More arrives in 02b).
+4. Bottom bar: 02b (stub, section 6).
+
+What you see or type:
+5. Note: the opening balance form has an optional Note (wireframe 10b, frame C), one line only, because a line break would break the backup file (spec section 8).
+6. Typed amount: "10000.00" is accepted. "$10,000.00", a comma and a minus are refused (spec section 8 number rules), although the wireframe field shows the "$" form.
+7. Future date: a future-dated opening balance is allowed. Net worth shows $0.00 until that date (4.1, 4.8).
+8. Review screen: the layout of frame D (Type, Date with "ET", Amount with its sign, Note, Cash effect; Confirm and save; Back to edit; "Nothing is saved until you confirm.").
+9. Wording: messages the wireframes do not cover (a non-number amount, an empty or impossible date, "$" or a comma) are written by me and shown to you before use (D9). Frame J gives "Amount: cannot be 0. Up to 2 decimals." and "Not saved. The opening balance already exists."
+
+Limits:
+10. Theme: Theme.kt sets dynamicColor to true by default and minSdk is 33, so the colors come from the wallpaper. The purple palette in Color.kt is never used. Contrast (criteria 39 to 42) cannot be shown by one phone. 02a keeps the theme unchanged. Gain green and loss red are decided with the Figma token handoff, not here.
+11. Frame C of wireframe 10b draws no bottom bar, although the wireframe says the bar is always visible. This is raised again when 02b is written; nothing changes here.
