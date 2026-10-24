@@ -229,7 +229,7 @@ when it adds a command, a convention or a pitfall.
 | spikes/price-source.md | not written |
 | spikes/dependency-upgrade.md | run 2026-10-21 to 2026-10-22 on branch spike-dependency-upgrade; pull request 73 merged as 7df2049, CI green on main (your report). Results in the note's section 9. Dependabot group unverified until it has run once |
 | Iteration 01 | done: built and checked on the phone 2026-10-19 (check 8 on 2026-10-20); pull request #70 merged as 8a5703e, CI green on main (your report); not-run items are listed in its file |
-| Iteration 02a | base file plan/iterations/02a-opening-balance-stored.md approved 2026-10-23, decisions 1 to 3 settled; not started (wireframes 01 and 10b not yet read) |
+| Iteration 02a | base file plan/iterations/02a-opening-balance-stored.md approved 2026-10-23, decisions 1 to 3 settled; wireframes 01 and 10b and the theme files read 2026-10-24, reading approved (02a file, section 12); not started |
 | Iteration 02b | not started, file not written |
 | Iterations 03 to 35 | not started, files not written |
 
@@ -260,6 +260,7 @@ Each departure from this plan is recorded here with its date and the reason.
   the app still re-locks on recreation. Versions come from pages you pasted on 2026-10-23.
 - 2026-10-23: the SQLCipher licence (BSD-style, three conditions, the binary one applies if the app is
   passed on) is a Deploy item: a Licences screen, written then as a spec addition. Spec v4 is unchanged.
+- 2026-10-24: wireframes 01 and 10b, their README and the theme files were read for 02a, and you approved my reading (02a file, section 12). Effect on 02a: an optional one-line Note field on the opening balance form; the allocation donut, price lines, backup banner, Buy/Sell button and "Restore is in More only" line of wireframe 01 are left to later iterations (18, 16, 32, 09, 02b); a future-dated opening balance is allowed. Spec v4 and the wireframes are unchanged.
 
 ## 13. Out of scope for this plan
 Performance over time, per-holding dividends, ETF look-through, the next intent.md items,
