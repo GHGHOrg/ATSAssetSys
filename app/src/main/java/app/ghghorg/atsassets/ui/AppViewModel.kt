@@ -105,8 +105,11 @@ class AppViewModel(
         current.copy(screen = Screen.FORM, form = filled, refusals = Refusals())
     }
 
-    /** Back from the form to Overall. The typed text is kept. Stub for commit G: does nothing yet. */
-    fun closeForm() {}
+    /** Back from the form to Overall. The typed text is kept and the refusals are cleared. Ignored outside FORM. */
+    fun closeForm() {
+        if (mutableState.value.screen != Screen.FORM) return
+        mutableState.update { it.copy(screen = Screen.OVERALL, refusals = Refusals()) }
+    }
 
     fun onDateChange(text: String) = mutableState.update {
         it.copy(form = it.form.copy(dateText = text), refusals = it.refusals.copy(date = null))
