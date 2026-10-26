@@ -273,6 +273,38 @@ class AppViewModelTest {
         assertTrue(store.saved.isEmpty())
         assertEquals(Screen.FORM, vm.state.value.screen)
     }
+
+    @Test
+    fun closeFormReturnsToOverallAndKeepsTheText() {
+        val vm = started(FakeStore())
+        vm.openForm()
+        vm.fill(date = "2026-01-01", amount = "abc", note = "Start")
+        vm.review()
+        assertEquals(AmountError.BAD_FORMAT, vm.state.value.refusals.amount)
+        vm.closeForm()
+        val state = vm.state.value
+        assertEquals(Screen.OVERALL, state.screen)
+        assertEquals(FormState("2026-01-01", "abc", "Start"), state.form)
+        assertEquals(Refusals(), state.refusals)
+        vm.openForm()
+        assertEquals(Screen.FORM, vm.state.value.screen)
+        assertEquals(FormState("2026-01-01", "abc", "Start"), vm.state.value.form)
+    }
+
+    @Test
+    fun closeFormOutsideTheFormDoesNothing() {
+        val store = FakeStore()
+        val vm = started(store)
+        vm.closeForm()
+        assertEquals(Screen.OVERALL, vm.state.value.screen)
+        vm.openForm()
+        vm.fill(date = "2026-01-01", amount = "10000.00")
+        vm.review()
+        assertEquals(Screen.REVIEW, vm.state.value.screen)
+        vm.closeForm()
+        assertEquals(Screen.REVIEW, vm.state.value.screen)
+        assertTrue(store.saved.isEmpty())
+    }
 }
 
 private fun clockAt(
