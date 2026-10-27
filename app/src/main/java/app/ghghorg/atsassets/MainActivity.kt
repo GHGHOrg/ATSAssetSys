@@ -17,19 +17,28 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat
 import androidx.fragment.app.FragmentActivity
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.ViewModelProvider
+import app.ghghorg.atsassets.data.DatabaseKey
+import app.ghghorg.atsassets.data.RoomRecordStore
+import app.ghghorg.atsassets.data.SqlCipherOpener
 import app.ghghorg.atsassets.lock.AppLock
 import app.ghghorg.atsassets.lock.LockState
+import app.ghghorg.atsassets.ui.AppContent
+import app.ghghorg.atsassets.ui.AppViewModel
 import app.ghghorg.atsassets.ui.theme.ATSAssetSystemTheme
+import java.time.Clock
+import java.util.UUID
 
 class MainActivity : FragmentActivity() {
     private val lock = AppLock()
@@ -37,6 +46,7 @@ class MainActivity : FragmentActivity() {
     private var windowFocused by mutableStateOf(false)
     private lateinit var prompt: BiometricPrompt
     private lateinit var promptInfo: BiometricPrompt.PromptInfo
+    private lateinit var viewModel: AppViewModel
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -69,16 +79,20 @@ class MainActivity : FragmentActivity() {
             .setTitle(getString(R.string.prompt_title))
             .setAllowedAuthenticators(BIOMETRIC_STRONG or DEVICE_CREDENTIAL)
             .build()
+        viewModel = ViewModelProvider(this, viewModelFactory())[AppViewModel::class.java]
 
         setContent {
             ATSAssetSystemTheme {
+                LaunchedEffect(lockState) {
+                    if (lockState == LockState.Unlocked) viewModel.start()
+                }
                 Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
                     when (lockState) {
                         // Cover while the window is not focused (for example recents), so the
                         // live card shows no content. Experiment after phone check 7.
                         LockState.Unlocked -> if (windowFocused) {
-                            Greeting(
-                                name = "Android",
+                            AppContent(
+                                viewModel = viewModel,
                                 modifier = Modifier.padding(innerPadding),
                             )
                         } else {
@@ -124,6 +138,20 @@ class MainActivity : FragmentActivity() {
         if (lock.shouldShowPrompt()) {
             lock.onPromptShown()
             prompt.authenticate(promptInfo)
+        }
+    }
+
+    private fun viewModelFactory() = object : ViewModelProvider.Factory {
+        override fun <T : ViewModel> create(modelClass: Class<T>): T {
+            val appContext = applicationContext
+            val appViewModel = AppViewModel(
+                storeProvider = {
+                    RoomRecordStore(DatabaseKey(appContext.noBackupFilesDir), SqlCipherOpener(appContext)::open)
+                },
+                clock = Clock.systemUTC(),
+                newId = { UUID.randomUUID().toString() },
+            )
+            return modelClass.cast(appViewModel)!!
         }
     }
 }
@@ -173,21 +201,5 @@ fun NoScreenLockScreen(modifier: Modifier = Modifier) {
             text = stringResource(R.string.no_screen_lock_message),
             style = MaterialTheme.typography.bodyLarge,
         )
-    }
-}
-
-@Composable
-fun Greeting(name: String, modifier: Modifier = Modifier) {
-    Text(
-        text = "Hello $name!",
-        modifier = modifier,
-    )
-}
-
-@Preview(showBackground = true)
-@Composable
-fun GreetingPreview() {
-    ATSAssetSystemTheme {
-        Greeting("Android")
     }
 }
