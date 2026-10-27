@@ -152,7 +152,8 @@ Branch iter-02a-opening-balance-stored, all local, no pull request, no CI. Newes
 ### 13.2 Local run
 - On commit M's files (2026-10-27): spotlessCheck green; debug build green (39 tasks); forced test run (30 tasks): 74 tests, 0 failures (BalanceTest 8, MarketDateTest 10, MoneyTest 15, OpeningBalanceTest 9, AppLockTest 12, AppViewModelTest 20), fresh timestamps.
 - Lint: 2 findings, both listed, neither silenced. NewerVersionAvailable for kotlinx-coroutines-test 1.9.0 (1.11.0 available) at gradle/libs.versions.toml:17; kept on purpose, it is the same coroutines core that Room 3 resolves. TypographyDashes at strings.xml:31 (date_not_a_date): the hyphens in YYYY-MM-DD are the format the field accepts, and an en dash would show a character you cannot type. Quoting the dates did not silence it. Not taken: tools:ignore, dropping the example date.
-- Run after commit J only (K to M changed screen code): release build (52 tasks, R8 ran; libandroidx.graphics.path.so and libsqlcipher.so packaged unstripped); 16 KB check on the debug APK: all 8 .so files (4 ABIs, 2 libraries) show align 2**14.
+- Run on 2026-10-28 on commit M's code (the later commits changed documents only): release build (52 tasks, R8 ran; libandroidx.graphics.path.so and libsqlcipher.so packaged unstripped); 16 KB check on the debug APK: all 8 .so files (4 ABIs, 2 libraries) show align 2**14.
+- R8 on the release APK (2026-10-28): the release build was green (52 tasks, 23 executed). mapping.txt (32,064,470 bytes, same time as the release APK) has no line for AtsDatabase_Impl or for any app.ghghorg.atsassets.data class; I did not find why. classes.dex of the release APK contains the names as text. Android Studio's APK Analyzer (your screenshot) lists, under app.ghghorg.atsassets.data in the release classes.dex, with their original names: AtsDatabase, AtsDatabase_Impl (1 inner class), CashEntryDao_Impl (4 inner classes), CashEntryRow, DatabaseKey, RoomRecordStore (2 inner classes), RoomRecordStoreKt, SqlCipherOpener (1 inner class). The 16 KB check read the debug APK only. Not shown: that the release app runs, because an unsigned APK cannot be installed.
 
 ### 13.3 Phone results (Android 17, debug builds)
 - 1 First launch: three steps, 2 and 3 locked. Yes.
@@ -186,7 +187,6 @@ Deferred by you on 2026-10-28:
 Not run:
 - CI, and any pull request
 - the release APK on a device
-- the R8 mapping.txt check for AtsDatabase_Impl
 - the merged-manifest read-back
 - installing a newer build over this one (criterion 35 is only partly checked)
 - the key-survival and lock-removal check
@@ -217,7 +217,7 @@ Items 1 to 9 come from the build and your phone reports. They are not in section
 - The journal-mode path was read in source, not run.
 - What Room 3 does when the open fails is unknown. Phone check 7 shows the screen and the unchanged file, not Room's internal behavior.
 - There is no proof of atomicity for multi-row saves until iteration 03 or 09.
-- R8 may remove AtsDatabase_Impl. The release build ran R8 after commit J, but the mapping check was not run.
+- R8 may remove AtsDatabase_Impl. In the release APK it is present with its original name (13.2). Whether Room finds it when the release app runs is not shown, and mapping.txt not listing the data classes is unexplained.
 - libsqlcipher.so is not stripped. The strip message names it, and it is left as is.
 
 ### 15.2 Research notes
