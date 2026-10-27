@@ -1,6 +1,6 @@
 # plan/iterations/02a-opening-balance-stored.md
 
-Stage: Build. Status: built on branch iter-02a-opening-balance-stored (commits A to M, local, not pushed at the time of writing; 2026-10-28). Base approved by you 2026-10-23, decisions 1 to 3 settled the same day (section 10), wireframe reading approved 2026-10-24 (section 12). Local checks and the phone checks done are in section 13. Not done, deferred by you on 2026-10-28: criterion 37, TalkBack (the rest of check 11 and the TalkBack part of criterion 39) and check 8 on this build. CI has not run. Sections 1 to 12 were written before the build; where the build differs, section 14 says so.
+Stage: Build. Status: done: built on branch iter-02a-opening-balance-stored (commits A to M and three document commits); pull request #79 merged as 68c9015 on 2026-10-28, CI green on the pull request and on main (your reports). Base approved by you 2026-10-23, decisions 1 to 3 settled the same day (section 10), wireframe reading approved 2026-10-24 (section 12). Local checks and the phone checks done are in section 13. Not done, deferred by you on 2026-10-28: criterion 37, TalkBack (the rest of check 11 and the TalkBack part of criterion 39) and check 8 on this build. Sections 13 to 15 were written before the push; the pull request and CI results are in section 11. Sections 1 to 12 were written before the build; where the build differs, section 14 says so.
 Source: plan/plan.md section 4 (row 02, split into 02a and 02b on 2026-10-23), intent/intent.md v52 (final), spec/spec.md v4 (final).
 Section 9 is "you read": pages you pasted on 2026-10-23. I did not see the pages. "My reading" is an interpretation, not a test. Versions are re-checked on the day the branch is made.
 
@@ -113,7 +113,7 @@ Settled by you on 2026-10-23:
 Leanings, not yet confirmed by you (I apply them unless you object): no StrongBox request; AES-256 GCM key without user authentication (C18); database opens after unlock; text date field "YYYY-MM-DD" instead of a date picker (a picker may shift dates by time zone; not checked); no navigation library yet; data_extraction_rules.xml unchanged; entity has all spec 3 cash fields; PlaceholderTest replaced. New message wording that the wireframes do not cover is written by me and shown to you before use (D9).
 
 ## 11. Status and notes
-Built (commits A to M). Checked locally and on the phone as stated in section 13. Left for later by you on 2026-10-28: criterion 37, TalkBack, and check 8 on this build. Next: release build and 16 KB re-check, then edits to plan.md and CLAUDE.md in the same pull request, then your go to push (pull request and CI not started).
+Done: built (commits A to M), checked locally and on the phone as stated in section 13. Pull request #79 merged as 68c9015 on 2026-10-28. CI on the pull request: 3 checks passed. CI on main for 68c9015: success, 2m21s (spotlessCheck, build, tests and lint). Both by your report. Left for later by you on 2026-10-28: criterion 37, TalkBack, and check 8 on this build.
 
 ## 12. Wireframe and theme reading (approved by you 2026-10-24)
 Files read, from your uploads of 2026-10-24. The hashes are from tool output. No earlier hash existed for them, so they identify what I read; they do not prove it equals the repo copy.
@@ -147,7 +147,7 @@ Limits:
 Everything below is your pasted output or your report. I did not see the phone. "My reading" is not a test.
 
 ### 13.1 Commits
-Branch iter-02a-opening-balance-stored, all local, no pull request, no CI. Newest first: M a0f7d63, L 21aa2ee, K 82c1b3b, J cf32e73, I 2e0258a, H 6161a27, G 6e5bdd9, F 00f9be5, E c3928f8, D 1edbfbf, C 875fd98, B a5c13a3, A 1b26895. main is 55a1e7a.
+Branch iter-02a-opening-balance-stored, all local at the time of writing (pull request #79 later merged them as 68c9015, see section 11). Newest first: M a0f7d63, L 21aa2ee, K 82c1b3b, J cf32e73, I 2e0258a, H 6161a27, G 6e5bdd9, F 00f9be5, E c3928f8, D 1edbfbf, C 875fd98, B a5c13a3, A 1b26895. main is 55a1e7a.
 
 ### 13.2 Local run
 - On commit M's files (2026-10-27): spotlessCheck green; debug build green (39 tasks); forced test run (30 tasks): 74 tests, 0 failures (BalanceTest 8, MarketDateTest 10, MoneyTest 15, OpeningBalanceTest 9, AppLockTest 12, AppViewModelTest 20), fresh timestamps.
