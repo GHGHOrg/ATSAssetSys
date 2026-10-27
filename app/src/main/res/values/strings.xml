@@ -10,7 +10,7 @@
     <string name="guided_step_2">2. Create a portfolio</string>
     <string name="guided_step_3">3. Enter a buy</string>
     <string name="guided_set_opening_balance">Set opening balance</string>
-    <string name="guided_locked">locked</string>
+    <string name="guided_locked">(locked)</string>
     <string name="no_portfolios_yet">No portfolios yet</string>
     <string name="loading">Loading</string>
     <string name="opening_balance">Opening balance</string>
