@@ -1,8 +1,8 @@
 # plan/plan.md
 
-Stage: Build. Status: approved, together with plan/setup.md. Setup run 2026-10-18 (setup.md section 13). Iteration 01 is done. The dependency-upgrade spike has run and is merged (pull request 73, merge commit 7df2049). Iteration 02 is split into 02a and 02b (section 12). 02a is built and checked on the phone, 14 local commits on branch iter-02a-opening-balance-stored (commits A to M and the file update a1b9a2c), not pushed, no pull request, no CI; see its file, sections 13 to 15. Iterations 03 onward have not started.
+Stage: Build. Status: approved, together with plan/setup.md. Setup run 2026-10-18 (setup.md section 13). Iteration 01 is done. The dependency-upgrade spike has run and is merged (pull request 73, merge commit 7df2049). Iteration 02 is split into 02a and 02b (section 12). Iteration 02a is done: built and checked on the phone; pull request #79 merged as 68c9015, CI green on the pull request and on main (your reports); see its file. 02b has no file yet; iterations 03 onward have not started.
 Source: intent/intent.md v52 (final), spec/spec.md v4 (final).
-Iteration 01 is built, checked on the phone and merged (see its file). 02a is built and checked on the phone but not merged. Where this file says "my reading", it is
+Iteration 01 is built, checked on the phone and merged (see its file). 02a is built, checked on the phone and merged (see its file). Where this file says "my reading", it is
 an interpretation of spec.md that you approve, not a test.
 
 ## 1. Purpose and gate
@@ -229,7 +229,7 @@ when it adds a command, a convention or a pitfall.
 | spikes/price-source.md | not written |
 | spikes/dependency-upgrade.md | run 2026-10-21 to 2026-10-22 on branch spike-dependency-upgrade; pull request 73 merged as 7df2049, CI green on main (your report). Results in the note's section 9. Dependabot group unverified until it has run once |
 | Iteration 01 | done: built and checked on the phone 2026-10-19 (check 8 on 2026-10-20); pull request #70 merged as 8a5703e, CI green on main (your report); not-run items are listed in its file |
-| Iteration 02a | built 2026-10-24 to 2026-10-28 (commits A to M plus the file update a1b9a2c); local run: spotlessCheck, debug build, 74 tests and lint as listed in its file; phone checks done by you 2026-10-27 and 2026-10-28; criterion 37, TalkBack and check 8 deferred by you (see change log); not pushed, no pull request, no CI; not merged |
+| Iteration 02a | done: built 2026-10-24 to 2026-10-28 (commits A to M plus the file update a1b9a2c); local run: spotlessCheck, debug build, 74 tests and lint as listed in its file; phone checks done by you 2026-10-27 and 2026-10-28; criterion 37, TalkBack and check 8 deferred by you (see change log); pull request #79 merged as 68c9015 on 2026-10-28, CI green on the pull request and on main (your reports) |
 | Iteration 02b | not started, file not written |
 | Iterations 03 to 35 | not started, files not written |
 
@@ -265,6 +265,7 @@ Each departure from this plan is recorded here with its date and the reason.
 - 2026-10-27: Room 3.0.3's builder has no allowDataLossOnRecovery (checked with javap), so 02a does not call it and calls no destructive-migration method. Room 3.1.0-alpha03 (2026-10-21) adds it; a later version should consider it once 3.1 is stable.
 - 2026-10-28: 02a has no bottom bar and shows the Overall screen only (as the 2026-10-23 entry says); the 02a file section 14 records the other departures from its plan (the "locked" wording, the wrapping note field, the review layout).
 - 2026-10-28: you deferred three 02a checks to later iterations: criterion 37 (backup and device-transfer test), the TalkBack check (including the TalkBack part of criterion 39), and check 8 on this build. Section 8 and the 02a row of the iteration table still list criterion 37 for 02a. The iteration that picks them up is left undecided until the 02b file is written (your decision 2026-10-28).
+- 2026-10-28: pull request #79 (iteration 02a) was merged as 68c9015. CI on the pull request (3 checks) and on main (the run for 68c9015, 2m21s) were reported successful by you. The status lines above were updated. The 02a file's sections 13 to 15 are left as written at build time.
 
 ## 13. Out of scope for this plan
 Performance over time, per-holding dividends, ETF look-through, the next intent.md items,
