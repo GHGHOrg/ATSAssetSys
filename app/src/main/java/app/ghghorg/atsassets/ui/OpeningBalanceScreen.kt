@@ -3,7 +3,8 @@ package app.ghghorg.atsassets.ui
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.imePadding
@@ -22,7 +23,9 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import app.ghghorg.atsassets.R
 import app.ghghorg.atsassets.core.AmountError
@@ -105,7 +108,7 @@ fun OpeningBalanceForm(
             label = { Text(text = stringResource(R.string.note_label)) },
             supportingText = { if (noteError != null) Text(text = noteError) },
             isError = refusals.noteHasLineBreak,
-            singleLine = true,
+            keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
         )
         saveMessage(refusals.save)?.let { message ->
             Text(
@@ -124,6 +127,7 @@ fun OpeningBalanceForm(
 }
 
 /** The review screen (wireframe 10b, frame D). Nothing is saved until Confirm and save. */
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
 fun OpeningBalanceReview(
     state: AppState,
@@ -153,9 +157,14 @@ fun OpeningBalanceReview(
                 ReviewRow(stringResource(R.string.date_label), stringResource(R.string.date_with_et, dateText))
                 ReviewRow(stringResource(R.string.amount_label), signed)
                 if (note.isEmpty()) {
-                    ReviewRow(stringResource(R.string.note_row_label), stringResource(R.string.note_none), muted = true)
+                    ReviewRow(
+                        stringResource(R.string.note_row_label),
+                        stringResource(R.string.note_none),
+                        muted = true,
+                        alignStart = true,
+                    )
                 } else {
-                    ReviewRow(stringResource(R.string.note_row_label), note)
+                    ReviewRow(stringResource(R.string.note_row_label), note, alignStart = true)
                 }
                 ReviewRow(stringResource(R.string.cash_effect_label), signed, bold = true)
             }
@@ -171,7 +180,10 @@ fun OpeningBalanceReview(
                 color = MaterialTheme.colorScheme.error,
             )
         }
-        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+        FlowRow(
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+            verticalArrangement = Arrangement.spacedBy(8.dp),
+        ) {
             Button(
                 onClick = onConfirm,
                 enabled = !state.saving,
@@ -188,18 +200,21 @@ fun OpeningBalanceReview(
     }
 }
 
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
 private fun ReviewRow(
     label: String,
     value: String,
     muted: Boolean = false,
     bold: Boolean = false,
+    alignStart: Boolean = false,
 ) {
     val valueColor =
         if (muted) MaterialTheme.colorScheme.onSurfaceVariant else MaterialTheme.colorScheme.onSurface
-    Row(
+    FlowRow(
         modifier = Modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.SpaceBetween,
+        horizontalArrangement = Arrangement.spacedBy(12.dp),
+        verticalArrangement = Arrangement.spacedBy(2.dp),
     ) {
         Text(
             text = label,
@@ -207,9 +222,11 @@ private fun ReviewRow(
         )
         Text(
             text = value,
+            modifier = Modifier.weight(1f),
             style = MaterialTheme.typography.bodyLarge,
             color = valueColor,
             fontWeight = if (bold) FontWeight.Medium else FontWeight.Normal,
+            textAlign = if (alignStart) TextAlign.Start else TextAlign.End,
         )
     }
 }
