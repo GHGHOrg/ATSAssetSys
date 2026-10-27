@@ -9,7 +9,6 @@ Project: ATS Asset System, a personal Android asset tracker (one user, sideloade
 - If the code departs from a plan file, update that plan file in the same commit.
 - Run build, tests and lint and show the real output before saying anything is done.
 - A bug fix starts with a failing test. Never weaken or delete a test.
-  Exception: plan/setup.md S3. The placeholder test in core/ is replaced by real K1 tests in iteration 02.
 - Say plainly what was not run or not verified.
 
 ## 2. Question rules (Ruleset B)
@@ -23,7 +22,7 @@ There is no local.properties file on purpose (see pitfalls).
 - Test:   .\gradlew.bat :core:test :app:testDebugUnitTest
 - Lint:   .\gradlew.bat :app:lintDebug
 - Style:  .\gradlew.bat spotlessCheck (read-only; CI runs it first). .\gradlew.bat spotlessApply rewrites files: run it only when asked, and show the diff first.
-- All three, forced fresh: add --rerun-tasks
+- All three, forced fresh: add --rerun-tasks (use it for lint too, see pitfalls)
 - Install on the phone: & "$env:ANDROID_HOME\platform-tools\adb.exe" install -r app\build\outputs\apk\debug\app-debug.apk
   (adb is not on PATH on this machine. The APK path is confirmed. The install has been run on the phone:
   setup proof item 4 (2026-10-18), iteration 01 (2026-10-19) and the dependency-upgrade spike (2026-10-22).)
@@ -57,10 +56,16 @@ CI (.github/workflows/ci.yml) runs the style check and then the same three steps
 - gradlew must stay LF and executable (.gitattributes, mode 100755). Do not retype it.
 - In PowerShell, do not use .Split('text') to count a substring: it splits on each character.
 - The CI runner is pinned to ubuntu-26.04 (moved from ubuntu-24.04 in the dependency-upgrade spike; CI green). Do not use ubuntu-latest.
-- Lint showed 0 findings after the dependency-upgrade spike. Do not silence a new notice: list it.
+- Lint after 02a shows 2 findings, both listed on purpose, neither silenced: NewerVersionAvailable for kotlinx-coroutines-test 1.9.0 (gradle/libs.versions.toml:17) and TypographyDashes at strings.xml:31 (the hyphens in the YYYY-MM-DD example). Do not silence a new notice: list it.
 - Style checker: Spotless 8.10.4 with ktlint 1.8.0, targets set by hand in the root build.gradle.kts. @Composable functions are exempt from ktlint's function-naming rule through an override there; the property name is supported only by its effect.
 - Dependabot has one group, kotlin (pattern org.jetbrains.kotlin.*). Whether it matches the Kotlin plugins is unverified until Dependabot has run once.
-- The message "Unable to strip ... libandroidx.graphics.path.so" appears in every build. It is known and not silenced.
+- A plain `.\gradlew.bat :app:lintDebug` after a change can leave the lint report stale (seen after commit L: the report time did not move). Use `--rerun-tasks` and check the report time.
+- ktlint rules that Spotless enforced in 02a (not the full list; spotlessCheck decides): imports in ASCII order with java.* last, one parameter per line when a function has two or more, lines of at most 140 characters.
+- developer.android.com reference pages and cs.android.com could not be fetched by my tools. Paste the page, or check the library with javap on the cached jar.
+- A version-catalog entry cannot carry the @aar suffix (found in 02a for SQLCipher); check how the dependency is declared before moving it to the catalog.
+- Room 3.0.3 (androidx.room3) has no allowDataLossOnRecovery (javap, 2026-10-27), so the code does not call it and calls no fallbackToDestructiveMigration. Room 3.1.0-alpha03 (2026-10-21) adds it; consider it once 3.1 is stable.
+- SQLCipher: Logger.setTarget(NoopTarget()) switches off the Java client's Logcat output only, not the JNI layer or the SQLCipher core.
+- The message "Unable to strip ..." appears in every release build and names libandroidx.graphics.path.so and libsqlcipher.so (both are packaged unstripped). It is known and not silenced.
 - Dependency-upgrade spike: plan/spikes/dependency-upgrade.md, run before iteration 02. Its section 9 holds the results and what was not verified.
 
 ## 7. Standing checks for every iteration's screens

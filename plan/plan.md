@@ -1,8 +1,8 @@
 # plan/plan.md
 
-Stage: Build. Status: approved, together with plan/setup.md. Setup run 2026-10-18 (setup.md section 13). Iteration 01 is done. The dependency-upgrade spike has run and is merged (pull request 73, merge commit 7df2049). Iteration 02 is split into 02a and 02b (section 12); 02a has a base file, nothing is built. Iterations 03 onward have not started.
+Stage: Build. Status: approved, together with plan/setup.md. Setup run 2026-10-18 (setup.md section 13). Iteration 01 is done. The dependency-upgrade spike has run and is merged (pull request 73, merge commit 7df2049). Iteration 02 is split into 02a and 02b (section 12). 02a is built and checked on the phone, 14 local commits on branch iter-02a-opening-balance-stored (commits A to M and the file update a1b9a2c), not pushed, no pull request, no CI; see its file, sections 13 to 15. Iterations 03 onward have not started.
 Source: intent/intent.md v52 (final), spec/spec.md v4 (final).
-Only iteration 01 has been built, checked on the phone and merged (see its file). Where this file says "my reading", it is
+Iteration 01 is built, checked on the phone and merged (see its file). 02a is built and checked on the phone but not merged. Where this file says "my reading", it is
 an interpretation of spec.md that you approve, not a test.
 
 ## 1. Purpose and gate
@@ -189,7 +189,7 @@ Merged as 7df2049 (pull request 73); CI on main reported green by you.
 - Keystore (C18): key survival across updates, reinstall and Android upgrades, and the
   lost-key case, are phone tests in iteration 02 and later (crit. 35, 36).
 - Backup and device-transfer exclusions (crit. 37): iteration 02 tightens the generic rules
-  against the real database path and decides how to verify.
+  against the real database path and decides how to verify. Not tested in 02a (deferred by you 2026-10-28); data_extraction_rules.xml is still the generic baseline.
 - Secure window and recents preview (crit. 20): the order of setting and clearing the flags
   is planned and tested in iterations 01 and 21.
 - Auto-lock and Android's file screens (crit. 57): decided in 31 and 34, tested on the phone.
@@ -229,7 +229,7 @@ when it adds a command, a convention or a pitfall.
 | spikes/price-source.md | not written |
 | spikes/dependency-upgrade.md | run 2026-10-21 to 2026-10-22 on branch spike-dependency-upgrade; pull request 73 merged as 7df2049, CI green on main (your report). Results in the note's section 9. Dependabot group unverified until it has run once |
 | Iteration 01 | done: built and checked on the phone 2026-10-19 (check 8 on 2026-10-20); pull request #70 merged as 8a5703e, CI green on main (your report); not-run items are listed in its file |
-| Iteration 02a | base file plan/iterations/02a-opening-balance-stored.md approved 2026-10-23, decisions 1 to 3 settled; wireframes 01 and 10b and the theme files read 2026-10-24, reading approved (02a file, section 12); not started |
+| Iteration 02a | built 2026-10-24 to 2026-10-28 (commits A to M plus the file update a1b9a2c); local run: spotlessCheck, debug build, 74 tests and lint as listed in its file; phone checks done by you 2026-10-27 and 2026-10-28; criterion 37, TalkBack and check 8 deferred by you (see change log); not pushed, no pull request, no CI; not merged |
 | Iteration 02b | not started, file not written |
 | Iterations 03 to 35 | not started, files not written |
 
@@ -261,6 +261,10 @@ Each departure from this plan is recorded here with its date and the reason.
 - 2026-10-23: the SQLCipher licence (BSD-style, three conditions, the binary one applies if the app is
   passed on) is a Deploy item: a Licences screen, written then as a spec addition. Spec v4 is unchanged.
 - 2026-10-24: wireframes 01 and 10b, their README and the theme files were read for 02a, and you approved my reading (02a file, section 12). Effect on 02a: an optional one-line Note field on the opening balance form; the allocation donut, price lines, backup banner, Buy/Sell button and "Restore is in More only" line of wireframe 01 are left to later iterations (18, 16, 32, 09, 02b); a future-dated opening balance is allowed. Spec v4 and the wireframes are unchanged.
+- 2026-10-27: 02a added two files the plan did not list, ui/AppContent.kt and data/SqlCipherOpener.kt, plus closeForm() with a Back button. Details in the 02a file, section 14.
+- 2026-10-27: Room 3.0.3's builder has no allowDataLossOnRecovery (checked with javap), so 02a does not call it and calls no destructive-migration method. Room 3.1.0-alpha03 (2026-10-21) adds it; a later version should consider it once 3.1 is stable.
+- 2026-10-28: 02a has no bottom bar and shows the Overall screen only (as the 2026-10-23 entry says); the 02a file section 14 records the other departures from its plan (the "locked" wording, the wrapping note field, the review layout).
+- 2026-10-28: you deferred three 02a checks to later iterations: criterion 37 (backup and device-transfer test), the TalkBack check (including the TalkBack part of criterion 39), and check 8 on this build. Section 8 and the 02a row of the iteration table still list criterion 37 for 02a. The iteration that picks them up is left undecided until the 02b file is written (your decision 2026-10-28).
 
 ## 13. Out of scope for this plan
 Performance over time, per-holding dividends, ETF look-through, the next intent.md items,
