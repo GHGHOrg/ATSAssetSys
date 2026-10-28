@@ -4,8 +4,11 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import app.ghghorg.atsassets.core.AmountError
 import app.ghghorg.atsassets.core.AmountResult
+import app.ghghorg.atsassets.core.CashAccount
 import app.ghghorg.atsassets.core.CashEntry
+import app.ghghorg.atsassets.core.CashRow
 import app.ghghorg.atsassets.core.CashRules
+import app.ghghorg.atsassets.core.CashType
 import app.ghghorg.atsassets.core.MarketDate
 import app.ghghorg.atsassets.core.Money
 import app.ghghorg.atsassets.core.OpeningBalance
@@ -78,6 +81,15 @@ data class AppState(
     val netWorthCents: Long = 0L,
 ) {
     val holdsData: Boolean get() = CashRules.appHoldsData(entries)
+
+    /** The Cash tab balance: on the latest entry date, so future-dated entries count (4.8). */
+    val cashBalanceCents: Long get() = CashAccount.balanceCents(entries)
+
+    /** The Cash tab rows, newest first, each with the balance after it (view 7). */
+    val cashRows: List<CashRow> get() = CashAccount.rows(entries)
+
+    /** Cash entry is offered only while the opening balance is missing; the other types arrive in 03. */
+    val cashEntryShown: Boolean get() = entries.none { it.type == CashType.OPENING_BALANCE }
 
     /** Android's back button on More, Cash or Portfolios goes to Overall (02b decision 3). */
     val backGoesToOverall: Boolean get() = screen == Screen.TABS && tab != Tab.OVERALL

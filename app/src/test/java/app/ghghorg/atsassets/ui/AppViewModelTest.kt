@@ -435,6 +435,37 @@ class AppViewModelTest {
     }
 
     @Test
+    fun cashTabWithNoEntriesShowsZeroNoRowsAndTheCashEntryButton() {
+        val state = started(FakeStore()).state.value
+        assertEquals(0L, state.cashBalanceCents)
+        assertTrue(state.cashRows.isEmpty())
+        assertTrue(state.cashEntryShown)
+    }
+
+    @Test
+    fun cashTabAfterSavingShowsTheBalanceAndOneRowAndHidesTheButton() {
+        val vm = started(FakeStore())
+        vm.selectTab(Tab.CASH)
+        vm.openForm()
+        vm.fill(date = "2026-01-01", amount = "10000.00")
+        vm.review()
+        vm.confirm()
+        val state = vm.state.value
+        assertEquals(1_000_000L, state.cashBalanceCents)
+        assertEquals(listOf("c1"), state.cashRows.map { it.entry.id })
+        assertEquals(1_000_000L, state.cashRows.single().balanceAfterCents)
+        assertFalse(state.cashEntryShown)
+    }
+
+    @Test
+    fun futureDatedOpeningBalanceCountsOnTheCashTabButNotInNetWorth() {
+        val state = started(FakeStore(stored = listOf(opening(date = "2026-12-01")))).state.value
+        assertEquals(1_000_000L, state.cashBalanceCents)
+        assertEquals(0L, state.netWorthCents)
+        assertFalse(state.cashEntryShown)
+    }
+
+    @Test
     fun selectTabIsIgnoredWhileSaving() {
         val gate = CompletableDeferred<Unit>()
         val store = FakeStore(gate = gate)

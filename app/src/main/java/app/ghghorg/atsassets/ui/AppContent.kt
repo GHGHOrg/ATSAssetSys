@@ -62,16 +62,8 @@ private fun BarContent(
 
         else -> when (state.tab) {
             Tab.OVERALL -> OverallScreen(state, viewModel::openForm)
-
-            // The Cash screen arrives in step 5 of iteration 02b; until then its title only.
-            Tab.CASH -> Text(
-                text = stringResource(R.string.tab_cash),
-                style = MaterialTheme.typography.titleLarge,
-                modifier = Modifier.padding(16.dp),
-            )
-
+            Tab.CASH -> CashScreen(state, viewModel::openForm)
             Tab.PORTFOLIOS -> PortfoliosScreen()
-
             Tab.MORE -> MoreScreen()
         }
     }
