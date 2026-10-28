@@ -12,6 +12,10 @@
     <string name="guided_set_opening_balance">Set opening balance</string>
     <string name="guided_locked">(locked)</string>
     <string name="no_portfolios_yet">No portfolios yet</string>
+    <string name="tab_more">More</string>
+    <string name="tab_cash">Cash</string>
+    <string name="tab_portfolios">Portfolios</string>
+    <string name="last_backup_never">Last backup: never backed up</string>
     <string name="loading">Loading</string>
     <string name="opening_balance">Opening balance</string>
     <string name="opening_balance_hint">Set this first. Nothing else can be entered before it.</string>
