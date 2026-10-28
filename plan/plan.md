@@ -1,6 +1,6 @@
 # plan/plan.md
 
-Stage: Build. Status: approved, together with plan/setup.md. Setup run 2026-10-18 (setup.md section 13). Iteration 01 is done. The dependency-upgrade spike has run and is merged (pull request 73, merge commit 7df2049). Iteration 02 is split into 02a and 02b (section 12). Iteration 02a is done: built and checked on the phone; pull request #79 merged as 68c9015, CI green on the pull request and on main (your reports); see its file. A spike to set up Claude Code in VS Code runs between 02a and 02b (section 7); 02b waits for it. 02b has no file yet; iterations 03 onward have not started.
+Stage: Build. Status: approved, together with plan/setup.md. Setup run 2026-10-18 (setup.md section 13). Iteration 01 is done. The dependency-upgrade spike has run and is merged (pull request 73, merge commit 7df2049). Iteration 02 is split into 02a and 02b (section 12). Iteration 02a is done: built and checked on the phone; pull request #79 merged as 68c9015, CI green on the pull request and on main (your reports); see its file. A spike to set up Claude Code in VS Code ran between 02a and 02b (section 7); pull request #81 merged as 0c2b49e, CI green on main (your report). 02b has no file yet; iterations 03 onward have not started.
 Source: intent/intent.md v52 (final), spec/spec.md v4 (final).
 Iteration 01 is built, checked on the phone and merged (see its file). 02a is built, checked on the phone and merged (see its file). Where this file says "my reading", it is
 an interpretation of spec.md that you approve, not a test.
@@ -21,7 +21,7 @@ plan/
   setup.md                     repo, stack, CI, manifest baseline, CLAUDE.md
   spikes/price-source.md       decision note, to be written and finished before iteration 09
   spikes/dependency-upgrade.md decision note, run after iteration 01 (results in its section 9); finished: pull request 73 merged as 7df2049, before 02
-  spikes/vscode-claude-code.md decision note, runs after iteration 02a and before 02b (results in its section 9)
+  spikes/vscode-claude-code.md decision note, run after iteration 02a and before 02b (results in its section 9); finished: pull request #81 merged as 0c2b49e
   open-items.md                one list of what is still open; updated when an item closes (spike vscode-claude-code, D4)
   iterations/01-... to 35-...  one file per iteration (section 4)
 CLAUDE.md                      repo root, created by setup.md
@@ -192,6 +192,8 @@ Added 2026-10-28. Not an iteration. It runs after iteration 02a and before 02b, 
 - whether anything is saved outside the repo (auto memory);
 - whether the hand-off works as written.
 Its proof includes an inventory of everything that lives only in the Project or in chat, each item with a destination you approved.
+Run 2026-10-28. The results and what was not verified are in the note's section 9. In short (your reports): checks 1 to 20 passed; the allow rules work only after Claude Code's own trust dialog is accepted for the folder.
+Merged as 0c2b49e (pull request #81); CI on main reported green by you.
 
 ## 8. Cross-cutting risks
 - Real data is unprotected until iteration 31: you can enter real data from 09, but there is
@@ -242,10 +244,10 @@ when it adds a command, a convention or a pitfall.
 | setup.md | approved, run 2026-10-18 on branch setup (pull request #64, merged) |
 | spikes/price-source.md | not written |
 | spikes/dependency-upgrade.md | run 2026-10-21 to 2026-10-22 on branch spike-dependency-upgrade; pull request 73 merged as 7df2049, CI green on main (your report). Results in the note's section 9. Dependabot group unverified until it has run once |
-| spikes/vscode-claude-code.md | run 2026-10-28, checks 1 to 20 passed; pull request #81 open, CI green, awaiting merge |
+| spikes/vscode-claude-code.md | run 2026-10-28, checks 1 to 20 passed; pull request #81 merged as 0c2b49e, CI green on main (run 40663927506, your report). Results in the note's section 9 |
 | Iteration 01 | done: built and checked on the phone 2026-10-19 (check 8 on 2026-10-20); pull request #70 merged as 8a5703e, CI green on main (your report); not-run items are listed in its file |
 | Iteration 02a | done: built 2026-10-24 to 2026-10-28 (commits A to M plus the file update a1b9a2c); local run: spotlessCheck, debug build, 74 tests and lint as listed in its file; phone checks done by you 2026-10-27 and 2026-10-28; criterion 37, TalkBack and check 8 deferred by you (see change log); pull request #79 merged as 68c9015 on 2026-10-28, CI green on the pull request and on main (your reports) |
-| Iteration 02b | not started, file not written; waits for spikes/vscode-claude-code.md |
+| Iteration 02b | not started, file not written |
 | Iterations 03 to 35 | not started, files not written |
 
 ## 12. Change log
@@ -285,6 +287,7 @@ Each departure from this plan is recorded here with its date and the reason.
 - 2026-10-28: the spike vscode-claude-code settled its decisions D1 to D14 (its section 5). Effects on the plan: the working model for Claude Code is written into CLAUDE.md section 8 (Edit automatically; ask before commit, merge, push, deletions, web search and web fetch; one numbered step at a time); the permission rules are in .claude/settings.json; plan/open-items.md holds the open items; the Ruleset A and B texts are now in CLAUDE.md sections 1 and 2.
 - 2026-10-28: the spike vscode-claude-code was run (results in its section 9; checks 1 to 18 and 20 passed, check 19 waits for the pull request). Effects on the plan: CLAUDE.md sections 6 and 8 gained the trust and line-ending pitfalls and the rule about buttons that save a rule; plan/open-items.md has items 24 to 29; the D12 report is accepted as asking about twice per step; 02b still waits for the merge.
 - 2026-10-28: check 19 of the spike vscode-claude-code passed (pull request #81, CI green, no key files tracked). Iteration 02b still waits for the merge.
+- 2026-10-28: pull request #81 (spike vscode-claude-code) was merged as 0c2b49e. CI on main (run 40663927506, 1m52s) was reported green by you. The spike is finished and iteration 02b no longer waits on it. The status lines above were updated.
 
 ## 13. Out of scope for this plan
 Performance over time, per-holding dividends, ETF look-through, the next intent.md items,
