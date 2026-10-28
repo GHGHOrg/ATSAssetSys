@@ -1,6 +1,6 @@
 # plan/spikes/vscode-claude-code.md
 
-Stage: Build. Status: run done 2026-10-28 (results in section 9); check 19 and the pull request still open. 02b waits for the merge.
+Stage: Build. Status: run done 2026-10-28, all 20 checks recorded (section 9); pull request #81 awaits your merge. 02b waits for the merge.
 Source: plan/plan.md section 7 (the spike's question list, added with this note), handoff-12.md (written 2026-10-28), the Project instructions (Ruleset A and B, read in the Project on 2026-10-28).
 The look-ups were done on 2026-10-28. Versions and behaviour here are facts of that day.
 
@@ -158,7 +158,7 @@ Every result below is your report of pasted output or a screenshot. I do not see
 16 pass: the hand-off pasted; it stated the stage, read the repo files, wrote nothing, listed the differences.
 17 pass: /status showed User settings and Shared project settings. Both PowerShell and Bash were used as shell tools. /mcp lists one connector (claude.ai Claude Docs); /status said 2 (unexplained).
 18 pass: every row of 3.1 confirmed by you (row 8 gets one more pitfall, 9.6).
-19 not yet: CI on the spike's pull request.
+19 pass: CI on pull request #81 green (CI / build 1 m; Code scanning results / CodeQL, no new alerts; CodeQL / Analyze (actions) 32 s; run 40661463844, on the branch head at that time, 71dd340, my reading). The CI run for the commit that records this result follows it. git ls-files .claude lists only .claude/settings.json; no key-like file is tracked.
 20 (added): the D12 report asks about twice per step. Numbers correct: 107 lines, 11,424 bytes, SHA-256 8603151E...78EC.
 
 9.4 Departures
@@ -169,7 +169,7 @@ Every result below is your report of pasted output or a screenshot. I do not see
 5. Added: check 20, and the line .claude/settings.local.json in .gitignore (your choice).
 
 9.5 Not run or not verified
-- Check 19, and whether the allow rules apply on a fresh clone or another machine.
+- Whether the allow rules apply on a fresh clone or another machine.
 - Claude Code's Edit tool on an existing CRLF document (the only edit was rejected).
 - The other three Gradle allow rules (build, test, lint); only spotlessCheck was run.
 - Whether Edit(...) rules cover other ways of writing a file.
@@ -183,4 +183,4 @@ Every result below is your report of pasted output or a screenshot. I do not see
 4. The Read deny rule also stopped Get-Content, and the stop message was misleading.
 
 ## 10. Status and notes
-Run done 2026-10-28, except check 19. Open: push, pull request, CI, your merge. 02b waits for the merge. Follow-up edits: CLAUDE.md section 6 (two pitfalls), plan/open-items.md (new items), plan.md (status row, change log).
+Run done 2026-10-28; all 20 checks recorded. Pull request #81: CI green on the commit before this record; the CI of this commit and your merge are open. 02b waits for the merge. After the merge the hand-off is refreshed.

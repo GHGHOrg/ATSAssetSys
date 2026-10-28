@@ -242,7 +242,7 @@ when it adds a command, a convention or a pitfall.
 | setup.md | approved, run 2026-10-18 on branch setup (pull request #64, merged) |
 | spikes/price-source.md | not written |
 | spikes/dependency-upgrade.md | run 2026-10-21 to 2026-10-22 on branch spike-dependency-upgrade; pull request 73 merged as 7df2049, CI green on main (your report). Results in the note's section 9. Dependabot group unverified until it has run once |
-| spikes/vscode-claude-code.md | run 2026-10-28, checks 1 to 18 and 20 passed, 19 open; pull request pending |
+| spikes/vscode-claude-code.md | run 2026-10-28, checks 1 to 20 passed; pull request #81 open, CI green, awaiting merge |
 | Iteration 01 | done: built and checked on the phone 2026-10-19 (check 8 on 2026-10-20); pull request #70 merged as 8a5703e, CI green on main (your report); not-run items are listed in its file |
 | Iteration 02a | done: built 2026-10-24 to 2026-10-28 (commits A to M plus the file update a1b9a2c); local run: spotlessCheck, debug build, 74 tests and lint as listed in its file; phone checks done by you 2026-10-27 and 2026-10-28; criterion 37, TalkBack and check 8 deferred by you (see change log); pull request #79 merged as 68c9015 on 2026-10-28, CI green on the pull request and on main (your reports) |
 | Iteration 02b | not started, file not written; waits for spikes/vscode-claude-code.md |
@@ -284,6 +284,7 @@ Each departure from this plan is recorded here with its date and the reason.
 - 2026-10-28: added the spike plan/spikes/vscode-claude-code.md between iterations 02a and 02b. Iteration 02b now depends on it. Reason: the project moves from claude.ai to Claude Code in VS Code, and the Project instructions, memory and chat history are not visible there.
 - 2026-10-28: the spike vscode-claude-code settled its decisions D1 to D14 (its section 5). Effects on the plan: the working model for Claude Code is written into CLAUDE.md section 8 (Edit automatically; ask before commit, merge, push, deletions, web search and web fetch; one numbered step at a time); the permission rules are in .claude/settings.json; plan/open-items.md holds the open items; the Ruleset A and B texts are now in CLAUDE.md sections 1 and 2.
 - 2026-10-28: the spike vscode-claude-code was run (results in its section 9; checks 1 to 18 and 20 passed, check 19 waits for the pull request). Effects on the plan: CLAUDE.md sections 6 and 8 gained the trust and line-ending pitfalls and the rule about buttons that save a rule; plan/open-items.md has items 24 to 29; the D12 report is accepted as asking about twice per step; 02b still waits for the merge.
+- 2026-10-28: check 19 of the spike vscode-claude-code passed (pull request #81, CI green, no key files tracked). Iteration 02b still waits for the merge.
 
 ## 13. Out of scope for this plan
 Performance over time, per-holding dividends, ETF look-through, the next intent.md items,
