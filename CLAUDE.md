@@ -59,7 +59,8 @@ CI (.github/workflows/ci.yml) runs the style check and then the same three steps
 - Never log or send amounts, tickers, quantities, notes or portfolio names (spec section 9).
 - No analytics or crash-reporting library.
 - Docs in this repo use CRLF. Keep line endings, do not retype files.
-- Claude Code's edit tool may not keep CRLF in documents (not verified). After every edit of a document, check `git diff --stat` and `git diff --check`.
+- Claude Code's Write tool made a new file with LF line endings in the proof run; its Edit tool on an existing CRLF document is untested. Git stores these files with LF (git ls-files --eol shows i/lf w/crlf), so git diff --check cannot see line-ending damage. After every document edit, count the raw CR and LF bytes as well (the report in section 8) and run git diff --stat.
+- Claude Code's allow rules in .claude/settings.json stay inactive until its own trust dialog is accepted for the folder. VS Code's Workspace Trust does not count and the panel shows no warning; /permissions shows ALLOW (0) when this has happened. The trust is keyed on the exact path text, so E:/GHRepo/ATSAssetSys and e:/GHRepo/ATSAssetSys are two records in ~/.claude.json. To record one, run the extension's claude.exe once from that path and accept the dialog (spike vscode-claude-code, 9.6). Do not read ~/.claude.json with ConvertFrom-Json in Windows PowerShell: it rejects two keys that differ only by case.
 - [UNVERIFIED] items in spec.md are not facts. Check them on the phone before relying on them.
 - Message wording is D9: decided on the phone, not on paper.
 - The Compose theme file in app/ is the source of truth for colors and type. Figma is only the starting point.
@@ -90,12 +91,13 @@ Start mode is Edit automatically.
 - No asking: deciding which files to create or edit, creating, editing and saving them, staging (git add), reading files inside the repo, .\gradlew.bat build, test, lint and spotlessCheck, git status, git diff, git log, and copying files.
 - Ask first: git commit, git merge, every git push, creating or merging pull requests, web search, web fetch, deleting files or folders, git commands that discard edits or branches (git rm, clean, reset, checkout --, restore, branch -D, stash drop), moving or renaming files, reading outside the repo, every edit of intent/intent.md and spec/spec.md, and any other shell command.
 - Never read: keystore.properties, signing.properties, *.jks, *.keystore, .env, .env.*.
-- For web search and web fetch: show me the tool, the query or URL and the reason in your message before you call it. Never choose "Yes, and don't ask again".
+- For web search and web fetch: show me the tool, the query or URL and the reason in your message before you call it.
+- Never suggest, and never choose, a button that saves a rule or grants the rest of the session ("Yes, allow ... for this project" or "for this session"). I press Yes or No.
 Gates (Ruleset A stays in force even though nothing technical blocks you): no code before an approved iteration file and plan.md; intent.md and spec.md change only with my acceptance.
 How far to go:
 - Work one numbered step of the iteration file's "Order of work" at a time. After each step run build, tests and lint, show the real output and the report below, and stop until I say go.
 - Before each step run git status. If there are uncommitted changes you did not make, stop, list the files and wait.
-- Report after creating or editing files: each file, the real git diff --stat output, and for documents the line count, byte count and SHA-256. Check that a CRLF document did not change its line endings (git diff --check; if a whole file shows as changed, stop).
+- Report after creating or editing files: each file, the real git diff --stat output, and for documents the line count, byte count and SHA-256. Check that a CRLF document did not change its line endings: count the raw CR and LF bytes and run git diff --check (if a whole file shows as changed, stop). The report commands ask for my approval, about two prompts per report; that is expected.
 Commits and pull requests:
 - Propose one commit per step, after build, tests and lint are green. Show the message and the changed files; I approve each. Message: "Iteration NN X: what", naming the spec refs. A red step gets no commit. Keep the default commit trailer.
 - Never push. I push, and I create and merge pull requests (GitHub Pull Requests extension or browser). Draft the title and description for me.

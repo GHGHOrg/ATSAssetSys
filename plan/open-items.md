@@ -26,5 +26,11 @@ One list of what is still open. When an item is closed, change its status here w
 | 19 | Room 3.1: consider allowDataLossOnRecovery() once 3.1 is stable (3.0.3 has no such method) | CLAUDE.md pitfalls | later |
 | 20 | Dependabot pull requests #67 (Gradle wrapper 9.8.1) and #68 (core-ktx, already applied on main) | dependency-upgrade note 9.9 | open, status not checked since |
 | 21 | Remote branch docs/readme-user-guide | hand-off | unchecked |
-| 22 | The Gradle configuration-cache "unknown location" message, and the LF to CRLF warning on commit | hand-off | unexplained, harmless so far |
+| 22 | The Gradle configuration-cache "unknown location" message, and the LF to CRLF warning on commit | hand-off | partly explained: git stores LF and the working copy is CRLF (spike 9.6); the setting itself is not shown |
 | 23 | The Project instructions in claude.ai are not changed by the spike. The repo's CLAUDE.md is the source for Claude Code, and the Project text can go stale | spike note 3.1, D2 | known |
+| 24 | Model for the real work (Opus 5.5 was used in the proof run); plan usage limits not checked | spike 9.2 | open |
+| 25 | The claude.ai Docs connector is visible in Claude Code (/mcp); whether a call asks first is untested; /status said 2 servers, /mcp lists 1 | spike 9.5 | open |
+| 26 | Trust dialog on another machine or another path spelling: allow rules stay inactive without a warning (two keys, E: and e:) | spike 9.6 | known; pitfall in CLAUDE.md |
+| 27 | Git stores LF, working copies are CRLF (core.autocrlf not shown); CI sees LF; Claude Code's Edit tool on an existing CRLF file untested | spike 9.6 | open |
+| 28 | Not run: the Gradle allow rules for build, test and lint; Edit rules for other write paths; effect of the unset attribution; allow rules on a fresh clone | spike 9.5 | open |
+| 29 | The stop message for a denied Get-Content names "allowed working directories", though the file is inside them | spike check 13 | known, harmless |

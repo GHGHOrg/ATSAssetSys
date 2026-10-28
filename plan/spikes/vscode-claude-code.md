@@ -1,6 +1,6 @@
 # plan/spikes/vscode-claude-code.md
 
-Stage: Build. Status: note and decisions D1 to D14 settled by you 2026-10-28. Not run.
+Stage: Build. Status: run done 2026-10-28 (results in section 9); check 19 and the pull request still open. 02b waits for the merge.
 Source: plan/plan.md section 7 (the spike's question list, added with this note), handoff-12.md (written 2026-10-28), the Project instructions (Ruleset A and B, read in the Project on 2026-10-28).
 The look-ups were done on 2026-10-28. Versions and behaviour here are facts of that day.
 
@@ -127,13 +127,60 @@ By you, in PowerShell and VS Code, each result pasted and written into section 9
 19. CI green on the spike's pull request (your report). git status shows no keys and no .claude/settings.local.json tracked.
 Not covered: other machines, other plans, and Claude Code versions after the run day.
 
-## 9. Results (not run yet)
-Every Claude Code, VS Code, Git, CI and settings result here will be your report of pasted output or of a check you did. I do not see your machine or GitHub. Where something was not run or not verified, it will say so.
-9.1 Decisions D1 to D14: settled values and dates (to fill).
-9.2 Install: versions and sign-in (to fill).
-9.3 Checks 1 to 19 of section 8: result and your report for each (to fill).
-9.4 Departures from section 4 (to fill).
-9.5 Not run or not verified (to fill).
+## 9. Results (run 2026-10-28)
+Every result below is your report of pasted output or a screenshot. I do not see your machine or GitHub.
+
+9.1 Decisions. D1 to D14 are as settled in section 5. D7 differs in one point (9.4).
+
+9.2 Install and setup
+- VS Code 1.143.1 (user setup). Extension anthropic.claude-code 2.1.312 (a 2.1.311 folder also exists, a leftover).
+- Signed in with the claude.ai account (/status: Claude Pro account). Model used for the run: claude-opus-5-5.
+- No standalone CLI installed (D8). The extension's own claude.exe was run once from cmd to accept the trust dialog (9.4, item 3).
+- User files: ~/.claude/settings.json (permissions.defaultMode acceptEdits, permissions.disableAutoMode disable, autoMemoryEnabled false) and line 25 of the VS Code user settings (claudeCode.initialPermissionMode acceptEdits). Both parse.
+- The Project in claude.ai: no memory section (memory not enabled) and no scheduled tasks.
+
+9.3 Checks (result, then what you reported)
+1 pass: extension 2.1.312.
+2 pass: Claude Code tab opened, signed in. No trust dialog appeared in the panel (see 9.6, finding 1).
+3 pass: stage first; Ruleset A, B, the working model and the gates present. Not mentioned: the "instructions, not enforced" note, the spec refs in the commit message, the CRLF check in the report, the iteration file before code.
+4 pass: Edit automatically in two conversations; Auto not in the mode switcher; /status: Auto mode server Disabled.
+5 pass, after a repair: a created file needed no prompt (new file has LF line endings); git add prompted until the trust was fixed, then ran with no prompt. The D12 report was given.
+6 pass: prompt showed the command with the message; denied; HEAD still de95b0d.
+7 pass: Remove-Item and Move-Item each prompted; denied. (git mv also prompted, by the general rule.)
+8 pass: Claude Code first stopped at its own gate (rule 7, section 8). With your one-time authorization it tried; the Edit prompt appeared; No; spec.md unchanged.
+9 pass, after the repair: .\gradlew.bat spotlessCheck prompted before the trust, then ran with no prompt: BUILD SUCCESSFUL, tasks up to date. Not compared with your own run.
+10 pass: git push --dry-run prompted; denied.
+11 pass: it showed tool, query and reason first; the WebSearch and WebFetch prompts have only Yes and No; both denied.
+12 pass: read outside the repo prompted (the prompt also offers "allow for this session"); denied.
+13 pass: Claude Code first refused by CLAUDE.md before any tool call. With your authorization on a dummy file, the Read tool was denied by the rule; Get-Content was blocked with no prompt and no content (the message wording is unclear).
+14 pass: it stopped on an untracked file it did not make and listed it; it also saw that step 1 of the 02a file belongs to a merged iteration.
+15 pass: no sub-agent. Its headline count was wrong (5 mentions in 4 files; its own list has 6).
+16 pass: the hand-off pasted; it stated the stage, read the repo files, wrote nothing, listed the differences.
+17 pass: /status showed User settings and Shared project settings. Both PowerShell and Bash were used as shell tools. /mcp lists one connector (claude.ai Claude Docs); /status said 2 (unexplained).
+18 pass: every row of 3.1 confirmed by you (row 8 gets one more pitfall, 9.6).
+19 not yet: CI on the spike's pull request.
+20 (added): the D12 report asks about twice per step. Numbers correct: 107 lines, 11,424 bytes, SHA-256 8603151E...78EC.
+
+9.4 Departures
+1. D7: the note says attribution is hidden on pull request descriptions (attribution.pr empty). The value that hides it was not found in the pages I fetched, and you chose to leave attribution unset. Claude Code, reading the D7 text, will leave the line out of PR drafts. Not verified: what the unset setting does in the extension.
+2. handoff-12.md is not a repo file; the refreshed text is pasted.
+3. D8 said extension only: the extension's bundled claude.exe was run once, from cmd, twice (capital and lowercase drive letter) to record trust. Nothing was installed.
+4. CLAUDE.md is 107 lines (D2 said about 150).
+5. Added: check 20, and the line .claude/settings.local.json in .gitignore (your choice).
+
+9.5 Not run or not verified
+- Check 19, and whether the allow rules apply on a fresh clone or another machine.
+- Claude Code's Edit tool on an existing CRLF document (the only edit was rejected).
+- The other three Gradle allow rules (build, test, lint); only spotlessCheck was run.
+- Whether Edit(...) rules cover other ways of writing a file.
+- The effect of the unset attribution, the 2-versus-1 MCP count, whether the Docs connector asks before a call.
+- Plan limits and usage, other machines, versions after today.
+
+9.6 Findings
+1. Allow rules in .claude/settings.json stay inactive until Claude Code's own trust dialog is accepted; VS Code's trust does not count and the panel never showed the dialog. The key is the exact path text: both E:/... and e:/... are now in ~/.claude.json. Without it /permissions shows ALLOW (0) with no warning.
+2. Reports (D12) ask about twice per step (decided: accepted).
+3. git stores CLAUDE.md with LF; the working copy is CRLF (i/lf w/crlf), my reading: core.autocrlf (not shown). Our hashes describe the working copy. git diff --check cannot see CRLF damage; the raw CRLF count can.
+4. The Read deny rule also stopped Get-Content, and the stop message was misleading.
 
 ## 10. Status and notes
-Note approved and decisions D1 to D14 settled 2026-10-28 (section 5). Not run.
+Run done 2026-10-28, except check 19. Open: push, pull request, CI, your merge. 02b waits for the merge. Follow-up edits: CLAUDE.md section 6 (two pitfalls), plan/open-items.md (new items), plan.md (status row, change log).
