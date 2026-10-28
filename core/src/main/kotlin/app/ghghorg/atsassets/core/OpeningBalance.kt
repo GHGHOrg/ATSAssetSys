@@ -37,7 +37,7 @@ object OpeningBalance {
         if (note.any { it == '\n' || it == '\r' }) {
             return OpeningBalanceResult.Refused(OpeningBalanceError.NOTE_HAS_LINE_BREAK)
         }
-        val nextSeq = (existing.maxOfOrNull { it.enteredSeq } ?: 0L) + 1L
+        val nextSeq = CashRules.nextSeq(existing)
         val entry =
             CashEntry(
                 id = id,
@@ -61,6 +61,9 @@ object CashRules {
 
     /** The exact sum of the amounts. Throws ArithmeticException if it would leave the range of Long (4.10). */
     fun sumExact(entries: List<CashEntry>): Long = entries.fold(0L) { sum, entry -> Math.addExact(sum, entry.amountCents) }
+
+    /** The entered_seq for a new entry: the highest so far plus one (4.1 order of entry). */
+    fun nextSeq(entries: List<CashEntry>): Long = (entries.maxOfOrNull { it.enteredSeq } ?: 0L) + 1L
 
     /** "App holds data" (spec section 3); in 02a that means any cash entry exists. */
     fun appHoldsData(entries: List<CashEntry>): Boolean = entries.isNotEmpty()
