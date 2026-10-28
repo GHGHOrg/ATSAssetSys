@@ -1,6 +1,6 @@
 # plan/iterations/02b-bottom-bar-and-cash-tab.md
 
-Stage: Build. Status: built on branch iter-02b-bottom-bar-and-cash-tab (steps 1 to 6, commits 7e35b57 to 91fb492) and checked on the phone 2026-10-28 to 2026-10-29, all checks yes (section 13). Pull request not created; CI not run. Decisions 1 to 9 settled (section 10). Sections 1 to 12 were written before the build; where the build differs, section 14 says so.
+Stage: Build. Status: built on branch iter-02b-bottom-bar-and-cash-tab (steps 1 to 6, commits 7e35b57 to 91fb492) and checked on the phone 2026-10-28 to 2026-10-29, all checks yes (section 13). Pull request #83 merged as 0a20873 on 2026-10-29; CI green on the pull request and on main (your reports). Decisions 1 to 9 settled (section 10). Sections 1 to 12 were written before the build; where the build differs, section 14 says so.
 Source: plan/plan.md section 4 (row 02b), intent/intent.md v52 (final), spec/spec.md v4 (final). "My reading" is an interpretation, not a test.
 
 ## 1. Outcome
@@ -104,7 +104,7 @@ Approved on paper with this file; confirmed on the phone (D9).
 Added and approved 2026-10-28 (step 5): type labels Deposit*, Withdrawal*, Interest/dividend*, Adjustment* and Trade (mine; in 02b only the opening balance can appear, and trade lines get their own label in 09). TalkBack reads cents ("10,000.00 dollars", as 02a's net worth does) and "plus" or "minus" before a signed amount.
 
 ## 12. Status and notes
-Built 2026-10-28; phone checks 2026-10-28 to 2026-10-29. Pull request and CI: not yet.
+Done. Built 2026-10-28; phone checks 2026-10-28 to 2026-10-29; pull request #83 merged as 0a20873 (2026-10-29), CI green on the pull request (3 checks) and on main (2m 24s) (your reports).
 
 ## 13. Build results
 ### 13.1 Commits
