@@ -1,6 +1,6 @@
 # plan/plan.md
 
-Stage: Build. Status: approved, together with plan/setup.md. Setup run 2026-10-18 (setup.md section 13). Iteration 01 is done. The dependency-upgrade spike has run and is merged (pull request 73, merge commit 7df2049). Iteration 02 is split into 02a and 02b (section 12). Iteration 02a is done: built and checked on the phone; pull request #79 merged as 68c9015, CI green on the pull request and on main (your reports); see its file. 02b has no file yet; iterations 03 onward have not started.
+Stage: Build. Status: approved, together with plan/setup.md. Setup run 2026-10-18 (setup.md section 13). Iteration 01 is done. The dependency-upgrade spike has run and is merged (pull request 73, merge commit 7df2049). Iteration 02 is split into 02a and 02b (section 12). Iteration 02a is done: built and checked on the phone; pull request #79 merged as 68c9015, CI green on the pull request and on main (your reports); see its file. A spike to set up Claude Code in VS Code runs between 02a and 02b (section 7); 02b waits for it. 02b has no file yet; iterations 03 onward have not started.
 Source: intent/intent.md v52 (final), spec/spec.md v4 (final).
 Iteration 01 is built, checked on the phone and merged (see its file). 02a is built, checked on the phone and merged (see its file). Where this file says "my reading", it is
 an interpretation of spec.md that you approve, not a test.
@@ -21,6 +21,7 @@ plan/
   setup.md                     repo, stack, CI, manifest baseline, CLAUDE.md
   spikes/price-source.md       decision note, to be written and finished before iteration 09
   spikes/dependency-upgrade.md decision note, run after iteration 01 (results in its section 9); finished: pull request 73 merged as 7df2049, before 02
+  spikes/vscode-claude-code.md decision note, runs after iteration 02a and before 02b (results in its section 9)
   iterations/01-... to 35-...  one file per iteration (section 4)
 CLAUDE.md                      repo root, created by setup.md
 ```
@@ -50,7 +51,7 @@ Rules for the list:
 |---|---|---|---|---|
 | 01 | unlock-app | Unlock with biometric or PIN; screenshots and recents blocked | setup | 9, crit. 6, 20, 35 |
 | 02a | opening-balance-stored | Set the opening balance; it is stored encrypted and Overall shows it as net worth | 01, upgrade spike | 3, 4.1, 4.2, 4.8, 4.10, crit. 19, 26, 35, 36, 37 |
-| 02b | bottom-bar-and-cash-tab | Use the four-tab bottom bar and a Cash tab showing the balance | 02a | 6 (navigation outline, view 7), crit. 9, 39 to 42, 49 (part) |
+| 02b | bottom-bar-and-cash-tab | Use the four-tab bottom bar and a Cash tab showing the balance | 02a, Claude Code spike | 6 (navigation outline, view 7), crit. 9, 39 to 42, 49 (part) |
 | 03 | deposit-withdrawal | Add deposits and withdrawals; overdrafts blocked | 02 | 4.2, crit. 42, 53 |
 | 04 | interest-adjustment | Add interest/dividend and adjustment entries | 03 | 4.2, crit. 53 |
 | 05 | reverse-cash-entry | Reverse a cash entry | 04 | 4.6 (cash), crit. 53 |
@@ -179,6 +180,18 @@ Spotless with ktlint 1.8.0, runner ubuntu-26.04, Dependabot group kotlin (unveri
 and all 14 phone checks of iteration 01 passed.
 Merged as 7df2049 (pull request 73); CI on main reported green by you.
 
+### Spike: Claude Code in VS Code (plan/spikes/vscode-claude-code.md)
+Added 2026-10-28. Not an iteration. It runs after iteration 02a and before 02b, whose file cannot start until it is finished. Reason: the work moves from claude.ai (Project instructions, Project memory, chat history) to Claude Code in VS Code, and those are not visible there. It must answer, with checks done on the day:
+- what must be installed and signed in (VS Code, the extension, the CLI, Git for Windows, the account);
+- how the CLI installs on Windows and whether the piped-script route is acceptable;
+- where the rules live (CLAUDE.md, user-level file, `.claude/rules`) and how Ruleset A and B get into them;
+- what Claude Code may do without asking, and how Manual mode is pinned so Auto cannot start by accident;
+- whether web search, web fetch, shell commands, file edits and git push prompt, and which rules guard them;
+- where the settings files live on Windows and which wins;
+- whether anything is saved outside the repo (auto memory);
+- whether the hand-off works as written.
+Its proof includes an inventory of everything that lives only in the Project or in chat, each item with a destination you approved.
+
 ## 8. Cross-cutting risks
 - Real data is unprotected until iteration 31: you can enter real data from 09, but there is
   no backup until 31 and no way to load a prepared file until 34. This is a risk, not a spec change.
@@ -228,9 +241,10 @@ when it adds a command, a convention or a pitfall.
 | setup.md | approved, run 2026-10-18 on branch setup (pull request #64, merged) |
 | spikes/price-source.md | not written |
 | spikes/dependency-upgrade.md | run 2026-10-21 to 2026-10-22 on branch spike-dependency-upgrade; pull request 73 merged as 7df2049, CI green on main (your report). Results in the note's section 9. Dependabot group unverified until it has run once |
+| spikes/vscode-claude-code.md | note drafted 2026-10-28, not approved, not run |
 | Iteration 01 | done: built and checked on the phone 2026-10-19 (check 8 on 2026-10-20); pull request #70 merged as 8a5703e, CI green on main (your report); not-run items are listed in its file |
 | Iteration 02a | done: built 2026-10-24 to 2026-10-28 (commits A to M plus the file update a1b9a2c); local run: spotlessCheck, debug build, 74 tests and lint as listed in its file; phone checks done by you 2026-10-27 and 2026-10-28; criterion 37, TalkBack and check 8 deferred by you (see change log); pull request #79 merged as 68c9015 on 2026-10-28, CI green on the pull request and on main (your reports) |
-| Iteration 02b | not started, file not written |
+| Iteration 02b | not started, file not written; waits for spikes/vscode-claude-code.md |
 | Iterations 03 to 35 | not started, files not written |
 
 ## 12. Change log
@@ -266,6 +280,7 @@ Each departure from this plan is recorded here with its date and the reason.
 - 2026-10-28: 02a has no bottom bar and shows the Overall screen only (as the 2026-10-23 entry says); the 02a file section 14 records the other departures from its plan (the "locked" wording, the wrapping note field, the review layout).
 - 2026-10-28: you deferred three 02a checks to later iterations: criterion 37 (backup and device-transfer test), the TalkBack check (including the TalkBack part of criterion 39), and check 8 on this build. Section 8 and the 02a row of the iteration table still list criterion 37 for 02a. The iteration that picks them up is left undecided until the 02b file is written (your decision 2026-10-28).
 - 2026-10-28: pull request #79 (iteration 02a) was merged as 68c9015. CI on the pull request (3 checks) and on main (the run for 68c9015, 2m21s) were reported successful by you. The status lines above were updated. The 02a file's sections 13 to 15 are left as written at build time.
+- 2026-10-28: added the spike plan/spikes/vscode-claude-code.md between iterations 02a and 02b. Iteration 02b now depends on it. Reason: the project moves from claude.ai to Claude Code in VS Code, and the Project instructions, memory and chat history are not visible there.
 
 ## 13. Out of scope for this plan
 Performance over time, per-holding dividends, ETF look-through, the next intent.md items,
