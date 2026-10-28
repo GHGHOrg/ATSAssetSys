@@ -99,7 +99,7 @@ private fun BalanceCard(
 @Composable
 private fun EntryRow(row: CashRow) {
     val entry = row.entry
-    val type = typeLabel(entry.type)
+    val type = cashTypeLabel(entry.type)
     val date = entry.date.toString()
     val spoken =
         stringResource(
@@ -132,7 +132,7 @@ private fun EntryRow(row: CashRow) {
             horizontalAlignment = Alignment.End,
         ) {
             Text(
-                text = signed(entry.amountCents),
+                text = signedAmount(entry.amountCents),
                 style = MaterialTheme.typography.bodyLarge,
                 textAlign = TextAlign.End,
             )
@@ -146,9 +146,9 @@ private fun EntryRow(row: CashRow) {
     }
 }
 
-// Only the opening balance can exist in 02b. Trade lines (09) show buy or sell, ticker and portfolio instead.
+// Shared with the cash entry form and review. Trade lines (09) show buy or sell, ticker and portfolio instead.
 @Composable
-private fun typeLabel(type: CashType): String = when (type) {
+internal fun cashTypeLabel(type: CashType): String = when (type) {
     CashType.OPENING_BALANCE -> stringResource(R.string.opening_balance)
     CashType.DEPOSIT -> stringResource(R.string.cash_type_deposit)
     CashType.WITHDRAWAL -> stringResource(R.string.cash_type_withdrawal)
@@ -158,7 +158,7 @@ private fun typeLabel(type: CashType): String = when (type) {
 }
 
 /** A cash amount with its sign and no color (section 6): +$10,000.00 or −$200.00. */
-private fun signed(cents: Long): String = if (cents > 0L) "+${Money.format(cents)}" else Money.format(cents)
+internal fun signedAmount(cents: Long): String = if (cents > 0L) "+${Money.format(cents)}" else Money.format(cents)
 
 /** "10,000.00" or "minus 200.00", for TalkBack. */
 @Composable
