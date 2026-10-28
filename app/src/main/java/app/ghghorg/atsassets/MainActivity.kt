@@ -84,7 +84,10 @@ class MainActivity : FragmentActivity() {
         setContent {
             ATSAssetSystemTheme {
                 LaunchedEffect(lockState) {
-                    if (lockState == LockState.Unlocked) viewModel.start()
+                    if (lockState == LockState.Unlocked) {
+                        viewModel.start()
+                        viewModel.onUnlocked()
+                    }
                 }
                 Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
                     when (lockState) {

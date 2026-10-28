@@ -30,7 +30,8 @@ fun AppContent(
             modifier,
         )
 
-        Screen.OVERALL -> OverallScreen(state, viewModel::openForm, modifier)
+        // The bottom bar and the other tabs arrive in step 4 of iteration 02b.
+        Screen.TABS -> OverallScreen(state, viewModel::openForm, modifier)
 
         Screen.FORM -> OpeningBalanceForm(
             state = state,

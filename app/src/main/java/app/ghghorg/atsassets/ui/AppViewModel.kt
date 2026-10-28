@@ -22,14 +22,25 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import java.time.Clock
 
-/** The one screen shown at a time (iteration 02a). */
+/** The one screen shown at a time. TABS shows the selected tab under the bottom bar. */
 enum class Screen {
     LOADING,
     UNREADABLE,
-    OVERALL,
+    TABS,
     FORM,
     REVIEW,
 }
+
+/** The four bottom bar tabs (spec 6, navigation outline). */
+enum class Tab {
+    MORE,
+    CASH,
+    PORTFOLIOS,
+    OVERALL,
+}
+
+/** The default order, left to right. Iteration 22 makes the order a setting. */
+val DEFAULT_TAB_ORDER = listOf(Tab.MORE, Tab.CASH, Tab.PORTFOLIOS, Tab.OVERALL)
 
 enum class DateRefusal {
     EMPTY,
@@ -58,6 +69,8 @@ data class Refusals(
 
 data class AppState(
     val screen: Screen = Screen.LOADING,
+    // The selected tab. While the form or review is open, it is the tab the form was opened from.
+    val tab: Tab = Tab.OVERALL,
     val entries: List<CashEntry> = emptyList(),
     val form: FormState = FormState(),
     val refusals: Refusals = Refusals(),
@@ -65,6 +78,9 @@ data class AppState(
     val netWorthCents: Long = 0L,
 ) {
     val holdsData: Boolean get() = CashRules.appHoldsData(entries)
+
+    /** Android's back button on More, Cash or Portfolios goes to Overall (02b decision 3). */
+    val backGoesToOverall: Boolean get() = screen == Screen.TABS && tab != Tab.OVERALL
 }
 
 /**
@@ -98,6 +114,22 @@ class AppViewModel(
         }
     }
 
+    /**
+     * Shows [tab]. From the form or review it leaves them unsaved; the typed text is kept (02b decision 1).
+     * Ignored while loading, on the unreadable screen and while a save is running.
+     */
+    fun selectTab(tab: Tab) {
+        val current = mutableState.value
+        if (current.screen !in TAB_BAR_SCREENS || current.saving) return
+        mutableState.update { it.copy(screen = Screen.TABS, tab = tab, refusals = Refusals()) }
+    }
+
+    /** After unlock the app shows Overall, unless the form or review is open, which stays (02b decision 9). */
+    fun onUnlocked() {
+        if (mutableState.value.screen != Screen.TABS) return
+        mutableState.update { it.copy(tab = Tab.OVERALL) }
+    }
+
     /** Opens the form. The date is filled with today in New York only if it is empty. */
     fun openForm() = mutableState.update { current ->
         val form = current.form
@@ -105,10 +137,10 @@ class AppViewModel(
         current.copy(screen = Screen.FORM, form = filled, refusals = Refusals())
     }
 
-    /** Back from the form to Overall. The typed text is kept and the refusals are cleared. Ignored outside FORM. */
+    /** Back from the form to the tab it was opened from. The typed text is kept and the refusals are cleared. Ignored outside FORM. */
     fun closeForm() {
         if (mutableState.value.screen != Screen.FORM) return
-        mutableState.update { it.copy(screen = Screen.OVERALL, refusals = Refusals()) }
+        mutableState.update { it.copy(screen = Screen.TABS, refusals = Refusals()) }
     }
 
     fun onDateChange(text: String) = mutableState.update {
@@ -184,7 +216,7 @@ class AppViewModel(
                 mutableState.update {
                     val entries = it.entries + entry
                     it.copy(
-                        screen = Screen.OVERALL,
+                        screen = Screen.TABS,
                         entries = entries,
                         form = FormState(),
                         refusals = Refusals(),
@@ -214,7 +246,7 @@ class AppViewModel(
 
     private fun showLoaded(entries: List<CashEntry>) {
         mutableState.update {
-            it.copy(screen = Screen.OVERALL, entries = entries, netWorthCents = netWorthOf(entries))
+            it.copy(screen = Screen.TABS, entries = entries, netWorthCents = netWorthOf(entries))
         }
     }
 
@@ -222,5 +254,8 @@ class AppViewModel(
 
     private companion object {
         const val PROBE_ID = "check"
+
+        // The screens that show the bottom bar (spec 6: always visible; 02b decision 1).
+        val TAB_BAR_SCREENS = setOf(Screen.TABS, Screen.FORM, Screen.REVIEW)
     }
 }

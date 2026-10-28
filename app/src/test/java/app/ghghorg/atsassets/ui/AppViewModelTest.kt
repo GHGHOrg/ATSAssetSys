@@ -39,7 +39,7 @@ class AppViewModelTest {
     fun loadWithNoEntriesShowsOverallWithNoData() {
         val vm = started(FakeStore())
         val state = vm.state.value
-        assertEquals(Screen.OVERALL, state.screen)
+        assertEquals(Screen.TABS, state.screen)
         assertFalse(state.holdsData)
         assertEquals(0L, state.netWorthCents)
     }
@@ -48,7 +48,7 @@ class AppViewModelTest {
     fun loadWithOpeningBalanceShowsNetWorth() {
         val vm = started(FakeStore(stored = listOf(opening())))
         val state = vm.state.value
-        assertEquals(Screen.OVERALL, state.screen)
+        assertEquals(Screen.TABS, state.screen)
         assertTrue(state.holdsData)
         assertEquals(1_000_000L, state.netWorthCents)
     }
@@ -200,7 +200,7 @@ class AppViewModelTest {
         assertEquals("Start", entry.note)
         assertEquals(1L, entry.enteredSeq)
         val state = vm.state.value
-        assertEquals(Screen.OVERALL, state.screen)
+        assertEquals(Screen.TABS, state.screen)
         assertEquals(1, state.entries.size)
         assertTrue(state.holdsData)
         assertEquals(1_000_000L, state.netWorthCents)
@@ -263,7 +263,7 @@ class AppViewModelTest {
     fun confirmOutsideReviewDoesNothing() {
         val store = FakeStore()
         val vm = started(store)
-        assertEquals(Screen.OVERALL, vm.state.value.screen)
+        assertEquals(Screen.TABS, vm.state.value.screen)
         vm.confirm()
         assertTrue(store.saved.isEmpty())
         vm.openForm()
@@ -283,7 +283,7 @@ class AppViewModelTest {
         assertEquals(AmountError.BAD_FORMAT, vm.state.value.refusals.amount)
         vm.closeForm()
         val state = vm.state.value
-        assertEquals(Screen.OVERALL, state.screen)
+        assertEquals(Screen.TABS, state.screen)
         assertEquals(FormState("2026-01-01", "abc", "Start"), state.form)
         assertEquals(Refusals(), state.refusals)
         vm.openForm()
@@ -296,7 +296,7 @@ class AppViewModelTest {
         val store = FakeStore()
         val vm = started(store)
         vm.closeForm()
-        assertEquals(Screen.OVERALL, vm.state.value.screen)
+        assertEquals(Screen.TABS, vm.state.value.screen)
         vm.openForm()
         vm.fill(date = "2026-01-01", amount = "10000.00")
         vm.review()
@@ -304,6 +304,150 @@ class AppViewModelTest {
         vm.closeForm()
         assertEquals(Screen.REVIEW, vm.state.value.screen)
         assertTrue(store.saved.isEmpty())
+    }
+
+    @Test
+    fun defaultTabOrderIsMoreCashPortfoliosOverall() {
+        assertEquals(listOf(Tab.MORE, Tab.CASH, Tab.PORTFOLIOS, Tab.OVERALL), DEFAULT_TAB_ORDER)
+    }
+
+    @Test
+    fun loadOpensOnTheOverallTab() {
+        val state = started(FakeStore(stored = listOf(opening()))).state.value
+        assertEquals(Screen.TABS, state.screen)
+        assertEquals(Tab.OVERALL, state.tab)
+    }
+
+    @Test
+    fun selectTabShowsThatTab() {
+        val vm = started(FakeStore())
+        for (tab in Tab.entries) {
+            vm.selectTab(tab)
+            assertEquals(Screen.TABS, vm.state.value.screen)
+            assertEquals(tab, vm.state.value.tab)
+        }
+    }
+
+    @Test
+    fun theFormOpenedFromCashClosesBackToCash() {
+        val vm = started(FakeStore())
+        vm.selectTab(Tab.CASH)
+        vm.openForm()
+        assertEquals(Screen.FORM, vm.state.value.screen)
+        vm.closeForm()
+        assertEquals(Screen.TABS, vm.state.value.screen)
+        assertEquals(Tab.CASH, vm.state.value.tab)
+    }
+
+    @Test
+    fun confirmFromCashReturnsToCash() {
+        val vm = started(FakeStore())
+        vm.selectTab(Tab.CASH)
+        vm.openForm()
+        vm.fill(date = "2026-01-01", amount = "10000.00")
+        vm.review()
+        vm.confirm()
+        assertEquals(Screen.TABS, vm.state.value.screen)
+        assertEquals(Tab.CASH, vm.state.value.tab)
+    }
+
+    @Test
+    fun confirmFromOverallReturnsToOverall() {
+        val vm = started(FakeStore())
+        vm.openForm()
+        vm.fill(date = "2026-01-01", amount = "10000.00")
+        vm.review()
+        vm.confirm()
+        assertEquals(Tab.OVERALL, vm.state.value.tab)
+    }
+
+    @Test
+    fun selectTabFromTheFormKeepsTheTypedTextAndClearsRefusals() {
+        val vm = started(FakeStore())
+        vm.openForm()
+        vm.fill(date = "2026-01-01", amount = "abc", note = "Start")
+        vm.review()
+        vm.selectTab(Tab.MORE)
+        val state = vm.state.value
+        assertEquals(Screen.TABS, state.screen)
+        assertEquals(Tab.MORE, state.tab)
+        assertEquals(FormState("2026-01-01", "abc", "Start"), state.form)
+        assertEquals(Refusals(), state.refusals)
+    }
+
+    @Test
+    fun selectTabFromTheReviewSavesNothingAndKeepsTheText() {
+        val store = FakeStore()
+        val vm = started(store)
+        vm.openForm()
+        vm.fill(date = "2026-01-01", amount = "10000.00", note = "Start")
+        vm.review()
+        vm.selectTab(Tab.PORTFOLIOS)
+        assertEquals(Screen.TABS, vm.state.value.screen)
+        assertEquals(FormState("2026-01-01", "10000.00", "Start"), vm.state.value.form)
+        assertTrue(store.saved.isEmpty())
+    }
+
+    @Test
+    fun backGoesToOverallOnlyFromTheOtherTabs() {
+        val vm = started(FakeStore())
+        for (tab in listOf(Tab.MORE, Tab.CASH, Tab.PORTFOLIOS)) {
+            vm.selectTab(tab)
+            assertTrue("back on $tab", vm.state.value.backGoesToOverall)
+        }
+        vm.selectTab(Tab.OVERALL)
+        assertFalse(vm.state.value.backGoesToOverall)
+        vm.selectTab(Tab.CASH)
+        vm.openForm()
+        assertFalse(vm.state.value.backGoesToOverall)
+    }
+
+    @Test
+    fun unlockOnATabResetsToOverall() {
+        val vm = started(FakeStore())
+        vm.selectTab(Tab.CASH)
+        vm.onUnlocked()
+        assertEquals(Screen.TABS, vm.state.value.screen)
+        assertEquals(Tab.OVERALL, vm.state.value.tab)
+    }
+
+    @Test
+    fun unlockWithTheFormOpenKeepsTheFormAndItsTab() {
+        val vm = started(FakeStore())
+        vm.selectTab(Tab.CASH)
+        vm.openForm()
+        vm.fill(date = "2026-01-01", amount = "12")
+        vm.onUnlocked()
+        assertEquals(Screen.FORM, vm.state.value.screen)
+        assertEquals(Tab.CASH, vm.state.value.tab)
+        assertEquals("12", vm.state.value.form.amountText)
+        vm.review()
+        vm.onUnlocked()
+        assertEquals(Screen.REVIEW, vm.state.value.screen)
+    }
+
+    @Test
+    fun selectTabIsIgnoredOnTheUnreadableScreen() {
+        val vm = started(FakeStore(loadError = UnreadableDataException("unreadable")))
+        vm.selectTab(Tab.CASH)
+        assertEquals(Screen.UNREADABLE, vm.state.value.screen)
+        assertEquals(Tab.OVERALL, vm.state.value.tab)
+    }
+
+    @Test
+    fun selectTabIsIgnoredWhileSaving() {
+        val gate = CompletableDeferred<Unit>()
+        val store = FakeStore(gate = gate)
+        val vm = started(store)
+        vm.openForm()
+        vm.fill(date = "2026-01-01", amount = "10000.00")
+        vm.review()
+        vm.confirm()
+        vm.selectTab(Tab.MORE)
+        assertEquals(Screen.REVIEW, vm.state.value.screen)
+        gate.complete(Unit)
+        assertEquals(Tab.OVERALL, vm.state.value.tab)
+        assertEquals(1, store.saved.size)
     }
 }
 
