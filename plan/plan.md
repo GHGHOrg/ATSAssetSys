@@ -1,6 +1,6 @@
 # plan/plan.md
 
-Stage: Build. Status: approved, together with plan/setup.md. Setup run 2026-10-18 (setup.md section 13). Iteration 01 is done. The dependency-upgrade spike has run and is merged (pull request 73, merge commit 7df2049). Iteration 02 is split into 02a and 02b (section 12). Iteration 02a is done: built and checked on the phone; pull request #79 merged as 68c9015, CI green on the pull request and on main (your reports); see its file. A spike to set up Claude Code in VS Code ran between 02a and 02b (section 7); pull request #81 merged as 0c2b49e, CI green on main (your report). 02b's file is approved (not started); iterations 03 onward have not started.
+Stage: Build. Status: approved, together with plan/setup.md. Setup run 2026-10-18 (setup.md section 13). Iteration 01 is done. The dependency-upgrade spike has run and is merged (pull request 73, merge commit 7df2049). Iteration 02 is split into 02a and 02b (section 12). Iteration 02a is done: built and checked on the phone; pull request #79 merged as 68c9015, CI green on the pull request and on main (your reports); see its file. A spike to set up Claude Code in VS Code ran between 02a and 02b (section 7); pull request #81 merged as 0c2b49e, CI green on main (your report). 02b is built and checked on the phone; its pull request is not yet created; iterations 03 onward have not started.
 Source: intent/intent.md v52 (final), spec/spec.md v4 (final).
 Iteration 01 is built, checked on the phone and merged (see its file). 02a is built, checked on the phone and merged (see its file). Where this file says "my reading", it is
 an interpretation of spec.md that you approve, not a test.
@@ -247,7 +247,7 @@ when it adds a command, a convention or a pitfall.
 | spikes/vscode-claude-code.md | run 2026-10-28, checks 1 to 20 passed; pull request #81 merged as 0c2b49e, CI green on main (run 40663927506, your report). Results in the note's section 9 |
 | Iteration 01 | done: built and checked on the phone 2026-10-19 (check 8 on 2026-10-20); pull request #70 merged as 8a5703e, CI green on main (your report); not-run items are listed in its file |
 | Iteration 02a | done: built 2026-10-24 to 2026-10-28 (commits A to M plus the file update a1b9a2c); local run: spotlessCheck, debug build, 74 tests and lint as listed in its file; phone checks done by you 2026-10-27 and 2026-10-28; criterion 37, TalkBack and check 8 deferred by you (see change log); pull request #79 merged as 68c9015 on 2026-10-28, CI green on the pull request and on main (your reports) |
-| Iteration 02b | file approved 2026-10-28, decisions 1 to 7 settled; not started |
+| Iteration 02b | built 2026-10-28 (steps 1 to 6, 91fb492); phone checks 2026-10-28 to 2026-10-29 all yes; 98 tests; pull request not yet created |
 | Iterations 03 to 35 | not started, files not written |
 
 ## 12. Change log
@@ -289,6 +289,7 @@ Each departure from this plan is recorded here with its date and the reason.
 - 2026-10-28: check 19 of the spike vscode-claude-code passed (pull request #81, CI green, no key files tracked). Iteration 02b still waits for the merge.
 - 2026-10-28: pull request #81 (spike vscode-claude-code) was merged as 0c2b49e. CI on main (run 40663927506, 1m52s) was reported green by you. The spike is finished and iteration 02b no longer waits on it. The status lines above were updated.
 - 2026-10-28: the 02b file was approved with decisions 1 to 7. The "Restore is in More only" line on Overall moves from 02b to 34. Of the checks deferred from 02a, TalkBack and check 8 are in 02b; criterion 37 waits for a later iteration, chosen when its file is written. Icons in the bottom bar are a future idea (open item 30).
+- 2026-10-29: 02b built and checked on the phone. Decisions 8 (same-date order in the Cash list) and 9 (unlock keeps an open form) were added. The bar uses selectable text items instead of Material's NavigationBarItem. Criterion 35's install-over is checked with a newer build (versionCode 2). TalkBack and check 8 are done for the current screens; criterion 37 is still deferred.
 
 ## 13. Out of scope for this plan
 Performance over time, per-holding dividends, ETF look-through, the next intent.md items,

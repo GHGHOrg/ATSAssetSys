@@ -1,6 +1,6 @@
 # plan/iterations/02b-bottom-bar-and-cash-tab.md
 
-Stage: Build. Status: approved 2026-10-28; decisions 1 to 7 settled the same day (section 10). Not started.
+Stage: Build. Status: built on branch iter-02b-bottom-bar-and-cash-tab (steps 1 to 6, commits 7e35b57 to 91fb492) and checked on the phone 2026-10-28 to 2026-10-29, all checks yes (section 13). Pull request not created; CI not run. Decisions 1 to 9 settled (section 10). Sections 1 to 12 were written before the build; where the build differs, section 14 says so.
 Source: plan/plan.md section 4 (row 02b), intent/intent.md v52 (final), spec/spec.md v4 (final). "My reading" is an interpretation, not a test.
 
 ## 1. Outcome
@@ -91,6 +91,8 @@ None planned. No new library, so no version lookup. If a later change brings in 
 5. TalkBack and check 8 in 02b; criterion 37 in a later iteration, chosen when its file is written.
 6. The "Restore is in More only" line moves to iteration 34.
 7. A text-only bar with no new library; icons are a future idea (open item 30).
+8. On a shared date the later entry comes first: the list is the exact reverse of the 4.1 order (settled 2026-10-28, step 2).
+9. Unlock keeps the form or review open; it resets to Overall only from a tab (settled 2026-10-28, step 3). This refines "unlock resets to Overall" in sections 5 and 8, so a theme change keeps the open form (criterion 40).
 
 ## 11. Wording to approve (D9; * = given by the spec or the wireframes)
 - Tabs: More*, Cash*, Portfolios*, Overall*.
@@ -99,6 +101,32 @@ None planned. No new library, so no version lookup. If a later change brings in 
 - More: "Last backup: never backed up"*.
 - TalkBack, Cash row: "Opening balance, 2026-01-01 Eastern Time, plus 10,000 dollars, balance 10,000 dollars". Balance: "Cash balance, 10,000 dollars".
 Approved on paper with this file; confirmed on the phone (D9).
+Added and approved 2026-10-28 (step 5): type labels Deposit*, Withdrawal*, Interest/dividend*, Adjustment* and Trade (mine; in 02b only the opening balance can appear, and trade lines get their own label in 09). TalkBack reads cents ("10,000.00 dollars", as 02a's net worth does) and "plus" or "minus" before a signed amount.
 
 ## 12. Status and notes
-Approved 2026-10-28. Not started.
+Built 2026-10-28; phone checks 2026-10-28 to 2026-10-29. Pull request and CI: not yet.
+
+## 13. Build results
+### 13.1 Commits
+Newest first: 91fb492 step 6, ab6fa3b step 5, f247c25 step 4, 52bda4b step 3, 1bee316 step 2, 7e35b57 iteration file. main was a35c67d.
+
+### 13.2 Local run
+On 91fb492's code (2026-10-28, all with --rerun-tasks): spotlessCheck green; debug build green (39 tasks); 98 tests, 0 failures (Balance 8, CashAccount 8, MarketDate 10, Money 15, OpeningBalance 9, AppLock 12, AppViewModel 36); lint: 2 findings, both known, neither silenced (NewerVersionAvailable at libs.versions.toml:17; TypographyDashes at strings.xml:48, the same string as :31 before, moved by the new strings); release build green (52 tasks, R8 ran; unsigned). Debug APK versionCode 2 (aapt2).
+
+### 13.3 Phone results (Android 17, debug build versionCode 2, your reports)
+Checks 1 to 14 all yes. Notes:
+- 11: installed over the 02a build (versionCode 1, adb install -r, firstInstallTime unchanged); the data was still there. Criterion 35 is now checked with a newer build.
+- 12: log cleared at 20:37:36, read after use; only counts were shown. The app's process (53 lines) had 0 matches for 500, 500.00, $500, 50000, "Opening balance", "Cash balance" and "Balance $". The whole log had 0 for the formatted patterns and the labels; plain 500 and 50000 matched 106 and 96 lines from other processes (content not read). The amount was only 3 digits, so this is a weak test.
+- 14b (check 8): with no screen lock the app shows the message and cannot be unlocked; check 13 afterwards passed.
+- 3, 4 (second half), 5 and 8 were run on fresh installs (two adb uninstalls, 2026-10-29), so the data was deleted on purpose. The phone now holds only the future-dated test balance from check 5.
+
+### 13.4 Not run or not checked
+CI and the pull request; the release APK on a device (unsigned); contrast measurement (by eye only); criterion 37 (deferred, decision 5); Compose UI tests (the project has none; the layout was checked by hand).
+
+## 14. Departures from the plan
+1. The bar is a row of selectable text items (Role.Tab, minimum height 56 dp, in a selectableGroup), not Material 3's NavigationBarItem, whose fixed icon slot could cut text off at the largest font. The selected tab is bold with a line under it.
+2. Screen.OVERALL is renamed Screen.TABS; the 7 test references were renamed and no assertion was removed.
+3. The form's origin tab is the selected tab itself (unchanged while the form is open), not a separate field.
+4. Between steps 4 and 5 the Cash tab showed only its title; step 5 replaced it.
+5. The rows wrap as two columns (FlowRow), so the right column moves under the left at large fonts.
+6. Write created new files with LF; spotlessCheck rejected them; they were converted to CRLF (CLAUDE.md pitfall).
