@@ -4,16 +4,28 @@ Rules, commands and pitfalls for working in this repo. Read this first.
 Project: ATS Asset System, a personal Android asset tracker (one user, sideloaded).
 
 ## 1. Stage rules (Ruleset A)
-- Say the current stage at the start of every response. Stages: Plan, Design, Build, Test, Deploy, Maintain.
-- No code before an approved plan/plan.md. Iteration files are approved before their code.
-- If the code departs from a plan file, update that plan file in the same commit.
-- Run build, tests and lint and show the real output before saying anything is done.
-- A bug fix starts with a failing test. Never weaken or delete a test.
-- Say plainly what was not run or not verified.
+This project builds working software following the AI-Native SDLC playbook (https://claude.com/blog/the-ai-native-sdlc-playbook). No copy of the playbook is kept in the repo. Fetching it asks first (section 8).
+These rules apply to every action in this project.
+
+Stage order: Plan -> Design -> Build -> Test -> Deploy -> Maintain.
+Each stage ends by producing a file artifact that the next stage reads:
+intent.md -> spec.md -> plan.md -> code + tests -> review findings -> new intent.md.
+
+Rules:
+1. Never write code before an approved plan.md exists. If asked to skip ahead, say which artifact is missing and offer to produce it first.
+2. Plan: turn my description into intent.md (problem, outcome, users, constraints, open questions). I correct it and accept it.
+3. Design: produce spec.md from intent.md. Flag concerns and conflicting constraints explicitly. I approve before Build.
+4. Build: produce plan.md (files, order of work, risks, proof) and wait for my approval. Keep a CLAUDE.md with commands, conventions and known pitfalls. If implementation departs from the plan, update plan.md.
+5. Test: write tests with the code. Run build, tests and lint before saying anything is done, and show the real output. For bug fixes, write the failing test first. Never weaken or delete a test to make it pass.
+6. Deploy: review the finished work against spec.md and plan.md (bugs, security, compliance) and report findings by severity before calling it ready. Anything risky needs my explicit approval.
+7. Maintain: treat every bug or change request as a new intent.md.
+8. At the start of each response, state the current stage. If a request would skip a gate, stop and tell me.
+9. Be honest about anything you could not run or verify.
 
 ## 2. Question rules (Ruleset B)
-- Every question asked must be tagged with a specific stage of the playbook, for example [Build].
+- Every question asked must be tagged with a specific stage (e.g. Plan) defined by the playbook in mind.
 - Do not ask questions or accept answers that are not meant for the tagged stage.
+- Before doing a web search, show me the details and let me decide to proceed or not.
 
 ## 3. Commands (Windows PowerShell, repo root)
 Environment (user variables, set once): JAVA_HOME = Android Studio's jbr folder; ANDROID_HOME = the Android SDK folder.
@@ -47,6 +59,7 @@ CI (.github/workflows/ci.yml) runs the style check and then the same three steps
 - Never log or send amounts, tickers, quantities, notes or portfolio names (spec section 9).
 - No analytics or crash-reporting library.
 - Docs in this repo use CRLF. Keep line endings, do not retype files.
+- Claude Code's edit tool may not keep CRLF in documents (not verified). After every edit of a document, check `git diff --stat` and `git diff --check`.
 - [UNVERIFIED] items in spec.md are not facts. Check them on the phone before relying on them.
 - Message wording is D9: decided on the phone, not on paper.
 - The Compose theme file in app/ is the source of truth for colors and type. Figma is only the starting point.
@@ -70,3 +83,25 @@ CI (.github/workflows/ci.yml) runs the style check and then the same three steps
 
 ## 7. Standing checks for every iteration's screens
 Criteria 9, 39 to 42, and the install-over-previous-build check (35).
+
+## 8. Working model in Claude Code (decided 2026-10-28; plan/spikes/vscode-claude-code.md section 5)
+These are instructions, not enforced rules. The only technical guards are the permission rules in .claude/settings.json and my user settings. Do not change either without asking.
+Start mode is Edit automatically.
+- No asking: deciding which files to create or edit, creating, editing and saving them, staging (git add), reading files inside the repo, .\gradlew.bat build, test, lint and spotlessCheck, git status, git diff, git log, and copying files.
+- Ask first: git commit, git merge, every git push, creating or merging pull requests, web search, web fetch, deleting files or folders, git commands that discard edits or branches (git rm, clean, reset, checkout --, restore, branch -D, stash drop), moving or renaming files, reading outside the repo, every edit of intent/intent.md and spec/spec.md, and any other shell command.
+- Never read: keystore.properties, signing.properties, *.jks, *.keystore, .env, .env.*.
+- For web search and web fetch: show me the tool, the query or URL and the reason in your message before you call it. Never choose "Yes, and don't ask again".
+Gates (Ruleset A stays in force even though nothing technical blocks you): no code before an approved iteration file and plan.md; intent.md and spec.md change only with my acceptance.
+How far to go:
+- Work one numbered step of the iteration file's "Order of work" at a time. After each step run build, tests and lint, show the real output and the report below, and stop until I say go.
+- Before each step run git status. If there are uncommitted changes you did not make, stop, list the files and wait.
+- Report after creating or editing files: each file, the real git diff --stat output, and for documents the line count, byte count and SHA-256. Check that a CRLF document did not change its line endings (git diff --check; if a whole file shows as changed, stop).
+Commits and pull requests:
+- Propose one commit per step, after build, tests and lint are green. Show the message and the changed files; I approve each. Message: "Iteration NN X: what", naming the spec refs. A red step gets no commit. Keep the default commit trailer.
+- Never push. I push, and I create and merge pull requests (GitHub Pull Requests extension or browser). Draft the title and description for me.
+Other:
+- Start sub-agents only when I ask.
+- Ask one question at a time, tagged with a stage, with the options, what each means for the end user, and your leaning marked.
+- Do not write security-relevant code from memory. Look up versions on the day. When a request conflicts with intent.md or spec.md, stop and offer a choice.
+- Wording that spec.md does not give (messages, labels) is written by you, shown to me and approved before use (D9).
+- Auto memory is off. If I correct you, propose the change as a CLAUDE.md edit.

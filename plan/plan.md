@@ -22,6 +22,7 @@ plan/
   spikes/price-source.md       decision note, to be written and finished before iteration 09
   spikes/dependency-upgrade.md decision note, run after iteration 01 (results in its section 9); finished: pull request 73 merged as 7df2049, before 02
   spikes/vscode-claude-code.md decision note, runs after iteration 02a and before 02b (results in its section 9)
+  open-items.md                one list of what is still open; updated when an item closes (spike vscode-claude-code, D4)
   iterations/01-... to 35-...  one file per iteration (section 4)
 CLAUDE.md                      repo root, created by setup.md
 ```
@@ -281,6 +282,7 @@ Each departure from this plan is recorded here with its date and the reason.
 - 2026-10-28: you deferred three 02a checks to later iterations: criterion 37 (backup and device-transfer test), the TalkBack check (including the TalkBack part of criterion 39), and check 8 on this build. Section 8 and the 02a row of the iteration table still list criterion 37 for 02a. The iteration that picks them up is left undecided until the 02b file is written (your decision 2026-10-28).
 - 2026-10-28: pull request #79 (iteration 02a) was merged as 68c9015. CI on the pull request (3 checks) and on main (the run for 68c9015, 2m21s) were reported successful by you. The status lines above were updated. The 02a file's sections 13 to 15 are left as written at build time.
 - 2026-10-28: added the spike plan/spikes/vscode-claude-code.md between iterations 02a and 02b. Iteration 02b now depends on it. Reason: the project moves from claude.ai to Claude Code in VS Code, and the Project instructions, memory and chat history are not visible there.
+- 2026-10-28: the spike vscode-claude-code settled its decisions D1 to D14 (its section 5). Effects on the plan: the working model for Claude Code is written into CLAUDE.md section 8 (Edit automatically; ask before commit, merge, push, deletions, web search and web fetch; one numbered step at a time); the permission rules are in .claude/settings.json; plan/open-items.md holds the open items; the Ruleset A and B texts are now in CLAUDE.md sections 1 and 2.
 
 ## 13. Out of scope for this plan
 Performance over time, per-holding dividends, ETF look-through, the next intent.md items,
