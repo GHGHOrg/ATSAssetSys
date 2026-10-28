@@ -59,7 +59,7 @@ CI (.github/workflows/ci.yml) runs the style check and then the same three steps
 - Never log or send amounts, tickers, quantities, notes or portfolio names (spec section 9).
 - No analytics or crash-reporting library.
 - Docs in this repo use CRLF. Keep line endings, do not retype files.
-- Claude Code's Write tool made a new file with LF line endings in the proof run; its Edit tool on an existing CRLF document is untested. Git stores these files with LF (git ls-files --eol shows i/lf w/crlf), so git diff --check cannot see line-ending damage. After every document edit, count the raw CR and LF bytes as well (the report in section 8) and run git diff --stat.
+- Claude Code's Write tool makes new files with LF. Its Edit tool kept CRLF on existing files, including multi-line inserts (02b). spotlessCheck rejects an LF Kotlin file in this working copy, so convert a new file's line breaks to CRLF right after Write. Git stores these files with LF (git ls-files --eol shows i/lf w/crlf), so git diff --check cannot see line-ending damage. After every document edit, count the raw CR and LF bytes as well (the report in section 8) and run git diff --stat.
 - Claude Code's allow rules in .claude/settings.json stay inactive until its own trust dialog is accepted for the folder. VS Code's Workspace Trust does not count and the panel shows no warning; /permissions shows ALLOW (0) when this has happened. The trust is keyed on the exact path text, so E:/GHRepo/ATSAssetSys and e:/GHRepo/ATSAssetSys are two records in ~/.claude.json. To record one, run the extension's claude.exe once from that path and accept the dialog (spike vscode-claude-code, 9.6). Do not read ~/.claude.json with ConvertFrom-Json in Windows PowerShell: it rejects two keys that differ only by case.
 - [UNVERIFIED] items in spec.md are not facts. Check them on the phone before relying on them.
 - Message wording is D9: decided on the phone, not on paper.
@@ -70,7 +70,7 @@ CI (.github/workflows/ci.yml) runs the style check and then the same three steps
 - gradlew must stay LF and executable (.gitattributes, mode 100755). Do not retype it.
 - In PowerShell, do not use .Split('text') to count a substring: it splits on each character.
 - The CI runner is pinned to ubuntu-26.04 (moved from ubuntu-24.04 in the dependency-upgrade spike; CI green). Do not use ubuntu-latest.
-- Lint after 02a shows 2 findings, both listed on purpose, neither silenced: NewerVersionAvailable for kotlinx-coroutines-test 1.9.0 (gradle/libs.versions.toml:17) and TypographyDashes at strings.xml:31 (the hyphens in the YYYY-MM-DD example). Do not silence a new notice: list it.
+- Lint after 02a shows 2 findings, both listed on purpose, neither silenced: NewerVersionAvailable for kotlinx-coroutines-test 1.9.0 (gradle/libs.versions.toml:17) and TypographyDashes at strings.xml:48 (moved from :31 by the strings added in 02b) (the hyphens in the YYYY-MM-DD example). Do not silence a new notice: list it.
 - Style checker: Spotless 8.10.4 with ktlint 1.8.0, targets set by hand in the root build.gradle.kts. @Composable functions are exempt from ktlint's function-naming rule through an override there; the property name is supported only by its effect.
 - Dependabot has one group, kotlin (pattern org.jetbrains.kotlin.*). Whether it matches the Kotlin plugins is unverified until Dependabot has run once.
 - A plain `.\gradlew.bat :app:lintDebug` after a change can leave the lint report stale (seen after commit L: the report time did not move). Use `--rerun-tasks` and check the report time.

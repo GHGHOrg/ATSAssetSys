@@ -9,10 +9,10 @@ One list of what is still open. When an item is closed, change its status here w
 | 2 | A normal start changes the hash and times of all four database files at open (e3988592... to cc77983a... at 16:32, to 74c6522e... at 16:40). Cause not shown | 02a file, 13.3 | open, unexplained |
 | 3 | The release build's mapping.txt lists no app.ghghorg.atsassets.data class, yet the release classes.dex defines them with their original names (APK Analyzer) | 02a file, 13.2 | open, unexplained |
 | 4 | The release app was never run (the unsigned APK cannot be installed). Whether Room finds AtsDatabase_Impl at run time is not shown | 02a file, 15.1 | open |
-| 5 | Criterion 37: backup and device-transfer test | plan.md change log 2026-10-28 | deferred; iteration chosen when the 02b file is written |
-| 6 | TalkBack check, including the TalkBack part of criterion 39 | same | deferred, same |
-| 7 | Check 8 (no screen lock) on the 02a build | same | deferred, same |
-| 8 | Not run in 02a: newer-build install-over (criterion 35 only partly checked), key survival and lock removal, Keystore KeyInfo level, the -journal file, contrast, a wrong-key test | 02a file, 13.5 | open |
+| 5 | Criterion 37: backup and device-transfer test | plan.md change log 2026-10-28 | deferred; iteration chosen when its file is written (02b decision 5) |
+| 6 | TalkBack check, including the TalkBack part of criterion 39 | same | closed 2026-10-29 for the screens of 02b (02b file, check 14a); later screens get their own TalkBack checks |
+| 7 | Check 8 (no screen lock) on the 02a build | same | closed 2026-10-29 (02b file, check 14b) |
+| 8 | Not run in 02a: newer-build install-over (criterion 35 only partly checked), key survival and lock removal, Keystore KeyInfo level, the -journal file, contrast, a wrong-key test | 02a file, 13.5 | open; the newer-build install-over was checked 2026-10-29 (02b check 11); the rest is still not run |
 | 9 | The balance sum has no overflow guard | 02a file, 15.3 | iteration 03 must add it |
 | 10 | The note rule rejects only \n and \r | 02a file, 15.3 | known limit |
 | 11 | Net worth does not refresh at midnight New York until the next load or save | 02a file, 15.3 | known limit |
@@ -31,6 +31,7 @@ One list of what is still open. When an item is closed, change its status here w
 | 24 | Model for the real work (Opus 5.5 was used in the proof run); plan usage limits not checked | spike 9.2 | open |
 | 25 | The claude.ai Docs connector is visible in Claude Code (/mcp); whether a call asks first is untested; /status said 2 servers, /mcp lists 1 | spike 9.5 | open |
 | 26 | Trust dialog on another machine or another path spelling: allow rules stay inactive without a warning (two keys, E: and e:) | spike 9.6 | known; pitfall in CLAUDE.md |
-| 27 | Git stores LF, working copies are CRLF (core.autocrlf not shown); CI sees LF; Claude Code's Edit tool on an existing CRLF file untested | spike 9.6 | open |
+| 27 | Git stores LF, working copies are CRLF (core.autocrlf not shown); CI sees LF; the Edit tool kept CRLF in 02b (documents and Kotlin, multi-line inserts too); the Write tool makes LF | spike 9.6 | open |
 | 28 | Not run: the Gradle allow rules for build, test and lint; Edit rules for other write paths; effect of the unset attribution; allow rules on a fresh clone | spike 9.5 | open |
 | 29 | The stop message for a denied Get-Content names "allowed working directories", though the file is inside them | spike check 13 | known, harmless |
+| 30 | Idea: icons in the bottom bar (future enhancement, not this version; needs a new intent.md under Ruleset A rule 7) | 02b decision 7 | idea |

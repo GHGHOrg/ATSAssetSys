@@ -1,6 +1,8 @@
 package app.ghghorg.atsassets.ui
 
+import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
@@ -30,8 +32,23 @@ fun AppContent(
             modifier,
         )
 
-        Screen.OVERALL -> OverallScreen(state, viewModel::openForm, modifier)
+        // The bar shows on the tabs, the form and the review (spec 6: always visible; 02b decision 1).
+        Screen.TABS, Screen.FORM, Screen.REVIEW -> Column(modifier = modifier.fillMaxSize()) {
+            Box(modifier = Modifier.weight(1f)) {
+                BarContent(state, viewModel)
+            }
+            BottomBar(DEFAULT_TAB_ORDER, state.tab, viewModel::selectTab)
+        }
+    }
+}
 
+@Composable
+private fun BarContent(
+    state: AppState,
+    viewModel: AppViewModel,
+) {
+    BackHandler(enabled = state.backGoesToOverall) { viewModel.selectTab(Tab.OVERALL) }
+    when (state.screen) {
         Screen.FORM -> OpeningBalanceForm(
             state = state,
             onDateChange = viewModel::onDateChange,
@@ -39,10 +56,16 @@ fun AppContent(
             onNoteChange = viewModel::onNoteChange,
             onReview = viewModel::review,
             onBack = viewModel::closeForm,
-            modifier = modifier,
         )
 
-        Screen.REVIEW -> OpeningBalanceReview(state, viewModel::confirm, viewModel::backToEdit, modifier)
+        Screen.REVIEW -> OpeningBalanceReview(state, viewModel::confirm, viewModel::backToEdit)
+
+        else -> when (state.tab) {
+            Tab.OVERALL -> OverallScreen(state, viewModel::openForm)
+            Tab.CASH -> CashScreen(state, viewModel::openForm)
+            Tab.PORTFOLIOS -> PortfoliosScreen()
+            Tab.MORE -> MoreScreen()
+        }
     }
 }
 
