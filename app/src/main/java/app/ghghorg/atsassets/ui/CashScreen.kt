@@ -29,8 +29,9 @@ import app.ghghorg.atsassets.core.CashType
 import app.ghghorg.atsassets.core.Money
 
 /**
- * The Cash account (view 7, wireframe 07 frame A), iteration 02b: the balance, the Cash entry button while the
- * opening balance is missing, and the rows. Filters arrive in 06 and 28, trade lines in 09. Cash is not colored.
+ * The Cash account (view 7, wireframe 07 frame A): the balance, the Cash entry button (the opening balance until
+ * it exists, then a deposit or withdrawal, iteration 03), and the rows. Filters arrive in 06 and 28, trade lines
+ * in 09. Cash is not colored.
  */
 @Composable
 fun CashScreen(
@@ -46,7 +47,7 @@ fun CashScreen(
             text = stringResource(R.string.tab_cash),
             style = MaterialTheme.typography.titleLarge,
         )
-        BalanceCard(state.cashBalanceCents, state.cashEntryShown, onCashEntry)
+        BalanceCard(state.cashBalanceCents, onCashEntry)
         val rows = state.cashRows
         if (rows.isEmpty()) {
             Text(
@@ -69,7 +70,6 @@ fun CashScreen(
 @Composable
 private fun BalanceCard(
     cents: Long,
-    cashEntryShown: Boolean,
     onCashEntry: () -> Unit,
 ) {
     val spoken = stringResource(R.string.cash_balance_spoken, spokenDollars(cents))
@@ -88,10 +88,8 @@ private fun BalanceCard(
                     style = MaterialTheme.typography.headlineSmall,
                 )
             }
-            if (cashEntryShown) {
-                Button(onClick = onCashEntry) {
-                    Text(text = stringResource(R.string.cash_entry_button))
-                }
+            Button(onClick = onCashEntry) {
+                Text(text = stringResource(R.string.cash_entry_button))
             }
         }
     }
