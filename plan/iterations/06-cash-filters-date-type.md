@@ -1,6 +1,6 @@
 # plan/iterations/06-cash-filters-date-type.md
 
-Stage: Build. Status: built on branch iter-06-cash-filters-date-type (steps 1 to 5 and one change, commits d93f99a to 42121aa) and checked on the phone 2026-10-29, all checks yes (section 13). Pull request not created; CI not run. Decisions 1 to 4 settled; decision 1 changed after phone check 12 (section 14). Sections 1 to 12 were written before the build; where the build differs, section 14 says so.
+Stage: Build. Status: built on branch iter-06-cash-filters-date-type (steps 1 to 5 and one change, commits d93f99a to 42121aa) and checked on the phone 2026-10-29, all checks yes (section 13). Pull request #91 merged as 0d5e2f4 on 2026-10-29; CI green on the pull request and on main (your reports). Decisions 1 to 4 settled; decision 1 changed after phone check 12 (section 14). Sections 1 to 12 were written before the build; where the build differs, section 14 says so.
 Source: plan/plan.md section 4 (row 06), intent/intent.md v52 (final), spec/spec.md v4 (final). "My reading" is an interpretation, not a test.
 
 ## 1. Outcome
@@ -77,7 +77,7 @@ Approved on paper with this file; confirmed on the phone (D9).
 Added and approved 2026-10-29 (after phone check 12): "Date: digits only, like 20260105." The empty fields show "YYYY-MM-DD"* as a placeholder. Confirmed on the phone (checks 1 to 10, 12, 13 and D1 to D6).
 
 ## 12. Status and notes
-Built 2026-10-29; phone checks 2026-10-29. Pull request and CI: not yet.
+Done. Built 2026-10-29; phone checks 2026-10-29; pull request #91 merged as 0d5e2f4 (2026-10-29), CI green on the pull request (3 checks) and on main (1m 51s) (your reports).
 
 ## 13. Build results
 ### 13.1 Commits
