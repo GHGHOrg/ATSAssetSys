@@ -52,6 +52,7 @@ private fun BarContent(
         Screen.FORM -> CashEntryForm(
             state = state,
             onTypeChange = viewModel::onTypeChange,
+            onDirectionChange = viewModel::onDirectionChange,
             onDateChange = viewModel::onDateChange,
             onAmountChange = viewModel::onAmountChange,
             onNoteChange = viewModel::onNoteChange,

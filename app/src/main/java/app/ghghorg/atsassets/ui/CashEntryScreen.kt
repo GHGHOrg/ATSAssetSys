@@ -32,19 +32,22 @@ import androidx.compose.ui.unit.dp
 import app.ghghorg.atsassets.R
 import app.ghghorg.atsassets.core.AmountError
 import app.ghghorg.atsassets.core.AmountResult
+import app.ghghorg.atsassets.core.CashDirection
 import app.ghghorg.atsassets.core.CashEntryRefusal
 import app.ghghorg.atsassets.core.CashType
 import app.ghghorg.atsassets.core.MarketDate
 import app.ghghorg.atsassets.core.Money
 
 /**
- * The cash entry form (wireframe 10b): the opening balance until it exists (frame C), then a deposit or
- * withdrawal (frame A, iteration 03). The typed text lives in the ViewModel.
+ * The cash entry form (wireframe 10b): the opening balance until it exists (frame C), then a deposit,
+ * withdrawal (frame A, 03), interest/dividend or adjustment with a direction and a required note (frame B, 04).
+ * The typed text lives in the ViewModel.
  */
 @Composable
 fun CashEntryForm(
     state: AppState,
     onTypeChange: (CashType) -> Unit,
+    onDirectionChange: (CashDirection) -> Unit,
     onDateChange: (String) -> Unit,
     onAmountChange: (String) -> Unit,
     onNoteChange: (String) -> Unit,
@@ -56,9 +59,10 @@ fun CashEntryForm(
     val refusals = state.refusals
     val type = state.form.type
     val opening = type == CashType.OPENING_BALANCE
+    val adjustment = type == CashType.ADJUSTMENT
     val dateError = dateMessage(refusals.date)
     val amountError = amountMessage(refusals.amount)
-    val noteError = noteMessage(refusals.noteHasLineBreak)
+    val noteError = noteMessage(refusals.noteHasLineBreak, refusals.noteRequired)
     Column(
         modifier = modifier.fillMaxSize().imePadding().verticalScroll(rememberScrollState()).padding(16.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp),
@@ -105,6 +109,16 @@ fun CashEntryForm(
             isError = refusals.date != null,
             singleLine = true,
         )
+        if (adjustment) {
+            // Adjustment only: the direction sets the sign (wireframe 10b, marker 6; 04 decision 2).
+            Column {
+                Text(
+                    text = stringResource(R.string.direction_label),
+                    style = MaterialTheme.typography.bodyMedium,
+                )
+                DirectionChips(state.form.direction, onDirectionChange)
+            }
+        }
         OutlinedTextField(
             value = state.form.amountText,
             onValueChange = onAmountChange,
@@ -124,9 +138,9 @@ fun CashEntryForm(
             value = state.form.noteText,
             onValueChange = onNoteChange,
             modifier = Modifier.fillMaxWidth(),
-            label = { Text(text = stringResource(R.string.note_label)) },
+            label = { Text(text = stringResource(if (adjustment) R.string.note_label_required else R.string.note_label)) },
             supportingText = { if (noteError != null) Text(text = noteError) },
-            isError = refusals.noteHasLineBreak,
+            isError = noteError != null,
             keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
         )
         listOfNotNull(saveMessage(refusals.save), cashMessage(refusals.cash)).forEach { message ->
@@ -158,8 +172,10 @@ fun CashEntryReview(
     val type = state.form.type
     val dateText = MarketDate.parse(state.form.dateText)?.toString() ?: state.form.dateText.trim()
     val cents = (Money.parseCents(state.form.amountText) as? AmountResult.Cents)?.value
-    // The amount is typed positive; the sign comes from the type (wireframe 10b, frame D).
-    val signed = cents?.let { signedAmount(if (type == CashType.WITHDRAWAL) -it else it) }.orEmpty()
+    // The amount is typed positive; the sign comes from the type, or the direction on an adjustment (frame D).
+    val outgoing =
+        type == CashType.WITHDRAWAL || (type == CashType.ADJUSTMENT && state.form.direction == CashDirection.OUT)
+    val signed = cents?.let { signedAmount(if (outgoing) -it else it) }.orEmpty()
     val note = state.form.noteText
     Column(
         modifier = modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(16.dp),
@@ -252,18 +268,19 @@ private fun ReviewRow(
     }
 }
 
-/** Deposit and Withdrawal, one at a time (03 decision 2: the other two types arrive in 04). */
+/** The four entry types, one at a time (wireframe 10b, frame A; Interest/dividend and Adjustment from 04). */
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
 private fun TypeChips(
     selected: CashType,
     onTypeChange: (CashType) -> Unit,
 ) {
+    val types = listOf(CashType.DEPOSIT, CashType.WITHDRAWAL, CashType.INTEREST_DIVIDEND, CashType.ADJUSTMENT)
     FlowRow(
         modifier = Modifier.selectableGroup(),
         horizontalArrangement = Arrangement.spacedBy(8.dp),
     ) {
-        for (type in listOf(CashType.DEPOSIT, CashType.WITHDRAWAL)) {
+        for (type in types) {
             FilterChip(
                 selected = type == selected,
                 onClick = { onTypeChange(type) },
@@ -273,10 +290,32 @@ private fun TypeChips(
     }
 }
 
-/** The line under the amount (wireframe 10b, frame A). None for the opening balance. */
+/** An adjustment's direction, one at a time (wireframe 10b, frame B). */
+@OptIn(ExperimentalLayoutApi::class)
+@Composable
+private fun DirectionChips(
+    selected: CashDirection,
+    onDirectionChange: (CashDirection) -> Unit,
+) {
+    FlowRow(
+        modifier = Modifier.selectableGroup(),
+        horizontalArrangement = Arrangement.spacedBy(8.dp),
+    ) {
+        for (direction in listOf(CashDirection.IN, CashDirection.OUT)) {
+            val label = if (direction == CashDirection.IN) R.string.direction_in else R.string.direction_out
+            FilterChip(
+                selected = direction == selected,
+                onClick = { onDirectionChange(direction) },
+                label = { Text(text = stringResource(label)) },
+            )
+        }
+    }
+}
+
+/** The line under the amount (wireframe 10b, frame A). None for the opening balance or an adjustment (04 decision 3). */
 @Composable
 private fun amountLine(type: CashType): String? = when (type) {
-    CashType.DEPOSIT -> stringResource(R.string.amount_line_deposit)
+    CashType.DEPOSIT, CashType.INTEREST_DIVIDEND -> stringResource(R.string.amount_line_deposit)
     CashType.WITHDRAWAL -> stringResource(R.string.amount_line_withdrawal)
     else -> null
 }
@@ -314,7 +353,14 @@ private fun dateMessage(refusal: DateRefusal?): String? = when (refusal) {
 }
 
 @Composable
-private fun noteMessage(lineBreak: Boolean): String? = if (lineBreak) stringResource(R.string.note_line_break) else null
+private fun noteMessage(
+    lineBreak: Boolean,
+    required: Boolean,
+): String? = when {
+    lineBreak -> stringResource(R.string.note_line_break)
+    required -> stringResource(R.string.note_required)
+    else -> null
+}
 
 @Composable
 private fun saveMessage(refusal: SaveRefusal?): String? = when (refusal) {
