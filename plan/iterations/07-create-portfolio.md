@@ -1,6 +1,6 @@
 # plan/iterations/07-create-portfolio.md
 
-Stage: Build. Status: built on branch iter-07-create-portfolio (steps 1 to 6 and one fix, commits 449ae9b to dd85e96) and checked on the phone 2026-10-30, all checks yes except check 10, which is not run (decision 3, open item 33) (section 13). Pull request not created; CI not run. Decisions 1 to 4 settled (section 10). Sections 1 to 12 were written before the build; where the build differs, section 14 says so.
+Stage: Build. Status: built on branch iter-07-create-portfolio (steps 1 to 6 and one fix, commits 449ae9b to dd85e96) and checked on the phone 2026-10-30, all checks yes except check 10, which is not run (decision 3, open item 33) (section 13). Pull request #94 merged as 1eb7220 on 2026-10-30; CI green on the pull request and on main (your reports). Decisions 1 to 4 settled (section 10). Sections 1 to 12 were written before the build; where the build differs, section 14 says so.
 Source: plan/plan.md section 4 (row 07), intent/intent.md v52 (final), spec/spec.md v4 (final). "My reading" is an interpretation, not a test.
 
 ## 1. Outcome
@@ -80,7 +80,7 @@ javap only (step 1). No web search planned.
 Approved on paper with this file; confirmed on the phone (D9): checks 2 to 7, 9 and 11.
 
 ## 12. Status and notes
-Built 2026-10-30; phone checks 2026-10-30. Pull request and CI: not yet.
+Done, except check 10 (open item 33, due in 09). Built 2026-10-30; phone checks 2026-10-30; pull request #94 merged as 1eb7220 (2026-10-30), CI green on the pull request (3 checks) and on main (2m 19s) (your reports).
 
 ## 13. Build results
 ### 13.1 Commits

@@ -252,7 +252,7 @@ when it adds a command, a convention or a pitfall.
 | Iteration 04 | done: built 2026-10-29 (steps 1 to 5); phone checks 2026-10-29 all yes; 154 tests; pull request #87 merged as 5424a6e, CI green on the pull request and on main (2m 17s) (your reports) |
 | Iteration 05 | done: built 2026-10-29 (steps 1 to 5 and one fix); phone checks 2026-10-29 all yes; 183 tests; pull request #89 merged as c1ad96d, CI green on the pull request and on main (2m 25s) (your reports) |
 | Iteration 06 | done: built 2026-10-29 (steps 1 to 5 and one change); phone checks 2026-10-29 all yes; 213 tests; pull request #91 merged as 0d5e2f4, CI green on the pull request and on main (1m 51s) (your reports) |
-| Iteration 07 | built 2026-10-30 (steps 1 to 6 and one fix, dd85e96); phone checks 2026-10-30 all yes, check 10 not run (open item 33); 243 tests; pull request not yet created |
+| Iteration 07 | done: built 2026-10-30 (steps 1 to 6 and one fix); phone checks 2026-10-30 all yes, check 10 not run (open item 33); 243 tests; pull request #94 merged as 1eb7220, CI green on the pull request and on main (2m 19s) (your reports) |
 | Iterations 08 to 35 | not started, files not written |
 
 ## 12. Change log
@@ -312,6 +312,7 @@ Each departure from this plan is recorded here with its date and the reason.
 - 2026-10-30: the test totals of 03 to 06 were 1 too high: 03 added 34 tests to 02b's 98, written as 133 instead of 132, and 04 to 06 added their new tests to that figure. Corrected to 132, 154, 183 and 213 in the status lines above and in the four files' local-run lines. The per-class counts were right, and no test was removed (git check of @Test lines at each merge). The 03 file's departure 2 now names the renamed test.
 - 2026-10-30: pull request #93 (docs: the test-count fix) was merged as 8ee5394, CI green on the pull request and on main (1m 29s) (your reports); main was merged into iter-07-create-portfolio (2d50683).
 - 2026-10-30: 07 built and checked on the phone. The first schema change (database version 2, a Room auto migration adding the portfolios table) was checked by installing over 06's build with data (criterion 35, versionCode 7). A defect found in phone check 2 (a dialog window took the focus and the focus cover hid the app in a loop) was fixed in 07 by drawing the dialog inside the activity window, with no failing test possible off the device (your decision; 07 file, section 14). A Logcat check for the portfolio names was added (07 file, section 13.3).
+- 2026-10-30: pull request #94 (iteration 07) was merged as 1eb7220. CI on the pull request (3 checks: build, Analyze (actions), CodeQL) and on main (the run for 1eb7220, 2m 19s) were reported successful by you. The status lines above were updated. The 07 file's sections 13 and 14 are left as written at build time.
 
 ## 13. Out of scope for this plan
 Performance over time, per-holding dividends, ETF look-through, the next intent.md items,
