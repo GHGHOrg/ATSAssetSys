@@ -83,7 +83,7 @@ Done. Built 2026-10-29; phone checks 2026-10-29; pull request #89 merged as c1ad
 Newest first: ce1c6fd fix, c40a8db step 5, 1c78aae step 4, c977ccc step 3, 43312bf step 2, b73d5fe iteration file. main was dc2549e.
 
 ### 13.2 Local run
-On ce1c6fd's code (2026-10-29, all with --rerun-tasks): spotlessCheck green; debug build green (39 tasks); 184 tests, 0 failures (Balance 11, CashAccount 10, CashEntriesReverse 12, CashEntries 27, MarketDate 10, Money 15, OpeningBalance 9, AppLock 12, AppViewModel 77); lint: 2 findings, both known, neither silenced (NewerVersionAvailable at libs.versions.toml:17; TypographyDashes on date_not_a_date, now strings.xml:75). Release build on c40a8db's code green (52 tasks, R8 ran; unsigned); the fix changed only the ViewModel and was not rebuilt as release. Debug APK versionCode 5 (aapt2).
+On ce1c6fd's code (2026-10-29, all with --rerun-tasks): spotlessCheck green; debug build green (39 tasks); 183 tests (written 184 until 2026-10-30, a sum error), 0 failures (Balance 11, CashAccount 10, CashEntriesReverse 12, CashEntries 27, MarketDate 10, Money 15, OpeningBalance 9, AppLock 12, AppViewModel 77); lint: 2 findings, both known, neither silenced (NewerVersionAvailable at libs.versions.toml:17; TypographyDashes on date_not_a_date, now strings.xml:75). Release build on c40a8db's code green (52 tasks, R8 ran; unsigned); the fix changed only the ViewModel and was not rebuilt as release. Debug APK versionCode 5 (aapt2).
 
 ### 13.3 Phone results (Android 17, debug build versionCode 5, your reports)
 Checks 1 to 11 all yes, and 5b and 7b after the fix. Notes:

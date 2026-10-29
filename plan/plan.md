@@ -248,10 +248,10 @@ when it adds a command, a convention or a pitfall.
 | Iteration 01 | done: built and checked on the phone 2026-10-19 (check 8 on 2026-10-20); pull request #70 merged as 8a5703e, CI green on main (your report); not-run items are listed in its file |
 | Iteration 02a | done: built 2026-10-24 to 2026-10-28 (commits A to M plus the file update a1b9a2c); local run: spotlessCheck, debug build, 74 tests and lint as listed in its file; phone checks done by you 2026-10-27 and 2026-10-28; criterion 37, TalkBack and check 8 deferred by you (see change log); pull request #79 merged as 68c9015 on 2026-10-28, CI green on the pull request and on main (your reports) |
 | Iteration 02b | done: built 2026-10-28 (steps 1 to 6); phone checks 2026-10-28 to 2026-10-29 all yes; 98 tests; pull request #83 merged as 0a20873, CI green on the pull request and on main (2m 24s) (your reports) |
-| Iteration 03 | done: built 2026-10-29 (steps 1 to 6); phone checks 2026-10-29 all yes; 133 tests; pull request #85 merged as 8d25892, CI green on the pull request and on main (1m 42s) (your reports) |
-| Iteration 04 | done: built 2026-10-29 (steps 1 to 5); phone checks 2026-10-29 all yes; 155 tests; pull request #87 merged as 5424a6e, CI green on the pull request and on main (2m 17s) (your reports) |
-| Iteration 05 | done: built 2026-10-29 (steps 1 to 5 and one fix); phone checks 2026-10-29 all yes; 184 tests; pull request #89 merged as c1ad96d, CI green on the pull request and on main (2m 25s) (your reports) |
-| Iteration 06 | done: built 2026-10-29 (steps 1 to 5 and one change); phone checks 2026-10-29 all yes; 214 tests; pull request #91 merged as 0d5e2f4, CI green on the pull request and on main (1m 51s) (your reports) |
+| Iteration 03 | done: built 2026-10-29 (steps 1 to 6); phone checks 2026-10-29 all yes; 132 tests; pull request #85 merged as 8d25892, CI green on the pull request and on main (1m 42s) (your reports) |
+| Iteration 04 | done: built 2026-10-29 (steps 1 to 5); phone checks 2026-10-29 all yes; 154 tests; pull request #87 merged as 5424a6e, CI green on the pull request and on main (2m 17s) (your reports) |
+| Iteration 05 | done: built 2026-10-29 (steps 1 to 5 and one fix); phone checks 2026-10-29 all yes; 183 tests; pull request #89 merged as c1ad96d, CI green on the pull request and on main (2m 25s) (your reports) |
+| Iteration 06 | done: built 2026-10-29 (steps 1 to 5 and one change); phone checks 2026-10-29 all yes; 213 tests; pull request #91 merged as 0d5e2f4, CI green on the pull request and on main (1m 51s) (your reports) |
 | Iterations 07 to 35 | not started, files not written |
 
 ## 12. Change log
@@ -307,6 +307,7 @@ Each departure from this plan is recorded here with its date and the reason.
 - 2026-10-29: pull request #90 (docs: the 05 merge record) was merged as da9f26e, CI green on the pull request and on main (1m 54s) (your reports). The 06 file was approved with decisions 1 to 4.
 - 2026-10-29: 06 built and checked on the phone. After phone check 12 the date filters were changed to digits only with the dashes shown (your request; decision 1 changed; 06 file, section 14). A new lint notice, AGP 9.5.0 available, is listed as open item 31. Criterion 35's install-over is checked again (versionCode 6).
 - 2026-10-29: pull request #91 (iteration 06) was merged as 0d5e2f4. CI on the pull request (3 checks: build, Analyze (actions), CodeQL) and on main (the run for 0d5e2f4, 1m 51s) were reported successful by you. The status lines above were updated. The 06 file's sections 13 and 14 are left as written at build time.
+- 2026-10-30: the test totals of 03 to 06 were 1 too high: 03 added 34 tests to 02b's 98, written as 133 instead of 132, and 04 to 06 added their new tests to that figure. Corrected to 132, 154, 183 and 213 in the status lines above and in the four files' local-run lines. The per-class counts were right, and no test was removed (git check of @Test lines at each merge). The 03 file's departure 2 now names the renamed test.
 
 ## 13. Out of scope for this plan
 Performance over time, per-holding dividends, ETF look-through, the next intent.md items,
