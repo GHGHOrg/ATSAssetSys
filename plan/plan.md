@@ -249,7 +249,8 @@ when it adds a command, a convention or a pitfall.
 | Iteration 02a | done: built 2026-10-24 to 2026-10-28 (commits A to M plus the file update a1b9a2c); local run: spotlessCheck, debug build, 74 tests and lint as listed in its file; phone checks done by you 2026-10-27 and 2026-10-28; criterion 37, TalkBack and check 8 deferred by you (see change log); pull request #79 merged as 68c9015 on 2026-10-28, CI green on the pull request and on main (your reports) |
 | Iteration 02b | done: built 2026-10-28 (steps 1 to 6); phone checks 2026-10-28 to 2026-10-29 all yes; 98 tests; pull request #83 merged as 0a20873, CI green on the pull request and on main (2m 24s) (your reports) |
 | Iteration 03 | done: built 2026-10-29 (steps 1 to 6); phone checks 2026-10-29 all yes; 133 tests; pull request #85 merged as 8d25892, CI green on the pull request and on main (1m 42s) (your reports) |
-| Iterations 04 to 35 | not started, files not written |
+| Iteration 04 | file approved 2026-10-29, decisions 1 to 4 settled; not started |
+| Iterations 05 to 35 | not started, files not written |
 
 ## 12. Change log
 Each departure from this plan is recorded here with its date and the reason.
@@ -295,6 +296,7 @@ Each departure from this plan is recorded here with its date and the reason.
 - 2026-10-29: pull request #84 (docs: the 02b merge record) was merged as 5e46dae, CI green on the pull request and on main (your reports). The 03 file was approved with decisions 1 to 4. Example C is tested cash-only in 03 (a withdrawal stands in for the buy, which arrives in 09). Open item 14's multi-row check moves to 09.
 - 2026-10-29: 03 built and checked on the phone. Decision 5 (the balance is judged after every entry) was added. One 02a ViewModel test was replaced, because a second opening balance can no longer be started (your decision; 03 file, section 14). Open item 9 (overflow guard) is closed. Criterion 35's install-over is checked again (versionCode 3).
 - 2026-10-29: pull request #85 (iteration 03) was merged as 8d25892. CI on the pull request (3 checks: build, Analyze (actions), CodeQL) and on main (the run for 8d25892, 1m 42s) were reported successful by you. The status lines above were updated. The 03 file's sections 13 and 14 are left as written at build time.
+- 2026-10-29: pull request #86 (docs: the 03 merge record) was merged as 00156bf, CI green on the pull request and on main (2m 2s) (your reports). The 04 file was approved with decisions 1 to 4.
 
 ## 13. Out of scope for this plan
 Performance over time, per-holding dividends, ETF look-through, the next intent.md items,
