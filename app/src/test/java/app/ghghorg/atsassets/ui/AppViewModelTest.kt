@@ -1,6 +1,7 @@
 package app.ghghorg.atsassets.ui
 
 import app.ghghorg.atsassets.core.AmountError
+import app.ghghorg.atsassets.core.CashDirection
 import app.ghghorg.atsassets.core.CashEntry
 import app.ghghorg.atsassets.core.CashEntryRefusal
 import app.ghghorg.atsassets.core.CashType
@@ -487,13 +488,15 @@ class AppViewModelTest {
         assertEquals(CashType.DEPOSIT, vm.state.value.form.type)
     }
 
+    // Narrowed in 04 (your decision, step 3): Adjustment and Interest/dividend can be chosen from 04
+    // (theFourTypesCanBeChosen); the opening balance and trade lines stay ignored here.
     @Test
-    fun theTypeChangesToWithdrawalAndBack_otherTypesAreIgnored() {
+    fun theTypeChangesToWithdrawalAndBack_openingBalanceAndTradeAreIgnored() {
         val vm = started(FakeStore(stored = listOf(opening())))
         vm.openForm()
         vm.onTypeChange(CashType.WITHDRAWAL)
         assertEquals(CashType.WITHDRAWAL, vm.state.value.form.type)
-        for (other in listOf(CashType.OPENING_BALANCE, CashType.ADJUSTMENT, CashType.INTEREST_DIVIDEND, CashType.TRADE)) {
+        for (other in listOf(CashType.OPENING_BALANCE, CashType.TRADE)) {
             vm.onTypeChange(other)
             assertEquals("$other", CashType.WITHDRAWAL, vm.state.value.form.type)
         }
@@ -619,6 +622,153 @@ class AppViewModelTest {
         vm.review()
         vm.onAmountChange("6.00")
         assertEquals(null, vm.state.value.refusals.cash)
+    }
+
+    // Iteration 04: interest/dividend and adjustment (04 decisions 1, 2 and 4).
+    @Test
+    fun theFourTypesCanBeChosen() {
+        val vm = started(FakeStore(stored = listOf(opening())))
+        vm.openForm()
+        for (type in listOf(CashType.INTEREST_DIVIDEND, CashType.ADJUSTMENT, CashType.WITHDRAWAL, CashType.DEPOSIT)) {
+            vm.onTypeChange(type)
+            assertEquals("$type", type, vm.state.value.form.type)
+        }
+    }
+
+    @Test
+    fun anAdjustmentStartsWithTheInDirection() {
+        val vm = started(FakeStore(stored = listOf(opening())))
+        vm.openForm()
+        vm.onTypeChange(CashType.ADJUSTMENT)
+        assertEquals(CashDirection.IN, vm.state.value.form.direction)
+    }
+
+    @Test
+    fun theDirectionIsKeptAcrossATypeSwitch() {
+        val vm = started(FakeStore(stored = listOf(opening())))
+        vm.openForm()
+        vm.onTypeChange(CashType.ADJUSTMENT)
+        vm.onDirectionChange(CashDirection.OUT)
+        vm.onTypeChange(CashType.DEPOSIT)
+        vm.onTypeChange(CashType.ADJUSTMENT)
+        assertEquals(CashDirection.OUT, vm.state.value.form.direction)
+    }
+
+    @Test
+    fun theTypeAdjustmentIsKeptWhenTheFormIsClosedAndOpenedAgain() {
+        val vm = started(FakeStore(stored = listOf(opening())))
+        vm.openForm()
+        vm.onTypeChange(CashType.ADJUSTMENT)
+        vm.closeForm()
+        vm.openForm()
+        assertEquals(CashType.ADJUSTMENT, vm.state.value.form.type)
+    }
+
+    @Test
+    fun interestDividendIsSavedPositive() {
+        val store = FakeStore(stored = listOf(opening()))
+        val vm = started(store)
+        vm.openForm()
+        vm.onTypeChange(CashType.INTEREST_DIVIDEND)
+        vm.fill(date = "2026-01-05", amount = "12.34")
+        vm.review()
+        vm.confirm()
+        val entry = store.saved.single().single()
+        assertEquals(CashType.INTEREST_DIVIDEND, entry.type)
+        assertEquals(1_234L, entry.amountCents)
+    }
+
+    @Test
+    fun anAdjustmentInIsSavedPositiveWithItsNote() {
+        val store = FakeStore(stored = listOf(opening()))
+        val vm = started(store)
+        vm.openForm()
+        vm.onTypeChange(CashType.ADJUSTMENT)
+        vm.fill(date = "2026-01-05", amount = "20.00", note = "Match broker balance")
+        vm.review()
+        vm.confirm()
+        val entry = store.saved.single().single()
+        assertEquals(CashType.ADJUSTMENT, entry.type)
+        assertEquals(2_000L, entry.amountCents)
+        assertEquals("Match broker balance", entry.note)
+    }
+
+    @Test
+    fun anAdjustmentOutIsSavedNegative() {
+        val store = FakeStore(stored = listOf(opening()))
+        val vm = started(store)
+        vm.openForm()
+        vm.onTypeChange(CashType.ADJUSTMENT)
+        vm.onDirectionChange(CashDirection.OUT)
+        vm.fill(date = "2026-01-05", amount = "5.00", note = "Fee")
+        vm.review()
+        vm.confirm()
+        assertEquals(-500L, store.saved.single().single().amountCents)
+        assertEquals(999_500L, vm.state.value.cashBalanceCents)
+    }
+
+    @Test
+    fun aLeftOverOutDirectionDoesNotFlipADeposit() {
+        val store = FakeStore(stored = listOf(opening()))
+        val vm = started(store)
+        vm.openForm()
+        vm.onTypeChange(CashType.ADJUSTMENT)
+        vm.onDirectionChange(CashDirection.OUT)
+        vm.onTypeChange(CashType.DEPOSIT)
+        vm.fill(date = "2026-01-05", amount = "5.00")
+        vm.review()
+        vm.confirm()
+        assertEquals(500L, store.saved.single().single().amountCents)
+    }
+
+    @Test
+    fun anAdjustmentWithoutANoteIsRefused_keepsTheTextAndSavesNothing() {
+        val store = FakeStore(stored = listOf(opening()))
+        val vm = started(store)
+        vm.openForm()
+        vm.onTypeChange(CashType.ADJUSTMENT)
+        vm.fill(date = "2026-01-05", amount = "20.00", note = "   ")
+        vm.review()
+        val state = vm.state.value
+        assertTrue(state.refusals.noteRequired)
+        assertEquals(Screen.FORM, state.screen)
+        assertEquals("   ", state.form.noteText)
+        assertTrue(store.saved.isEmpty())
+    }
+
+    @Test
+    fun noteRequiredIsReportedTogetherWithTheAmountAndDate() {
+        val vm = started(FakeStore(stored = listOf(opening())))
+        vm.openForm()
+        vm.onTypeChange(CashType.ADJUSTMENT)
+        vm.fill(date = "nope", amount = "abc", note = "")
+        vm.review()
+        val refusals = vm.state.value.refusals
+        assertEquals(AmountError.BAD_FORMAT, refusals.amount)
+        assertEquals(DateRefusal.NOT_A_DATE, refusals.date)
+        assertTrue(refusals.noteRequired)
+    }
+
+    @Test
+    fun editingTheNoteClearsNoteRequired() {
+        val vm = started(FakeStore(stored = listOf(opening())))
+        vm.openForm()
+        vm.onTypeChange(CashType.ADJUSTMENT)
+        vm.fill(date = "2026-01-05", amount = "20.00", note = "")
+        vm.review()
+        vm.onNoteChange("Fix")
+        assertFalse(vm.state.value.refusals.noteRequired)
+    }
+
+    @Test
+    fun anOutgoingAdjustmentThatOverdrawsIsRefused() {
+        val vm = started(FakeStore(stored = listOf(opening(cents = 100_000L))))
+        vm.openForm()
+        vm.onTypeChange(CashType.ADJUSTMENT)
+        vm.onDirectionChange(CashDirection.OUT)
+        vm.fill(date = "2026-01-05", amount = "2000.00", note = "Fix")
+        vm.review()
+        assertEquals(CashEntryRefusal.NegativeCash(LocalDate.of(2026, 1, 5), 100_000L), vm.state.value.refusals.cash)
     }
 
     @Test

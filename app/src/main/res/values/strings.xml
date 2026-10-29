@@ -34,6 +34,11 @@
     <string name="cash_negative">Not saved. Cash would be negative on %1$s by %2$s.</string>
     <string name="cash_before_opening_balance">Not saved. Cash entries cannot be dated before the opening balance (%1$s).</string>
     <string name="cash_too_large">Not saved. The balance would be too large.</string>
+    <string name="direction_label">Direction</string>
+    <string name="direction_in">Deposit (+)</string>
+    <string name="direction_out">Withdrawal (−)</string>
+    <string name="note_label_required">Note (required)</string>
+    <string name="note_required">Note: required for an adjustment.</string>
     <string name="loading">Loading</string>
     <string name="opening_balance">Opening balance</string>
     <string name="opening_balance_hint">Set this first. Nothing else can be entered before it.</string>

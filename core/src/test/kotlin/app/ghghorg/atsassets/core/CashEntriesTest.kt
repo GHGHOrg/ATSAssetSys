@@ -31,7 +31,8 @@ class CashEntriesTest {
         date: String,
         cents: Long,
         note: String = "",
-    ): CashEntryResult = CashEntries.create(existing, "new", type, LocalDate.parse(date), cents, note)
+        direction: CashDirection = CashDirection.IN,
+    ): CashEntryResult = CashEntries.create(existing, "new", type, LocalDate.parse(date), cents, note, direction)
 
     private fun created(result: CashEntryResult): CashEntry = (result as CashEntryResult.Created).entry
 
@@ -99,9 +100,11 @@ class CashEntriesTest {
         }
     }
 
+    // Narrowed in 04 (your decision, step 2): Interest/dividend and Adjustment are allowed from 04 and are
+    // covered by the tests below; the opening balance and trade lines stay refused here.
     @Test
-    fun typesOtherThanDepositAndWithdrawal_areRefused() {
-        val others = listOf(CashType.OPENING_BALANCE, CashType.INTEREST_DIVIDEND, CashType.ADJUSTMENT, CashType.TRADE)
+    fun theOpeningBalanceAndTradeTypes_areRefused() {
+        val others = listOf(CashType.OPENING_BALANCE, CashType.TRADE)
         for (type in others) {
             assertEquals("$type", CashEntryRefusal.TypeNotAllowed, refusal(create(listOf(opening()), type, "2026-01-05", 1_000L)))
         }
@@ -169,5 +172,83 @@ class CashEntriesTest {
     fun aBalanceOfExactlyTheLargestLong_isAllowed() {
         val existing = listOf(opening(cents = Long.MAX_VALUE - 10L))
         assertTrue(create(existing, CashType.DEPOSIT, "2026-01-05", 10L) is CashEntryResult.Created)
+    }
+
+    // Iteration 04: interest/dividend and adjustment (spec 4.2; 04 decisions 1 and 4).
+    @Test
+    fun interestDividend_isAdded() {
+        val entry = created(create(listOf(opening()), CashType.INTEREST_DIVIDEND, "2026-01-05", 1_234L))
+        assertEquals(CashType.INTEREST_DIVIDEND, entry.type)
+        assertEquals(1_234L, entry.amountCents)
+    }
+
+    @Test
+    fun adjustmentIn_isAdded() {
+        val result = create(listOf(opening()), CashType.ADJUSTMENT, "2026-01-05", 2_000L, "Match broker balance", CashDirection.IN)
+        val entry = created(result)
+        assertEquals(CashType.ADJUSTMENT, entry.type)
+        assertEquals(2_000L, entry.amountCents)
+        assertEquals("Match broker balance", entry.note)
+    }
+
+    @Test
+    fun adjustmentOut_isTakenOut() {
+        val entry = created(create(listOf(opening()), CashType.ADJUSTMENT, "2026-01-05", 500L, "Fee", CashDirection.OUT))
+        assertEquals(-500L, entry.amountCents)
+    }
+
+    @Test
+    fun anOutgoingAdjustmentThatOverdraws_isRefusedLikeAWithdrawal() {
+        val existing = listOf(opening(), stored("2026-01-10", -80_000L, 2L, CashType.WITHDRAWAL))
+        val result = create(existing, CashType.ADJUSTMENT, "2026-01-05", 30_000L, "Fix", CashDirection.OUT)
+        assertEquals(CashEntryRefusal.NegativeCash(LocalDate.of(2026, 1, 10), 10_000L), refusal(result))
+    }
+
+    @Test
+    fun anAdjustmentWithoutANote_isRefused() {
+        assertEquals(
+            CashEntryRefusal.NoteRequired,
+            refusal(create(listOf(opening()), CashType.ADJUSTMENT, "2026-01-05", 100L, "", CashDirection.IN)),
+        )
+    }
+
+    @Test
+    fun anAdjustmentWithANoteOfOnlySpaces_isRefused() {
+        assertEquals(
+            CashEntryRefusal.NoteRequired,
+            refusal(create(listOf(opening()), CashType.ADJUSTMENT, "2026-01-05", 100L, "   ", CashDirection.IN)),
+        )
+    }
+
+    @Test
+    fun anAdjustmentNote_isStoredAsTyped() {
+        val entry = created(create(listOf(opening()), CashType.ADJUSTMENT, "2026-01-05", 100L, "  fix  ", CashDirection.IN))
+        assertEquals("  fix  ", entry.note)
+    }
+
+    @Test
+    fun anAdjustmentNoteWithALineBreak_isRefusedForTheLineBreak() {
+        assertEquals(
+            CashEntryRefusal.NoteHasLineBreak,
+            refusal(create(listOf(opening()), CashType.ADJUSTMENT, "2026-01-05", 100L, "a\nb", CashDirection.IN)),
+        )
+    }
+
+    @Test
+    fun theNoteIsOptionalForTheOtherTypes() {
+        for (type in listOf(CashType.DEPOSIT, CashType.WITHDRAWAL, CashType.INTEREST_DIVIDEND)) {
+            assertTrue("$type", create(listOf(opening()), type, "2026-01-05", 100L, "") is CashEntryResult.Created)
+        }
+    }
+
+    @Test
+    fun theDirectionIsIgnoredForTypesOtherThanAdjustment() {
+        val existing = listOf(opening())
+        assertEquals(100L, created(create(existing, CashType.DEPOSIT, "2026-01-05", 100L, "", CashDirection.OUT)).amountCents)
+        assertEquals(-100L, created(create(existing, CashType.WITHDRAWAL, "2026-01-05", 100L, "", CashDirection.IN)).amountCents)
+        assertEquals(
+            100L,
+            created(create(existing, CashType.INTEREST_DIVIDEND, "2026-01-05", 100L, "", CashDirection.OUT)).amountCents,
+        )
     }
 }

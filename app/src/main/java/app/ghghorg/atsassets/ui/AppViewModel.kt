@@ -5,6 +5,7 @@ import androidx.lifecycle.viewModelScope
 import app.ghghorg.atsassets.core.AmountError
 import app.ghghorg.atsassets.core.AmountResult
 import app.ghghorg.atsassets.core.CashAccount
+import app.ghghorg.atsassets.core.CashDirection
 import app.ghghorg.atsassets.core.CashEntries
 import app.ghghorg.atsassets.core.CashEntry
 import app.ghghorg.atsassets.core.CashEntryRefusal
@@ -60,14 +61,16 @@ enum class SaveRefusal {
 }
 
 /**
- * The cash entry form: the typed text, kept as typed and never trimmed or changed, and the type. The type is
- * the opening balance until it exists, then Deposit or Withdrawal (iteration 03).
+ * The cash entry form: the typed text, kept as typed and never trimmed or changed, the type and the direction.
+ * The type is the opening balance until it exists, then one of the four entry types (03, 04). The direction is
+ * used for an adjustment only and is kept across a type switch (04 decisions 2 and 4).
  */
 data class FormState(
     val dateText: String = "",
     val amountText: String = "",
     val noteText: String = "",
     val type: CashType = CashType.OPENING_BALANCE,
+    val direction: CashDirection = CashDirection.IN,
 )
 
 /** Reasons only, no wording (D9). A null or false field is fine. [cash] holds K1's date and balance rules. */
@@ -77,6 +80,7 @@ data class Refusals(
     val noteHasLineBreak: Boolean = false,
     val save: SaveRefusal? = null,
     val cash: CashEntryRefusal? = null,
+    val noteRequired: Boolean = false,
 )
 
 data class AppState(
@@ -174,7 +178,15 @@ class AppViewModel(
     fun onTypeChange(type: CashType) {
         val current = mutableState.value
         if (type !in ENTRY_TYPES || current.form.type !in ENTRY_TYPES) return
-        mutableState.update { it.copy(form = it.form.copy(type = type), refusals = it.refusals.copy(cash = null)) }
+        mutableState.update {
+            it.copy(form = it.form.copy(type = type), refusals = it.refusals.copy(cash = null, noteRequired = false))
+        }
+    }
+
+    /** The adjustment's direction (04 decision 2: In by default). Kept while other types are shown. */
+    fun onDirectionChange(direction: CashDirection) {
+        if (mutableState.value.form.type !in ENTRY_TYPES) return
+        mutableState.update { it.copy(form = it.form.copy(direction = direction), refusals = it.refusals.copy(cash = null)) }
     }
 
     /** Back from the form to the tab it was opened from. The typed text is kept and the refusals are cleared. Ignored outside FORM. */
@@ -192,7 +204,10 @@ class AppViewModel(
     }
 
     fun onNoteChange(text: String) = mutableState.update {
-        it.copy(form = it.form.copy(noteText = text), refusals = it.refusals.copy(noteHasLineBreak = false))
+        it.copy(
+            form = it.form.copy(noteText = text),
+            refusals = it.refusals.copy(noteHasLineBreak = false, noteRequired = false),
+        )
     }
 
     /** Checks every field and reports all refusals together. Goes to REVIEW only if all are fine. Saves nothing. */
@@ -256,16 +271,21 @@ class AppViewModel(
     ): Refusals {
         val form = current.form
         val noteProbe =
-            CashEntries.create(current.entries, PROBE_ID, form.type, marketDate.today(), 1L, form.noteText)
+            CashEntries.create(current.entries, PROBE_ID, form.type, marketDate.today(), 1L, form.noteText, form.direction)
         val noteRule = (noteProbe as? CashEntryResult.Refused)?.reason
+        // A stand-in note, so the note rules (judged above) cannot hide the date and balance rules here.
         val cashRule =
             if (date != null && cents != null) {
-                val probe = CashEntries.create(current.entries, PROBE_ID, form.type, date, cents, "")
+                val probe = CashEntries.create(current.entries, PROBE_ID, form.type, date, cents, PROBE_NOTE, form.direction)
                 (probe as? CashEntryResult.Refused)?.reason
             } else {
                 null
             }
-        return Refusals(noteHasLineBreak = noteRule == CashEntryRefusal.NoteHasLineBreak, cash = cashRule)
+        return Refusals(
+            noteHasLineBreak = noteRule == CashEntryRefusal.NoteHasLineBreak,
+            noteRequired = noteRule == CashEntryRefusal.NoteRequired,
+            cash = cashRule,
+        )
     }
 
     /** Back from the review to the form. The typed text is kept. */
@@ -321,7 +341,7 @@ class AppViewModel(
             val result = OpeningBalance.create(current.entries, newId(), date, amount.value, form.noteText)
             return (result as? OpeningBalanceResult.Created)?.entry
         }
-        val result = CashEntries.create(current.entries, newId(), form.type, date, amount.value, form.noteText)
+        val result = CashEntries.create(current.entries, newId(), form.type, date, amount.value, form.noteText, form.direction)
         return (result as? CashEntryResult.Created)?.entry
     }
 
@@ -337,7 +357,10 @@ class AppViewModel(
         const val PROBE_ID = "check"
 
         // The types the form offers once the opening balance exists (03 decision 2).
-        val ENTRY_TYPES = setOf(CashType.DEPOSIT, CashType.WITHDRAWAL)
+        val ENTRY_TYPES = setOf(CashType.DEPOSIT, CashType.WITHDRAWAL, CashType.INTEREST_DIVIDEND, CashType.ADJUSTMENT)
+
+        // Not blank and one line, so the review's second K1 pass judges only the date and balance rules.
+        const val PROBE_NOTE = "check"
 
         // The screens that show the bottom bar (spec 6: always visible; 02b decision 1).
         val TAB_BAR_SCREENS = setOf(Screen.TABS, Screen.FORM, Screen.REVIEW)
