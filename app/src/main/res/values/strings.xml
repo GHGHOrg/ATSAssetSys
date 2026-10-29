@@ -62,6 +62,7 @@
     <string name="filter_all">All</string>
     <string name="filter_clear">Clear filters</string>
     <string name="cash_no_match">No entries match these filters</string>
+    <string name="date_not_digits">Date: digits only, like 20260105.</string>
     <plurals name="cash_entries_shown">
         <item quantity="one">%d entry shown</item>
         <item quantity="other">%d entries shown</item>

@@ -56,6 +56,9 @@ val DEFAULT_TAB_ORDER = listOf(Tab.MORE, Tab.CASH, Tab.PORTFOLIOS, Tab.OVERALL)
 enum class DateRefusal {
     EMPTY,
     NOT_A_DATE,
+
+    // A character other than a digit in a digits-only date field (the Cash filters, iteration 06).
+    NOT_DIGITS,
 }
 
 enum class SaveRefusal {
@@ -116,16 +119,19 @@ data class AppState(
     val reversal: ReversalForm = ReversalForm(),
     val cashFilterForm: CashFilterForm = CashFilterForm(),
 ) {
-    /** A refusal shows only once the field holds a full-length date that is not a real date (06 decision 1). */
-    val filterFromRefusal: DateRefusal? get() = filterDateRefusal(cashFilterForm.fromText)
+    /**
+     * The fields take digits only (YYYYMMDD): any other character is refused at once, eight digits that are no
+     * real date get the date message, fewer digits get nothing (06 decision 1 as changed after phone check 12).
+     */
+    val filterFromRefusal: DateRefusal? get() = DateDigits.refusal(cashFilterForm.fromText)
 
-    val filterToRefusal: DateRefusal? get() = filterDateRefusal(cashFilterForm.toText)
+    val filterToRefusal: DateRefusal? get() = DateDigits.refusal(cashFilterForm.toText)
 
-    /** Only valid dates count as bounds; an empty or invalid field is no bound (06 decision 1). */
+    /** Only eight digits of a real date count as a bound; anything else is no bound (06 decision 1). */
     val cashFilter: CashFilter
         get() = CashFilter(
-            from = MarketDate.parse(cashFilterForm.fromText.trim()),
-            to = MarketDate.parse(cashFilterForm.toText.trim()),
+            from = DateDigits.toDate(cashFilterForm.fromText),
+            to = DateDigits.toDate(cashFilterForm.toText),
             type = cashFilterForm.type,
         )
 
@@ -165,15 +171,6 @@ data class AppState(
 
     /** Android's back button on More, Cash or Portfolios goes to Overall (02b decision 3). */
     val backGoesToOverall: Boolean get() = screen == Screen.TABS && tab != Tab.OVERALL
-}
-
-// The length of a full YYYY-MM-DD date; a shorter text is still being typed (06 decision 1).
-private const val FULL_DATE_LENGTH = 10
-
-private fun filterDateRefusal(text: String): DateRefusal? {
-    val trimmed = text.trim()
-    if (trimmed.length < FULL_DATE_LENGTH) return null
-    return if (MarketDate.parse(trimmed) == null) DateRefusal.NOT_A_DATE else null
 }
 
 /**
@@ -355,13 +352,18 @@ class AppViewModel(
         )
     }
 
-    fun onFilterFromChange(text: String) = mutableState.update {
-        it.copy(cashFilterForm = it.cashFilterForm.copy(fromText = text))
+    /** A ninth digit is not accepted; other characters are kept, so their error shows at once. */
+    fun onFilterFromChange(text: String) {
+        if (tooManyDigits(text)) return
+        mutableState.update { it.copy(cashFilterForm = it.cashFilterForm.copy(fromText = text)) }
     }
 
-    fun onFilterToChange(text: String) = mutableState.update {
-        it.copy(cashFilterForm = it.cashFilterForm.copy(toText = text))
+    fun onFilterToChange(text: String) {
+        if (tooManyDigits(text)) return
+        mutableState.update { it.copy(cashFilterForm = it.cashFilterForm.copy(toText = text)) }
     }
+
+    private fun tooManyDigits(text: String): Boolean = DateDigits.isDigits(text) && text.length > DateDigits.LENGTH
 
     /** One chip at a time: null for All, or one of the four direct types. Other types are ignored. */
     fun onFilterTypeChange(type: CashType?) {

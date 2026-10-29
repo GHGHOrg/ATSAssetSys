@@ -1021,8 +1021,8 @@ class AppViewModelTest {
     @Test
     fun fromAndToNarrowTheRows() {
         val vm = withFourEntries()
-        vm.onFilterFromChange("2026-01-05")
-        vm.onFilterToChange("2026-01-06")
+        vm.onFilterFromChange("20260105")
+        vm.onFilterToChange("20260106")
         assertTrue(vm.state.value.filterActive)
         assertEquals(listOf("w3", "d2"), vm.shownIds())
     }
@@ -1050,7 +1050,7 @@ class AppViewModelTest {
     @Test
     fun anIncompleteDateIsIgnoredWithoutAMessage() {
         val vm = withFourEntries()
-        vm.onFilterFromChange("2026-01")
+        vm.onFilterFromChange("202601")
         assertEquals(null, vm.state.value.filterFromRefusal)
         assertFalse(vm.state.value.filterActive)
         assertEquals(4, vm.state.value.cashFilteredRows.size)
@@ -1059,8 +1059,8 @@ class AppViewModelTest {
     @Test
     fun aFullLengthDateThatIsNotADateShowsTheMessageAndIsIgnored() {
         val vm = withFourEntries()
-        vm.onFilterFromChange("2026-13-01")
-        vm.onFilterToChange("2026-02-30")
+        vm.onFilterFromChange("20261301")
+        vm.onFilterToChange("20260230")
         assertEquals(DateRefusal.NOT_A_DATE, vm.state.value.filterFromRefusal)
         assertEquals(DateRefusal.NOT_A_DATE, vm.state.value.filterToRefusal)
         assertFalse(vm.state.value.filterActive)
@@ -1070,8 +1070,8 @@ class AppViewModelTest {
     @Test
     fun fromAfterToShowsNoRows() {
         val vm = withFourEntries()
-        vm.onFilterFromChange("2026-01-08")
-        vm.onFilterToChange("2026-01-05")
+        vm.onFilterFromChange("20260108")
+        vm.onFilterToChange("20260105")
         assertTrue(vm.state.value.filterActive)
         assertTrue(vm.state.value.cashFilteredRows.isEmpty())
     }
@@ -1079,13 +1079,52 @@ class AppViewModelTest {
     @Test
     fun clearFiltersResetsTheDatesAndTheChip() {
         val vm = withFourEntries()
-        vm.onFilterFromChange("2026-01-05")
-        vm.onFilterToChange("2026-01-06")
+        vm.onFilterFromChange("20260105")
+        vm.onFilterToChange("20260106")
         vm.onFilterTypeChange(CashType.DEPOSIT)
         vm.clearFilters()
         assertEquals(CashFilterForm(), vm.state.value.cashFilterForm)
         assertFalse(vm.state.value.filterActive)
         assertEquals(4, vm.state.value.cashFilteredRows.size)
+    }
+
+    // Iteration 06, after phone check 12 (your request): digits only, dashes shown by the field, an immediate error for
+    // any other character (a change to 06 decision 1).
+    @Test
+    fun aNonDigitShowsTheDigitsMessageAtOnce_andIsNoBound() {
+        val vm = withFourEntries()
+        vm.onFilterFromChange("2")
+        assertEquals(null, vm.state.value.filterFromRefusal)
+        vm.onFilterFromChange("2a")
+        assertEquals(DateRefusal.NOT_DIGITS, vm.state.value.filterFromRefusal)
+        vm.onFilterToChange("2026-")
+        assertEquals(DateRefusal.NOT_DIGITS, vm.state.value.filterToRefusal)
+        assertFalse(vm.state.value.filterActive)
+        assertEquals(4, vm.state.value.cashFilteredRows.size)
+    }
+
+    @Test
+    fun fewerThanEightDigitsShowNoMessageAndAreNoBound() {
+        val vm = withFourEntries()
+        vm.onFilterFromChange("2026010")
+        assertEquals(null, vm.state.value.filterFromRefusal)
+        assertFalse(vm.state.value.filterActive)
+    }
+
+    @Test
+    fun aNinthDigitIsNotAccepted() {
+        val vm = withFourEntries()
+        vm.onFilterFromChange("20260105")
+        vm.onFilterFromChange("202601051")
+        assertEquals("20260105", vm.state.value.cashFilterForm.fromText)
+    }
+
+    @Test
+    fun aDatePastedWithDashesIsRefusedAsNotDigits() {
+        val vm = withFourEntries()
+        vm.onFilterFromChange("2026-01-05")
+        assertEquals(DateRefusal.NOT_DIGITS, vm.state.value.filterFromRefusal)
+        assertFalse(vm.state.value.filterActive)
     }
 
     @Test

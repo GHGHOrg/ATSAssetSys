@@ -11,6 +11,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.selection.selectableGroup
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
 import androidx.compose.material3.FilterChip
@@ -30,7 +31,12 @@ import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.onClick
 import androidx.compose.ui.semantics.role
+import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.input.OffsetMapping
+import androidx.compose.ui.text.input.TransformedText
+import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import app.ghghorg.atsassets.R
@@ -172,6 +178,7 @@ private fun FilterDateField(
     onChange: (String) -> Unit,
     modifier: Modifier = Modifier,
 ) {
+    // Digits only on a number keyboard; the dashes are shown, not typed (06, after phone check 12).
     OutlinedTextField(
         value = text,
         onValueChange = onChange,
@@ -180,8 +187,24 @@ private fun FilterDateField(
         placeholder = { Text(text = stringResource(R.string.filter_date_placeholder)) },
         supportingText = error?.let { { Text(text = it) } },
         isError = error != null,
+        visualTransformation = DateDigitsTransformation,
+        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
         singleLine = true,
     )
+}
+
+/** Shows the typed digits with the dashes of YYYY-MM-DD; the cursor follows (rules in DateDigits). */
+private object DateDigitsTransformation : VisualTransformation {
+    override fun filter(text: AnnotatedString): TransformedText {
+        val typed = text.text
+        val mapping =
+            object : OffsetMapping {
+                override fun originalToTransformed(offset: Int): Int = DateDigits.toShownOffset(offset, typed)
+
+                override fun transformedToOriginal(offset: Int): Int = DateDigits.toTypedOffset(offset, typed)
+            }
+        return TransformedText(AnnotatedString(DateDigits.format(typed)), mapping)
+    }
 }
 
 // The chips after All, in the order of view 7; Buy and Sell arrive in 28.
