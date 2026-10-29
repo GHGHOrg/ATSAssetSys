@@ -8,7 +8,15 @@ enum class CashDirection {
     OUT,
 }
 
-/** Why a cash entry was refused (spec 4.1, 4.2). Reasons only; the wording is D9. */
+/** Why an entry cannot be reversed (spec 4.2, 4.6). */
+enum class NotReversibleReason {
+    OPENING_BALANCE,
+    TRADE,
+    IS_REVERSAL,
+    ALREADY_REVERSED,
+}
+
+/** Why a cash entry or a reversal was refused (spec 4.1, 4.2, 4.6). Reasons only; the wording is D9. */
 sealed interface CashEntryRefusal {
     data object TypeNotAllowed : CashEntryRefusal
 
@@ -32,6 +40,17 @@ sealed interface CashEntryRefusal {
     ) : CashEntryRefusal
 
     data object TooLarge : CashEntryRefusal
+
+    data object OriginalNotFound : CashEntryRefusal
+
+    data class NotReversible(
+        val reason: NotReversibleReason,
+    ) : CashEntryRefusal
+
+    /** A reversal cannot be dated before its original (spec 4.6). */
+    data class BeforeOriginal(
+        val originalDate: LocalDate,
+    ) : CashEntryRefusal
 }
 
 sealed interface CashEntryResult {
@@ -86,6 +105,56 @@ object CashEntries {
                 type = type,
                 note = note,
                 enteredSeq = CashRules.nextSeq(existing),
+            )
+        val replayed = replay(existing + entry, from = date)
+        return if (replayed == null) CashEntryResult.Created(entry) else CashEntryResult.Refused(replayed)
+    }
+
+    /**
+     * Reverses a direct cash entry (spec 4.6): an Adjustment with the opposite of the stored amount, linked by
+     * reversesId. The first rule that fails decides the reason: found, reversible, note (line break, then
+     * required: the reversal is an adjustment), date, then the replay. The note is stored as typed.
+     */
+    fun reverse(
+        existing: List<CashEntry>,
+        id: String,
+        originalId: String,
+        date: LocalDate,
+        note: String,
+    ): CashEntryResult {
+        val original = existing.firstOrNull { it.id == originalId } ?: return CashEntryResult.Refused(CashEntryRefusal.OriginalNotFound)
+        val notReversible =
+            when {
+                original.type == CashType.OPENING_BALANCE -> NotReversibleReason.OPENING_BALANCE
+                original.type == CashType.TRADE -> NotReversibleReason.TRADE
+                original.reversesId != null -> NotReversibleReason.IS_REVERSAL
+                existing.any { it.reversesId == original.id } -> NotReversibleReason.ALREADY_REVERSED
+                else -> null
+            }
+        val refusal =
+            when {
+                notReversible != null -> CashEntryRefusal.NotReversible(notReversible)
+                note.any { it == '\n' || it == '\r' } -> CashEntryRefusal.NoteHasLineBreak
+                note.isBlank() -> CashEntryRefusal.NoteRequired
+                date.isBefore(original.date) -> CashEntryRefusal.BeforeOriginal(original.date)
+                else -> null
+            }
+        if (refusal != null) return CashEntryResult.Refused(refusal)
+        val opposite =
+            try {
+                Math.negateExact(original.amountCents)
+            } catch (e: ArithmeticException) {
+                return CashEntryResult.Refused(CashEntryRefusal.TooLarge)
+            }
+        val entry =
+            CashEntry(
+                id = id,
+                date = date,
+                amountCents = opposite,
+                type = CashType.ADJUSTMENT,
+                note = note,
+                enteredSeq = CashRules.nextSeq(existing),
+                reversesId = original.id,
             )
         val replayed = replay(existing + entry, from = date)
         return if (replayed == null) CashEntryResult.Created(entry) else CashEntryResult.Refused(replayed)
