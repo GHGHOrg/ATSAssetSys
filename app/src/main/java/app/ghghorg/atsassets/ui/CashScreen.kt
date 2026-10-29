@@ -5,19 +5,25 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.selection.selectableGroup
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
+import androidx.compose.material3.FilterChip
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedCard
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.clearAndSetSemantics
@@ -35,13 +41,15 @@ import app.ghghorg.atsassets.core.Money
 /**
  * The Cash account (view 7, wireframe 07 frame A): the balance, the Cash entry button (the opening balance until
  * it exists, then a deposit or withdrawal, iteration 03), and the rows. A row opens its detail and shows its note
- * (05 decision 3). Filters arrive in 06 and 28, trade lines in 09. Cash is not colored.
+ * (05 decision 3). The date range and type filters (06) sit between the balance and the list; the ticker and the
+ * Buy and Sell chips arrive in 28, trade lines in 09. Cash is not colored.
  */
 @Composable
 fun CashScreen(
     state: AppState,
     onCashEntry: () -> Unit,
     onOpenEntry: (String) -> Unit,
+    filterActions: CashFilterActions,
     modifier: Modifier = Modifier,
 ) {
     Column(
@@ -53,10 +61,18 @@ fun CashScreen(
             style = MaterialTheme.typography.titleLarge,
         )
         BalanceCard(state.cashBalanceCents, onCashEntry)
-        val rows = state.cashRows
-        if (rows.isEmpty()) {
+        if (state.cashRows.isEmpty()) {
             Text(
                 text = stringResource(R.string.cash_no_entries),
+                style = MaterialTheme.typography.bodyLarge,
+            )
+            return@Column
+        }
+        FilterCard(state, filterActions)
+        val rows = state.cashFilteredRows
+        if (rows.isEmpty()) {
+            Text(
+                text = stringResource(R.string.cash_no_match),
                 style = MaterialTheme.typography.bodyLarge,
             )
         } else {
@@ -71,6 +87,105 @@ fun CashScreen(
         }
     }
 }
+
+/** The filter actions of the Cash list (iteration 06), passed together to keep the screen's parameters short. */
+data class CashFilterActions(
+    val onFromChange: (String) -> Unit,
+    val onToChange: (String) -> Unit,
+    val onTypeChange: (CashType?) -> Unit,
+    val onClear: () -> Unit,
+)
+
+/**
+ * From and To with the date note, the type chips, and, while a filter is active, Clear filters and the count line
+ * (wireframe 07 markers 2, 3, 5 and 6; 06 decisions 1 and 3).
+ */
+@OptIn(ExperimentalLayoutApi::class)
+@Composable
+private fun FilterCard(
+    state: AppState,
+    actions: CashFilterActions,
+) {
+    val form = state.cashFilterForm
+    OutlinedCard(modifier = Modifier.fillMaxWidth()) {
+        Column(
+            modifier = Modifier.padding(12.dp),
+            verticalArrangement = Arrangement.spacedBy(8.dp),
+        ) {
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                FilterDateField(
+                    label = stringResource(R.string.filter_from),
+                    text = form.fromText,
+                    error = dateMessage(state.filterFromRefusal),
+                    onChange = actions.onFromChange,
+                    modifier = Modifier.weight(1f),
+                )
+                FilterDateField(
+                    label = stringResource(R.string.filter_to),
+                    text = form.toText,
+                    error = dateMessage(state.filterToRefusal),
+                    onChange = actions.onToChange,
+                    modifier = Modifier.weight(1f),
+                )
+            }
+            Text(
+                text = stringResource(R.string.date_note),
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+            FlowRow(
+                modifier = Modifier.selectableGroup(),
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+            ) {
+                FilterChip(
+                    selected = form.type == null,
+                    onClick = { actions.onTypeChange(null) },
+                    label = { Text(text = stringResource(R.string.filter_all)) },
+                )
+                for (type in FILTER_TYPES) {
+                    FilterChip(
+                        selected = form.type == type,
+                        onClick = { actions.onTypeChange(type) },
+                        label = { Text(text = cashTypeLabel(type)) },
+                    )
+                }
+            }
+            if (state.filterActive) {
+                val count = state.cashFilteredRows.size
+                Text(
+                    text = pluralStringResource(R.plurals.cash_entries_shown, count, count),
+                    style = MaterialTheme.typography.bodyMedium,
+                )
+                TextButton(onClick = actions.onClear) {
+                    Text(text = stringResource(R.string.filter_clear))
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun FilterDateField(
+    label: String,
+    text: String,
+    error: String?,
+    onChange: (String) -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    OutlinedTextField(
+        value = text,
+        onValueChange = onChange,
+        modifier = modifier,
+        label = { Text(text = label) },
+        placeholder = { Text(text = stringResource(R.string.filter_date_placeholder)) },
+        supportingText = error?.let { { Text(text = it) } },
+        isError = error != null,
+        singleLine = true,
+    )
+}
+
+// The chips after All, in the order of view 7; Buy and Sell arrive in 28.
+private val FILTER_TYPES = listOf(CashType.DEPOSIT, CashType.WITHDRAWAL, CashType.INTEREST_DIVIDEND, CashType.ADJUSTMENT)
 
 @Composable
 private fun BalanceCard(

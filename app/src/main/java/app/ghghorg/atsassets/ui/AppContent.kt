@@ -79,8 +79,22 @@ private fun BarContent(
 
         else -> when (state.tab) {
             Tab.OVERALL -> OverallScreen(state, viewModel::openForm)
-            Tab.CASH -> CashScreen(state, viewModel::openForm, viewModel::openDetail)
+
+            Tab.CASH -> CashScreen(
+                state = state,
+                onCashEntry = viewModel::openForm,
+                onOpenEntry = viewModel::openDetail,
+                filterActions =
+                CashFilterActions(
+                    onFromChange = viewModel::onFilterFromChange,
+                    onToChange = viewModel::onFilterToChange,
+                    onTypeChange = viewModel::onFilterTypeChange,
+                    onClear = viewModel::clearFilters,
+                ),
+            )
+
             Tab.PORTFOLIOS -> PortfoliosScreen()
+
             Tab.MORE -> MoreScreen()
         }
     }
