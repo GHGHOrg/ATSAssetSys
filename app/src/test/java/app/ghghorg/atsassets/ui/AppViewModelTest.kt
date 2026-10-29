@@ -771,6 +771,197 @@ class AppViewModelTest {
         assertEquals(CashEntryRefusal.NegativeCash(LocalDate.of(2026, 1, 5), 100_000L), vm.state.value.refusals.cash)
     }
 
+    // Iteration 05: the cash entry detail and the reversal (spec 4.6; 05 decisions 1 and 4).
+    private fun withDeposit(): AppViewModel {
+        val vm = started(FakeStore(stored = listOf(opening(), deposit("2026-01-05", 50_000L, seq = 2L))))
+        vm.selectTab(Tab.CASH)
+        return vm
+    }
+
+    @Test
+    fun openDetailShowsTheEntryAndOffersReverse() {
+        val vm = withDeposit()
+        vm.openDetail("d2")
+        val state = vm.state.value
+        assertEquals(Screen.DETAIL, state.screen)
+        assertEquals("d2", state.detailEntry?.id)
+        assertTrue(state.reverseOffered)
+        assertEquals(null, state.detailReversedBy)
+        assertEquals(null, state.detailReverses)
+    }
+
+    @Test
+    fun theOpeningBalanceDetailDoesNotOfferReverse() {
+        val vm = withDeposit()
+        vm.openDetail("o1")
+        assertEquals(Screen.DETAIL, vm.state.value.screen)
+        assertFalse(vm.state.value.reverseOffered)
+    }
+
+    @Test
+    fun openDetailWithAnUnknownIdIsIgnored() {
+        val vm = withDeposit()
+        vm.openDetail("nope")
+        assertEquals(Screen.TABS, vm.state.value.screen)
+    }
+
+    @Test
+    fun closeDetailReturnsToCash() {
+        val vm = withDeposit()
+        vm.openDetail("d2")
+        vm.closeDetail()
+        assertEquals(Screen.TABS, vm.state.value.screen)
+        assertEquals(Tab.CASH, vm.state.value.tab)
+    }
+
+    @Test
+    fun openReversalStartsWithTheOriginalDateAndTheGivenNote() {
+        val vm = withDeposit()
+        vm.openDetail("d2")
+        vm.openReversal("Reversal of the deposit of 2026-01-05 ET")
+        val state = vm.state.value
+        assertEquals(Screen.REVERSAL, state.screen)
+        assertEquals(ReversalForm("2026-01-05", "Reversal of the deposit of 2026-01-05 ET"), state.reversal)
+    }
+
+    @Test
+    fun openReversalIsIgnoredWhenReverseIsNotOffered() {
+        val vm = withDeposit()
+        vm.openDetail("o1")
+        vm.openReversal("x")
+        assertEquals(Screen.DETAIL, vm.state.value.screen)
+    }
+
+    @Test
+    fun confirmReversalSavesTheOppositeAdjustmentAndReturnsToTheOriginalsDetail() {
+        val store = FakeStore(stored = listOf(opening(), deposit("2026-01-05", 50_000L, seq = 2L)))
+        val vm = started(store)
+        vm.selectTab(Tab.CASH)
+        vm.openDetail("d2")
+        vm.openReversal("Reversal of the deposit of 2026-01-05 ET")
+        vm.confirmReversal()
+        val saved = store.saved.single().single()
+        assertEquals(CashType.ADJUSTMENT, saved.type)
+        assertEquals(-50_000L, saved.amountCents)
+        assertEquals("d2", saved.reversesId)
+        assertEquals("Reversal of the deposit of 2026-01-05 ET", saved.note)
+        val state = vm.state.value
+        assertEquals(Screen.DETAIL, state.screen)
+        assertEquals("d2", state.detailEntry?.id)
+        assertEquals("c1", state.detailReversedBy?.id)
+        assertFalse(state.reverseOffered)
+        assertEquals(1_000_000L, state.cashBalanceCents)
+        assertEquals(ReversalForm(), state.reversal)
+    }
+
+    @Test
+    fun theReversalsDetailLinksToTheOriginalAndOffersNoReverse() {
+        val vm = withDeposit()
+        vm.openDetail("d2")
+        vm.openReversal("Reversal")
+        vm.confirmReversal()
+        vm.openDetail("c1")
+        val state = vm.state.value
+        assertEquals("d2", state.detailReverses?.id)
+        assertFalse(state.reverseOffered)
+    }
+
+    @Test
+    fun aReversalDatedBeforeTheOriginalIsRefused_keepsTheTextAndSavesNothing() {
+        val store = FakeStore(stored = listOf(opening(), deposit("2026-01-05", 50_000L, seq = 2L)))
+        val vm = started(store)
+        vm.openDetail("d2")
+        vm.openReversal("Reversal")
+        vm.onReversalDateChange("2026-01-04")
+        vm.confirmReversal()
+        val state = vm.state.value
+        assertEquals(Screen.REVERSAL, state.screen)
+        assertEquals(CashEntryRefusal.BeforeOriginal(LocalDate.of(2026, 1, 5)), state.refusals.cash)
+        assertEquals(ReversalForm("2026-01-04", "Reversal"), state.reversal)
+        assertTrue(store.saved.isEmpty())
+    }
+
+    @Test
+    fun aBlankReversalNoteIsRefused() {
+        val vm = withDeposit()
+        vm.openDetail("d2")
+        vm.openReversal("Reversal")
+        vm.onReversalNoteChange("  ")
+        vm.confirmReversal()
+        assertTrue(vm.state.value.refusals.noteRequired)
+        assertEquals(Screen.REVERSAL, vm.state.value.screen)
+    }
+
+    @Test
+    fun aBadReversalDateAndALineBreakAreReportedTogether() {
+        val vm = withDeposit()
+        vm.openDetail("d2")
+        vm.openReversal("Reversal")
+        vm.onReversalDateChange("nope")
+        vm.onReversalNoteChange("a\nb")
+        vm.confirmReversal()
+        val refusals = vm.state.value.refusals
+        assertEquals(DateRefusal.NOT_A_DATE, refusals.date)
+        assertTrue(refusals.noteHasLineBreak)
+        assertEquals(null, refusals.cash)
+    }
+
+    @Test
+    fun aReversalThatMakesLaterCashNegativeIsRefused() {
+        val stored =
+            listOf(
+                opening(cents = 100_000L),
+                deposit("2026-01-05", 50_000L, seq = 2L),
+                withdrawal("2026-01-06", 50_000L, seq = 3L),
+                withdrawal("2026-01-10", 80_000L, seq = 4L),
+            )
+        val vm = started(FakeStore(stored = stored))
+        vm.openDetail("d2")
+        vm.openReversal("Reversal")
+        vm.confirmReversal()
+        assertEquals(CashEntryRefusal.NegativeCash(LocalDate.of(2026, 1, 10), 30_000L), vm.state.value.refusals.cash)
+    }
+
+    @Test
+    fun cancelReversalReturnsToTheDetailAndSavesNothing() {
+        val store = FakeStore(stored = listOf(opening(), deposit("2026-01-05", 50_000L, seq = 2L)))
+        val vm = started(store)
+        vm.openDetail("d2")
+        vm.openReversal("Reversal")
+        vm.cancelReversal()
+        assertEquals(Screen.DETAIL, vm.state.value.screen)
+        assertTrue(store.saved.isEmpty())
+    }
+
+    @Test
+    fun editingTheReversalDateOrNoteClearsItsRefusals() {
+        val vm = withDeposit()
+        vm.openDetail("d2")
+        vm.openReversal("Reversal")
+        vm.onReversalDateChange("2026-01-04")
+        vm.confirmReversal()
+        vm.onReversalDateChange("2026-01-06")
+        assertEquals(null, vm.state.value.refusals.cash)
+        vm.onReversalNoteChange("")
+        vm.confirmReversal()
+        vm.onReversalNoteChange("Fix")
+        assertFalse(vm.state.value.refusals.noteRequired)
+    }
+
+    @Test
+    fun theBarWorksFromTheDetailAndTheReversal() {
+        val vm = withDeposit()
+        vm.openDetail("d2")
+        vm.selectTab(Tab.OVERALL)
+        assertEquals(Screen.TABS, vm.state.value.screen)
+        vm.selectTab(Tab.CASH)
+        vm.openDetail("d2")
+        vm.openReversal("Reversal")
+        vm.selectTab(Tab.MORE)
+        assertEquals(Screen.TABS, vm.state.value.screen)
+        assertEquals(Tab.MORE, vm.state.value.tab)
+    }
+
     @Test
     fun selectTabIsIgnoredWhileSaving() {
         val gate = CompletableDeferred<Unit>()
@@ -822,6 +1013,19 @@ private fun opening(
     type = CashType.OPENING_BALANCE,
     note = "",
     enteredSeq = 1L,
+)
+
+private fun deposit(
+    date: String,
+    cents: Long,
+    seq: Long,
+): CashEntry = CashEntry(
+    id = "d$seq",
+    date = LocalDate.parse(date),
+    amountCents = cents,
+    type = CashType.DEPOSIT,
+    note = "",
+    enteredSeq = seq,
 )
 
 private fun withdrawal(

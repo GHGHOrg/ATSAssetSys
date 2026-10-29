@@ -37,6 +37,8 @@ enum class Screen {
     TABS,
     FORM,
     REVIEW,
+    DETAIL,
+    REVERSAL,
 }
 
 /** The four bottom bar tabs (spec 6, navigation outline). */
@@ -73,6 +75,12 @@ data class FormState(
     val direction: CashDirection = CashDirection.IN,
 )
 
+/** The reversal screen's typed text (spec 4.6): the date and the pre-filled, editable note (05 decision 1). */
+data class ReversalForm(
+    val dateText: String = "",
+    val noteText: String = "",
+)
+
 /** Reasons only, no wording (D9). A null or false field is fine. [cash] holds K1's date and balance rules. */
 data class Refusals(
     val amount: AmountError? = null,
@@ -92,8 +100,27 @@ data class AppState(
     val refusals: Refusals = Refusals(),
     val saving: Boolean = false,
     val netWorthCents: Long = 0L,
+    // The entry shown on DETAIL; on REVERSAL, the entry being reversed.
+    val detailId: String? = null,
+    val reversal: ReversalForm = ReversalForm(),
 ) {
     val holdsData: Boolean get() = CashRules.appHoldsData(entries)
+
+    val detailEntry: CashEntry? get() = entries.firstOrNull { it.id == detailId }
+
+    /** The reversal of the shown entry, if it has one (spec 4.6: at most one). */
+    val detailReversedBy: CashEntry? get() = detailId?.let { id -> entries.firstOrNull { it.reversesId == id } }
+
+    /** The original the shown entry reverses, if it is a reversal. */
+    val detailReverses: CashEntry? get() = detailEntry?.reversesId?.let { id -> entries.firstOrNull { it.id == id } }
+
+    /** Reverse is offered on a direct entry that is not a reversal and not yet reversed (spec 4.6). */
+    val reverseOffered: Boolean
+        get() {
+            val entry = detailEntry ?: return false
+            val direct = entry.type != CashType.OPENING_BALANCE && entry.type != CashType.TRADE
+            return direct && entry.reversesId == null && detailReversedBy == null
+        }
 
     /** The Cash tab balance: on the latest entry date, so future-dated entries count (4.8). */
     val cashBalanceCents: Long get() = CashAccount.balanceCents(entries)
@@ -288,6 +315,114 @@ class AppViewModel(
         )
     }
 
+    /** Opens an entry's detail from the Cash list, or follows a link from another detail. Unknown ids are ignored. */
+    fun openDetail(id: String) {
+        val current = mutableState.value
+        if (current.screen != Screen.TABS && current.screen != Screen.DETAIL) return
+        if (current.entries.none { it.id == id }) return
+        mutableState.update { it.copy(screen = Screen.DETAIL, detailId = id, refusals = Refusals()) }
+    }
+
+    /** Back from the detail to the Cash list. */
+    fun closeDetail() {
+        if (mutableState.value.screen != Screen.DETAIL) return
+        mutableState.update { it.copy(screen = Screen.TABS, detailId = null) }
+    }
+
+    /**
+     * Opens the reversal for the shown entry, dated the original's date, with [defaultNote] pre-filled. The
+     * screen passes the note because its wording is D9 and lives in the strings. Ignored unless Reverse is offered.
+     */
+    fun openReversal(defaultNote: String) {
+        val current = mutableState.value
+        if (current.screen != Screen.DETAIL || !current.reverseOffered) return
+        val original = current.detailEntry ?: return
+        mutableState.update {
+            it.copy(
+                screen = Screen.REVERSAL,
+                reversal = ReversalForm(dateText = original.date.toString(), noteText = defaultNote),
+                refusals = Refusals(),
+            )
+        }
+    }
+
+    fun onReversalDateChange(text: String) = mutableState.update {
+        it.copy(reversal = it.reversal.copy(dateText = text), refusals = it.refusals.copy(date = null, cash = null))
+    }
+
+    fun onReversalNoteChange(text: String) = mutableState.update {
+        it.copy(
+            reversal = it.reversal.copy(noteText = text),
+            refusals = it.refusals.copy(noteHasLineBreak = false, noteRequired = false),
+        )
+    }
+
+    /** Back from the reversal to the detail. Nothing is saved. Ignored while a save is running. */
+    fun cancelReversal() {
+        val current = mutableState.value
+        if (current.screen != Screen.REVERSAL || current.saving) return
+        mutableState.update { it.copy(screen = Screen.DETAIL, reversal = ReversalForm(), refusals = Refusals()) }
+    }
+
+    /**
+     * Checks and saves the reversal, one row (spec 4.6: one screen, no separate review). On a refusal the screen
+     * stays with the typed text. On success it returns to the original's detail (05 decision 4).
+     */
+    fun confirmReversal() {
+        val current = mutableState.value
+        if (current.screen != Screen.REVERSAL || current.saving) return
+        val original = current.detailEntry ?: return
+        val target = store ?: return
+        val dateText = current.reversal.dateText.trim()
+        val date = MarketDate.parse(dateText)
+        val dateRefusal =
+            when {
+                dateText.isEmpty() -> DateRefusal.EMPTY
+                date == null -> DateRefusal.NOT_A_DATE
+                else -> null
+            }
+        // With a bad date, K1 still judges the note, using the original's date as a stand-in.
+        val result = CashEntries.reverse(current.entries, newId(), original.id, date ?: original.date, current.reversal.noteText)
+        val rule = (result as? CashEntryResult.Refused)?.reason
+        val refusals =
+            Refusals(
+                date = dateRefusal,
+                noteHasLineBreak = rule == CashEntryRefusal.NoteHasLineBreak,
+                noteRequired = rule == CashEntryRefusal.NoteRequired,
+                cash = rule.takeIf { date != null && it != CashEntryRefusal.NoteHasLineBreak && it != CashEntryRefusal.NoteRequired },
+            )
+        val entry = (result as? CashEntryResult.Created)?.entry
+        if (entry == null || dateRefusal != null) {
+            mutableState.update { it.copy(refusals = refusals) }
+            return
+        }
+        mutableState.update { it.copy(saving = true, refusals = Refusals()) }
+        viewModelScope.launch {
+            try {
+                target.saveCashEntries(listOf(entry))
+                mutableState.update {
+                    val entries = it.entries + entry
+                    it.copy(
+                        screen = Screen.DETAIL,
+                        entries = entries,
+                        reversal = ReversalForm(),
+                        refusals = Refusals(),
+                        saving = false,
+                        netWorthCents = netWorthOf(entries),
+                    )
+                }
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: UnreadableDataException) {
+                mutableState.update { it.copy(screen = Screen.UNREADABLE, saving = false) }
+            } catch (e: Exception) {
+                mutableState.update {
+                    it.copy(saving = false, refusals = Refusals(save = SaveRefusal.SAVE_FAILED))
+                }
+            }
+        }
+    }
+
     /** Back from the review to the form. The typed text is kept. */
     fun backToEdit() {
         val current = mutableState.value
@@ -363,6 +498,6 @@ class AppViewModel(
         const val PROBE_NOTE = "check"
 
         // The screens that show the bottom bar (spec 6: always visible; 02b decision 1).
-        val TAB_BAR_SCREENS = setOf(Screen.TABS, Screen.FORM, Screen.REVIEW)
+        val TAB_BAR_SCREENS = setOf(Screen.TABS, Screen.FORM, Screen.REVIEW, Screen.DETAIL, Screen.REVERSAL)
     }
 }

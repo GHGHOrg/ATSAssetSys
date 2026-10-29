@@ -32,8 +32,9 @@ fun AppContent(
             modifier,
         )
 
-        // The bar shows on the tabs, the form and the review (spec 6: always visible; 02b decision 1).
-        Screen.TABS, Screen.FORM, Screen.REVIEW -> Column(modifier = modifier.fillMaxSize()) {
+        // The bar shows on every screen after loading (spec 6: always visible; 02b decision 1). DETAIL and
+        // REVERSAL get their own screens in step 4 of iteration 05; until then they show the tab.
+        Screen.TABS, Screen.FORM, Screen.REVIEW, Screen.DETAIL, Screen.REVERSAL -> Column(modifier = modifier.fillMaxSize()) {
             Box(modifier = Modifier.weight(1f)) {
                 BarContent(state, viewModel)
             }
