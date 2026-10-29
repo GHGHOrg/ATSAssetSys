@@ -1,6 +1,6 @@
 # plan/iterations/04-interest-adjustment.md
 
-Stage: Build. Status: built on branch iter-04-interest-adjustment (steps 1 to 5, commits 822c58d to cef9a8a) and checked on the phone 2026-10-29, all checks yes (section 13). Pull request not created; CI not run. Decisions 1 to 4 settled (section 10). Sections 1 to 12 were written before the build; where the build differs, section 14 says so.
+Stage: Build. Status: built on branch iter-04-interest-adjustment (steps 1 to 5, commits 822c58d to cef9a8a) and checked on the phone 2026-10-29, all checks yes (section 13). Pull request #87 merged as 5424a6e on 2026-10-29; CI green on the pull request and on main (your reports). Decisions 1 to 4 settled (section 10). Sections 1 to 12 were written before the build; where the build differs, section 14 says so.
 Source: plan/plan.md section 4 (row 04), intent/intent.md v52 (final), spec/spec.md v4 (final). "My reading" is an interpretation, not a test.
 
 ## 1. Outcome
@@ -75,7 +75,7 @@ Approved on paper with this file; confirmed on the phone (D9).
 Confirmed on the phone 2026-10-29 (checks 1 to 6 and 10): the four chips, the Direction row, "Note (required)" and the message as written above.
 
 ## 12. Status and notes
-Built 2026-10-29; phone checks 2026-10-29. Pull request and CI: not yet.
+Done. Built 2026-10-29; phone checks 2026-10-29; pull request #87 merged as 5424a6e (2026-10-29), CI green on the pull request (3 checks) and on main (2m 17s) (your reports).
 
 ## 13. Build results
 ### 13.1 Commits
