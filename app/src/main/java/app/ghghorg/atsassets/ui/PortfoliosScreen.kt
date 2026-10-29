@@ -1,28 +1,37 @@
 package app.ghghorg.atsassets.ui
 
+import androidx.activity.compose.BackHandler
+import androidx.compose.foundation.background
+import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedCard
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.LiveRegionMode
+import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.liveRegion
+import androidx.compose.ui.semantics.paneTitle
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.window.DialogProperties
 import app.ghghorg.atsassets.R
 import app.ghghorg.atsassets.core.Money
 import app.ghghorg.atsassets.core.Portfolio
@@ -108,8 +117,10 @@ private fun PortfolioRow(portfolio: Portfolio) {
 
 /**
  * The New portfolio dialog (wireframe 10d frames A and C): one Name field, the helper line, the first refusal under
- * the field, Create and Cancel. Create is always tappable. A tap outside does not close it, so the typed text is
- * not lost by accident; Back closes it like Cancel.
+ * the field, Create and Cancel. Create is always tappable. Drawn inside the activity's window over a dimmed layer,
+ * not as a separate dialog window: a separate window takes the focus, and MainActivity covers the app whenever its
+ * window loses focus (defect found in 07 phone check 2). The layer takes every tap, so a tap outside the card does
+ * nothing and the typed text is not lost by accident; Back closes it like Cancel.
  */
 @Composable
 internal fun NewPortfolioDialog(
@@ -119,16 +130,34 @@ internal fun NewPortfolioDialog(
     onCreate: () -> Unit,
     onCancel: () -> Unit,
 ) {
+    BackHandler(enabled = !saving, onBack = onCancel)
     val error = portfolioMessage(dialog)
-    AlertDialog(
-        onDismissRequest = onCancel,
-        properties = DialogProperties(dismissOnClickOutside = false),
-        title = { Text(text = stringResource(R.string.new_portfolio)) },
-        text = {
-            Column(modifier = Modifier.verticalScroll(rememberScrollState())) {
+    val title = stringResource(R.string.new_portfolio)
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(MaterialTheme.colorScheme.scrim.copy(alpha = SCRIM_ALPHA))
+            .pointerInput(Unit) { detectTapGestures { } },
+        contentAlignment = Alignment.Center,
+    ) {
+        Surface(
+            modifier = Modifier.padding(24.dp).widthIn(max = 560.dp).semantics { paneTitle = title },
+            shape = MaterialTheme.shapes.extraLarge,
+            color = MaterialTheme.colorScheme.surfaceContainerHigh,
+        ) {
+            Column(
+                modifier = Modifier.verticalScroll(rememberScrollState()).padding(24.dp),
+                verticalArrangement = Arrangement.spacedBy(16.dp),
+            ) {
+                Text(
+                    text = title,
+                    style = MaterialTheme.typography.headlineSmall,
+                    modifier = Modifier.semantics { heading() },
+                )
                 OutlinedTextField(
                     value = dialog.nameText,
                     onValueChange = onNameChange,
+                    modifier = Modifier.fillMaxWidth(),
                     label = { Text(text = stringResource(R.string.portfolio_name_label)) },
                     supportingText = {
                         Column {
@@ -144,20 +173,24 @@ internal fun NewPortfolioDialog(
                     isError = error != null,
                     singleLine = true,
                 )
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp, Alignment.End),
+                ) {
+                    TextButton(onClick = onCancel, enabled = !saving) {
+                        Text(text = stringResource(R.string.cancel_button))
+                    }
+                    TextButton(onClick = onCreate, enabled = !saving) {
+                        Text(text = stringResource(R.string.create_button))
+                    }
+                }
             }
-        },
-        confirmButton = {
-            TextButton(onClick = onCreate, enabled = !saving) {
-                Text(text = stringResource(R.string.create_button))
-            }
-        },
-        dismissButton = {
-            TextButton(onClick = onCancel, enabled = !saving) {
-                Text(text = stringResource(R.string.cancel_button))
-            }
-        },
-    )
+        }
+    }
 }
+
+// The dim behind the dialog, as Material's own dialogs use.
+private const val SCRIM_ALPHA = 0.32f
 
 @Composable
 private fun portfolioMessage(dialog: PortfolioDialog): String? {
