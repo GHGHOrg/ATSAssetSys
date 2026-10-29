@@ -995,6 +995,113 @@ class AppViewModelTest {
         assertEquals(Tab.MORE, vm.state.value.tab)
     }
 
+    // Iteration 06: the Cash list filters (view 7; 06 decisions 1 to 4).
+    private fun withFourEntries(): AppViewModel {
+        val stored =
+            listOf(
+                opening(),
+                deposit("2026-01-05", 50_000L, seq = 2L),
+                withdrawal("2026-01-06", 30_000L, seq = 3L),
+                deposit("2026-01-10", 5_000L, seq = 4L),
+            )
+        val vm = started(FakeStore(stored = stored))
+        vm.selectTab(Tab.CASH)
+        return vm
+    }
+
+    private fun AppViewModel.shownIds(): List<String> = state.value.cashFilteredRows.map { it.entry.id }
+
+    @Test
+    fun withNoFilterEveryRowIsShownAndNoFilterIsActive() {
+        val vm = withFourEntries()
+        assertFalse(vm.state.value.filterActive)
+        assertEquals(vm.state.value.cashRows, vm.state.value.cashFilteredRows)
+    }
+
+    @Test
+    fun fromAndToNarrowTheRows() {
+        val vm = withFourEntries()
+        vm.onFilterFromChange("2026-01-05")
+        vm.onFilterToChange("2026-01-06")
+        assertTrue(vm.state.value.filterActive)
+        assertEquals(listOf("w3", "d2"), vm.shownIds())
+    }
+
+    @Test
+    fun aTypeChipNarrowsTheRows_andKeepsTheRealBalances() {
+        val vm = withFourEntries()
+        vm.onFilterTypeChange(CashType.DEPOSIT)
+        assertEquals(listOf("d4", "d2"), vm.shownIds())
+        assertEquals(listOf(1_025_000L, 1_050_000L), vm.state.value.cashFilteredRows.map { it.balanceAfterCents })
+    }
+
+    @Test
+    fun allClearsTheChip_andOtherTypesAreIgnored() {
+        val vm = withFourEntries()
+        vm.onFilterTypeChange(CashType.WITHDRAWAL)
+        vm.onFilterTypeChange(CashType.OPENING_BALANCE)
+        vm.onFilterTypeChange(CashType.TRADE)
+        assertEquals(CashType.WITHDRAWAL, vm.state.value.cashFilterForm.type)
+        vm.onFilterTypeChange(null)
+        assertEquals(null, vm.state.value.cashFilterForm.type)
+        assertFalse(vm.state.value.filterActive)
+    }
+
+    @Test
+    fun anIncompleteDateIsIgnoredWithoutAMessage() {
+        val vm = withFourEntries()
+        vm.onFilterFromChange("2026-01")
+        assertEquals(null, vm.state.value.filterFromRefusal)
+        assertFalse(vm.state.value.filterActive)
+        assertEquals(4, vm.state.value.cashFilteredRows.size)
+    }
+
+    @Test
+    fun aFullLengthDateThatIsNotADateShowsTheMessageAndIsIgnored() {
+        val vm = withFourEntries()
+        vm.onFilterFromChange("2026-13-01")
+        vm.onFilterToChange("2026-02-30")
+        assertEquals(DateRefusal.NOT_A_DATE, vm.state.value.filterFromRefusal)
+        assertEquals(DateRefusal.NOT_A_DATE, vm.state.value.filterToRefusal)
+        assertFalse(vm.state.value.filterActive)
+        assertEquals(4, vm.state.value.cashFilteredRows.size)
+    }
+
+    @Test
+    fun fromAfterToShowsNoRows() {
+        val vm = withFourEntries()
+        vm.onFilterFromChange("2026-01-08")
+        vm.onFilterToChange("2026-01-05")
+        assertTrue(vm.state.value.filterActive)
+        assertTrue(vm.state.value.cashFilteredRows.isEmpty())
+    }
+
+    @Test
+    fun clearFiltersResetsTheDatesAndTheChip() {
+        val vm = withFourEntries()
+        vm.onFilterFromChange("2026-01-05")
+        vm.onFilterToChange("2026-01-06")
+        vm.onFilterTypeChange(CashType.DEPOSIT)
+        vm.clearFilters()
+        assertEquals(CashFilterForm(), vm.state.value.cashFilterForm)
+        assertFalse(vm.state.value.filterActive)
+        assertEquals(4, vm.state.value.cashFilteredRows.size)
+    }
+
+    @Test
+    fun theFiltersLastAcrossATabSwitchTheDetailAndAnUnlock() {
+        val vm = withFourEntries()
+        vm.onFilterTypeChange(CashType.DEPOSIT)
+        vm.selectTab(Tab.OVERALL)
+        vm.selectTab(Tab.CASH)
+        vm.openDetail("d2")
+        vm.closeDetail()
+        vm.onUnlocked()
+        vm.selectTab(Tab.CASH)
+        assertEquals(CashType.DEPOSIT, vm.state.value.cashFilterForm.type)
+        assertEquals(listOf("d4", "d2"), vm.shownIds())
+    }
+
     @Test
     fun selectTabIsIgnoredWhileSaving() {
         val gate = CompletableDeferred<Unit>()
