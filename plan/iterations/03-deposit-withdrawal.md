@@ -93,7 +93,7 @@ Done. Built 2026-10-29; phone checks 2026-10-29; pull request #85 merged as 8d25
 Newest first: 2654b9c step 6, b9696e7 step 5, de8c9bb step 4, d820167 step 3, 4e2234e step 2, ed5f8cb iteration file. main was 5e46dae.
 
 ### 13.2 Local run
-On 2654b9c's code (2026-10-29, all with --rerun-tasks): spotlessCheck green; debug build green (39 tasks); 133 tests, 0 failures (Balance 11, CashAccount 10, CashEntries 17, MarketDate 10, Money 15, OpeningBalance 9, AppLock 12, AppViewModel 48); lint: 2 findings, both known, neither silenced (NewerVersionAvailable at libs.versions.toml:17; TypographyDashes at strings.xml:53, the same string as :48 before, moved by the new strings); release build green (52 tasks, R8 ran; unsigned). Debug APK versionCode 3 (aapt2).
+On 2654b9c's code (2026-10-29, all with --rerun-tasks): spotlessCheck green; debug build green (39 tasks); 132 tests (written 133 until 2026-10-30, a sum error), 0 failures (Balance 11, CashAccount 10, CashEntries 17, MarketDate 10, Money 15, OpeningBalance 9, AppLock 12, AppViewModel 48); lint: 2 findings, both known, neither silenced (NewerVersionAvailable at libs.versions.toml:17; TypographyDashes at strings.xml:53, the same string as :48 before, moved by the new strings); release build green (52 tasks, R8 ran; unsigned). Debug APK versionCode 3 (aapt2).
 
 ### 13.3 Phone results (Android 17, debug build versionCode 3, your reports)
 Checks 1 to 12 all yes. Notes:
@@ -108,7 +108,7 @@ CI and the pull request; the release APK on a device (unsigned); contrast measur
 
 ## 14. Departures from the plan
 1. 02a's test reviewIsRefusedWhenAnOpeningBalanceAlreadyExists was replaced by withAnOpeningBalanceASecondOneCannotBeStarted (your decision, step 4): the form opens as a deposit once the opening balance exists (wireframe 10b marker 16), so a second one cannot be started. K1 still refuses one (OpeningBalanceTest, unchanged).
-2. AppState.cashEntryShown became cashEntryType; three 02b assertions changed accordingly (the button now opens a deposit instead of being hidden).
+2. AppState.cashEntryShown became cashEntryType; three 02b assertions changed accordingly (the button now opens a deposit instead of being hidden). With it, the test cashTabAfterSavingShowsTheBalanceAndOneRowAndHidesTheButton was renamed cashTabAfterSavingShowsTheBalanceAndOneRowAndTheButtonOpensADeposit (name added 2026-10-30).
 3. Review runs K1 twice so all refusals show together: the note with a stand-in date and amount, then the date and balance rules with an empty note, only when the date and amount are valid.
 4. Step 3 first judged the balance at the end of each date; on your decision 5 it was changed to after every entry before the commit. The new test aDipInsideALaterDate_isRefused was not run against the end-of-date code.
 5. The overflow guard throws ArithmeticException from the sums (CashRules.sumExact); K1's replay turns it into the TooLarge refusal.

@@ -82,7 +82,7 @@ Done. Built 2026-10-29; phone checks 2026-10-29; pull request #87 merged as 5424
 Newest first: cef9a8a step 5, 682bf25 step 4, 3b0075b step 3, 0298c13 step 2, 822c58d iteration file. main was 00156bf.
 
 ### 13.2 Local run
-On cef9a8a's code (2026-10-29, all with --rerun-tasks): spotlessCheck green; debug build green (39 tasks); 155 tests, 0 failures (Balance 11, CashAccount 10, CashEntries 27, MarketDate 10, Money 15, OpeningBalance 9, AppLock 12, AppViewModel 60); lint: 2 findings, both known, neither silenced (NewerVersionAvailable at libs.versions.toml:17; TypographyDashes at strings.xml:58, the date_not_a_date string); release build green (52 tasks, R8 ran; unsigned). Debug APK versionCode 4 (aapt2). The minus sign in "Withdrawal (−)" is stored as U+2212 (byte check).
+On cef9a8a's code (2026-10-29, all with --rerun-tasks): spotlessCheck green; debug build green (39 tasks); 154 tests (written 155 until 2026-10-30, a sum error), 0 failures (Balance 11, CashAccount 10, CashEntries 27, MarketDate 10, Money 15, OpeningBalance 9, AppLock 12, AppViewModel 60); lint: 2 findings, both known, neither silenced (NewerVersionAvailable at libs.versions.toml:17; TypographyDashes at strings.xml:58, the date_not_a_date string); release build green (52 tasks, R8 ran; unsigned). Debug APK versionCode 4 (aapt2). The minus sign in "Withdrawal (−)" is stored as U+2212 (byte check).
 
 ### 13.3 Phone results (Android 17, debug build versionCode 4, your reports)
 Checks 1 to 11 all yes. Notes:
