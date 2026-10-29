@@ -1,6 +1,6 @@
 # plan/iterations/03-deposit-withdrawal.md
 
-Stage: Build. Status: approved 2026-10-29; decisions 1 to 4 settled the same day (section 10). Not started.
+Stage: Build. Status: built on branch iter-03-deposit-withdrawal (steps 1 to 6, commits ed5f8cb to 2654b9c) and checked on the phone 2026-10-29, all checks yes (section 13). Pull request not created; CI not run. Decisions 1 to 5 settled (section 10). Sections 1 to 12 were written before the build; where the build differs, section 14 says so.
 Source: plan/plan.md section 4 (row 03), intent/intent.md v52 (final), spec/spec.md v4 (final). "My reading" is an interpretation, not a test.
 
 ## 1. Outcome
@@ -75,6 +75,7 @@ None planned; no new library.
 2. Interest/dividend and Adjustment are hidden until 04.
 3. OpeningBalanceScreen.kt is renamed CashEntryScreen.kt with git mv in step 5 (asks first).
 4. The form opens from the Cash tab only (spec 6, navigation outline).
+5. The balance is judged after every entry in the 4.1 order (date, then entry order), not at the end of each date (settled 2026-10-29, step 3). A dip inside a later date is refused even if that date ends positive.
 
 ## 11. Wording to approve (D9; * = given by the spec or the wireframes)
 - Chips: "Deposit"*, "Withdrawal"*. Title: "Cash entry"*.
@@ -82,6 +83,34 @@ None planned; no new library.
 - Messages: "Not saved. Cash would be negative on <date> by <amount>."*; "Not saved. Cash entries cannot be dated before the opening balance (<date>)."*; "Not saved. The balance would be too large." (overflow).
 - Review: "Review cash entry"*; the type, the date with ET, the signed amount, the note, the cash effect.
 Approved on paper with this file; confirmed on the phone (D9).
+Confirmed on the phone 2026-10-29 (checks 1, 4, 5 and 10): the chips, the two amount lines and the three messages as written above.
 
 ## 12. Status and notes
-Approved 2026-10-29. Not started.
+Built 2026-10-29; phone checks 2026-10-29. Pull request and CI: not yet.
+
+## 13. Build results
+### 13.1 Commits
+Newest first: 2654b9c step 6, b9696e7 step 5, de8c9bb step 4, d820167 step 3, 4e2234e step 2, ed5f8cb iteration file. main was 5e46dae.
+
+### 13.2 Local run
+On 2654b9c's code (2026-10-29, all with --rerun-tasks): spotlessCheck green; debug build green (39 tasks); 133 tests, 0 failures (Balance 11, CashAccount 10, CashEntries 17, MarketDate 10, Money 15, OpeningBalance 9, AppLock 12, AppViewModel 48); lint: 2 findings, both known, neither silenced (NewerVersionAvailable at libs.versions.toml:17; TypographyDashes at strings.xml:53, the same string as :48 before, moved by the new strings); release build green (52 tasks, R8 ran; unsigned). Debug APK versionCode 3 (aapt2).
+
+### 13.3 Phone results (Android 17, debug build versionCode 3, your reports)
+Checks 1 to 12 all yes. Notes:
+- 9: installed over the 02b build (versionCode 2, adb install -r, firstInstallTime unchanged); the future-dated test balance was still there (criterion 35).
+- 4: Example C cash-only refused with "Not saved. Cash would be negative on 2026-01-10 by $100.00."; text kept; nothing saved (criteria 42, 53).
+- 7: a deposit dated tomorrow: Cash $350.00, net worth $250.00 (60(c)).
+- 11: log cleared at 11:01:34; a deposit of $4,321.87 saved. The app's process (89 lines) had 0 matches for 4321, 4,321, 432187, 4321.87 and the screen labels. The whole log had 0 for every pattern except plain 4321 (2 lines from other processes, content not read).
+- Part B ran on a fresh install (adb uninstall, 2026-10-29); the 02b test data was deleted on purpose. The phone now holds the Example C test data and two later deposits.
+
+### 13.4 Not run or not checked
+CI and the pull request; the release APK on a device (unsigned); contrast measurement (by eye only); criterion 37 (deferred); a refused multi-row save (open item 14, moved to 09); Compose UI tests (none in the project).
+
+## 14. Departures from the plan
+1. 02a's test reviewIsRefusedWhenAnOpeningBalanceAlreadyExists was replaced by withAnOpeningBalanceASecondOneCannotBeStarted (your decision, step 4): the form opens as a deposit once the opening balance exists (wireframe 10b marker 16), so a second one cannot be started. K1 still refuses one (OpeningBalanceTest, unchanged).
+2. AppState.cashEntryShown became cashEntryType; three 02b assertions changed accordingly (the button now opens a deposit instead of being hidden).
+3. Review runs K1 twice so all refusals show together: the note with a stand-in date and amount, then the date and balance rules with an empty note, only when the date and amount are valid.
+4. Step 3 first judged the balance at the end of each date; on your decision 5 it was changed to after every entry before the commit. The new test aDipInsideALaterDate_isRefused was not run against the end-of-date code.
+5. The overflow guard throws ArithmeticException from the sums (CashRules.sumExact); K1's replay turns it into the TooLarge refusal.
+6. CashScreen's typeLabel and signed became the shared cashTypeLabel and signedAmount, used by the rows and the review.
+7. The new refusal messages use the date as YYYY-MM-DD without "ET", as frame J shows.

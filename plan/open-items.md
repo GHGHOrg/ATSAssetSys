@@ -13,7 +13,7 @@ One list of what is still open. When an item is closed, change its status here w
 | 6 | TalkBack check, including the TalkBack part of criterion 39 | same | closed 2026-10-29 for the screens of 02b (02b file, check 14a); later screens get their own TalkBack checks |
 | 7 | Check 8 (no screen lock) on the 02a build | same | closed 2026-10-29 (02b file, check 14b) |
 | 8 | Not run in 02a: newer-build install-over (criterion 35 only partly checked), key survival and lock removal, Keystore KeyInfo level, the -journal file, contrast, a wrong-key test | 02a file, 13.5 | open; the newer-build install-over was checked 2026-10-29 (02b check 11); the rest is still not run |
-| 9 | The balance sum has no overflow guard | 02a file, 15.3 | iteration 03 must add it |
+| 9 | The balance sum has no overflow guard | 02a file, 15.3 | closed 2026-10-29 (03 step 2: exact addition; an overflowing save is refused as too large) |
 | 10 | The note rule rejects only \n and \r | 02a file, 15.3 | known limit |
 | 11 | Net worth does not refresh at midnight New York until the next load or save | 02a file, 15.3 | known limit |
 | 12 | The ViewModel keeps data in memory while the app is locked | 02a file, 15.3 | known limit |
