@@ -906,6 +906,39 @@ class AppViewModelTest {
         assertEquals(null, refusals.cash)
     }
 
+    // Defect found in 05 phone check 5: a blank note hid the date refusal, because K1 stops at the note.
+    @Test
+    fun aReversalDateBeforeTheOriginalAndABlankNoteAreReportedTogether() {
+        val vm = withDeposit()
+        vm.openDetail("d2")
+        vm.openReversal("Reversal")
+        vm.onReversalDateChange("2026-01-04")
+        vm.onReversalNoteChange("")
+        vm.confirmReversal()
+        val refusals = vm.state.value.refusals
+        assertTrue(refusals.noteRequired)
+        assertEquals(CashEntryRefusal.BeforeOriginal(LocalDate.of(2026, 1, 5)), refusals.cash)
+    }
+
+    @Test
+    fun aReversalThatMakesCashNegativeAndABlankNoteAreReportedTogether() {
+        val stored =
+            listOf(
+                opening(cents = 100_000L),
+                deposit("2026-01-05", 50_000L, seq = 2L),
+                withdrawal("2026-01-06", 50_000L, seq = 3L),
+                withdrawal("2026-01-10", 80_000L, seq = 4L),
+            )
+        val vm = started(FakeStore(stored = stored))
+        vm.openDetail("d2")
+        vm.openReversal("Reversal")
+        vm.onReversalNoteChange("  ")
+        vm.confirmReversal()
+        val refusals = vm.state.value.refusals
+        assertTrue(refusals.noteRequired)
+        assertEquals(CashEntryRefusal.NegativeCash(LocalDate.of(2026, 1, 10), 30_000L), refusals.cash)
+    }
+
     @Test
     fun aReversalThatMakesLaterCashNegativeIsRefused() {
         val stored =

@@ -381,18 +381,31 @@ class AppViewModel(
                 date == null -> DateRefusal.NOT_A_DATE
                 else -> null
             }
-        // With a bad date, K1 still judges the note, using the original's date as a stand-in.
-        val result = CashEntries.reverse(current.entries, newId(), original.id, date ?: original.date, current.reversal.noteText)
-        val rule = (result as? CashEntryResult.Refused)?.reason
+        // Two passes of K1 so every refusal shows together, as in the form's review: the note with the original's
+        // date as a stand-in, then (with a valid date) the date and balance rules with a stand-in note. One pass
+        // hid the date refusal behind "note required" (defect found in 05 phone check 5).
+        val noteProbe = CashEntries.reverse(current.entries, PROBE_ID, original.id, original.date, current.reversal.noteText)
+        val noteRule = (noteProbe as? CashEntryResult.Refused)?.reason
+        val cashRule =
+            date?.let {
+                val probe = CashEntries.reverse(current.entries, PROBE_ID, original.id, it, PROBE_NOTE)
+                (probe as? CashEntryResult.Refused)?.reason
+            }
         val refusals =
             Refusals(
                 date = dateRefusal,
-                noteHasLineBreak = rule == CashEntryRefusal.NoteHasLineBreak,
-                noteRequired = rule == CashEntryRefusal.NoteRequired,
-                cash = rule.takeIf { date != null && it != CashEntryRefusal.NoteHasLineBreak && it != CashEntryRefusal.NoteRequired },
+                noteHasLineBreak = noteRule == CashEntryRefusal.NoteHasLineBreak,
+                noteRequired = noteRule == CashEntryRefusal.NoteRequired,
+                cash = cashRule,
             )
+        if (refusals != Refusals()) {
+            mutableState.update { it.copy(refusals = refusals) }
+            return
+        }
+        // The guard before saving: the same rules again, with the real id and the typed note.
+        val result = CashEntries.reverse(current.entries, newId(), original.id, date ?: return, current.reversal.noteText)
         val entry = (result as? CashEntryResult.Created)?.entry
-        if (entry == null || dateRefusal != null) {
+        if (entry == null) {
             mutableState.update { it.copy(refusals = refusals) }
             return
         }
