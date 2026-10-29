@@ -19,6 +19,10 @@ import app.ghghorg.atsassets.core.Money
 import app.ghghorg.atsassets.core.OpeningBalance
 import app.ghghorg.atsassets.core.OpeningBalanceError
 import app.ghghorg.atsassets.core.OpeningBalanceResult
+import app.ghghorg.atsassets.core.Portfolio
+import app.ghghorg.atsassets.core.PortfolioRefusal
+import app.ghghorg.atsassets.core.PortfolioResult
+import app.ghghorg.atsassets.core.Portfolios
 import app.ghghorg.atsassets.core.RecordStore
 import app.ghghorg.atsassets.core.UnreadableDataException
 import app.ghghorg.atsassets.core.Valuation
@@ -95,6 +99,16 @@ data class CashFilterForm(
     val type: CashType? = null,
 )
 
+/**
+ * The New portfolio dialog (wireframe 10d frame A): the typed name, kept as typed except that a line break becomes
+ * a space (07 decision 4), and the reason it was refused, if it was. Reasons only, no wording (D9).
+ */
+data class PortfolioDialog(
+    val nameText: String = "",
+    val refusal: PortfolioRefusal? = null,
+    val save: SaveRefusal? = null,
+)
+
 /** Reasons only, no wording (D9). A null or false field is fine. [cash] holds K1's date and balance rules. */
 data class Refusals(
     val amount: AmountError? = null,
@@ -118,6 +132,12 @@ data class AppState(
     val detailId: String? = null,
     val reversal: ReversalForm = ReversalForm(),
     val cashFilterForm: CashFilterForm = CashFilterForm(),
+    // In the order they were created (spec 3).
+    val portfolios: List<Portfolio> = emptyList(),
+    // The New portfolio dialog over the selected tab; null while it is closed.
+    val portfolioDialog: PortfolioDialog? = null,
+    // New portfolio was tapped before the opening balance exists (4.2): the screen asks for it instead.
+    val portfolioNeedsOpeningBalance: Boolean = false,
 ) {
     /**
      * The fields take digits only (YYYYMMDD): any other character is refused at once, eight digits that are no
@@ -198,7 +218,7 @@ class AppViewModel(
             try {
                 val opened = storeProvider()
                 store = opened
-                showLoaded(opened.loadCashEntries())
+                showLoaded(opened.loadCashEntries(), opened.loadPortfolios())
             } catch (e: UnreadableDataException) {
                 mutableState.update { it.copy(screen = Screen.UNREADABLE) }
             }
@@ -212,12 +232,18 @@ class AppViewModel(
     fun selectTab(tab: Tab) {
         val current = mutableState.value
         if (current.screen !in TAB_BAR_SCREENS || current.saving) return
-        mutableState.update { it.copy(screen = Screen.TABS, tab = tab, refusals = Refusals()) }
+        mutableState.update {
+            it.copy(screen = Screen.TABS, tab = tab, refusals = Refusals(), portfolioNeedsOpeningBalance = false)
+        }
     }
 
-    /** After unlock the app shows Overall, unless the form or review is open, which stays (02b decision 9). */
+    /**
+     * After unlock the app shows Overall, unless the form, the review or the New portfolio dialog is open, which
+     * stays (02b decision 9).
+     */
     fun onUnlocked() {
-        if (mutableState.value.screen != Screen.TABS) return
+        val current = mutableState.value
+        if (current.screen != Screen.TABS || current.portfolioDialog != null) return
         mutableState.update { it.copy(tab = Tab.OVERALL) }
     }
 
@@ -373,6 +399,72 @@ class AppViewModel(
 
     /** Clear filters: both dates empty and All (view 7). */
     fun clearFilters() = mutableState.update { it.copy(cashFilterForm = CashFilterForm()) }
+
+    /**
+     * New portfolio or Create a portfolio: opens an empty dialog over the selected tab, or, before the opening
+     * balance exists, asks for it instead (4.2, wireframe 10d). Ignored outside the tabs and while a save is running.
+     */
+    fun openPortfolioDialog() {
+        val current = mutableState.value
+        if (current.screen != Screen.TABS || current.saving) return
+        if (current.cashEntryType == CashType.OPENING_BALANCE) {
+            mutableState.update { it.copy(portfolioNeedsOpeningBalance = true) }
+            return
+        }
+        mutableState.update { it.copy(portfolioDialog = PortfolioDialog(), portfolioNeedsOpeningBalance = false) }
+    }
+
+    /** A line break, typed or pasted, becomes a space (07 decision 4). Typing clears the refusal. */
+    fun onPortfolioNameChange(text: String) {
+        val oneLine = text.replace("\r\n", " ").replace('\r', ' ').replace('\n', ' ')
+        mutableState.update { state ->
+            state.copy(portfolioDialog = state.portfolioDialog?.let { PortfolioDialog(nameText = oneLine) })
+        }
+    }
+
+    /** Closes the dialog; nothing is saved. Ignored while a save is running. */
+    fun cancelPortfolioDialog() {
+        if (mutableState.value.saving) return
+        mutableState.update { it.copy(portfolioDialog = null) }
+    }
+
+    /**
+     * Create (wireframe 10d): checks the name (4.7) and saves the portfolio. On a refusal the dialog stays with the
+     * typed text and the reason. On success it closes and the new portfolio is last; the tab stays as it was.
+     */
+    fun createPortfolio() {
+        val current = mutableState.value
+        val dialog = current.portfolioDialog ?: return
+        if (current.saving) return
+        val target = store ?: return
+        val result = Portfolios.create(current.portfolios, current.entries, newId(), dialog.nameText)
+        val portfolio =
+            when (result) {
+                is PortfolioResult.Refused -> {
+                    mutableState.update { it.copy(portfolioDialog = dialog.copy(refusal = result.reason, save = null)) }
+                    return
+                }
+
+                is PortfolioResult.Created -> result.portfolio
+            }
+        mutableState.update { it.copy(saving = true, portfolioDialog = dialog.copy(refusal = null, save = null)) }
+        viewModelScope.launch {
+            try {
+                target.savePortfolio(portfolio)
+                mutableState.update {
+                    it.copy(portfolios = it.portfolios + portfolio, portfolioDialog = null, saving = false)
+                }
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: UnreadableDataException) {
+                mutableState.update { it.copy(screen = Screen.UNREADABLE, saving = false) }
+            } catch (e: Exception) {
+                mutableState.update {
+                    it.copy(saving = false, portfolioDialog = dialog.copy(save = SaveRefusal.SAVE_FAILED))
+                }
+            }
+        }
+    }
 
     /** Opens an entry's detail from the Cash list, or follows a link from another detail. Unknown ids are ignored. */
     fun openDetail(id: String) {
@@ -552,9 +644,17 @@ class AppViewModel(
         return (result as? CashEntryResult.Created)?.entry
     }
 
-    private fun showLoaded(entries: List<CashEntry>) {
+    private fun showLoaded(
+        entries: List<CashEntry>,
+        portfolios: List<Portfolio>,
+    ) {
         mutableState.update {
-            it.copy(screen = Screen.TABS, entries = entries, netWorthCents = netWorthOf(entries))
+            it.copy(
+                screen = Screen.TABS,
+                entries = entries,
+                netWorthCents = netWorthOf(entries),
+                portfolios = Portfolios.inCreationOrder(portfolios),
+            )
         }
     }
 
