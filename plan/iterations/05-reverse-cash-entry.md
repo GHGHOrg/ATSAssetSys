@@ -1,6 +1,6 @@
 # plan/iterations/05-reverse-cash-entry.md
 
-Stage: Build. Status: approved 2026-10-29; decisions 1 to 4 settled the same day (section 10). Not started.
+Stage: Build. Status: built on branch iter-05-reverse-cash-entry (steps 1 to 5 and one fix, commits b73d5fe to ce1c6fd) and checked on the phone 2026-10-29, all checks yes (section 13). Pull request not created; CI not run. Decisions 1 to 4 settled (section 10). Sections 1 to 12 were written before the build; where the build differs, section 14 says so.
 Source: plan/plan.md section 4 (row 05), intent/intent.md v52 (final), spec/spec.md v4 (final). "My reading" is an interpretation, not a test.
 
 ## 1. Outcome
@@ -73,6 +73,34 @@ None planned; no new library.
 - The pre-filled note: "Reversal of the <type> of <date> ET"*, the type in lower case (deposit, withdrawal, interest/dividend, adjustment).
 - Message: "Reversal date: not earlier than the original (<date>)."*
 Approved on paper with this file; confirmed on the phone (D9).
+Confirmed on the phone 2026-10-29 (checks 1 to 8 and 10): the detail, the links, the reversal screen and the messages as written above. TalkBack reads a row's note at the end of its label, with no lead-in word (section 14, item 2).
 
 ## 12. Status and notes
-Approved 2026-10-29. Not started.
+Built 2026-10-29; phone checks 2026-10-29. Pull request and CI: not yet.
+
+## 13. Build results
+### 13.1 Commits
+Newest first: ce1c6fd fix, c40a8db step 5, 1c78aae step 4, c977ccc step 3, 43312bf step 2, b73d5fe iteration file. main was dc2549e.
+
+### 13.2 Local run
+On ce1c6fd's code (2026-10-29, all with --rerun-tasks): spotlessCheck green; debug build green (39 tasks); 184 tests, 0 failures (Balance 11, CashAccount 10, CashEntriesReverse 12, CashEntries 27, MarketDate 10, Money 15, OpeningBalance 9, AppLock 12, AppViewModel 77); lint: 2 findings, both known, neither silenced (NewerVersionAvailable at libs.versions.toml:17; TypographyDashes on date_not_a_date, now strings.xml:75). Release build on c40a8db's code green (52 tasks, R8 ran; unsigned); the fix changed only the ViewModel and was not rebuilt as release. Debug APK versionCode 5 (aapt2).
+
+### 13.3 Phone results (Android 17, debug build versionCode 5, your reports)
+Checks 1 to 11 all yes, and 5b and 7b after the fix. Notes:
+- 9: installed over the 04 build (versionCode 4, adb install -r, firstInstallTime unchanged); the data was still there (criterion 35). The fixed build was installed over it again at 17:27:42.
+- 3 and 4: Interest/dividend +$12.34 reversed (−$12.34); the original shows "Reversed on <date> ET", the reversal shows "Reverses: Interest/dividend, <date> ET"; the links work both ways.
+- 5 and 6: the Fee adjustment: dated yesterday refused; dated tomorrow saved (+$5.00).
+- 7: the Jan 5 deposit dated 2026-01-05 refused with "Not saved. Cash would be negative on 2026-01-10 by $300.00."; Cancel saved nothing.
+- 5b and 7b (after the fix): a blank note together with a date before the original, or with a short balance, shows both messages.
+- 11: log cleared at 17:31:34; the Adjustment +$7,654.21 reversed with the note "zqxrevcheck". The app's process (155 lines) had 0 matches for the amount in four forms, both notes and the labels. The whole log had 0 for everything except "Adjustment" (11 lines from other processes, content not read).
+- No uninstall in 05; the phone holds the 03 and 04 data plus the 05 reversals.
+
+### 13.4 Not run or not checked
+CI and the pull request; the release APK on a device (unsigned); a release build of the fix commit; contrast measurement (by eye only); criterion 37 (deferred); Compose UI tests (none in the project).
+
+## 14. Departures from the plan
+1. Defect found in phone check 5: with a date before the original (or a short balance) and a blank note, only the note error showed, because K1 stops at the first failing rule and checks the note first. Two failing tests were written first (both failed: 89 tests, 2 failed), then confirmReversal was changed to two K1 passes as in the form's review (the note with the original's date as a stand-in; the date and balance rules with a stand-in note), plus a third pass with the real id and note as the guard before saving. Commit ce1c6fd, your decision to fix it in 05. Rechecked on the phone (5b, 7b).
+2. A row's TalkBack label ends with ", <note>" when the entry has a note; no lead-in word was added (no new wording).
+3. The message helpers (date, note, save, cash) and ReviewRow in CashEntryScreen.kt became internal, shared with the reversal screen; cashMessage gained the BeforeOriginal message.
+4. The reversal tests are in a new file, CashEntriesReverseTest.kt, not in CashEntriesTest.kt.
+5. The pre-filled note text is passed from the screen to the ViewModel (openReversal(defaultNote)), because its wording lives in the strings (D9).
