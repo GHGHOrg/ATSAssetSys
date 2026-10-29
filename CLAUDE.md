@@ -82,6 +82,8 @@ CI (.github/workflows/ci.yml) runs the style check and then the same three steps
 - The message "Unable to strip ..." appears in every release build and names libandroidx.graphics.path.so and libsqlcipher.so (both are packaged unstripped). It is known and not silenced.
 - Dependency-upgrade spike: plan/spikes/dependency-upgrade.md, run before iteration 02. Its section 9 holds the results and what was not verified.
 - K1 stops at the first rule that fails. A screen that must show every refusal together asks K1 once per group of fields, with stand-ins for the other fields (the cash entry review since 04, the reversal since 05). One call hid the date refusal behind "note required" (05, phone check 5).
+- MainActivity shows a cover screen whenever its window loses focus. A Compose Dialog, AlertDialog, Popup, DropdownMenu or ModalBottomSheet opens a separate window, takes the focus, and the cover and the dialog then replace each other in a loop that blocks all input (07, phone check 2). Draw dialogs inside the activity window, as NewPortfolioDialog in PortfoliosScreen.kt does. Unit tests cannot catch this; only the phone shows it.
+- Test totals: add up the per-class counts from the test result files. Never add the new tests to the previous total: 03 to 06 were written one too high that way (corrected in pull request #93).
 
 ## 7. Standing checks for every iteration's screens
 Criteria 9, 39 to 42, and the install-over-previous-build check (35).

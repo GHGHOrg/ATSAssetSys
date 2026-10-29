@@ -1,6 +1,6 @@
 # plan/iterations/07-create-portfolio.md
 
-Stage: Build. Status: approved 2026-10-30 with decisions 1 to 4 (section 10); not built.
+Stage: Build. Status: built on branch iter-07-create-portfolio (steps 1 to 6 and one fix, commits 449ae9b to dd85e96) and checked on the phone 2026-10-30, all checks yes except check 10, which is not run (decision 3, open item 33) (section 13). Pull request not created; CI not run. Decisions 1 to 4 settled (section 10). Sections 1 to 12 were written before the build; where the build differs, section 14 says so.
 Source: plan/plan.md section 4 (row 07), intent/intent.md v52 (final), spec/spec.md v4 (final). "My reading" is an interpretation, not a test.
 
 ## 1. Outcome
@@ -77,7 +77,40 @@ javap only (step 1). No web search planned.
 - "Not saved. Another portfolio is already named "<name>". Names are compared ignoring case and spaces."*
 - "Set the opening balance first."* with the existing "Set opening balance" button.
 - The row: "no holdings"* and "$0.00".
-Approved on paper with this file; confirmed on the phone (D9).
+Approved on paper with this file; confirmed on the phone (D9): checks 2 to 7, 9 and 11.
 
 ## 12. Status and notes
-Approved 2026-10-30. Not built.
+Built 2026-10-30; phone checks 2026-10-30. Pull request and CI: not yet.
+
+## 13. Build results
+### 13.1 Commits
+Newest first: dd85e96 fix, 717b21d step 6, b1a47b8 step 5, d7d6a22 step 4, 6d9f94e step 3, ea59bf7 step 2, 2d50683 merge of main (pull request #93, the test-count fix), 449ae9b step 1 with this file. main was 1c4b85c.
+
+### 13.2 Local run
+On dd85e96's code (2026-10-30, all with --rerun-tasks): spotlessCheck green; debug build green (39 tasks); 243 tests, 0 failures (Balance 11, CashAccount 20, CashEntriesReverse 12, CashEntries 27, MarketDate 10, Money 15, OpeningBalance 9, Portfolios 16, AppLock 12, AppViewModel 104, DateDigits 7); lint: 3 findings, all listed, none silenced (AndroidGradlePluginVersion at libs.versions.toml:2, open item 31; NewerVersionAvailable at :17; TypographyDashes on date_not_a_date, strings.xml:86). Release build on 717b21d's code green (52 tasks, R8 ran; unsigned); the fix was not rebuilt as release. Debug APK versionCode 7 (aapt2).
+Step 1, javap on room3-common 3.0.3 and room3-runtime 3.0.3: @Database has autoMigrations (AutoMigration from, to, spec); Migration(startVersion, endVersion) with a suspend migrate(SQLiteConnection) and Builder.addMigrations exist too. Room generated AtsDatabase_AutoMigration_1_2_Impl with one statement, CREATE TABLE IF NOT EXISTS `portfolios` (`id` TEXT NOT NULL, `name` TEXT NOT NULL, `createdSeq` INTEGER NOT NULL, PRIMARY KEY(`id`)), registered in AtsDatabase_Impl.createAutoMigrations. 2.json: version 2, identity hash fd3791ba...
+
+### 13.3 Phone results (Android 17, debug build versionCode 7, your reports)
+Checks 1 to 9 and 11 all yes; check 10 not run. Notes:
+- 1: installed over the 06 build (versionCode 6, adb install -r at 01:24:22, firstInstallTime 2026-10-29 10:44:04 unchanged). The migration ran when the app opened: the 03 to 06 data was still there and Portfolios showed "No portfolios yet" with Create a portfolio (criterion 35).
+- 2: failed on the first build: the dialog and the cover screen alternated and no input was possible; the app had to be force-stopped. Fixed (section 14, item 1); the fixed build was installed at 01:37:08 (firstInstallTime unchanged) and check 2 passed: the dialog opens steadily over Overall, takes typing, and a tap outside does nothing.
+- 3 to 7: "Main" created and listed with "no holdings" and $0.00, the row does nothing when tapped; "投資", "  ab  ", "123" and "---" refused with their messages, the text kept and the message gone on typing; "投資信託" accepted and listed second; " main " and "MAIN" refused naming "Main"; Cancel and Back save nothing and the dialog reopens empty.
+- 8: after a force stop both portfolios and the cash data were there, in creation order.
+- 9: largest font, light and dark (typed name kept across the switch), TalkBack (a row reads as one item, not a button; the dialog is announced and swiping stays in the card; the refusal is read when it appears).
+- 11: a pasted two-line text showed as "Line Break" on one line; cancelled, nothing saved.
+- Logcat (not planned; Definition of done item 5): a first count found 0 for 投資信託 and 投資 and no whole-word Main in the app's lines, but the main buffer only reached back to 02:03, after the creates. Re-check: log cleared at 02:06:39; you force-stopped and reopened the app (both names loaded), typed 投資信託 and main, each refused naming the portfolio, then Cancel. App uid 10454, 81 lines: 0 for 投資信託, 0 for 投資, 0 for Main or main as a word except logcat's own "beginning of main" header; the whole log (5,792 lines) had no 投資信託 or 投資, and its other "main" lines came from system components. Only counts and tags were printed. The save path was not repeated in the re-check.
+- No uninstall in 07; the phone holds the 03 to 06 data plus the portfolios Main and 投資信託.
+
+### 13.4 Not run or not checked
+CI and the pull request; check 10 (open item 33, due in 09); the release APK on a device (unsigned, open item 4), so R8's effect on the generated migration is not shown; a release build of the fix commit; a failed migration on the phone (only the successful one was seen); the save path in the Logcat re-check; contrast measurement (by eye only); criterion 37 (deferred); Compose UI tests (none in the project).
+
+## 14. Departures from the plan
+1. Defect found in phone check 2: Material3's AlertDialog opens a separate window, which takes the focus; MainActivity shows the cover screen whenever its window loses focus (the experiment after 02a phone check 7), the cover removed the dialog, the focus came back and the dialog opened again, in a loop. Fixed on your decision (A) by drawing the dialog inside the activity window over a dimmed layer that covers the tab and the bottom bar, takes every tap, and hides the screen under it from TalkBack (commit dd85e96). MainActivity is unchanged. No failing test was written first: the defect lives in Android's windows and focus and cannot be reproduced in a JVM test, and the project has no device UI tests; check 2 on the phone is the proof. A CLAUDE.md pitfall records the rule for later dialogs (08, 29).
+2. RecordStore's two new methods and the test fakes moved from step 2 to step 3: RoomRecordStore implements RecordStore, so adding them in step 2 would have needed a production stub for one commit. Step 2 stayed pure core/.
+3. An unlock keeps an open New portfolio dialog and its tab, as for the form and the review (02b decision 9). Not written in this file before the build; a ViewModel test covers it.
+4. A tap outside the dialog does nothing; Back closes it like Cancel (my design choice, so typed text is not lost by accident).
+5. Overall shows "No portfolios yet" only while there is no portfolio; before 07 the line was always shown.
+6. 2.json is kept as Room writes it (LF in the working copy); git stores it with LF, like 1.json.
+7. The step 1 baseline found the test totals of 03 to 06 one too high; they were corrected in a separate pull request (#93, your decision C) and merged into this branch before step 2.
+8. In step 1 the Room aar was unpacked into %TEMP%\claude\room3aar, not my scratchpad; the folder was deleted with your approval.
+9. The Logcat check (section 13.3) was not planned in section 8; it was added for Definition of done item 5, with your approval.
