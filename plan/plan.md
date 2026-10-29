@@ -250,7 +250,7 @@ when it adds a command, a convention or a pitfall.
 | Iteration 02b | done: built 2026-10-28 (steps 1 to 6); phone checks 2026-10-28 to 2026-10-29 all yes; 98 tests; pull request #83 merged as 0a20873, CI green on the pull request and on main (2m 24s) (your reports) |
 | Iteration 03 | done: built 2026-10-29 (steps 1 to 6); phone checks 2026-10-29 all yes; 133 tests; pull request #85 merged as 8d25892, CI green on the pull request and on main (1m 42s) (your reports) |
 | Iteration 04 | done: built 2026-10-29 (steps 1 to 5); phone checks 2026-10-29 all yes; 155 tests; pull request #87 merged as 5424a6e, CI green on the pull request and on main (2m 17s) (your reports) |
-| Iteration 05 | built 2026-10-29 (steps 1 to 5 and one fix, ce1c6fd); phone checks 2026-10-29 all yes; 184 tests; pull request not yet created |
+| Iteration 05 | done: built 2026-10-29 (steps 1 to 5 and one fix); phone checks 2026-10-29 all yes; 184 tests; pull request #89 merged as c1ad96d, CI green on the pull request and on main (2m 25s) (your reports) |
 | Iterations 06 to 35 | not started, files not written |
 
 ## 12. Change log
@@ -302,6 +302,7 @@ Each departure from this plan is recorded here with its date and the reason.
 - 2026-10-29: pull request #87 (iteration 04) was merged as 5424a6e. CI on the pull request (3 checks: build, Analyze (actions), CodeQL) and on main (the run for 5424a6e, 2m 17s) were reported successful by you. The status lines above were updated. The 04 file's sections 13 and 14 are left as written at build time.
 - 2026-10-29: pull request #88 (docs: the 04 merge record) was merged as dc2549e, CI green on the pull request and on main (2m 10s) (your reports). The 05 file was approved with decisions 1 to 4. The Cash rows gain the note line of wireframe 07 marker 4, which 02b did not build.
 - 2026-10-29: 05 built and checked on the phone. A defect found in phone check 5 (the reversal showed only the note error when the date was also wrong) was fixed in 05 with failing tests first (your decision; 05 file, section 14). Criterion 35's install-over is checked again (versionCode 5).
+- 2026-10-29: pull request #89 (iteration 05) was merged as c1ad96d. CI on the pull request (3 checks: build, Analyze (actions), CodeQL) and on main (the run for c1ad96d, 2m 25s) were reported successful by you. The status lines above were updated. The 05 file's sections 13 and 14 are left as written at build time.
 
 ## 13. Out of scope for this plan
 Performance over time, per-holding dividends, ETF look-through, the next intent.md items,

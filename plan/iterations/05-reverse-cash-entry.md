@@ -1,6 +1,6 @@
 # plan/iterations/05-reverse-cash-entry.md
 
-Stage: Build. Status: built on branch iter-05-reverse-cash-entry (steps 1 to 5 and one fix, commits b73d5fe to ce1c6fd) and checked on the phone 2026-10-29, all checks yes (section 13). Pull request not created; CI not run. Decisions 1 to 4 settled (section 10). Sections 1 to 12 were written before the build; where the build differs, section 14 says so.
+Stage: Build. Status: built on branch iter-05-reverse-cash-entry (steps 1 to 5 and one fix, commits b73d5fe to ce1c6fd) and checked on the phone 2026-10-29, all checks yes (section 13). Pull request #89 merged as c1ad96d on 2026-10-29; CI green on the pull request and on main (your reports). Decisions 1 to 4 settled (section 10). Sections 1 to 12 were written before the build; where the build differs, section 14 says so.
 Source: plan/plan.md section 4 (row 05), intent/intent.md v52 (final), spec/spec.md v4 (final). "My reading" is an interpretation, not a test.
 
 ## 1. Outcome
@@ -76,7 +76,7 @@ Approved on paper with this file; confirmed on the phone (D9).
 Confirmed on the phone 2026-10-29 (checks 1 to 8 and 10): the detail, the links, the reversal screen and the messages as written above. TalkBack reads a row's note at the end of its label, with no lead-in word (section 14, item 2).
 
 ## 12. Status and notes
-Built 2026-10-29; phone checks 2026-10-29. Pull request and CI: not yet.
+Done. Built 2026-10-29; phone checks 2026-10-29; pull request #89 merged as c1ad96d (2026-10-29), CI green on the pull request (3 checks) and on main (2m 25s) (your reports).
 
 ## 13. Build results
 ### 13.1 Commits
