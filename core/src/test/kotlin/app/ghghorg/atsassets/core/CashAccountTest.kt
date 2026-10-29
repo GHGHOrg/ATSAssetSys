@@ -1,6 +1,7 @@
 package app.ghghorg.atsassets.core
 
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertThrows
 import org.junit.Test
 import java.time.LocalDate
 
@@ -78,5 +79,21 @@ class CashAccountTest {
     @Test
     fun rows_topBalanceEqualsTheAccountBalance() {
         assertEquals(CashAccount.balanceCents(exampleA), CashAccount.rows(exampleA).first().balanceAfterCents)
+    }
+
+    private val overflowing =
+        listOf(
+            entry("2026-01-01", Long.MAX_VALUE, 1L, CashType.OPENING_BALANCE),
+            entry("2026-01-02", 1L, 2L),
+        )
+
+    @Test
+    fun balance_overflow_throwsInsteadOfWrapping() {
+        assertThrows(ArithmeticException::class.java) { CashAccount.balanceCents(overflowing) }
+    }
+
+    @Test
+    fun rows_overflow_throwsInsteadOfWrapping() {
+        assertThrows(ArithmeticException::class.java) { CashAccount.rows(overflowing) }
     }
 }

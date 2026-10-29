@@ -49,8 +49,9 @@ private fun BarContent(
 ) {
     BackHandler(enabled = state.backGoesToOverall) { viewModel.selectTab(Tab.OVERALL) }
     when (state.screen) {
-        Screen.FORM -> OpeningBalanceForm(
+        Screen.FORM -> CashEntryForm(
             state = state,
+            onTypeChange = viewModel::onTypeChange,
             onDateChange = viewModel::onDateChange,
             onAmountChange = viewModel::onAmountChange,
             onNoteChange = viewModel::onNoteChange,
@@ -58,7 +59,7 @@ private fun BarContent(
             onBack = viewModel::closeForm,
         )
 
-        Screen.REVIEW -> OpeningBalanceReview(state, viewModel::confirm, viewModel::backToEdit)
+        Screen.REVIEW -> CashEntryReview(state, viewModel::confirm, viewModel::backToEdit)
 
         else -> when (state.tab) {
             Tab.OVERALL -> OverallScreen(state, viewModel::openForm)

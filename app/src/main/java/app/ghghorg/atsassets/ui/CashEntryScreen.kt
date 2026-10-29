@@ -10,9 +10,11 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.selection.selectableGroup
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
+import androidx.compose.material3.FilterChip
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedCard
 import androidx.compose.material3.OutlinedTextField
@@ -30,13 +32,19 @@ import androidx.compose.ui.unit.dp
 import app.ghghorg.atsassets.R
 import app.ghghorg.atsassets.core.AmountError
 import app.ghghorg.atsassets.core.AmountResult
+import app.ghghorg.atsassets.core.CashEntryRefusal
+import app.ghghorg.atsassets.core.CashType
 import app.ghghorg.atsassets.core.MarketDate
 import app.ghghorg.atsassets.core.Money
 
-/** The opening balance form (wireframe 10b, frame C). The typed text lives in the ViewModel. */
+/**
+ * The cash entry form (wireframe 10b): the opening balance until it exists (frame C), then a deposit or
+ * withdrawal (frame A, iteration 03). The typed text lives in the ViewModel.
+ */
 @Composable
-fun OpeningBalanceForm(
+fun CashEntryForm(
     state: AppState,
+    onTypeChange: (CashType) -> Unit,
     onDateChange: (String) -> Unit,
     onAmountChange: (String) -> Unit,
     onNoteChange: (String) -> Unit,
@@ -46,6 +54,8 @@ fun OpeningBalanceForm(
 ) {
     BackHandler(onBack = onBack)
     val refusals = state.refusals
+    val type = state.form.type
+    val opening = type == CashType.OPENING_BALANCE
     val dateError = dateMessage(refusals.date)
     val amountError = amountMessage(refusals.amount)
     val noteError = noteMessage(refusals.noteHasLineBreak)
@@ -57,7 +67,7 @@ fun OpeningBalanceForm(
             Text(text = stringResource(R.string.back_button))
         }
         Text(
-            text = stringResource(R.string.opening_balance),
+            text = stringResource(if (opening) R.string.opening_balance else R.string.cash_entry_button),
             style = MaterialTheme.typography.titleLarge,
         )
         OutlinedCard(modifier = Modifier.fillMaxWidth()) {
@@ -66,15 +76,19 @@ fun OpeningBalanceForm(
                     text = stringResource(R.string.type_label),
                     style = MaterialTheme.typography.bodyMedium,
                 )
-                Text(
-                    text = stringResource(R.string.opening_balance),
-                    style = MaterialTheme.typography.bodyLarge,
-                    fontWeight = FontWeight.Medium,
-                )
-                Text(
-                    text = stringResource(R.string.opening_balance_hint),
-                    style = MaterialTheme.typography.bodyMedium,
-                )
+                if (opening) {
+                    Text(
+                        text = stringResource(R.string.opening_balance),
+                        style = MaterialTheme.typography.bodyLarge,
+                        fontWeight = FontWeight.Medium,
+                    )
+                    Text(
+                        text = stringResource(R.string.opening_balance_hint),
+                        style = MaterialTheme.typography.bodyMedium,
+                    )
+                } else {
+                    TypeChips(type, onTypeChange)
+                }
             }
         }
         OutlinedTextField(
@@ -96,7 +110,12 @@ fun OpeningBalanceForm(
             onValueChange = onAmountChange,
             modifier = Modifier.fillMaxWidth(),
             label = { Text(text = stringResource(R.string.amount_label)) },
-            supportingText = { if (amountError != null) Text(text = amountError) },
+            supportingText = {
+                Column {
+                    if (amountError != null) Text(text = amountError)
+                    amountLine(type)?.let { Text(text = it) }
+                }
+            },
             isError = refusals.amount != null,
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
             singleLine = true,
@@ -110,7 +129,7 @@ fun OpeningBalanceForm(
             isError = refusals.noteHasLineBreak,
             keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
         )
-        saveMessage(refusals.save)?.let { message ->
+        listOfNotNull(saveMessage(refusals.save), cashMessage(refusals.cash)).forEach { message ->
             Text(
                 text = message,
                 style = MaterialTheme.typography.bodyMedium,
@@ -129,16 +148,18 @@ fun OpeningBalanceForm(
 /** The review screen (wireframe 10b, frame D). Nothing is saved until Confirm and save. */
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
-fun OpeningBalanceReview(
+fun CashEntryReview(
     state: AppState,
     onConfirm: () -> Unit,
     onBack: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     BackHandler(enabled = !state.saving, onBack = onBack)
+    val type = state.form.type
     val dateText = MarketDate.parse(state.form.dateText)?.toString() ?: state.form.dateText.trim()
     val cents = (Money.parseCents(state.form.amountText) as? AmountResult.Cents)?.value
-    val signed = cents?.let { "+${Money.format(it)}" }.orEmpty()
+    // The amount is typed positive; the sign comes from the type (wireframe 10b, frame D).
+    val signed = cents?.let { signedAmount(if (type == CashType.WITHDRAWAL) -it else it) }.orEmpty()
     val note = state.form.noteText
     Column(
         modifier = modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(16.dp),
@@ -153,7 +174,7 @@ fun OpeningBalanceReview(
                 modifier = Modifier.padding(12.dp),
                 verticalArrangement = Arrangement.spacedBy(6.dp),
             ) {
-                ReviewRow(stringResource(R.string.type_label), stringResource(R.string.opening_balance))
+                ReviewRow(stringResource(R.string.type_label), cashTypeLabel(type))
                 ReviewRow(stringResource(R.string.date_label), stringResource(R.string.date_with_et, dateText))
                 ReviewRow(stringResource(R.string.amount_label), signed)
                 if (note.isEmpty()) {
@@ -229,6 +250,50 @@ private fun ReviewRow(
             textAlign = if (alignStart) TextAlign.Start else TextAlign.End,
         )
     }
+}
+
+/** Deposit and Withdrawal, one at a time (03 decision 2: the other two types arrive in 04). */
+@OptIn(ExperimentalLayoutApi::class)
+@Composable
+private fun TypeChips(
+    selected: CashType,
+    onTypeChange: (CashType) -> Unit,
+) {
+    FlowRow(
+        modifier = Modifier.selectableGroup(),
+        horizontalArrangement = Arrangement.spacedBy(8.dp),
+    ) {
+        for (type in listOf(CashType.DEPOSIT, CashType.WITHDRAWAL)) {
+            FilterChip(
+                selected = type == selected,
+                onClick = { onTypeChange(type) },
+                label = { Text(text = cashTypeLabel(type)) },
+            )
+        }
+    }
+}
+
+/** The line under the amount (wireframe 10b, frame A). None for the opening balance. */
+@Composable
+private fun amountLine(type: CashType): String? = when (type) {
+    CashType.DEPOSIT -> stringResource(R.string.amount_line_deposit)
+    CashType.WITHDRAWAL -> stringResource(R.string.amount_line_withdrawal)
+    else -> null
+}
+
+// NoOpeningBalance, TypeNotAllowed, AmountNotPositive and NoteHasLineBreak cannot reach here: the form only
+// offers Deposit and Withdrawal after the opening balance, the amount rules and the note come first.
+@Composable
+private fun cashMessage(refusal: CashEntryRefusal?): String? = when (refusal) {
+    is CashEntryRefusal.NegativeCash ->
+        stringResource(R.string.cash_negative, refusal.date.toString(), Money.format(refusal.shortfallCents))
+
+    is CashEntryRefusal.BeforeOpeningBalance ->
+        stringResource(R.string.cash_before_opening_balance, refusal.openingDate.toString())
+
+    CashEntryRefusal.TooLarge -> stringResource(R.string.cash_too_large)
+
+    else -> null
 }
 
 @Composable

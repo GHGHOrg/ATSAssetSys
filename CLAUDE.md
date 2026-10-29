@@ -70,7 +70,7 @@ CI (.github/workflows/ci.yml) runs the style check and then the same three steps
 - gradlew must stay LF and executable (.gitattributes, mode 100755). Do not retype it.
 - In PowerShell, do not use .Split('text') to count a substring: it splits on each character.
 - The CI runner is pinned to ubuntu-26.04 (moved from ubuntu-24.04 in the dependency-upgrade spike; CI green). Do not use ubuntu-latest.
-- Lint after 02a shows 2 findings, both listed on purpose, neither silenced: NewerVersionAvailable for kotlinx-coroutines-test 1.9.0 (gradle/libs.versions.toml:17) and TypographyDashes at strings.xml:48 (moved from :31 by the strings added in 02b) (the hyphens in the YYYY-MM-DD example). Do not silence a new notice: list it.
+- Lint after 02a shows 2 findings, both listed on purpose, neither silenced: NewerVersionAvailable for kotlinx-coroutines-test 1.9.0 (gradle/libs.versions.toml:17) and TypographyDashes at strings.xml:53 (moved from :31 and :48 by the strings added in 02b and 03) (the hyphens in the YYYY-MM-DD example). Do not silence a new notice: list it.
 - Style checker: Spotless 8.10.4 with ktlint 1.8.0, targets set by hand in the root build.gradle.kts. @Composable functions are exempt from ktlint's function-naming rule through an override there; the property name is supported only by its effect.
 - Dependabot has one group, kotlin (pattern org.jetbrains.kotlin.*). Whether it matches the Kotlin plugins is unverified until Dependabot has run once.
 - A plain `.\gradlew.bat :app:lintDebug` after a change can leave the lint report stale (seen after commit L: the report time did not move). Use `--rerun-tasks` and check the report time.

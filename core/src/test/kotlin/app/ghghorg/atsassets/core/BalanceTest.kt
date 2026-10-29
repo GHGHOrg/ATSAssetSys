@@ -1,6 +1,7 @@
 package app.ghghorg.atsassets.core
 
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertThrows
 import org.junit.Test
 import java.time.LocalDate
 
@@ -85,5 +86,35 @@ class BalanceTest {
     @Test
     fun netWorth_noEntries_isZero() {
         assertEquals(0L, Valuation.netWorthCents(emptyList(), LocalDate.of(2026, 10, 24)))
+    }
+
+    @Test
+    fun balanceOn_aSumAboveTheLargestLong_throwsInsteadOfWrapping() {
+        val entries =
+            listOf(
+                entry("2026-01-01", Long.MAX_VALUE, 1L, CashType.OPENING_BALANCE),
+                entry("2026-01-02", 1L, 2L),
+            )
+        assertThrows(ArithmeticException::class.java) { balance(entries, "2026-01-02") }
+    }
+
+    @Test
+    fun balanceOn_aSumBelowTheSmallestLong_throwsInsteadOfWrapping() {
+        val entries =
+            listOf(
+                entry("2026-01-01", Long.MIN_VALUE, 1L),
+                entry("2026-01-02", -1L, 2L),
+            )
+        assertThrows(ArithmeticException::class.java) { balance(entries, "2026-01-02") }
+    }
+
+    @Test
+    fun balanceOn_theLargestLongItself_isStillAllowed() {
+        val entries =
+            listOf(
+                entry("2026-01-01", Long.MAX_VALUE - 5L, 1L, CashType.OPENING_BALANCE),
+                entry("2026-01-02", 5L, 2L),
+            )
+        assertEquals(Long.MAX_VALUE, balance(entries, "2026-01-02"))
     }
 }

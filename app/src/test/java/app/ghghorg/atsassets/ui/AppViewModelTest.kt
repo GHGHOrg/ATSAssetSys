@@ -2,6 +2,7 @@ package app.ghghorg.atsassets.ui
 
 import app.ghghorg.atsassets.core.AmountError
 import app.ghghorg.atsassets.core.CashEntry
+import app.ghghorg.atsassets.core.CashEntryRefusal
 import app.ghghorg.atsassets.core.CashType
 import app.ghghorg.atsassets.core.RecordStore
 import app.ghghorg.atsassets.core.UnreadableDataException
@@ -207,16 +208,22 @@ class AppViewModelTest {
         assertEquals(FormState(), state.form)
     }
 
+    // Replaced in 03 (step 4, your decision): the form opens as a deposit once the opening balance exists
+    // (wireframe 10b marker 16), so a second one cannot be started. K1 still refuses it (OpeningBalanceTest).
     @Test
-    fun reviewIsRefusedWhenAnOpeningBalanceAlreadyExists() {
+    fun withAnOpeningBalanceASecondOneCannotBeStarted() {
         val store = FakeStore(stored = listOf(opening()))
         val vm = started(store)
         vm.openForm()
+        assertEquals(CashType.DEPOSIT, vm.state.value.form.type)
+        vm.onTypeChange(CashType.OPENING_BALANCE)
+        assertEquals(CashType.DEPOSIT, vm.state.value.form.type)
         vm.fill(date = "2026-01-01", amount = "500.00")
         vm.review()
-        assertEquals(SaveRefusal.ALREADY_EXISTS, vm.state.value.refusals.save)
-        assertEquals(Screen.FORM, vm.state.value.screen)
-        assertTrue(store.saved.isEmpty())
+        vm.confirm()
+        val saved = store.saved.single().single()
+        assertEquals(CashType.DEPOSIT, saved.type)
+        assertEquals(1, vm.state.value.entries.count { it.type == CashType.OPENING_BALANCE })
     }
 
     @Test
@@ -439,11 +446,11 @@ class AppViewModelTest {
         val state = started(FakeStore()).state.value
         assertEquals(0L, state.cashBalanceCents)
         assertTrue(state.cashRows.isEmpty())
-        assertTrue(state.cashEntryShown)
+        assertEquals(CashType.OPENING_BALANCE, state.cashEntryType)
     }
 
     @Test
-    fun cashTabAfterSavingShowsTheBalanceAndOneRowAndHidesTheButton() {
+    fun cashTabAfterSavingShowsTheBalanceAndOneRowAndTheButtonOpensADeposit() {
         val vm = started(FakeStore())
         vm.selectTab(Tab.CASH)
         vm.openForm()
@@ -454,7 +461,7 @@ class AppViewModelTest {
         assertEquals(1_000_000L, state.cashBalanceCents)
         assertEquals(listOf("c1"), state.cashRows.map { it.entry.id })
         assertEquals(1_000_000L, state.cashRows.single().balanceAfterCents)
-        assertFalse(state.cashEntryShown)
+        assertEquals(CashType.DEPOSIT, state.cashEntryType)
     }
 
     @Test
@@ -462,7 +469,156 @@ class AppViewModelTest {
         val state = started(FakeStore(stored = listOf(opening(date = "2026-12-01")))).state.value
         assertEquals(1_000_000L, state.cashBalanceCents)
         assertEquals(0L, state.netWorthCents)
-        assertFalse(state.cashEntryShown)
+        assertEquals(CashType.DEPOSIT, state.cashEntryType)
+    }
+
+    @Test
+    fun theFormIsTheOpeningBalanceUntilItExists() {
+        val vm = started(FakeStore())
+        vm.openForm()
+        assertEquals(CashType.OPENING_BALANCE, vm.state.value.form.type)
+    }
+
+    @Test
+    fun withAnOpeningBalanceTheFormOpensAsADeposit() {
+        val vm = started(FakeStore(stored = listOf(opening())))
+        vm.selectTab(Tab.CASH)
+        vm.openForm()
+        assertEquals(CashType.DEPOSIT, vm.state.value.form.type)
+    }
+
+    @Test
+    fun theTypeChangesToWithdrawalAndBack_otherTypesAreIgnored() {
+        val vm = started(FakeStore(stored = listOf(opening())))
+        vm.openForm()
+        vm.onTypeChange(CashType.WITHDRAWAL)
+        assertEquals(CashType.WITHDRAWAL, vm.state.value.form.type)
+        for (other in listOf(CashType.OPENING_BALANCE, CashType.ADJUSTMENT, CashType.INTEREST_DIVIDEND, CashType.TRADE)) {
+            vm.onTypeChange(other)
+            assertEquals("$other", CashType.WITHDRAWAL, vm.state.value.form.type)
+        }
+        vm.onTypeChange(CashType.DEPOSIT)
+        assertEquals(CashType.DEPOSIT, vm.state.value.form.type)
+    }
+
+    @Test
+    fun theOpeningBalanceTypeCannotBeChanged() {
+        val vm = started(FakeStore())
+        vm.openForm()
+        vm.onTypeChange(CashType.DEPOSIT)
+        assertEquals(CashType.OPENING_BALANCE, vm.state.value.form.type)
+    }
+
+    @Test
+    fun aDepositIsSavedPositiveWithTheNextSeqAndReturnsToCash() {
+        val store = FakeStore(stored = listOf(opening()))
+        val vm = started(store)
+        vm.selectTab(Tab.CASH)
+        vm.openForm()
+        vm.fill(date = "2026-01-05", amount = "500.00", note = "Pay")
+        vm.review()
+        assertEquals(Screen.REVIEW, vm.state.value.screen)
+        vm.confirm()
+        val entry = store.saved.single().single()
+        assertEquals(CashType.DEPOSIT, entry.type)
+        assertEquals(50_000L, entry.amountCents)
+        assertEquals(2L, entry.enteredSeq)
+        assertEquals("Pay", entry.note)
+        val state = vm.state.value
+        assertEquals(Screen.TABS, state.screen)
+        assertEquals(Tab.CASH, state.tab)
+        assertEquals(1_050_000L, state.cashBalanceCents)
+        assertEquals(1_050_000L, state.netWorthCents)
+    }
+
+    @Test
+    fun aWithdrawalIsSavedNegative() {
+        val store = FakeStore(stored = listOf(opening()))
+        val vm = started(store)
+        vm.openForm()
+        vm.onTypeChange(CashType.WITHDRAWAL)
+        vm.fill(date = "2026-01-05", amount = "300.00")
+        vm.review()
+        vm.confirm()
+        assertEquals(-30_000L, store.saved.single().single().amountCents)
+        assertEquals(970_000L, vm.state.value.cashBalanceCents)
+    }
+
+    // Example C with a withdrawal in place of the buy (03 file, section 3).
+    @Test
+    fun exampleC_cashOnly_isRefusedAtReview_keepsTheTextAndSavesNothing() {
+        val existing = listOf(opening(cents = 100_000L), withdrawal("2026-01-10", 80_000L, seq = 2L))
+        val store = FakeStore(stored = existing)
+        val vm = started(store)
+        vm.openForm()
+        vm.onTypeChange(CashType.WITHDRAWAL)
+        vm.fill(date = "2026-01-05", amount = "300.00", note = "Rent")
+        vm.review()
+        val state = vm.state.value
+        assertEquals(Screen.FORM, state.screen)
+        assertEquals(CashEntryRefusal.NegativeCash(LocalDate.of(2026, 1, 10), 10_000L), state.refusals.cash)
+        assertEquals(FormState("2026-01-05", "300.00", "Rent", CashType.WITHDRAWAL), state.form)
+        assertTrue(store.saved.isEmpty())
+    }
+
+    @Test
+    fun aDateBeforeTheOpeningBalanceIsRefusedNamingIt() {
+        val vm = started(FakeStore(stored = listOf(opening(date = "2026-01-10"))))
+        vm.openForm()
+        vm.fill(date = "2026-01-09", amount = "5.00")
+        vm.review()
+        assertEquals(CashEntryRefusal.BeforeOpeningBalance(LocalDate.of(2026, 1, 10)), vm.state.value.refusals.cash)
+        assertEquals(Screen.FORM, vm.state.value.screen)
+    }
+
+    @Test
+    fun aDepositWithSeveralWrongFieldsReportsThemTogether() {
+        val vm = started(FakeStore(stored = listOf(opening())))
+        vm.openForm()
+        vm.fill(date = "nope", amount = "abc", note = "a\nb")
+        vm.review()
+        val refusals = vm.state.value.refusals
+        assertEquals(AmountError.BAD_FORMAT, refusals.amount)
+        assertEquals(DateRefusal.NOT_A_DATE, refusals.date)
+        assertTrue(refusals.noteHasLineBreak)
+        assertEquals(null, refusals.cash)
+        assertEquals(Screen.FORM, vm.state.value.screen)
+    }
+
+    @Test
+    fun aLineBreakAndABlockedWithdrawalAreReportedTogether() {
+        val vm = started(FakeStore(stored = listOf(opening(cents = 100_000L))))
+        vm.openForm()
+        vm.onTypeChange(CashType.WITHDRAWAL)
+        vm.fill(date = "2026-01-05", amount = "2000.00", note = "a\nb")
+        vm.review()
+        val refusals = vm.state.value.refusals
+        assertTrue(refusals.noteHasLineBreak)
+        assertEquals(CashEntryRefusal.NegativeCash(LocalDate.of(2026, 1, 5), 100_000L), refusals.cash)
+    }
+
+    @Test
+    fun aBalanceThatWouldBeTooLargeIsRefused() {
+        val vm = started(FakeStore(stored = listOf(opening(cents = Long.MAX_VALUE - 10L))))
+        vm.openForm()
+        vm.fill(date = "2026-01-05", amount = "1.00")
+        vm.review()
+        assertEquals(CashEntryRefusal.TooLarge, vm.state.value.refusals.cash)
+        assertEquals(Screen.FORM, vm.state.value.screen)
+    }
+
+    @Test
+    fun editingTheDateOrAmountClearsTheCashRefusal() {
+        val vm = started(FakeStore(stored = listOf(opening(date = "2026-01-10"))))
+        vm.openForm()
+        vm.fill(date = "2026-01-09", amount = "5.00")
+        vm.review()
+        vm.onDateChange("2026-01-11")
+        assertEquals(null, vm.state.value.refusals.cash)
+        vm.onDateChange("2026-01-09")
+        vm.review()
+        vm.onAmountChange("6.00")
+        assertEquals(null, vm.state.value.refusals.cash)
     }
 
     @Test
@@ -516,6 +672,19 @@ private fun opening(
     type = CashType.OPENING_BALANCE,
     note = "",
     enteredSeq = 1L,
+)
+
+private fun withdrawal(
+    date: String,
+    cents: Long,
+    seq: Long,
+): CashEntry = CashEntry(
+    id = "w$seq",
+    date = LocalDate.parse(date),
+    amountCents = -cents,
+    type = CashType.WITHDRAWAL,
+    note = "",
+    enteredSeq = seq,
 )
 
 /** A store in memory. It records every save, and can fail or wait on demand. */

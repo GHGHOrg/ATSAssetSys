@@ -5,7 +5,10 @@ import androidx.lifecycle.viewModelScope
 import app.ghghorg.atsassets.core.AmountError
 import app.ghghorg.atsassets.core.AmountResult
 import app.ghghorg.atsassets.core.CashAccount
+import app.ghghorg.atsassets.core.CashEntries
 import app.ghghorg.atsassets.core.CashEntry
+import app.ghghorg.atsassets.core.CashEntryRefusal
+import app.ghghorg.atsassets.core.CashEntryResult
 import app.ghghorg.atsassets.core.CashRow
 import app.ghghorg.atsassets.core.CashRules
 import app.ghghorg.atsassets.core.CashType
@@ -24,6 +27,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import java.time.Clock
+import java.time.LocalDate
 
 /** The one screen shown at a time. TABS shows the selected tab under the bottom bar. */
 enum class Screen {
@@ -55,19 +59,24 @@ enum class SaveRefusal {
     SAVE_FAILED,
 }
 
-/** The typed text of the opening balance form. Kept as typed, never trimmed or changed. */
+/**
+ * The cash entry form: the typed text, kept as typed and never trimmed or changed, and the type. The type is
+ * the opening balance until it exists, then Deposit or Withdrawal (iteration 03).
+ */
 data class FormState(
     val dateText: String = "",
     val amountText: String = "",
     val noteText: String = "",
+    val type: CashType = CashType.OPENING_BALANCE,
 )
 
-/** Reasons only, no wording (D9). A null or false field is fine. */
+/** Reasons only, no wording (D9). A null or false field is fine. [cash] holds K1's date and balance rules. */
 data class Refusals(
     val amount: AmountError? = null,
     val date: DateRefusal? = null,
     val noteHasLineBreak: Boolean = false,
     val save: SaveRefusal? = null,
+    val cash: CashEntryRefusal? = null,
 )
 
 data class AppState(
@@ -88,17 +97,19 @@ data class AppState(
     /** The Cash tab rows, newest first, each with the balance after it (view 7). */
     val cashRows: List<CashRow> get() = CashAccount.rows(entries)
 
-    /** Cash entry is offered only while the opening balance is missing; the other types arrive in 03. */
-    val cashEntryShown: Boolean get() = entries.none { it.type == CashType.OPENING_BALANCE }
+    /** The type the Cash entry button opens: the opening balance until it exists, then a deposit (iteration 03). */
+    val cashEntryType: CashType
+        get() = if (entries.none { it.type == CashType.OPENING_BALANCE }) CashType.OPENING_BALANCE else CashType.DEPOSIT
 
     /** Android's back button on More, Cash or Portfolios goes to Overall (02b decision 3). */
     val backGoesToOverall: Boolean get() = screen == Screen.TABS && tab != Tab.OVERALL
 }
 
 /**
- * The state and actions of the opening balance flow (iteration 02a). It holds the typed form text, so a
- * recreation of the screen keeps it. The store is created on the first [start], after unlock. Refusals
- * are reasons only; their wording is D9 and lives in the screens.
+ * The state and actions of the app: the tabs and the cash entry flow (opening balance from 02a, deposit and
+ * withdrawal from 03). It holds the typed form text, so a recreation of the screen keeps it. The store is
+ * created on the first [start], after unlock. Refusals are reasons only; their wording is D9 and lives in
+ * the screens.
  */
 class AppViewModel(
     private val storeProvider: () -> RecordStore,
@@ -142,11 +153,28 @@ class AppViewModel(
         mutableState.update { it.copy(tab = Tab.OVERALL) }
     }
 
-    /** Opens the form. The date is filled with today in New York only if it is empty. */
+    /**
+     * Opens the form. The date is filled with today in New York only if it is empty. The type is the opening
+     * balance until it exists; after that a kept Deposit or Withdrawal stays, anything else becomes Deposit.
+     */
     fun openForm() = mutableState.update { current ->
         val form = current.form
-        val filled = if (form.dateText.isEmpty()) form.copy(dateText = marketDate.today().toString()) else form
-        current.copy(screen = Screen.FORM, form = filled, refusals = Refusals())
+        val dated = if (form.dateText.isEmpty()) form.copy(dateText = marketDate.today().toString()) else form
+        val opening = current.cashEntryType == CashType.OPENING_BALANCE
+        val type =
+            when {
+                opening -> CashType.OPENING_BALANCE
+                form.type in ENTRY_TYPES -> form.type
+                else -> CashType.DEPOSIT
+            }
+        current.copy(screen = Screen.FORM, form = dated.copy(type = type), refusals = Refusals())
+    }
+
+    /** Deposit or Withdrawal only, and only once the opening balance exists (03 decision 2). Other types are ignored. */
+    fun onTypeChange(type: CashType) {
+        val current = mutableState.value
+        if (type !in ENTRY_TYPES || current.form.type !in ENTRY_TYPES) return
+        mutableState.update { it.copy(form = it.form.copy(type = type), refusals = it.refusals.copy(cash = null)) }
     }
 
     /** Back from the form to the tab it was opened from. The typed text is kept and the refusals are cleared. Ignored outside FORM. */
@@ -156,11 +184,11 @@ class AppViewModel(
     }
 
     fun onDateChange(text: String) = mutableState.update {
-        it.copy(form = it.form.copy(dateText = text), refusals = it.refusals.copy(date = null))
+        it.copy(form = it.form.copy(dateText = text), refusals = it.refusals.copy(date = null, cash = null))
     }
 
     fun onAmountChange(text: String) = mutableState.update {
-        it.copy(form = it.form.copy(amountText = text), refusals = it.refusals.copy(amount = null))
+        it.copy(form = it.form.copy(amountText = text), refusals = it.refusals.copy(amount = null, cash = null))
     }
 
     fun onNoteChange(text: String) = mutableState.update {
@@ -182,26 +210,62 @@ class AppViewModel(
                 date == null -> DateRefusal.NOT_A_DATE
                 else -> null
             }
-        // A stand-in amount and date let K1 judge the note and "already exists" rules in the same pass.
+        val cents = (amount as? AmountResult.Cents)?.value
+        val ruleRefusals =
+            if (form.type == CashType.OPENING_BALANCE) {
+                openingBalanceRefusals(current, date, cents)
+            } else {
+                entryRefusals(current, date, cents)
+            }
+        val refusals = ruleRefusals.copy(amount = amountError, date = dateRefusal)
+        val allFine = refusals == Refusals()
+        mutableState.update {
+            it.copy(screen = if (allFine) Screen.REVIEW else Screen.FORM, refusals = refusals)
+        }
+    }
+
+    // A stand-in amount and date let K1 judge the note and "already exists" rules in the same pass.
+    private fun openingBalanceRefusals(
+        current: AppState,
+        date: LocalDate?,
+        cents: Long?,
+    ): Refusals {
         val probe =
             OpeningBalance.create(
                 existing = current.entries,
                 id = PROBE_ID,
                 date = date ?: marketDate.today(),
-                amountCents = (amount as? AmountResult.Cents)?.value ?: 1L,
-                note = form.noteText,
+                amountCents = cents ?: 1L,
+                note = current.form.noteText,
             )
         val rule = (probe as? OpeningBalanceResult.Refused)?.reason
-        val refusals = Refusals(
-            amount = amountError,
-            date = dateRefusal,
+        return Refusals(
             noteHasLineBreak = rule == OpeningBalanceError.NOTE_HAS_LINE_BREAK,
             save = if (rule == OpeningBalanceError.ALREADY_EXISTS) SaveRefusal.ALREADY_EXISTS else null,
         )
-        val allFine = amountError == null && dateRefusal == null && rule == null
-        mutableState.update {
-            it.copy(screen = if (allFine) Screen.REVIEW else Screen.FORM, refusals = refusals)
-        }
+    }
+
+    /**
+     * Two passes of K1 so every refusal shows together: the note with a stand-in date and amount, then the
+     * date and balance rules with an empty note, only when the date and amount are valid.
+     */
+    private fun entryRefusals(
+        current: AppState,
+        date: LocalDate?,
+        cents: Long?,
+    ): Refusals {
+        val form = current.form
+        val noteProbe =
+            CashEntries.create(current.entries, PROBE_ID, form.type, marketDate.today(), 1L, form.noteText)
+        val noteRule = (noteProbe as? CashEntryResult.Refused)?.reason
+        val cashRule =
+            if (date != null && cents != null) {
+                val probe = CashEntries.create(current.entries, PROBE_ID, form.type, date, cents, "")
+                (probe as? CashEntryResult.Refused)?.reason
+            } else {
+                null
+            }
+        return Refusals(noteHasLineBreak = noteRule == CashEntryRefusal.NoteHasLineBreak, cash = cashRule)
     }
 
     /** Back from the review to the form. The typed text is kept. */
@@ -211,7 +275,7 @@ class AppViewModel(
         mutableState.update { it.copy(screen = Screen.FORM, refusals = Refusals()) }
     }
 
-    /** Saves the opening balance. Ignored outside REVIEW and while a save is running. */
+    /** Saves the entry, one row. Ignored outside REVIEW and while a save is running. */
     fun confirm() {
         val current = mutableState.value
         if (current.screen != Screen.REVIEW || current.saving) return
@@ -250,10 +314,15 @@ class AppViewModel(
 
     /** The guard before saving: the same rules again, with a real id. Null if any rule fails. */
     private fun newEntry(current: AppState): CashEntry? {
-        val amount = Money.parseCents(current.form.amountText) as? AmountResult.Cents ?: return null
-        val date = MarketDate.parse(current.form.dateText) ?: return null
-        val result = OpeningBalance.create(current.entries, newId(), date, amount.value, current.form.noteText)
-        return (result as? OpeningBalanceResult.Created)?.entry
+        val form = current.form
+        val amount = Money.parseCents(form.amountText) as? AmountResult.Cents ?: return null
+        val date = MarketDate.parse(form.dateText) ?: return null
+        if (form.type == CashType.OPENING_BALANCE) {
+            val result = OpeningBalance.create(current.entries, newId(), date, amount.value, form.noteText)
+            return (result as? OpeningBalanceResult.Created)?.entry
+        }
+        val result = CashEntries.create(current.entries, newId(), form.type, date, amount.value, form.noteText)
+        return (result as? CashEntryResult.Created)?.entry
     }
 
     private fun showLoaded(entries: List<CashEntry>) {
@@ -266,6 +335,9 @@ class AppViewModel(
 
     private companion object {
         const val PROBE_ID = "check"
+
+        // The types the form offers once the opening balance exists (03 decision 2).
+        val ENTRY_TYPES = setOf(CashType.DEPOSIT, CashType.WITHDRAWAL)
 
         // The screens that show the bottom bar (spec 6: always visible; 02b decision 1).
         val TAB_BAR_SCREENS = setOf(Screen.TABS, Screen.FORM, Screen.REVIEW)
