@@ -2,6 +2,7 @@ package app.ghghorg.atsassets.data
 
 import app.ghghorg.atsassets.core.CashEntry
 import app.ghghorg.atsassets.core.CashType
+import app.ghghorg.atsassets.core.Portfolio
 import app.ghghorg.atsassets.core.RecordStore
 import app.ghghorg.atsassets.core.UnreadableDataException
 import kotlinx.coroutines.Dispatchers
@@ -45,7 +46,38 @@ class RoomRecordStore(
         }
         dao.insertAll(entries.map { it.toRow() })
     }
+
+    override suspend fun loadPortfolios(): List<Portfolio> = withContext(Dispatchers.IO) {
+        try {
+            database.portfolioDao().loadAll().map { it.toPortfolio() }
+        } catch (e: CancellationException) {
+            throw e
+        } catch (e: UnreadableDataException) {
+            throw e
+        } catch (e: Exception) {
+            throw UnreadableDataException("The stored data could not be read.", e)
+        }
+    }
+
+    override suspend fun savePortfolio(portfolio: Portfolio) {
+        val dao = withContext(Dispatchers.IO) {
+            try {
+                database.portfolioDao()
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: UnreadableDataException) {
+                throw e
+            } catch (e: Exception) {
+                throw UnreadableDataException("The stored data could not be opened.", e)
+            }
+        }
+        dao.insert(portfolio.toRow())
+    }
 }
+
+private fun Portfolio.toRow() = PortfolioRow(id = id, name = name, createdSeq = createdSeq)
+
+private fun PortfolioRow.toPortfolio() = Portfolio(id = id, name = name, createdSeq = createdSeq)
 
 private fun CashEntry.toRow() = CashEntryRow(
     id = id,

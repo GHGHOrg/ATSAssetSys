@@ -7,6 +7,12 @@ interface RecordStore {
 
     /** Saves the entries as one all-or-nothing batch. */
     suspend fun saveCashEntries(entries: List<CashEntry>)
+
+    /** Throws [UnreadableDataException] if stored data exists but cannot be read. */
+    suspend fun loadPortfolios(): List<Portfolio>
+
+    /** Saves one new portfolio. */
+    suspend fun savePortfolio(portfolio: Portfolio)
 }
 
 class UnreadableDataException(

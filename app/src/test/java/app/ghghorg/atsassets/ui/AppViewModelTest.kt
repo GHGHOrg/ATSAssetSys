@@ -5,6 +5,7 @@ import app.ghghorg.atsassets.core.CashDirection
 import app.ghghorg.atsassets.core.CashEntry
 import app.ghghorg.atsassets.core.CashEntryRefusal
 import app.ghghorg.atsassets.core.CashType
+import app.ghghorg.atsassets.core.Portfolio
 import app.ghghorg.atsassets.core.RecordStore
 import app.ghghorg.atsassets.core.UnreadableDataException
 import kotlinx.coroutines.CompletableDeferred
@@ -1229,6 +1230,8 @@ private class FakeStore(
 ) : RecordStore {
     var loadCalls = 0
     val saved = mutableListOf<List<CashEntry>>()
+    var storedPortfolios: List<Portfolio> = emptyList()
+    val savedPortfolios = mutableListOf<Portfolio>()
 
     override suspend fun loadCashEntries(): List<CashEntry> {
         loadCalls++
@@ -1241,5 +1244,17 @@ private class FakeStore(
         saveError?.let { throw it }
         saved.add(entries)
         stored = stored + entries
+    }
+
+    override suspend fun loadPortfolios(): List<Portfolio> {
+        loadError?.let { throw it }
+        return storedPortfolios
+    }
+
+    override suspend fun savePortfolio(portfolio: Portfolio) {
+        gate?.await()
+        saveError?.let { throw it }
+        savedPortfolios.add(portfolio)
+        storedPortfolios = storedPortfolios + portfolio
     }
 }
