@@ -1,5 +1,23 @@
 package app.ghghorg.atsassets.core
 
+import java.time.LocalDate
+
+/**
+ * The Cash list filters (view 7): a date range, both ends included, and one type; null means no bound and All.
+ * Combined: a row must match all of them. Never stored (iteration 06 decision 4).
+ */
+data class CashFilter(
+    val from: LocalDate? = null,
+    val to: LocalDate? = null,
+    val type: CashType? = null,
+) {
+    val isActive: Boolean get() = from != null || to != null || type != null
+
+    fun matches(entry: CashEntry): Boolean = (from == null || !entry.date.isBefore(from)) &&
+        (to == null || !entry.date.isAfter(to)) &&
+        (type == null || entry.type == type)
+}
+
 /** One row of the Cash account (view 7): an entry and the real balance after it. */
 data class CashRow(
     val entry: CashEntry,
@@ -28,4 +46,13 @@ object CashAccount {
                 CashRow(entry, running)
             }.asReversed()
     }
+
+    /**
+     * The rows that match [filter], each still with the real balance after it: the balances are worked out on
+     * the whole list first, then the rows are filtered (view 7: "the real balance, whatever the filters").
+     */
+    fun rows(
+        entries: List<CashEntry>,
+        filter: CashFilter,
+    ): List<CashRow> = rows(entries).filter { filter.matches(it.entry) }
 }

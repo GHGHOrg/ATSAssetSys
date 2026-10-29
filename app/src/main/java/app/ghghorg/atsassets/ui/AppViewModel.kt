@@ -10,6 +10,7 @@ import app.ghghorg.atsassets.core.CashEntries
 import app.ghghorg.atsassets.core.CashEntry
 import app.ghghorg.atsassets.core.CashEntryRefusal
 import app.ghghorg.atsassets.core.CashEntryResult
+import app.ghghorg.atsassets.core.CashFilter
 import app.ghghorg.atsassets.core.CashRow
 import app.ghghorg.atsassets.core.CashRules
 import app.ghghorg.atsassets.core.CashType
@@ -55,6 +56,9 @@ val DEFAULT_TAB_ORDER = listOf(Tab.MORE, Tab.CASH, Tab.PORTFOLIOS, Tab.OVERALL)
 enum class DateRefusal {
     EMPTY,
     NOT_A_DATE,
+
+    // A character other than a digit in a digits-only date field (the Cash filters, iteration 06).
+    NOT_DIGITS,
 }
 
 enum class SaveRefusal {
@@ -81,6 +85,16 @@ data class ReversalForm(
     val noteText: String = "",
 )
 
+/**
+ * The Cash list filters as typed (view 7): From and To text and one type, null for All. Held in memory only, so
+ * they last while the app runs and are never stored (06 decision 4).
+ */
+data class CashFilterForm(
+    val fromText: String = "",
+    val toText: String = "",
+    val type: CashType? = null,
+)
+
 /** Reasons only, no wording (D9). A null or false field is fine. [cash] holds K1's date and balance rules. */
 data class Refusals(
     val amount: AmountError? = null,
@@ -103,7 +117,30 @@ data class AppState(
     // The entry shown on DETAIL; on REVERSAL, the entry being reversed.
     val detailId: String? = null,
     val reversal: ReversalForm = ReversalForm(),
+    val cashFilterForm: CashFilterForm = CashFilterForm(),
 ) {
+    /**
+     * The fields take digits only (YYYYMMDD): any other character is refused at once, eight digits that are no
+     * real date get the date message, fewer digits get nothing (06 decision 1 as changed after phone check 12).
+     */
+    val filterFromRefusal: DateRefusal? get() = DateDigits.refusal(cashFilterForm.fromText)
+
+    val filterToRefusal: DateRefusal? get() = DateDigits.refusal(cashFilterForm.toText)
+
+    /** Only eight digits of a real date count as a bound; anything else is no bound (06 decision 1). */
+    val cashFilter: CashFilter
+        get() = CashFilter(
+            from = DateDigits.toDate(cashFilterForm.fromText),
+            to = DateDigits.toDate(cashFilterForm.toText),
+            type = cashFilterForm.type,
+        )
+
+    /** A valid date bound or a chip other than All (06 decision 3: the count line and Clear filters show then). */
+    val filterActive: Boolean get() = cashFilter.isActive
+
+    /** The rows that match the filters, each with its real balance (view 7). */
+    val cashFilteredRows: List<CashRow> get() = CashAccount.rows(entries, cashFilter)
+
     val holdsData: Boolean get() = CashRules.appHoldsData(entries)
 
     val detailEntry: CashEntry? get() = entries.firstOrNull { it.id == detailId }
@@ -314,6 +351,28 @@ class AppViewModel(
             cash = cashRule,
         )
     }
+
+    /** A ninth digit is not accepted; other characters are kept, so their error shows at once. */
+    fun onFilterFromChange(text: String) {
+        if (tooManyDigits(text)) return
+        mutableState.update { it.copy(cashFilterForm = it.cashFilterForm.copy(fromText = text)) }
+    }
+
+    fun onFilterToChange(text: String) {
+        if (tooManyDigits(text)) return
+        mutableState.update { it.copy(cashFilterForm = it.cashFilterForm.copy(toText = text)) }
+    }
+
+    private fun tooManyDigits(text: String): Boolean = DateDigits.isDigits(text) && text.length > DateDigits.LENGTH
+
+    /** One chip at a time: null for All, or one of the four direct types. Other types are ignored. */
+    fun onFilterTypeChange(type: CashType?) {
+        if (type != null && type !in ENTRY_TYPES) return
+        mutableState.update { it.copy(cashFilterForm = it.cashFilterForm.copy(type = type)) }
+    }
+
+    /** Clear filters: both dates empty and All (view 7). */
+    fun clearFilters() = mutableState.update { it.copy(cashFilterForm = CashFilterForm()) }
 
     /** Opens an entry's detail from the Cash list, or follows a link from another detail. Unknown ids are ignored. */
     fun openDetail(id: String) {

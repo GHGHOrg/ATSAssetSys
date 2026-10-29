@@ -353,6 +353,7 @@ internal fun dateMessage(refusal: DateRefusal?): String? = when (refusal) {
     null -> null
     DateRefusal.EMPTY -> stringResource(R.string.date_empty)
     DateRefusal.NOT_A_DATE -> stringResource(R.string.date_not_a_date)
+    DateRefusal.NOT_DIGITS -> stringResource(R.string.date_not_digits)
 }
 
 @Composable

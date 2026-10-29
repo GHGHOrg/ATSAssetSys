@@ -35,3 +35,5 @@ One list of what is still open. When an item is closed, change its status here w
 | 28 | Not run: the Gradle allow rules for build, test and lint; Edit rules for other write paths; effect of the unset attribution; allow rules on a fresh clone | spike 9.5 | open |
 | 29 | The stop message for a denied Get-Content names "allowed working directories", though the file is inside them | spike check 13 | known, harmless |
 | 30 | Idea: icons in the bottom bar (future enhancement, not this version; needs a new intent.md under Ruleset A rule 7) | 02b decision 7 | idea |
+| 31 | AGP 9.5.0 is available; the project uses 9.4.1 (lint AndroidGradlePluginVersion, seen 2026-10-29). Upgrade in its own change, with versions and release notes looked up on the day | 06 step 2 | open |
+| 32 | The digits-only date input of the Cash filters (06) for the cash entry form's date field (opening balance and entries) and the reversal date; they still take YYYY-MM-DD typed with dashes. Needs a new intent.md (Ruleset A rule 7) | 06, after phone check 12 | open |
