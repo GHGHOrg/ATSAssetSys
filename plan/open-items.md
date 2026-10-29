@@ -37,3 +37,4 @@ One list of what is still open. When an item is closed, change its status here w
 | 30 | Idea: icons in the bottom bar (future enhancement, not this version; needs a new intent.md under Ruleset A rule 7) | 02b decision 7 | idea |
 | 31 | AGP 9.5.0 is available; the project uses 9.4.1 (lint AndroidGradlePluginVersion, seen 2026-10-29). Upgrade in its own change, with versions and release notes looked up on the day | 06 step 2 | open |
 | 32 | The digits-only date input of the Cash filters (06) for the cash entry form's date field (opening balance and entries) and the reversal date; they still take YYYY-MM-DD typed with dashes. Needs a new intent.md (Ruleset A rule 7) | 06, after phone check 12 | open |
+| 33 | Phone check of "Set the opening balance first" for New portfolio (criterion 19, wireframe 10d frame C) needs an app with no data. Unit tested in 07 | 07 file, decision 3 | open; due in 09 with the buy refusal (one uninstall, your approval), at the latest in 34 |

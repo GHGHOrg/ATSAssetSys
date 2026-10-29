@@ -98,6 +98,7 @@ Gates (Ruleset A stays in force even though nothing technical blocks you): no co
 How far to go:
 - Work one numbered step of the iteration file's "Order of work" at a time. After each step run build, tests and lint, show the real output and the report below, and stop until I say go.
 - Before each step run git status. If there are uncommitted changes you did not make, stop, list the files and wait.
+- At the end of every iteration (its documents step), remind me of open item 33: the phone check of "Set the opening balance first" for New portfolio, due in 09, at the latest in 34. Drop this line when item 33 is closed.
 - Report after creating or editing files: each file, the real git diff --stat output, and for documents the line count, byte count and SHA-256. Check that a CRLF document did not change its line endings: count the raw CR and LF bytes and run git diff --check (if a whole file shows as changed, stop). The report commands ask for my approval, about two prompts per report; that is expected.
 Commits and pull requests:
 - Propose one commit per step, after build, tests and lint are green. Show the message and the changed files; I approve each. Message: "Iteration NN X: what", naming the spec refs. A red step gets no commit. Keep the default commit trailer.

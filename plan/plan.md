@@ -307,6 +307,7 @@ Each departure from this plan is recorded here with its date and the reason.
 - 2026-10-29: pull request #90 (docs: the 05 merge record) was merged as da9f26e, CI green on the pull request and on main (1m 54s) (your reports). The 06 file was approved with decisions 1 to 4.
 - 2026-10-29: 06 built and checked on the phone. After phone check 12 the date filters were changed to digits only with the dashes shown (your request; decision 1 changed; 06 file, section 14). A new lint notice, AGP 9.5.0 available, is listed as open item 31. Criterion 35's install-over is checked again (versionCode 6).
 - 2026-10-29: pull request #91 (iteration 06) was merged as 0d5e2f4. CI on the pull request (3 checks: build, Analyze (actions), CodeQL) and on main (the run for 0d5e2f4, 1m 51s) were reported successful by you. The status lines above were updated. The 06 file's sections 13 and 14 are left as written at build time.
+- 2026-10-29: pull request #92 (docs: the 06 merge record) was merged as 1c4b85c, CI green on the pull request and on main (2m 4s) (your reports). 2026-10-30: the 07 file was approved with decisions 1 to 4. The phone check of "Set the opening balance first" for New portfolio moves to 09 (open item 33).
 
 ## 13. Out of scope for this plan
 Performance over time, per-holding dividends, ETF look-through, the next intent.md items,
