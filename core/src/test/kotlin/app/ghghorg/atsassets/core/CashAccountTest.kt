@@ -1,7 +1,9 @@
 package app.ghghorg.atsassets.core
 
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertThrows
+import org.junit.Assert.assertTrue
 import org.junit.Test
 import java.time.LocalDate
 
@@ -95,5 +97,80 @@ class CashAccountTest {
     @Test
     fun rows_overflow_throwsInsteadOfWrapping() {
         assertThrows(ArithmeticException::class.java) { CashAccount.rows(overflowing) }
+    }
+
+    // Iteration 06: filters (view 7). One entry of each direct type, Jan 1 to Jan 10.
+    private val mixed =
+        listOf(
+            entry("2026-01-01", 100_000L, 1L, CashType.OPENING_BALANCE),
+            entry("2026-01-05", 50_000L, 2L, CashType.DEPOSIT),
+            entry("2026-01-06", -30_000L, 3L, CashType.WITHDRAWAL),
+            entry("2026-01-07", 1_234L, 4L, CashType.INTEREST_DIVIDEND),
+            entry("2026-01-08", -500L, 5L, CashType.ADJUSTMENT),
+            entry("2026-01-10", 5_000L, 6L, CashType.DEPOSIT),
+        )
+
+    private fun ids(filter: CashFilter): List<String> = CashAccount.rows(mixed, filter).map { it.entry.id }
+
+    private fun day(text: String): LocalDate = LocalDate.parse(text)
+
+    @Test
+    fun filter_none_givesEveryRow_asRowsDoes() {
+        assertEquals(CashAccount.rows(mixed), CashAccount.rows(mixed, CashFilter()))
+        assertFalse(CashFilter().isActive)
+    }
+
+    @Test
+    fun filter_fromOnly_includesTheFromDate() {
+        assertEquals(listOf("e6", "e5", "e4", "e3"), ids(CashFilter(from = day("2026-01-06"))))
+    }
+
+    @Test
+    fun filter_toOnly_includesTheToDate() {
+        assertEquals(listOf("e3", "e2", "e1"), ids(CashFilter(to = day("2026-01-06"))))
+    }
+
+    @Test
+    fun filter_fromAndTo_bothEndsIncluded() {
+        assertEquals(listOf("e4", "e3", "e2"), ids(CashFilter(from = day("2026-01-05"), to = day("2026-01-07"))))
+    }
+
+    @Test
+    fun filter_byEachType() {
+        assertEquals(listOf("e6", "e2"), ids(CashFilter(type = CashType.DEPOSIT)))
+        assertEquals(listOf("e3"), ids(CashFilter(type = CashType.WITHDRAWAL)))
+        assertEquals(listOf("e4"), ids(CashFilter(type = CashType.INTEREST_DIVIDEND)))
+        assertEquals(listOf("e5"), ids(CashFilter(type = CashType.ADJUSTMENT)))
+    }
+
+    @Test
+    fun filter_theOpeningBalanceShowsOnlyUnderAll() {
+        assertTrue("e1" in ids(CashFilter()))
+        for (type in listOf(CashType.DEPOSIT, CashType.WITHDRAWAL, CashType.INTEREST_DIVIDEND, CashType.ADJUSTMENT)) {
+            assertFalse("$type", "e1" in ids(CashFilter(type = type)))
+        }
+    }
+
+    @Test
+    fun filter_typeAndDatesCombine() {
+        assertEquals(listOf("e6"), ids(CashFilter(from = day("2026-01-06"), type = CashType.DEPOSIT)))
+    }
+
+    @Test
+    fun filter_fromAfterTo_givesNoRows() {
+        assertTrue(ids(CashFilter(from = day("2026-01-08"), to = day("2026-01-05"))).isEmpty())
+    }
+
+    @Test
+    fun filter_keepsTheRealBalanceAfterEachEntry() {
+        val rows = CashAccount.rows(mixed, CashFilter(type = CashType.DEPOSIT))
+        assertEquals(listOf(125_734L, 150_000L), rows.map { it.balanceAfterCents })
+    }
+
+    @Test
+    fun filter_isActive_withAnyBoundOrAType() {
+        assertTrue(CashFilter(from = day("2026-01-01")).isActive)
+        assertTrue(CashFilter(to = day("2026-01-01")).isActive)
+        assertTrue(CashFilter(type = CashType.DEPOSIT).isActive)
     }
 }
