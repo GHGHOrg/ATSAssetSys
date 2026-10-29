@@ -309,6 +309,7 @@ Each departure from this plan is recorded here with its date and the reason.
 - 2026-10-29: pull request #91 (iteration 06) was merged as 0d5e2f4. CI on the pull request (3 checks: build, Analyze (actions), CodeQL) and on main (the run for 0d5e2f4, 1m 51s) were reported successful by you. The status lines above were updated. The 06 file's sections 13 and 14 are left as written at build time.
 - 2026-10-29: pull request #92 (docs: the 06 merge record) was merged as 1c4b85c, CI green on the pull request and on main (2m 4s) (your reports). 2026-10-30: the 07 file was approved with decisions 1 to 4. The phone check of "Set the opening balance first" for New portfolio moves to 09 (open item 33).
 - 2026-10-30: the test totals of 03 to 06 were 1 too high: 03 added 34 tests to 02b's 98, written as 133 instead of 132, and 04 to 06 added their new tests to that figure. Corrected to 132, 154, 183 and 213 in the status lines above and in the four files' local-run lines. The per-class counts were right, and no test was removed (git check of @Test lines at each merge). The 03 file's departure 2 now names the renamed test.
+- 2026-10-30: pull request #93 (docs: the test-count fix) was merged as 8ee5394, CI green on the pull request and on main (1m 29s) (your reports); main was merged into iter-07-create-portfolio (2d50683).
 
 ## 13. Out of scope for this plan
 Performance over time, per-holding dividends, ETF look-through, the next intent.md items,
