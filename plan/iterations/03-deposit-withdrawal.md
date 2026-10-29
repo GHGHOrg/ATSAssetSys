@@ -1,6 +1,6 @@
 # plan/iterations/03-deposit-withdrawal.md
 
-Stage: Build. Status: built on branch iter-03-deposit-withdrawal (steps 1 to 6, commits ed5f8cb to 2654b9c) and checked on the phone 2026-10-29, all checks yes (section 13). Pull request not created; CI not run. Decisions 1 to 5 settled (section 10). Sections 1 to 12 were written before the build; where the build differs, section 14 says so.
+Stage: Build. Status: built on branch iter-03-deposit-withdrawal (steps 1 to 6, commits ed5f8cb to 2654b9c) and checked on the phone 2026-10-29, all checks yes (section 13). Pull request #85 merged as 8d25892 on 2026-10-29; CI green on the pull request and on main (your reports). Decisions 1 to 5 settled (section 10). Sections 1 to 12 were written before the build; where the build differs, section 14 says so.
 Source: plan/plan.md section 4 (row 03), intent/intent.md v52 (final), spec/spec.md v4 (final). "My reading" is an interpretation, not a test.
 
 ## 1. Outcome
@@ -86,7 +86,7 @@ Approved on paper with this file; confirmed on the phone (D9).
 Confirmed on the phone 2026-10-29 (checks 1, 4, 5 and 10): the chips, the two amount lines and the three messages as written above.
 
 ## 12. Status and notes
-Built 2026-10-29; phone checks 2026-10-29. Pull request and CI: not yet.
+Done. Built 2026-10-29; phone checks 2026-10-29; pull request #85 merged as 8d25892 (2026-10-29), CI green on the pull request (3 checks) and on main (1m 42s) (your reports).
 
 ## 13. Build results
 ### 13.1 Commits
