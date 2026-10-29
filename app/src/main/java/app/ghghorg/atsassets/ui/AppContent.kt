@@ -77,26 +77,44 @@ private fun BarContent(
             onCancel = viewModel::cancelReversal,
         )
 
-        else -> when (state.tab) {
-            Tab.OVERALL -> OverallScreen(state, viewModel::openForm)
+        else -> TabContent(state, viewModel)
+    }
+}
 
-            Tab.CASH -> CashScreen(
-                state = state,
-                onCashEntry = viewModel::openForm,
-                onOpenEntry = viewModel::openDetail,
-                filterActions =
-                CashFilterActions(
-                    onFromChange = viewModel::onFilterFromChange,
-                    onToChange = viewModel::onFilterToChange,
-                    onTypeChange = viewModel::onFilterTypeChange,
-                    onClear = viewModel::clearFilters,
-                ),
-            )
+@Composable
+private fun TabContent(
+    state: AppState,
+    viewModel: AppViewModel,
+) {
+    when (state.tab) {
+        Tab.OVERALL -> OverallScreen(state, viewModel::openForm, viewModel::openPortfolioDialog)
 
-            Tab.PORTFOLIOS -> PortfoliosScreen()
+        Tab.CASH -> CashScreen(
+            state = state,
+            onCashEntry = viewModel::openForm,
+            onOpenEntry = viewModel::openDetail,
+            filterActions =
+            CashFilterActions(
+                onFromChange = viewModel::onFilterFromChange,
+                onToChange = viewModel::onFilterToChange,
+                onTypeChange = viewModel::onFilterTypeChange,
+                onClear = viewModel::clearFilters,
+            ),
+        )
 
-            Tab.MORE -> MoreScreen()
-        }
+        Tab.PORTFOLIOS -> PortfoliosScreen(state, viewModel::openPortfolioDialog, viewModel::openForm)
+
+        Tab.MORE -> MoreScreen()
+    }
+    // The New portfolio dialog, over Portfolios or Overall (wireframe 10d frame A).
+    state.portfolioDialog?.let {
+        NewPortfolioDialog(
+            dialog = it,
+            saving = state.saving,
+            onNameChange = viewModel::onPortfolioNameChange,
+            onCreate = viewModel::createPortfolio,
+            onCancel = viewModel::cancelPortfolioDialog,
+        )
     }
 }
 
