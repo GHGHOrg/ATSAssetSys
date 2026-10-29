@@ -1,6 +1,6 @@
 # plan/iterations/04-interest-adjustment.md
 
-Stage: Build. Status: approved 2026-10-29; decisions 1 to 4 settled the same day (section 10). Not started.
+Stage: Build. Status: built on branch iter-04-interest-adjustment (steps 1 to 5, commits 822c58d to cef9a8a) and checked on the phone 2026-10-29, all checks yes (section 13). Pull request not created; CI not run. Decisions 1 to 4 settled (section 10). Sections 1 to 12 were written before the build; where the build differs, section 14 says so.
 Source: plan/plan.md section 4 (row 04), intent/intent.md v52 (final), spec/spec.md v4 (final). "My reading" is an interpretation, not a test.
 
 ## 1. Outcome
@@ -72,6 +72,31 @@ None planned; no new library.
 - Note label on an adjustment: "Note (required)"*. Message: "Note: required for an adjustment."*
 - The line under the amount for Interest/dividend: "A positive number. It is added to cash." (the same as Deposit).
 Approved on paper with this file; confirmed on the phone (D9).
+Confirmed on the phone 2026-10-29 (checks 1 to 6 and 10): the four chips, the Direction row, "Note (required)" and the message as written above.
 
 ## 12. Status and notes
-Approved 2026-10-29. Not started.
+Built 2026-10-29; phone checks 2026-10-29. Pull request and CI: not yet.
+
+## 13. Build results
+### 13.1 Commits
+Newest first: cef9a8a step 5, 682bf25 step 4, 3b0075b step 3, 0298c13 step 2, 822c58d iteration file. main was 00156bf.
+
+### 13.2 Local run
+On cef9a8a's code (2026-10-29, all with --rerun-tasks): spotlessCheck green; debug build green (39 tasks); 155 tests, 0 failures (Balance 11, CashAccount 10, CashEntries 27, MarketDate 10, Money 15, OpeningBalance 9, AppLock 12, AppViewModel 60); lint: 2 findings, both known, neither silenced (NewerVersionAvailable at libs.versions.toml:17; TypographyDashes at strings.xml:58, the date_not_a_date string); release build green (52 tasks, R8 ran; unsigned). Debug APK versionCode 4 (aapt2). The minus sign in "Withdrawal (−)" is stored as U+2212 (byte check).
+
+### 13.3 Phone results (Android 17, debug build versionCode 4, your reports)
+Checks 1 to 11 all yes. Notes:
+- 9: installed over the 03 build (versionCode 3, adb install -r, firstInstallTime unchanged); the 03 data was still there (criterion 35).
+- 7: an outgoing adjustment of $300.00 dated 2026-01-05 was refused with "Not saved. Cash would be negative on 2026-01-10 by $100.00." (the Example C arithmetic).
+- 11: log cleared at 13:42:46; an adjustment of $7,654.21 with the note "zqxlogcheck" saved. The app's process (82 lines) had 0 matches for the amount in four forms, the note and the screen labels. The whole log had 0 for the amount and the note; "Adjustment" matched 4 lines from other processes (content not read).
+- No uninstall in 04; the phone holds the 03 data plus the 04 entries.
+
+### 13.4 Not run or not checked
+CI and the pull request; the release APK on a device (unsigned); contrast measurement (by eye only); criterion 37 (deferred); Compose UI tests (none in the project).
+
+## 14. Departures from the plan
+1. 03's core test typesOtherThanDepositAndWithdrawal_areRefused was narrowed to theOpeningBalanceAndTradeTypes_areRefused (your decision, step 2): Interest/dividend and Adjustment are allowed from 04 and covered by the new tests.
+2. 03's ViewModel test theTypeChangesToWithdrawalAndBack_otherTypesAreIgnored was narrowed to theTypeChangesToWithdrawalAndBack_openingBalanceAndTradeAreIgnored (your decision, step 3), for the same reason.
+3. Review's second K1 pass uses a stand-in note (PROBE_NOTE), so an empty adjustment note cannot hide the date and balance refusals behind "note required".
+4. The Direction row sits between the date and the amount, as in frame B, not inside the type card.
+5. NoteRequired is checked after the line-break rule, so a note "a\nb" gets the line-break message.
