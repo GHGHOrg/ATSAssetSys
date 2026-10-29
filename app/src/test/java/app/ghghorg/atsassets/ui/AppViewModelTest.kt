@@ -5,6 +5,8 @@ import app.ghghorg.atsassets.core.CashDirection
 import app.ghghorg.atsassets.core.CashEntry
 import app.ghghorg.atsassets.core.CashEntryRefusal
 import app.ghghorg.atsassets.core.CashType
+import app.ghghorg.atsassets.core.Portfolio
+import app.ghghorg.atsassets.core.PortfolioRefusal
 import app.ghghorg.atsassets.core.RecordStore
 import app.ghghorg.atsassets.core.UnreadableDataException
 import kotlinx.coroutines.CompletableDeferred
@@ -1156,6 +1158,181 @@ class AppViewModelTest {
         assertEquals(Tab.OVERALL, vm.state.value.tab)
         assertEquals(1, store.saved.size)
     }
+
+    // Iteration 07: create a portfolio (spec 4.7, wireframe 10d frames A and C).
+
+    private fun withOpening(portfolios: List<Portfolio> = emptyList()): Pair<AppViewModel, FakeStore> {
+        val store = FakeStore(stored = listOf(opening())).apply { storedPortfolios = portfolios }
+        return started(store) to store
+    }
+
+    private val main = Portfolio(id = "p1", name = "Main", createdSeq = 1L)
+
+    @Test
+    fun thePortfoliosLoadAtStartInCreationOrder() {
+        val second = Portfolio(id = "p2", name = "Second", createdSeq = 2L)
+        val (vm, _) = withOpening(listOf(second, main))
+        assertEquals(listOf(main, second), vm.state.value.portfolios)
+    }
+
+    @Test
+    fun newPortfolioOpensAnEmptyDialogOverTheTab() {
+        val (vm, _) = withOpening()
+        vm.selectTab(Tab.PORTFOLIOS)
+        vm.openPortfolioDialog()
+        val state = vm.state.value
+        assertEquals(Screen.TABS, state.screen)
+        assertEquals(Tab.PORTFOLIOS, state.tab)
+        assertEquals(PortfolioDialog(), state.portfolioDialog)
+    }
+
+    @Test
+    fun createSavesThePortfolioClosesTheDialogAndKeepsTheTab() {
+        val (vm, store) = withOpening()
+        vm.openPortfolioDialog()
+        vm.onPortfolioNameChange("  Main  ")
+        vm.createPortfolio()
+        val state = vm.state.value
+        val saved = Portfolio(id = "c1", name = "Main", createdSeq = 1L)
+        assertEquals(listOf(saved), store.savedPortfolios)
+        assertEquals(listOf(saved), state.portfolios)
+        assertEquals(null, state.portfolioDialog)
+        assertEquals(Tab.OVERALL, state.tab)
+        assertEquals(Screen.TABS, state.screen)
+    }
+
+    @Test
+    fun aNewPortfolioIsListedLast() {
+        val (vm, _) = withOpening(listOf(main))
+        vm.openPortfolioDialog()
+        vm.onPortfolioNameChange("投資信託")
+        vm.createPortfolio()
+        assertEquals(listOf("Main", "投資信託"), vm.state.value.portfolios.map { it.name })
+    }
+
+    @Test
+    fun refusedNamesGiveTheirReasonKeepTheTextAndSaveNothing() {
+        val cases = mapOf(
+            "投資" to PortfolioRefusal.TooShort,
+            "  ab  " to PortfolioRefusal.TooShort,
+            "123" to PortfolioRefusal.NoLetter,
+            "---" to PortfolioRefusal.NoLetter,
+            " main " to PortfolioRefusal.Duplicate("Main"),
+            "MAIN" to PortfolioRefusal.Duplicate("Main"),
+        )
+        for ((text, expected) in cases) {
+            val (vm, store) = withOpening(listOf(main))
+            vm.openPortfolioDialog()
+            vm.onPortfolioNameChange(text)
+            vm.createPortfolio()
+            val dialog = vm.state.value.portfolioDialog
+            assertEquals("refusal for '$text'", expected, dialog?.refusal)
+            assertEquals("kept '$text'", text, dialog?.nameText)
+            assertEquals("saved for '$text'", emptyList<Portfolio>(), store.savedPortfolios)
+        }
+    }
+
+    @Test
+    fun typingClearsTheRefusal() {
+        val (vm, _) = withOpening()
+        vm.openPortfolioDialog()
+        vm.onPortfolioNameChange("ab")
+        vm.createPortfolio()
+        vm.onPortfolioNameChange("abc")
+        assertEquals(PortfolioDialog(nameText = "abc"), vm.state.value.portfolioDialog)
+    }
+
+    // Decision 4: a line break, typed or pasted, becomes a space.
+    @Test
+    fun aLineBreakInTheNameBecomesASpace() {
+        val (vm, _) = withOpening()
+        vm.openPortfolioDialog()
+        vm.onPortfolioNameChange("Main\nAccount\r\nTwo\rThree")
+        assertEquals("Main Account Two Three", vm.state.value.portfolioDialog?.nameText)
+    }
+
+    @Test
+    fun cancelClosesTheDialogAndSavesNothing() {
+        val (vm, store) = withOpening()
+        vm.openPortfolioDialog()
+        vm.onPortfolioNameChange("Main")
+        vm.cancelPortfolioDialog()
+        assertEquals(null, vm.state.value.portfolioDialog)
+        assertEquals(emptyList<Portfolio>(), store.savedPortfolios)
+        vm.openPortfolioDialog()
+        assertEquals(PortfolioDialog(), vm.state.value.portfolioDialog)
+    }
+
+    // Decision 3: unit tested here; the phone check is open item 33.
+    @Test
+    fun beforeTheOpeningBalanceNewPortfolioAsksForItInsteadOfTheDialog() {
+        val vm = started(FakeStore())
+        vm.selectTab(Tab.PORTFOLIOS)
+        vm.openPortfolioDialog()
+        val state = vm.state.value
+        assertEquals(null, state.portfolioDialog)
+        assertTrue(state.portfolioNeedsOpeningBalance)
+    }
+
+    @Test
+    fun theOpeningBalanceMessageGoesAwayOnATabSwitch() {
+        val vm = started(FakeStore())
+        vm.selectTab(Tab.PORTFOLIOS)
+        vm.openPortfolioDialog()
+        vm.selectTab(Tab.OVERALL)
+        assertFalse(vm.state.value.portfolioNeedsOpeningBalance)
+    }
+
+    @Test
+    fun aFailedSaveKeepsTheDialogAndTheText() {
+        val store = FakeStore(stored = listOf(opening()), saveError = IllegalStateException("disk"))
+        val vm = started(store)
+        vm.openPortfolioDialog()
+        vm.onPortfolioNameChange("Main")
+        vm.createPortfolio()
+        val state = vm.state.value
+        assertEquals(PortfolioDialog(nameText = "Main", save = SaveRefusal.SAVE_FAILED), state.portfolioDialog)
+        assertEquals(emptyList<Portfolio>(), state.portfolios)
+        assertFalse(state.saving)
+    }
+
+    @Test
+    fun unreadableDataOnSaveShowsTheUnreadableScreen() {
+        val store = FakeStore(stored = listOf(opening()), saveError = UnreadableDataException("unreadable"))
+        val vm = started(store)
+        vm.openPortfolioDialog()
+        vm.onPortfolioNameChange("Main")
+        vm.createPortfolio()
+        assertEquals(Screen.UNREADABLE, vm.state.value.screen)
+    }
+
+    @Test
+    fun createAndCancelAreIgnoredWhileSaving() {
+        val gate = CompletableDeferred<Unit>()
+        val store = FakeStore(stored = listOf(opening()), gate = gate)
+        val vm = started(store)
+        vm.openPortfolioDialog()
+        vm.onPortfolioNameChange("Main")
+        vm.createPortfolio()
+        vm.createPortfolio()
+        vm.cancelPortfolioDialog()
+        assertTrue(vm.state.value.saving)
+        gate.complete(Unit)
+        assertEquals(1, store.savedPortfolios.size)
+        assertEquals(null, vm.state.value.portfolioDialog)
+    }
+
+    @Test
+    fun anUnlockKeepsTheOpenDialogAndItsTab() {
+        val (vm, _) = withOpening()
+        vm.selectTab(Tab.PORTFOLIOS)
+        vm.openPortfolioDialog()
+        vm.onPortfolioNameChange("Ma")
+        vm.onUnlocked()
+        val state = vm.state.value
+        assertEquals(Tab.PORTFOLIOS, state.tab)
+        assertEquals("Ma", state.portfolioDialog?.nameText)
+    }
 }
 
 private fun clockAt(
@@ -1229,6 +1406,8 @@ private class FakeStore(
 ) : RecordStore {
     var loadCalls = 0
     val saved = mutableListOf<List<CashEntry>>()
+    var storedPortfolios: List<Portfolio> = emptyList()
+    val savedPortfolios = mutableListOf<Portfolio>()
 
     override suspend fun loadCashEntries(): List<CashEntry> {
         loadCalls++
@@ -1241,5 +1420,17 @@ private class FakeStore(
         saveError?.let { throw it }
         saved.add(entries)
         stored = stored + entries
+    }
+
+    override suspend fun loadPortfolios(): List<Portfolio> {
+        loadError?.let { throw it }
+        return storedPortfolios
+    }
+
+    override suspend fun savePortfolio(portfolio: Portfolio) {
+        gate?.await()
+        saveError?.let { throw it }
+        savedPortfolios.add(portfolio)
+        storedPortfolios = storedPortfolios + portfolio
     }
 }

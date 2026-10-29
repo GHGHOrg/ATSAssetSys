@@ -13,6 +13,7 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.unit.dp
 import app.ghghorg.atsassets.R
 
@@ -33,11 +34,26 @@ fun AppContent(
         )
 
         // The bar shows on every screen after loading (spec 6: always visible; 02b decision 1).
-        Screen.TABS, Screen.FORM, Screen.REVIEW, Screen.DETAIL, Screen.REVERSAL -> Column(modifier = modifier.fillMaxSize()) {
-            Box(modifier = Modifier.weight(1f)) {
-                BarContent(state, viewModel)
+        Screen.TABS, Screen.FORM, Screen.REVIEW, Screen.DETAIL, Screen.REVERSAL -> Box(modifier = modifier.fillMaxSize()) {
+            val dialog = state.portfolioDialog
+            // While the dialog is open, TalkBack reads only the dialog, not the screen under it.
+            val under = if (dialog != null) Modifier.clearAndSetSemantics { } else Modifier
+            Column(modifier = Modifier.fillMaxSize().then(under)) {
+                Box(modifier = Modifier.weight(1f)) {
+                    BarContent(state, viewModel)
+                }
+                BottomBar(DEFAULT_TAB_ORDER, state.tab, viewModel::selectTab)
             }
-            BottomBar(DEFAULT_TAB_ORDER, state.tab, viewModel::selectTab)
+            // The New portfolio dialog, over Portfolios or Overall and the dimmed bar (wireframe 10d frame A).
+            if (dialog != null) {
+                NewPortfolioDialog(
+                    dialog = dialog,
+                    saving = state.saving,
+                    onNameChange = viewModel::onPortfolioNameChange,
+                    onCreate = viewModel::createPortfolio,
+                    onCancel = viewModel::cancelPortfolioDialog,
+                )
+            }
         }
     }
 }
@@ -77,26 +93,34 @@ private fun BarContent(
             onCancel = viewModel::cancelReversal,
         )
 
-        else -> when (state.tab) {
-            Tab.OVERALL -> OverallScreen(state, viewModel::openForm)
+        else -> TabContent(state, viewModel)
+    }
+}
 
-            Tab.CASH -> CashScreen(
-                state = state,
-                onCashEntry = viewModel::openForm,
-                onOpenEntry = viewModel::openDetail,
-                filterActions =
-                CashFilterActions(
-                    onFromChange = viewModel::onFilterFromChange,
-                    onToChange = viewModel::onFilterToChange,
-                    onTypeChange = viewModel::onFilterTypeChange,
-                    onClear = viewModel::clearFilters,
-                ),
-            )
+@Composable
+private fun TabContent(
+    state: AppState,
+    viewModel: AppViewModel,
+) {
+    when (state.tab) {
+        Tab.OVERALL -> OverallScreen(state, viewModel::openForm, viewModel::openPortfolioDialog)
 
-            Tab.PORTFOLIOS -> PortfoliosScreen()
+        Tab.CASH -> CashScreen(
+            state = state,
+            onCashEntry = viewModel::openForm,
+            onOpenEntry = viewModel::openDetail,
+            filterActions =
+            CashFilterActions(
+                onFromChange = viewModel::onFilterFromChange,
+                onToChange = viewModel::onFilterToChange,
+                onTypeChange = viewModel::onFilterTypeChange,
+                onClear = viewModel::clearFilters,
+            ),
+        )
 
-            Tab.MORE -> MoreScreen()
-        }
+        Tab.PORTFOLIOS -> PortfoliosScreen(state, viewModel::openPortfolioDialog, viewModel::openForm)
+
+        Tab.MORE -> MoreScreen()
     }
 }
 

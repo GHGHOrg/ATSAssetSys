@@ -97,4 +97,14 @@
     <string name="back_to_edit_button">Back to edit</string>
     <string name="unreadable_title">Your data cannot be read</string>
     <string name="unreadable_body">The stored data could not be opened. Nothing was changed or deleted. Close the app and open it again. If this stays, the only way back is a restore from a backup file, which this version does not have yet.</string>
+    <string name="new_portfolio">New portfolio</string>
+    <string name="create_portfolio">Create a portfolio</string>
+    <string name="portfolio_name_label">Name</string>
+    <string name="portfolio_name_helper">At least 3 characters, including a letter of any alphabet or script. Names are compared ignoring case and spaces.</string>
+    <string name="create_button">Create</string>
+    <string name="portfolio_name_too_short">Name: at least 3 characters.</string>
+    <string name="portfolio_name_no_letter">Name: must include a letter of any alphabet or script.</string>
+    <string name="portfolio_name_duplicate">Not saved. Another portfolio is already named \"%1$s\". Names are compared ignoring case and spaces.</string>
+    <string name="opening_balance_first">Set the opening balance first.</string>
+    <string name="portfolio_no_holdings">no holdings</string>
 </resources>

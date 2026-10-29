@@ -24,11 +24,15 @@ import androidx.compose.ui.unit.dp
 import app.ghghorg.atsassets.R
 import app.ghghorg.atsassets.core.Money
 
-/** Overall (view 1), cash only in iteration 02a: net worth, or the guided steps when the app holds no data. */
+/**
+ * Overall (view 1), cash only since iteration 02a: net worth, or the guided steps when the app holds no data. With
+ * cash and no portfolio it offers Create a portfolio (criterion 24, part; 07 decision 2).
+ */
 @Composable
 fun OverallScreen(
     state: AppState,
     onSetOpeningBalance: () -> Unit,
+    onCreatePortfolio: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     Column(
@@ -41,10 +45,7 @@ fun OverallScreen(
         )
         if (state.holdsData) {
             NetWorthCard(state.netWorthCents)
-            Text(
-                text = stringResource(R.string.no_portfolios_yet),
-                style = MaterialTheme.typography.bodyLarge,
-            )
+            if (state.portfolios.isEmpty()) NoPortfoliosYet(onCreatePortfolio)
         } else {
             GuidedSteps(onSetOpeningBalance)
         }

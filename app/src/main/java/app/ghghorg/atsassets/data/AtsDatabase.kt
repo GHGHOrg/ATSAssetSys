@@ -1,5 +1,6 @@
 package app.ghghorg.atsassets.data
 
+import androidx.room3.AutoMigration
 import androidx.room3.Dao
 import androidx.room3.Database
 import androidx.room3.Entity
@@ -21,6 +22,14 @@ data class CashEntryRow(
     val transactionId: String?,
 )
 
+/** One portfolio row (spec 3). createdSeq keeps the order of creation. */
+@Entity(tableName = "portfolios")
+data class PortfolioRow(
+    @PrimaryKey val id: String,
+    val name: String,
+    val createdSeq: Long,
+)
+
 @Dao
 interface CashEntryDao {
     /** One transaction. The default conflict rule (abort) is kept: records are permanent. */
@@ -31,7 +40,24 @@ interface CashEntryDao {
     suspend fun loadAll(): List<CashEntryRow>
 }
 
-@Database(entities = [CashEntryRow::class], version = 1)
+@Dao
+interface PortfolioDao {
+    /** The default conflict rule (abort) is kept. */
+    @Insert
+    suspend fun insert(row: PortfolioRow)
+
+    @Query("SELECT * FROM portfolios ORDER BY createdSeq")
+    suspend fun loadAll(): List<PortfolioRow>
+}
+
+/** Version 2 (iteration 07) adds the portfolios table; Room generates the step from 1 out of schemas/1.json and 2.json. */
+@Database(
+    entities = [CashEntryRow::class, PortfolioRow::class],
+    version = 2,
+    autoMigrations = [AutoMigration(from = 1, to = 2)],
+)
 abstract class AtsDatabase : RoomDatabase() {
     abstract fun cashEntryDao(): CashEntryDao
+
+    abstract fun portfolioDao(): PortfolioDao
 }
