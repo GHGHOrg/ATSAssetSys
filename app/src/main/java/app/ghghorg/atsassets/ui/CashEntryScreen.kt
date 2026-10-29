@@ -239,7 +239,7 @@ fun CashEntryReview(
 
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
-private fun ReviewRow(
+internal fun ReviewRow(
     label: String,
     value: String,
     muted: Boolean = false,
@@ -320,15 +320,18 @@ private fun amountLine(type: CashType): String? = when (type) {
     else -> null
 }
 
-// NoOpeningBalance, TypeNotAllowed, AmountNotPositive and NoteHasLineBreak cannot reach here: the form only
-// offers Deposit and Withdrawal after the opening balance, the amount rules and the note come first.
+// Shared with the reversal screen. The other reasons cannot reach here: the form and the detail only offer
+// what K1 allows, and the amount and note rules are shown on their own fields.
 @Composable
-private fun cashMessage(refusal: CashEntryRefusal?): String? = when (refusal) {
+internal fun cashMessage(refusal: CashEntryRefusal?): String? = when (refusal) {
     is CashEntryRefusal.NegativeCash ->
         stringResource(R.string.cash_negative, refusal.date.toString(), Money.format(refusal.shortfallCents))
 
     is CashEntryRefusal.BeforeOpeningBalance ->
         stringResource(R.string.cash_before_opening_balance, refusal.openingDate.toString())
+
+    is CashEntryRefusal.BeforeOriginal ->
+        stringResource(R.string.reversal_before_original, refusal.originalDate.toString())
 
     CashEntryRefusal.TooLarge -> stringResource(R.string.cash_too_large)
 
@@ -346,14 +349,14 @@ private fun amountMessage(error: AmountError?): String? = when (error) {
 }
 
 @Composable
-private fun dateMessage(refusal: DateRefusal?): String? = when (refusal) {
+internal fun dateMessage(refusal: DateRefusal?): String? = when (refusal) {
     null -> null
     DateRefusal.EMPTY -> stringResource(R.string.date_empty)
     DateRefusal.NOT_A_DATE -> stringResource(R.string.date_not_a_date)
 }
 
 @Composable
-private fun noteMessage(
+internal fun noteMessage(
     lineBreak: Boolean,
     required: Boolean,
 ): String? = when {
@@ -363,7 +366,7 @@ private fun noteMessage(
 }
 
 @Composable
-private fun saveMessage(refusal: SaveRefusal?): String? = when (refusal) {
+internal fun saveMessage(refusal: SaveRefusal?): String? = when (refusal) {
     null -> null
     SaveRefusal.ALREADY_EXISTS -> stringResource(R.string.save_already_exists)
     SaveRefusal.SAVE_FAILED -> stringResource(R.string.save_failed)

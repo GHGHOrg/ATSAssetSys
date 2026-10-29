@@ -1,5 +1,6 @@
 package app.ghghorg.atsassets.ui
 
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
@@ -18,8 +19,11 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.onClick
+import androidx.compose.ui.semantics.role
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -30,13 +34,14 @@ import app.ghghorg.atsassets.core.Money
 
 /**
  * The Cash account (view 7, wireframe 07 frame A): the balance, the Cash entry button (the opening balance until
- * it exists, then a deposit or withdrawal, iteration 03), and the rows. Filters arrive in 06 and 28, trade lines
- * in 09. Cash is not colored.
+ * it exists, then a deposit or withdrawal, iteration 03), and the rows. A row opens its detail and shows its note
+ * (05 decision 3). Filters arrive in 06 and 28, trade lines in 09. Cash is not colored.
  */
 @Composable
 fun CashScreen(
     state: AppState,
     onCashEntry: () -> Unit,
+    onOpenEntry: (String) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     Column(
@@ -59,7 +64,7 @@ fun CashScreen(
                 Column(modifier = Modifier.padding(12.dp)) {
                     rows.forEachIndexed { index, row ->
                         if (index > 0) HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
-                        EntryRow(row)
+                        EntryRow(row, onOpen = { onOpenEntry(row.entry.id) })
                     }
                 }
             }
@@ -97,11 +102,14 @@ private fun BalanceCard(
 
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
-private fun EntryRow(row: CashRow) {
+private fun EntryRow(
+    row: CashRow,
+    onOpen: () -> Unit,
+) {
     val entry = row.entry
     val type = cashTypeLabel(entry.type)
     val date = entry.date.toString()
-    val spoken =
+    val base =
         stringResource(
             R.string.cash_row_spoken,
             type,
@@ -109,9 +117,22 @@ private fun EntryRow(row: CashRow) {
             spokenSigned(entry.amountCents),
             spokenDollars(row.balanceAfterCents),
         )
-    // A wrapping two-part row, so nothing is cut off at the largest font (criterion 39).
+    // The note is read last, after the figures (05 decision 3).
+    val spoken = if (entry.note.isEmpty()) base else "$base, ${entry.note}"
+    // A wrapping two-part row, so nothing is cut off at the largest font (criterion 39). Tapping opens the detail.
     FlowRow(
-        modifier = Modifier.fillMaxWidth().clearAndSetSemantics { contentDescription = spoken },
+        modifier =
+        Modifier
+            .fillMaxWidth()
+            .clickable(role = Role.Button, onClick = onOpen)
+            .clearAndSetSemantics {
+                contentDescription = spoken
+                role = Role.Button
+                onClick {
+                    onOpen()
+                    true
+                }
+            },
         horizontalArrangement = Arrangement.spacedBy(12.dp),
         verticalArrangement = Arrangement.spacedBy(2.dp),
     ) {
@@ -126,6 +147,13 @@ private fun EntryRow(row: CashRow) {
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
+            if (entry.note.isNotEmpty()) {
+                Text(
+                    text = entry.note,
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            }
         }
         Column(
             modifier = Modifier.weight(1f),
@@ -162,7 +190,7 @@ internal fun signedAmount(cents: Long): String = if (cents > 0L) "+${Money.forma
 
 /** "10,000.00" or "minus 200.00", for TalkBack. */
 @Composable
-private fun spokenDollars(cents: Long): String {
+internal fun spokenDollars(cents: Long): String {
     val digits = Money.format(cents).substringAfter('$')
     return if (cents < 0L) stringResource(R.string.spoken_minus, digits) else digits
 }

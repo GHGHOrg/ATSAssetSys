@@ -32,8 +32,8 @@ fun AppContent(
             modifier,
         )
 
-        // The bar shows on the tabs, the form and the review (spec 6: always visible; 02b decision 1).
-        Screen.TABS, Screen.FORM, Screen.REVIEW -> Column(modifier = modifier.fillMaxSize()) {
+        // The bar shows on every screen after loading (spec 6: always visible; 02b decision 1).
+        Screen.TABS, Screen.FORM, Screen.REVIEW, Screen.DETAIL, Screen.REVERSAL -> Column(modifier = modifier.fillMaxSize()) {
             Box(modifier = Modifier.weight(1f)) {
                 BarContent(state, viewModel)
             }
@@ -62,9 +62,24 @@ private fun BarContent(
 
         Screen.REVIEW -> CashEntryReview(state, viewModel::confirm, viewModel::backToEdit)
 
+        Screen.DETAIL -> CashEntryDetail(
+            state = state,
+            onOpenEntry = viewModel::openDetail,
+            onReverse = viewModel::openReversal,
+            onBack = viewModel::closeDetail,
+        )
+
+        Screen.REVERSAL -> CashReversal(
+            state = state,
+            onDateChange = viewModel::onReversalDateChange,
+            onNoteChange = viewModel::onReversalNoteChange,
+            onConfirm = viewModel::confirmReversal,
+            onCancel = viewModel::cancelReversal,
+        )
+
         else -> when (state.tab) {
             Tab.OVERALL -> OverallScreen(state, viewModel::openForm)
-            Tab.CASH -> CashScreen(state, viewModel::openForm)
+            Tab.CASH -> CashScreen(state, viewModel::openForm, viewModel::openDetail)
             Tab.PORTFOLIOS -> PortfoliosScreen()
             Tab.MORE -> MoreScreen()
         }
