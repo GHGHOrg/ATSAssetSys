@@ -160,6 +160,47 @@ cannot start until it is finished. It must answer, with checks done on the day, 
 If the source does not supply sector and geography, iteration 23 is reduced to
 "Unclassified" plus the override path, and the change is recorded here.
 
+### Exchange table (spec 4.3; price-source spike decision 4)
+The exchanges the ticker check accepts: the 29 national securities exchanges registered under Section 6(a),
+as the SEC page listed them on 2026-10-30 (price-source note 10.1), with their former names from that page
+and the MIC codes Finnhub reports (note 10.3). A name is matched ignoring case and spaces as in 4.9. Any other
+name or code, OOTC (OTC) included, is refused. The same table is in core/ (TickerCheck.EXCHANGES, iteration 09).
+
+| SEC name | Aliases (former names; MIC code) |
+|---|---|
+| 24X National Exchange LLC | none |
+| BOX Exchange LLC | BOX Options Exchange LLC |
+| Cboe BYX Exchange, Inc. | Bats BYX Exchange, Inc.; BATS Y-Exchange, Inc. |
+| Cboe BZX Exchange, Inc. | Bats BZX Exchange, Inc.; BATS Exchange, Inc.; BATS |
+| Cboe C2 Exchange, Inc. | none |
+| Cboe EDGA Exchange, Inc. | Bats EDGA Exchange, Inc.; EDGA Exchange, Inc. |
+| Cboe EDGX Exchange, Inc. | Bats EDGX Exchange, Inc.; EDGX Exchange, Inc. |
+| Cboe Exchange, Inc. | none |
+| Green Impact Exchange, LLC | none |
+| Investors Exchange LLC | IEXG |
+| Long-Term Stock Exchange, Inc. | none |
+| MEMX, LLC | none |
+| Miami International Securities Exchange | none |
+| MIAX Emerald, LLC | none |
+| MIAX PEARL, LLC | none |
+| MIAX Sapphire, LLC | none |
+| MX2 LLC | none |
+| Nasdaq GEMX, LLC | ISE Gemini |
+| Nasdaq ISE, LLC | International Securities Exchange, LLC |
+| Nasdaq MRX, LLC | ISE Mercury |
+| Nasdaq PHLX LLC | NASDAQ OMX PHLX, LLC; Philadelphia Stock Exchange |
+| Nasdaq Texas, LLC | Nasdaq BX, Inc.; NASDAQ OMX BX, Inc.; Boston Stock Exchange |
+| The Nasdaq Stock Market | XNAS |
+| New York Stock Exchange LLC | XNYS |
+| NYSE Arca, Inc. | ARCX |
+| NYSE Texas, Inc. | NYSE Chicago, Inc.; Chicago Stock Exchange |
+| NYSE American LLC | NYSE MKT LLC; NYSE Amex; NYSE Alternet US; American Stock Exchange; XASE |
+| NYSE National, Inc. | National Stock Exchange, Inc. |
+| Texas Stock Exchange LLC | none |
+
+The SEC page writes NYSE American's former names as one phrase ("NYSE MKT LLC, NYSE Amex, NYSE Alternet US,
+and the American Stock Exchange"); splitting it into four names is my reading.
+
 ### Spike: dependency upgrade (plan/spikes/dependency-upgrade.md)
 Added 2026-10-18. Not an iteration. It runs after iteration 01 and before iteration 02, which
 cannot start until it is finished. Reason: Android lint reports 8 library-version notices on the
