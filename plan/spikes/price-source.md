@@ -315,5 +315,14 @@ Terms and Conditions, you read 2026-10-30 (pasted from https://files.alpaca.mark
 - My reading, not legal advice: an app used only by you is not "making the Services and Content available to others", so the 30-day notice would not apply. But the Service is "intended for United States residents only", and spec C13 records that you are in Tokyo; that alone rules Alpaca out for you, whatever its data plan offers.
 - Outcome (your decision 2026-10-30, option A): Alpaca is dropped and not shipped: its service is for United States residents only. No account, key or call.
 
+### 10.12 EODHD (EOD Historical Data)
+A web search limited to eodhd.com, 2026-10-30 (only the query left this PC), found its pricing and API-limits pages; per the search summary, not fetched, the free plan's end-of-day data covers one year of history and is described as for personal use; display and storage were not covered.
+API Limits page, I fetched 2026-10-30, https://eodhd.com/financial-apis/api-limits (no date shown), quoted as the fetch returned it:
+- "Free plan — 20 API calls per day."
+- "Enough to try the endpoints out, not to run an application."
+- "For subscription plans the daily limit resets at midnight GMT." A "Commercial vs Personal license use" link appears in the navigation; its content was not read.
+- My reading, not checked: by EODHD's own words its free plan is for trying the API, not for running an application, and 20 calls a day is fewer than Alpha Vantage's; so it cannot serve this app even as a fallback, whatever its terms say about display. Its terms were not read.
+- Outcome (your decision 2026-10-30, option A): EODHD is dropped and not shipped. No key or call.
+
 ## 11. Status and notes
 Outline approved 2026-10-30. Running: the US exchange list (10.1), Finnhub (10.2), the MIC codes (10.3), Twelve Data (10.4, dropped) and FMP's terms (10.5) looked up 2026-10-30; Finnhub's real-time question is open.
