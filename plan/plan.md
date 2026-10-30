@@ -313,6 +313,7 @@ Each departure from this plan is recorded here with its date and the reason.
 - 2026-10-30: pull request #93 (docs: the test-count fix) was merged as 8ee5394, CI green on the pull request and on main (1m 29s) (your reports); main was merged into iter-07-create-portfolio (2d50683).
 - 2026-10-30: 07 built and checked on the phone. The first schema change (database version 2, a Room auto migration adding the portfolios table) was checked by installing over 06's build with data (criterion 35, versionCode 7). A defect found in phone check 2 (a dialog window took the focus and the focus cover hid the app in a loop) was fixed in 07 by drawing the dialog inside the activity window, with no failing test possible off the device (your decision; 07 file, section 14). A Logcat check for the portfolio names was added (07 file, section 13.3).
 - 2026-10-30: pull request #94 (iteration 07) was merged as 1eb7220. CI on the pull request (3 checks: build, Analyze (actions), CodeQL) and on main (the run for 1eb7220, 2m 19s) were reported successful by you. The status lines above were updated. The 07 file's sections 13 and 14 are left as written at build time.
+- 2026-10-30: pull request #95 (docs: the 07 merge record) was merged as 53a97b8, CI green on the pull request and on main (1m 33s) (your reports). The 08 file was approved with decisions 1 to 3; its decision 3 replaces 07 decision 1 (the portfolio rows become tappable).
 
 ## 13. Out of scope for this plan
 Performance over time, per-holding dividends, ETF look-through, the next intent.md items,
