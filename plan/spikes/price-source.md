@@ -333,5 +333,22 @@ Pricing page, I fetched 2026-10-30, https://marketstack.com/pricing (no date sho
 - My reading, not checked: 100 requests a month is about 3 a day, while one daily price sweep of 20 tickers needs about 600 a month; with end-of-day data only, the free plan cannot serve this app, even as a fallback. Its terms were not read.
 - Outcome: dropped and not shipped (option A: the pricing page was fetched first). No key or call.
 
+### 10.14 Nasdaq Data Link (formerly Quandl)
+A web search limited to nasdaq.com, 2026-10-30 (only the query left this PC), found its API product page and the database "Trade Summary - US Markets" (https://data.nasdaq.com/databases/TRDSUM); no terms page. I fetched that database page: it returned only its title.
+Database page, you read 2026-10-30 (pasted; no date shown):
+- "Trade Summary - US Markets": "Premium"; "End-of-day consolidated market pricing data"; coverage "Nasdaq-, NYSE-, NYSE American and other US regional-listed securities"; "Availability: Premium"; "Log in with your Nasdaq Data Link account to view pricing information"; "If you are interested in subscribing to this product, please contact sales." Fields include open, high, low, close and volume as "Double" and a "timestamp"; the key is passed as "api_key" in the URL.
+- The related US datasets listed on the page are all "Premium": "Trade Summary - OTC Data", "U.S. Equity Tick History", "U.S. Equity Daily History" (end-of-day from all US exchanges back to January 2014) and "Nasdaq Basic".
+- My reading, not checked: Nasdaq Data Link's US stock prices are premium only, sold through sales, so it offers no free tier for this app (spec 7). Its "Data License Terms and Conditions" were not read.
+- Outcome: dropped and not shipped (option A: the page was read first). No account, key or call.
+
+### 10.15 Tradier
+A web search limited to tradier.com, 2026-10-30 (only the query left this PC), found its API documentation and blog posts from 2014 and 2019 (not used as facts); per the search summary, not fetched, the FAQ says that unless you are a Tradier Partner the APIs are "entitled for personal use only", and nothing current was found on non-US residents.
+Endpoints page, I fetched 2026-10-30, https://docs.tradier.com/docs/endpoints, quoted as the fetch returned it:
+- Production: "The production environment is for trading and real-time market data related to your live account." "You must have a Tradier Brokerage account, be a Tradier Partner, or a Tradier Advisor to use these APIs."
+- Sandbox: "The sandbox is a paper trading account to test your integration with our API", "including working with delayed market data and paper trades"; "you must sign up for a Tradier Brokerage account and create a paper trading access token".
+- Not on the page: personal use, non-US residents.
+- My reading, not checked: even Tradier's delayed sandbox data needs a Tradier Brokerage account, a regulated securities account, to be opened in your name; whether that is possible from Japan is not shown. Opening a broker account to get a price feed goes well beyond an API key, and the sandbox is meant for testing an integration, not for running an app. Its terms were not read.
+- Outcome (your decision 2026-10-30, option A): Tradier is dropped and not shipped: it needs a brokerage account even for delayed prices. No account, token or call. With this, all thirteen candidates of section 5 are checked.
+
 ## 11. Status and notes
 Outline approved 2026-10-30. Running: the US exchange list (10.1), Finnhub (10.2), the MIC codes (10.3), Twelve Data (10.4, dropped) and FMP's terms (10.5) looked up 2026-10-30; Finnhub's real-time question is open.
