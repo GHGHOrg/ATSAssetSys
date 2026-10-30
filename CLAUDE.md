@@ -113,7 +113,7 @@ Commits and pull requests:
 - Never push. I push, and I create and merge pull requests (GitHub Pull Requests extension or browser). Draft the title and description for me.
 Other:
 - Start sub-agents only when I ask.
-- Ask one question at a time, tagged with a stage, with the options, what each means for the end user, and your leaning marked.
+- Ask one question at a time, tagged with a stage, with the options, what each means for the end user, and your leaning marked. Each option starts with a short letter tag (A, B, C).
 - Do not write security-relevant code from memory. Look up versions on the day. When a request conflicts with intent.md or spec.md, stop and offer a choice.
 - Wording that spec.md does not give (messages, labels) is written by you, shown to me and approved before use (D9).
 - Auto memory is off. If I correct you, propose the change as a CLAUDE.md edit.
