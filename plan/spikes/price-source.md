@@ -92,5 +92,34 @@ Registered under Section 6(a) as national securities exchanges: 29 names. The co
 The page also lists 7 exchanges notice-registered under Section 6(g) for trading security futures, and 2 exempted on the basis of limited transaction volume (Arizona Stock Exchange; SWX Europe Limited), both no longer operating under the exemption. Neither group is a national securities exchange under 6(a), so neither is part of the 4.3 list.
 Not shown by the fetch: which of the 29 list stocks or ETFs (several trade options only); the short names and codes a price source reports (for example "NASDAQ", "NYSE ARCA", "BATS"). Both are for the alias table (decision 4), from the calls to the sources.
 
+### 10.2 Finnhub
+Official pages not readable by my tools (2026-10-30): a web search limited to finnhub.io found the pricing page; I fetched https://finnhub.io/pricing and https://api.finnhub.io/pricing, and both returned only the title and the tagline "Real-time stock prices, Company fundamentals, Estimates, and Alternative data." The search summary's figures were not used as facts.
+Pricing page, you read 2026-10-30 (https://finnhub.io/pricing, pasted):
+- Free: "$0/month"; "License: Personal Use. Terms apply"; "Limit: 60 API calls/minute".
+- Fundamental Data: "Coverage: US"; "Company Profile: v2" (All-In-One: "v1 with more information").
+- US Market Data: "Coverage: US"; "Websocket: 50 symbols".
+- ETFs and Indices: "Coverage: US". Mutual Funds: no coverage shown for Free (All-In-One: "Global").
+- Footnote: "LSE data is delayed by 15 minutes. Other international markets support end-of-day data only."
+- Not shown by the paste: the rows whose cells are marks rather than text (for example quotes, "ETFs Profile", "Mutual Funds Profile", "SEC filings") came through empty in both columns, so which of them the Free plan includes is not known; whether Free US prices are real-time or delayed; the terms behind "Terms apply". The All-In-One plan ($3500/month) is out of scope (free tier only, spec 7).
+Company Profile 2 page, you read 2026-10-30 (https://finnhub.io/docs/api/company-profile2, pasted):
+- "Get general information of a company. You can query by symbol, ISIN or CUSIP. This is the free version of Company Profile." GET /stock/profile2?symbol=AAPL.
+- Response attributes as the page words them: country "Country of company's headquarter."; currency "Currency used in company filings."; exchange "Listed exchange."; finnhubIndustry "Finnhub industry classification."; ipo; logo; marketCapitalization; name; phone; shareOutstanding; ticker "Company symbol/ticker as used on the listed exchange."; weburl.
+- Sample response for AAPL: "exchange": "NASDAQ/NMS (GLOBAL MARKET)", "currency": "USD", "country": "US", "finnhubIndustry": "Technology".
+- My reading, not checked by a call: there is no instrument type field, so this call alone cannot tell a stock from an ETF or a mutual fund (4.3); currency is the filing currency, not the trading currency, so it does not answer "quoted in USD" (4.3); the exchange is a free text such as "NASDAQ/NMS (GLOBAL MARKET)", not one of the SEC names of 10.1, so an alias table is needed (decision 4); finnhubIndustry is an industry, which could feed the sector (4.9), and country is the headquarters, which is not necessarily the geography the user means (4.9). The page does not say what profile2 returns for an ETF or a fund.
+Quote page, you read 2026-10-30 (https://finnhub.io/docs/api/quote, pasted):
+- "Get real-time quote data for US stocks. Constant polling is not recommended. Use websocket if you need real-time updates." "Real-time stock prices for international markets are supported for Enterprise clients via our partner's feed." GET /quote?symbol=AAPL.
+- Response attributes: c "Current price"; d "Change"; dp "Percent change"; h "High price of the day"; l "Low price of the day"; o "Open price of the day"; pc "Previous close price".
+- Sample response: "c": 261.74, "h": 263.31, "l": 260.68, "o": 261.07, "pc": 259.45, "t": 1582641000.
+- My reading, not checked by a call: the price comes with a previous close (the later price-change idea, plan.md section 7); the sample has a "t" field the attribute list does not name, probably a Unix time in seconds, which would give the price timestamp spec 7 asks for; the page shows no plan marker, so whether the Free plan gets quotes, and real-time or delayed, is not shown here; prices are JSON numbers, so the app must read them as exact decimals, never as floating point (4.10).
+Symbol Lookup page, you read 2026-10-30 (a screenshot of Finnhub's documentation; its address was not shown):
+- "Search for best-matching symbols based on your query. You can input anything from symbol, security's name to ISIN and Cusip." GET /search?q=apple&exchange=US; arguments q (required), exchange (optional, "Exchange limit.").
+- Response: count; result with description, displaySymbol, symbol, type "Security type.". Sample for "apple": AAPL, AAPL.SW, APC.BE and APC.DE, each "type": "Common Stock".
+Stock Symbol page, you read 2026-10-30 (a screenshot of Finnhub's documentation; its address was not shown):
+- "List supported stocks." GET /stock/symbol?exchange=US, optionally &mic=XNYS; arguments exchange (required), mic ("Filter by MIC code."), securityType ("Filter by security type used by OpenFigi standard."), currency ("Filter by currency.").
+- Response attributes: currency "Price's currency. This might be different from the reporting currency of fundamental data."; description; displaySymbol; figi; isin ("only available for EU stocks and selected Asian markets. Entitlement from Finnhub is required"); mic "Primary exchange's MIC."; shareClassFIGI; symbol; symbol2; type "Security type.".
+- Sample: UPOW "mic": "OTCM", AAPL "mic": "XNGS", EXCOF "mic": "OOTC"; each "currency": "USD", "type": "Common Stock".
+- Neither page shows a plan marker.
+- My reading, not checked by a call: the Stock Symbol list gives what 4.3 needs in one place: the price's currency (not the filing currency of profile2), the primary exchange as an ISO MIC code (XNGS for AAPL; OTCM and OOTC for OTC names), and the security type. A MIC code is a stable code, so the alias table (decision 4) could map MIC codes of the 29 exchanges rather than free-text names, and OTC MICs are refused plainly. Which type values mark an ETF or a mutual fund (OpenFIGI's list) is not shown. The US list is long: whether to fetch it once and keep it, or to look one symbol up with the search call, is a design question for 09.
+
 ## 11. Status and notes
 Outline approved 2026-10-30. Running: the US exchange list looked up 2026-10-30 (section 10.1); the sources not yet checked.
