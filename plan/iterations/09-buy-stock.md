@@ -56,6 +56,8 @@ Each step ends with build, tests and lint and the report; then I stop.
 - [UNVERIFIED] How Android reports offline against a source that does not answer.
 - The Buy/Sell menu, like every menu and dialog, stays inside the activity window with imePadding where it has a field (CLAUDE.md pitfall from 07 and 08).
 - Exact arithmetic: quantity and price per share never pass through floating point (4.10).
+- decodeToSequence is marked @ExperimentalSerializationApi in kotlinx-serialization-json 1.12.0 and may change in a later version; a change shows as a failed build or failed test, not on the phone (decision 5).
+- kotlinx-serialization-json 1.12.0 is built on Kotlin 2.4.10 and the project uses 2.4.21; that they work together is shown only by the build in step 6.
 
 ## 8. Proof
 Commands: as in 08, all with --rerun-tasks. CI green on the pull request.
@@ -79,7 +81,7 @@ By hand on the phone, with 08's data (the 03 to 06 cash entries, Main and 投資
 2. Sell is in the Buy/Sell menu. With nothing held it says "Nothing to sell yet" (spec); with something held it says "Selling arrives in a later build" until 11.
 3. A buy shows on the portfolio screen (summary at cost, gain/loss $0.00 without color, a holdings row with ticker, shares, value at cost and "no price, at cost"), on the Portfolios tab row (holding count, value, gain/loss), in Overall's net worth (at cost, 4.8) and as a trade line on the Cash tab.
 4. The check fetches Finnhub's full US list (/stock/symbol?exchange=US) at each check of a ticker not yet verified, looks the ticker up and keeps only the result. If step 2 shows the list too large or too slow, I come back to you before building it.
-5. HTTPS through Android's HttpURLConnection, with no HTTP library; JSON read row by row with kotlinx-serialization-json, numbers kept as exact text.
+5. HTTPS through Android's HttpURLConnection, with no HTTP library; JSON read row by row with kotlinx-serialization-json, numbers kept as exact text. Follow-up after step 2 (your decision 2026-10-31, option A): version 1.12.0, and the row-by-row reader decodeToSequence with the opt-in @OptIn(ExperimentalSerializationApi::class), although it is still marked experimental; tests on recorded responses guard it.
 6. Open item 37: (a) type "Open-End Fund" is refused as a mutual fund; (b) a ticker not in the list gets "Not saved. AAPPL was not found. Mutual funds are not accepted."; (c) every other type is accepted as 4.3 says: "ETP" is an ETF and every other type, an empty one included, a stock.
 7. Lots are worked out from the transactions by replay; there is no lot table (section 8 rebuilds them the same way).
 8. A check that cannot be made blocks a ticker not yet verified, with three messages: offline, the source did not answer, no price source configured. Offline is told apart with Android's network-state permission (ACCESS_NETWORK_STATE). A verified ticker needs no check.
@@ -96,4 +98,16 @@ By hand on the phone, with 08's data (the 03 to 06 cash entries, Main and 投資
 Approved on paper with this file; confirmed on the phone (D9): checks 2 to 7.
 
 ## 12. Status and notes
-Approved 2026-10-31. Not built.
+Approved 2026-10-31. Step 2 (research) done 2026-10-31 (section 13.1).
+
+## 13. Build results
+### 13.1 Research (step 2)
+Finnhub call, I called 2026-10-31 from this PC, GET https://finnhub.io/api/v1/stock/symbol?exchange=US with the key in the X-Finnhub-Token header and Accept-Encoding gzip; only counts, sizes and times printed, nothing saved:
+- HTTP 200, Content-Type application/json, Content-Encoding gzip.
+- 1,209,998 bytes on the wire; 7,356,709 bytes after decompression; first byte after 2,047 ms, complete after 3,751 ms; 31,111 rows by a text count of "symbol": (31,116 on 2026-10-30).
+- My reading: about 1.2 MB and 4 s per check of a ticker not yet verified, so decision 4 holds (your decision, option A). The time on the phone, over Wi-Fi or mobile data, is seen in step 10. That Android's HttpURLConnection asks for gzip by default is my knowledge, not checked.
+kotlinx-serialization-json, I fetched 2026-10-31:
+- https://repo1.maven.org/maven2/org/jetbrains/kotlinx/kotlinx-serialization-json/maven-metadata.xml: latest and release "1.12.0", lastUpdated "20261019182949"; before it 1.12.0-RC, 1.11.0, 1.10.0.
+- https://github.com/Kotlin/kotlinx.serialization/releases: v1.12.0 "released this 19 Oct 18:36" (no year on the page); "This release is based on Kotlin 2.4.10 and contains all of the changes from 1.12.0-RC."; nothing on decodeToSequence or streaming.
+- https://kotlinlang.org/api/kotlinx.serialization/kotlinx-serialization-json/kotlinx.serialization.json/decode-to-sequence.html (version 1.12.0, platform jvm): "@ExperimentalSerializationApi fun <T> Json.decodeToSequence(stream: InputStream, deserializer: DeserializationStrategy<T>, format: DecodeSequenceMode = DecodeSequenceMode.AUTO_DETECT): Sequence<T>"; "Transforms the given stream into lazily deserialized sequence of elements of type T using UTF-8 encoding and deserializer."
+- Outcome: decision 5's follow-up (section 10).
