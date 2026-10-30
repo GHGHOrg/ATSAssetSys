@@ -1,6 +1,6 @@
 # plan/spikes/price-source.md
 
-Stage: Build. Status: run 2026-10-30; all thirteen candidates checked (section 10), decisions 1 to 7 settled (section 6), summary in section 11. Finished when its pull request is merged. Branch spike-price-source.
+Stage: Build. Status: run 2026-10-30; all thirteen candidates checked (section 10), decisions 1 to 7 settled (section 6), summary in section 11. Finished: pull request #98 merged as 5cc77da (2026-10-31). Branch spike-price-source.
 Source: plan/plan.md section 7 (the spike's question list), spec/spec.md v4 (final): 4.3 (the ticker check), section 7 (prices), section 9 (security), concerns C1, C8 and C14; intent/intent.md v52 (final).
 Facts in this note are facts of the day they were looked up; each carries its date.
 
