@@ -19,7 +19,7 @@ approved together. After that:
 plan/
   plan.md                      this file
   setup.md                     repo, stack, CI, manifest baseline, CLAUDE.md
-  spikes/price-source.md       decision note, run 2026-10-30 (summary in its section 11); finished when its pull request is merged, before 09
+  spikes/price-source.md       decision note, run 2026-10-30 (summary in its section 11); finished: pull request #98 merged as 5cc77da, before 09
   spikes/dependency-upgrade.md decision note, run after iteration 01 (results in its section 9); finished: pull request 73 merged as 7df2049, before 02
   spikes/vscode-claude-code.md decision note, run after iteration 02a and before 02b (results in its section 9); finished: pull request #81 merged as 0c2b49e
   open-items.md                one list of what is still open; updated when an item closes (spike vscode-claude-code, D4)
@@ -242,7 +242,7 @@ when it adds a command, a convention or a pitfall.
 |---|---|
 | plan.md | approved |
 | setup.md | approved, run 2026-10-18 on branch setup (pull request #64, merged) |
-| spikes/price-source.md | run 2026-10-30 on branch spike-price-source; thirteen candidates checked, decisions 1 to 7 settled (Finnhub only, key built in). Results in the note's sections 6, 10 and 11. Pull request not yet opened |
+| spikes/price-source.md | run 2026-10-30 on branch spike-price-source; thirteen candidates checked, decisions 1 to 7 settled (Finnhub only, key built in). Results in the note's sections 6, 10 and 11. Pull request #98 merged as 5cc77da, CI green on the pull request and on main (1m 47s) (your reports) |
 | spikes/dependency-upgrade.md | run 2026-10-21 to 2026-10-22 on branch spike-dependency-upgrade; pull request 73 merged as 7df2049, CI green on main (your report). Results in the note's section 9. Dependabot group unverified until it has run once |
 | spikes/vscode-claude-code.md | run 2026-10-28, checks 1 to 20 passed; pull request #81 merged as 0c2b49e, CI green on main (run 40663927506, your report). Results in the note's section 9 |
 | Iteration 01 | done: built and checked on the phone 2026-10-19 (check 8 on 2026-10-20); pull request #70 merged as 8a5703e, CI green on main (your report); not-run items are listed in its file |
@@ -319,6 +319,7 @@ Each departure from this plan is recorded here with its date and the reason.
 - 2026-10-30: pull request #96 (iteration 08) was merged as 936c7e2. CI on the pull request (3 checks: build, Analyze (actions), CodeQL) and on main (the run for 936c7e2, 2m 31s) were reported successful by you. The status lines above were updated. The 08 file's sections 13 and 14 are left as written at build time.
 - 2026-10-30: pull request #97 (docs: the 08 merge record) was merged as efdec84, CI green on the pull request and on main (2m 7s) (your reports). The price-source spike's outline was approved (plan/spikes/price-source.md). The "29-name US list in the hand-off" named in section 7 is not in the repo; the spike takes the US exchange list from the SEC's list of registered national securities exchanges instead (your decision 1). A source that needs a key is a spec gap (sections 8 and 9), flagged in the note.
 - 2026-10-30: the price-source spike was run (note sections 6, 10 and 11). Effects on the plan: the app ships with Finnhub only (decision 3); the exchange table of 4.3 is fixed here, built from the 29 SEC names with the MIC codes XNAS, XNYS, ARCX, BATS, XASE and IEXG as aliases, and any other code is refused (decision 4; the table itself is written with iteration 09); the Finnhub key is built in at build time from FINNHUB_API_KEY, with no spec change (decision 5); Finnhub's deletion term is met by App initialization (decision 6). Iteration 23 is not reduced for stocks; ETFs start as "Unclassified" plus the override. Iteration 30 has only one source to change to (open item 36). Open item 17 is closed; items 35 to 38 are new.
+- 2026-10-31: pull request #98 (price-source spike) was merged as 5cc77da. CI on the pull request (3 checks: build, Analyze (actions), CodeQL) and on main (the run for 5cc77da, 1m 47s) were reported successful by you. The spike is finished and iteration 09 no longer waits on it. The status lines above were updated. Dependabot has opened branches for the Gradle wrapper 9.8.2 and core-ktx 1.19.1 (open item 20).
 
 ## 13. Out of scope for this plan
 Performance over time, per-holding dividends, ETF look-through, the next intent.md items,
