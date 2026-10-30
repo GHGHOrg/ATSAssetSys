@@ -1,6 +1,6 @@
 # plan/spikes/price-source.md
 
-Stage: Build. Status: outline approved 2026-10-30 with decision 1 (section 6); not run. Branch spike-price-source.
+Stage: Build. Status: outline approved 2026-10-30 with decision 1 (section 6); running: the US exchange list looked up (section 10.1), the sources not yet checked. Branch spike-price-source.
 Source: plan/plan.md section 7 (the spike's question list), spec/spec.md v4 (final): 4.3 (the ticker check), section 7 (prices), section 9 (security), concerns C1, C8 and C14; intent/intent.md v52 (final).
 Facts in this note are facts of the day they were looked up; each carries its date.
 
@@ -34,7 +34,7 @@ This is a decision note, not an iteration. Iteration 09 cannot start until the q
 From my own knowledge, to be checked: Finnhub, Alpha Vantage, Twelve Data, Financial Modeling Prep, Polygon, Tiingo, Stooq, and the unofficial Yahoo Finance endpoints. Today's free tiers and terms are what the spike checks.
 
 ## 6. Decisions (all Build)
-1. The US exchange list comes from the SEC's list of registered national securities exchanges, looked up on the day (settled by you 2026-10-30, option B).
+1. The US exchange list comes from the SEC's list of registered national securities exchanges, looked up on the day (settled by you 2026-10-30, option B). Looked up 2026-10-30: 29 names under Section 6(a) (section 10.1).
 2. The default source.
 3. The list of sources the app ships with (spec 7, iteration 30).
 4. The exchange alias table kept in plan.md (spec 4.3).
@@ -53,7 +53,44 @@ No app code, no network permission in the app, no historical prices (spec 7: bef
 The raw responses for each test ticker, with the date, summarised in section 10. Nothing secret is recorded.
 
 ## 10. Results
-Not run.
+### 10.1 The US exchange list (decision 1; question 3)
+I fetched, 2026-10-30, two fetches of https://www.sec.gov/divisions/marketreg/mrexchanges.shtml ("National Securities Exchanges", "Last Reviewed or Updated: Jan. 7, 2026"), found by a web search for the SEC's own page (only the query and the URL left this PC). Names and former names as the fetch returned them from the page.
+Registered under Section 6(a) as national securities exchanges: 29 names. The count matches plan.md section 7's "29-name US list in the hand-off", which is not in the repo; that the two lists are the same is my reading, not checked.
+
+| # | Name | Former names shown on the page |
+|---|---|---|
+| 1 | 24X National Exchange LLC | none |
+| 2 | BOX Exchange LLC | BOX Options Exchange LLC |
+| 3 | Cboe BYX Exchange, Inc. | Bats BYX Exchange, Inc.; BATS Y-Exchange, Inc. |
+| 4 | Cboe BZX Exchange, Inc. | Bats BZX Exchange, Inc.; BATS Exchange, Inc. |
+| 5 | Cboe C2 Exchange, Inc. | none |
+| 6 | Cboe EDGA Exchange, Inc. | Bats EDGA Exchange, Inc.; EDGA Exchange, Inc. |
+| 7 | Cboe EDGX Exchange, Inc. | Bats EDGX Exchange, Inc.; EDGX Exchange, Inc. |
+| 8 | Cboe Exchange, Inc. | none |
+| 9 | Green Impact Exchange, LLC | none |
+| 10 | Investors Exchange LLC | none |
+| 11 | Long-Term Stock Exchange, Inc. | none |
+| 12 | MEMX, LLC | none |
+| 13 | Miami International Securities Exchange | none |
+| 14 | MIAX Emerald, LLC | none |
+| 15 | MIAX PEARL, LLC | none |
+| 16 | MIAX Sapphire, LLC | none |
+| 17 | MX2 LLC | none |
+| 18 | Nasdaq GEMX, LLC | ISE Gemini |
+| 19 | Nasdaq ISE, LLC | International Securities Exchange, LLC |
+| 20 | Nasdaq MRX, LLC | ISE Mercury |
+| 21 | Nasdaq PHLX LLC | NASDAQ OMX PHLX, LLC; Philadelphia Stock Exchange |
+| 22 | Nasdaq Texas, LLC | Nasdaq BX, Inc.; NASDAQ OMX BX, Inc.; Boston Stock Exchange |
+| 23 | The Nasdaq Stock Market | none |
+| 24 | New York Stock Exchange LLC | none |
+| 25 | NYSE Arca, Inc. | none |
+| 26 | NYSE Texas, Inc. | NYSE Chicago, Inc.; Chicago Stock Exchange |
+| 27 | NYSE American LLC | NYSE MKT LLC, NYSE Amex, NYSE Alternet US, and the American Stock Exchange |
+| 28 | NYSE National, Inc. | National Stock Exchange, Inc. |
+| 29 | Texas Stock Exchange LLC | none |
+
+The page also lists 7 exchanges notice-registered under Section 6(g) for trading security futures, and 2 exempted on the basis of limited transaction volume (Arizona Stock Exchange; SWX Europe Limited), both no longer operating under the exemption. Neither group is a national securities exchange under 6(a), so neither is part of the 4.3 list.
+Not shown by the fetch: which of the 29 list stocks or ETFs (several trade options only); the short names and codes a price source reports (for example "NASDAQ", "NYSE ARCA", "BATS"). Both are for the alias table (decision 4), from the calls to the sources.
 
 ## 11. Status and notes
-Outline approved 2026-10-30. Not run.
+Outline approved 2026-10-30. Running: the US exchange list looked up 2026-10-30 (section 10.1); the sources not yet checked.
