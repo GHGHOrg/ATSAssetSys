@@ -144,6 +144,9 @@ Batch 4, I called 2026-10-30 14:23:01 to 14:23:06 +08:00 (market closed), at you
 - The US list: SQQQ mic XNAS, type ETP, USD, "PROSHARES ULTRAPRO SHORT QQQ".
 - /quote?symbol=SQQQ: {"c":37.83,"d":1.55,"dp":4.2723,"h":38.4,"l":37.42,"o":37.645,"pc":36.28,"t":1793304000}; t = 2026-10-29 16:00:00 New York.
 - A leveraged inverse ETF is typed ETP like any other ETF and passes 4.3 as written; the list does not tell leveraged or inverse ETFs apart.
+Call 5, I called 2026-10-30 14:27:55 +08:00, /stock/profile2?symbol=AAPL, same key handling, nothing saved:
+- {"ticker":"AAPL","name":"Apple Inc.","country":"US","currency":"USD","estimateCurrency":"USD","exchange":"NASDAQ NMS - GLOBAL MARKET","ipo":"1980-12-12","marketCapitalization":5092055.035903137,"logo":"…","shareOutstanding":14594.18,"finnhubIndustry":"Technology","phone":"14089961010","weburl":"https://www.apple.com/","floatingShare":14352.36} (the logo URL shortened here).
+- My reading, not checked: for a stock, profile2 gives one industry word ("Technology"), which could be the source sector of 4.9, and the headquarters country ("US"), which could be the source geography; for an ETF it gives nothing (SPY: {}), so ETFs start as "Unclassified" plus the override (C14). The exchange text differs from the documentation sample ("NASDAQ NMS - GLOBAL MARKET" against "NASDAQ/NMS (GLOBAL MARKET)"), which supports using the list's MIC for 4.3, not this text.
 
 ### 10.3 The MIC codes (ISO 10383; decision 4)
 A web search limited to iso20022.org (only the query left this PC) found the registry's files. I downloaded two CSV files into a new folder in my scratchpad, outside the repo, and read them with Import-Csv only.
