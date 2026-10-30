@@ -291,5 +291,17 @@ A web search limited to stooq.com and stooq.pl, 2026-10-30 (only the query left 
 - My reading, not checked: Stooq is a website with downloadable files, not an API meant for apps; a ".US" suffix gives a country, not the exchange, type or currency that 4.3 needs; fetching its files by program, with no API offered, may be the kind of automated access its unread terms forbid.
 - Outcome (your decision 2026-10-30, option B): Stooq is dropped and not shipped, without reading its terms. No call was made.
 
+### 10.10 Yahoo Finance (unofficial endpoints)
+A web search limited to yahoo.com and yahooinc.com, 2026-10-30 (only the query left this PC), found Yahoo's general terms, an API terms page and advertising and vendor terms; nothing specific to Yahoo Finance data and no official Finance API.
+Yahoo Terms of Service, I fetched 2026-10-30, https://legal.yahoo.com/xw/en/yahoo/terms/otos/index.html (only the first 100,000 of 116,059 characters were read; no "last updated" date shown; the text names versions "dated May 15, 2025 or later" and "dated January 2, 2026 or later"), quoted as the fetch returned it:
+- 2(d), member conduct, item 9: you may not "access or collect data, or attempt to access or collect data, from our Services using any automated means" "including but not limited to robots, spiders, scrapers, data mining tools, or data gathering or extraction tools" "for any purpose without our express, prior permission".
+- 2(d), item 10: not to "use any material or content from, including without limitation any data, (a) to create any database".
+- 2(e): not to "try to access them using a method other than the interface and the instructions that we provide".
+- 2(i): "to use the software and APIs we may provide to you as part of the Services".
+- 14.2(a)(i): "except for Yahoo Finance which is provided by Yahoo Finance LLC".
+- Not on the page (part read): terms specific to market data or quotes.
+- My reading, not legal advice: calling Yahoo Finance's undocumented endpoints from an app is access "using any automated means" that Yahoo has not offered as an interface or API, which 2(d) forbids "for any purpose", personal use included; keeping the prices would also be building a database from its data (item 10). Besides, such endpoints can change or stop without notice (section 8 risks).
+- Outcome: Yahoo Finance is dropped and not shipped (option A: the terms were fetched first, then recorded as dropped). No call was made.
+
 ## 11. Status and notes
 Outline approved 2026-10-30. Running: the US exchange list (10.1), Finnhub (10.2), the MIC codes (10.3), Twelve Data (10.4, dropped) and FMP's terms (10.5) looked up 2026-10-30; Finnhub's real-time question is open.
