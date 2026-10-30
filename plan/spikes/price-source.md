@@ -324,5 +324,14 @@ API Limits page, I fetched 2026-10-30, https://eodhd.com/financial-apis/api-limi
 - My reading, not checked: by EODHD's own words its free plan is for trying the API, not for running an application, and 20 calls a day is fewer than Alpha Vantage's; so it cannot serve this app even as a fallback, whatever its terms say about display. Its terms were not read.
 - Outcome (your decision 2026-10-30, option A): EODHD is dropped and not shipped. No key or call.
 
+### 10.13 Marketstack (apilayer)
+A web search limited to marketstack.com and apilayer.com, 2026-10-30 (only the query left this PC), found its pricing and FAQ pages and apilayer blog posts (not used as facts); per the search summary, a cached FAQ gave 1,000 requests a month, against 100 elsewhere.
+Pricing page, I fetched 2026-10-30, https://marketstack.com/pricing (no date shown), quoted as the fetch returned it:
+- Free: "Free forever."; "$0 per month"; "100 Requests / mo"; "End-of-Day Data"; "1 Year History"; "Non-Commercial Use".
+- The FAQ, per the fetch, says a premium plan is needed for "intraday data (for US tickers)".
+- Not on the page: real-time for the free plan, personal-use wording, display or storage.
+- My reading, not checked: 100 requests a month is about 3 a day, while one daily price sweep of 20 tickers needs about 600 a month; with end-of-day data only, the free plan cannot serve this app, even as a fallback. Its terms were not read.
+- Outcome: dropped and not shipped (option A: the pricing page was fetched first). No key or call.
+
 ## 11. Status and notes
 Outline approved 2026-10-30. Running: the US exchange list (10.1), Finnhub (10.2), the MIC codes (10.3), Twelve Data (10.4, dropped) and FMP's terms (10.5) looked up 2026-10-30; Finnhub's real-time question is open.
