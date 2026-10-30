@@ -56,7 +56,7 @@ CI (.github/workflows/ci.yml) runs the style check and then the same three steps
 
 ## 6. Known pitfalls
 - No floating point for money or quantity (4.10).
-- Never log or send amounts, tickers, quantities, notes or portfolio names (spec section 9).
+- Never log or send amounts, tickers, quantities, notes or portfolio names (spec section 9). Never log the price-source key either: no HTTP logging, not even in debug builds; the key goes in the X-Finnhub-Token header only, never in a URL (price-source note, decision 5).
 - No analytics or crash-reporting library.
 - Docs in this repo use CRLF. Keep line endings, do not retype files.
 - Claude Code's Write tool makes new files with LF. Its Edit tool kept CRLF on existing files, including multi-line inserts (02b). spotlessCheck rejects an LF Kotlin file in this working copy, so convert a new file's line breaks to CRLF right after Write. Git stores these files with LF (git ls-files --eol shows i/lf w/crlf), so git diff --check cannot see line-ending damage. After every document edit, count the raw CR and LF bytes as well (the report in section 8) and run git diff --stat.
@@ -84,6 +84,12 @@ CI (.github/workflows/ci.yml) runs the style check and then the same three steps
 - K1 stops at the first rule that fails. A screen that must show every refusal together asks K1 once per group of fields, with stand-ins for the other fields (the cash entry review since 04, the reversal since 05). One call hid the date refusal behind "note required" (05, phone check 5).
 - MainActivity shows a cover screen whenever its window loses focus. A Compose Dialog, AlertDialog, Popup, DropdownMenu or ModalBottomSheet opens a separate window, takes the focus, and the cover and the dialog then replace each other in a loop that blocks all input (07, phone check 2). Draw dialogs and menus inside the activity window, as PortfolioNameDialog in PortfoliosScreen.kt and the ⋮ menu in PortfolioScreen.kt do. The app draws edge to edge, so such a layer needs imePadding() or the keyboard covers it (08, phone check 9a). Unit tests cannot catch either; only the phone shows it.
 - Test totals: add up the per-class counts from the test result files. Never add the new tests to the previous total: 03 to 06 were written one too high that way (corrected in pull request #93).
+- Windows PowerShell 5.1 splits a native command's argument at embedded double quotes. For commit messages with quotes, write the message to a file in the scratchpad and use git commit -F <file>.
+- GPG signing can time out when its pinentry window is not answered; the window often opens behind VS Code. Nothing is committed then, and the files stay staged. Ask me to be ready, then retry. Never bypass signing.
+- WebFetch cannot read pages built by JavaScript (Finnhub pricing, Nasdaq Data Link) or compressed PDFs (Alpha Vantage terms), and some sites return 403 or 401 (FMP, Tiingo terms). Ask me to paste the text.
+- In Windows PowerShell 5.1, Invoke-RestMethod returns the raw text, not an object, when the JSON has keys that differ only by case (Massive's "T" and "t"). Use Invoke-WebRequest and read .Content.
+- A call that must run in a time window (market hours) checks the time itself and makes no call outside it. An approval is not a clock (price-source spike, first run at 20:03 +08:00).
+- Tag a question Design only when every option changes spec.md. If one option stays within the spec, the question is Build, and that option comes first (price-source spike, decision 5).
 
 ## 7. Standing checks for every iteration's screens
 Criteria 9, 39 to 42, and the install-over-previous-build check (35).
