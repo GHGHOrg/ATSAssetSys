@@ -10,6 +10,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.rememberScrollState
@@ -153,7 +154,10 @@ internal fun PortfolioNameDialog(
         modifier = Modifier
             .fillMaxSize()
             .background(MaterialTheme.colorScheme.scrim.copy(alpha = SCRIM_ALPHA))
-            .pointerInput(Unit) { detectTapGestures { } },
+            .pointerInput(Unit) { detectTapGestures { } }
+            // The app draws edge to edge, so the window does not shrink for the keyboard: the card is centred in
+            // the space above it and scrolls there (defect found in 08 phone check 9a).
+            .imePadding(),
         contentAlignment = Alignment.Center,
     ) {
         Surface(
