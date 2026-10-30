@@ -145,5 +145,24 @@ Batch 4, I called 2026-10-30 14:23:01 to 14:23:06 +08:00 (market closed), at you
 - /quote?symbol=SQQQ: {"c":37.83,"d":1.55,"dp":4.2723,"h":38.4,"l":37.42,"o":37.645,"pc":36.28,"t":1793304000}; t = 2026-10-29 16:00:00 New York.
 - A leveraged inverse ETF is typed ETP like any other ETF and passes 4.3 as written; the list does not tell leveraged or inverse ETFs apart.
 
+### 10.3 The MIC codes (ISO 10383; decision 4)
+A web search limited to iso20022.org (only the query left this PC) found the registry's files. I downloaded two CSV files into a new folder in my scratchpad, outside the repo, and read them with Import-Csv only.
+- ISO10383_MIC_NewFormat.csv (downloaded 2026-10-30 14:25:56 +08:00; HTTP Last-Modified 20 Oct 2022; 495,159 bytes; 2,553 rows; SHA-256 153968422E23BA90B61BD0A836E9D1588B8BB424CB3C83F2B6152ED32B613E18): its newest row is dated 2022-10-24, so it is an old copy and is not used below.
+- ISO10383_MIC.csv (downloaded 2026-10-30 14:26:43 +08:00; HTTP Last-Modified 12 Oct 2026; 590,760 bytes; 2,889 rows; SHA-256 09A0D07B7B8348147453A2D8B18BC6638E3C5B16F749462582C9B1EDF0FD0E38). The rows for Finnhub's 7 codes:
+
+| MIC | Operating MIC | Kind | Market name in the file | Legal entity | Country | Status | Last update | SEC name (10.1) |
+|---|---|---|---|---|---|---|---|---|
+| XNAS | XNAS | OPRT | NASDAQ - ALL MARKETS | NASDAQ, INC. | US | ACTIVE | 2026-04-27 | The Nasdaq Stock Market |
+| XNYS | XNYS | OPRT | NEW YORK STOCK EXCHANGE, INC. | INTERCONTINENTAL EXCHANGE, INC. | US | ACTIVE | 2025-04-28 | New York Stock Exchange LLC |
+| ARCX | XNYS | SGMT | NYSE ARCA | INTERCONTINENTAL EXCHANGE, INC. | US | ACTIVE | 2025-04-28 | NYSE Arca, Inc. |
+| BATS | XCBO | SGMT | CBOE BZX U.S. EQUITIES EXCHANGE | (empty) | US | ACTIVE | 2018-06-25 | Cboe BZX Exchange, Inc. |
+| XASE | XNYS | SGMT | NYSE AMERICAN LLC | INTERCONTINENTAL EXCHANGE, INC. | US | ACTIVE | 2025-04-28 | NYSE American LLC |
+| IEXG | IEXG | OPRT | INVESTORS EXCHANGE | INVESTORS EXCHANGE LLC | US | ACTIVE | 2022-10-24 | Investors Exchange LLC |
+| OOTC | FINR | SGMT | OTHER OTC | FINANCIAL INDUSTRY REGULATORY AUTHORITY, INC. | US | ACTIVE | 2024-05-27 | none: OTC, refused |
+
+(XCBO, BATS's operating MIC: CBOE GLOBAL MARKETS INC., US, ACTIVE.) The 2022 copy showed XASE as "NYSE MKT LLC", a former name on the SEC page.
+- My reading: the six non-OTC codes Finnhub reports are active US markets, each matching one of the 29 SEC names; the match of a MIC's market name to an SEC name is my reading of two different registries, not a published mapping. The other 23 SEC exchanges (options-only markets and others) did not occur in Finnhub's list on 2026-10-30.
+- The downloaded copies stay in the scratchpad (not in the repo); deleting them needs your approval.
+
 ## 11. Status and notes
 Outline approved 2026-10-30. Running: the US exchange list looked up 2026-10-30 (section 10.1); the sources not yet checked.
