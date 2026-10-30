@@ -244,6 +244,10 @@ Batch M1, I called 2026-10-30 15:56:31 to 15:56:32 +08:00 (market closed), https
 - /v3/reference/tickers/VFIAX: HTTP 404.
 - /v2/aggs/ticker/AAPL/prev: "adjusted":true, results o 348, c 348.91, h 351.43, l 347.3, vw 349.3528, t 1793304000000 (milliseconds; 2026-10-29 16:00:00 New York, the same session close Finnhub returned), v as 4.2582126e+07.
 - My reading, not checked: the free key gets reference data and the previous day's prices; the ticker details give 4.3 what it needs in one call: type (CS, ETF), primary_exchange as a MIC for listed names (XNAS, ARCX, the same codes as Finnhub, so the same alias table of 10.3), market "otc" with "OTC Link" (not a MIC) for OTC names, and currency_name, whose case varies (usd, USD); a mutual fund is not found (404), as with Finnhub. For 4.9, a stock has an SIC industry and a headquarters address; an ETF has neither. Whether the free plan gives anything newer than the previous close (an intraday or real-time price) was not tried. Volume comes in exponent form, so numbers must be read as exact decimals, never as floating point (4.10).
+Batch M2, I called 2026-10-30 15:58:43 to 15:58:45 +08:00, same key handling; the two paths are from my memory of Polygon's API, not from Massive's documentation:
+- /v2/snapshot/locale/us/markets/stocks/tickers/AAPL: HTTP 403, no body read.
+- /v2/last/trade/AAPL: HTTP 403, no body read.
+- My reading, not checked: 403 (refused) rather than 404 (not found) suggests the paths exist and the free key is not entitled to them, which fits the reported end-of-day-only free plan. So on the free plan Massive gives the previous session's close, not a current price: usable as a fallback that shows yesterday's close with its time, not as the default.
 
 ## 11. Status and notes
 Outline approved 2026-10-30. Running: the US exchange list (10.1), Finnhub (10.2), the MIC codes (10.3), Twelve Data (10.4, dropped) and FMP's terms (10.5) looked up 2026-10-30; Finnhub's real-time question is open.
