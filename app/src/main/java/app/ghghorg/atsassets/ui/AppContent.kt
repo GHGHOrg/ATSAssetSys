@@ -37,26 +37,55 @@ fun AppContent(
         Screen.TABS, Screen.FORM, Screen.REVIEW, Screen.DETAIL, Screen.REVERSAL, Screen.PORTFOLIO -> Box(
             modifier = modifier.fillMaxSize(),
         ) {
-            val dialog = state.portfolioDialog
-            // While the dialog is open, TalkBack reads only the dialog, not the screen under it.
-            val under = if (dialog != null) Modifier.clearAndSetSemantics { } else Modifier
+            val dialogOpen = state.portfolioDialog != null || state.renameDialog != null
+            // While a dialog is open, TalkBack reads only the dialog, not the screen under it.
+            val under = if (dialogOpen) Modifier.clearAndSetSemantics { } else Modifier
             Column(modifier = Modifier.fillMaxSize().then(under)) {
                 Box(modifier = Modifier.weight(1f)) {
                     BarContent(state, viewModel)
                 }
                 BottomBar(DEFAULT_TAB_ORDER, state.tab, viewModel::selectTab)
             }
-            // The New portfolio dialog, over Portfolios or Overall and the dimmed bar (wireframe 10d frame A).
-            if (dialog != null) {
-                NewPortfolioDialog(
-                    dialog = dialog,
-                    saving = state.saving,
-                    onNameChange = viewModel::onPortfolioNameChange,
-                    onCreate = viewModel::createPortfolio,
-                    onCancel = viewModel::cancelPortfolioDialog,
-                )
-            }
+            PortfolioDialogs(state, viewModel)
         }
+    }
+}
+
+// New portfolio over Portfolios or Overall, Rename portfolio over a portfolio, both over the dimmed bar (wireframe 10d).
+@Composable
+private fun PortfolioDialogs(
+    state: AppState,
+    viewModel: AppViewModel,
+) {
+    state.portfolioDialog?.let {
+        PortfolioNameDialog(
+            wording =
+            PortfolioNameWording(
+                title = stringResource(R.string.new_portfolio),
+                helper = stringResource(R.string.portfolio_name_helper),
+                confirm = stringResource(R.string.create_button),
+            ),
+            dialog = it,
+            saving = state.saving,
+            onNameChange = viewModel::onPortfolioNameChange,
+            onConfirm = viewModel::createPortfolio,
+            onCancel = viewModel::cancelPortfolioDialog,
+        )
+    }
+    state.renameDialog?.let {
+        PortfolioNameDialog(
+            wording =
+            PortfolioNameWording(
+                title = stringResource(R.string.rename_portfolio),
+                helper = stringResource(R.string.rename_helper),
+                confirm = stringResource(R.string.save_button),
+            ),
+            dialog = it,
+            saving = state.saving,
+            onNameChange = viewModel::onRenameNameChange,
+            onConfirm = viewModel::saveRename,
+            onCancel = viewModel::cancelRename,
+        )
     }
 }
 
@@ -95,6 +124,17 @@ private fun BarContent(
             onCancel = viewModel::cancelReversal,
         )
 
+        Screen.PORTFOLIO -> PortfolioScreen(
+            state = state,
+            actions =
+            PortfolioScreenActions(
+                onBack = viewModel::closePortfolio,
+                onOpenMenu = viewModel::openPortfolioMenu,
+                onCloseMenu = viewModel::closePortfolioMenu,
+                onRename = viewModel::openRename,
+            ),
+        )
+
         else -> TabContent(state, viewModel)
     }
 }
@@ -120,7 +160,7 @@ private fun TabContent(
             ),
         )
 
-        Tab.PORTFOLIOS -> PortfoliosScreen(state, viewModel::openPortfolioDialog, viewModel::openForm)
+        Tab.PORTFOLIOS -> PortfoliosScreen(state, viewModel::openPortfolio, viewModel::openPortfolioDialog, viewModel::openForm)
 
         Tab.MORE -> MoreScreen()
     }
