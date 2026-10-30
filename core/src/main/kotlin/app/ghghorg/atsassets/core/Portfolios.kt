@@ -31,7 +31,22 @@ sealed interface PortfolioResult {
     ) : PortfolioResult
 }
 
-/** The portfolio rules of spec 4.7 (create in iteration 07). */
+sealed interface PortfolioRenameResult {
+    data class Renamed(
+        val portfolio: Portfolio,
+    ) : PortfolioRenameResult
+
+    /** The trimmed name equals the current one: nothing to save (wireframe 10d marker 4). */
+    data object Unchanged : PortfolioRenameResult
+
+    data class Refused(
+        val reason: PortfolioRefusal,
+    ) : PortfolioRenameResult
+
+    data object NotFound : PortfolioRenameResult
+}
+
+/** The portfolio rules of spec 4.7 (create in iteration 07, rename in 08). */
 object Portfolios {
     private const val MIN_LENGTH = 3
 
@@ -51,6 +66,22 @@ object Portfolios {
         nameRefusal(typedName, existing)?.let { return PortfolioResult.Refused(it) }
         val nextSeq = (existing.maxOfOrNull { it.createdSeq } ?: 0L) + 1L
         return PortfolioResult.Created(Portfolio(id = id, name = typedName.trim(), createdSeq = nextSeq))
+    }
+
+    /**
+     * Renames the portfolio [id]: only the name changes (4.7). The rules are checked against the other portfolios
+     * only, so a change of case or spaces of its own name is accepted (wireframe 10d marker 4, criterion 55).
+     */
+    fun rename(
+        existing: List<Portfolio>,
+        id: String,
+        typedName: String,
+    ): PortfolioRenameResult {
+        val portfolio = existing.firstOrNull { it.id == id } ?: return PortfolioRenameResult.NotFound
+        val name = typedName.trim()
+        if (name == portfolio.name) return PortfolioRenameResult.Unchanged
+        nameRefusal(name, existing.filter { it.id != id })?.let { return PortfolioRenameResult.Refused(it) }
+        return PortfolioRenameResult.Renamed(portfolio.copy(name = name))
     }
 
     /**
