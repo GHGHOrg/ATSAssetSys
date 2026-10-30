@@ -216,5 +216,25 @@ Terms of Service, you read 2026-10-30 (https://site.financialmodelingprep.com/te
 - My reading, not legal advice: a one-person app on your own phone is not "for multiple individuals" (2.2.2) and is not accessible to third parties (2.2.1). But the app downloads and keeps prices and instrument data (spec 7: the last price is kept and shown when a refresh fails), and 2.2.1 forbids copying or downloading content without FMP's written approval; 2.8 asks to notify FMP of every storage location; 10.3 asks for a written security programme. These go well beyond Finnhub's terms (10.2). The free plan's limits and FMP's profile fields were not looked up, because the terms already weigh against it.
 - Outcome (your decision 2026-10-30, option B): FMP is dropped as a candidate and not shipped: its terms restrict copying or keeping data without FMP's written approval and add storage notices and a security programme. No key was created and no call was made. One more candidate is checked, terms first.
 
+### 10.6 Polygon (now Massive)
+Two web searches limited to polygon.io (only the queries left this PC) found its pages titled "Massive", its knowledge base and its terms pages; the search summaries' figures (Stocks Basic free: end-of-day data, 5 calls per minute) were not used as facts. Fetching https://polygon.io/individuals-terms-of-service returned "301 Moved Permanently" to https://massive.com/individuals-terms-of-service; with that redirect from polygon.io's own server, massive.com is taken as the same company's site.
+Massive for Individuals Terms of Service, I fetched 2026-10-30, https://massive.com/individuals-terms-of-service ("Last Updated: July 18, 2025"), quoted as the fetch returned it:
+- §2 Access Grant: "we grant you a non-exclusive, non-transferable, non-assignable, worldwide, limited right to access and use the Services" "solely for your own personal, non-commercial, and non-business purposes."
+- §1: "Market Data is provided to you subject to the terms and conditions of the Market Data Terms of Service" (linked to /legal/market-data-terms-of-service).
+- §3.3: "You are solely responsible for any and all activities conducted under your account, including your API keys." "For the avoidance of doubt, this includes sharing an account or API keys with others." §6.1(i): "Use or attempt to use another user's account or API keys;".
+- §6.1(d)(iii): "making unauthorized copies of any content made available on or through the Services"; §6.1(h): "Sell or otherwise transfer the access granted under the Agreement or any of Massive's materials".
+- §4.1: "free-of-charge Services" ("Free Services").
+- Not on the page: display, apps, storing or caching, attribution, the word "Basic".
+- My reading, not checked: personal, non-commercial use by you fits; display, storing and redistribution of market data are left to the Market Data Terms of Service, which decide.
+Market Data Terms of Service, I fetched 2026-10-30, https://massive.com/legal/market-data-terms-of-service ("Last Updated: August 28, 2025"), quoted as the fetch returned it:
+- Section 1: "exclusively for your personal, non-business, and non-commercial purposes"; "you may not use the Market Data to build an application intended for use by end users other than you".
+- Section 2: "any and all Market Data is strictly for display use only"; it "may not be copied, reproduced, republished, uploaded, posted, publicly displayed" ... "to any other computer, server, website, or other medium for publication or distribution".
+- Section 3: "will use the Market Data solely for your personal, non-business use".
+- Section 5(d), among the things you may not do: "Use Market Data for non-display use or to create derivative works". 5(c): "to any third party or use the Market Data for business or commercial purposes". 5(a): "remove any trademarks transmitted with the Market Data".
+- Section 8: "cease all use of the Market Data and delete all Market Data in your possession".
+- Exchange schedules: NYSE (Schedule 2) "shall receive Market Data solely for his or her personal, non-business use", "Subscriber shall not furnish Market Data to any other person or entity."
+- Not on the page: storing or caching, end-of-day data, a general attribution rule.
+- My reading, not legal advice: an app built for you alone is expressly allowed ("end users other than you" is the limit), and showing prices to you is "display use". But 5(d) forbids "non-display use" and "derivative works", and the app computes market values, net worth, gains and allocation from the prices (4.8); whether that is a derivative work or non-display use is not defined on the page and could cut against the app's core purpose. With the free plan reported as end-of-day only (not checked), Massive would at best be a fallback whose terms are less clear than Finnhub's.
+
 ## 11. Status and notes
 Outline approved 2026-10-30. Running: the US exchange list (10.1), Finnhub (10.2), the MIC codes (10.3), Twelve Data (10.4, dropped) and FMP's terms (10.5) looked up 2026-10-30; Finnhub's real-time question is open.
