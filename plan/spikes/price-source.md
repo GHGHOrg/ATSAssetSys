@@ -193,6 +193,13 @@ Support article "US equities market data", I fetched 2026-10-30, https://support
 - Historical and end-of-day data "is accessible starting with the Basic plan."
 - Not on the page: ETFs, a table of usage per plan, whether Basic is one of the "standard plans".
 - My reading, not checked: the article ties real-time US data to the paid plans and names Basic only for historical and end-of-day data, which does not match the pricing page's "Real-time US equities and ETFs" for Basic; display is covered "under standard plans", and whether the free Basic plan is one is not said. Three Twelve Data pages say three different things about the free plan; none settles display on Basic.
+Support article "Commercial and personal usage", I fetched 2026-10-30 at your request, https://support.twelvedata.com/en/articles/5332349-commercial-and-personal-usage (page metadata dateModified 2026-10-22), quoted as the fetch returned it:
+- "Individual plans are intended strictly for personal or internal use." Individual plans are named: "Individual plans (Grow, Pro, Ultra)"; business plans: "Business plans (Venture, Enterprise, Enterprise+)".
+- "Acceptable non-commercial use cases include internal tools for personal or organizational use"; also "educational projects like student apps or academic research" and "development or testing phases of applications (non-production)".
+- Individual plans "do not permit": "commercial display of data to third parties"; "redistribution of data". "Business plans allow the use of data for commercial display and internal usage, subject to exchange licensing requirements."
+- Not on the page: the free Basic plan, non-display use, and a personal app or dashboard as such.
+- My reading, not checked: for the paid individual plans, a personal app that shows prices only to you fits "internal tools for personal ... use" and is not "commercial display to third parties". The free Basic plan is not among the named plans in this article, so it does not settle Basic; with the pricing page's "Internal non-display usage" for Basic still unexplained, display on the free plan stays unclear.
+- Outcome (your decision 2026-10-30, option A): Twelve Data is dropped as a candidate. Its free plan is unclear on display and on real-time US data (four pages, 2026-10-30, disagree); it is not shipped. No call was made to it and no key was created.
 
 ## 11. Status and notes
 Outline approved 2026-10-30. Running: the US exchange list (10.1), Finnhub (10.2), the MIC codes (10.3) and Twelve Data (10.4) looked up 2026-10-30; Finnhub's real-time question is open.
