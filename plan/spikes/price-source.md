@@ -1,6 +1,6 @@
 # plan/spikes/price-source.md
 
-Stage: Build. Status: outline approved 2026-10-30 with decision 1 (section 6); running: the US exchange list looked up (section 10.1), the sources not yet checked. Branch spike-price-source.
+Stage: Build. Status: run 2026-10-30; all thirteen candidates checked (section 10), decisions 1 to 7 settled (section 6), summary in section 11. Finished when its pull request is merged. Branch spike-price-source.
 Source: plan/plan.md section 7 (the spike's question list), spec/spec.md v4 (final): 4.3 (the ticker check), section 7 (prices), section 9 (security), concerns C1, C8 and C14; intent/intent.md v52 (final).
 Facts in this note are facts of the day they were looked up; each carries its date.
 
@@ -364,4 +364,13 @@ Endpoints page, I fetched 2026-10-30, https://docs.tradier.com/docs/endpoints, q
 - Outcome (your decision 2026-10-30, option A): Tradier is dropped and not shipped: it needs a brokerage account even for delayed prices. No account, token or call. With this, all thirteen candidates of section 5 are checked.
 
 ## 11. Status and notes
-Outline approved 2026-10-30. Running: the US exchange list (10.1), Finnhub (10.2), the MIC codes (10.3), Twelve Data (10.4, dropped) and FMP's terms (10.5) looked up 2026-10-30; Finnhub's real-time question is open.
+Outline approved 2026-10-30; run the same day; decisions 1 to 7 settled (section 6). Answers to plan.md section 7 and section 3 of this note, for iteration 09 and later:
+- Source (question 1): Finnhub only, free plan, personal use, 60 calls a minute; the key is built into the app at build time (decision 5). The other twelve candidates are dropped or not shipped (10.4 to 10.15).
+- What a look-up returns (question 2): /stock/symbol?exchange=US gives each ticker's MIC, type (ETF = "ETP") and price currency; /quote gives the price c, the previous close pc and its time t in Unix seconds, current during the session (26 s behind the call, 2026-10-30) and the last close outside it; prices have up to 4 decimals and must be read as exact decimals (4.10).
+- Exchanges (question 3): a fixed table in plan.md of the 29 SEC names; only XNAS, XNYS, ARCX, BATS, XASE and IEXG pass; OOTC and unknown codes are refused (decision 4). Mutual funds are almost absent from the list (VFIAX not found), so most are refused as "not found", not as "a mutual fund". BRK.B is written with a dot.
+- K4 (question 4): Finnhub sits behind K4; a second source can be added later behind it. The settings list holds Finnhub only (decision 3).
+- Sector and geography (question 5): profile2 gives an industry and the HQ country for stocks and nothing for ETFs (SPY: {}). Iteration 23 keeps the source path for stocks; ETFs start as "Unclassified" plus the override (C14).
+- The key (question 6): decision 5; no spec change.
+- Left for the iteration files: the 4.3 message when a mutual fund is not found; whether type "Open-End Fund" counts as a mutual fund; types that pass 4.3 as written (ADR, Closed-End Fund, REIT, Unit and others) against the scope "stocks and ETFs"; the US list fetched once and kept, or a look-up per ticker (10.2).
+- Not verified: real-time quotes for OTC names, on other days and in busy periods (two tickers, one day); Finnhub's limits under use; App initialization as the deletion route (decision 6), by reading only.
+- With one source, iteration 30's change of source (criterion 7) has nothing to change to (open items).
