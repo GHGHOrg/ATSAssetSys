@@ -48,6 +48,13 @@ interface PortfolioDao {
 
     @Query("SELECT * FROM portfolios ORDER BY createdSeq")
     suspend fun loadAll(): List<PortfolioRow>
+
+    /** Rename (4.7): the name of one row by id, nothing else. Returns the number of rows changed. */
+    @Query("UPDATE portfolios SET name = :name WHERE id = :id")
+    suspend fun rename(
+        id: String,
+        name: String,
+    ): Int
 }
 
 /** Version 2 (iteration 07) adds the portfolios table; Room generates the step from 1 out of schemas/1.json and 2.json. */

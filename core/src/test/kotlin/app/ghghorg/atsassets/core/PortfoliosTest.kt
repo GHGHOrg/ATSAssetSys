@@ -135,4 +135,62 @@ class PortfoliosTest {
         val dashes = Portfolio(id = "p2", name = "---", createdSeq = 2L)
         assertEquals(PortfolioRefusal.NoLetter, refusal(create("---", listOf(dashes))))
     }
+
+    // Iteration 08: rename (spec 4.7, wireframe 10d frame B and marker 4).
+
+    private val trust = Portfolio(id = "p2", name = "投資信託", createdSeq = 2L)
+
+    private fun rename(
+        typedName: String,
+        id: String = "p1",
+    ): PortfolioRenameResult = Portfolios.rename(listOf(main, trust), id, typedName)
+
+    private fun renamed(result: PortfolioRenameResult): Portfolio = (result as PortfolioRenameResult.Renamed).portfolio
+
+    private fun renameRefusal(result: PortfolioRenameResult): PortfolioRefusal = (result as PortfolioRenameResult.Refused).reason
+
+    @Test
+    fun aNewName_isSavedTrimmed_withTheIdAndTheOrderKept() {
+        assertEquals(Portfolio(id = "p1", name = "Main Account", createdSeq = 1L), renamed(rename("  Main Account  ")))
+    }
+
+    // Criterion 55: on rename, a name that differs from the portfolio's own only in case is accepted.
+    @Test
+    fun aChangeOfCaseOnly_isAcceptedAndTheNewCasingSaved() {
+        assertEquals("MAIN", renamed(rename("MAIN")).name)
+    }
+
+    @Test
+    fun aChangeOfInnerSpacesOnly_isAccepted() {
+        val account = Portfolio(id = "p1", name = "Main account", createdSeq = 1L)
+        val result = Portfolios.rename(listOf(account), "p1", "Main  account")
+        assertEquals("Main  account", renamed(result).name)
+    }
+
+    // Wireframe 10d marker 4: saving the unchanged name closes the dialog and changes nothing.
+    @Test
+    fun theUnchangedName_givesUnchanged() {
+        assertEquals(PortfolioRenameResult.Unchanged, rename("Main"))
+        assertEquals(PortfolioRenameResult.Unchanged, rename("  Main "))
+    }
+
+    @Test
+    fun aNameOfAnotherPortfolio_isRefusedAndNamesIt() {
+        assertEquals(PortfolioRefusal.Duplicate("投資信託"), renameRefusal(rename("投資信託")))
+        assertEquals(PortfolioRefusal.Duplicate("Main"), renameRefusal(rename(" main ", id = "p2")))
+    }
+
+    // Criterion 55: "投資", "123" and "---" are refused on rename too.
+    @Test
+    fun theLengthAndLetterRules_applyOnRename() {
+        assertEquals(PortfolioRefusal.TooShort, renameRefusal(rename("投資")))
+        assertEquals(PortfolioRefusal.TooShort, renameRefusal(rename("  ab  ")))
+        assertEquals(PortfolioRefusal.NoLetter, renameRefusal(rename("123")))
+        assertEquals(PortfolioRefusal.NoLetter, renameRefusal(rename("---")))
+    }
+
+    @Test
+    fun anUnknownId_isNotFound() {
+        assertEquals(PortfolioRenameResult.NotFound, rename("Other", id = "missing"))
+    }
 }

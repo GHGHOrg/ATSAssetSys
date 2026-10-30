@@ -2,6 +2,7 @@ package app.ghghorg.atsassets.ui
 
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -9,6 +10,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.rememberScrollState
@@ -27,6 +29,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.LiveRegionMode
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.liveRegion
 import androidx.compose.ui.semantics.paneTitle
@@ -38,13 +41,14 @@ import app.ghghorg.atsassets.core.Portfolio
 import app.ghghorg.atsassets.core.PortfolioRefusal
 
 /**
- * Portfolios (view 3, wireframe 3 frame A), create only in iteration 07: the rows in the order they were created,
- * display-only until 08 (07 decision 1), and New portfolio. Before the opening balance exists, New portfolio asks
- * for it instead of opening the dialog (4.2).
+ * Portfolios (view 3, wireframe 3 frame A): the rows in the order they were created, each opening its portfolio
+ * (08 decision 3), and New portfolio. Before the opening balance exists, New portfolio asks for it instead of
+ * opening the dialog (4.2).
  */
 @Composable
 fun PortfoliosScreen(
     state: AppState,
+    onOpenPortfolio: (String) -> Unit,
     onNewPortfolio: () -> Unit,
     onSetOpeningBalance: () -> Unit,
     modifier: Modifier = Modifier,
@@ -60,7 +64,7 @@ fun PortfoliosScreen(
         if (state.portfolios.isEmpty()) {
             NoPortfoliosYet(onNewPortfolio)
         } else {
-            state.portfolios.forEach { PortfolioRow(it) }
+            state.portfolios.forEach { portfolio -> PortfolioRow(portfolio) { onOpenPortfolio(portfolio.id) } }
             OutlinedButton(onClick = onNewPortfolio) {
                 Text(text = stringResource(R.string.new_portfolio))
             }
@@ -90,12 +94,16 @@ internal fun NoPortfoliosYet(onCreate: () -> Unit) {
     }
 }
 
-// Holdings and values arrive with 09; until then every portfolio has no holdings and $0.00 (07 stubs).
+// Holdings and values arrive with 09; until then every portfolio has no holdings and $0.00 (07 stubs). The whole
+// row is one tap target without ">", read by TalkBack as one button (08 decision 3).
 @Composable
-private fun PortfolioRow(portfolio: Portfolio) {
+private fun PortfolioRow(
+    portfolio: Portfolio,
+    onOpen: () -> Unit,
+) {
     OutlinedCard(modifier = Modifier.fillMaxWidth()) {
         Column(
-            modifier = Modifier.fillMaxWidth().padding(12.dp).semantics(mergeDescendants = true) {},
+            modifier = Modifier.fillMaxWidth().clickable(role = Role.Button, onClick = onOpen).padding(12.dp),
             verticalArrangement = Arrangement.spacedBy(2.dp),
         ) {
             Text(
@@ -115,29 +123,41 @@ private fun PortfolioRow(portfolio: Portfolio) {
     }
 }
 
+/** The wording that differs between New portfolio and Rename portfolio (wireframe 10d frames A and B). */
+internal class PortfolioNameWording(
+    val title: String,
+    val helper: String,
+    val confirm: String,
+)
+
 /**
- * The New portfolio dialog (wireframe 10d frames A and C): one Name field, the helper line, the first refusal under
- * the field, Create and Cancel. Create is always tappable. Drawn inside the activity's window over a dimmed layer,
- * not as a separate dialog window: a separate window takes the focus, and MainActivity covers the app whenever its
- * window loses focus (defect found in 07 phone check 2). The layer takes every tap, so a tap outside the card does
- * nothing and the typed text is not lost by accident; Back closes it like Cancel.
+ * The New portfolio and Rename portfolio dialog (wireframe 10d frames A to C): one Name field, the helper line, the
+ * first refusal under the field, Cancel and the confirm button. The confirm button is always tappable. Drawn inside
+ * the activity's window over a dimmed layer, not as a separate dialog window: a separate window takes the focus, and
+ * MainActivity covers the app whenever its window loses focus (defect found in 07 phone check 2). The layer takes
+ * every tap, so a tap outside the card does nothing and the typed text is not lost by accident; Back closes it like
+ * Cancel.
  */
 @Composable
-internal fun NewPortfolioDialog(
+internal fun PortfolioNameDialog(
+    wording: PortfolioNameWording,
     dialog: PortfolioDialog,
     saving: Boolean,
     onNameChange: (String) -> Unit,
-    onCreate: () -> Unit,
+    onConfirm: () -> Unit,
     onCancel: () -> Unit,
 ) {
     BackHandler(enabled = !saving, onBack = onCancel)
     val error = portfolioMessage(dialog)
-    val title = stringResource(R.string.new_portfolio)
+    val title = wording.title
     Box(
         modifier = Modifier
             .fillMaxSize()
             .background(MaterialTheme.colorScheme.scrim.copy(alpha = SCRIM_ALPHA))
-            .pointerInput(Unit) { detectTapGestures { } },
+            .pointerInput(Unit) { detectTapGestures { } }
+            // The app draws edge to edge, so the window does not shrink for the keyboard: the card is centred in
+            // the space above it and scrolls there (defect found in 08 phone check 9a).
+            .imePadding(),
         contentAlignment = Alignment.Center,
     ) {
         Surface(
@@ -167,7 +187,7 @@ internal fun NewPortfolioDialog(
                                     modifier = Modifier.semantics { liveRegion = LiveRegionMode.Polite },
                                 )
                             }
-                            Text(text = stringResource(R.string.portfolio_name_helper))
+                            Text(text = wording.helper)
                         }
                     },
                     isError = error != null,
@@ -180,8 +200,8 @@ internal fun NewPortfolioDialog(
                     TextButton(onClick = onCancel, enabled = !saving) {
                         Text(text = stringResource(R.string.cancel_button))
                     }
-                    TextButton(onClick = onCreate, enabled = !saving) {
-                        Text(text = stringResource(R.string.create_button))
+                    TextButton(onClick = onConfirm, enabled = !saving) {
+                        Text(text = wording.confirm)
                     }
                 }
             }

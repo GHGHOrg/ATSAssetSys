@@ -107,4 +107,14 @@
     <string name="portfolio_name_duplicate">Not saved. Another portfolio is already named \"%1$s\". Names are compared ignoring case and spaces.</string>
     <string name="opening_balance_first">Set the opening balance first.</string>
     <string name="portfolio_no_holdings">no holdings</string>
+    <string name="rename_portfolio">Rename portfolio</string>
+    <string name="rename_button">Rename</string>
+    <string name="save_button">Save</string>
+    <string name="rename_helper">Only the name changes. Everything else stays as it is.</string>
+    <string name="portfolio_value_label">Portfolio value</string>
+    <string name="portfolio_cost_label">Cost</string>
+    <string name="portfolio_unrealized_label">Unrealized gain/loss</string>
+    <string name="portfolio_holdings">Holdings</string>
+    <string name="portfolio_no_holdings_yet">No holdings yet</string>
+    <string name="portfolio_menu">Portfolio menu</string>
 </resources>

@@ -253,7 +253,8 @@ when it adds a command, a convention or a pitfall.
 | Iteration 05 | done: built 2026-10-29 (steps 1 to 5 and one fix); phone checks 2026-10-29 all yes; 183 tests; pull request #89 merged as c1ad96d, CI green on the pull request and on main (2m 25s) (your reports) |
 | Iteration 06 | done: built 2026-10-29 (steps 1 to 5 and one change); phone checks 2026-10-29 all yes; 213 tests; pull request #91 merged as 0d5e2f4, CI green on the pull request and on main (1m 51s) (your reports) |
 | Iteration 07 | done: built 2026-10-30 (steps 1 to 6 and one fix); phone checks 2026-10-30 all yes, check 10 not run (open item 33); 243 tests; pull request #94 merged as 1eb7220, CI green on the pull request and on main (2m 19s) (your reports) |
-| Iterations 08 to 35 | not started, files not written |
+| Iteration 08 | built 2026-10-30 (steps 1 to 6 and one fix, 74aa71b); phone checks 2026-10-30 all yes; 266 tests; pull request not yet created |
+| Iterations 09 to 35 | not started, files not written |
 
 ## 12. Change log
 Each departure from this plan is recorded here with its date and the reason.
@@ -313,6 +314,8 @@ Each departure from this plan is recorded here with its date and the reason.
 - 2026-10-30: pull request #93 (docs: the test-count fix) was merged as 8ee5394, CI green on the pull request and on main (1m 29s) (your reports); main was merged into iter-07-create-portfolio (2d50683).
 - 2026-10-30: 07 built and checked on the phone. The first schema change (database version 2, a Room auto migration adding the portfolios table) was checked by installing over 06's build with data (criterion 35, versionCode 7). A defect found in phone check 2 (a dialog window took the focus and the focus cover hid the app in a loop) was fixed in 07 by drawing the dialog inside the activity window, with no failing test possible off the device (your decision; 07 file, section 14). A Logcat check for the portfolio names was added (07 file, section 13.3).
 - 2026-10-30: pull request #94 (iteration 07) was merged as 1eb7220. CI on the pull request (3 checks: build, Analyze (actions), CodeQL) and on main (the run for 1eb7220, 2m 19s) were reported successful by you. The status lines above were updated. The 07 file's sections 13 and 14 are left as written at build time.
+- 2026-10-30: pull request #95 (docs: the 07 merge record) was merged as 53a97b8, CI green on the pull request and on main (1m 33s) (your reports). The 08 file was approved with decisions 1 to 3; its decision 3 replaces 07 decision 1 (the portfolio rows become tappable).
+- 2026-10-30: 08 built and checked on the phone. Rename is the first update of a stored record (the name of one portfolio row by id). A defect found in phone check 9a.2 (the keyboard covered the in-window dialog at the largest font, in New portfolio from 07 too) was fixed in 08 with imePadding, with no failing test possible off the device (your decision; 08 file, section 14). Criterion 35's install-over is checked again (versionCode 8).
 
 ## 13. Out of scope for this plan
 Performance over time, per-holding dividends, ETF look-through, the next intent.md items,
