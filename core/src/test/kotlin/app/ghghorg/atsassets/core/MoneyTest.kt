@@ -2,6 +2,7 @@ package app.ghghorg.atsassets.core
 
 import org.junit.Assert.assertEquals
 import org.junit.Test
+import java.math.BigInteger
 
 class MoneyTest {
     private fun cents(text: String): AmountResult = Money.parseCents(text)
@@ -109,5 +110,37 @@ class MoneyTest {
     fun format_limits_doNotOverflow() {
         assertEquals("\$92,233,720,368,547,758.07", Money.format(Long.MAX_VALUE))
         assertEquals("\u2212\$92,233,720,368,547,758.08", Money.format(Long.MIN_VALUE))
+    }
+
+    private fun dollars(
+        numerator: Long,
+        denominator: Long,
+    ): Fraction = Fraction.of(BigInteger.valueOf(numerator), BigInteger.valueOf(denominator))
+
+    @Test
+    fun format_fraction_roundsHalfAwayFromZeroToCents() {
+        assertEquals("\$100.01", Money.format(dollars(20_001, 200)))
+        assertEquals("\$333.33", Money.format(dollars(1_000, 3)))
+        assertEquals("\u2212\$0.01", Money.format(dollars(-1, 200)))
+    }
+
+    @Test
+    fun format_fractionThatRoundsToZero_hasNoSign() {
+        assertEquals("\$0.00", Money.format(dollars(-1, 1_000)))
+    }
+
+    @Test
+    fun formatPerShare_isTwoDecimalsFromOneDollar() {
+        assertEquals("\$150.00", Money.formatPerShare(dollars(150, 1)))
+        assertEquals("\$333.33", Money.formatPerShare(dollars(1_000, 3)))
+        assertEquals("\$1,234.50", Money.formatPerShare(dollars(2_469, 2)))
+        assertEquals("\$1.00", Money.formatPerShare(dollars(1, 1)))
+    }
+
+    @Test
+    fun formatPerShare_isFourDecimalsUnderOneDollar() {
+        assertEquals("\$0.5000", Money.formatPerShare(dollars(1, 2)))
+        assertEquals("\$0.3333", Money.formatPerShare(dollars(1, 3)))
+        assertEquals("\$0.0089", Money.formatPerShare(dollars(89, 10_000)))
     }
 }
