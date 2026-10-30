@@ -286,5 +286,10 @@ Batch AV1, I called 2026-10-30 16:34:39 to 16:34:46 +08:00, https://www.alphavan
 - GLOBAL_QUOTE AABB (OTC): priced, "05. price": "0.0089", "07. latest trading day": "2026-10-29".
 - My reading, not checked: the free key gives the end-of-day price (the same close as Finnhub and Massive) with its date but no time of day, which is less than spec 7's timestamp; prices come as strings, which suits exact decimals (4.10). The search gives a type (ETF) and a currency, but only a region ("United States"), not an exchange, so 4.3's exchange check cannot use it: an OTC name such as AABB would pass under 4.3's "if the source does not say, the ticker is accepted". Sector and country (OVERVIEW) are premium. The free limit was not reached in 4 calls and is still not shown. So Alpha Vantage's free key could at most be an end-of-day price fallback; its ticker check is weaker than Finnhub's or Massive's.
 
+### 10.9 Stooq
+A web search limited to stooq.com and stooq.pl, 2026-10-30 (only the query left this PC), found its "Free Market Data" page (https://stooq.com/db/) and quote pages with CSV file downloads, for tickers written with a market suffix (for example OSS.US, SNDK.US). Per the search summary, not fetched: "This data is intended solely for personal use"; quotes for Nasdaq, NYSE and other markets are provided by Infront; a "Terms of service" page is linked but its address and text were not shown; no API documentation appeared.
+- My reading, not checked: Stooq is a website with downloadable files, not an API meant for apps; a ".US" suffix gives a country, not the exchange, type or currency that 4.3 needs; fetching its files by program, with no API offered, may be the kind of automated access its unread terms forbid.
+- Outcome (your decision 2026-10-30, option B): Stooq is dropped and not shipped, without reading its terms. No call was made.
+
 ## 11. Status and notes
 Outline approved 2026-10-30. Running: the US exchange list (10.1), Finnhub (10.2), the MIC codes (10.3), Twelve Data (10.4, dropped) and FMP's terms (10.5) looked up 2026-10-30; Finnhub's real-time question is open.
