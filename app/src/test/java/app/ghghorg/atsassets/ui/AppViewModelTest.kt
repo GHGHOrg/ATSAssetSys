@@ -1333,6 +1333,217 @@ class AppViewModelTest {
         assertEquals(Tab.PORTFOLIOS, state.tab)
         assertEquals("Ma", state.portfolioDialog?.nameText)
     }
+
+    // Iteration 08: the portfolio screen and rename (spec 4.7, wireframes 3 frame B and 10d frame B).
+
+    private val trust = Portfolio(id = "p2", name = "投資信託", createdSeq = 2L)
+
+    private fun onMain(): Pair<AppViewModel, FakeStore> {
+        val (vm, store) = withOpening(listOf(main, trust))
+        vm.selectTab(Tab.PORTFOLIOS)
+        vm.openPortfolio("p1")
+        return vm to store
+    }
+
+    private fun renamingMain(): Pair<AppViewModel, FakeStore> {
+        val (vm, store) = onMain()
+        vm.openPortfolioMenu()
+        vm.openRename()
+        return vm to store
+    }
+
+    @Test
+    fun aRowOpensThePortfolioScreen() {
+        val (vm, _) = onMain()
+        val state = vm.state.value
+        assertEquals(Screen.PORTFOLIO, state.screen)
+        assertEquals(Tab.PORTFOLIOS, state.tab)
+        assertEquals(main, state.shownPortfolio)
+        assertFalse(state.portfolioMenuOpen)
+    }
+
+    @Test
+    fun anUnknownPortfolioIsIgnored() {
+        val (vm, _) = withOpening(listOf(main))
+        vm.selectTab(Tab.PORTFOLIOS)
+        vm.openPortfolio("missing")
+        assertEquals(Screen.TABS, vm.state.value.screen)
+    }
+
+    @Test
+    fun backFromThePortfolioScreenGoesToTheList() {
+        val (vm, _) = onMain()
+        vm.closePortfolio()
+        val state = vm.state.value
+        assertEquals(Screen.TABS, state.screen)
+        assertEquals(Tab.PORTFOLIOS, state.tab)
+        assertEquals(null, state.shownPortfolio)
+    }
+
+    @Test
+    fun theMenuOpensAndCloses() {
+        val (vm, _) = onMain()
+        vm.openPortfolioMenu()
+        assertTrue(vm.state.value.portfolioMenuOpen)
+        vm.closePortfolioMenu()
+        assertFalse(vm.state.value.portfolioMenuOpen)
+        assertEquals(Screen.PORTFOLIO, vm.state.value.screen)
+    }
+
+    // Wireframe 10d frame B: the field starts with the current name.
+    @Test
+    fun renameClosesTheMenuAndOpensTheDialogWithTheCurrentName() {
+        val (vm, _) = renamingMain()
+        val state = vm.state.value
+        assertFalse(state.portfolioMenuOpen)
+        assertEquals(PortfolioDialog(nameText = "Main"), state.renameDialog)
+    }
+
+    @Test
+    fun saveRenamesOnTheScreenAndInTheListInTheSamePlace() {
+        val (vm, store) = renamingMain()
+        vm.onRenameNameChange("  Main Account ")
+        vm.saveRename()
+        val state = vm.state.value
+        assertEquals(listOf("p1" to "Main Account"), store.renames)
+        assertEquals(listOf("Main Account", "投資信託"), state.portfolios.map { it.name })
+        assertEquals("Main Account", state.shownPortfolio?.name)
+        assertEquals(null, state.renameDialog)
+        assertEquals(Screen.PORTFOLIO, state.screen)
+        assertFalse(state.saving)
+    }
+
+    // Criterion 55: a change of case only is accepted on rename.
+    @Test
+    fun aChangeOfCaseOnlyIsSaved() {
+        val (vm, store) = renamingMain()
+        vm.onRenameNameChange("MAIN")
+        vm.saveRename()
+        assertEquals(listOf("p1" to "MAIN"), store.renames)
+        assertEquals("MAIN", vm.state.value.shownPortfolio?.name)
+    }
+
+    // Wireframe 10d marker 4: saving the unchanged name closes the dialog and changes nothing.
+    @Test
+    fun theUnchangedNameClosesTheDialogWithNoWrite() {
+        val (vm, store) = renamingMain()
+        vm.onRenameNameChange(" Main ")
+        vm.saveRename()
+        assertEquals(null, vm.state.value.renameDialog)
+        assertEquals(emptyList<Pair<String, String>>(), store.renames)
+    }
+
+    @Test
+    fun refusedRenamesGiveTheirReasonKeepTheTextAndSaveNothing() {
+        val cases = mapOf(
+            "投資信託" to PortfolioRefusal.Duplicate("投資信託"),
+            "投資" to PortfolioRefusal.TooShort,
+            "  ab  " to PortfolioRefusal.TooShort,
+            "123" to PortfolioRefusal.NoLetter,
+            "---" to PortfolioRefusal.NoLetter,
+        )
+        for ((text, expected) in cases) {
+            val (vm, store) = renamingMain()
+            vm.onRenameNameChange(text)
+            vm.saveRename()
+            val dialog = vm.state.value.renameDialog
+            assertEquals("refusal for '$text'", expected, dialog?.refusal)
+            assertEquals("kept '$text'", text, dialog?.nameText)
+            assertEquals("saved for '$text'", emptyList<Pair<String, String>>(), store.renames)
+        }
+    }
+
+    @Test
+    fun typingInRenameClearsTheRefusalAndALineBreakBecomesASpace() {
+        val (vm, _) = renamingMain()
+        vm.onRenameNameChange("ab")
+        vm.saveRename()
+        vm.onRenameNameChange("Main\nAccount")
+        assertEquals(PortfolioDialog(nameText = "Main Account"), vm.state.value.renameDialog)
+    }
+
+    @Test
+    fun cancelRenameClosesTheDialogAndSavesNothing() {
+        val (vm, store) = renamingMain()
+        vm.onRenameNameChange("Other")
+        vm.cancelRename()
+        val state = vm.state.value
+        assertEquals(null, state.renameDialog)
+        assertEquals("Main", state.shownPortfolio?.name)
+        assertEquals(emptyList<Pair<String, String>>(), store.renames)
+    }
+
+    @Test
+    fun aFailedRenameKeepsTheDialogAndTheText() {
+        val store = FakeStore(stored = listOf(opening()), saveError = IllegalStateException("disk"))
+        store.storedPortfolios = listOf(main)
+        val vm = started(store)
+        vm.selectTab(Tab.PORTFOLIOS)
+        vm.openPortfolio("p1")
+        vm.openRename()
+        vm.onRenameNameChange("Main Account")
+        vm.saveRename()
+        val state = vm.state.value
+        assertEquals(PortfolioDialog(nameText = "Main Account", save = SaveRefusal.SAVE_FAILED), state.renameDialog)
+        assertEquals("Main", state.shownPortfolio?.name)
+        assertFalse(state.saving)
+    }
+
+    @Test
+    fun unreadableDataOnRenameShowsTheUnreadableScreen() {
+        val store = FakeStore(stored = listOf(opening()), saveError = UnreadableDataException("unreadable"))
+        store.storedPortfolios = listOf(main)
+        val vm = started(store)
+        vm.selectTab(Tab.PORTFOLIOS)
+        vm.openPortfolio("p1")
+        vm.openRename()
+        vm.onRenameNameChange("Main Account")
+        vm.saveRename()
+        assertEquals(Screen.UNREADABLE, vm.state.value.screen)
+    }
+
+    @Test
+    fun saveCancelAndBackAreIgnoredWhileSavingARename() {
+        val gate = CompletableDeferred<Unit>()
+        val store = FakeStore(stored = listOf(opening()), gate = gate)
+        store.storedPortfolios = listOf(main)
+        val vm = started(store)
+        vm.selectTab(Tab.PORTFOLIOS)
+        vm.openPortfolio("p1")
+        vm.openRename()
+        vm.onRenameNameChange("Main Account")
+        vm.saveRename()
+        vm.saveRename()
+        vm.cancelRename()
+        vm.closePortfolio()
+        assertTrue(vm.state.value.saving)
+        assertEquals(Screen.PORTFOLIO, vm.state.value.screen)
+        gate.complete(Unit)
+        assertEquals(1, store.renames.size)
+        assertEquals(null, vm.state.value.renameDialog)
+    }
+
+    @Test
+    fun anUnlockKeepsThePortfolioScreenAndTheRenameDialog() {
+        val (vm, _) = renamingMain()
+        vm.onRenameNameChange("Mai")
+        vm.onUnlocked()
+        val state = vm.state.value
+        assertEquals(Screen.PORTFOLIO, state.screen)
+        assertEquals("Mai", state.renameDialog?.nameText)
+    }
+
+    @Test
+    fun aTabFromThePortfolioScreenLeavesIt() {
+        val (vm, _) = onMain()
+        vm.openPortfolioMenu()
+        vm.selectTab(Tab.CASH)
+        val state = vm.state.value
+        assertEquals(Screen.TABS, state.screen)
+        assertEquals(Tab.CASH, state.tab)
+        assertEquals(null, state.shownPortfolio)
+        assertFalse(state.portfolioMenuOpen)
+    }
 }
 
 private fun clockAt(

@@ -34,7 +34,9 @@ fun AppContent(
         )
 
         // The bar shows on every screen after loading (spec 6: always visible; 02b decision 1).
-        Screen.TABS, Screen.FORM, Screen.REVIEW, Screen.DETAIL, Screen.REVERSAL -> Box(modifier = modifier.fillMaxSize()) {
+        Screen.TABS, Screen.FORM, Screen.REVIEW, Screen.DETAIL, Screen.REVERSAL, Screen.PORTFOLIO -> Box(
+            modifier = modifier.fillMaxSize(),
+        ) {
             val dialog = state.portfolioDialog
             // While the dialog is open, TalkBack reads only the dialog, not the screen under it.
             val under = if (dialog != null) Modifier.clearAndSetSemantics { } else Modifier

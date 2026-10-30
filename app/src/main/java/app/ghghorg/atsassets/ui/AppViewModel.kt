@@ -21,6 +21,7 @@ import app.ghghorg.atsassets.core.OpeningBalanceError
 import app.ghghorg.atsassets.core.OpeningBalanceResult
 import app.ghghorg.atsassets.core.Portfolio
 import app.ghghorg.atsassets.core.PortfolioRefusal
+import app.ghghorg.atsassets.core.PortfolioRenameResult
 import app.ghghorg.atsassets.core.PortfolioResult
 import app.ghghorg.atsassets.core.Portfolios
 import app.ghghorg.atsassets.core.RecordStore
@@ -44,6 +45,9 @@ enum class Screen {
     REVIEW,
     DETAIL,
     REVERSAL,
+
+    // One portfolio (view 3, wireframe 3 frame B), opened from its row (iteration 08).
+    PORTFOLIO,
 }
 
 /** The four bottom bar tabs (spec 6, navigation outline). */
@@ -138,7 +142,13 @@ data class AppState(
     val portfolioDialog: PortfolioDialog? = null,
     // New portfolio was tapped before the opening balance exists (4.2): the screen asks for it instead.
     val portfolioNeedsOpeningBalance: Boolean = false,
+    // The portfolio shown on PORTFOLIO, its ⋮ menu, and the Rename dialog over it (08 decision 1).
+    val portfolioId: String? = null,
+    val portfolioMenuOpen: Boolean = false,
+    val renameDialog: PortfolioDialog? = null,
 ) {
+    val shownPortfolio: Portfolio? get() = portfolioId?.let { id -> portfolios.firstOrNull { it.id == id } }
+
     /**
      * The fields take digits only (YYYYMMDD): any other character is refused at once, eight digits that are no
      * real date get the date message, fewer digits get nothing (06 decision 1 as changed after phone check 12).
@@ -233,7 +243,15 @@ class AppViewModel(
         val current = mutableState.value
         if (current.screen !in TAB_BAR_SCREENS || current.saving) return
         mutableState.update {
-            it.copy(screen = Screen.TABS, tab = tab, refusals = Refusals(), portfolioNeedsOpeningBalance = false)
+            it.copy(
+                screen = Screen.TABS,
+                tab = tab,
+                refusals = Refusals(),
+                portfolioNeedsOpeningBalance = false,
+                portfolioId = null,
+                portfolioMenuOpen = false,
+                renameDialog = null,
+            )
         }
     }
 
@@ -415,11 +433,8 @@ class AppViewModel(
     }
 
     /** A line break, typed or pasted, becomes a space (07 decision 4). Typing clears the refusal. */
-    fun onPortfolioNameChange(text: String) {
-        val oneLine = text.replace("\r\n", " ").replace('\r', ' ').replace('\n', ' ')
-        mutableState.update { state ->
-            state.copy(portfolioDialog = state.portfolioDialog?.let { PortfolioDialog(nameText = oneLine) })
-        }
+    fun onPortfolioNameChange(text: String) = mutableState.update { state ->
+        state.copy(portfolioDialog = state.portfolioDialog?.let { PortfolioDialog(nameText = oneLine(text)) })
     }
 
     /** Closes the dialog; nothing is saved. Ignored while a save is running. */
@@ -465,6 +480,98 @@ class AppViewModel(
             }
         }
     }
+
+    /** Opens a portfolio's screen from its row (08 decision 3). Unknown ids are ignored. */
+    fun openPortfolio(id: String) {
+        val current = mutableState.value
+        if (current.screen != Screen.TABS || current.portfolios.none { it.id == id }) return
+        mutableState.update { it.copy(screen = Screen.PORTFOLIO, portfolioId = id, portfolioMenuOpen = false) }
+    }
+
+    /** "<" or Android Back: back to the list. Ignored while a save is running. */
+    fun closePortfolio() {
+        val current = mutableState.value
+        if (current.screen != Screen.PORTFOLIO || current.saving) return
+        mutableState.update {
+            it.copy(screen = Screen.TABS, portfolioId = null, portfolioMenuOpen = false, renameDialog = null)
+        }
+    }
+
+    fun openPortfolioMenu() {
+        if (mutableState.value.screen != Screen.PORTFOLIO) return
+        mutableState.update { it.copy(portfolioMenuOpen = true) }
+    }
+
+    fun closePortfolioMenu() = mutableState.update { it.copy(portfolioMenuOpen = false) }
+
+    /** Rename in the menu: closes the menu and opens the dialog with the current name (wireframe 10d frame B). */
+    fun openRename() {
+        val current = mutableState.value
+        if (current.screen != Screen.PORTFOLIO || current.saving) return
+        val portfolio = current.shownPortfolio ?: return
+        mutableState.update { it.copy(portfolioMenuOpen = false, renameDialog = PortfolioDialog(nameText = portfolio.name)) }
+    }
+
+    /** As for create: a line break becomes a space and typing clears the refusal. */
+    fun onRenameNameChange(text: String) = mutableState.update { state ->
+        state.copy(renameDialog = state.renameDialog?.let { PortfolioDialog(nameText = oneLine(text)) })
+    }
+
+    /** Closes the dialog; nothing is saved. Ignored while a save is running. */
+    fun cancelRename() {
+        if (mutableState.value.saving) return
+        mutableState.update { it.copy(renameDialog = null) }
+    }
+
+    /**
+     * Save (wireframe 10d frame B): checks the name against the other portfolios (4.7) and changes only the name.
+     * The unchanged name closes the dialog without a write. On a refusal the dialog stays with the typed text.
+     */
+    fun saveRename() {
+        val current = mutableState.value
+        val dialog = current.renameDialog ?: return
+        val id = current.portfolioId ?: return
+        if (current.saving) return
+        val target = store ?: return
+        val portfolio =
+            when (val result = Portfolios.rename(current.portfolios, id, dialog.nameText)) {
+                is PortfolioRenameResult.Renamed -> result.portfolio
+
+                is PortfolioRenameResult.Refused -> {
+                    mutableState.update { it.copy(renameDialog = dialog.copy(refusal = result.reason, save = null)) }
+                    return
+                }
+
+                PortfolioRenameResult.Unchanged, PortfolioRenameResult.NotFound -> {
+                    mutableState.update { it.copy(renameDialog = null) }
+                    return
+                }
+            }
+        mutableState.update { it.copy(saving = true, renameDialog = dialog.copy(refusal = null, save = null)) }
+        viewModelScope.launch {
+            try {
+                target.renamePortfolio(portfolio.id, portfolio.name)
+                mutableState.update { state ->
+                    state.copy(
+                        portfolios = state.portfolios.map { if (it.id == portfolio.id) portfolio else it },
+                        renameDialog = null,
+                        saving = false,
+                    )
+                }
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: UnreadableDataException) {
+                mutableState.update { it.copy(screen = Screen.UNREADABLE, saving = false) }
+            } catch (e: Exception) {
+                mutableState.update {
+                    it.copy(saving = false, renameDialog = dialog.copy(save = SaveRefusal.SAVE_FAILED))
+                }
+            }
+        }
+    }
+
+    // A line break, typed or pasted, becomes a space in a portfolio name (07 decision 4).
+    private fun oneLine(text: String): String = text.replace("\r\n", " ").replace('\r', ' ').replace('\n', ' ')
 
     /** Opens an entry's detail from the Cash list, or follows a link from another detail. Unknown ids are ignored. */
     fun openDetail(id: String) {
@@ -670,6 +777,6 @@ class AppViewModel(
         const val PROBE_NOTE = "check"
 
         // The screens that show the bottom bar (spec 6: always visible; 02b decision 1).
-        val TAB_BAR_SCREENS = setOf(Screen.TABS, Screen.FORM, Screen.REVIEW, Screen.DETAIL, Screen.REVERSAL)
+        val TAB_BAR_SCREENS = setOf(Screen.TABS, Screen.FORM, Screen.REVIEW, Screen.DETAIL, Screen.REVERSAL, Screen.PORTFOLIO)
     }
 }
