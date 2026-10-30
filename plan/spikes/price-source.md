@@ -31,7 +31,8 @@ This is a decision note, not an iteration. Iteration 09 cannot start until the q
 - Then, per candidate kept, a few real calls from this PC (curl) for the test tickers, each approved. A call that needs a key needs you to sign up and to give me the key in a way we agree; the key is never written to the repo or to this note.
 
 ## 5. Candidates (all "not checked")
-From my own knowledge, to be checked: Finnhub, Alpha Vantage, Twelve Data, Financial Modeling Prep, Polygon, Tiingo, Stooq, and the unofficial Yahoo Finance endpoints. Today's free tiers and terms are what the spike checks.
+From my own knowledge, to be checked: Finnhub, Alpha Vantage, Twelve Data, Financial Modeling Prep, Polygon, Tiingo, Stooq, and the unofficial Yahoo Finance endpoints. Today's free tiers and terms are what the spike checks. All eight were checked on 2026-10-30 (sections 10.2 and 10.4 to 10.10).
+Added 2026-10-30 at your request, from my own knowledge, not checked and not looked up (your decision: listed now, checked later): Alpaca (Market Data API), EODHD (EOD Historical Data), Marketstack (apilayer), Nasdaq Data Link (formerly Quandl), Tradier. Left out: IEX Cloud (a page title on alphavantage.co named its shutdown) and paid-only vendors (spec 7: free tier only).
 
 ## 6. Decisions (all Build)
 1. The US exchange list comes from the SEC's list of registered national securities exchanges, looked up on the day (settled by you 2026-10-30, option B). Looked up 2026-10-30: 29 names under Section 6(a) (section 10.1).
