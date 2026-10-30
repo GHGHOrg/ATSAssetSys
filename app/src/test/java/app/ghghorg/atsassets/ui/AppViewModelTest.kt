@@ -1408,6 +1408,7 @@ private class FakeStore(
     val saved = mutableListOf<List<CashEntry>>()
     var storedPortfolios: List<Portfolio> = emptyList()
     val savedPortfolios = mutableListOf<Portfolio>()
+    val renames = mutableListOf<Pair<String, String>>()
 
     override suspend fun loadCashEntries(): List<CashEntry> {
         loadCalls++
@@ -1432,5 +1433,15 @@ private class FakeStore(
         saveError?.let { throw it }
         savedPortfolios.add(portfolio)
         storedPortfolios = storedPortfolios + portfolio
+    }
+
+    override suspend fun renamePortfolio(
+        id: String,
+        name: String,
+    ) {
+        gate?.await()
+        saveError?.let { throw it }
+        renames.add(id to name)
+        storedPortfolios = storedPortfolios.map { if (it.id == id) it.copy(name = name) else it }
     }
 }

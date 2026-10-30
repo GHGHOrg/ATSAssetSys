@@ -13,6 +13,12 @@ interface RecordStore {
 
     /** Saves one new portfolio. */
     suspend fun savePortfolio(portfolio: Portfolio)
+
+    /** Changes the name of portfolio [id] and nothing else (4.7). Throws if no portfolio, or more than one, changed. */
+    suspend fun renamePortfolio(
+        id: String,
+        name: String,
+    )
 }
 
 class UnreadableDataException(

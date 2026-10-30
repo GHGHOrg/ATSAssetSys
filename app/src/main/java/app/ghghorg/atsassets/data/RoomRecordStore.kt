@@ -73,6 +73,26 @@ class RoomRecordStore(
         }
         dao.insert(portfolio.toRow())
     }
+
+    override suspend fun renamePortfolio(
+        id: String,
+        name: String,
+    ) {
+        val dao = withContext(Dispatchers.IO) {
+            try {
+                database.portfolioDao()
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: UnreadableDataException) {
+                throw e
+            } catch (e: Exception) {
+                throw UnreadableDataException("The stored data could not be opened.", e)
+            }
+        }
+        // The message names only the count: never a portfolio name (spec section 9).
+        val changed = dao.rename(id, name)
+        check(changed == 1) { "A rename changed $changed rows instead of 1." }
+    }
 }
 
 private fun Portfolio.toRow() = PortfolioRow(id = id, name = name, createdSeq = createdSeq)
