@@ -174,5 +174,19 @@ A web search limited to iso20022.org (only the query left this PC) found the reg
 - My reading: the six non-OTC codes Finnhub reports are active US markets, each matching one of the 29 SEC names; the match of a MIC's market name to an SEC name is my reading of two different registries, not a published mapping. The other 23 SEC exchanges (options-only markets and others) did not occur in Finnhub's list on 2026-10-30.
 - The downloaded copies stay in the scratchpad (not in the repo); deleting them needs your approval.
 
+### 10.4 Twelve Data
+A web search limited to twelvedata.com (only the query left this PC) found its pricing, documentation, support and refund pages; the search summary's figures were not used as facts.
+Pricing page, I fetched 2026-10-30, https://twelvedata.com/pricing, quoted as the fetch returned it:
+- Basic: "$0" "/month", "For testing and side projects"; "API requests: 8 (800 a day)"; "Basic plan with 8 requests per minute limit." (from the page's structured data); "800 / day".
+- "Real-time US equities and ETFs", "Real-time forex market data", "Real-time crypto market data"; "Markets" row "3", which three not shown.
+- Licence: "Internal non-display usage".
+- "Free trial is available under the Basic plan." Whether a key is needed: not on the page.
+- My reading, not checked: "non-display usage" usually means the data may not be shown on a screen to a person, which is exactly what this app does with prices; if the terms confirm that, the free plan does not fit spec 7 at all, however good its fields are. The terms decide it.
+Terms of Use, I fetched 2026-10-30, https://twelvedata.com/terms ("Last updated: January 1, 2026"), found by a second search limited to twelvedata.com. Quoted as the fetch returned them; some passages came back cut off, marked "(cut off)":
+- Definitions: "Non-Display Use" means any use of Data that does not involve displaying the Data to natural persons. "Internal Use" means use solely for Customer's internal business purposes and not for redistribution (cut off). "Free Trial" means evaluative use of the Platform for testing purposes prior to purchasing a subscription. "Credentials" means access controls, keys, tokens, or other authentication mechanisms necessary to access the Platform. "Display Use", "Personal Use" and "Basic": not on the page.
+- 2.2(b): "Display Data to Authorized Users in accordance with this Agreement or third parties as expressly" (cut off). 2.2(e): "Redistribute or provide external display of Data only if and as expressly authorized by a" (cut off), with "(including compliance with attribution requirements)".
+- Restrictions: 2.3(g) "Store or cache Data beyond permitted timeframes specified in the Documentation"; 2.3(l) "Use Free Tier data for commercial purposes"; 2.3(m) "Share Credentials or allow unauthorized access to the Platform". 4.1(c) "Maintain confidentiality of Credentials". 5.6(b) "No commercial use permitted during Free Trial". 16.2(a) "All Data must be deleted within 30 days" (on termination or expiration).
+- My reading, not checked: the terms allow display to Authorized Users (2.2(b)), which does not match the pricing page's "Internal non-display usage" label for Basic; the cut-off passages and the "Documentation" that sets the caching timeframes would settle it, and neither was read. The free tier is non-commercial, which fits a personal app. Keeping prices (spec 7: last price, marked stale) depends on the caching timeframes, not read. A key built into the app on your own phone is not shared, but 4.1(c) asks to keep it confidential.
+
 ## 11. Status and notes
-Outline approved 2026-10-30. Running: the US exchange list looked up 2026-10-30 (section 10.1); the sources not yet checked.
+Outline approved 2026-10-30. Running: the US exchange list (10.1), Finnhub (10.2), the MIC codes (10.3) and Twelve Data (10.4) looked up 2026-10-30; Finnhub's real-time question is open.
