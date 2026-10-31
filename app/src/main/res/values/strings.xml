@@ -125,7 +125,6 @@
     <string name="sell_button">Sell</string>
     <string name="buy_needs_portfolio">Create a portfolio first</string>
     <string name="sell_nothing_held">Nothing to sell yet</string>
-    <string name="sell_later_build">Selling arrives in a later build</string>
     <string name="buy_review_title">Review buy</string>
     <string name="buy_portfolio_label">Portfolio</string>
     <string name="buy_ticker_label">Ticker</string>

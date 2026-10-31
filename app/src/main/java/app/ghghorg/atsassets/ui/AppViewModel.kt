@@ -21,11 +21,13 @@ import app.ghghorg.atsassets.core.Holding
 import app.ghghorg.atsassets.core.Holdings
 import app.ghghorg.atsassets.core.Instrument
 import app.ghghorg.atsassets.core.Lot
+import app.ghghorg.atsassets.core.LotChoice
 import app.ghghorg.atsassets.core.MarketDate
 import app.ghghorg.atsassets.core.Money
 import app.ghghorg.atsassets.core.OpeningBalance
 import app.ghghorg.atsassets.core.OpeningBalanceError
 import app.ghghorg.atsassets.core.OpeningBalanceResult
+import app.ghghorg.atsassets.core.Pick
 import app.ghghorg.atsassets.core.Portfolio
 import app.ghghorg.atsassets.core.PortfolioRefusal
 import app.ghghorg.atsassets.core.PortfolioRenameResult
@@ -36,6 +38,10 @@ import app.ghghorg.atsassets.core.Quantity
 import app.ghghorg.atsassets.core.QuantityError
 import app.ghghorg.atsassets.core.QuantityResult
 import app.ghghorg.atsassets.core.RecordStore
+import app.ghghorg.atsassets.core.SellRefusal
+import app.ghghorg.atsassets.core.SellResult
+import app.ghghorg.atsassets.core.Sells
+import app.ghghorg.atsassets.core.SoldPiece
 import app.ghghorg.atsassets.core.TickerCheck
 import app.ghghorg.atsassets.core.Transaction
 import app.ghghorg.atsassets.core.Transactions
@@ -74,6 +80,10 @@ enum class Screen {
 
     // One holding (view 6, wireframe 06), opened from a portfolio's holdings (iteration 10).
     HOLDING,
+
+    // Sell entry with the lot picker, and its review (wireframe 10a frames C to E, iteration 11).
+    SELL,
+    SELL_REVIEW,
 }
 
 /** Holding detail's tabs (view 6). Classification joins in 23 (10 decision 1). Never saved. */
@@ -91,9 +101,36 @@ enum class BuyNotice {
     NEEDS_PORTFOLIO,
     NOTHING_TO_SELL,
 
-    // Something is held, but the sell screen arrives in iteration 11.
-    SELL_LATER,
+    // Sell in the header of a holding at 0 shares (11 decision 2), shown on Holding detail.
+    NOTHING_TO_SELL_IN_HOLDING,
 }
+
+/**
+ * The sell entry as typed (wireframe 10a frame C): the portfolio and ticker chosen with chips (11 decision 1), the
+ * typed text, and the picks as typed, by lot (the lot's buy id), in the order they were made.
+ */
+data class SellForm(
+    val portfolioId: String? = null,
+    val ticker: String? = null,
+    val dateText: String = "",
+    val quantityText: String = "",
+    val totalText: String = "",
+    val picks: Map<String, String> = emptyMap(),
+)
+
+/**
+ * Why a sell was refused, reasons only (D9). The field rules show together, with a refusal per pick; [rule] (K1)
+ * runs with stand-ins whenever the date and total pass, so a field error does not hide a rule (CLAUDE.md pitfall).
+ */
+data class SellRefusals(
+    val tickerMissing: Boolean = false,
+    val date: DateRefusal? = null,
+    val quantity: QuantityError? = null,
+    val total: AmountError? = null,
+    val picks: Map<String, QuantityError> = emptyMap(),
+    val rule: SellRefusal? = null,
+    val save: SaveRefusal? = null,
+)
 
 /** The buy entry as typed (wireframe 10a frame A). The ticker is kept in capitals; the rest as typed. */
 data class BuyForm(
@@ -117,6 +154,12 @@ data class BuyRefusals(
     val check: CheckRefusal? = null,
     val save: SaveRefusal? = null,
 )
+
+/** A sell's total (4.4): as a buy's, except that zero is allowed. */
+internal fun sellTotal(text: String): AmountResult = when (val parsed = Money.parseCents(text)) {
+    is AmountResult.Refused -> if (parsed.reason == AmountError.ZERO) AmountResult.Cents(0L) else parsed
+    is AmountResult.Cents -> parsed
+}
 
 /** The four bottom bar tabs (spec 6, navigation outline). */
 enum class Tab {
@@ -218,6 +261,14 @@ data class AppState(
     val holdingTab: HoldingTab = HoldingTab.TRANSACTIONS,
     // Buy was opened from the holding's header: Back and a save return to it (10 decision 2).
     val buyFromHolding: Boolean = false,
+    val sellForm: SellForm = SellForm(),
+    val sellRefusals: SellRefusals = SellRefusals(),
+    // A date change dropped picks that no longer pass the lot rules (wireframe 10a marker 11); cleared by the next pick.
+    val sellPicksDropped: Boolean = false,
+    // Sell was opened from the holding's header: Back and a save return to it (11 decision 2).
+    val sellFromHolding: Boolean = false,
+    // The sell shown on SELL_REVIEW, as K1 made it at Review.
+    val sellReview: SellResult.Created? = null,
     // Today in New York at the last load or save; holdings and lots are as of this date (4.8).
     val today: LocalDate = LocalDate.MIN,
     // The entry shown on DETAIL; on REVERSAL, the entry being reversed.
@@ -272,6 +323,39 @@ data class AppState(
             val total = Money.parseCents(buyForm.totalText) as? AmountResult.Cents ?: return null
             return Transactions.pricePerShare(total.value, quantity.value)
         }
+
+    /** The tickers [portfolioId] holds with shares as of today, in ticker order. */
+    fun heldTickers(portfolioId: String): List<String> = holdingsOf(portfolioId).filter { it.shares.signum() > 0 }.map { it.ticker }
+
+    /** The tickers the sell's portfolio holds, with shares as of today, in ticker order (11 decision 1). */
+    val sellTickers: List<String> get() = sellForm.portfolioId?.let { heldTickers(it) }.orEmpty()
+
+    /** The sell's lot list (4.4) for its date, or for today while the date is not a whole date. */
+    val sellLotChoices: List<LotChoice>
+        get() {
+            val id = sellForm.portfolioId ?: return emptyList()
+            val ticker = sellForm.ticker ?: return emptyList()
+            val date = DateDigits.toDate(sellForm.dateText) ?: today
+            return Sells.lotChoices(transactions, id, ticker, date, Transactions.nextSeq(entries, transactions))
+        }
+
+    /** The sum of the picks that are valid quantities, for "Picked X of Y shares" (wireframe 10a marker 11). */
+    val sellPicked: BigDecimal
+        get() = sellForm.picks.values
+            .mapNotNull { (Quantity.parse(it) as? QuantityResult.Exact)?.value }
+            .fold(BigDecimal.ZERO) { sum, quantity -> sum + quantity }
+
+    /** Total over quantity (4.4); null until both are valid. A total of 0 gives $0. */
+    val sellPricePerShare: Fraction?
+        get() {
+            val quantity = Quantity.parse(sellForm.quantityText) as? QuantityResult.Exact ?: return null
+            val total = sellTotal(sellForm.totalText) as? AmountResult.Cents ?: return null
+            return Transactions.pricePerShare(total.value, quantity.value)
+        }
+
+    /** The pieces of the reviewed sell, oldest lot first (wireframe 10a frame E). */
+    val sellPieces: List<SoldPiece>
+        get() = sellReview?.let { Sells.pieces(transactions + it.transaction, it.transaction) }.orEmpty()
 
     /**
      * The fields take digits only (YYYYMMDD): any other character is refused at once, eight digits that are no
@@ -382,6 +466,10 @@ class AppViewModel(
                 buyRefusals = BuyRefusals(),
                 holdingTicker = null,
                 buyFromHolding = false,
+                sellRefusals = SellRefusals(),
+                sellPicksDropped = false,
+                sellFromHolding = false,
+                sellReview = null,
             )
         }
     }
@@ -539,6 +627,14 @@ class AppViewModel(
     }
 
     private fun tooManyDigits(text: String): Boolean = DateDigits.isDigits(text) && text.length > DateDigits.LENGTH
+
+    /** A digits-only entry date (Buy and Sell, 09 decision 10): empty, not digits, or not a real date. */
+    private fun digitsDateRefusal(text: String): DateRefusal? = when {
+        text.isEmpty() -> DateRefusal.EMPTY
+        !DateDigits.isDigits(text) -> DateRefusal.NOT_DIGITS
+        DateDigits.toDate(text) == null -> DateRefusal.NOT_A_DATE
+        else -> null
+    }
 
     /** One chip at a time: null for All, or one of the four direct types. Other types are ignored. */
     fun onFilterTypeChange(type: CashType?) {
@@ -929,7 +1025,7 @@ class AppViewModel(
     /** "<" or Android Back: back to the portfolio. */
     fun closeHolding() {
         if (mutableState.value.screen != Screen.HOLDING) return
-        mutableState.update { it.copy(screen = Screen.PORTFOLIO, holdingTicker = null) }
+        mutableState.update { it.copy(screen = Screen.PORTFOLIO, holdingTicker = null, buyNotice = null) }
     }
 
     /** Not saved: the next opening starts on Transactions (view 6). */
@@ -975,14 +1071,314 @@ class AppViewModel(
         openBuy(portfolioId = null)
     }
 
-    /** Sell in the menu: nothing held says so; something held points to a later build until 11 (09 decision 2). */
+    /** Sell in the menu: with no holding that has shares it says so (criterion 24), otherwise the sell entry opens. */
     fun chooseSell() {
         val current = mutableState.value
         if (current.screen != Screen.TABS || current.saving) return
-        val held = current.holdings.any { it.shares.signum() > 0 }
-        mutableState.update {
-            it.copy(buySellMenuOpen = false, buyNotice = if (held) BuyNotice.SELL_LATER else BuyNotice.NOTHING_TO_SELL)
+        if (current.holdings.none { it.shares.signum() > 0 }) {
+            mutableState.update { it.copy(buySellMenuOpen = false, buyNotice = BuyNotice.NOTHING_TO_SELL) }
+            return
         }
+        openSell(portfolioId = null)
+    }
+
+    /**
+     * Sell in the holding's header: the portfolio and ticker chosen; Back and a save return here. At 0 shares it
+     * says so instead (11 decision 2).
+     */
+    fun sellFromHolding() {
+        val current = mutableState.value
+        if (current.screen != Screen.HOLDING || current.saving) return
+        val holding = current.shownHolding ?: return
+        if (holding.shares.signum() == 0) {
+            mutableState.update { it.copy(buyNotice = BuyNotice.NOTHING_TO_SELL_IN_HOLDING) }
+            return
+        }
+        openSell(portfolioId = holding.portfolioId, ticker = holding.ticker)
+    }
+
+    /**
+     * Opens the sell entry. The typed text is kept until a sell is saved; the date is filled with today in New York
+     * only if it is empty. The portfolio is [portfolioId], else the kept one, else the first; the ticker is [ticker],
+     * else the kept one if still held there, else the first held (11 decision 1). Picks are kept only for the same
+     * portfolio and ticker.
+     */
+    private fun openSell(
+        portfolioId: String?,
+        ticker: String? = null,
+    ) = mutableState.update { current ->
+        val form = current.sellForm
+        val kept = form.portfolioId?.takeIf { id -> current.portfolios.any { it.id == id } }
+        val chosen = portfolioId ?: kept ?: current.portfolios.firstOrNull()?.id
+        val held = chosen?.let { current.heldTickers(it) }.orEmpty()
+        val keptTicker = form.ticker?.takeIf { chosen == form.portfolioId && it in held }
+        val chosenTicker = ticker ?: keptTicker ?: held.firstOrNull()
+        val samePlace = chosen == form.portfolioId && chosenTicker == form.ticker
+        val date = form.dateText.ifEmpty { marketDate.today().toString().replace("-", "") }
+        current.copy(
+            screen = Screen.SELL,
+            buySellMenuOpen = false,
+            buyNotice = null,
+            sellForm =
+            form.copy(
+                portfolioId = chosen,
+                ticker = chosenTicker,
+                dateText = date,
+                picks = if (samePlace) form.picks else emptyMap(),
+            ),
+            sellRefusals = SellRefusals(),
+            sellPicksDropped = false,
+            sellFromHolding = ticker != null,
+            sellReview = null,
+        )
+    }
+
+    /** One of the portfolios only. The ticker becomes its first held one, and the picks are cleared. */
+    fun onSellPortfolioChange(id: String) {
+        val current = mutableState.value
+        if (current.portfolios.none { it.id == id }) return
+        mutableState.update {
+            it.copy(
+                sellForm = it.sellForm.copy(portfolioId = id, ticker = it.heldTickers(id).firstOrNull(), picks = emptyMap()),
+                sellRefusals = it.sellRefusals.copy(tickerMissing = false, picks = emptyMap(), rule = null),
+                sellPicksDropped = false,
+            )
+        }
+    }
+
+    /** One of the tickers held in the chosen portfolio only (11 decision 1). The picks are cleared. */
+    fun onSellTickerChange(ticker: String) {
+        if (ticker !in mutableState.value.sellTickers) return
+        mutableState.update {
+            it.copy(
+                sellForm = it.sellForm.copy(ticker = ticker, picks = emptyMap()),
+                sellRefusals = it.sellRefusals.copy(tickerMissing = false, picks = emptyMap(), rule = null),
+                sellPicksDropped = false,
+            )
+        }
+    }
+
+    /**
+     * Digits only, as Buy's date (09 decision 10). Once the date is whole, the lot list follows it and a pick that
+     * no longer passes the lot rules is dropped, with a line (wireframe 10a marker 11).
+     */
+    fun onSellDateChange(text: String) {
+        if (tooManyDigits(text)) return
+        val refusal = if (DateDigits.isDigits(text)) null else DateRefusal.NOT_DIGITS
+        mutableState.update { state ->
+            val dated =
+                state.copy(
+                    sellForm = state.sellForm.copy(dateText = text),
+                    sellRefusals = state.sellRefusals.copy(date = refusal, rule = null),
+                )
+            if (DateDigits.toDate(text) == null) return@update dated
+            val passing = dated.sellLotChoices.filter { it.unavailable == null }.map { it.buyId }.toSet()
+            val kept = dated.sellForm.picks.filterKeys { it in passing }
+            if (kept.size == dated.sellForm.picks.size) {
+                dated
+            } else {
+                dated.copy(sellForm = dated.sellForm.copy(picks = kept), sellPicksDropped = true)
+            }
+        }
+    }
+
+    fun onSellQuantityChange(text: String) = mutableState.update {
+        it.copy(sellForm = it.sellForm.copy(quantityText = text), sellRefusals = it.sellRefusals.copy(quantity = null, rule = null))
+    }
+
+    fun onSellTotalChange(text: String) = mutableState.update {
+        it.copy(sellForm = it.sellForm.copy(totalText = text), sellRefusals = it.sellRefusals.copy(total = null, rule = null))
+    }
+
+    /**
+     * A tap on a lot picks it with its full remainder, as the picker shows it; a second tap unpicks it. A lot that
+     * fails the lot rules, or is not listed, cannot be picked (wireframe 10a marker 10).
+     */
+    fun toggleLot(lotId: String) = mutableState.update { state ->
+        val picks = state.sellForm.picks
+        val next =
+            if (lotId in picks) {
+                picks - lotId
+            } else {
+                val choice = state.sellLotChoices.firstOrNull { it.buyId == lotId && it.unavailable == null } ?: return@update state
+                picks + (lotId to Sells.shown(choice.available).toPlainString())
+            }
+        state.copy(
+            sellForm = state.sellForm.copy(picks = next),
+            sellRefusals = state.sellRefusals.copy(picks = state.sellRefusals.picks - lotId, rule = null),
+            sellPicksDropped = false,
+        )
+    }
+
+    /** A picked lot's quantity, typed for a partial lot. Ignored for a lot that is not picked. */
+    fun onPickChange(
+        lotId: String,
+        text: String,
+    ) {
+        if (lotId !in mutableState.value.sellForm.picks) return
+        mutableState.update {
+            it.copy(
+                sellForm = it.sellForm.copy(picks = it.sellForm.picks + (lotId to text)),
+                sellRefusals = it.sellRefusals.copy(picks = it.sellRefusals.picks - lotId, rule = null),
+                sellPicksDropped = false,
+            )
+        }
+    }
+
+    /** Sell all (4.4): picks every lot that passes, each at its remainder to 8 places, and fills the quantity with their sum. */
+    fun sellAll() = mutableState.update { state ->
+        val picks = Sells.sellAll(state.sellLotChoices)
+        if (picks.isEmpty()) return@update state
+        val quantity = picks.fold(BigDecimal.ZERO) { sum, pick -> sum + pick.quantity }
+        state.copy(
+            sellForm =
+            state.sellForm.copy(
+                picks = picks.associate { it.lotId to it.quantity.toPlainString() },
+                quantityText = quantity.toPlainString(),
+            ),
+            sellRefusals = state.sellRefusals.copy(quantity = null, picks = emptyMap(), rule = null),
+            sellPicksDropped = false,
+        )
+    }
+
+    /** Back from the sell entry to the tab, or to the holding it came from. The typed text is kept. */
+    fun closeSell() {
+        if (mutableState.value.screen != Screen.SELL) return
+        mutableState.update {
+            it.copy(screen = afterSell(it), sellRefusals = SellRefusals(), sellPicksDropped = false, sellFromHolding = false)
+        }
+    }
+
+    // Where the sell entry returns to: the holding it was opened from (11 decision 2), else the tab.
+    private fun afterSell(state: AppState): Screen = if (state.sellFromHolding) Screen.HOLDING else Screen.TABS
+
+    /**
+     * Review (wireframe 10a marker 6): the field rules and, with stand-ins, K1's rules (4.1, 4.2, 4.4) together. No
+     * ticker check: a sell never needs one (4.6). Shows the review only if the save would pass.
+     */
+    fun reviewSell() {
+        val current = mutableState.value
+        if (current.screen != Screen.SELL || current.saving) return
+        val form = current.sellForm
+        val quantity = Quantity.parse(form.quantityText)
+        val pickErrors =
+            form.picks.mapNotNull { (lotId, text) -> (Quantity.parse(text) as? QuantityResult.Refused)?.let { lotId to it.reason } }.toMap()
+        val fieldRefusals =
+            SellRefusals(
+                tickerMissing = form.ticker == null,
+                date = digitsDateRefusal(form.dateText),
+                quantity = (quantity as? QuantityResult.Refused)?.reason,
+                total = (sellTotal(form.totalText) as? AmountResult.Refused)?.reason,
+                picks = pickErrors,
+            )
+        val probe = sellOf(current, PROBE_ID, PROBE_ID, standIns = true)
+        val reason = (probe as? SellResult.Refused)?.reason
+        // A stand-in quantity or a missing pick makes the holding and add-up rules meaningless; the field refusals say why.
+        val standIn = quantity !is QuantityResult.Exact || form.ticker == null
+        val rule =
+            when {
+                reason is SellRefusal.MoreThanHeld && standIn -> null
+                reason is SellRefusal.PicksDoNotAddUp && (standIn || pickErrors.isNotEmpty()) -> null
+                else -> reason
+            }
+        val refusals = fieldRefusals.copy(rule = rule)
+        if (refusals != SellRefusals() || probe !is SellResult.Created) {
+            mutableState.update { it.copy(sellRefusals = refusals) }
+            return
+        }
+        mutableState.update { it.copy(screen = Screen.SELL_REVIEW, sellReview = probe, sellRefusals = SellRefusals()) }
+    }
+
+    /** Back to edit from the sell review. The typed text is kept. */
+    fun backToSell() {
+        val current = mutableState.value
+        if (current.screen != Screen.SELL_REVIEW || current.saving) return
+        mutableState.update { it.copy(screen = Screen.SELL, sellRefusals = SellRefusals(), sellReview = null) }
+    }
+
+    /**
+     * Confirm and save (criterion 30): K1's rules again with real ids, then the sell, its cash line and its
+     * allocations are saved together (open item 14). A rule that fails now returns to the entry with the reason.
+     */
+    fun confirmSell() {
+        val current = mutableState.value
+        if (current.screen != Screen.SELL_REVIEW || current.saving) return
+        val target = store ?: return
+        val created =
+            when (val result = sellOf(current, newId(), newId())) {
+                is SellResult.Created -> result
+
+                is SellResult.Refused -> {
+                    mutableState.update { it.copy(screen = Screen.SELL, sellRefusals = SellRefusals(rule = result.reason), sellReview = null) }
+                    return
+                }
+
+                null -> {
+                    mutableState.update { it.copy(screen = Screen.SELL, sellReview = null) }
+                    return
+                }
+            }
+        mutableState.update { it.copy(saving = true, sellRefusals = SellRefusals()) }
+        viewModelScope.launch {
+            try {
+                target.saveSell(created.transaction, created.cashLine)
+                mutableState.update {
+                    valued(
+                        it.copy(
+                            screen = afterSell(it),
+                            entries = it.entries + created.cashLine,
+                            transactions = it.transactions + created.transaction,
+                            sellForm = SellForm(),
+                            sellRefusals = SellRefusals(),
+                            saving = false,
+                            sellFromHolding = false,
+                            sellReview = null,
+                        ),
+                    )
+                }
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: UnreadableDataException) {
+                mutableState.update { it.copy(screen = Screen.UNREADABLE, saving = false) }
+            } catch (e: Exception) {
+                mutableState.update { it.copy(saving = false, sellRefusals = SellRefusals(save = SaveRefusal.SAVE_FAILED)) }
+            }
+        }
+    }
+
+    /**
+     * K1's sell rules on the typed values; null when the date or total does not parse (the field rules decide then).
+     * Without [standIns] it is also null when the quantity, the ticker or a pick does not parse. With [standIns], a bad
+     * quantity counts as the sum of the valid picks (or 1), a missing ticker as a placeholder, and bad picks are left out.
+     */
+    private fun sellOf(
+        current: AppState,
+        transactionId: String,
+        cashEntryId: String,
+        standIns: Boolean = false,
+    ): SellResult? {
+        val form = current.sellForm
+        val date = DateDigits.toDate(form.dateText) ?: return null
+        val total = sellTotal(form.totalText) as? AmountResult.Cents ?: return null
+        val picks = form.picks.mapNotNull { (lotId, text) -> (Quantity.parse(text) as? QuantityResult.Exact)?.let { Pick(lotId, it.value) } }
+        if (!standIns && picks.size != form.picks.size) return null
+        val picked = picks.fold(BigDecimal.ZERO) { sum, pick -> sum + pick.quantity }
+        val typed = (Quantity.parse(form.quantityText) as? QuantityResult.Exact)?.value
+        val quantity = typed ?: if (standIns) picked.takeIf { it.signum() > 0 } ?: BigDecimal.ONE else return null
+        val ticker = form.ticker ?: if (standIns) PROBE_ID else return null
+        return Sells.sell(
+            cashEntries = current.entries,
+            transactions = current.transactions,
+            portfolios = current.portfolios,
+            transactionId = transactionId,
+            cashEntryId = cashEntryId,
+            portfolioId = form.portfolioId.orEmpty(),
+            ticker = ticker,
+            date = date,
+            quantity = quantity,
+            totalCents = total.value,
+            picks = picks,
+        )
     }
 
     fun dismissBuyNotice() = mutableState.update { it.copy(buyNotice = null) }
@@ -1075,17 +1471,10 @@ class AppViewModel(
         val ticker = TickerCheck.normalize(form.tickerText)
         val quantity = Quantity.parse(form.quantityText)
         val total = Money.parseCents(form.totalText)
-        val dateRefusal =
-            when {
-                form.dateText.isEmpty() -> DateRefusal.EMPTY
-                !DateDigits.isDigits(form.dateText) -> DateRefusal.NOT_DIGITS
-                DateDigits.toDate(form.dateText) == null -> DateRefusal.NOT_A_DATE
-                else -> null
-            }
         val fieldRefusals =
             BuyRefusals(
                 tickerEmpty = ticker == null,
-                date = dateRefusal,
+                date = digitsDateRefusal(form.dateText),
                 quantity = (quantity as? QuantityResult.Refused)?.reason,
                 total = (total as? AmountResult.Refused)?.reason,
             )
@@ -1230,6 +1619,8 @@ class AppViewModel(
                 Screen.BUY,
                 Screen.BUY_REVIEW,
                 Screen.HOLDING,
+                Screen.SELL,
+                Screen.SELL_REVIEW,
             )
     }
 }
