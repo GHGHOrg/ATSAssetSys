@@ -15,6 +15,7 @@ ksp = "2.3.12"
 sqlcipher = "4.19.1"
 androidxSqlite = "2.7.1"
 coroutines = "1.9.0"
+serialization = "1.12.0"
 
 [libraries]
 androidx-biometric = { group = "androidx.biometric", name = "biometric", version.ref = "biometric" }
@@ -38,6 +39,7 @@ androidx-room3-compiler = { group = "androidx.room3", name = "room3-compiler", v
 androidx-sqlite = { group = "androidx.sqlite", name = "sqlite", version.ref = "androidxSqlite" }
 sqlcipher-android = { module = "net.zetetic:sqlcipher-android", version.ref = "sqlcipher" }
 kotlinx-coroutines-test = { group = "org.jetbrains.kotlinx", name = "kotlinx-coroutines-test", version.ref = "coroutines" }
+kotlinx-serialization-json = { group = "org.jetbrains.kotlinx", name = "kotlinx-serialization-json", version.ref = "serialization" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }
