@@ -1,6 +1,7 @@
 package app.ghghorg.atsassets.ui
 
 import androidx.activity.compose.BackHandler
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -24,10 +25,13 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.heading
+import androidx.compose.ui.semantics.onClick
 import androidx.compose.ui.semantics.paneTitle
+import androidx.compose.ui.semantics.role
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
@@ -91,7 +95,7 @@ fun PortfolioScreen(
                     Column(modifier = Modifier.padding(12.dp)) {
                         holdings.forEachIndexed { index, holding ->
                             if (index > 0) HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
-                            HoldingRow(holding)
+                            HoldingRow(holding) { actions.onOpenHolding(holding.ticker) }
                         }
                     }
                 }
@@ -107,6 +111,7 @@ class PortfolioScreenActions(
     val onOpenMenu: () -> Unit,
     val onCloseMenu: () -> Unit,
     val onRename: () -> Unit,
+    val onOpenHolding: (String) -> Unit,
 )
 
 @Composable
@@ -187,16 +192,30 @@ private fun SummaryLine(
 
 /**
  * A holding (wireframe 3 marker 5, format of marker 6): ticker and shares, the value at cost and "no price, at cost"
- * in place of a gain/loss (4.8). Read by TalkBack as one sentence. Not tappable until Holding detail (10).
+ * in place of a gain/loss (4.8). One tap target opening Holding detail (iteration 10), read by TalkBack as one button.
  */
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
-private fun HoldingRow(holding: Holding) {
+private fun HoldingRow(
+    holding: Holding,
+    onOpen: () -> Unit,
+) {
     val shares = sharesText(holding.shares)
     val value = Money.format(holding.cost)
     val spoken = stringResource(R.string.holding_row_spoken, holding.ticker, shares, value.substringAfter('$'))
     FlowRow(
-        modifier = Modifier.fillMaxWidth().clearAndSetSemantics { contentDescription = spoken },
+        modifier =
+        Modifier
+            .fillMaxWidth()
+            .clickable(role = Role.Button, onClick = onOpen)
+            .clearAndSetSemantics {
+                contentDescription = spoken
+                role = Role.Button
+                onClick {
+                    onOpen()
+                    true
+                }
+            },
         horizontalArrangement = Arrangement.spacedBy(12.dp),
         verticalArrangement = Arrangement.spacedBy(2.dp),
     ) {

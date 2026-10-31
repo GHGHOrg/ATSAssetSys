@@ -68,7 +68,10 @@ None planned; no new library and no network.
 - "Shares"*, "Cost"*, "Unrealized gain/loss"* (existing), "no price, at cost"* (09), "Buy"* (09), "Transactions"*, "Lots"*, "No lots with shares"* (format only in 10).
 - Transaction row as wireframe 06 frame A: "Buy, 2026-10-31 ET", "10 shares", "$1,500.00"*.
 - Lot row as frame B: "2026-10-31 ET", "10 left, $150.00 per share", the lot cost, and "no price" in place of the gain/loss*.
-- To ask in step 4 before use: the header's layout and labels, the TalkBack sentences of the header, the tabs and both rows, and any line not given above.
+- Approved in step 4 (2026-10-31):
+  - Wording 1 (option A): the header shows the portfolio, the value, "Shares", "Cost" and "Unrealized gain/loss" with "no price, at cost" as its value; TalkBack "AAPL in Main, value 1,500.00 dollars, 10 shares, cost 1,500.00 dollars, unrealized gain/loss: no price, at cost".
+  - Wording 2 (your change, option B): a transaction is one line, date first, separated by spaces only: "2026-10-31 ET   Buy   10 shares   $1,500.00"; the amount wraps below at the largest font; TalkBack "2026-10-31 Eastern Time, buy, 10 shares, 1,500.00 dollars". The tabs read as Android's own tabs. A lot: "2026-10-31 ET", "10 left, $150.00 per share", the lot cost and "no price"; TalkBack "Lot of 2026-10-31 Eastern Time, 10 left, 150.00 dollars per share, cost 1,500.00 dollars, no price".
+  - Wording 3 (option A): a holdings row on a portfolio's screen reads as in 09, now as a button; Buy in the header reads "Buy AAPL in Main" for TalkBack.
 
 ## 12. Status and notes
 Approved 2026-10-31. Not built.

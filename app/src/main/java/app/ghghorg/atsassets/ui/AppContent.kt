@@ -133,6 +133,17 @@ private fun BarContent(
                 onOpenMenu = viewModel::openPortfolioMenu,
                 onCloseMenu = viewModel::closePortfolioMenu,
                 onRename = viewModel::openRename,
+                onOpenHolding = viewModel::openHolding,
+            ),
+        )
+
+        Screen.HOLDING -> HoldingDetailScreen(
+            state = state,
+            actions =
+            HoldingActions(
+                onBack = viewModel::closeHolding,
+                onTab = viewModel::selectHoldingTab,
+                onBuy = viewModel::buyFromHolding,
             ),
         )
 
