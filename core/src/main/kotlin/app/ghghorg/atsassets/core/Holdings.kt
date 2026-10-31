@@ -16,7 +16,10 @@ data class Lot(
     val originalQuantity: BigDecimal,
     val remainingQuantity: Fraction,
     val cost: Fraction,
-)
+) {
+    /** Lot cost over the shares left, exact (spec 3, 4.10); rounded only when shown. */
+    val costPerShare: Fraction get() = cost / remainingQuantity
+}
 
 /** A holding: a ticker within a portfolio (spec section 3), with the shares and cost of its lots (4.8). */
 data class Holding(
@@ -47,6 +50,26 @@ object Holdings {
                 cost = Fraction.ofCents(buy.totalCents),
             )
         }
+
+    /**
+     * One holding's transactions for Holding detail (view 6): newest first, and on a shared date the later entry first,
+     * as the Cash list (view 7). Entries dated after today are listed too: a history shows everything.
+     */
+    fun transactionsOf(
+        transactions: List<Transaction>,
+        portfolioId: String,
+        ticker: String,
+    ): List<Transaction> = transactions
+        .filter { it.portfolioId == portfolioId && it.ticker == ticker }
+        .sortedWith(compareByDescending<Transaction> { it.date }.thenByDescending { it.enteredSeq })
+
+    /** One holding's lots as of [asOf], oldest first (4.4, view 6). */
+    fun lotsOf(
+        transactions: List<Transaction>,
+        portfolioId: String,
+        ticker: String,
+        asOf: LocalDate,
+    ): List<Lot> = lots(transactions, asOf).filter { it.portfolioId == portfolioId && it.ticker == ticker }
 
     /** One holding per portfolio and ticker, with the sums of its lots; by portfolio id, then in ticker order. */
     fun holdings(
