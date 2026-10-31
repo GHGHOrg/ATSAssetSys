@@ -2,6 +2,8 @@ package app.ghghorg.atsassets.ui
 
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
@@ -20,8 +22,13 @@ import androidx.compose.material3.Tab
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.contentDescription
@@ -59,7 +66,41 @@ fun HoldingDetailScreen(
     val holding = state.shownHolding ?: return
     val portfolio = state.shownPortfolio?.name.orEmpty()
     BackHandler(onBack = actions.onBack)
-    Column(modifier = modifier.fillMaxSize()) {
+    // The fixed part stays in place while it takes at most half the height (view 6); taller, as at the largest font,
+    // the whole screen scrolls as one so the list is not hidden (criterion 39; defect found in 10 phone check 6a).
+    BoxWithConstraints(modifier = modifier.fillMaxSize()) {
+        val limit = constraints.maxHeight / 2
+        var fixedHeight by remember { mutableIntStateOf(0) }
+        val fixedPart: @Composable () -> Unit = {
+            FixedPart(state, holding, portfolio, actions, Modifier.onSizeChanged { fixedHeight = it.height })
+        }
+        val list: @Composable () -> Unit = { TabContent(state, Modifier.fillMaxWidth().padding(16.dp)) }
+        if (fixedHeight > limit) {
+            Column(modifier = Modifier.fillMaxSize().verticalScroll(rememberScrollState())) {
+                fixedPart()
+                list()
+            }
+        } else {
+            Column(modifier = Modifier.fillMaxSize()) {
+                fixedPart()
+                Box(modifier = Modifier.weight(1f).verticalScroll(rememberScrollState())) {
+                    list()
+                }
+            }
+        }
+    }
+}
+
+/** "<" and the ticker, the header, Buy and the tabs: the part that stays in place when it fits (view 6). */
+@Composable
+private fun FixedPart(
+    state: AppState,
+    holding: Holding,
+    portfolio: String,
+    actions: HoldingActions,
+    modifier: Modifier,
+) {
+    Column(modifier = modifier.fillMaxWidth()) {
         Column(
             modifier = Modifier.fillMaxWidth().padding(start = 16.dp, end = 16.dp, top = 16.dp),
             verticalArrangement = Arrangement.spacedBy(8.dp),
@@ -81,18 +122,24 @@ fun HoldingDetailScreen(
                 )
             }
         }
-        Column(
-            modifier = Modifier.weight(1f).fillMaxWidth().verticalScroll(rememberScrollState()).padding(16.dp),
-        ) {
-            when (state.holdingTab) {
-                HoldingTab.TRANSACTIONS -> RowList(state.holdingTransactions) { TransactionRow(it) }
+    }
+}
 
-                HoldingTab.LOTS -> {
-                    if (state.holdingLots.isEmpty()) {
-                        Text(text = stringResource(R.string.holding_no_lots), style = MaterialTheme.typography.bodyLarge)
-                    } else {
-                        RowList(state.holdingLots) { LotRow(it) }
-                    }
+/** The selected tab's rows. */
+@Composable
+private fun TabContent(
+    state: AppState,
+    modifier: Modifier,
+) {
+    Column(modifier = modifier) {
+        when (state.holdingTab) {
+            HoldingTab.TRANSACTIONS -> RowList(state.holdingTransactions) { TransactionRow(it) }
+
+            HoldingTab.LOTS -> {
+                if (state.holdingLots.isEmpty()) {
+                    Text(text = stringResource(R.string.holding_no_lots), style = MaterialTheme.typography.bodyLarge)
+                } else {
+                    RowList(state.holdingLots) { LotRow(it) }
                 }
             }
         }
