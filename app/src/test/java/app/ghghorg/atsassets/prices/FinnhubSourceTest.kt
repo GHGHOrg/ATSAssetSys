@@ -118,6 +118,97 @@ class FinnhubSourceTest {
         assertTrue(connection.disconnected)
     }
 
+    /**
+     * The API on finnhub.io answers [first]; any other URL gets [second]. Records every URL opened. Finnhub sends the
+     * list as a redirect to a signed link on static2.finnhub.io (defect found in 09 phone check 3).
+     */
+    private class TwoHops(
+        val first: FakeConnection,
+        val second: FakeConnection = FakeConnection(200, US_LIST),
+    ) {
+        val opened = mutableListOf<String>()
+        val source =
+            FinnhubSource("test-key") { url ->
+                opened.add(url.toString())
+                if (url.host == "finnhub.io" && url.path.startsWith("/api/")) first else second
+            }
+    }
+
+    private val signedLink = "https://static2.finnhub.io/file/privatedatany2/exchange/USf.json?Authorization=signed"
+
+    @Test
+    fun lookUp_aRedirectToFinnhubsFileHost_isFollowedOnce_withoutTheKey() = runTest {
+        val hops = TwoHops(FakeConnection(302, "", location = signedLink))
+        assertEquals(Lookup.Found(Listing("ETP", "ARCX", "USD")), hops.source.lookUp("SPY"))
+        assertEquals(listOf("https://finnhub.io/api/v1/stock/symbol?exchange=US", signedLink), hops.opened)
+        assertEquals("test-key", hops.first.getRequestProperty("X-Finnhub-Token"))
+        assertEquals(null, hops.second.getRequestProperty("X-Finnhub-Token"))
+        assertFalse(hops.second.instanceFollowRedirects)
+        assertTrue(hops.second.connectTimeout > 0)
+        assertTrue(hops.second.readTimeout > 0)
+        assertTrue(hops.first.disconnected)
+        assertTrue(hops.second.disconnected)
+    }
+
+    @Test
+    fun lookUp_everyRedirectStatus_isFollowed() = runTest {
+        for (code in listOf(301, 302, 303, 307, 308)) {
+            val hops = TwoHops(FakeConnection(code, "", location = signedLink))
+            assertEquals(code.toString(), Lookup.Found(Listing("ETP", "ARCX", "USD")), hops.source.lookUp("SPY"))
+        }
+    }
+
+    @Test
+    fun lookUp_aRelativeRedirect_staysOnFinnhub_andIsFollowed() = runTest {
+        val hops = TwoHops(FakeConnection(302, "", location = "/file/USf.json"))
+        assertEquals(Lookup.Found(Listing("ETP", "ARCX", "USD")), hops.source.lookUp("SPY"))
+        assertEquals("https://finnhub.io/file/USf.json", hops.opened[1])
+    }
+
+    @Test
+    fun lookUp_aRedirectAwayFromFinnhubOrHttps_isNotFollowed() = runTest {
+        val targets =
+            listOf(
+                "http://static2.finnhub.io/file/USf.json",
+                "https://example.com/USf.json",
+                "https://notfinnhub.io/USf.json",
+                "https://finnhub.io.example.com/USf.json",
+                "ftp://static2.finnhub.io/USf.json",
+            )
+        for (target in targets) {
+            val hops = TwoHops(FakeConnection(302, "", location = target))
+            assertEquals(target, Lookup.NoAnswer(302), hops.source.lookUp("SPY"))
+            assertEquals(target, 1, hops.opened.size)
+            assertTrue(hops.first.disconnected)
+        }
+    }
+
+    @Test
+    fun lookUp_aRedirectWithoutALocation_isNoAnswer() = runTest {
+        val hops = TwoHops(FakeConnection(302, ""))
+        assertEquals(Lookup.NoAnswer(302), hops.source.lookUp("SPY"))
+        assertEquals(1, hops.opened.size)
+    }
+
+    @Test
+    fun lookUp_aSecondRedirect_isNotFollowed() = runTest {
+        val hops = TwoHops(FakeConnection(302, "", location = signedLink), FakeConnection(302, "", location = signedLink))
+        assertEquals(Lookup.NoAnswer(302), hops.source.lookUp("SPY"))
+        assertEquals(2, hops.opened.size)
+        assertTrue(hops.second.disconnected)
+    }
+
+    @Test
+    fun lookUp_theSecondHopFailing_givesItsOwnOutcome() = runTest {
+        val expired = TwoHops(FakeConnection(302, "", location = signedLink), FakeConnection(403, "denied"))
+        assertEquals(Lookup.NoAnswer(403), expired.source.lookUp("SPY"))
+        val lost = TwoHops(FakeConnection(302, "", location = signedLink), FakeConnection(200, US_LIST, failure = IOException("reset")))
+        assertEquals(Lookup.NoAnswer(null), lost.source.lookUp("SPY"))
+        assertTrue(lost.second.disconnected)
+        val garbled = TwoHops(FakeConnection(302, "", location = signedLink), FakeConnection(200, "<html>"))
+        assertEquals(Lookup.Unreadable, garbled.source.lookUp("SPY"))
+    }
+
     @Test
     fun lookUp_status200WithABodyThatIsNotTheList_isUnreadable() = runTest {
         for (body in listOf("""{"error":"Invalid API key"}""", "[{\"symbol\":", "<html>", "[1, 2]")) {
@@ -133,7 +224,10 @@ private class FakeConnection(
     private val code: Int,
     private val body: String,
     private val failure: IOException? = null,
+    private val location: String? = null,
 ) : HttpURLConnection(URL("https://example.invalid/")) {
+    override fun getHeaderField(name: String?): String? = if (name.equals("Location", ignoreCase = true)) location else null
+
     lateinit var opened: URL
     var disconnected = false
 

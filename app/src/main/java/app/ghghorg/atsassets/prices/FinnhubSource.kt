@@ -15,7 +15,9 @@ import kotlinx.serialization.json.decodeToSequence
 import java.io.IOException
 import java.io.InputStream
 import java.net.HttpURLConnection
+import java.net.MalformedURLException
 import java.net.URL
+import java.util.Locale
 
 /** Reads Finnhub's US symbol list one row at a time, so the whole list (7.4 MB on 2026-10-31) is never held at once. */
 object FinnhubList {
@@ -42,8 +44,10 @@ object FinnhubList {
 
 /**
  * K4 on Finnhub, verify only (spec 7; spike decisions 3 and 5; 09 decisions 4, 5 and 8). The key goes in the
- * X-Finnhub-Token header only, never in the URL. Nothing is logged: no ticker, no key, no response (spec section 9).
- * Redirects are not followed, so the key is sent to finnhub.io only.
+ * X-Finnhub-Token header only, never in the URL. Nothing is logged: no ticker, no key, no response, no link (spec
+ * section 9). Finnhub answers the list with a redirect to a signed link on its file host (static2.finnhub.io; defect
+ * found in 09 phone check 3). That one redirect is followed by hand, only over https to finnhub.io or a subdomain,
+ * and without the key, which only finnhub.io itself receives. No further redirect is followed.
  */
 class FinnhubSource(
     private val key: String,
@@ -55,25 +59,55 @@ class FinnhubSource(
     }
 
     private fun fetch(ticker: String): Lookup {
-        var connection: HttpURLConnection? = null
+        var api: HttpURLConnection? = null
+        var file: HttpURLConnection? = null
         return try {
-            connection = open(US_LIST)
-            connection.requestMethod = "GET"
-            connection.connectTimeout = CONNECT_TIMEOUT_MS
-            connection.readTimeout = READ_TIMEOUT_MS
-            connection.instanceFollowRedirects = false
-            connection.setRequestProperty("X-Finnhub-Token", key)
-            when (val status = connection.responseCode) {
-                HttpURLConnection.HTTP_OK -> read(connection, ticker)
+            api = prepared(US_LIST)
+            api.setRequestProperty("X-Finnhub-Token", key)
+            when (val status = api.responseCode) {
+                HttpURLConnection.HTTP_OK -> read(api, ticker)
+
                 HttpURLConnection.HTTP_UNAUTHORIZED, HttpURLConnection.HTTP_FORBIDDEN -> Lookup.KeyRefused(status)
+
                 TOO_MANY_REQUESTS -> Lookup.TooManyCalls
+
+                in REDIRECTS -> {
+                    val target = fileLink(api) ?: return Lookup.NoAnswer(status)
+                    file = prepared(target)
+                    val fileStatus = file.responseCode
+                    if (fileStatus == HttpURLConnection.HTTP_OK) read(file, ticker) else Lookup.NoAnswer(fileStatus)
+                }
+
                 else -> Lookup.NoAnswer(status)
             }
         } catch (e: IOException) {
             Lookup.NoAnswer(status = null)
         } finally {
-            connection?.disconnect()
+            api?.disconnect()
+            file?.disconnect()
         }
+    }
+
+    /** A GET with both timeouts, following no redirect by itself. */
+    private fun prepared(url: URL): HttpURLConnection = open(url).apply {
+        requestMethod = "GET"
+        connectTimeout = CONNECT_TIMEOUT_MS
+        readTimeout = READ_TIMEOUT_MS
+        instanceFollowRedirects = false
+    }
+
+    /** The redirect's target when it is https on finnhub.io or one of its subdomains; null otherwise. */
+    private fun fileLink(connection: HttpURLConnection): URL? {
+        val location = connection.getHeaderField("Location") ?: return null
+        val target =
+            try {
+                URL(US_LIST, location)
+            } catch (e: MalformedURLException) {
+                return null
+            }
+        val host = target.host.lowercase(Locale.ROOT)
+        val onFinnhub = host == FINNHUB_HOST || host.endsWith(".$FINNHUB_HOST")
+        return if (target.protocol == "https" && onFinnhub) target else null
     }
 
     /**
@@ -98,5 +132,7 @@ class FinnhubSource(
         const val CONNECT_TIMEOUT_MS = 15_000
         const val READ_TIMEOUT_MS = 30_000
         const val TOO_MANY_REQUESTS = 429
+        const val FINNHUB_HOST = "finnhub.io"
+        val REDIRECTS = setOf(301, 302, 303, 307, 308)
     }
 }
