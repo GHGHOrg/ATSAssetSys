@@ -1,6 +1,6 @@
 # plan/iterations/10-holding-detail.md
 
-Stage: Build. Status: approved 2026-10-31 with decisions 1 to 5 (section 10); not built. Branch iter-10-holding-detail.
+Stage: Build. Status: built on branch iter-10-holding-detail (steps 1 to 6 and one fix, commits e6c128a to fb2d270) and checked on the phone 2026-10-31, all checks yes (section 13). Decisions 1 to 5 settled (section 10). Sections 1 to 12 were written before the build; where the build differs, section 14 says so.
 Source: plan/plan.md section 4 (row 10), intent/intent.md v52 (final), spec/spec.md v4 (final). "My reading" is an interpretation, not a test.
 
 ## 1. Outcome
@@ -74,4 +74,31 @@ None planned; no new library and no network.
   - Wording 3 (option A): a holdings row on a portfolio's screen reads as in 09, now as a button; Buy in the header reads "Buy AAPL in Main" for TalkBack.
 
 ## 12. Status and notes
-Approved 2026-10-31. Not built.
+Built 2026-10-31; phone checks 2026-10-31, all yes after one fix (section 14, item 1). Pull request not yet opened.
+
+## 13. Build results
+### 13.1 Commits
+Newest first: fb2d270 fix, 6052132 step 5, bcc3818 step 4, 1d83224 step 3, 44d90e9 step 2, e6c128a step 1 with this file. main was c372de8.
+
+### 13.2 Local run
+On fb2d270's code (2026-10-31, all with --rerun-tasks): spotlessCheck green; debug build green, no compiler warnings; 402 tests, 0 failures (Balance 11, CashAccount 20, CashEntriesReverse 12, CashEntries 27, Fraction 9, Holdings 12, MarketDate 10, Money 19, OpeningBalance 9, Portfolios 23, Quantity 10, TickerCheck 16, Transactions 18, RowMapping 3, AppLock 12, FinnhubSource 18, TickerVerifier 6, AppViewModel 120, BuyFlow 29, DateDigits 7, HoldingDetailFlow 11); lint: the same 3 listed findings, none silenced (AndroidGradlePluginVersion at libs.versions.toml:2, open item 31; NewerVersionAvailable at :17; TypographyDashes on date_not_a_date, strings.xml:86). Release build on 6052132's code green (R8 ran; unsigned; this time Gradle printed no "Unable to strip" message, probably a reused task result, not checked); the fix was not rebuilt as release. Debug APK versionCode 10 (aapt2).
+
+### 13.3 Phone results (Android 17, debug build versionCode 10, your reports)
+Checks 1 to 6 all yes; 6a after the fix. Notes:
+- 1: installed over the 09 build (adb install -r, lastUpdateTime 16:01:30, firstInstallTime 2026-10-29 10:44:04 unchanged); net worth, cash entries, the AAPL and SPY buys, both portfolios and Main's holdings as before (criterion 35).
+- 2: the AAPL row opened Holding detail: "< AAPL", the header Main, $1,500.00, Shares 10, Cost $1,500.00, "no price, at cost", Buy, the Transactions and Lots tabs on Transactions, and one line "2026-10-31 ET   Buy   10 shares   $1,500.00" that opens nothing.
+- 3: Lots showed one lot, "2026-10-31 ET", "10 left, $150.00 per share", $1,500.00, "no price"; the header stayed in place.
+- 4: Buy from the header filled in AAPL and Main; "<" returned to the holding; a buy of 1 share saved from there returned to the holding with 11 shares and $1,650.00, the new transaction first and the original lot first.
+- 5: "<" and Back returned to Main; reopening started on Transactions; the Cash tab left the holding; an unlock kept it.
+- 6a: failed on the first build: at the largest font the fixed part (title, header, Buy, tabs) filled the screen and no list could be seen (section 14, item 1). After the fix (installed 16:19:51) the whole screen scrolled at the largest font and in landscape, with the rows below the tabs; in portrait at the normal font the header stayed in place (the list had too few rows to scroll).
+- 6b, 6c: light and dark readable with the tab kept; TalkBack read the holdings row as a button, "<" as Back, the header, "Buy AAPL in Main", the tabs, a transaction and a lot as section 11.
+- The phone now also holds a second AAPL buy in Main (1 share, check 4).
+
+### 13.4 Not run or not checked
+CI and the pull request; open item 33 (34); the release APK on a device (unsigned, open item 4); a release build of the fix; a list long enough to scroll under the fixed header in portrait (too few rows); contrast measurement (by eye only); Compose UI tests (none in the project).
+
+## 14. Departures from the plan
+1. Defect found in phone check 6a (the risk of section 7): at the largest font the fixed part filled the screen and hid the list. View 6 and wireframe 06 keep the header in place, while criterion 39 asks that nothing be hidden and screens scroll instead; both cannot hold there. Fixed on your decision (A): the fixed part stays in place while it takes at most half the screen's height, and when it is taller the whole screen scrolls as one (fb2d270). In landscape it is taller too, so the screen scrolls as one there as well, which you accepted (A). No failing test was written first: the defect lives in on-device layout, which a JVM test cannot reproduce, and the project has no device UI tests (as in 08); the recheck on the phone is the proof.
+2. core/ gained Holdings.transactionsOf and lotsOf and Lot.costPerShare (step 2); AppState keeps today, so lots are counted as of the same date as the holdings.
+3. AppContent's bar-screen branch became else (step 3), so the list of screens no longer passes 140 characters.
+4. The transaction row is one line, date first, separated by spaces only (your change in step 4, wording 2); the plan had the wireframe's two lines.
