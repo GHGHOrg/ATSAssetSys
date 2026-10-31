@@ -49,6 +49,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import java.math.BigDecimal
 import java.time.Clock
 import java.time.LocalDate
 import java.util.Locale
@@ -1008,18 +1009,15 @@ class AppViewModel(
                 quantity = (quantity as? QuantityResult.Refused)?.reason,
                 total = (total as? AmountResult.Refused)?.reason,
             )
-        if (fieldRefusals != BuyRefusals()) {
-            mutableState.update { it.copy(buyRefusals = fieldRefusals) }
+        // K1's rules with stand-ins for a bad ticker or quantity, so a field error does not hide the cash or date rule
+        // (defect found in phone check 7; CLAUDE.md pitfall from 04 and 05). Null when the date or total is bad.
+        val probe = buyOf(current, PROBE_ID, PROBE_ID, standIns = true)
+        val refusals = fieldRefusals.copy(rule = (probe as? BuyResult.Refused)?.reason)
+        if (refusals != BuyRefusals()) {
+            mutableState.update { it.copy(buyRefusals = refusals) }
             return
         }
         val checked = ticker ?: return
-        val probe = buyOf(current, PROBE_ID, PROBE_ID)
-        if (probe !is BuyResult.Created) {
-            // Null only without a chosen portfolio, which K1 refuses the same way as an unknown one.
-            val rule = (probe as? BuyResult.Refused)?.reason ?: BuyRefusal.PortfolioNotFound
-            mutableState.update { it.copy(buyRefusals = BuyRefusals(rule = rule)) }
-            return
-        }
         mutableState.update { it.copy(checking = true, buyRefusals = BuyRefusals()) }
         viewModelScope.launch {
             try {
@@ -1099,26 +1097,33 @@ class AppViewModel(
         }
     }
 
-    /** K1's buy rules on the typed values; null when a field does not parse (the field rules decide then). */
+    /**
+     * K1's buy rules on the typed values; null when the date or total does not parse (the field rules decide then).
+     * With [standIns], a bad quantity counts as 1 and an empty ticker as a placeholder, so the cash and date rules,
+     * which need neither, are still judged. A missing portfolio is refused by K1 as an unknown one.
+     */
     private fun buyOf(
         current: AppState,
         transactionId: String,
         cashEntryId: String,
+        standIns: Boolean = false,
     ): BuyResult? {
         val form = current.buyForm
         val date = DateDigits.toDate(form.dateText) ?: return null
-        val quantity = Quantity.parse(form.quantityText) as? QuantityResult.Exact ?: return null
         val total = Money.parseCents(form.totalText) as? AmountResult.Cents ?: return null
+        val typed = (Quantity.parse(form.quantityText) as? QuantityResult.Exact)?.value
+        val quantity = typed ?: if (standIns) BigDecimal.ONE else return null
+        val ticker = if (standIns && form.tickerText.isBlank()) PROBE_ID else form.tickerText
         return Transactions.buy(
             cashEntries = current.entries,
             transactions = current.transactions,
             portfolios = current.portfolios,
             transactionId = transactionId,
             cashEntryId = cashEntryId,
-            portfolioId = form.portfolioId ?: return null,
-            ticker = form.tickerText,
+            portfolioId = form.portfolioId.orEmpty(),
+            ticker = ticker,
             date = date,
-            quantity = quantity.value,
+            quantity = quantity,
             totalCents = total.value,
         )
     }

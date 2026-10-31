@@ -246,6 +246,42 @@ class BuyFlowTest {
         assertEquals(emptyList<String>(), source.asked)
     }
 
+    // Defect found in 09 phone check 7: quantity 0 hid the cash rule. K1's rules run with stand-ins for the fields
+    // they do not need, so every refusal shows together (CLAUDE.md pitfall from 04 and 05).
+    @Test
+    fun review_aFieldErrorAndTheCashRule_showTogether() {
+        val source = FakeSource(answer = Lookup.Found(aaplListing))
+        val vm = started(storeWithCash(cents = 100_000L), source = source)
+        vm.chooseBuy()
+        vm.fillBuy(quantity = "0", total = "1500.00")
+        vm.reviewBuy()
+        val state = vm.state.value
+        assertEquals(QuantityError.ZERO, state.buyRefusals.quantity)
+        assertEquals(BuyRefusal.NegativeCash(LocalDate.of(2026, 2, 1), 50_000L), state.buyRefusals.rule)
+        assertEquals(Screen.BUY, state.screen)
+        assertEquals(emptyList<String>(), source.asked)
+    }
+
+    @Test
+    fun review_anEmptyTickerAndTheCashRule_showTogether() {
+        val vm = started(storeWithCash(cents = 100_000L))
+        vm.chooseBuy()
+        vm.fillBuy(ticker = "", total = "1500.00")
+        vm.reviewBuy()
+        assertTrue(vm.state.value.buyRefusals.tickerEmpty)
+        assertEquals(BuyRefusal.NegativeCash(LocalDate.of(2026, 2, 1), 50_000L), vm.state.value.buyRefusals.rule)
+    }
+
+    @Test
+    fun review_aBadQuantityAndADateBeforeTheOpeningBalance_showTogether() {
+        val vm = started(storeWithCash())
+        vm.chooseBuy()
+        vm.fillBuy(date = "20251231", quantity = "1.123456789")
+        vm.reviewBuy()
+        assertEquals(QuantityError.TOO_MANY_DECIMALS, vm.state.value.buyRefusals.quantity)
+        assertEquals(BuyRefusal.BeforeOpeningBalance(LocalDate.of(2026, 1, 1)), vm.state.value.buyRefusals.rule)
+    }
+
     @Test
     fun review_aBuyOverTheCash_isRefusedByTheRules_beforeAnyLookup() {
         val source = FakeSource(answer = Lookup.Found(aaplListing))
