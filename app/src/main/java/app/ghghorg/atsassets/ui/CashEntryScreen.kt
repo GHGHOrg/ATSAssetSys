@@ -23,6 +23,7 @@ import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.contentDescription
@@ -249,9 +250,10 @@ internal fun ReviewRow(
     bold: Boolean = false,
     alignStart: Boolean = false,
     spoken: String? = null,
+    color: Color? = null,
 ) {
     val valueColor =
-        if (muted) MaterialTheme.colorScheme.onSurfaceVariant else MaterialTheme.colorScheme.onSurface
+        color ?: if (muted) MaterialTheme.colorScheme.onSurfaceVariant else MaterialTheme.colorScheme.onSurface
     val reading = if (spoken == null) Modifier else Modifier.clearAndSetSemantics { contentDescription = spoken }
     FlowRow(
         modifier = Modifier.fillMaxWidth().then(reading),

@@ -30,9 +30,11 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.LiveRegionMode
 import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.heading
+import androidx.compose.ui.semantics.liveRegion
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -44,12 +46,14 @@ import app.ghghorg.atsassets.core.Lot
 import app.ghghorg.atsassets.core.Money
 import app.ghghorg.atsassets.core.Quantity
 import app.ghghorg.atsassets.core.Transaction
+import app.ghghorg.atsassets.core.TransactionType
 
 /** Holding detail's callbacks, passed together. */
 class HoldingActions(
     val onBack: () -> Unit,
     val onTab: (HoldingTab) -> Unit,
     val onBuy: () -> Unit,
+    val onSell: () -> Unit,
 )
 
 /**
@@ -108,8 +112,22 @@ private fun FixedPart(
             TitleRow(holding.ticker, actions.onBack)
             Header(holding, portfolio)
             val buySpoken = stringResource(R.string.holding_buy_spoken, holding.ticker, portfolio)
-            OutlinedButton(onClick = actions.onBuy, modifier = Modifier.semantics { contentDescription = buySpoken }) {
-                Text(text = stringResource(R.string.buy_button))
+            val sellSpoken = stringResource(R.string.holding_sell_spoken, holding.ticker, portfolio)
+            FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                OutlinedButton(onClick = actions.onBuy, modifier = Modifier.semantics { contentDescription = buySpoken }) {
+                    Text(text = stringResource(R.string.buy_button))
+                }
+                OutlinedButton(onClick = actions.onSell, modifier = Modifier.semantics { contentDescription = sellSpoken }) {
+                    Text(text = stringResource(R.string.sell_button))
+                }
+            }
+            // Sell at 0 shares (11 decision 2, wording 4): read once, gone when the holding is left.
+            if (state.buyNotice == BuyNotice.NOTHING_TO_SELL_IN_HOLDING) {
+                Text(
+                    text = stringResource(R.string.holding_nothing_to_sell, portfolio, holding.ticker),
+                    style = MaterialTheme.typography.bodyMedium,
+                    modifier = Modifier.semantics { liveRegion = LiveRegionMode.Polite },
+                )
             }
         }
         val tabs = listOf(HoldingTab.TRANSACTIONS, HoldingTab.LOTS)
@@ -180,15 +198,30 @@ private fun Header(
     portfolio: String,
 ) {
     val value = Money.format(holding.cost)
+    // Sold out: plain zeros, no "no price" flag (11 wording 4).
+    val soldOut = holding.shares.signum() == 0
+    val gain = Money.format(Fraction.ZERO)
     val spoken =
-        stringResource(
-            R.string.holding_header_spoken,
-            holding.ticker,
-            portfolio,
-            value.substringAfter('$'),
-            sharesText(holding.shares),
-            value.substringAfter('$'),
-        )
+        if (soldOut) {
+            stringResource(
+                R.string.holding_header_sold_out_spoken,
+                holding.ticker,
+                portfolio,
+                value.substringAfter('$'),
+                sharesText(holding.shares),
+                value.substringAfter('$'),
+                gain.substringAfter('$'),
+            )
+        } else {
+            stringResource(
+                R.string.holding_header_spoken,
+                holding.ticker,
+                portfolio,
+                value.substringAfter('$'),
+                sharesText(holding.shares),
+                value.substringAfter('$'),
+            )
+        }
     OutlinedCard(modifier = Modifier.fillMaxWidth().clearAndSetSemantics { contentDescription = spoken }) {
         Column(
             modifier = Modifier.fillMaxWidth().padding(12.dp),
@@ -202,7 +235,7 @@ private fun Header(
             Text(text = value, style = MaterialTheme.typography.headlineSmall)
             HeaderLine(stringResource(R.string.holding_shares_label), Quantity.format(holding.shares))
             HeaderLine(stringResource(R.string.portfolio_cost_label), value)
-            HeaderLine(stringResource(R.string.portfolio_unrealized_label), stringResource(R.string.holding_no_price))
+            HeaderLine(stringResource(R.string.portfolio_unrealized_label), if (soldOut) gain else stringResource(R.string.holding_no_price))
         }
     }
 }
@@ -239,8 +272,9 @@ private fun <T> RowList(
 }
 
 /**
- * A transaction (wording 2, option B): one line, the date first, then "Buy", the shares and the amount, separated by
- * space only. At the largest font the amount wraps below. Not tappable until 13 (decision 4).
+ * A transaction (wording 2, option B): one line, the date first, then "Buy" or "Sell" (11 wording 4), the shares as
+ * typed and the amount, separated by space only. At the largest font the amount wraps below. Not tappable until 13
+ * (decision 4).
  */
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
@@ -248,7 +282,14 @@ private fun TransactionRow(transaction: Transaction) {
     val date = transaction.date.toString()
     val shares = sharesText(Fraction.of(transaction.quantity))
     val amount = Money.format(transaction.totalCents)
-    val spoken = stringResource(R.string.holding_transaction_spoken, date, shares, amount.substringAfter('$'))
+    val sell = transaction.type == TransactionType.SELL
+    val spoken =
+        stringResource(
+            if (sell) R.string.holding_transaction_sell_spoken else R.string.holding_transaction_spoken,
+            date,
+            shares,
+            amount.substringAfter('$'),
+        )
     FlowRow(
         modifier = Modifier.fillMaxWidth().clearAndSetSemantics { contentDescription = spoken },
         horizontalArrangement = Arrangement.spacedBy(16.dp),
@@ -256,7 +297,7 @@ private fun TransactionRow(transaction: Transaction) {
     ) {
         Text(text = stringResource(R.string.date_with_et, date), style = MaterialTheme.typography.bodyLarge)
         Text(
-            text = stringResource(R.string.holding_transaction_buy),
+            text = stringResource(if (sell) R.string.holding_transaction_sell else R.string.holding_transaction_buy),
             style = MaterialTheme.typography.bodyLarge,
             fontWeight = FontWeight.Medium,
         )

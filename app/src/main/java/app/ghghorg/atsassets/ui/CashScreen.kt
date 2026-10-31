@@ -43,6 +43,7 @@ import app.ghghorg.atsassets.R
 import app.ghghorg.atsassets.core.CashRow
 import app.ghghorg.atsassets.core.CashType
 import app.ghghorg.atsassets.core.Money
+import app.ghghorg.atsassets.core.TransactionType
 
 /**
  * The Cash account (view 7, wireframe 07 frame A): the balance, the Cash entry button (the opening balance until
@@ -89,7 +90,7 @@ fun CashScreen(
                         val trade = state.transactions.firstOrNull { it.id == row.entry.transactionId }
                         if (trade != null) {
                             val portfolio = state.portfolios.firstOrNull { it.id == trade.portfolioId }?.name.orEmpty()
-                            TradeRow(row, trade.ticker, portfolio)
+                            TradeRow(row, trade.ticker, portfolio, sell = trade.type == TransactionType.SELL)
                         } else {
                             EntryRow(row, onOpen = { onOpenEntry(row.entry.id) })
                         }
@@ -319,8 +320,9 @@ private fun EntryRow(
 }
 
 /**
- * A buy's trade line (view 7; 09 wording 3): "Buy AAPL", the date with "ET" and the balance after it, and
- * "For portfolio Main" where a direct entry shows its note. Not tappable until it opens its transaction (10 or 27).
+ * A buy's or sell's trade line (view 7; 09 wording 3, 11 wording 4): "Buy AAPL" or "Sell AAPL", the date with "ET"
+ * and the balance after it, and "For portfolio Main" where a direct entry shows its note. Not tappable until it opens
+ * its transaction (13).
  */
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
@@ -328,12 +330,13 @@ private fun TradeRow(
     row: CashRow,
     ticker: String,
     portfolio: String,
+    sell: Boolean,
 ) {
     val entry = row.entry
     val date = entry.date.toString()
     val spoken =
         stringResource(
-            R.string.trade_buy_spoken,
+            if (sell) R.string.trade_sell_spoken else R.string.trade_buy_spoken,
             ticker,
             portfolio,
             date,
@@ -347,7 +350,7 @@ private fun TradeRow(
     ) {
         Column {
             Text(
-                text = stringResource(R.string.trade_buy_title, ticker),
+                text = stringResource(if (sell) R.string.trade_sell_title else R.string.trade_buy_title, ticker),
                 style = MaterialTheme.typography.bodyLarge,
                 fontWeight = FontWeight.Medium,
             )
@@ -404,7 +407,7 @@ internal fun spokenDollars(cents: Long): String {
 
 /** "plus 10,000.00" or "minus 200.00", for TalkBack. */
 @Composable
-private fun spokenSigned(cents: Long): String {
+internal fun spokenSigned(cents: Long): String {
     if (cents <= 0L) return spokenDollars(cents)
     return stringResource(R.string.spoken_plus, Money.format(cents).substringAfter('$'))
 }

@@ -144,6 +144,7 @@ private fun BarContent(
                 onBack = viewModel::closeHolding,
                 onTab = viewModel::selectHoldingTab,
                 onBuy = viewModel::buyFromHolding,
+                onSell = viewModel::sellFromHolding,
             ),
         )
 
@@ -162,6 +163,25 @@ private fun BarContent(
         )
 
         Screen.BUY_REVIEW -> BuyReviewScreen(state, viewModel::confirmBuy, viewModel::backToBuy)
+
+        Screen.SELL -> SellEntryScreen(
+            state = state,
+            actions =
+            SellActions(
+                onPortfolioChange = viewModel::onSellPortfolioChange,
+                onTickerChange = viewModel::onSellTickerChange,
+                onDateChange = viewModel::onSellDateChange,
+                onQuantityChange = viewModel::onSellQuantityChange,
+                onTotalChange = viewModel::onSellTotalChange,
+                onToggleLot = viewModel::toggleLot,
+                onPickChange = viewModel::onPickChange,
+                onSellAll = viewModel::sellAll,
+                onReview = viewModel::reviewSell,
+                onBack = viewModel::closeSell,
+            ),
+        )
+
+        Screen.SELL_REVIEW -> SellReviewScreen(state, viewModel::confirmSell, viewModel::backToSell)
 
         else -> TabContent(state, viewModel)
     }
