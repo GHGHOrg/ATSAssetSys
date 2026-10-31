@@ -20,6 +20,7 @@ import app.ghghorg.atsassets.core.Fraction
 import app.ghghorg.atsassets.core.Holding
 import app.ghghorg.atsassets.core.Holdings
 import app.ghghorg.atsassets.core.Instrument
+import app.ghghorg.atsassets.core.Lot
 import app.ghghorg.atsassets.core.MarketDate
 import app.ghghorg.atsassets.core.Money
 import app.ghghorg.atsassets.core.OpeningBalance
@@ -70,6 +71,15 @@ enum class Screen {
     // Buy entry and its review (wireframe 10a frames A and B, iteration 09).
     BUY,
     BUY_REVIEW,
+
+    // One holding (view 6, wireframe 06), opened from a portfolio's holdings (iteration 10).
+    HOLDING,
+}
+
+/** Holding detail's tabs (view 6). Classification joins in 23 (10 decision 1). Never saved. */
+enum class HoldingTab {
+    TRANSACTIONS,
+    LOTS,
 }
 
 /**
@@ -203,6 +213,13 @@ data class AppState(
     val checking: Boolean = false,
     // Create a portfolio was tapped from the Buy notice: after the portfolio is created, Buy opens (criterion 24).
     val buyAfterPortfolio: Boolean = false,
+    // The holding on HOLDING: this ticker in the portfolio of portfolioId (iteration 10), and its tab.
+    val holdingTicker: String? = null,
+    val holdingTab: HoldingTab = HoldingTab.TRANSACTIONS,
+    // Buy was opened from the holding's header: Back and a save return to it (10 decision 2).
+    val buyFromHolding: Boolean = false,
+    // Today in New York at the last load or save; holdings and lots are as of this date (4.8).
+    val today: LocalDate = LocalDate.MIN,
     // The entry shown on DETAIL; on REVERSAL, the entry being reversed.
     val detailId: String? = null,
     val reversal: ReversalForm = ReversalForm(),
@@ -224,6 +241,26 @@ data class AppState(
     val netWorthCents: Long get() = netWorth.rounded(2).movePointRight(2).longValueExact()
 
     fun holdingsOf(portfolioId: String): List<Holding> = holdings.filter { it.portfolioId == portfolioId }
+
+    /** The holding shown on HOLDING, as of today. */
+    val shownHolding: Holding?
+        get() = holdings.firstOrNull { it.portfolioId == portfolioId && it.ticker == holdingTicker }
+
+    /** Its transactions, newest first, those dated after today included (view 6). */
+    val holdingTransactions: List<Transaction>
+        get() {
+            val id = portfolioId ?: return emptyList()
+            val ticker = holdingTicker ?: return emptyList()
+            return Holdings.transactionsOf(transactions, id, ticker)
+        }
+
+    /** Its lots with shares as of today, oldest first (view 6, 4.4). */
+    val holdingLots: List<Lot>
+        get() {
+            val id = portfolioId ?: return emptyList()
+            val ticker = holdingTicker ?: return emptyList()
+            return Holdings.lotsOf(transactions, id, ticker, today)
+        }
 
     /** Each holding at cost while there are no prices (4.8). */
     fun portfolioValue(portfolioId: String): Fraction = holdingsOf(portfolioId).fold(Fraction.ZERO) { sum, holding -> sum + holding.cost }
@@ -343,6 +380,8 @@ class AppViewModel(
                 buySellMenuOpen = false,
                 buyNotice = null,
                 buyRefusals = BuyRefusals(),
+                holdingTicker = null,
+                buyFromHolding = false,
             )
         }
     }
@@ -873,7 +912,38 @@ class AppViewModel(
         return state.copy(
             holdings = Holdings.holdings(state.transactions, today),
             netWorth = Valuation.netWorth(state.entries, state.transactions, today),
+            today = today,
         )
+    }
+
+    /** Opens a holding from its row on the portfolio's screen (view 6). Unknown tickers are ignored. */
+    fun openHolding(ticker: String) {
+        val current = mutableState.value
+        val id = current.portfolioId ?: return
+        if (current.screen != Screen.PORTFOLIO || current.holdingsOf(id).none { it.ticker == ticker }) return
+        mutableState.update {
+            it.copy(screen = Screen.HOLDING, holdingTicker = ticker, holdingTab = HoldingTab.TRANSACTIONS, portfolioMenuOpen = false)
+        }
+    }
+
+    /** "<" or Android Back: back to the portfolio. */
+    fun closeHolding() {
+        if (mutableState.value.screen != Screen.HOLDING) return
+        mutableState.update { it.copy(screen = Screen.PORTFOLIO, holdingTicker = null) }
+    }
+
+    /** Not saved: the next opening starts on Transactions (view 6). */
+    fun selectHoldingTab(tab: HoldingTab) {
+        if (mutableState.value.screen != Screen.HOLDING) return
+        mutableState.update { it.copy(holdingTab = tab) }
+    }
+
+    /** Buy in the holding's header: the ticker and portfolio filled in; Back and a save return here (10 decision 2). */
+    fun buyFromHolding() {
+        val current = mutableState.value
+        if (current.screen != Screen.HOLDING || current.saving) return
+        val ticker = current.holdingTicker ?: return
+        openBuy(portfolioId = current.portfolioId, ticker = ticker)
     }
 
     /** Buy/Sell (navigation outline): opens the short menu over Overall, Portfolios or Cash. */
@@ -926,8 +996,12 @@ class AppViewModel(
     /**
      * Opens the buy entry. The typed text is kept until a buy is saved; the date is filled with today in New York
      * only if it is empty. The portfolio is [portfolioId], else the kept one if it still exists, else the first.
+     * A [ticker] is given only from a holding's header, which Back and a save then return to (10 decision 2).
      */
-    private fun openBuy(portfolioId: String?) = mutableState.update { current ->
+    private fun openBuy(
+        portfolioId: String?,
+        ticker: String? = null,
+    ) = mutableState.update { current ->
         val form = current.buyForm
         val kept = form.portfolioId?.takeIf { id -> current.portfolios.any { it.id == id } }
         val chosen = portfolioId ?: kept ?: current.portfolios.firstOrNull()?.id
@@ -937,8 +1011,9 @@ class AppViewModel(
             screen = Screen.BUY,
             buySellMenuOpen = false,
             buyNotice = null,
-            buyForm = form.copy(portfolioId = chosen, dateText = date),
+            buyForm = form.copy(portfolioId = chosen, dateText = date, tickerText = ticker ?: form.tickerText),
             buyRefusals = BuyRefusals(),
+            buyFromHolding = ticker != null,
         )
     }
 
@@ -976,12 +1051,17 @@ class AppViewModel(
         it.copy(buyForm = it.buyForm.copy(totalText = text), buyRefusals = it.buyRefusals.copy(total = null, rule = null))
     }
 
-    /** Back from the buy entry to the tab. The typed text is kept. Ignored while the check runs. */
+    /** Back from the buy entry to the tab, or to the holding it came from. The typed text is kept. Ignored while the check runs. */
     fun closeBuy() {
         val current = mutableState.value
         if (current.screen != Screen.BUY || current.checking) return
-        mutableState.update { it.copy(screen = Screen.TABS, buyRefusals = BuyRefusals()) }
+        mutableState.update {
+            it.copy(screen = afterBuy(it), buyRefusals = BuyRefusals(), buyFromHolding = false)
+        }
     }
+
+    // Where the buy entry returns to: the holding it was opened from (10 decision 2), else the tab.
+    private fun afterBuy(state: AppState): Screen = if (state.buyFromHolding) Screen.HOLDING else Screen.TABS
 
     /**
      * Review (wireframe 10a marker 6): the field rules, then K1's rules, then the ticker check of 4.3 through K4.
@@ -1078,12 +1158,13 @@ class AppViewModel(
                 mutableState.update {
                     valued(
                         it.copy(
-                            screen = Screen.TABS,
+                            screen = afterBuy(it),
                             entries = it.entries + created.cashLine,
                             transactions = it.transactions + created.transaction,
                             buyForm = BuyForm(),
                             buyRefusals = BuyRefusals(),
                             saving = false,
+                            buyFromHolding = false,
                         ),
                     )
                 }
@@ -1139,6 +1220,16 @@ class AppViewModel(
 
         // The screens that show the bottom bar (spec 6: always visible; 02b decision 1).
         val TAB_BAR_SCREENS =
-            setOf(Screen.TABS, Screen.FORM, Screen.REVIEW, Screen.DETAIL, Screen.REVERSAL, Screen.PORTFOLIO, Screen.BUY, Screen.BUY_REVIEW)
+            setOf(
+                Screen.TABS,
+                Screen.FORM,
+                Screen.REVIEW,
+                Screen.DETAIL,
+                Screen.REVERSAL,
+                Screen.PORTFOLIO,
+                Screen.BUY,
+                Screen.BUY_REVIEW,
+                Screen.HOLDING,
+            )
     }
 }

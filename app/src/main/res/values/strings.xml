@@ -174,4 +174,16 @@
     <string name="portfolio_row_spoken">%1$s, %2$s, %3$s dollars, gain or loss %4$s dollars</string>
     <string name="portfolio_row_at_cost_spoken">%1$s, all holdings at cost</string>
     <string name="portfolio_row_empty_spoken">%1$s, %2$s, %3$s dollars</string>
+    <!-- Iteration 10: holding detail (wording approved 2026-10-31, 10 file section 11). -->
+    <string name="holding_shares_label">Shares</string>
+    <string name="holding_header_spoken">%1$s in %2$s, value %3$s dollars, %4$s, cost %5$s dollars, unrealized gain/loss: no price, at cost</string>
+    <string name="holding_buy_spoken">Buy %1$s in %2$s</string>
+    <string name="holding_tab_transactions">Transactions</string>
+    <string name="holding_tab_lots">Lots</string>
+    <string name="holding_transaction_buy">Buy</string>
+    <string name="holding_transaction_spoken">%1$s Eastern Time, buy, %2$s, %3$s dollars</string>
+    <string name="holding_lot_left">%1$s left, %2$s per share</string>
+    <string name="holding_lot_no_price">no price</string>
+    <string name="holding_lot_spoken">Lot of %1$s Eastern Time, %2$s left, %3$s dollars per share, cost %4$s dollars, no price</string>
+    <string name="holding_no_lots">No lots with shares</string>
 </resources>

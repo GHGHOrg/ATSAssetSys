@@ -35,7 +35,7 @@ fun AppContent(
         )
 
         // The bar shows on every screen after loading (spec 6: always visible; 02b decision 1).
-        Screen.TABS, Screen.FORM, Screen.REVIEW, Screen.DETAIL, Screen.REVERSAL, Screen.PORTFOLIO, Screen.BUY, Screen.BUY_REVIEW -> Box(
+        else -> Box(
             modifier = modifier.fillMaxSize(),
         ) {
             val dialogOpen = state.portfolioDialog != null || state.renameDialog != null
@@ -133,6 +133,17 @@ private fun BarContent(
                 onOpenMenu = viewModel::openPortfolioMenu,
                 onCloseMenu = viewModel::closePortfolioMenu,
                 onRename = viewModel::openRename,
+                onOpenHolding = viewModel::openHolding,
+            ),
+        )
+
+        Screen.HOLDING -> HoldingDetailScreen(
+            state = state,
+            actions =
+            HoldingActions(
+                onBack = viewModel::closeHolding,
+                onTab = viewModel::selectHoldingTab,
+                onBuy = viewModel::buyFromHolding,
             ),
         )
 

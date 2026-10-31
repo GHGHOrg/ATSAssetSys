@@ -107,6 +107,48 @@ class HoldingsTest {
     }
 
     @Test
+    fun transactionsOf_aHolding_areNewestFirst_laterEntryFirstOnASharedDate_futureIncluded() {
+        val transactions =
+            listOf(
+                bought("b1", "2026-01-02", "1", 1_000L, 2L),
+                bought("b2", "2026-02-01", "1", 1_000L, 3L),
+                bought("b3", "2026-02-01", "1", 1_000L, 5L),
+                bought("b4", "2026-07-01", "1", 1_000L, 6L),
+                bought("x1", "2026-03-01", "1", 1_000L, 4L, ticker = "SPY"),
+                bought("x2", "2026-03-01", "1", 1_000L, 7L, portfolioId = "p2"),
+            )
+        assertEquals(listOf("b4", "b3", "b2", "b1"), Holdings.transactionsOf(transactions, "p1", "AAPL").map { it.id })
+        assertEquals(emptyList<Transaction>(), Holdings.transactionsOf(transactions, "p1", "MSFT"))
+    }
+
+    @Test
+    fun lotsOf_aHolding_areOldestFirst_asOfTheDate() {
+        val transactions =
+            listOf(
+                bought("b2", "2026-02-01", "1", 1_000L, 3L),
+                bought("b1", "2026-01-02", "1", 1_000L, 2L),
+                bought("b3", "2026-07-01", "1", 1_000L, 6L),
+                bought("x1", "2026-01-01", "1", 1_000L, 4L, ticker = "SPY"),
+                bought("x2", "2026-01-01", "1", 1_000L, 5L, portfolioId = "p2"),
+            )
+        assertEquals(listOf("b1", "b2"), Holdings.lotsOf(transactions, "p1", "AAPL", today).map { it.buyId })
+    }
+
+    @Test
+    fun costPerShare_isTheLotCostOverTheSharesLeft_exactly() {
+        val lots =
+            Holdings.lots(
+                listOf(
+                    bought("b1", "2026-02-01", "10", 150_000L, 2L),
+                    bought("b2", "2026-02-02", "3", 100_000L, 3L),
+                ),
+                today,
+            )
+        assertEquals(dollars(150), lots[0].costPerShare)
+        assertEquals(Fraction.of(BigInteger.valueOf(1_000), BigInteger.valueOf(3)), lots[1].costPerShare)
+    }
+
+    @Test
     fun netWorth_countsHoldingsAtCost() {
         val cashEntries =
             listOf(
