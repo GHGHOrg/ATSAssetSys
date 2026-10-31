@@ -1,6 +1,6 @@
 # plan/iterations/09-buy-stock.md
 
-Stage: Build. Status: approved 2026-10-31 with decisions 1 to 9 (section 10); not built. Branch iter-09-buy-stock.
+Stage: Build. Status: built on branch iter-09-buy-stock (steps 1 to 10 and two fixes, commits 6e00841 to 54b1bdb) and checked on the phone 2026-10-31, all checks yes (section 13). Decisions 1 to 11 settled (section 10). Sections 1 to 12 were written before the build; where the build differs, section 14 says so.
 Source: plan/plan.md section 4 (row 09), plan/spikes/price-source.md (decisions 1 to 7, sections 10.2 and 10.3), intent/intent.md v52 (final), spec/spec.md v4 (final). "My reading" is an interpretation, not a test.
 
 ## 1. Outcome
@@ -108,7 +108,7 @@ By hand on the phone, with 08's data (the 03 to 06 cash entries, Main and 投資
 Approved on paper with this file; confirmed on the phone (D9): checks 2 to 7.
 
 ## 12. Status and notes
-Approved 2026-10-31. Step 2 (research) done 2026-10-31 (section 13.1).
+Built 2026-10-31; phone checks 2026-10-31, all yes after two fixes (section 14, items 1 and 2). Pull request not yet opened.
 
 ## 13. Build results
 ### 13.1 Research (step 2)
@@ -116,8 +116,45 @@ Finnhub call, I called 2026-10-31 from this PC, GET https://finnhub.io/api/v1/st
 - HTTP 200, Content-Type application/json, Content-Encoding gzip.
 - 1,209,998 bytes on the wire; 7,356,709 bytes after decompression; first byte after 2,047 ms, complete after 3,751 ms; 31,111 rows by a text count of "symbol": (31,116 on 2026-10-30).
 - My reading: about 1.2 MB and 4 s per check of a ticker not yet verified, so decision 4 holds (your decision, option A). The time on the phone, over Wi-Fi or mobile data, is seen in step 10. That Android's HttpURLConnection asks for gzip by default is my knowledge, not checked.
+- Found in step 10 (phone check 3): this call was answered by a redirect, which .NET's HttpWebRequest followed by default without my noticing, so the figures above are those of the redirected download. Rechecked 2026-10-31 with redirects off: HTTP 302 to https://static2.finnhub.io/file/privatedatany2/exchange/USf.json with one query parameter, "Authorization", 111 characters, not the key; fetched without the key: HTTP 200, application/json, 7,356,709 bytes, 2,947 ms, 31,111 rows. Only the parameter's name and length were printed.
 kotlinx-serialization-json, I fetched 2026-10-31:
 - https://repo1.maven.org/maven2/org/jetbrains/kotlinx/kotlinx-serialization-json/maven-metadata.xml: latest and release "1.12.0", lastUpdated "20261019182949"; before it 1.12.0-RC, 1.11.0, 1.10.0.
 - https://github.com/Kotlin/kotlinx.serialization/releases: v1.12.0 "released this 19 Oct 18:36" (no year on the page); "This release is based on Kotlin 2.4.10 and contains all of the changes from 1.12.0-RC."; nothing on decodeToSequence or streaming.
 - https://kotlinlang.org/api/kotlinx.serialization/kotlinx-serialization-json/kotlinx.serialization.json/decode-to-sequence.html (version 1.12.0, platform jvm): "@ExperimentalSerializationApi fun <T> Json.decodeToSequence(stream: InputStream, deserializer: DeserializationStrategy<T>, format: DecodeSequenceMode = DecodeSequenceMode.AUTO_DETECT): Sequence<T>"; "Transforms the given stream into lazily deserialized sequence of elements of type T using UTF-8 encoding and deserializer."
 - Outcome: decision 5's follow-up (section 10).
+
+### 13.2 Commits
+Newest first: 54b1bdb fix 2, fea01af fix 1, 4735441 step 9, be20a0a step 8, 15f1070 step 7, e74382a step 6, 69e8bb5 step 5, aada001 step 4, a16399b step 3, 60d3851 step 2, 6e00841 step 1 with this file. main was 5978482.
+
+### 13.3 Local run
+On 54b1bdb's code (2026-10-31, all with --rerun-tasks): spotlessCheck green; debug build green; 388 tests, 0 failures (Balance 11, CashAccount 20, CashEntriesReverse 12, CashEntries 27, Fraction 9, Holdings 9, MarketDate 10, Money 19, OpeningBalance 9, Portfolios 23, Quantity 10, TickerCheck 16, Transactions 18, RowMapping 3, AppLock 12, FinnhubSource 18, TickerVerifier 6, AppViewModel 120, BuyFlow 29, DateDigits 7); lint: 3 findings, all listed, none silenced (AndroidGradlePluginVersion at libs.versions.toml:2, open item 31; NewerVersionAvailable at :17, kotlinx-coroutines-test; TypographyDashes on date_not_a_date, strings.xml:86). kotlinx-serialization-json 1.12.0 raised no lint notice. Release build on 4735441's code green (R8 ran; unsigned; only the known "Unable to strip" message); the two fixes were not rebuilt as release. Debug APK versionCode 9 (aapt2).
+Room generated the 2 to 3 migration as two CREATE TABLE IF NOT EXISTS statements (transactions, instruments) and touched no existing table; insertBuy runs both inserts in performInTransactionSuspending, each INSERT OR ABORT with bound parameters (read in app/build/generated/ksp).
+The key reached BuildConfig with length 40 (only the length printed); BuildConfig.java and .gradle/ are ignored by git (git check-ignore).
+
+### 13.4 Phone results (Android 17, debug build versionCode 9, your reports)
+Checks 1 to 9 all yes; check 3 after fix 1, check 7's finding after fix 2. Notes:
+- 1: installed over the 08 build (adb install -r, lastUpdateTime 13:25:29, firstInstallTime 2026-10-29 10:44:04 unchanged); the cash data, Main and 投資信託 were there, Buy/Sell showed (criterion 35, database version 3).
+- 2: Buy/Sell on Overall, Portfolios and Cash, not on More; the menu inside the window with no cover loop; a tap outside and Back close it; Sell said "Nothing to sell yet"; Buy opened on Main.
+- 3: failed on the first build: every new ticker got "did not answer (302)" (section 14, item 1). After the fix (installed 14:03:35) APPL, a typo, gave "Not saved. APPL was not found. Mutual funds are not accepted.", other tickers passed, and AAPL 10 for $1,500.00 in Main went through check, review, a second review with no look-up, and save; Cash, Portfolios, Main and Overall showed it as described. "Checking…" showed for about 3 to 4 seconds.
+- 4: SPY (ETP, NYSE Arca) accepted and shown as "1 share"; Sell then said "Selling arrives in a later build".
+- 5: AABB (OOTC), VFIAX, a ninth quantity decimal, quantity 0, total 0, a total over the cash, a date before the opening balance and an empty ticker were refused with their messages and the text kept.
+- 6: offline, a new ticker got the offline message with no look-up; AAPL went to review with no look-up.
+- 7: largest font, light and dark with the typed values kept, and TalkBack as section 11; your finding: quantity 0 hid the cash rule (section 14, item 2). After the fix (installed 14:41:46) quantity 0 with a total over the cash, and a ninth decimal with a date before the opening balance, each showed both messages.
+- 8: after a force stop the buys, holdings, cash lines and net worth were kept, and AAPL needed no look-up.
+- 9: log cleared at 14:48:35; you force-stopped the app, reviewed KO (2 shares, 750.25, a look-up) and AAPL, and opened Cash and Main. Read at 14:51:31: app uid 10454, 118 app lines from 14:48:44 to 14:49:54; in the app's lines 0 for KO, AAPL, SPY, 750.25, 1500, the key, finnhub, static2 and Authorization; in the whole log (7,479 lines) 0 for all of them except 1500 (329, from uid 1000 and radio) and Authorization (1, from uid 1017). The app's lines carry only Android's own tags. Only counts, uids and tags were printed. A first read that day failed to find the uid (dumpsys has no userId line here) and was repeated with pm list packages -U.
+- The phone now holds the AAPL buy in Main and the SPY buy from check 4, besides the 03 to 06 cash data.
+
+### 13.5 Not run or not checked
+CI and the pull request; open item 33 (34); the release APK on a device (unsigned, open item 4); a release build of the two fixes; that a refused buy write saves nothing in Room (shown by the generated code only, open item 14); the app's network traffic (criterion 38, traffic part); contrast measurement (by eye only); criterion 37 (deferred); Compose UI tests (none in the project); whether Finnhub counts the file download against the 60 calls a minute.
+
+## 14. Departures from the plan
+1. Defect found in phone check 3: Finnhub answers /stock/symbol?exchange=US with a 302 to a signed link on static2.finnhub.io, and the source followed no redirect, so every new ticker got "did not answer (302)". Step 2's PC measurement had followed the redirect silently (13.1). Fixed with failing tests first (5 of 7 new tests failed before): one redirect (301, 302, 303, 307, 308) is followed by hand, only over https to finnhub.io or a subdomain, without the key; anything else stays "did not answer" with the first status (fea01af, your decision A). Rechecked on the phone.
+2. Defect found in phone check 7: a field error hid K1's cash and date rules, because Review ran K1 only when every field passed; this departed from the CLAUDE.md pitfall from 04 and 05. Fixed with failing tests first (3 failed before): K1 runs with stand-ins (quantity 1, a placeholder ticker) whenever the date and total are valid; the Finnhub check still waits for everything else (54b1bdb, your decision A). Rechecked on the phone.
+3. Files: Fraction.kt and Holdings.kt are their own files (the plan put lots in Transactions.kt); OpeningBalance.kt (CashRules.replay moved there) and Money.kt changed; PriceSource.kt is in core/ and the implementation is FinnhubSource.kt (the plan said PriceService.kt); NetworkStatus.kt, TickerVerifier.kt (K4 writes instruments, not the ViewModel), BuySellMenu.kt and RowMappingTest.kt are new; Instrument sits in TickerCheck.kt.
+4. cash_entries already had transaction_id from 02a, so version 3 adds two tables and no column (section 7's risk did not arise).
+5. Valuation.netWorthCents stays as the cash part, because existing core tests use it; the screens use netWorth.
+6. Review checks the fields and K1 first (now together, item 2) and asks Finnhub only when both pass; a ticker accepted at Review stays verified even if the buy is not confirmed; after a saved buy the app returns to the tab Buy was opened from.
+7. Redirects were not followed at first, for key safety (step 6); item 1 replaced that with the one checked redirect.
+8. The buy date follows the Cash filters (decision 10), and the portfolio is chosen with chips (decision 11); both were settled in step 8, after the file was approved.
+9. An empty portfolio row reads "<name>, no holdings, 0.00 dollars" for TalkBack, a sentence added in step 8 without asking (section 11).
+10. A trade line in the Cash list is not tappable, as this file's section 6 (stubs) planned; the ViewModel's openDetail would still open one if called.
