@@ -33,8 +33,9 @@ fun AppContent(
             modifier,
         )
 
-        // The bar shows on every screen after loading (spec 6: always visible; 02b decision 1).
-        Screen.TABS, Screen.FORM, Screen.REVIEW, Screen.DETAIL, Screen.REVERSAL, Screen.PORTFOLIO -> Box(
+        // The bar shows on every screen after loading (spec 6: always visible; 02b decision 1). BUY and BUY_REVIEW
+        // show the tab until their screens arrive in iteration 09 step 8; nothing opens them before then.
+        Screen.TABS, Screen.FORM, Screen.REVIEW, Screen.DETAIL, Screen.REVERSAL, Screen.PORTFOLIO, Screen.BUY, Screen.BUY_REVIEW -> Box(
             modifier = modifier.fillMaxSize(),
         ) {
             val dialogOpen = state.portfolioDialog != null || state.renameDialog != null

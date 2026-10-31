@@ -4,6 +4,8 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import app.ghghorg.atsassets.core.AmountError
 import app.ghghorg.atsassets.core.AmountResult
+import app.ghghorg.atsassets.core.BuyRefusal
+import app.ghghorg.atsassets.core.BuyResult
 import app.ghghorg.atsassets.core.CashAccount
 import app.ghghorg.atsassets.core.CashDirection
 import app.ghghorg.atsassets.core.CashEntries
@@ -14,6 +16,10 @@ import app.ghghorg.atsassets.core.CashFilter
 import app.ghghorg.atsassets.core.CashRow
 import app.ghghorg.atsassets.core.CashRules
 import app.ghghorg.atsassets.core.CashType
+import app.ghghorg.atsassets.core.Fraction
+import app.ghghorg.atsassets.core.Holding
+import app.ghghorg.atsassets.core.Holdings
+import app.ghghorg.atsassets.core.Instrument
 import app.ghghorg.atsassets.core.MarketDate
 import app.ghghorg.atsassets.core.Money
 import app.ghghorg.atsassets.core.OpeningBalance
@@ -24,9 +30,19 @@ import app.ghghorg.atsassets.core.PortfolioRefusal
 import app.ghghorg.atsassets.core.PortfolioRenameResult
 import app.ghghorg.atsassets.core.PortfolioResult
 import app.ghghorg.atsassets.core.Portfolios
+import app.ghghorg.atsassets.core.PriceSource
+import app.ghghorg.atsassets.core.Quantity
+import app.ghghorg.atsassets.core.QuantityError
+import app.ghghorg.atsassets.core.QuantityResult
 import app.ghghorg.atsassets.core.RecordStore
+import app.ghghorg.atsassets.core.TickerCheck
+import app.ghghorg.atsassets.core.Transaction
+import app.ghghorg.atsassets.core.Transactions
 import app.ghghorg.atsassets.core.UnreadableDataException
 import app.ghghorg.atsassets.core.Valuation
+import app.ghghorg.atsassets.prices.CheckRefusal
+import app.ghghorg.atsassets.prices.TickerVerifier
+import app.ghghorg.atsassets.prices.Verification
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -35,6 +51,7 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import java.time.Clock
 import java.time.LocalDate
+import java.util.Locale
 
 /** The one screen shown at a time. TABS shows the selected tab under the bottom bar. */
 enum class Screen {
@@ -48,7 +65,47 @@ enum class Screen {
 
     // One portfolio (view 3, wireframe 3 frame B), opened from its row (iteration 08).
     PORTFOLIO,
+
+    // Buy entry and its review (wireframe 10a frames A and B, iteration 09).
+    BUY,
+    BUY_REVIEW,
 }
+
+/**
+ * A line the Buy/Sell menu shows instead of an entry screen (wireframe 10a frame G; 09 decision 2). Reasons only;
+ * the wording is D9 and lives in the screens.
+ */
+enum class BuyNotice {
+    NEEDS_OPENING_BALANCE,
+    NEEDS_PORTFOLIO,
+    NOTHING_TO_SELL,
+
+    // Something is held, but the sell screen arrives in iteration 11.
+    SELL_LATER,
+}
+
+/** The buy entry as typed (wireframe 10a frame A). The ticker is kept in capitals; the rest as typed. */
+data class BuyForm(
+    val portfolioId: String? = null,
+    val tickerText: String = "",
+    val dateText: String = "",
+    val quantityText: String = "",
+    val totalText: String = "",
+)
+
+/**
+ * Why a buy was refused, reasons only (D9). The field rules show together; [rule] (K1) only when the fields pass;
+ * [check] (K4) only when the rules pass, so a typo never costs a look-up (iteration 09 step 7).
+ */
+data class BuyRefusals(
+    val tickerEmpty: Boolean = false,
+    val date: DateRefusal? = null,
+    val quantity: QuantityError? = null,
+    val total: AmountError? = null,
+    val rule: BuyRefusal? = null,
+    val check: CheckRefusal? = null,
+    val save: SaveRefusal? = null,
+)
 
 /** The four bottom bar tabs (spec 6, navigation outline). */
 enum class Tab {
@@ -131,7 +188,20 @@ data class AppState(
     val form: FormState = FormState(),
     val refusals: Refusals = Refusals(),
     val saving: Boolean = false,
-    val netWorthCents: Long = 0L,
+    // Cash as of today plus every holding at cost, as of today (4.8; no prices before iteration 16).
+    val netWorth: Fraction = Fraction.ZERO,
+    val transactions: List<Transaction> = emptyList(),
+    val instruments: List<Instrument> = emptyList(),
+    // As of today (4.8), by portfolio, then ticker.
+    val holdings: List<Holding> = emptyList(),
+    val buySellMenuOpen: Boolean = false,
+    val buyNotice: BuyNotice? = null,
+    val buyForm: BuyForm = BuyForm(),
+    val buyRefusals: BuyRefusals = BuyRefusals(),
+    // The ticker check (K4) is running after Review.
+    val checking: Boolean = false,
+    // Create a portfolio was tapped from the Buy notice: after the portfolio is created, Buy opens (criterion 24).
+    val buyAfterPortfolio: Boolean = false,
     // The entry shown on DETAIL; on REVERSAL, the entry being reversed.
     val detailId: String? = null,
     val reversal: ReversalForm = ReversalForm(),
@@ -148,6 +218,22 @@ data class AppState(
     val renameDialog: PortfolioDialog? = null,
 ) {
     val shownPortfolio: Portfolio? get() = portfolioId?.let { id -> portfolios.firstOrNull { it.id == id } }
+
+    /** Net worth rounded to cents, for Overall (4.10: rounded only when shown). */
+    val netWorthCents: Long get() = netWorth.rounded(2).movePointRight(2).longValueExact()
+
+    fun holdingsOf(portfolioId: String): List<Holding> = holdings.filter { it.portfolioId == portfolioId }
+
+    /** Each holding at cost while there are no prices (4.8). */
+    fun portfolioValue(portfolioId: String): Fraction = holdingsOf(portfolioId).fold(Fraction.ZERO) { sum, holding -> sum + holding.cost }
+
+    /** The derived price per share (4.3), shown as the fields change; null until quantity and total are both valid. */
+    val buyPricePerShare: Fraction?
+        get() {
+            val quantity = Quantity.parse(buyForm.quantityText) as? QuantityResult.Exact ?: return null
+            val total = Money.parseCents(buyForm.totalText) as? AmountResult.Cents ?: return null
+            return Transactions.pricePerShare(total.value, quantity.value)
+        }
 
     /**
      * The fields take digits only (YYYYMMDD): any other character is refused at once, eight digits that are no
@@ -213,6 +299,8 @@ class AppViewModel(
     private val storeProvider: () -> RecordStore,
     clock: Clock,
     private val newId: () -> String,
+    private val priceSource: PriceSource,
+    private val isOnline: () -> Boolean,
 ) : ViewModel() {
     private val marketDate = MarketDate(clock)
     private val mutableState = MutableStateFlow(AppState())
@@ -228,7 +316,7 @@ class AppViewModel(
             try {
                 val opened = storeProvider()
                 store = opened
-                showLoaded(opened.loadCashEntries(), opened.loadPortfolios())
+                showLoaded(opened.loadCashEntries(), opened.loadPortfolios(), opened.loadTransactions(), opened.loadInstruments())
             } catch (e: UnreadableDataException) {
                 mutableState.update { it.copy(screen = Screen.UNREADABLE) }
             }
@@ -241,7 +329,7 @@ class AppViewModel(
      */
     fun selectTab(tab: Tab) {
         val current = mutableState.value
-        if (current.screen !in TAB_BAR_SCREENS || current.saving) return
+        if (current.screen !in TAB_BAR_SCREENS || current.saving || current.checking) return
         mutableState.update {
             it.copy(
                 screen = Screen.TABS,
@@ -251,18 +339,21 @@ class AppViewModel(
                 portfolioId = null,
                 portfolioMenuOpen = false,
                 renameDialog = null,
+                buySellMenuOpen = false,
+                buyNotice = null,
+                buyRefusals = BuyRefusals(),
             )
         }
     }
 
     /**
-     * After unlock the app shows Overall, unless the form, the review or the New portfolio dialog is open, which
-     * stays (02b decision 9).
+     * After unlock the app shows Overall, unless an entry screen or the New portfolio dialog is open, which stays
+     * (02b decision 9). The Buy/Sell menu and its notice close.
      */
     fun onUnlocked() {
         val current = mutableState.value
         if (current.screen != Screen.TABS || current.portfolioDialog != null) return
-        mutableState.update { it.copy(tab = Tab.OVERALL) }
+        mutableState.update { it.copy(tab = Tab.OVERALL, buySellMenuOpen = false, buyNotice = null) }
     }
 
     /**
@@ -279,7 +370,7 @@ class AppViewModel(
                 form.type in ENTRY_TYPES -> form.type
                 else -> CashType.DEPOSIT
             }
-        current.copy(screen = Screen.FORM, form = dated.copy(type = type), refusals = Refusals())
+        current.copy(screen = Screen.FORM, form = dated.copy(type = type), refusals = Refusals(), buyNotice = null)
     }
 
     /** Deposit or Withdrawal only, and only once the opening balance exists (03 decision 2). Other types are ignored. */
@@ -437,15 +528,16 @@ class AppViewModel(
         state.copy(portfolioDialog = state.portfolioDialog?.let { PortfolioDialog(nameText = oneLine(text)) })
     }
 
-    /** Closes the dialog; nothing is saved. Ignored while a save is running. */
+    /** Closes the dialog; nothing is saved, and Buy does not open afterwards. Ignored while a save is running. */
     fun cancelPortfolioDialog() {
         if (mutableState.value.saving) return
-        mutableState.update { it.copy(portfolioDialog = null) }
+        mutableState.update { it.copy(portfolioDialog = null, buyAfterPortfolio = false) }
     }
 
     /**
      * Create (wireframe 10d): checks the name (4.7) and saves the portfolio. On a refusal the dialog stays with the
-     * typed text and the reason. On success it closes and the new portfolio is last; the tab stays as it was.
+     * typed text and the reason. On success it closes and the new portfolio is last; the tab stays as it was, or,
+     * when the dialog came from the Buy notice, Buy opens on the new portfolio (criterion 24).
      */
     fun createPortfolio() {
         val current = mutableState.value
@@ -468,6 +560,10 @@ class AppViewModel(
                 target.savePortfolio(portfolio)
                 mutableState.update {
                     it.copy(portfolios = it.portfolios + portfolio, portfolioDialog = null, saving = false)
+                }
+                if (mutableState.value.buyAfterPortfolio) {
+                    mutableState.update { it.copy(buyAfterPortfolio = false) }
+                    openBuy(portfolio.id)
                 }
             } catch (e: CancellationException) {
                 throw e
@@ -672,14 +768,14 @@ class AppViewModel(
             try {
                 target.saveCashEntries(listOf(entry))
                 mutableState.update {
-                    val entries = it.entries + entry
-                    it.copy(
-                        screen = Screen.DETAIL,
-                        entries = entries,
-                        reversal = ReversalForm(),
-                        refusals = Refusals(),
-                        saving = false,
-                        netWorthCents = netWorthOf(entries),
+                    valued(
+                        it.copy(
+                            screen = Screen.DETAIL,
+                            entries = it.entries + entry,
+                            reversal = ReversalForm(),
+                            refusals = Refusals(),
+                            saving = false,
+                        ),
                     )
                 }
             } catch (e: CancellationException) {
@@ -716,14 +812,14 @@ class AppViewModel(
             try {
                 target.saveCashEntries(listOf(entry))
                 mutableState.update {
-                    val entries = it.entries + entry
-                    it.copy(
-                        screen = Screen.TABS,
-                        entries = entries,
-                        form = FormState(),
-                        refusals = Refusals(),
-                        saving = false,
-                        netWorthCents = netWorthOf(entries),
+                    valued(
+                        it.copy(
+                            screen = Screen.TABS,
+                            entries = it.entries + entry,
+                            form = FormState(),
+                            refusals = Refusals(),
+                            saving = false,
+                        ),
                     )
                 }
             } catch (e: CancellationException) {
@@ -754,18 +850,270 @@ class AppViewModel(
     private fun showLoaded(
         entries: List<CashEntry>,
         portfolios: List<Portfolio>,
+        transactions: List<Transaction>,
+        instruments: List<Instrument>,
     ) {
         mutableState.update {
-            it.copy(
-                screen = Screen.TABS,
-                entries = entries,
-                netWorthCents = netWorthOf(entries),
-                portfolios = Portfolios.inCreationOrder(portfolios),
+            valued(
+                it.copy(
+                    screen = Screen.TABS,
+                    entries = entries,
+                    portfolios = Portfolios.inCreationOrder(portfolios),
+                    transactions = transactions,
+                    instruments = instruments,
+                ),
             )
         }
     }
 
-    private fun netWorthOf(entries: List<CashEntry>): Long = Valuation.netWorthCents(entries, marketDate.today())
+    /** The holdings and net worth for [state]'s records, as of today in New York (4.8). */
+    private fun valued(state: AppState): AppState {
+        val today = marketDate.today()
+        return state.copy(
+            holdings = Holdings.holdings(state.transactions, today),
+            netWorth = Valuation.netWorth(state.entries, state.transactions, today),
+        )
+    }
+
+    /** Buy/Sell (navigation outline): opens the short menu over Overall, Portfolios or Cash. */
+    fun openBuySellMenu() {
+        val current = mutableState.value
+        if (current.screen != Screen.TABS || current.saving) return
+        mutableState.update { it.copy(buySellMenuOpen = true, buyNotice = null) }
+    }
+
+    fun closeBuySellMenu() = mutableState.update { it.copy(buySellMenuOpen = false) }
+
+    /**
+     * Buy in the menu: before the opening balance exists it asks for it, with no portfolio it asks for one (4.2,
+     * criterion 24), otherwise the buy entry opens. Ignored off the tabs.
+     */
+    fun chooseBuy() {
+        val current = mutableState.value
+        if (current.screen != Screen.TABS || current.saving) return
+        val notice =
+            when {
+                current.cashEntryType == CashType.OPENING_BALANCE -> BuyNotice.NEEDS_OPENING_BALANCE
+                current.portfolios.isEmpty() -> BuyNotice.NEEDS_PORTFOLIO
+                else -> null
+            }
+        if (notice != null) {
+            mutableState.update { it.copy(buySellMenuOpen = false, buyNotice = notice) }
+            return
+        }
+        openBuy(portfolioId = null)
+    }
+
+    /** Sell in the menu: nothing held says so; something held points to a later build until 11 (09 decision 2). */
+    fun chooseSell() {
+        val current = mutableState.value
+        if (current.screen != Screen.TABS || current.saving) return
+        val held = current.holdings.any { it.shares.signum() > 0 }
+        mutableState.update {
+            it.copy(buySellMenuOpen = false, buyNotice = if (held) BuyNotice.SELL_LATER else BuyNotice.NOTHING_TO_SELL)
+        }
+    }
+
+    fun dismissBuyNotice() = mutableState.update { it.copy(buyNotice = null) }
+
+    /** Create a portfolio from the Buy notice: the New portfolio dialog, then Buy once it is created (criterion 24). */
+    fun createPortfolioForBuy() {
+        mutableState.update { it.copy(buyNotice = null, buyAfterPortfolio = true) }
+        openPortfolioDialog()
+    }
+
+    /**
+     * Opens the buy entry. The typed text is kept until a buy is saved; the date is filled with today in New York
+     * only if it is empty. The portfolio is [portfolioId], else the kept one if it still exists, else the first.
+     */
+    private fun openBuy(portfolioId: String?) = mutableState.update { current ->
+        val form = current.buyForm
+        val kept = form.portfolioId?.takeIf { id -> current.portfolios.any { it.id == id } }
+        val chosen = portfolioId ?: kept ?: current.portfolios.firstOrNull()?.id
+        val date = form.dateText.ifEmpty { marketDate.today().toString() }
+        current.copy(
+            screen = Screen.BUY,
+            buySellMenuOpen = false,
+            buyNotice = null,
+            buyForm = form.copy(portfolioId = chosen, dateText = date),
+            buyRefusals = BuyRefusals(),
+        )
+    }
+
+    /** One of the portfolios only; other ids are ignored. */
+    fun onBuyPortfolioChange(id: String) {
+        if (mutableState.value.portfolios.none { it.id == id }) return
+        mutableState.update { it.copy(buyForm = it.buyForm.copy(portfolioId = id), buyRefusals = it.buyRefusals.copy(rule = null)) }
+    }
+
+    /** The ticker is shown in capitals as it is typed (wireframe 10a marker 2). */
+    fun onBuyTickerChange(text: String) = mutableState.update {
+        it.copy(
+            buyForm = it.buyForm.copy(tickerText = text.uppercase(Locale.ROOT)),
+            buyRefusals = it.buyRefusals.copy(tickerEmpty = false, check = null, rule = null),
+        )
+    }
+
+    fun onBuyDateChange(text: String) = mutableState.update {
+        it.copy(buyForm = it.buyForm.copy(dateText = text), buyRefusals = it.buyRefusals.copy(date = null, rule = null))
+    }
+
+    fun onBuyQuantityChange(text: String) = mutableState.update {
+        it.copy(buyForm = it.buyForm.copy(quantityText = text), buyRefusals = it.buyRefusals.copy(quantity = null, rule = null))
+    }
+
+    fun onBuyTotalChange(text: String) = mutableState.update {
+        it.copy(buyForm = it.buyForm.copy(totalText = text), buyRefusals = it.buyRefusals.copy(total = null, rule = null))
+    }
+
+    /** Back from the buy entry to the tab. The typed text is kept. Ignored while the check runs. */
+    fun closeBuy() {
+        val current = mutableState.value
+        if (current.screen != Screen.BUY || current.checking) return
+        mutableState.update { it.copy(screen = Screen.TABS, buyRefusals = BuyRefusals()) }
+    }
+
+    /**
+     * Review (wireframe 10a marker 6): the field rules, then K1's rules, then the ticker check of 4.3 through K4.
+     * Each later stage runs only when the earlier ones pass. Shows the review only if the save would pass.
+     */
+    fun reviewBuy() {
+        val current = mutableState.value
+        if (current.screen != Screen.BUY || current.checking || current.saving) return
+        val target = store ?: return
+        val form = current.buyForm
+        val ticker = TickerCheck.normalize(form.tickerText)
+        val dateText = form.dateText.trim()
+        val date = MarketDate.parse(dateText)
+        val quantity = Quantity.parse(form.quantityText)
+        val total = Money.parseCents(form.totalText)
+        val dateRefusal =
+            when {
+                dateText.isEmpty() -> DateRefusal.EMPTY
+                date == null -> DateRefusal.NOT_A_DATE
+                else -> null
+            }
+        val fieldRefusals =
+            BuyRefusals(
+                tickerEmpty = ticker == null,
+                date = dateRefusal,
+                quantity = (quantity as? QuantityResult.Refused)?.reason,
+                total = (total as? AmountResult.Refused)?.reason,
+            )
+        if (fieldRefusals != BuyRefusals()) {
+            mutableState.update { it.copy(buyRefusals = fieldRefusals) }
+            return
+        }
+        val checked = ticker ?: return
+        val probe = buyOf(current, PROBE_ID, PROBE_ID)
+        if (probe !is BuyResult.Created) {
+            // Null only without a chosen portfolio, which K1 refuses the same way as an unknown one.
+            val rule = (probe as? BuyResult.Refused)?.reason ?: BuyRefusal.PortfolioNotFound
+            mutableState.update { it.copy(buyRefusals = BuyRefusals(rule = rule)) }
+            return
+        }
+        mutableState.update { it.copy(checking = true, buyRefusals = BuyRefusals()) }
+        viewModelScope.launch {
+            try {
+                when (val result = TickerVerifier.verify(checked, current.instruments, isOnline(), priceSource, target)) {
+                    is Verification.Verified -> mutableState.update { state ->
+                        val instruments = state.instruments.filter { it.ticker != result.instrument.ticker } + result.instrument
+                        state.copy(screen = Screen.BUY_REVIEW, instruments = instruments, checking = false)
+                    }
+
+                    is Verification.Refused -> mutableState.update {
+                        it.copy(checking = false, buyRefusals = BuyRefusals(check = result.reason))
+                    }
+                }
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: UnreadableDataException) {
+                mutableState.update { it.copy(screen = Screen.UNREADABLE, checking = false) }
+            } catch (e: Exception) {
+                mutableState.update { it.copy(checking = false, buyRefusals = BuyRefusals(save = SaveRefusal.SAVE_FAILED)) }
+            }
+        }
+    }
+
+    /** Back to edit from the buy review. The typed text is kept. */
+    fun backToBuy() {
+        val current = mutableState.value
+        if (current.screen != Screen.BUY_REVIEW || current.saving) return
+        mutableState.update { it.copy(screen = Screen.BUY, buyRefusals = BuyRefusals()) }
+    }
+
+    /**
+     * Confirm and save (criterion 30): K1's rules again with real ids, then the buy and its cash line are saved
+     * together (open item 14). A rule that fails now returns to the entry with the reason.
+     */
+    fun confirmBuy() {
+        val current = mutableState.value
+        if (current.screen != Screen.BUY_REVIEW || current.saving) return
+        val target = store ?: return
+        val result = buyOf(current, newId(), newId())
+        val created =
+            when (result) {
+                is BuyResult.Created -> result
+
+                is BuyResult.Refused -> {
+                    mutableState.update { it.copy(screen = Screen.BUY, buyRefusals = BuyRefusals(rule = result.reason)) }
+                    return
+                }
+
+                null -> {
+                    mutableState.update { it.copy(screen = Screen.BUY) }
+                    return
+                }
+            }
+        mutableState.update { it.copy(saving = true, buyRefusals = BuyRefusals()) }
+        viewModelScope.launch {
+            try {
+                target.saveBuy(created.transaction, created.cashLine)
+                mutableState.update {
+                    valued(
+                        it.copy(
+                            screen = Screen.TABS,
+                            entries = it.entries + created.cashLine,
+                            transactions = it.transactions + created.transaction,
+                            buyForm = BuyForm(),
+                            buyRefusals = BuyRefusals(),
+                            saving = false,
+                        ),
+                    )
+                }
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: UnreadableDataException) {
+                mutableState.update { it.copy(screen = Screen.UNREADABLE, saving = false) }
+            } catch (e: Exception) {
+                mutableState.update { it.copy(saving = false, buyRefusals = BuyRefusals(save = SaveRefusal.SAVE_FAILED)) }
+            }
+        }
+    }
+
+    /** K1's buy rules on the typed values; null when a field does not parse (the field rules decide then). */
+    private fun buyOf(
+        current: AppState,
+        transactionId: String,
+        cashEntryId: String,
+    ): BuyResult? {
+        val form = current.buyForm
+        val date = MarketDate.parse(form.dateText.trim()) ?: return null
+        val quantity = Quantity.parse(form.quantityText) as? QuantityResult.Exact ?: return null
+        val total = Money.parseCents(form.totalText) as? AmountResult.Cents ?: return null
+        return Transactions.buy(
+            cashEntries = current.entries,
+            transactions = current.transactions,
+            portfolios = current.portfolios,
+            transactionId = transactionId,
+            cashEntryId = cashEntryId,
+            portfolioId = form.portfolioId ?: return null,
+            ticker = form.tickerText,
+            date = date,
+            quantity = quantity.value,
+            totalCents = total.value,
+        )
+    }
 
     private companion object {
         const val PROBE_ID = "check"
@@ -777,6 +1125,7 @@ class AppViewModel(
         const val PROBE_NOTE = "check"
 
         // The screens that show the bottom bar (spec 6: always visible; 02b decision 1).
-        val TAB_BAR_SCREENS = setOf(Screen.TABS, Screen.FORM, Screen.REVIEW, Screen.DETAIL, Screen.REVERSAL, Screen.PORTFOLIO)
+        val TAB_BAR_SCREENS =
+            setOf(Screen.TABS, Screen.FORM, Screen.REVIEW, Screen.DETAIL, Screen.REVERSAL, Screen.PORTFOLIO, Screen.BUY, Screen.BUY_REVIEW)
     }
 }

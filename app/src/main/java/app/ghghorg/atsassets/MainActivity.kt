@@ -34,6 +34,8 @@ import app.ghghorg.atsassets.data.RoomRecordStore
 import app.ghghorg.atsassets.data.SqlCipherOpener
 import app.ghghorg.atsassets.lock.AppLock
 import app.ghghorg.atsassets.lock.LockState
+import app.ghghorg.atsassets.prices.FinnhubSource
+import app.ghghorg.atsassets.prices.NetworkStatus
 import app.ghghorg.atsassets.ui.AppContent
 import app.ghghorg.atsassets.ui.AppViewModel
 import app.ghghorg.atsassets.ui.theme.ATSAssetSystemTheme
@@ -153,6 +155,8 @@ class MainActivity : FragmentActivity() {
                 },
                 clock = Clock.systemUTC(),
                 newId = { UUID.randomUUID().toString() },
+                priceSource = FinnhubSource(BuildConfig.FINNHUB_API_KEY),
+                isOnline = NetworkStatus(appContext)::isOnline,
             )
             return modelClass.cast(appViewModel)!!
         }

@@ -4,7 +4,7 @@ import java.time.LocalDate
 
 /** K3 (spec 4.8). There are no prices before iteration 16, so every holding is valued at cost ("no price"). */
 object Valuation {
-    /** Cash only; the screens use it until iteration 09 step 7 moves them to [netWorth]. */
+    /** The cash part of net worth: the cash balance as of today. Since iteration 09 the screens use [netWorth]. */
     fun netWorthCents(
         entries: List<CashEntry>,
         today: LocalDate,
