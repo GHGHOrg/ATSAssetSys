@@ -27,15 +27,22 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.LiveRegionMode
 import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.clearAndSetSemantics
+import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.liveRegion
+import androidx.compose.ui.semantics.onClick
 import androidx.compose.ui.semantics.paneTitle
+import androidx.compose.ui.semantics.role
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import app.ghghorg.atsassets.R
+import app.ghghorg.atsassets.core.Fraction
+import app.ghghorg.atsassets.core.Holding
 import app.ghghorg.atsassets.core.Money
 import app.ghghorg.atsassets.core.Portfolio
 import app.ghghorg.atsassets.core.PortfolioRefusal
@@ -64,7 +71,9 @@ fun PortfoliosScreen(
         if (state.portfolios.isEmpty()) {
             NoPortfoliosYet(onNewPortfolio)
         } else {
-            state.portfolios.forEach { portfolio -> PortfolioRow(portfolio) { onOpenPortfolio(portfolio.id) } }
+            state.portfolios.forEach { portfolio ->
+                PortfolioRow(portfolio, state.holdingsOf(portfolio.id)) { onOpenPortfolio(portfolio.id) }
+            }
             OutlinedButton(onClick = onNewPortfolio) {
                 Text(text = stringResource(R.string.new_portfolio))
             }
@@ -94,16 +103,47 @@ internal fun NoPortfoliosYet(onCreate: () -> Unit) {
     }
 }
 
-// Holdings and values arrive with 09; until then every portfolio has no holdings and $0.00 (07 stubs). The whole
-// row is one tap target without ">", read by TalkBack as one button (08 decision 3).
+// Wireframe 3 marker 1: name, number of holdings, value and gain/loss. Every holding is at cost until 16, so the
+// gain/loss is $0.00 without color, with "(all holdings at cost)" while there are holdings (wording 4). The whole
+// row is one tap target without ">", read by TalkBack as one button with the figures (08 decision 3, wording 5).
 @Composable
 private fun PortfolioRow(
     portfolio: Portfolio,
+    holdings: List<Holding>,
     onOpen: () -> Unit,
 ) {
+    val count =
+        if (holdings.isEmpty()) {
+            stringResource(R.string.portfolio_no_holdings)
+        } else {
+            pluralStringResource(R.plurals.portfolio_holding_count, holdings.size, holdings.size)
+        }
+    val value = Money.format(holdings.fold(Fraction.ZERO) { sum, holding -> sum + holding.cost })
+    val gain = Money.format(Fraction.ZERO)
+    val atCost = allAtCost(holdings)
+    val dollars = value.substringAfter('$')
+    // Wireframe 3 shows no gain/loss line on a portfolio with no holdings ("Retirement").
+    val spoken =
+        if (holdings.isEmpty()) {
+            stringResource(R.string.portfolio_row_empty_spoken, portfolio.name, count, dollars)
+        } else {
+            val base = stringResource(R.string.portfolio_row_spoken, portfolio.name, count, dollars, gain.substringAfter('$'))
+            if (atCost) stringResource(R.string.portfolio_row_at_cost_spoken, base) else base
+        }
     OutlinedCard(modifier = Modifier.fillMaxWidth()) {
         Column(
-            modifier = Modifier.fillMaxWidth().clickable(role = Role.Button, onClick = onOpen).padding(12.dp),
+            modifier =
+            Modifier
+                .fillMaxWidth()
+                .clickable(role = Role.Button, onClick = onOpen)
+                .clearAndSetSemantics {
+                    contentDescription = spoken
+                    role = Role.Button
+                    onClick {
+                        onOpen()
+                        true
+                    }
+                }.padding(12.dp),
             verticalArrangement = Arrangement.spacedBy(2.dp),
         ) {
             Text(
@@ -111,14 +151,20 @@ private fun PortfolioRow(
                 style = MaterialTheme.typography.titleMedium,
             )
             Text(
-                text = stringResource(R.string.portfolio_no_holdings),
+                text = count,
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
             Text(
-                text = Money.format(0L),
+                text = value,
                 style = MaterialTheme.typography.bodyLarge,
             )
+            if (holdings.isNotEmpty()) {
+                Text(
+                    text = if (atCost) "$gain ${stringResource(R.string.holdings_at_cost)}" else gain,
+                    style = MaterialTheme.typography.bodyMedium,
+                )
+            }
         }
     }
 }

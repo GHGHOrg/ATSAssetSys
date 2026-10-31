@@ -11,6 +11,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.clearAndSetSemantics
@@ -33,8 +34,7 @@ fun AppContent(
             modifier,
         )
 
-        // The bar shows on every screen after loading (spec 6: always visible; 02b decision 1). BUY and BUY_REVIEW
-        // show the tab until their screens arrive in iteration 09 step 8; nothing opens them before then.
+        // The bar shows on every screen after loading (spec 6: always visible; 02b decision 1).
         Screen.TABS, Screen.FORM, Screen.REVIEW, Screen.DETAIL, Screen.REVERSAL, Screen.PORTFOLIO, Screen.BUY, Screen.BUY_REVIEW -> Box(
             modifier = modifier.fillMaxSize(),
         ) {
@@ -136,12 +136,71 @@ private fun BarContent(
             ),
         )
 
+        Screen.BUY -> BuyEntryScreen(
+            state = state,
+            actions =
+            BuyActions(
+                onPortfolioChange = viewModel::onBuyPortfolioChange,
+                onTickerChange = viewModel::onBuyTickerChange,
+                onDateChange = viewModel::onBuyDateChange,
+                onQuantityChange = viewModel::onBuyQuantityChange,
+                onTotalChange = viewModel::onBuyTotalChange,
+                onReview = viewModel::reviewBuy,
+                onBack = viewModel::closeBuy,
+            ),
+        )
+
+        Screen.BUY_REVIEW -> BuyReviewScreen(state, viewModel::confirmBuy, viewModel::backToBuy)
+
         else -> TabContent(state, viewModel)
     }
 }
 
+/**
+ * The selected tab. Overall, Portfolios and Cash carry the Buy/Sell button under their content, and its menu or
+ * notice over it (navigation outline; 09 decision 2). While the layer is open, TalkBack reads only the layer.
+ */
 @Composable
 private fun TabContent(
+    state: AppState,
+    viewModel: AppViewModel,
+) {
+    if (state.tab == Tab.MORE) {
+        TabScreen(state, viewModel)
+        return
+    }
+    val layerOpen = state.buySellMenuOpen || state.buyNotice != null
+    Box(modifier = Modifier.fillMaxSize()) {
+        val under = if (layerOpen) Modifier.clearAndSetSemantics { } else Modifier
+        Column(modifier = Modifier.fillMaxSize().then(under)) {
+            Box(modifier = Modifier.weight(1f)) {
+                TabScreen(state, viewModel)
+            }
+            BuySellButton(
+                onOpen = viewModel::openBuySellMenu,
+                modifier = Modifier.align(Alignment.End).padding(horizontal = 16.dp, vertical = 8.dp),
+            )
+        }
+        if (layerOpen) {
+            BuySellLayer(
+                state = state,
+                actions =
+                BuySellActions(
+                    onOpen = viewModel::openBuySellMenu,
+                    onClose = viewModel::closeBuySellMenu,
+                    onBuy = viewModel::chooseBuy,
+                    onSell = viewModel::chooseSell,
+                    onDismissNotice = viewModel::dismissBuyNotice,
+                    onSetOpeningBalance = viewModel::openForm,
+                    onCreatePortfolio = viewModel::createPortfolioForBuy,
+                ),
+            )
+        }
+    }
+}
+
+@Composable
+private fun TabScreen(
     state: AppState,
     viewModel: AppViewModel,
 ) {

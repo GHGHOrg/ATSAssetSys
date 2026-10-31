@@ -24,6 +24,8 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.clearAndSetSemantics
+import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
@@ -237,6 +239,7 @@ fun CashEntryReview(
     }
 }
 
+// [spoken], when given, is what TalkBack reads for the whole row, such as "Cash effect, minus 1,500.00 dollars" (09).
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
 internal fun ReviewRow(
@@ -245,11 +248,13 @@ internal fun ReviewRow(
     muted: Boolean = false,
     bold: Boolean = false,
     alignStart: Boolean = false,
+    spoken: String? = null,
 ) {
     val valueColor =
         if (muted) MaterialTheme.colorScheme.onSurfaceVariant else MaterialTheme.colorScheme.onSurface
+    val reading = if (spoken == null) Modifier else Modifier.clearAndSetSemantics { contentDescription = spoken }
     FlowRow(
-        modifier = Modifier.fillMaxWidth(),
+        modifier = Modifier.fillMaxWidth().then(reading),
         horizontalArrangement = Arrangement.spacedBy(12.dp),
         verticalArrangement = Arrangement.spacedBy(2.dp),
     ) {

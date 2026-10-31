@@ -930,7 +930,8 @@ class AppViewModel(
         val form = current.buyForm
         val kept = form.portfolioId?.takeIf { id -> current.portfolios.any { it.id == id } }
         val chosen = portfolioId ?: kept ?: current.portfolios.firstOrNull()?.id
-        val date = form.dateText.ifEmpty { marketDate.today().toString() }
+        // Digits only, as the Cash filters (09 decision 10): today as YYYYMMDD, shown with its dashes.
+        val date = form.dateText.ifEmpty { marketDate.today().toString().replace("-", "") }
         current.copy(
             screen = Screen.BUY,
             buySellMenuOpen = false,
@@ -954,8 +955,16 @@ class AppViewModel(
         )
     }
 
-    fun onBuyDateChange(text: String) = mutableState.update {
-        it.copy(buyForm = it.buyForm.copy(dateText = text), buyRefusals = it.buyRefusals.copy(date = null, rule = null))
+    /**
+     * Digits only, as the Cash filters (09 decision 10): a ninth digit is not accepted, and any other character is kept
+     * so its refusal shows at once.
+     */
+    fun onBuyDateChange(text: String) {
+        if (tooManyDigits(text)) return
+        val refusal = if (DateDigits.isDigits(text)) null else DateRefusal.NOT_DIGITS
+        mutableState.update {
+            it.copy(buyForm = it.buyForm.copy(dateText = text), buyRefusals = it.buyRefusals.copy(date = refusal, rule = null))
+        }
     }
 
     fun onBuyQuantityChange(text: String) = mutableState.update {
@@ -983,14 +992,13 @@ class AppViewModel(
         val target = store ?: return
         val form = current.buyForm
         val ticker = TickerCheck.normalize(form.tickerText)
-        val dateText = form.dateText.trim()
-        val date = MarketDate.parse(dateText)
         val quantity = Quantity.parse(form.quantityText)
         val total = Money.parseCents(form.totalText)
         val dateRefusal =
             when {
-                dateText.isEmpty() -> DateRefusal.EMPTY
-                date == null -> DateRefusal.NOT_A_DATE
+                form.dateText.isEmpty() -> DateRefusal.EMPTY
+                !DateDigits.isDigits(form.dateText) -> DateRefusal.NOT_DIGITS
+                DateDigits.toDate(form.dateText) == null -> DateRefusal.NOT_A_DATE
                 else -> null
             }
         val fieldRefusals =
@@ -1098,7 +1106,7 @@ class AppViewModel(
         cashEntryId: String,
     ): BuyResult? {
         val form = current.buyForm
-        val date = MarketDate.parse(form.dateText.trim()) ?: return null
+        val date = DateDigits.toDate(form.dateText) ?: return null
         val quantity = Quantity.parse(form.quantityText) as? QuantityResult.Exact ?: return null
         val total = Money.parseCents(form.totalText) as? AmountResult.Cents ?: return null
         return Transactions.buy(

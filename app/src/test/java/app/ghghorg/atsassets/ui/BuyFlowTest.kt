@@ -75,7 +75,7 @@ class BuyFlowTest {
 
     private fun AppViewModel.fillBuy(
         ticker: String = "AAPL",
-        date: String = "2026-02-01",
+        date: String = "20260201",
         quantity: String = "10",
         total: String = "1500.00",
     ) {
@@ -174,8 +174,34 @@ class BuyFlowTest {
         val state = vm.state.value
         assertEquals(Screen.BUY, state.screen)
         assertEquals("p1", state.buyForm.portfolioId)
-        assertEquals("2026-10-26", state.buyForm.dateText)
+        assertEquals("20261026", state.buyForm.dateText)
         assertEquals("", state.buyForm.tickerText)
+    }
+
+    @Test
+    fun theDate_takesDigitsOnly_asTheCashFilters() {
+        val vm = started(storeWithCash())
+        vm.chooseBuy()
+        vm.onBuyDateChange("202602011")
+        assertEquals("20261026", vm.state.value.buyForm.dateText)
+        vm.onBuyDateChange("2026-02")
+        assertEquals("2026-02", vm.state.value.buyForm.dateText)
+        assertEquals(DateRefusal.NOT_DIGITS, vm.state.value.buyRefusals.date)
+        vm.onBuyDateChange("202602")
+        assertEquals(null, vm.state.value.buyRefusals.date)
+    }
+
+    @Test
+    fun review_aShortOrEmptyDate_isRefused() {
+        val vm = started(storeWithCash())
+        vm.chooseBuy()
+        vm.fillBuy(date = "202602")
+        vm.reviewBuy()
+        assertEquals(DateRefusal.NOT_A_DATE, vm.state.value.buyRefusals.date)
+        vm.onBuyDateChange("")
+        vm.reviewBuy()
+        assertEquals(DateRefusal.EMPTY, vm.state.value.buyRefusals.date)
+        assertEquals(Screen.BUY, vm.state.value.screen)
     }
 
     @Test
@@ -208,7 +234,7 @@ class BuyFlowTest {
         val source = FakeSource()
         val vm = started(storeWithCash(), source = source)
         vm.chooseBuy()
-        vm.fillBuy(ticker = "  ", date = "2026-02-30", quantity = "1.123456789", total = "0")
+        vm.fillBuy(ticker = "  ", date = "20260230", quantity = "1.123456789", total = "0")
         vm.reviewBuy()
         val state = vm.state.value
         assertEquals(Screen.BUY, state.screen)
@@ -343,7 +369,7 @@ class BuyFlowTest {
         val store = storeWithCash().also { it.storedInstruments = listOf(aaplVerified) }
         val vm = started(store, newId = ids())
         vm.chooseBuy()
-        vm.fillBuy(ticker = "AAPL", date = "2026-02-01", quantity = "10", total = "1500.00")
+        vm.fillBuy(ticker = "AAPL", date = "20260201", quantity = "10", total = "1500.00")
         vm.reviewBuy()
         vm.confirmBuy()
         val (transaction, line) = store.savedBuys.single()
