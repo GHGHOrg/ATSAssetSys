@@ -35,7 +35,7 @@ fun AppContent(
         )
 
         // The bar shows on every screen after loading (spec 6: always visible; 02b decision 1).
-        Screen.TABS, Screen.FORM, Screen.REVIEW, Screen.DETAIL, Screen.REVERSAL, Screen.PORTFOLIO, Screen.BUY, Screen.BUY_REVIEW -> Box(
+        else -> Box(
             modifier = modifier.fillMaxSize(),
         ) {
             val dialogOpen = state.portfolioDialog != null || state.renameDialog != null
