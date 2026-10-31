@@ -1,5 +1,6 @@
 package app.ghghorg.atsassets.core
 
+import java.math.BigDecimal
 import java.math.BigInteger
 
 /** Why a typed amount was refused (spec 4.2 and the number rules of section 8). */
@@ -63,5 +64,24 @@ object Money {
         val grouped = dollars.reversed().chunked(3).joinToString(",").reversed()
         val sign = if (cents < 0L) MINUS else ""
         return "$sign\$$grouped.$hundredths"
+    }
+
+    /**
+     * An exact dollar value, rounded half away from zero to cents (4.10). A value that rounds to 0.00 shows $0.00
+     * with no sign.
+     */
+    fun format(dollars: Fraction): String = formatDecimal(dollars.rounded(2))
+
+    /** A price per share or cost per share (section 6): 2 decimals, or 4 when under $1. */
+    fun formatPerShare(dollars: Fraction): String {
+        val underOneDollar = dollars.abs() < Fraction.of(BigInteger.ONE, BigInteger.ONE)
+        return formatDecimal(dollars.rounded(if (underOneDollar) 4 else 2))
+    }
+
+    private fun formatDecimal(value: BigDecimal): String {
+        val plain = value.abs().toPlainString()
+        val grouped = plain.substringBefore('.').reversed().chunked(3).joinToString(",").reversed()
+        val sign = if (value.signum() < 0) MINUS else ""
+        return "$sign\$$grouped.${plain.substringAfter('.')}"
     }
 }

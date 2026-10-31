@@ -106,7 +106,7 @@ object CashEntries {
                 note = note,
                 enteredSeq = CashRules.nextSeq(existing),
             )
-        val replayed = replay(existing + entry, from = date)
+        val replayed = CashRules.replay(existing + entry, from = date)
         return if (replayed == null) CashEntryResult.Created(entry) else CashEntryResult.Refused(replayed)
     }
 
@@ -156,29 +156,7 @@ object CashEntries {
                 enteredSeq = CashRules.nextSeq(existing),
                 reversesId = original.id,
             )
-        val replayed = replay(existing + entry, from = date)
+        val replayed = CashRules.replay(existing + entry, from = date)
         return if (replayed == null) CashEntryResult.Created(entry) else CashEntryResult.Refused(replayed)
-    }
-
-    /**
-     * Replays the cash balance in the 4.1 order (date, then entered_seq) and judges it after every entry
-     * dated [from] or later (03 decision 5). Null when every entry passes.
-     */
-    private fun replay(
-        entries: List<CashEntry>,
-        from: LocalDate,
-    ): CashEntryRefusal? {
-        var balance = 0L
-        try {
-            for (entry in entries.sortedWith(compareBy<CashEntry>({ it.date }, { it.enteredSeq }))) {
-                balance = Math.addExact(balance, entry.amountCents)
-                if (!entry.date.isBefore(from) && balance < 0L) {
-                    return CashEntryRefusal.NegativeCash(entry.date, -balance)
-                }
-            }
-        } catch (e: ArithmeticException) {
-            return CashEntryRefusal.TooLarge
-        }
-        return null
     }
 }

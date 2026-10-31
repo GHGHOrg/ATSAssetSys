@@ -160,6 +160,47 @@ cannot start until it is finished. It must answer, with checks done on the day, 
 If the source does not supply sector and geography, iteration 23 is reduced to
 "Unclassified" plus the override path, and the change is recorded here.
 
+### Exchange table (spec 4.3; price-source spike decision 4)
+The exchanges the ticker check accepts: the 29 national securities exchanges registered under Section 6(a),
+as the SEC page listed them on 2026-10-30 (price-source note 10.1), with their former names from that page
+and the MIC codes Finnhub reports (note 10.3). A name is matched ignoring case and spaces as in 4.9. Any other
+name or code, OOTC (OTC) included, is refused. The same table is in core/ (TickerCheck.EXCHANGES, iteration 09).
+
+| SEC name | Aliases (former names; MIC code) |
+|---|---|
+| 24X National Exchange LLC | none |
+| BOX Exchange LLC | BOX Options Exchange LLC |
+| Cboe BYX Exchange, Inc. | Bats BYX Exchange, Inc.; BATS Y-Exchange, Inc. |
+| Cboe BZX Exchange, Inc. | Bats BZX Exchange, Inc.; BATS Exchange, Inc.; BATS |
+| Cboe C2 Exchange, Inc. | none |
+| Cboe EDGA Exchange, Inc. | Bats EDGA Exchange, Inc.; EDGA Exchange, Inc. |
+| Cboe EDGX Exchange, Inc. | Bats EDGX Exchange, Inc.; EDGX Exchange, Inc. |
+| Cboe Exchange, Inc. | none |
+| Green Impact Exchange, LLC | none |
+| Investors Exchange LLC | IEXG |
+| Long-Term Stock Exchange, Inc. | none |
+| MEMX, LLC | none |
+| Miami International Securities Exchange | none |
+| MIAX Emerald, LLC | none |
+| MIAX PEARL, LLC | none |
+| MIAX Sapphire, LLC | none |
+| MX2 LLC | none |
+| Nasdaq GEMX, LLC | ISE Gemini |
+| Nasdaq ISE, LLC | International Securities Exchange, LLC |
+| Nasdaq MRX, LLC | ISE Mercury |
+| Nasdaq PHLX LLC | NASDAQ OMX PHLX, LLC; Philadelphia Stock Exchange |
+| Nasdaq Texas, LLC | Nasdaq BX, Inc.; NASDAQ OMX BX, Inc.; Boston Stock Exchange |
+| The Nasdaq Stock Market | XNAS |
+| New York Stock Exchange LLC | XNYS |
+| NYSE Arca, Inc. | ARCX |
+| NYSE Texas, Inc. | NYSE Chicago, Inc.; Chicago Stock Exchange |
+| NYSE American LLC | NYSE MKT LLC; NYSE Amex; NYSE Alternet US; American Stock Exchange; XASE |
+| NYSE National, Inc. | National Stock Exchange, Inc. |
+| Texas Stock Exchange LLC | none |
+
+The SEC page writes NYSE American's former names as one phrase ("NYSE MKT LLC, NYSE Amex, NYSE Alternet US,
+and the American Stock Exchange"); splitting it into four names is my reading.
+
 ### Spike: dependency upgrade (plan/spikes/dependency-upgrade.md)
 Added 2026-10-18. Not an iteration. It runs after iteration 01 and before iteration 02, which
 cannot start until it is finished. Reason: Android lint reports 8 library-version notices on the
@@ -254,7 +295,8 @@ when it adds a command, a convention or a pitfall.
 | Iteration 06 | done: built 2026-10-29 (steps 1 to 5 and one change); phone checks 2026-10-29 all yes; 213 tests; pull request #91 merged as 0d5e2f4, CI green on the pull request and on main (1m 51s) (your reports) |
 | Iteration 07 | done: built 2026-10-30 (steps 1 to 6 and one fix); phone checks 2026-10-30 all yes, check 10 not run (open item 33); 243 tests; pull request #94 merged as 1eb7220, CI green on the pull request and on main (2m 19s) (your reports) |
 | Iteration 08 | done: built 2026-10-30 (steps 1 to 6 and one fix); phone checks 2026-10-30 all yes; 266 tests; pull request #96 merged as 936c7e2, CI green on the pull request and on main (2m 31s) (your reports) |
-| Iterations 09 to 35 | not started, files not written |
+| Iteration 09 | built 2026-10-31 (steps 1 to 10 and two fixes); phone checks 2026-10-31 all yes; 388 tests; pull request not yet opened |
+| Iterations 10 to 35 | not started, files not written |
 
 ## 12. Change log
 Each departure from this plan is recorded here with its date and the reason.
@@ -320,6 +362,8 @@ Each departure from this plan is recorded here with its date and the reason.
 - 2026-10-30: pull request #97 (docs: the 08 merge record) was merged as efdec84, CI green on the pull request and on main (2m 7s) (your reports). The price-source spike's outline was approved (plan/spikes/price-source.md). The "29-name US list in the hand-off" named in section 7 is not in the repo; the spike takes the US exchange list from the SEC's list of registered national securities exchanges instead (your decision 1). A source that needs a key is a spec gap (sections 8 and 9), flagged in the note.
 - 2026-10-30: the price-source spike was run (note sections 6, 10 and 11). Effects on the plan: the app ships with Finnhub only (decision 3); the exchange table of 4.3 is fixed here, built from the 29 SEC names with the MIC codes XNAS, XNYS, ARCX, BATS, XASE and IEXG as aliases, and any other code is refused (decision 4; the table itself is written with iteration 09); the Finnhub key is built in at build time from FINNHUB_API_KEY, with no spec change (decision 5); Finnhub's deletion term is met by App initialization (decision 6). Iteration 23 is not reduced for stocks; ETFs start as "Unclassified" plus the override. Iteration 30 has only one source to change to (open item 36). Open item 17 is closed; items 35 to 38 are new.
 - 2026-10-31: pull request #98 (price-source spike) was merged as 5cc77da. CI on the pull request (3 checks: build, Analyze (actions), CodeQL) and on main (the run for 5cc77da, 1m 47s) were reported successful by you. The spike is finished and iteration 09 no longer waits on it. The status lines above were updated. Dependabot has opened branches for the Gradle wrapper 9.8.2 and core-ktx 1.19.1 (open item 20).
+- 2026-10-31: pull request #99 (docs: the price-source spike merge record) was merged as 5978482, CI green on the pull request and on main (1m 38s) (your reports). The 09 file was approved with decisions 1 to 9. The phone check of open item 33 moves from 09 to 34 (decision 9). Open item 37 is settled by decision 6; open item 38 is closed.
+- 2026-10-31: 09 built and checked on the phone. The first network access: Finnhub's list comes as a redirect to a signed link on its file host, which the app follows once, without the key, over https to finnhub.io only (defect found in phone check 3, fixed with failing tests first; 09 file, section 14). A second defect from phone check 7 (a field error hid the cash rule on the review) was fixed the same way. Decision 8 was amended in step 6 (six check-failure messages, the status suffix), and decisions 10 (the buy date as the Cash filters) and 11 (portfolio chips) were added in step 8. The exchange table of 4.3 is in section 7 above. Database version 3 adds the transactions and instruments tables. Criterion 35's install-over is checked again (versionCode 9).
 
 ## 13. Out of scope for this plan
 Performance over time, per-holding dividends, ETF look-through, the next intent.md items,

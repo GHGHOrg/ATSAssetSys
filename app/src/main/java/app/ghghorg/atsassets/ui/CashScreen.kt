@@ -86,7 +86,13 @@ fun CashScreen(
                 Column(modifier = Modifier.padding(12.dp)) {
                     rows.forEachIndexed { index, row ->
                         if (index > 0) HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
-                        EntryRow(row, onOpen = { onOpenEntry(row.entry.id) })
+                        val trade = state.transactions.firstOrNull { it.id == row.entry.transactionId }
+                        if (trade != null) {
+                            val portfolio = state.portfolios.firstOrNull { it.id == trade.portfolioId }?.name.orEmpty()
+                            TradeRow(row, trade.ticker, portfolio)
+                        } else {
+                            EntryRow(row, onOpen = { onOpenEntry(row.entry.id) })
+                        }
                     }
                 }
             }
@@ -193,8 +199,8 @@ private fun FilterDateField(
     )
 }
 
-/** Shows the typed digits with the dashes of YYYY-MM-DD; the cursor follows (rules in DateDigits). */
-private object DateDigitsTransformation : VisualTransformation {
+/** Shows the typed digits with the dashes of YYYY-MM-DD; the cursor follows (rules in DateDigits). Also the buy date (09). */
+internal object DateDigitsTransformation : VisualTransformation {
     override fun filter(text: AnnotatedString): TransformedText {
         val typed = text.text
         val mapping =
@@ -312,7 +318,70 @@ private fun EntryRow(
     }
 }
 
-// Shared with the cash entry form and review. Trade lines (09) show buy or sell, ticker and portfolio instead.
+/**
+ * A buy's trade line (view 7; 09 wording 3): "Buy AAPL", the date with "ET" and the balance after it, and
+ * "For portfolio Main" where a direct entry shows its note. Not tappable until it opens its transaction (10 or 27).
+ */
+@OptIn(ExperimentalLayoutApi::class)
+@Composable
+private fun TradeRow(
+    row: CashRow,
+    ticker: String,
+    portfolio: String,
+) {
+    val entry = row.entry
+    val date = entry.date.toString()
+    val spoken =
+        stringResource(
+            R.string.trade_buy_spoken,
+            ticker,
+            portfolio,
+            date,
+            spokenSigned(entry.amountCents),
+            spokenDollars(row.balanceAfterCents),
+        )
+    FlowRow(
+        modifier = Modifier.fillMaxWidth().clearAndSetSemantics { contentDescription = spoken },
+        horizontalArrangement = Arrangement.spacedBy(12.dp),
+        verticalArrangement = Arrangement.spacedBy(2.dp),
+    ) {
+        Column {
+            Text(
+                text = stringResource(R.string.trade_buy_title, ticker),
+                style = MaterialTheme.typography.bodyLarge,
+                fontWeight = FontWeight.Medium,
+            )
+            Text(
+                text = stringResource(R.string.date_with_et, date),
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+            Text(
+                text = stringResource(R.string.trade_for_portfolio, portfolio),
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+        }
+        Column(
+            modifier = Modifier.weight(1f),
+            horizontalAlignment = Alignment.End,
+        ) {
+            Text(
+                text = signedAmount(entry.amountCents),
+                style = MaterialTheme.typography.bodyLarge,
+                textAlign = TextAlign.End,
+            )
+            Text(
+                text = stringResource(R.string.cash_balance_after, Money.format(row.balanceAfterCents)),
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                textAlign = TextAlign.End,
+            )
+        }
+    }
+}
+
+// Shared with the cash entry form and review. Trade lines (09) show buy, ticker and portfolio instead (TradeRow).
 @Composable
 internal fun cashTypeLabel(type: CashType): String = when (type) {
     CashType.OPENING_BALANCE -> stringResource(R.string.opening_balance)

@@ -5,6 +5,12 @@ plugins {
     alias(libs.plugins.room3)
 }
 
+// The Finnhub key (price-source spike decision 5): read from the user environment at build time and built into the
+// app, never written to the repo. Empty when the variable is missing, as in CI; the app then says no price source
+// is configured (09 decision 8). Letters and digits only, so it cannot break the generated Java string.
+val finnhubApiKey: String = providers.environmentVariable("FINNHUB_API_KEY").orElse("").get()
+require(finnhubApiKey.matches(Regex("[A-Za-z0-9]*"))) { "FINNHUB_API_KEY must be letters and digits only." }
+
 android {
     namespace = "app.ghghorg.atsassets"
     compileSdk {
@@ -15,10 +21,11 @@ android {
         applicationId = "app.ghghorg.atsassets"
         minSdk = 33
         targetSdk = 37
-        versionCode = 8
+        versionCode = 9
         versionName = "1.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+        buildConfigField("String", "FINNHUB_API_KEY", "\"$finnhubApiKey\"")
     }
 
     buildTypes {
@@ -35,6 +42,7 @@ android {
     }
     buildFeatures {
         compose = true
+        buildConfig = true
     }
 }
 
@@ -63,6 +71,7 @@ dependencies {
         }
     }
     implementation(libs.androidx.sqlite)
+    implementation(libs.kotlinx.serialization.json)
     testImplementation(libs.junit)
     testImplementation(libs.kotlinx.coroutines.test)
     androidTestImplementation(platform(libs.androidx.compose.bom))

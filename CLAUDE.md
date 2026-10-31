@@ -90,6 +90,9 @@ CI (.github/workflows/ci.yml) runs the style check and then the same three steps
 - In Windows PowerShell 5.1, Invoke-RestMethod returns the raw text, not an object, when the JSON has keys that differ only by case (Massive's "T" and "t"). Use Invoke-WebRequest and read .Content.
 - A call that must run in a time window (market hours) checks the time itself and makes no call outside it. An approval is not a clock (price-source spike, first run at 20:03 +08:00).
 - Tag a question Design only when every option changes spec.md. If one option stays within the spec, the question is Build, and that option comes first (price-source spike, decision 5).
+- PowerShell's HttpWebRequest and Invoke-WebRequest follow redirects by default. When measuring an API the app calls, turn that off (AllowAutoRedirect = $false, or -MaximumRedirection 0), or a redirect goes unseen (09: Finnhub's US list, phone check 3).
+- Finnhub answers /stock/symbol?exchange=US with a 302 to a signed link on static2.finnhub.io. FinnhubSource follows that one redirect, only over https to *.finnhub.io and without the key. Keep it that way: Android's HTTP stack would forward the X-Finnhub-Token header on its own redirect (my reading, not checked).
+- The app's uid for a Logcat check: adb shell pm list packages -U app.ghghorg.atsassets (uid:10454). dumpsys package has no userId line on Android 17 (09 check 9).
 
 ## 7. Standing checks for every iteration's screens
 Criteria 9, 39 to 42, and the install-over-previous-build check (35).
@@ -106,14 +109,14 @@ Gates (Ruleset A stays in force even though nothing technical blocks you): no co
 How far to go:
 - Work one numbered step of the iteration file's "Order of work" at a time. After each step run build, tests and lint, show the real output and the report below, and stop until I say go.
 - Before each step run git status. If there are uncommitted changes you did not make, stop, list the files and wait.
-- At the end of every iteration (its documents step), remind me of open item 33: the phone check of "Set the opening balance first" for New portfolio, due in 09, at the latest in 34. Drop this line when item 33 is closed.
+- At the end of every iteration (its documents step), remind me of open item 33: the phone check of "Set the opening balance first" for New portfolio, deferred to 34 (09 decision 9). Drop this line when item 33 is closed.
 - Report after creating or editing files: each file, the real git diff --stat output, and for documents the line count, byte count and SHA-256. Check that a CRLF document did not change its line endings: count the raw CR and LF bytes and run git diff --check (if a whole file shows as changed, stop). The report commands ask for my approval, about two prompts per report; that is expected.
 Commits and pull requests:
 - Propose one commit per step, after build, tests and lint are green. Show the message and the changed files; I approve each. Message: "Iteration NN X: what", naming the spec refs. A red step gets no commit. Keep the default commit trailer.
 - Never push. I push, and I create and merge pull requests (GitHub Pull Requests extension or browser). Draft the title and description for me.
 Other:
 - Start sub-agents only when I ask.
-- Ask one question at a time, tagged with a stage, with the options, what each means for the end user, and your leaning marked.
+- Ask one question at a time, tagged with a stage, with the options, what each means for the end user, and your leaning marked. Each option starts with a short letter tag (A, B, C).
 - Do not write security-relevant code from memory. Look up versions on the day. When a request conflicts with intent.md or spec.md, stop and offer a choice.
 - Wording that spec.md does not give (messages, labels) is written by you, shown to me and approved before use (D9).
 - Auto memory is off. If I correct you, propose the change as a CLAUDE.md edit.

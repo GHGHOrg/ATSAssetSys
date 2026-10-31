@@ -5,9 +5,13 @@ import app.ghghorg.atsassets.core.CashDirection
 import app.ghghorg.atsassets.core.CashEntry
 import app.ghghorg.atsassets.core.CashEntryRefusal
 import app.ghghorg.atsassets.core.CashType
+import app.ghghorg.atsassets.core.Instrument
+import app.ghghorg.atsassets.core.Lookup
 import app.ghghorg.atsassets.core.Portfolio
 import app.ghghorg.atsassets.core.PortfolioRefusal
+import app.ghghorg.atsassets.core.PriceSource
 import app.ghghorg.atsassets.core.RecordStore
+import app.ghghorg.atsassets.core.Transaction
 import app.ghghorg.atsassets.core.UnreadableDataException
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Dispatchers
@@ -83,6 +87,8 @@ class AppViewModelTest {
             },
             clock = clockAt("2026-10-26T12:00:00Z"),
             newId = { "c1" },
+            priceSource = FakeSource(),
+            isOnline = { true },
         )
         vm.start()
         vm.start()
@@ -1546,18 +1552,35 @@ class AppViewModelTest {
     }
 }
 
-private fun clockAt(
+internal fun clockAt(
     instant: String,
     zone: ZoneId = ZoneOffset.UTC,
 ): Clock = Clock.fixed(Instant.parse(instant), zone)
 
-private fun started(
+internal fun started(
     store: FakeStore,
     clock: Clock = clockAt("2026-10-26T12:00:00Z"),
+    source: FakeSource = FakeSource(),
+    online: () -> Boolean = { true },
+    newId: () -> String = { "c1" },
 ): AppViewModel {
-    val vm = AppViewModel(storeProvider = { store }, clock = clock, newId = { "c1" })
+    val vm = AppViewModel(storeProvider = { store }, clock = clock, newId = newId, priceSource = source, isOnline = online)
     vm.start()
     return vm
+}
+
+/** A price source in memory: it answers [answer] and records each ticker asked; [gate] makes it wait. */
+internal class FakeSource(
+    var answer: Lookup = Lookup.NotFound,
+    val gate: CompletableDeferred<Unit>? = null,
+) : PriceSource {
+    val asked = mutableListOf<String>()
+
+    override suspend fun lookUp(ticker: String): Lookup {
+        asked.add(ticker)
+        gate?.await()
+        return answer
+    }
 }
 
 private fun AppViewModel.fill(
@@ -1570,7 +1593,7 @@ private fun AppViewModel.fill(
     onNoteChange(note)
 }
 
-private fun opening(
+internal fun opening(
     date: String = "2026-01-01",
     cents: Long = 1_000_000L,
 ): CashEntry = CashEntry(
@@ -1609,7 +1632,7 @@ private fun withdrawal(
 )
 
 /** A store in memory. It records every save, and can fail or wait on demand. */
-private class FakeStore(
+internal class FakeStore(
     var stored: List<CashEntry> = emptyList(),
     val loadError: Throwable? = null,
     val saveError: Throwable? = null,
@@ -1654,5 +1677,38 @@ private class FakeStore(
         saveError?.let { throw it }
         renames.add(id to name)
         storedPortfolios = storedPortfolios.map { if (it.id == id) it.copy(name = name) else it }
+    }
+
+    var storedTransactions: List<Transaction> = emptyList()
+    val savedBuys = mutableListOf<Pair<Transaction, CashEntry>>()
+    var storedInstruments: List<Instrument> = emptyList()
+    val savedInstruments = mutableListOf<Instrument>()
+
+    override suspend fun loadTransactions(): List<Transaction> {
+        loadError?.let { throw it }
+        return storedTransactions
+    }
+
+    /** Both or neither, as the Room store: a failure saves nothing. */
+    override suspend fun saveBuy(
+        transaction: Transaction,
+        cashLine: CashEntry,
+    ) {
+        gate?.await()
+        saveError?.let { throw it }
+        savedBuys.add(transaction to cashLine)
+        storedTransactions = storedTransactions + transaction
+        stored = stored + cashLine
+    }
+
+    override suspend fun loadInstruments(): List<Instrument> {
+        loadError?.let { throw it }
+        return storedInstruments
+    }
+
+    override suspend fun saveInstrument(instrument: Instrument) {
+        saveError?.let { throw it }
+        savedInstruments.add(instrument)
+        storedInstruments = storedInstruments.filter { it.ticker != instrument.ticker } + instrument
     }
 }

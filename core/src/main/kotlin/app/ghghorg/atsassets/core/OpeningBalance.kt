@@ -67,4 +67,27 @@ object CashRules {
 
     /** "App holds data" (spec section 3); in 02a that means any cash entry exists. */
     fun appHoldsData(entries: List<CashEntry>): Boolean = entries.isNotEmpty()
+
+    /**
+     * Replays the cash balance in the 4.1 order (date, then entered_seq) and judges it after every entry
+     * dated [from] or later (03 decision 5). Null when every entry passes; only NegativeCash or TooLarge otherwise.
+     * Used by cash entries (03 to 05) and buys (09).
+     */
+    internal fun replay(
+        entries: List<CashEntry>,
+        from: LocalDate,
+    ): CashEntryRefusal? {
+        var balance = 0L
+        try {
+            for (entry in entries.sortedWith(compareBy<CashEntry>({ it.date }, { it.enteredSeq }))) {
+                balance = Math.addExact(balance, entry.amountCents)
+                if (!entry.date.isBefore(from) && balance < 0L) {
+                    return CashEntryRefusal.NegativeCash(entry.date, -balance)
+                }
+            }
+        } catch (e: ArithmeticException) {
+            return CashEntryRefusal.TooLarge
+        }
+        return null
+    }
 }
