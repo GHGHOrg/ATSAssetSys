@@ -4,12 +4,16 @@ import java.math.BigDecimal
 import java.time.LocalDate
 import java.util.Locale
 
-/** The transaction types of spec section 3. Sell (11) and split (12) join later. */
+/** The transaction types of spec section 3. Split (12) joins later. */
 enum class TransactionType {
     BUY,
+    SELL,
 }
 
-/** One transaction in a portfolio (spec section 3). The quantity is the exact decimal as typed; the total is in cents (4.10). */
+/**
+ * One transaction in a portfolio (spec section 3). The quantity is the exact decimal as typed; the total is in cents (4.10).
+ * A sell carries its allocations, oldest lot first; they, not the typed quantity, drive shares, cost and proceeds (4.10).
+ */
 data class Transaction(
     val id: String,
     val portfolioId: String,
@@ -20,6 +24,13 @@ data class Transaction(
     val quantity: BigDecimal,
     val totalCents: Long,
     val reversesId: String? = null,
+    val allocations: List<SellAllocation> = emptyList(),
+)
+
+/** A sell allocation (spec section 3): the exact quantity a sell took from the lot of buy [lotId] (4.10, 11 decision 3). */
+data class SellAllocation(
+    val lotId: String,
+    val quantity: Fraction,
 )
 
 /** Why a buy was refused (spec 4.1, 4.2, 4.3). Reasons only; the wording is D9. */

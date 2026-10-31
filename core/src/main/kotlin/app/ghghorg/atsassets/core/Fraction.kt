@@ -43,8 +43,15 @@ class Fraction private constructor(
 
     override fun toString(): String = "$numerator/$denominator"
 
+    /** The stored form of a quantity above 0 (11 decision 3). Throws IllegalArgumentException for 0 or less. */
+    fun stored(): String {
+        require(signum() > 0) { "a stored quantity is above 0" }
+        return "$numerator/$denominator"
+    }
+
     companion object {
         private val HUNDRED = BigInteger.valueOf(100)
+        private val STORED = Regex("[1-9][0-9]*/[1-9][0-9]*")
 
         val ZERO: Fraction = of(BigInteger.ZERO, BigInteger.ONE)
 
@@ -68,5 +75,13 @@ class Fraction private constructor(
 
         /** Integer cents as dollars. */
         fun ofCents(cents: Long): Fraction = of(BigInteger.valueOf(cents), HUNDRED)
+
+        /** Reads the form [stored] writes, and nothing else: null for any other text. */
+        fun fromStored(text: String): Fraction? {
+            if (!STORED.matches(text)) return null
+            val numerator = BigInteger(text.substringBefore('/'))
+            val denominator = BigInteger(text.substringAfter('/'))
+            return if (numerator.gcd(denominator) == BigInteger.ONE) of(numerator, denominator) else null
+        }
     }
 }

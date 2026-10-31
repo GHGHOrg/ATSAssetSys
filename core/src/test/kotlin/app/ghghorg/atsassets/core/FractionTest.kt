@@ -71,4 +71,26 @@ class FractionTest {
         assertEquals(BigDecimal("0.00"), fraction(1, 201).rounded(2))
         assertEquals(BigDecimal("333.33"), fraction(1_000, 3).rounded(2))
     }
+
+    @Test
+    fun stored_isNumeratorSlashDenominator_reduced_andReadsBackTheSame() {
+        assertEquals("10/1", fraction(10, 1).stored())
+        assertEquals("5/2", Fraction.of(BigDecimal("2.50")).stored())
+        assertEquals("10/3", fraction(20, 6).stored())
+        val large = Fraction.of(BigInteger("123456789012345678901234567890"), BigInteger("7"))
+        assertEquals(large, Fraction.fromStored(large.stored()))
+        assertEquals(fraction(10, 3), Fraction.fromStored("10/3"))
+    }
+
+    @Test(expected = IllegalArgumentException::class)
+    fun stored_ofZeroOrLess_throws() {
+        fraction(-1, 2).stored()
+    }
+
+    @Test
+    fun fromStored_refusesEveryOtherForm() {
+        for (text in listOf("6/2", "3", "-1/2", "1/-2", "1/0", "0/1", "1.5/1", " 1/2", "1/2 ", "01/2", "1/02", "1//2", "", "a/b")) {
+            assertEquals(text, null, Fraction.fromStored(text))
+        }
+    }
 }
