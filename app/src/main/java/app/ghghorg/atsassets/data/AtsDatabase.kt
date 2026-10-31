@@ -49,6 +49,17 @@ data class TransactionRow(
     val reversesId: String?,
 )
 
+/**
+ * One sell allocation row (spec 3): the exact quantity sell [sellId] took from the lot of buy [lotId], stored as a
+ * reduced fraction in text, such as "5/2" (4.10, 11 decision 3). A sell takes from a lot at most once.
+ */
+@Entity(tableName = "sell_allocations", primaryKeys = ["sellId", "lotId"])
+data class SellAllocationRow(
+    val sellId: String,
+    val lotId: String,
+    val quantity: String,
+)
+
 /** One instrument row (spec 3): a verified ticker and its asset type. Prices and classification join later (16, 23). */
 @Entity(tableName = "instruments")
 data class InstrumentRow(
@@ -104,8 +115,27 @@ interface TransactionDao {
         insertCashEntry(cashLine)
     }
 
+    /** The default conflict rule (abort) is kept. */
+    @Insert
+    suspend fun insertAllocations(rows: List<SellAllocationRow>)
+
+    /** A sell, its trade cash line and its allocations in one database transaction: all or nothing (open item 14). */
+    @Transaction
+    suspend fun insertSell(
+        transaction: TransactionRow,
+        cashLine: CashEntryRow,
+        allocations: List<SellAllocationRow>,
+    ) {
+        insertTransaction(transaction)
+        insertCashEntry(cashLine)
+        insertAllocations(allocations)
+    }
+
     @Query("SELECT * FROM transactions ORDER BY date, enteredSeq")
     suspend fun loadAll(): List<TransactionRow>
+
+    @Query("SELECT * FROM sell_allocations")
+    suspend fun loadAllocations(): List<SellAllocationRow>
 }
 
 @Dao
@@ -119,13 +149,13 @@ interface InstrumentDao {
 }
 
 /**
- * Version 2 (iteration 07) adds the portfolios table, version 3 (09) the transactions and instruments tables; Room
- * generates each step out of the schemas in app/schemas.
+ * Version 2 (iteration 07) adds the portfolios table, version 3 (09) the transactions and instruments tables, version 4
+ * (11) the sell_allocations table; Room generates each step out of the schemas in app/schemas.
  */
 @Database(
-    entities = [CashEntryRow::class, PortfolioRow::class, TransactionRow::class, InstrumentRow::class],
-    version = 3,
-    autoMigrations = [AutoMigration(from = 1, to = 2), AutoMigration(from = 2, to = 3)],
+    entities = [CashEntryRow::class, PortfolioRow::class, TransactionRow::class, InstrumentRow::class, SellAllocationRow::class],
+    version = 4,
+    autoMigrations = [AutoMigration(from = 1, to = 2), AutoMigration(from = 2, to = 3), AutoMigration(from = 3, to = 4)],
 )
 abstract class AtsDatabase : RoomDatabase() {
     abstract fun cashEntryDao(): CashEntryDao

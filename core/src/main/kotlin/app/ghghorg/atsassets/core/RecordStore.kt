@@ -20,11 +20,17 @@ interface RecordStore {
         name: String,
     )
 
-    /** Throws [UnreadableDataException] if stored data exists but cannot be read. */
+    /** Each sell with its allocations. Throws [UnreadableDataException] if stored data exists but cannot be read. */
     suspend fun loadTransactions(): List<Transaction>
 
     /** Saves a buy and its trade cash line together: both or neither (open item 14). */
     suspend fun saveBuy(
+        transaction: Transaction,
+        cashLine: CashEntry,
+    )
+
+    /** Saves a sell, its trade cash line and its allocations together: all or nothing (open item 14). */
+    suspend fun saveSell(
         transaction: Transaction,
         cashLine: CashEntry,
     )
