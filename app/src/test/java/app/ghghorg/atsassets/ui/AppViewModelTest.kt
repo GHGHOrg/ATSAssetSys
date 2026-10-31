@@ -5,9 +5,11 @@ import app.ghghorg.atsassets.core.CashDirection
 import app.ghghorg.atsassets.core.CashEntry
 import app.ghghorg.atsassets.core.CashEntryRefusal
 import app.ghghorg.atsassets.core.CashType
+import app.ghghorg.atsassets.core.Instrument
 import app.ghghorg.atsassets.core.Portfolio
 import app.ghghorg.atsassets.core.PortfolioRefusal
 import app.ghghorg.atsassets.core.RecordStore
+import app.ghghorg.atsassets.core.Transaction
 import app.ghghorg.atsassets.core.UnreadableDataException
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Dispatchers
@@ -1654,5 +1656,38 @@ private class FakeStore(
         saveError?.let { throw it }
         renames.add(id to name)
         storedPortfolios = storedPortfolios.map { if (it.id == id) it.copy(name = name) else it }
+    }
+
+    var storedTransactions: List<Transaction> = emptyList()
+    val savedBuys = mutableListOf<Pair<Transaction, CashEntry>>()
+    var storedInstruments: List<Instrument> = emptyList()
+    val savedInstruments = mutableListOf<Instrument>()
+
+    override suspend fun loadTransactions(): List<Transaction> {
+        loadError?.let { throw it }
+        return storedTransactions
+    }
+
+    /** Both or neither, as the Room store: a failure saves nothing. */
+    override suspend fun saveBuy(
+        transaction: Transaction,
+        cashLine: CashEntry,
+    ) {
+        gate?.await()
+        saveError?.let { throw it }
+        savedBuys.add(transaction to cashLine)
+        storedTransactions = storedTransactions + transaction
+        stored = stored + cashLine
+    }
+
+    override suspend fun loadInstruments(): List<Instrument> {
+        loadError?.let { throw it }
+        return storedInstruments
+    }
+
+    override suspend fun saveInstrument(instrument: Instrument) {
+        saveError?.let { throw it }
+        savedInstruments.add(instrument)
+        storedInstruments = storedInstruments.filter { it.ticker != instrument.ticker } + instrument
     }
 }

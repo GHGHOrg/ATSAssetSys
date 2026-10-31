@@ -8,6 +8,16 @@ enum class AssetType {
     ETF,
 }
 
+/**
+ * An instrument (spec section 3) as far as iteration 09 needs it: a ticker that passed the check of 4.3 and its asset
+ * type. Prices (16) and source sector and geography (23) join later. Written only by K4.
+ */
+data class Instrument(
+    val ticker: String,
+    val assetType: AssetType,
+    val verified: Boolean,
+)
+
 /** What the price source says about a ticker. Null means the source does not state it (4.3: then accepted). */
 data class Listing(
     val type: String?,
