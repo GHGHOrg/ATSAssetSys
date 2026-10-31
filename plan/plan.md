@@ -295,7 +295,7 @@ when it adds a command, a convention or a pitfall.
 | Iteration 06 | done: built 2026-10-29 (steps 1 to 5 and one change); phone checks 2026-10-29 all yes; 213 tests; pull request #91 merged as 0d5e2f4, CI green on the pull request and on main (1m 51s) (your reports) |
 | Iteration 07 | done: built 2026-10-30 (steps 1 to 6 and one fix); phone checks 2026-10-30 all yes, check 10 not run (open item 33); 243 tests; pull request #94 merged as 1eb7220, CI green on the pull request and on main (2m 19s) (your reports) |
 | Iteration 08 | done: built 2026-10-30 (steps 1 to 6 and one fix); phone checks 2026-10-30 all yes; 266 tests; pull request #96 merged as 936c7e2, CI green on the pull request and on main (2m 31s) (your reports) |
-| Iteration 09 | built 2026-10-31 (steps 1 to 10 and two fixes); phone checks 2026-10-31 all yes; 388 tests; pull request not yet opened |
+| Iteration 09 | done: built 2026-10-31 (steps 1 to 10 and two fixes); phone checks 2026-10-31 all yes; 388 tests; pull request #100 merged as e31c558, CI green on the pull request and on main (3m 25s) (your reports) |
 | Iterations 10 to 35 | not started, files not written |
 
 ## 12. Change log
@@ -364,6 +364,7 @@ Each departure from this plan is recorded here with its date and the reason.
 - 2026-10-31: pull request #98 (price-source spike) was merged as 5cc77da. CI on the pull request (3 checks: build, Analyze (actions), CodeQL) and on main (the run for 5cc77da, 1m 47s) were reported successful by you. The spike is finished and iteration 09 no longer waits on it. The status lines above were updated. Dependabot has opened branches for the Gradle wrapper 9.8.2 and core-ktx 1.19.1 (open item 20).
 - 2026-10-31: pull request #99 (docs: the price-source spike merge record) was merged as 5978482, CI green on the pull request and on main (1m 38s) (your reports). The 09 file was approved with decisions 1 to 9. The phone check of open item 33 moves from 09 to 34 (decision 9). Open item 37 is settled by decision 6; open item 38 is closed.
 - 2026-10-31: 09 built and checked on the phone. The first network access: Finnhub's list comes as a redirect to a signed link on its file host, which the app follows once, without the key, over https to finnhub.io only (defect found in phone check 3, fixed with failing tests first; 09 file, section 14). A second defect from phone check 7 (a field error hid the cash rule on the review) was fixed the same way. Decision 8 was amended in step 6 (six check-failure messages, the status suffix), and decisions 10 (the buy date as the Cash filters) and 11 (portfolio chips) were added in step 8. The exchange table of 4.3 is in section 7 above. Database version 3 adds the transactions and instruments tables. Criterion 35's install-over is checked again (versionCode 9).
+- 2026-10-31: pull request #100 (iteration 09) was merged as e31c558. CI on the pull request (3 checks: build, Analyze (actions), CodeQL) and on main (the run for e31c558, 3m 25s) were reported successful by you; CI builds without FINNHUB_API_KEY, as planned. The status lines above were updated. The 09 file's sections 13 and 14 are left as written at build time.
 
 ## 13. Out of scope for this plan
 Performance over time, per-holding dividends, ETF look-through, the next intent.md items,

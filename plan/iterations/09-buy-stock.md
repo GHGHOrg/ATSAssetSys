@@ -1,6 +1,6 @@
 # plan/iterations/09-buy-stock.md
 
-Stage: Build. Status: built on branch iter-09-buy-stock (steps 1 to 10 and two fixes, commits 6e00841 to 54b1bdb) and checked on the phone 2026-10-31, all checks yes (section 13). Decisions 1 to 11 settled (section 10). Sections 1 to 12 were written before the build; where the build differs, section 14 says so.
+Stage: Build. Status: built on branch iter-09-buy-stock (steps 1 to 10 and two fixes, commits 6e00841 to 54b1bdb) and checked on the phone 2026-10-31, all checks yes (section 13). Pull request #100 merged as e31c558 on 2026-10-31; CI green on the pull request and on main (your reports). Decisions 1 to 11 settled (section 10). Sections 1 to 12 were written before the build; where the build differs, section 14 says so.
 Source: plan/plan.md section 4 (row 09), plan/spikes/price-source.md (decisions 1 to 7, sections 10.2 and 10.3), intent/intent.md v52 (final), spec/spec.md v4 (final). "My reading" is an interpretation, not a test.
 
 ## 1. Outcome
@@ -108,7 +108,7 @@ By hand on the phone, with 08's data (the 03 to 06 cash entries, Main and 投資
 Approved on paper with this file; confirmed on the phone (D9): checks 2 to 7.
 
 ## 12. Status and notes
-Built 2026-10-31; phone checks 2026-10-31, all yes after two fixes (section 14, items 1 and 2). Pull request not yet opened.
+Done. Built 2026-10-31; phone checks 2026-10-31, all yes after two fixes (section 14, items 1 and 2); pull request #100 merged as e31c558 (2026-10-31), CI green on the pull request (3 checks) and on main (3m 25s) (your reports).
 
 ## 13. Build results
 ### 13.1 Research (step 2)
