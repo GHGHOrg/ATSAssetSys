@@ -5,6 +5,7 @@ import app.ghghorg.atsassets.core.CashType
 import app.ghghorg.atsassets.core.Fraction
 import app.ghghorg.atsassets.core.Portfolio
 import app.ghghorg.atsassets.core.SellAllocation
+import app.ghghorg.atsassets.core.SellRefusal
 import app.ghghorg.atsassets.core.SplitEffect
 import app.ghghorg.atsassets.core.SplitRatio
 import app.ghghorg.atsassets.core.SplitRefusal
@@ -95,7 +96,9 @@ class SplitFlowTest {
         transactions: List<Transaction> = listOf(lot1, lot2, spy),
         saveError: Exception? = null,
     ): FakeStore {
-        val store = FakeStore(stored = listOf(opening()) + transactions.map { lineOf(it) }, saveError = saveError)
+        // A split has no cash line (4.5).
+        val lines = transactions.filter { it.type != TransactionType.SPLIT }.map { lineOf(it) }
+        val store = FakeStore(stored = listOf(opening()) + lines, saveError = saveError)
         store.storedPortfolios = listOf(main, second)
         store.storedTransactions = transactions
         return store
@@ -277,6 +280,97 @@ class SplitFlowTest {
         assertEquals(Screen.SPLIT_REVIEW, vm.state.value.screen)
         assertEquals(SaveRefusal.SAVE_FAILED, vm.state.value.splitRefusals.save)
         assertEquals(emptyList<Transaction>(), store.savedSplits)
+    }
+
+    /**
+     * AAPL bought in lots of [quantities] shares on 2026-01-02, then a saved split of [to] for [from] on 2026-03-01;
+     * Sell opened from the holding (dated today, 2026-10-26) with Sell all pressed.
+     */
+    private fun sellAllAfterSplit(
+        quantities: List<String>,
+        to: Int,
+        from: Int,
+    ): Pair<FakeStore, AppViewModel> {
+        val buys = quantities.mapIndexed { index, quantity -> bought("b$index", "2026-01-02", quantity, 10_000L, 2L + index) }
+        val split =
+            Transaction(
+                id = "x1",
+                portfolioId = "p1",
+                ticker = "AAPL",
+                type = TransactionType.SPLIT,
+                date = LocalDate.of(2026, 3, 1),
+                enteredSeq = 2L + quantities.size,
+                quantity = BigDecimal.ZERO,
+                totalCents = 0L,
+                split = SplitRatio(to, from),
+            )
+        val store = store(buys + split)
+        val vm = started(store, newId = { "id${++nextId}" })
+        vm.openPortfolio("p1")
+        vm.openHolding("AAPL")
+        vm.sellFromHolding()
+        vm.sellAll()
+        return store to vm
+    }
+
+    /** Sell all fills [shownSum], Review passes, and the saved sell leaves AAPL at exactly 0 with no lots listed. */
+    private fun assertSellAllSavesAndEmptiesTheHolding(
+        quantities: List<String>,
+        to: Int,
+        from: Int,
+        shownSum: String,
+    ) {
+        val (store, vm) = sellAllAfterSplit(quantities, to, from)
+        assertEquals(shownSum, vm.state.value.sellForm.quantityText)
+        vm.onSellTotalChange("100.00")
+        vm.reviewSell()
+        assertEquals(SellRefusals(), vm.state.value.sellRefusals)
+        assertEquals(Screen.SELL_REVIEW, vm.state.value.screen)
+        vm.confirmSell()
+        val state = vm.state.value
+        assertEquals(Screen.HOLDING, state.screen)
+        assertEquals(BigDecimal(shownSum), store.savedSells.single().first.quantity)
+        assertEquals(Fraction.ZERO, state.shownHolding?.shares)
+        assertEquals(emptyList<String>(), state.holdingLots.map { it.buyId })
+    }
+
+    // P1, phone check 6 (12): 2, 10 and 2 shares, then 1 for 3; two of the three remainders round up.
+    @Test
+    fun p1_sellAllAfterAOneForThree_onLotsOf2_10And2_savesAndEmptiesTheHolding() {
+        assertSellAllSavesAndEmptiesTheHolding(listOf("2", "10", "2"), 1, 3, "4.66666667")
+    }
+
+    // P2: a single lot of 5/3, rounded up.
+    @Test
+    fun p2_sellAllOfASingleLotOf5Over3_savesAndEmptiesTheHolding() {
+        assertSellAllSavesAndEmptiesTheHolding(listOf("5"), 1, 3, "1.66666667")
+    }
+
+    // P3: three lots of 2/3; the shown sum (2.00000001) is above the holding shown at 8 places (2).
+    @Test
+    fun p3_sellAllOfThreeLotsOf2Over3_sells2_00000001_andEmptiesTheHolding() {
+        assertSellAllSavesAndEmptiesTheHolding(listOf("2", "2", "2"), 1, 3, "2.00000001")
+    }
+
+    // P4: four lots of 3/7 (0.42857142857...), each shown as 0.42857143; the holding of 12/7 shows 1.71428571.
+    @Test
+    fun p4_sellAllOfFourLotsOf3Over7_sells1_71428572_andEmptiesTheHolding() {
+        assertSellAllSavesAndEmptiesTheHolding(listOf("3", "3", "3", "3"), 1, 7, "1.71428572")
+    }
+
+    // P5: two lots of 1/7 (0.14285714285...), each shown as 0.14285714; the holding of 2/7 shows 0.28571429.
+    @Test
+    fun p5_sellAllOfTwoLotsOf1Over7_sells0_28571428_andTheShownHoldingFigure_isRefusedAsMoreThanHeld() {
+        assertSellAllSavesAndEmptiesTheHolding(listOf("1", "1"), 1, 7, "0.28571428")
+        val (_, vm) = sellAllAfterSplit(listOf("1", "1"), 1, 7)
+        vm.onSellQuantityChange("0.28571429")
+        vm.onSellTotalChange("100.00")
+        vm.reviewSell()
+        assertEquals(Screen.SELL, vm.state.value.screen)
+        assertEquals(
+            SellRefusal.MoreThanHeld(LocalDate.of(2026, 10, 26), Fraction.of(BigDecimal("0.28571428")), BigDecimal("0.28571429")),
+            vm.state.value.sellRefusals.rule,
+        )
     }
 
     @Test

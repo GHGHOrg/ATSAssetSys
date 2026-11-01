@@ -188,6 +188,84 @@ class SplitsTest {
         assertEquals(listOf(Fraction.ZERO, Fraction.ZERO), Holdings.lots(transactions + sell, day).map { it.remainingQuantity })
     }
 
+    /** Buys of [quantities] shares, one lot each, then a split of [to] for [from]; Sell all on the day after, saved. */
+    private fun sellAllAfterSplit(
+        quantities: List<String>,
+        to: Int,
+        from: Int,
+    ): Pair<List<Transaction>, SellResult> {
+        val buys = quantities.mapIndexed { index, quantity -> bought("b$index", "2026-01-02", quantity, 10_000L, 2L + index) }
+        val split = created(split(buys, "2026-03-01", to, from))
+        val transactions = buys + split
+        val seq = split.enteredSeq + 1L
+        val picks = Sells.sellAll(Sells.lotChoices(transactions, "p1", "AAPL", LocalDate.of(2026, 4, 1), sellSeq = seq))
+        val quantity = picks.fold(BigDecimal.ZERO) { sum, it -> sum + it.quantity }
+        return transactions to sell(transactions, "2026-04-01", quantity.toPlainString(), 100_000L, picks)
+    }
+
+    private fun assertSellAllEmptiesEveryLot(
+        quantities: List<String>,
+        to: Int,
+        from: Int,
+        shownSum: String,
+    ) {
+        val (transactions, result) = sellAllAfterSplit(quantities, to, from)
+        val sell = (result as? SellResult.Created)?.transaction ?: error("Sell all was refused: $result")
+        assertEquals(BigDecimal(shownSum), sell.quantity)
+        assertEquals(quantities.map { Fraction.ZERO }, Holdings.lots(transactions + sell, day).map { it.remainingQuantity })
+    }
+
+    // Phone check 6 (12): 2, 10 and 2 shares, then 1 for 3: 0.66666667 + 3.33333333 + 0.66666667, two rounded up.
+    @Test
+    fun sellAll_afterAOneForThree_withLotsRoundedUp_isNotMoreThanHeld_andEmptiesEveryLot() {
+        assertSellAllEmptiesEveryLot(listOf("2", "10", "2"), 1, 3, "4.66666667")
+    }
+
+    @Test
+    fun sellAll_ofASingleLotOf5Over3_isNotMoreThanHeld() {
+        assertSellAllEmptiesEveryLot(listOf("5"), 1, 3, "1.66666667")
+    }
+
+    // The sum of the shown figures (2.00000001) is above the holding shown at 8 places (2).
+    @Test
+    fun sellAll_ofThreeLotsOf2Over3_sells2_00000001_andEmptiesEveryLot() {
+        assertSellAllEmptiesEveryLot(listOf("2", "2", "2"), 1, 3, "2.00000001")
+    }
+
+    // 3/7 is 0.42857142857...: each lot shows 0.42857143; the holding of 12/7 shows 1.71428571.
+    @Test
+    fun sellAll_ofFourLotsOf3Over7_sells1_71428572_andEmptiesEveryLot() {
+        assertSellAllEmptiesEveryLot(listOf("3", "3", "3", "3"), 1, 7, "1.71428572")
+    }
+
+    // 1/7 is 0.14285714285...: each lot shows 0.14285714, the holding of 2/7 shows 0.28571429, and only 0.28571428 can be picked.
+    @Test
+    fun afterAOneForSeven_onTwoLotsOf1_sellAllSells0_28571428_andTheShownHoldingIsMoreThanThePicksCanTake() {
+        assertSellAllEmptiesEveryLot(listOf("1", "1"), 1, 7, "0.28571428")
+        val (transactions, _) = sellAllAfterSplit(listOf("1", "1"), 1, 7)
+        val over = sell(transactions, "2026-04-01", "0.28571429", 100_000L, listOf(Pick("b0", BigDecimal("0.14285714"))))
+        assertEquals(
+            SellRefusal.MoreThanHeld(LocalDate.of(2026, 4, 1), Fraction.of(BigDecimal("0.28571428")), BigDecimal("0.28571429")),
+            (over as SellResult.Refused).reason,
+        )
+    }
+
+    // A partial sell of 5/3 leaves 1/150000000 (shown as 0.00000001); that last bit can still be sold.
+    @Test
+    fun aLeftoverOfLessThanOneHundredMillionth_canStillBeSold_toExactlyZero() {
+        val buy = bought("b1", "2026-01-02", "5", 10_000L, 2L)
+        val split = created(split(listOf(buy), "2026-03-01", 1, 3))
+        val first = sell(listOf(buy, split), "2026-04-01", "1.66666666", 10_000L, listOf(Pick("b1", BigDecimal("1.66666666"))))
+        val partial = (first as SellResult.Created).transaction
+        val transactions = listOf(buy, split, partial)
+        val choice = Sells.lotChoices(transactions, "p1", "AAPL", LocalDate.of(2026, 4, 2), sellSeq = 5L).single()
+        assertEquals(fraction(1, 150_000_000), choice.available)
+        assertEquals(BigDecimal("0.00000001"), Sells.shown(choice.available))
+        val last = sell(transactions, "2026-04-02", "0.00000001", 1L, listOf(Pick("b1", BigDecimal("0.00000001"))))
+        val dust = (last as? SellResult.Created)?.transaction ?: error("The last bit was refused: $last")
+        assertEquals(Fraction.ZERO, Holdings.lots(transactions + dust, day).single().remainingQuantity)
+    }
+
     @Test
     fun aSellAfterASplit_isInPostSplitShares_andItsPiecesCostThePostSplitPrice() {
         val split = created(split(listOf(tenFor1000), "2026-03-01", 2, 1))

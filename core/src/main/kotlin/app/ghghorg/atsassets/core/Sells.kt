@@ -56,7 +56,10 @@ sealed interface SellRefusal {
         val openingDate: LocalDate,
     ) : SellRefusal
 
-    /** The shares the portfolio can sell on [date] (the lots that pass the lot rules), and the sell quantity. */
+    /**
+     * The shares the portfolio can sell on [date]: the lots that pass the lot rules, each at its remainder to 8 places
+     * (4.4), and the sell quantity.
+     */
     data class MoreThanHeld(
         val date: LocalDate,
         val held: Fraction,
@@ -197,7 +200,12 @@ object Sells {
         val seq = Transactions.nextSeq(cashEntries, transactions)
         val upperTicker = ticker.trim().uppercase(Locale.ROOT)
         val choices = lotChoices(transactions, portfolioId, upperTicker, date, seq)
-        val held = choices.filter { it.unavailable == null }.fold(Fraction.ZERO) { sum, choice -> sum + choice.available }
+        // What the picks can take: each lot that passes at its remainder to 8 places, the figure the picker shows and a
+        // pick may reach (4.4; 12, fix after phone check 6). The exact sum can be below it when remainders round up.
+        val held =
+            choices
+                .filter { it.unavailable == null }
+                .fold(Fraction.ZERO) { sum, choice -> sum + Fraction.of(choice.available.rounded(Quantity.MAX_DECIMALS)) }
         if (Fraction.of(quantity) > held) {
             return SellResult.Refused(SellRefusal.MoreThanHeld(date, held, quantity))
         }
