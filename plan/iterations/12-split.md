@@ -87,7 +87,7 @@ Settled by the spec, no question asked: a split has no cash line and never trigg
 - New, asked in step 5: the split row in Transactions; the refusal for a split that would leave a later sell short; the limit message of decision 3; the TalkBack sentences for the ratio fields, the review's before and after, and the split row; the "share" lines of decision 4.
 
 ## 12. Status and notes
-Built 2026-11-01 (steps 1 to 6 and one fix); phone checks 2026-11-01, all yes after the fix (section 14, item 1). Pull request not yet opened.
+Done. Built 2026-11-01 (steps 1 to 6 and one fix); phone checks 2026-11-01, all yes after the fix (section 14, item 1); pull request #106 merged as 08198bd (2026-11-01), CI green on the pull request (3 checks) and on main (2m 51s) (your reports).
 
 ## 13. Build results
 ### 13.1 Commits
