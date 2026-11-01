@@ -1,6 +1,6 @@
 # plan/iterations/12-split.md
 
-Stage: Build. Status: approved 2026-11-01, not built. Decisions 1 to 4 settled (section 10).
+Stage: Build. Status: approved 2026-11-01, built and checked 2026-11-01 (section 12). Decisions 1 to 4 settled (section 10).
 Source: plan/plan.md section 4 (row 12), intent/intent.md v52 (final), spec/spec.md v4 (final). "My reading" is an interpretation, not a test.
 
 ## 1. Outcome
@@ -87,10 +87,38 @@ Settled by the spec, no question asked: a split has no cash line and never trigg
 - New, asked in step 5: the split row in Transactions; the refusal for a split that would leave a later sell short; the limit message of decision 3; the TalkBack sentences for the ratio fields, the review's before and after, and the split row; the "share" lines of decision 4.
 
 ## 12. Status and notes
-Approved 2026-11-01. Not built.
+Built 2026-11-01 (steps 1 to 6 and one fix); phone checks 2026-11-01, all yes after the fix (section 14, item 1). Pull request not yet opened.
 
 ## 13. Build results
-Filled in during the build.
+### 13.1 Commits
+Newest first: 7929ba9 fix, 4136330 step 6, c8481c0 step 5, 807d4bf step 4, 144e6e4 step 3, 0e8183d step 2, f18df62 step 1 with this file. main was dde7568.
+
+### 13.2 Local run
+On 7929ba9's code (2026-11-01, all with --rerun-tasks): spotlessCheck green; debug build green, no compiler warnings printed; 495 tests, 0 failures (Balance 11, CashAccount 20, CashEntriesReverse 12, CashEntries 27, Fraction 12, Holdings 15, MarketDate 10, Money 21, OpeningBalance 9, Portfolios 23, Quantity 10, Sells 19, Splits 23, TickerCheck 16, Transactions 18, RowMapping 8, AppLock 12, FinnhubSource 18, TickerVerifier 6, AppViewModel 120, BuyFlow 29, DateDigits 7, HoldingDetailFlow 11, SellFlow 21, SplitFlow 17); lint: the 4 listed findings, none silenced (AndroidGradlePluginVersion, open item 31; NewerVersionAvailable for kotlinx-coroutines-test and for sqlcipher-android, open item 43; TypographyDashes on date_not_a_date, strings.xml:86), report written 16:39:45. Release build on the same code green (R8 ran; unsigned; "Unable to strip" names libandroidx.graphics.path.so and libsqlcipher.so, as known). Debug APK versionCode 12 (aapt2). Room's migration from 4 to 5 is two ALTER TABLE ... ADD COLUMN statements (generated code read in step 3).
+
+### 13.3 Phone results (Android 17, debug build versionCode 12, your reports)
+Checks 1 to 10 all yes; 6 after the fix. Notes:
+- 1: installed over the 11 build (lastUpdateTime 15:07:33, firstInstallTime 2026-10-29 10:44:04 unchanged); the cash lines, the sells, both portfolios, AAPL at 6 shares and $900.00 with its two lots as before, so the migration to version 5 ran (criterion 35); Buy, Sell and Split in AAPL's header. The opening balance is dated 2026-01-01.
+- 2: Split from AAPL's header chose Main and AAPL, dated today, with the two fields, "for" and the hint; 投資信託 showed its line or chips; "<" and Back returned to AAPL.
+- 3: refusals with the text kept and nothing saved: empty, 1 for 1, 0 for 1, 1.5 for 1 (the wireframe's line), 2000000 for 1 (the limit line), a date before the opening balance, and a bad number beside that date (both lines together).
+- 4: 2 for 1 dated 2026-10-31: the review showed 6 and 12 with no cash effect; AAPL 12 shares, cost $900.00 unchanged, the split row first, lots of 10 and 2 at $75.00 per share; no cash line; net worth $4,041.87 unchanged.
+- 5: a forgotten buy of 1 AAPL dated 2026-10-30 for $150.00 counted as 2 shares at $75.00 (Example B on the phone): AAPL 14 shares, cost $1,050.00, the new lot first, the row reading "1 share"; net worth unchanged.
+- 6: 1 for 3 dated today: 14 to 4.66666667; lots 0.66666667, 3.33333333 and 0.66666667 at $225.00 per share. Sell all for $1,200.00 failed on the first build (section 14, item 1). After the fix (installed 16:20:55): proceeds $171.43, $857.14 and $171.43, gains +$21.43, +$107.14 and +$21.43 in green, realized +$150.00; AAPL at exactly 0 with "No lots with shares"; net worth $4,191.87.
+- 7: after a buy of 1 AAPL: "1 share" on the row and the transaction, "Picked 0 shares", "Picked 1 share", "Picked 1 of 1 share", "Picked 1 of 2 shares", and the refusals "holds 1 share", "has 1 share left", "add up to 1 share" (open item 41).
+- 8: largest font, portrait and landscape, light and dark: the three header buttons in full, the Split screen and its review scroll as one, the messages readable; TalkBack read "Split AAPL in Main", the two ratio fields, the review's two lines and the split row as section 11; a 2 for 1 split was saved with it (AAPL 2 shares).
+- 9: closed from Recents and reopened: the splits, the buys, the sell, the lot and net worth kept.
+- 10: Logcat cleared at 16:37:28, then a split of 1 for 2; the app's uid 10454 had 46 lines, all from system tags (WindowOnBackDispatcher, ImeTracker, InsetsController, VRI[MainActivity] and single lines). No ticker, portfolio name, amount, quantity or split word, ratio, key or token. Counts only.
+- The phone now holds AAPL in Main at 1 share (one lot at $150.00), four splits, and net worth $4,191.87.
+
+### 13.4 Not run or not checked
+CI and the pull request; open item 33 (34); the release APK on a device (unsigned, open item 4); a failed save (open item 14: not provoked); contrast measurement (by eye on the phone); network traffic (open item 39); a split refused for a later sell left short, on the phone (unit tested only); a leftover too small to show (open item 44); the "share" rule in a JVM test (it sits in a composable; phone check 7 is the proof); Compose UI tests (none in the project).
 
 ## 14. Departures from the plan
-None yet.
+1. Defect found in phone check 6: Sell all after the 1 for 3 split was refused as more than held. Sell all's picks are the remainders rounded to 8 places, two of them rounded up (0.66666667), so their sum (4.66666667) was above the exact holding (14/3), while each pick still takes its lot's exact remainder (4.4, 4.10). In 11 no remainder had more than 8 places, and 59(d)'s lots of 10/3 round down. Options weighed with you on cases P1 to P5 (the phone's lots; 5/3; three lots of 2/3; four lots of 3/7; two lots of 1/7) and a leftover of 1/150000000: the exact comparison, a check of the allocations after the picks, and a comparison with the holding shown at 8 places each fail one of them; rounding the picker's figures down would change 4.4 and 4.10. Fixed on your decision (A): "more than held" compares with the sum of the lots' remainders at 8 places, the figures the picker shows and a pick may reach (7929ba9). My reading of 4.4: "more than held" is judged on the same per-lot figures the lot picker, the pick limit and the restore replay use. Failing tests first: P1 to P5 and the leftover in core (6), and P1 to P5 through the ViewModel (5), each seen failing with the old line before the fix was restored.
+2. The split review shows "Shares at this point" and "Shares after split" on two lines, not the wireframe's "6 → 12" (your wording 2, option A).
+3. The "more than held" message names what the picks can take; after a split with remainders of more than 8 places it can differ from the holding shown in the header by a few hundred-millionths (for example "holds 2.00000001 shares" beside a header of 2). The approved wording is kept (your decision A in step 8).
+4. A lot left with less than 0.000000005 share after a reverse split shows "0 left" and cannot be picked, so its holding cannot reach exactly 0 (needed for Hide, 15). A spec gap in 4.4; logged as open item 44 with options S0, S3, S4 and S5, to be settled before 15 (your decision A in step 8). Not reachable in 12's checks.
+5. Section 2 gained 4.4's lot-picker line (with my reading of "so far": the splits up to the sell's place in the 4.1 order), 4.8, C13 and view 3, and section 3 gained view 8, criterion 50 and criterion 48's split-history part, before step 4 (your decision A).
+6. core/ gained an internal place in the 4.1 order and Lot gained its split factor (step 2); the lot functions work out the split factors on each call, which grows with the square of the number of transactions: a known limit for one person's records, not optimised.
+7. Sell's Message composable and the "share" function are shared with Split (step 5); sharesText gained a form for a quantity as typed.
+8. SplitFlowTest's store gives a split no cash line, as K1 does (fix step).

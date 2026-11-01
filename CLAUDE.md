@@ -95,6 +95,7 @@ CI (.github/workflows/ci.yml) runs the style check and then the same three steps
 - The app's uid for a Logcat check: adb shell pm list packages -U app.ghghorg.atsassets (uid:10454). dumpsys package has no userId line on Android 17 (09 check 9).
 - A part of a screen that stays in place (a header over a list) must give way at the largest font and in landscape. Holding detail keeps its header fixed only while it takes at most half the screen's height, and otherwise scrolls as one (10, phone check 6a). Unit tests cannot catch it; only the phone shows it. Later screens with a fixed part, such as the sell screen's header (11), should do the same.
 - Phone-check instructions: name the screen each check starts on and the exact control to tap (the Buy/Sell menu's Sell and a holding's Sell return to different places), and write each check from where the previous one leaves the phone and the data it changed (11, check 3).
+- Exact fractions at 8 places: test with remainders that round up as well as down, and with several lots (for example 2/3, 5/3, 3/7, 1/7), not only 10/3, which rounds down. A sum of shown figures can be above or below the total shown, and every rule that compares typed quantities must use the same figures the picker shows. Before proposing a fix, try each option on all the remaining checks and on such cases (12, phone check 6).
 
 ## 7. Standing checks for every iteration's screens
 Criteria 9, 39 to 42, and the install-over-previous-build check (35).
