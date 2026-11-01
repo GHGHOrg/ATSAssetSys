@@ -106,7 +106,7 @@ class RoomRecordStore(
     override suspend fun loadTransactions(): List<Transaction> = withContext(Dispatchers.IO) {
         try {
             val dao = database.transactionDao()
-            withAllocations(dao.loadAll().map { it.toTransaction() }, dao.loadAllocations())
+            checkReversals(withAllocations(dao.loadAll().map { it.toTransaction() }, dao.loadAllocations()))
         } catch (e: CancellationException) {
             throw e
         } catch (e: UnreadableDataException) {
@@ -114,6 +114,24 @@ class RoomRecordStore(
         } catch (e: Exception) {
             throw UnreadableDataException("The stored data could not be read.", e)
         }
+    }
+
+    override suspend fun saveReversal(
+        transaction: Transaction,
+        cashLine: CashEntry?,
+    ) {
+        val dao = withContext(Dispatchers.IO) {
+            try {
+                database.transactionDao()
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: UnreadableDataException) {
+                throw e
+            } catch (e: Exception) {
+                throw UnreadableDataException("The stored data could not be opened.", e)
+            }
+        }
+        if (cashLine == null) dao.insertTransaction(transaction.toRow()) else dao.insertReversal(transaction.toRow(), cashLine.toRow())
     }
 
     override suspend fun saveBuy(
@@ -212,10 +230,14 @@ internal fun Transaction.toRow() = TransactionRow(
 
 /**
  * Throws [UnreadableDataException] for a split without a ratio that 4.5 allows (whole numbers from 1 to
- * [Splits.MAX_RATIO], not equal), or a buy or sell with a ratio. The messages name no value (spec section 9).
+ * [Splits.MAX_RATIO], not equal), a buy or sell with a ratio, a reversal without its link, or a buy, sell or split
+ * with one (13b decision 1). The messages name no value (spec section 9).
  */
 internal fun TransactionRow.toTransaction(): Transaction {
     val transactionType = TransactionType.valueOf(type)
+    if ((transactionType == TransactionType.REVERSAL) != (reversesId != null)) {
+        throw UnreadableDataException("A stored transaction has a damaged reversal link.")
+    }
     val ratio =
         if (transactionType == TransactionType.SPLIT) {
             val to = splitTo ?: throw UnreadableDataException("A stored split has no ratio.")
@@ -240,6 +262,29 @@ internal fun TransactionRow.toTransaction(): Transaction {
         reversesId = reversesId,
         split = ratio,
     )
+}
+
+/**
+ * Checks each stored reversal against its original (4.6; 13b decision 1): the original is there, is a buy, sell or
+ * split, has no other reversal, is not dated after it, and is in the same portfolio and ticker. Throws
+ * [UnreadableDataException] otherwise; nothing is guessed. The messages name no value (spec section 9).
+ */
+internal fun checkReversals(transactions: List<Transaction>): List<Transaction> {
+    val byId = transactions.associateBy { it.id }
+    val reversals = transactions.filter { it.type == TransactionType.REVERSAL }
+    if (reversals.groupBy { it.reversesId }.any { it.value.size > 1 }) {
+        throw UnreadableDataException("A stored transaction is reversed twice.")
+    }
+    for (reversal in reversals) {
+        val original = byId[reversal.reversesId] ?: throw UnreadableDataException("A stored reversal has no original.")
+        val matches =
+            original.type != TransactionType.REVERSAL &&
+                !reversal.date.isBefore(original.date) &&
+                reversal.portfolioId == original.portfolioId &&
+                reversal.ticker == original.ticker
+        if (!matches) throw UnreadableDataException("A stored reversal does not match its original.")
+    }
+    return transactions
 }
 
 /** A sell's allocations as rows, each quantity in its stored form (11 decision 3); none for a buy. */

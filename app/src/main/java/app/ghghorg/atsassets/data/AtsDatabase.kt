@@ -118,6 +118,16 @@ interface TransactionDao {
         insertCashEntry(cashLine)
     }
 
+    /** A reversal of a buy or sell and its trade cash line in one database transaction: both or neither (4.6). */
+    @Transaction
+    suspend fun insertReversal(
+        transaction: TransactionRow,
+        cashLine: CashEntryRow,
+    ) {
+        insertTransaction(transaction)
+        insertCashEntry(cashLine)
+    }
+
     /** The default conflict rule (abort) is kept. */
     @Insert
     suspend fun insertAllocations(rows: List<SellAllocationRow>)
