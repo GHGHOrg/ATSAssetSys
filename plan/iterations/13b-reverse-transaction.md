@@ -1,6 +1,6 @@
 # plan/iterations/13b-reverse-transaction.md
 
-Stage: Build. Status: approved 2026-11-01, not built. Decisions 1 to 3 settled (section 10).
+Stage: Build. Status: approved 2026-11-01, built and checked 2026-11-02 (section 12). Decisions 1 to 3 settled (section 10).
 Source: plan/plan.md section 4 (row 13b), intent/intent.md v52 (final), spec/spec.md v4 (final). "My reading" is an interpretation, not a test.
 
 ## 1. Outcome
@@ -81,10 +81,36 @@ Settled by the spec, no question asked: one screen with Confirm and save and no 
 - New, asked in step 5: a sell's and a split's reversal screen (the lots restored, the realized gain removed; the inverse ratio and the shares before and after), the refusal for a split's reversal that leaves a later sell short, the reversal rows in Holding detail, the reversal's detail and its title, and the TalkBack sentences.
 
 ## 12. Status and notes
-Approved 2026-11-01. Not built.
+Built 2026-11-01 to 2026-11-02 (steps 1 to 6); phone checks 2026-11-02, all yes, no fix needed. Pull request not yet opened.
 
 ## 13. Build results
-Filled in during the build.
+### 13.1 Commits
+Newest first: e9da4fa step 6, f1d4b92 step 5, 3e0a581 step 4, 600f9aa step 3, edb06bb step 2, 959179c step 1 with this file. main was 460d3b6. Steps 1 to 6 were committed together after step 6, on your request (section 14, item 4).
+
+### 13.2 Local run
+On e9da4fa's code (2026-11-02, all with --rerun-tasks): spotlessCheck green; debug build green, no compiler warnings printed; 527 tests, 0 failures (Balance 11, CashAccount 20, CashEntriesReverse 12, CashEntries 27, Fraction 12, Holdings 15, MarketDate 10, Money 21, OpeningBalance 9, Portfolios 23, Quantity 10, Reversals 14, Sells 19, Splits 23, TickerCheck 16, Transactions 18, RowMapping 11, AppLock 12, FinnhubSource 18, TickerVerifier 6, AppViewModel 120, BuyFlow 29, DateDigits 7, HoldingDetailFlow 11, ReversalFlow 7, SellFlow 21, SplitFlow 17, TransactionDetailFlow 8); lint: the 4 listed findings, none silenced (AndroidGradlePluginVersion, open item 31; NewerVersionAvailable for kotlinx-coroutines-test and for sqlcipher-android, open item 43; TypographyDashes on date_not_a_date, strings.xml:86), report written 01:11:53. Release build on the same code green (R8 ran; unsigned; "Unable to strip" names libandroidx.graphics.path.so and libsqlcipher.so, as known). Debug APK versionCode 14 (aapt2). No schema change (still 5.json).
+
+### 13.3 Phone results (Android 17, debug build versionCode 14, your reports)
+Checks 1 to 10 all yes. The figures of each check were worked out from the data on the phone before it was given. Notes:
+- 1: installed over the 13a build (lastUpdateTime 2026-11-02 00:11:04, firstInstallTime 2026-10-29 10:44:04 unchanged); net worth $4,191.87, AAPL at 1 share; Reverse under "Not reversed." on a buy (criterion 35).
+- 2: "< Reverse buy AAPL" for the 2026-11-01 buy: the original fixed, the date and its note, the effect (1 share removed, the 2 for 1 and 1 for 2 since cancelling, +$150.00, $0.00); Cancel left nothing saved; Reverse on a sell and a split.
+- 3: a reversal dated 2026-10-31 refused with "Reversal date: not earlier than the original (2026-11-01).", the date kept; "2026-" refused at once and the effect hidden.
+- 4: Example D on the phone: the reversal of the 2026-10-30 buy refused with "Shares would be −0.66666667 on 2026-11-01. Reverse the sell of 2026-11-01 first, …".
+- 5: the sell of 4.66666667 reversed: its three lots back (0.66666667, 3.33333333 and 0.66666667), −$1,200.00 on a "Reversal of sell AAPL" line, realized +$150.00 removed in no color; the sell showed "Reversed on 2026-11-01 ET >" without Reverse, the reversal its link back without Reverse, and Back went one step at a time; AAPL 5.66666667 shares at $1,200.00, net worth $4,041.87.
+- 6: Example D continued: dated 2026-10-30 refused, naming 2026-11-01 as the date that works; dated 2026-11-01 saved, 0.66666667 shares removed and +$150.00; AAPL 5 shares at $1,050.00; net worth unchanged.
+- 7: the 1 for 2 split of 2026-11-01 reversed: ratio applied 2 for 1, 5 to 10 shares, no cash line; lots at $112.50 and $75.00 per share; net worth unchanged.
+- 8: largest font, portrait and landscape, light and dark: the reversal screen and the reversal's detail scroll and wrap, the refusal readable on dark; TalkBack through a whole reversal of the 2026-11-01 buy (2 shares removed, +$150.00), read as section 11; AAPL 8 shares at $900.00.
+- 9: closed and reopened: the four reversals, their links and their cash lines kept.
+- 10: Logcat cleared at 01:08:33, then the reversal of a 2026-10-31 sell of 1 for $160.00; the app's uid 10454 had 39 lines, all from system tags; no ticker, portfolio name, amount, quantity, reversal word or key; the two lines matching "N for N" were Android's I/Surface buffer lines (checked with the digits masked). Counts only. Afterwards, as worked out: AAPL 9.33333333 shares, Main $1,050.00, net worth $4,031.87.
+
+### 13.4 Not run or not checked
+CI and the pull request; open item 33 (34); the release APK on a device (unsigned, open item 4); a failed save (open item 14: not provoked); a split's reversal refused for a later sell left short, and a sell's reversal refused for cash, on the phone (unit tested only); contrast measurement (by eye on the phone); network traffic (open item 39); the screens in a JVM test (none in the project; the flow and figures are tested in steps 2 and 4).
 
 ## 14. Departures from the plan
-None yet.
+1. A reversal row also holds its original's portfolio and ticker, because those columns are required; the stored check reads a reversal whose portfolio or ticker differs from its original as unreadable (step 3). Every figure still comes from the original (decision 1).
+2. A lot's remainder for a pick is the least it holds at the sell's place or any later place of the holding, as 4.4 says, since a sell's reversal can raise a lot again; 12 used the last figure, which was the least while lots only fell (step 2; tested with a backdated sell before a sell and its reversal).
+3. A split's reversal applies its inverse ratio to every lot placed before it, lots bought after the split in post-split shares included (4.6 as written, read with its date rule: the split's effect stays in place until the reversal; your decision A in step 8). The default date, the split's own, reaches only buys entered on that date after the split.
+4. On your request steps 1 to 6 were committed together after step 6, each with its own files. AppViewModel.kt (steps 4 and 5) went into step 4's commit, Reversals.kt (steps 2 and 4) into step 2's and TransactionDetailScreen.kt (steps 2 and 5) into step 5's, so the commits of steps 2 to 4 do not build on their own; the tip e9da4fa was built and tested.
+5. TransactionDetailScreen.kt had placeholder branches for a reversal in step 2 so the app compiled; step 5 replaced them with the approved wording.
+6. A reversal's own trade line shows only the link to the reversal, not "Open the buy or sell to reverse it.", since a reversal cannot be reversed (frame H: a reversal shows the link to the other entry); not shown to you before step 5's build.
+7. Reversals.draft builds the unsaved reversal for both the save and the screen's effect, so the two cannot differ (step 4).

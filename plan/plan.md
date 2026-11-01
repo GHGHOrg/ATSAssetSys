@@ -301,7 +301,7 @@ when it adds a command, a convention or a pitfall.
 | Iteration 11 | done: built 2026-10-31 to 2026-11-01 (steps 1 to 6); phone checks 2026-10-31 to 2026-11-01 all yes; 453 tests; pull request #104 merged as e689af9, CI green on the pull request and on main (2m 16s) (your reports) |
 | Iteration 12 | done: built 2026-11-01 (steps 1 to 6 and one fix); phone checks 2026-11-01 all yes after the fix; 495 tests; pull request #106 merged as 08198bd, CI green on the pull request and on main (2m 51s) (your reports) |
 | Iteration 13a | done: built 2026-11-01 (steps 1 to 4); phone checks 2026-11-01 all yes; 503 tests; pull request #108 merged as 07dd814, CI green on the pull request and on main (2m 5s) (your reports) |
-| Iteration 13b | file approved 2026-11-01 (decisions 1 to 3); branch iter-13b-reverse-transaction; not built |
+| Iteration 13b | built 2026-11-01 to 2026-11-02 (steps 1 to 6); phone checks 2026-11-02 all yes; 527 tests; pull request not yet opened |
 | Iterations 14 to 35 | not started, files not written |
 
 ## 12. Change log
@@ -384,6 +384,7 @@ Each departure from this plan is recorded here with its date and the reason.
 - 2026-11-01: 13a built and checked on the phone, with no defect found and no schema change. Holding detail's rows and the Cash tab's trade lines open the transaction (criterion 29); a trade line's detail is titled with its buy or sell and links back to it, keeping 05's "Back" button (your decision; 13a file, section 14). Criterion 35's install-over is checked again (versionCode 13).
 - 2026-11-01: pull request #108 (iteration 13a) was merged as 07dd814. CI on the pull request (3 checks: build, Analyze (actions), CodeQL) and on main (the run for 07dd814, 2m 5s) were reported successful by you. The status lines above were updated. The 13a file's sections 13 and 14 are left as written at build time.
 - 2026-11-01: pull request #109 (docs: the 13a merge record) was merged as 460d3b6, CI green on the pull request and on main (2m 39s) (your reports). The 13b file was approved with decisions 1 to 3: a reversal is stored as a REVERSAL holding only its link, date and entry order, with every figure worked out from the original; Reverse is on the original's detail only; a refused buy reversal names the earliest sell not yet reversed.
+- 2026-11-02: 13b built and checked on the phone, with no defect found and no schema change. A reversal is a REVERSAL row holding its link; Examples D and F hold on the phone. A lot's remainder for a pick is now the least it holds on the sell date or later, since a reversal can raise a lot again. A split's reversal applies its inverse ratio to every lot placed before it, as 4.6 is written (your decision; 13b file, section 14). Steps 1 to 6 were committed together on your request, so the intermediate commits do not build alone. Criterion 35's install-over is checked again (versionCode 14).
 
 ## 13. Out of scope for this plan
 Performance over time, per-holding dividends, ETF look-through, the next intent.md items,
