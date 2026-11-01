@@ -300,7 +300,7 @@ when it adds a command, a convention or a pitfall.
 | Iteration 10 | done: built 2026-10-31 (steps 1 to 6 and one fix); phone checks 2026-10-31 all yes; 402 tests; pull request #102 merged as 43a2c7f, CI green on the pull request and on main (2m 24s) (your reports) |
 | Iteration 11 | done: built 2026-10-31 to 2026-11-01 (steps 1 to 6); phone checks 2026-10-31 to 2026-11-01 all yes; 453 tests; pull request #104 merged as e689af9, CI green on the pull request and on main (2m 16s) (your reports) |
 | Iteration 12 | done: built 2026-11-01 (steps 1 to 6 and one fix); phone checks 2026-11-01 all yes after the fix; 495 tests; pull request #106 merged as 08198bd, CI green on the pull request and on main (2m 51s) (your reports) |
-| Iteration 13a | built 2026-11-01 (steps 1 to 4); phone checks 2026-11-01 all yes; 503 tests; pull request not yet opened |
+| Iteration 13a | done: built 2026-11-01 (steps 1 to 4); phone checks 2026-11-01 all yes; 503 tests; pull request #108 merged as 07dd814, CI green on the pull request and on main (2m 5s) (your reports) |
 | Iteration 13b | not started, file not written |
 | Iterations 14 to 35 | not started, files not written |
 
@@ -382,6 +382,7 @@ Each departure from this plan is recorded here with its date and the reason.
 - 2026-11-01: pull request #106 (iteration 12) was merged as 08198bd. CI on the pull request (3 checks: build, Analyze (actions), CodeQL) and on main (the run for 08198bd, 2m 51s) were reported successful by you. The status lines above were updated. The 12 file's sections 13 and 14 are left as written at build time.
 - 2026-11-01: pull request #107 (docs: the 12 merge record) was merged as c5dad53, CI green on the pull request and on main (2m 50s) (your reports). Iteration 13 split into 13a (transaction-detail) and 13b (reverse-transaction), as section 5 requires when an iteration holds more than one capability (your decision): viewing a buy, sell or split, reached from Holding detail and from a cash trade line (criterion 29), and reversing one (4.6). In the Depends-on column of rows 14, 15, 26 and 27, "13" means 13b, which depends on 13a. The 13a file was approved with decisions 1 to 3: a sell's detail shows the lots used and the realized gain as on its review, a buy's detail shows what is left of its lot, and Back goes one step back.
 - 2026-11-01: 13a built and checked on the phone, with no defect found and no schema change. Holding detail's rows and the Cash tab's trade lines open the transaction (criterion 29); a trade line's detail is titled with its buy or sell and links back to it, keeping 05's "Back" button (your decision; 13a file, section 14). Criterion 35's install-over is checked again (versionCode 13).
+- 2026-11-01: pull request #108 (iteration 13a) was merged as 07dd814. CI on the pull request (3 checks: build, Analyze (actions), CodeQL) and on main (the run for 07dd814, 2m 5s) were reported successful by you. The status lines above were updated. The 13a file's sections 13 and 14 are left as written at build time.
 
 ## 13. Out of scope for this plan
 Performance over time, per-holding dividends, ETF look-through, the next intent.md items,

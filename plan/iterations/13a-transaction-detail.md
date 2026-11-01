@@ -74,7 +74,7 @@ Settled by the spec, no question asked: a trade line opens the transaction, not 
 - New, asked in step 3: the titles of a sell and a split, the lot line of decision 2, the cash link's TalkBack sentence, and the TalkBack role and sentence of a row that opens.
 
 ## 12. Status and notes
-Built 2026-11-01 (steps 1 to 4); phone checks 2026-11-01, all yes, no fix needed. Pull request not yet opened.
+Done. Built 2026-11-01 (steps 1 to 4); phone checks 2026-11-01, all yes, no fix needed; pull request #108 merged as 07dd814 (2026-11-01), CI green on the pull request (3 checks) and on main (2m 5s) (your reports).
 
 ## 13. Build results
 ### 13.1 Commits
