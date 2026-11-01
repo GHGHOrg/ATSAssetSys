@@ -42,7 +42,7 @@ import app.ghghorg.atsassets.core.Fraction
 import app.ghghorg.atsassets.core.Holding
 import app.ghghorg.atsassets.core.Money
 import app.ghghorg.atsassets.core.Quantity
-import java.math.BigInteger
+import java.math.BigDecimal
 
 /**
  * One portfolio (view 3, wireframe 3 frame B): "<", the name and the ⋮ menu with Rename (08 decision 1), the summary
@@ -260,13 +260,19 @@ private fun HoldingRow(
     }
 }
 
-/** "1 share" or "10 shares", "2.5 shares" (section 6 quantity format). */
+/**
+ * "1 share" only when the quantity as shown is exactly "1", otherwise "0 shares", "10 shares", "2.5 shares" (section 6
+ * quantity format; 12 decision 4): Android's plural strings take whole numbers only, so the shown text decides.
+ */
 @Composable
 internal fun sharesText(shares: Fraction): String {
     val shown = Quantity.format(shares)
-    val one = shares.compareTo(Fraction.of(BigInteger.ONE, BigInteger.ONE)) == 0
-    return stringResource(if (one) R.string.holding_share_one else R.string.holding_shares, shown)
+    return stringResource(if (shown == "1") R.string.holding_share_one else R.string.holding_shares, shown)
 }
+
+/** As [sharesText], for a quantity as typed. */
+@Composable
+internal fun sharesText(shares: BigDecimal): String = sharesText(Fraction.of(shares))
 
 /**
  * No holding has a price before iteration 16, so every portfolio with shares is all at cost (09 wording 4). A sold-out

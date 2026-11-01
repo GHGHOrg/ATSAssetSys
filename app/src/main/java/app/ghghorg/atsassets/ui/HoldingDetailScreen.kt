@@ -45,6 +45,7 @@ import app.ghghorg.atsassets.core.Holding
 import app.ghghorg.atsassets.core.Lot
 import app.ghghorg.atsassets.core.Money
 import app.ghghorg.atsassets.core.Quantity
+import app.ghghorg.atsassets.core.SplitRatio
 import app.ghghorg.atsassets.core.Transaction
 import app.ghghorg.atsassets.core.TransactionType
 
@@ -54,6 +55,7 @@ class HoldingActions(
     val onTab: (HoldingTab) -> Unit,
     val onBuy: () -> Unit,
     val onSell: () -> Unit,
+    val onSplit: () -> Unit,
 )
 
 /**
@@ -113,12 +115,17 @@ private fun FixedPart(
             Header(holding, portfolio)
             val buySpoken = stringResource(R.string.holding_buy_spoken, holding.ticker, portfolio)
             val sellSpoken = stringResource(R.string.holding_sell_spoken, holding.ticker, portfolio)
+            val splitSpoken = stringResource(R.string.holding_split_spoken, holding.ticker, portfolio)
+            // Buy, Sell and Split (view 6, criterion 48; 12 wording 4); they wrap when there is no room.
             FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 OutlinedButton(onClick = actions.onBuy, modifier = Modifier.semantics { contentDescription = buySpoken }) {
                     Text(text = stringResource(R.string.buy_button))
                 }
                 OutlinedButton(onClick = actions.onSell, modifier = Modifier.semantics { contentDescription = sellSpoken }) {
                     Text(text = stringResource(R.string.sell_button))
+                }
+                OutlinedButton(onClick = actions.onSplit, modifier = Modifier.semantics { contentDescription = splitSpoken }) {
+                    Text(text = stringResource(R.string.split_button))
                 }
             }
             // Sell at 0 shares (11 decision 2, wording 4): read once, gone when the holding is left.
@@ -151,7 +158,11 @@ private fun TabContent(
 ) {
     Column(modifier = modifier) {
         when (state.holdingTab) {
-            HoldingTab.TRANSACTIONS -> RowList(state.holdingTransactions) { TransactionRow(it) }
+            HoldingTab.TRANSACTIONS ->
+                RowList(state.holdingTransactions) {
+                    val ratio = it.split
+                    if (ratio == null) TransactionRow(it) else SplitRow(it, ratio)
+                }
 
             HoldingTab.LOTS -> {
                 if (state.holdingLots.isEmpty()) {
@@ -308,6 +319,31 @@ private fun TransactionRow(transaction: Transaction) {
             style = MaterialTheme.typography.bodyLarge,
             textAlign = TextAlign.End,
         )
+    }
+}
+
+/** A split (12 wording 4): one line, the date first, then "Split" and the ratio; no amount, as a split has no cash. */
+@OptIn(ExperimentalLayoutApi::class)
+@Composable
+private fun SplitRow(
+    transaction: Transaction,
+    ratio: SplitRatio,
+) {
+    val date = transaction.date.toString()
+    val shown = ratioText(ratio)
+    val spoken = stringResource(R.string.holding_transaction_split_spoken, date, shown)
+    FlowRow(
+        modifier = Modifier.fillMaxWidth().clearAndSetSemantics { contentDescription = spoken },
+        horizontalArrangement = Arrangement.spacedBy(16.dp),
+        verticalArrangement = Arrangement.spacedBy(2.dp),
+    ) {
+        Text(text = stringResource(R.string.date_with_et, date), style = MaterialTheme.typography.bodyLarge)
+        Text(
+            text = stringResource(R.string.holding_transaction_split),
+            style = MaterialTheme.typography.bodyLarge,
+            fontWeight = FontWeight.Medium,
+        )
+        Text(text = shown, style = MaterialTheme.typography.bodyLarge)
     }
 }
 
