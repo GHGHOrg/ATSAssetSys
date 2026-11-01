@@ -113,6 +113,7 @@ private fun BarContent(
         Screen.DETAIL -> CashEntryDetail(
             state = state,
             onOpenEntry = viewModel::openDetail,
+            onOpenTransaction = viewModel::openLinkedTransaction,
             onReverse = viewModel::openReversal,
             onBack = viewModel::closeDetail,
         )
@@ -146,7 +147,13 @@ private fun BarContent(
                 onBuy = viewModel::buyFromHolding,
                 onSell = viewModel::sellFromHolding,
                 onSplit = viewModel::splitFromHolding,
+                onOpenTransaction = viewModel::openTransaction,
             ),
+        )
+
+        Screen.TRANSACTION -> TransactionDetailScreen(
+            state = state,
+            actions = TransactionActions(onBack = viewModel::closeTransaction, onOpenCashLine = viewModel::openCashLine),
         )
 
         Screen.BUY -> BuyEntryScreen(
@@ -259,6 +266,7 @@ private fun TabScreen(
             state = state,
             onCashEntry = viewModel::openForm,
             onOpenEntry = viewModel::openDetail,
+            onOpenTransaction = viewModel::openTransaction,
             filterActions =
             CashFilterActions(
                 onFromChange = viewModel::onFilterFromChange,

@@ -63,7 +63,8 @@ Rules for the list:
 | 10 | holding-detail | Open a holding (header, Transactions, Lots) | 09 | view 6, crit. 48 |
 | 11 | sell-with-lots | Sell with lot picking and Sell all | 09 | 4.4, crit. 14, 52, 59 |
 | 12 | split | Record a stock split | 09 | 4.5, crit. 53 |
-| 13 | reverse-transaction | Reverse a buy, sell or split | 11, 12 | 4.6, crit. 53 |
+| 13a | transaction-detail | Open a buy, sell or split from Holding detail or a cash trade line | 11, 12 | view 7, 10b frames G and H, crit. 29, 53 |
+| 13b | reverse-transaction | Reverse a buy, sell or split | 13a | 4.6, crit. 53 |
 | 14 | reverse-and-reenter | Reverse and re-enter, trades and cash | 13, 05 | 4.6, crit. 21, 54, 60(b) |
 | 15 | hide-holdings | Hide and unhide sold-out holdings | 13 | 4.4, crit. 27, 51, 60(a) |
 | 16 | live-prices | See prices, their age, stale marker, unrealized gain/loss | 09, price spike | 7, 4.8, crit. 5, 41, 42 |
@@ -299,7 +300,9 @@ when it adds a command, a convention or a pitfall.
 | Iteration 10 | done: built 2026-10-31 (steps 1 to 6 and one fix); phone checks 2026-10-31 all yes; 402 tests; pull request #102 merged as 43a2c7f, CI green on the pull request and on main (2m 24s) (your reports) |
 | Iteration 11 | done: built 2026-10-31 to 2026-11-01 (steps 1 to 6); phone checks 2026-10-31 to 2026-11-01 all yes; 453 tests; pull request #104 merged as e689af9, CI green on the pull request and on main (2m 16s) (your reports) |
 | Iteration 12 | done: built 2026-11-01 (steps 1 to 6 and one fix); phone checks 2026-11-01 all yes after the fix; 495 tests; pull request #106 merged as 08198bd, CI green on the pull request and on main (2m 51s) (your reports) |
-| Iterations 13 to 35 | not started, files not written |
+| Iteration 13a | built 2026-11-01 (steps 1 to 4); phone checks 2026-11-01 all yes; 503 tests; pull request not yet opened |
+| Iteration 13b | not started, file not written |
+| Iterations 14 to 35 | not started, files not written |
 
 ## 12. Change log
 Each departure from this plan is recorded here with its date and the reason.
@@ -377,6 +380,8 @@ Each departure from this plan is recorded here with its date and the reason.
 - 2026-11-01: pull request #105 (docs: the 11 merge record) was merged as dde7568, CI green on the pull request and on main (1m 54s) (your reports). The 12 file was approved with decisions 1 to 4: the Split screen chooses with chips like Sell, a split at 0 shares is allowed, each ratio number is a whole number from 1 to 1,000,000, and "share" is used only for a quantity shown as exactly 1 (open item 41). Split stays a header button as view 6 and criterion 48 say; a ⋮ menu for it is open item 42.
 - 2026-11-01: 12 built and checked on the phone. Database version 5 adds two columns to transactions (splitTo, splitFrom). A defect found in phone check 6 (Sell all after a 1 for 3 split was refused as more than held, because remainders rounded up at 8 places add to more than the exact holding) was fixed with failing tests first: "more than held" compares with the lots' remainders at 8 places (your decision; 12 file, section 14). Open item 41 is closed by 12; open item 44 (a leftover too small to show) is new and due before 15. Criterion 35's install-over is checked again (versionCode 12).
 - 2026-11-01: pull request #106 (iteration 12) was merged as 08198bd. CI on the pull request (3 checks: build, Analyze (actions), CodeQL) and on main (the run for 08198bd, 2m 51s) were reported successful by you. The status lines above were updated. The 12 file's sections 13 and 14 are left as written at build time.
+- 2026-11-01: pull request #107 (docs: the 12 merge record) was merged as c5dad53, CI green on the pull request and on main (2m 50s) (your reports). Iteration 13 split into 13a (transaction-detail) and 13b (reverse-transaction), as section 5 requires when an iteration holds more than one capability (your decision): viewing a buy, sell or split, reached from Holding detail and from a cash trade line (criterion 29), and reversing one (4.6). In the Depends-on column of rows 14, 15, 26 and 27, "13" means 13b, which depends on 13a. The 13a file was approved with decisions 1 to 3: a sell's detail shows the lots used and the realized gain as on its review, a buy's detail shows what is left of its lot, and Back goes one step back.
+- 2026-11-01: 13a built and checked on the phone, with no defect found and no schema change. Holding detail's rows and the Cash tab's trade lines open the transaction (criterion 29); a trade line's detail is titled with its buy or sell and links back to it, keeping 05's "Back" button (your decision; 13a file, section 14). Criterion 35's install-over is checked again (versionCode 13).
 
 ## 13. Out of scope for this plan
 Performance over time, per-holding dividends, ETF look-through, the next intent.md items,

@@ -471,7 +471,7 @@ fun SellReviewScreen(
 /** One lot used (11 wording 3, option A): the lot and its cost, then its proceeds and its gain in color with its sign. */
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
-private fun PieceRows(
+internal fun PieceRows(
     date: String,
     quantity: Fraction,
     costCents: Long,

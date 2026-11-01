@@ -252,4 +252,18 @@
     <string name="holding_split_spoken">Split %1$s in %2$s</string>
     <string name="holding_transaction_split">Split</string>
     <string name="holding_transaction_split_spoken">%1$s Eastern Time, split, %2$s</string>
+    <!-- Iteration 13a: transaction detail (wording approved 2026-11-01, 13a file section 11). -->
+    <string name="transaction_split_title">Split %1$s</string>
+    <string name="transaction_quantity_traded">Quantity, as traded</string>
+    <string name="transaction_lot_label">Lot</string>
+    <string name="transaction_lot_sold_out">0 left</string>
+    <string name="transaction_lot_from">%1$s from %2$s ET</string>
+    <string name="transaction_lot_spoken">Lot, %1$s left, %2$s dollars per share</string>
+    <string name="transaction_lot_sold_out_spoken">Lot, 0 left</string>
+    <string name="transaction_lot_from_spoken">Lot, %1$s from %2$s Eastern Time</string>
+    <string name="transaction_cash_link">Cash %1$s</string>
+    <string name="transaction_cash_link_spoken">Cash line, %1$s dollars, opens it</string>
+    <string name="trade_line_reverse_hint">Open the buy or sell to reverse it.</string>
+    <string name="transaction_link">%1$s, %2$s ET</string>
+    <string name="transaction_link_spoken">%1$s, %2$s Eastern Time, opens it</string>
 </resources>
