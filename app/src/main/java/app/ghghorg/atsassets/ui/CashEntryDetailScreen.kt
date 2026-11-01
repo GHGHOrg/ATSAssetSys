@@ -21,6 +21,8 @@ import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.unit.dp
 import app.ghghorg.atsassets.R
@@ -29,12 +31,14 @@ import app.ghghorg.atsassets.core.CashType
 
 /**
  * The cash entry detail (wireframe 10b, frame H; iteration 05): type, date with ET, signed amount and note, then
- * one status line and Reverse when it is offered (spec 4.6). The links open the other entry's detail.
+ * one status line and Reverse when it is offered (spec 4.6). The links open the other entry's detail. A trade line
+ * is titled with its buy or sell and portfolio, and links to that transaction instead (13a wording 3).
  */
 @Composable
 fun CashEntryDetail(
     state: AppState,
     onOpenEntry: (String) -> Unit,
+    onOpenTransaction: () -> Unit,
     onReverse: (String) -> Unit,
     onBack: () -> Unit,
     modifier: Modifier = Modifier,
@@ -43,6 +47,7 @@ fun CashEntryDetail(
     val entry = state.detailEntry ?: return
     val reversedBy = state.detailReversedBy
     val reverses = state.detailReverses
+    val trade = state.detailTradeTransaction
     val defaultNote = stringResource(R.string.reversal_note_default, cashTypeLower(entry.type), entry.date.toString())
     Column(
         modifier = modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(16.dp),
@@ -52,12 +57,26 @@ fun CashEntryDetail(
             Text(text = stringResource(R.string.back_button))
         }
         Text(
-            text = cashTypeLabel(entry.type),
+            text = trade?.let { transactionTitle(it) } ?: cashTypeLabel(entry.type),
             style = MaterialTheme.typography.titleLarge,
         )
+        trade?.let { transaction ->
+            val portfolio = state.portfolios.firstOrNull { it.id == transaction.portfolioId }?.name.orEmpty()
+            Text(text = stringResource(R.string.trade_for_portfolio, portfolio), style = MaterialTheme.typography.bodyLarge)
+        }
         EntryCard(entry)
         when {
             entry.type == CashType.OPENING_BALANCE -> StatusLine(stringResource(R.string.detail_opening_not_reversible))
+
+            trade != null -> {
+                StatusLine(stringResource(R.string.trade_line_reverse_hint))
+                val title = transactionTitle(trade)
+                val date = trade.date.toString()
+                val spoken = stringResource(R.string.transaction_link_spoken, title, date)
+                TextButton(onClick = onOpenTransaction, modifier = Modifier.semantics { contentDescription = spoken }) {
+                    Text(text = stringResource(R.string.transaction_link, title, date))
+                }
+            }
 
             reversedBy != null ->
                 LinkButton(stringResource(R.string.detail_reversed_on, reversedBy.date.toString())) { onOpenEntry(reversedBy.id) }

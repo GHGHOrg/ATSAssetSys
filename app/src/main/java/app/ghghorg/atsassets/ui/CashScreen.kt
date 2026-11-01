@@ -56,6 +56,7 @@ fun CashScreen(
     state: AppState,
     onCashEntry: () -> Unit,
     onOpenEntry: (String) -> Unit,
+    onOpenTransaction: (String) -> Unit,
     filterActions: CashFilterActions,
     modifier: Modifier = Modifier,
 ) {
@@ -90,7 +91,13 @@ fun CashScreen(
                         val trade = state.transactions.firstOrNull { it.id == row.entry.transactionId }
                         if (trade != null) {
                             val portfolio = state.portfolios.firstOrNull { it.id == trade.portfolioId }?.name.orEmpty()
-                            TradeRow(row, trade.ticker, portfolio, sell = trade.type == TransactionType.SELL)
+                            TradeRow(
+                                row = row,
+                                ticker = trade.ticker,
+                                portfolio = portfolio,
+                                sell = trade.type == TransactionType.SELL,
+                                onOpen = { onOpenTransaction(trade.id) },
+                            )
                         } else {
                             EntryRow(row, onOpen = { onOpenEntry(row.entry.id) })
                         }
@@ -321,8 +328,8 @@ private fun EntryRow(
 
 /**
  * A buy's or sell's trade line (view 7; 09 wording 3, 11 wording 4): "Buy AAPL" or "Sell AAPL", the date with "ET"
- * and the balance after it, and "For portfolio Main" where a direct entry shows its note. Not tappable until it opens
- * its transaction (13).
+ * and the balance after it, and "For portfolio Main" where a direct entry shows its note. Tapping opens the buy or
+ * sell (criterion 29; 13a wording 4).
  */
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
@@ -331,6 +338,7 @@ private fun TradeRow(
     ticker: String,
     portfolio: String,
     sell: Boolean,
+    onOpen: () -> Unit,
 ) {
     val entry = row.entry
     val date = entry.date.toString()
@@ -344,7 +352,7 @@ private fun TradeRow(
             spokenDollars(row.balanceAfterCents),
         )
     FlowRow(
-        modifier = Modifier.fillMaxWidth().clearAndSetSemantics { contentDescription = spoken },
+        modifier = Modifier.fillMaxWidth().opensWith(spoken, onOpen),
         horizontalArrangement = Arrangement.spacedBy(12.dp),
         verticalArrangement = Arrangement.spacedBy(2.dp),
     ) {

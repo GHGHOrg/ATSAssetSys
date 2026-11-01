@@ -1,6 +1,7 @@
 package app.ghghorg.atsassets.ui
 
 import androidx.activity.compose.BackHandler
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
@@ -31,10 +32,13 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.LiveRegionMode
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.liveRegion
+import androidx.compose.ui.semantics.onClick
+import androidx.compose.ui.semantics.role
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -56,6 +60,7 @@ class HoldingActions(
     val onBuy: () -> Unit,
     val onSell: () -> Unit,
     val onSplit: () -> Unit,
+    val onOpenTransaction: (String) -> Unit,
 )
 
 /**
@@ -80,7 +85,7 @@ fun HoldingDetailScreen(
         val fixedPart: @Composable () -> Unit = {
             FixedPart(state, holding, portfolio, actions, Modifier.onSizeChanged { fixedHeight = it.height })
         }
-        val list: @Composable () -> Unit = { TabContent(state, Modifier.fillMaxWidth().padding(16.dp)) }
+        val list: @Composable () -> Unit = { TabContent(state, actions.onOpenTransaction, Modifier.fillMaxWidth().padding(16.dp)) }
         if (fixedHeight > limit) {
             Column(modifier = Modifier.fillMaxSize().verticalScroll(rememberScrollState())) {
                 fixedPart()
@@ -154,14 +159,16 @@ private fun FixedPart(
 @Composable
 private fun TabContent(
     state: AppState,
+    onOpenTransaction: (String) -> Unit,
     modifier: Modifier,
 ) {
     Column(modifier = modifier) {
         when (state.holdingTab) {
             HoldingTab.TRANSACTIONS ->
                 RowList(state.holdingTransactions) {
+                    val open = { onOpenTransaction(it.id) }
                     val ratio = it.split
-                    if (ratio == null) TransactionRow(it) else SplitRow(it, ratio)
+                    if (ratio == null) TransactionRow(it, open) else SplitRow(it, ratio, open)
                 }
 
             HoldingTab.LOTS -> {
@@ -284,12 +291,15 @@ private fun <T> RowList(
 
 /**
  * A transaction (wording 2, option B): one line, the date first, then "Buy" or "Sell" (11 wording 4), the shares as
- * typed and the amount, separated by space only. At the largest font the amount wraps below. Not tappable until 13
- * (decision 4).
+ * typed and the amount, separated by space only. At the largest font the amount wraps below. Tapping opens the
+ * transaction (13a wording 4).
  */
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
-private fun TransactionRow(transaction: Transaction) {
+private fun TransactionRow(
+    transaction: Transaction,
+    onOpen: () -> Unit,
+) {
     val date = transaction.date.toString()
     val shares = sharesText(Fraction.of(transaction.quantity))
     val amount = Money.format(transaction.totalCents)
@@ -302,7 +312,7 @@ private fun TransactionRow(transaction: Transaction) {
             amount.substringAfter('$'),
         )
     FlowRow(
-        modifier = Modifier.fillMaxWidth().clearAndSetSemantics { contentDescription = spoken },
+        modifier = Modifier.fillMaxWidth().opensWith(spoken, onOpen),
         horizontalArrangement = Arrangement.spacedBy(16.dp),
         verticalArrangement = Arrangement.spacedBy(2.dp),
     ) {
@@ -322,18 +332,36 @@ private fun TransactionRow(transaction: Transaction) {
     }
 }
 
+/**
+ * A row that opens something (13a wording 4): tappable, read by TalkBack as one sentence, [spoken], with the button
+ * role Android announces, as the Cash tab's entry rows since 05.
+ */
+internal fun Modifier.opensWith(
+    spoken: String,
+    onOpen: () -> Unit,
+): Modifier = clickable(role = Role.Button, onClick = onOpen)
+    .clearAndSetSemantics {
+        contentDescription = spoken
+        role = Role.Button
+        onClick {
+            onOpen()
+            true
+        }
+    }
+
 /** A split (12 wording 4): one line, the date first, then "Split" and the ratio; no amount, as a split has no cash. */
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
 private fun SplitRow(
     transaction: Transaction,
     ratio: SplitRatio,
+    onOpen: () -> Unit,
 ) {
     val date = transaction.date.toString()
     val shown = ratioText(ratio)
     val spoken = stringResource(R.string.holding_transaction_split_spoken, date, shown)
     FlowRow(
-        modifier = Modifier.fillMaxWidth().clearAndSetSemantics { contentDescription = spoken },
+        modifier = Modifier.fillMaxWidth().opensWith(spoken, onOpen),
         horizontalArrangement = Arrangement.spacedBy(16.dp),
         verticalArrangement = Arrangement.spacedBy(2.dp),
     ) {
