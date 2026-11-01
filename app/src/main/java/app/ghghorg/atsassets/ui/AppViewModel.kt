@@ -38,6 +38,10 @@ import app.ghghorg.atsassets.core.Quantity
 import app.ghghorg.atsassets.core.QuantityError
 import app.ghghorg.atsassets.core.QuantityResult
 import app.ghghorg.atsassets.core.RecordStore
+import app.ghghorg.atsassets.core.ReversalEffect
+import app.ghghorg.atsassets.core.ReversalRefusal
+import app.ghghorg.atsassets.core.ReversalResult
+import app.ghghorg.atsassets.core.Reversals
 import app.ghghorg.atsassets.core.SellRefusal
 import app.ghghorg.atsassets.core.SellResult
 import app.ghghorg.atsassets.core.Sells
@@ -97,7 +101,20 @@ enum class Screen {
 
     // A buy, sell or split (wireframe 10b frame G, iteration 13a), opened from Holding detail or a cash trade line.
     TRANSACTION,
+
+    // The reversal of the shown transaction (wireframe 10b frame I, iteration 13b): one screen, no review.
+    REVERSE_TRANSACTION,
 }
+
+// The id of the unsaved draft the reversal screen shows the effect of; never saved.
+private const val PREVIEW_ID = "preview"
+
+/** Why a transaction's reversal was refused, reasons only (D9): the date field, K1's rule, or the save. */
+data class TransactionReversalRefusals(
+    val date: DateRefusal? = null,
+    val rule: ReversalRefusal? = null,
+    val save: SaveRefusal? = null,
+)
 
 /** Holding detail's tabs (view 6). Classification joins in 23 (10 decision 1). Never saved. */
 enum class HoldingTab {
@@ -348,6 +365,11 @@ data class AppState(
     // The transaction shown on TRANSACTION, and the screen its Back returns to: HOLDING or TABS (13a decision 3).
     val transactionId: String? = null,
     val transactionFrom: Screen = Screen.TABS,
+    // The transactions left through a reversal link, oldest first: Back returns through them, one step at a time.
+    val transactionTrail: List<String> = emptyList(),
+    // REVERSE_TRANSACTION: the reversal date as digits, and why the reversal was refused (13b).
+    val transactionReversalDate: String = "",
+    val transactionReversalRefusals: TransactionReversalRefusals = TransactionReversalRefusals(),
     val reversal: ReversalForm = ReversalForm(),
     val cashFilterForm: CashFilterForm = CashFilterForm(),
     // In the order they were created (spec 3).
@@ -495,6 +517,31 @@ data class AppState(
     val transactionSplitEffect: SplitEffect?
         get() = shownTransaction?.takeIf { it.type == TransactionType.SPLIT }?.let { Splits.effect(transactions, it) }
 
+    /** Reverse is offered on a buy, sell or split not yet reversed; never on a reversal (4.6). */
+    val transactionReverseOffered: Boolean get() = shownTransaction?.let { Reversals.offered(transactions, it) } ?: false
+
+    /** The shown transaction's reversal, for "Reversed on" (frame G marker 14). */
+    val transactionReversal: Transaction? get() = transactionId?.let { Reversals.reversalOf(transactions, it) }
+
+    /** The original of the shown reversal, for "Reversal of the … of …" (frame G marker 14). */
+    val transactionOriginal: Transaction? get() = shownTransaction?.let { Reversals.originalOf(transactions, it) }
+
+    /** What the shown reversal did, worked out from its original (frame G; 13b wording 5). */
+    val transactionShownEffect: ReversalEffect?
+        get() = shownTransaction?.takeIf { it.type == TransactionType.REVERSAL }?.let { Reversals.effect(transactions, it) }
+
+    /**
+     * What the reversal on REVERSE_TRANSACTION would do at the typed date (frame I marker 26), from an unsaved draft;
+     * null while the date is not a whole date.
+     */
+    val transactionReversalEffect: ReversalEffect?
+        get() {
+            val original = shownTransaction ?: return null
+            val date = DateDigits.toDate(transactionReversalDate) ?: return null
+            val draft = Reversals.draft(entries, transactions, original, PREVIEW_ID, date)
+            return Reversals.effect(transactions + draft, draft)
+        }
+
     /** Reverse is offered on a direct entry that is not a reversal and not yet reversed (spec 4.6). */
     val reverseOffered: Boolean
         get() {
@@ -580,6 +627,9 @@ class AppViewModel(
                 splitReview = null,
                 detailFromTransaction = false,
                 transactionId = null,
+                transactionTrail = emptyList(),
+                transactionReversalDate = "",
+                transactionReversalRefusals = TransactionReversalRefusals(),
             )
         }
     }
@@ -942,10 +992,111 @@ class AppViewModel(
         mutableState.update { it.copy(screen = Screen.TRANSACTION, transactionId = id, transactionFrom = current.screen) }
     }
 
-    /** "<" or Back on a transaction: where it was opened from (13a decision 3). */
+    /**
+     * "<" or Back on a transaction: back through the reversal links followed, then to where it was opened from (13a
+     * decision 3).
+     */
     fun closeTransaction() {
         if (mutableState.value.screen != Screen.TRANSACTION) return
-        mutableState.update { it.copy(screen = it.transactionFrom, transactionId = null) }
+        mutableState.update {
+            val previous = it.transactionTrail.lastOrNull()
+            if (previous != null) {
+                it.copy(transactionId = previous, transactionTrail = it.transactionTrail.dropLast(1))
+            } else {
+                it.copy(screen = it.transactionFrom, transactionId = null)
+            }
+        }
+    }
+
+    /** "Reversed on …" or "Reversal of the … of …" (frame G marker 14): the other transaction of the pair; Back returns. */
+    fun openTransactionLink() {
+        val current = mutableState.value
+        if (current.screen != Screen.TRANSACTION) return
+        val shown = current.transactionId ?: return
+        val other = current.transactionReversal ?: current.transactionOriginal ?: return
+        mutableState.update { it.copy(transactionId = other.id, transactionTrail = it.transactionTrail + shown) }
+    }
+
+    /** Reverse on a buy, sell or split (4.6): the reversal screen, dated the original's date (frame I marker 17). */
+    fun openTransactionReversal() {
+        val current = mutableState.value
+        if (current.screen != Screen.TRANSACTION || !current.transactionReverseOffered) return
+        val original = current.shownTransaction ?: return
+        mutableState.update {
+            it.copy(
+                screen = Screen.REVERSE_TRANSACTION,
+                transactionReversalDate = original.date.toString().replace("-", ""),
+                transactionReversalRefusals = TransactionReversalRefusals(),
+            )
+        }
+    }
+
+    /** Digits only, as the other entry dates (09 decision 10). */
+    fun onTransactionReversalDateChange(text: String) {
+        if (tooManyDigits(text)) return
+        val refusal = if (DateDigits.isDigits(text)) null else DateRefusal.NOT_DIGITS
+        mutableState.update {
+            it.copy(transactionReversalDate = text, transactionReversalRefusals = TransactionReversalRefusals(date = refusal))
+        }
+    }
+
+    /** Cancel or Back: the original's detail, nothing saved. */
+    fun cancelTransactionReversal() {
+        val current = mutableState.value
+        if (current.screen != Screen.REVERSE_TRANSACTION || current.saving) return
+        mutableState.update { it.copy(screen = Screen.TRANSACTION, transactionReversalRefusals = TransactionReversalRefusals()) }
+    }
+
+    /**
+     * Confirm and save (frame I): the date field, then K1's reversal rules (4.1, 4.6); a refusal keeps the screen open
+     * with the date (frame J). The reversal and its trade line are saved together; the app returns to the original's
+     * detail, as 05's cash reversal does (13b decision 2).
+     */
+    fun confirmTransactionReversal() {
+        val current = mutableState.value
+        if (current.screen != Screen.REVERSE_TRANSACTION || current.saving) return
+        val target = store ?: return
+        val original = current.shownTransaction ?: return
+        val dateRefusal = digitsDateRefusal(current.transactionReversalDate)
+        val date = DateDigits.toDate(current.transactionReversalDate)
+        if (dateRefusal != null || date == null) {
+            mutableState.update { it.copy(transactionReversalRefusals = TransactionReversalRefusals(date = dateRefusal ?: DateRefusal.NOT_A_DATE)) }
+            return
+        }
+        val created =
+            when (val result = Reversals.reverse(current.entries, current.transactions, newId(), newId(), original.id, date)) {
+                is ReversalResult.Created -> result
+
+                is ReversalResult.Refused -> {
+                    mutableState.update { it.copy(transactionReversalRefusals = TransactionReversalRefusals(rule = result.reason)) }
+                    return
+                }
+            }
+        mutableState.update { it.copy(saving = true, transactionReversalRefusals = TransactionReversalRefusals()) }
+        viewModelScope.launch {
+            try {
+                target.saveReversal(created.transaction, created.cashLine)
+                mutableState.update {
+                    valued(
+                        it.copy(
+                            screen = Screen.TRANSACTION,
+                            transactions = it.transactions + created.transaction,
+                            entries = it.entries + listOfNotNull(created.cashLine),
+                            transactionReversalDate = "",
+                            saving = false,
+                        ),
+                    )
+                }
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: UnreadableDataException) {
+                mutableState.update { it.copy(screen = Screen.UNREADABLE, saving = false) }
+            } catch (e: Exception) {
+                mutableState.update {
+                    it.copy(saving = false, transactionReversalRefusals = TransactionReversalRefusals(save = SaveRefusal.SAVE_FAILED))
+                }
+            }
+        }
     }
 
     /** The cash link of a buy or sell: its trade line's detail, which returns here. A split has none. */
@@ -1977,6 +2128,7 @@ class AppViewModel(
                 Screen.SPLIT,
                 Screen.SPLIT_REVIEW,
                 Screen.TRANSACTION,
+                Screen.REVERSE_TRANSACTION,
             )
     }
 }
