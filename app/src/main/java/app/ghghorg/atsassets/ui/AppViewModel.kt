@@ -49,6 +49,7 @@ import app.ghghorg.atsassets.core.SplitResult
 import app.ghghorg.atsassets.core.Splits
 import app.ghghorg.atsassets.core.TickerCheck
 import app.ghghorg.atsassets.core.Transaction
+import app.ghghorg.atsassets.core.TransactionType
 import app.ghghorg.atsassets.core.Transactions
 import app.ghghorg.atsassets.core.UnreadableDataException
 import app.ghghorg.atsassets.core.Valuation
@@ -93,6 +94,9 @@ enum class Screen {
     // Split entry and its review (wireframe 10b frames E and F, iteration 12), opened from a holding's header only.
     SPLIT,
     SPLIT_REVIEW,
+
+    // A buy, sell or split (wireframe 10b frame G, iteration 13a), opened from Holding detail or a cash trade line.
+    TRANSACTION,
 }
 
 /** Holding detail's tabs (view 6). Classification joins in 23 (10 decision 1). Never saved. */
@@ -339,6 +343,11 @@ data class AppState(
     val today: LocalDate = LocalDate.MIN,
     // The entry shown on DETAIL; on REVERSAL, the entry being reversed.
     val detailId: String? = null,
+    // DETAIL shows a trade line opened from its transaction's cash link: Back returns to the transaction (13a decision 3).
+    val detailFromTransaction: Boolean = false,
+    // The transaction shown on TRANSACTION, and the screen its Back returns to: HOLDING or TABS (13a decision 3).
+    val transactionId: String? = null,
+    val transactionFrom: Screen = Screen.TABS,
     val reversal: ReversalForm = ReversalForm(),
     val cashFilterForm: CashFilterForm = CashFilterForm(),
     // In the order they were created (spec 3).
@@ -462,6 +471,30 @@ data class AppState(
     /** The original the shown entry reverses, if it is a reversal. */
     val detailReverses: CashEntry? get() = detailEntry?.reversesId?.let { id -> entries.firstOrNull { it.id == id } }
 
+    /** The buy or sell of the shown trade line (wireframe 10b frame H: its detail links to it). */
+    val detailTradeTransaction: Transaction?
+        get() = detailEntry?.transactionId?.let { id -> transactions.firstOrNull { it.id == id } }
+
+    val shownTransaction: Transaction? get() = transactionId?.let { id -> transactions.firstOrNull { it.id == id } }
+
+    /** The shown transaction's trade line; none for a split (4.5). */
+    val transactionCashLine: CashEntry?
+        get() = transactionId?.let { id -> entries.firstOrNull { it.type == CashType.TRADE && it.transactionId == id } }
+
+    /** What is left of the shown buy's lot as of today, split-adjusted; null for a buy dated after today (13a decision 2). */
+    val transactionLot: Lot?
+        get() = shownTransaction?.takeIf { it.type == TransactionType.BUY }?.let { buy ->
+            Holdings.lots(transactions, today).firstOrNull { it.buyId == buy.id }
+        }
+
+    /** The lots the shown sell used, oldest first, priced on its date (13a decision 1). */
+    val transactionPieces: List<SoldPiece>
+        get() = shownTransaction?.takeIf { it.type == TransactionType.SELL }?.let { Sells.pieces(transactions, it) }.orEmpty()
+
+    /** The shares at the shown split's place, before and after. */
+    val transactionSplitEffect: SplitEffect?
+        get() = shownTransaction?.takeIf { it.type == TransactionType.SPLIT }?.let { Splits.effect(transactions, it) }
+
     /** Reverse is offered on a direct entry that is not a reversal and not yet reversed (spec 4.6). */
     val reverseOffered: Boolean
         get() {
@@ -545,6 +578,8 @@ class AppViewModel(
                 sellReview = null,
                 splitRefusals = SplitRefusals(),
                 splitReview = null,
+                detailFromTransaction = false,
+                transactionId = null,
             )
         }
     }
@@ -888,10 +923,60 @@ class AppViewModel(
         mutableState.update { it.copy(screen = Screen.DETAIL, detailId = id, refusals = Refusals()) }
     }
 
-    /** Back from the detail to the Cash list. */
+    /** Back from the detail to the Cash list, or to the transaction whose cash link opened it (13a decision 3). */
     fun closeDetail() {
-        if (mutableState.value.screen != Screen.DETAIL) return
-        mutableState.update { it.copy(screen = Screen.TABS, detailId = null) }
+        val current = mutableState.value
+        if (current.screen != Screen.DETAIL) return
+        val back = if (current.detailFromTransaction) Screen.TRANSACTION else Screen.TABS
+        mutableState.update { it.copy(screen = back, detailId = null, detailFromTransaction = false) }
+    }
+
+    /**
+     * Opens a buy, sell or split (wireframe 10b frame G): from a Transactions row on Holding detail, or from a trade
+     * line on the Cash tab (criterion 29). Back returns there. Unknown ids are ignored.
+     */
+    fun openTransaction(id: String) {
+        val current = mutableState.value
+        if (current.screen != Screen.HOLDING && current.screen != Screen.TABS) return
+        if (current.transactions.none { it.id == id }) return
+        mutableState.update { it.copy(screen = Screen.TRANSACTION, transactionId = id, transactionFrom = current.screen) }
+    }
+
+    /** "<" or Back on a transaction: where it was opened from (13a decision 3). */
+    fun closeTransaction() {
+        if (mutableState.value.screen != Screen.TRANSACTION) return
+        mutableState.update { it.copy(screen = it.transactionFrom, transactionId = null) }
+    }
+
+    /** The cash link of a buy or sell: its trade line's detail, which returns here. A split has none. */
+    fun openCashLine() {
+        val current = mutableState.value
+        if (current.screen != Screen.TRANSACTION) return
+        val line = current.transactionCashLine ?: return
+        mutableState.update { it.copy(screen = Screen.DETAIL, detailId = line.id, detailFromTransaction = true, refusals = Refusals()) }
+    }
+
+    /**
+     * The trade line's link to its buy or sell (wireframe 10b frame H). Opened from that transaction, it goes back to it
+     * rather than opening it again, so there is no loop (13a decision 3).
+     */
+    fun openLinkedTransaction() {
+        val current = mutableState.value
+        if (current.screen != Screen.DETAIL) return
+        val transaction = current.detailTradeTransaction ?: return
+        mutableState.update {
+            if (it.detailFromTransaction && it.transactionId == transaction.id) {
+                it.copy(screen = Screen.TRANSACTION, detailId = null, detailFromTransaction = false)
+            } else {
+                it.copy(
+                    screen = Screen.TRANSACTION,
+                    transactionId = transaction.id,
+                    transactionFrom = Screen.TABS,
+                    detailId = null,
+                    detailFromTransaction = false,
+                )
+            }
+        }
     }
 
     /**
@@ -1891,6 +1976,7 @@ class AppViewModel(
                 Screen.SELL_REVIEW,
                 Screen.SPLIT,
                 Screen.SPLIT_REVIEW,
+                Screen.TRANSACTION,
             )
     }
 }
