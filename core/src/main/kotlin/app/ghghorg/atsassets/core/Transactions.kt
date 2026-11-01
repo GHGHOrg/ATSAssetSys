@@ -9,12 +9,16 @@ enum class TransactionType {
     BUY,
     SELL,
     SPLIT,
+
+    // A reversal of a buy, sell or split (4.6; 13b decision 1).
+    REVERSAL,
 }
 
 /**
  * One transaction in a portfolio (spec section 3). The quantity is the exact decimal as typed; the total is in cents (4.10).
  * A sell carries its allocations, oldest lot first; they, not the typed quantity, drive shares, cost and proceeds (4.10).
- * A split carries its ratio, with quantity 0 and total 0: it has no cash line (4.5).
+ * A split carries its ratio, with quantity 0 and total 0: it has no cash line (4.5). A reversal carries only [reversesId]
+ * and its original's portfolio and ticker, with quantity 0 and total 0; every figure comes from the original (4.6, 4.10).
  */
 data class Transaction(
     val id: String,

@@ -115,11 +115,11 @@ sealed interface SellResult {
 object Sells {
     /**
      * The lots of one holding for a sell dated [sellDate] with entry order [sellSeq], oldest first (4.4). A lot's
-     * available quantity is the least it holds on the sell date or any later date, in the units of the sell date. In
-     * those units only sells lower it (a split changes the units, not the share of the lot), so it is what the lot holds
-     * after every entry, taken back through the splits placed after the sell. A lot bought after the sell is shown in
-     * its own units. Lots with nothing available are left out; lots that fail the lot rules stay in their place with
-     * the reason.
+     * available quantity is the least it holds on the sell date or any later date, in the units of the sell date: the
+     * least over the sell's place and every later entry of the holding, each taken back through the splits since the
+     * sell. A reversal of a sell can raise a lot again (13b), so the last figure is not always the least. A lot bought
+     * after the sell is shown in its own units. Lots with nothing available are left out; lots that fail the lot rules
+     * stay in their place with the reason.
      */
     fun lotChoices(
         transactions: List<Transaction>,
@@ -129,18 +129,22 @@ object Sells {
         sellSeq: Long,
     ): List<LotChoice> {
         val sellPlace = Place(sellDate, sellSeq)
+        val places = transactions.filter { it.portfolioId == portfolioId && it.ticker == ticker }.map { it.place }
         return transactions
             .filter { it.type == TransactionType.BUY && it.portfolioId == portfolioId && it.ticker == ticker }
             .sortedWith(compareBy<Transaction>({ it.date }, { it.enteredSeq }))
             .map { buy ->
                 val from = maxOf(buy.place, sellPlace)
-                val afterwards = Holdings.splitFactor(transactions, portfolioId, ticker, from, Place.END)
                 val before = Holdings.splitFactor(transactions, portfolioId, ticker, buy.place, from)
+                val least =
+                    (listOf(from) + places.filter { it > from }).minOf { place ->
+                        Holdings.quantityAt(transactions, buy, place) / Holdings.splitFactor(transactions, portfolioId, ticker, from, place)
+                    }
                 LotChoice(
                     buyId = buy.id,
                     buyDate = buy.date,
                     enteredSeq = buy.enteredSeq,
-                    available = Holdings.quantityAt(transactions, buy, Place.END) / afterwards,
+                    available = least,
                     costPerShare = Fraction.ofCents(buy.totalCents) / (Fraction.of(buy.quantity) * before),
                     unavailable =
                     when {
