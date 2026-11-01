@@ -1,6 +1,6 @@
 # plan/iterations/13a-transaction-detail.md
 
-Stage: Build. Status: approved 2026-11-01, not built. Decisions 1 to 3 settled (section 10).
+Stage: Build. Status: approved 2026-11-01, built and checked 2026-11-01 (section 12). Decisions 1 to 3 settled (section 10).
 Source: plan/plan.md section 4 (row 13, split into 13a and 13b on 2026-11-01), intent/intent.md v52 (final), spec/spec.md v4 (final). "My reading" is an interpretation, not a test.
 
 ## 1. Outcome
@@ -74,10 +74,31 @@ Settled by the spec, no question asked: a trade line opens the transaction, not 
 - New, asked in step 3: the titles of a sell and a split, the lot line of decision 2, the cash link's TalkBack sentence, and the TalkBack role and sentence of a row that opens.
 
 ## 12. Status and notes
-Approved 2026-11-01. Not built.
+Built 2026-11-01 (steps 1 to 4); phone checks 2026-11-01, all yes, no fix needed. Pull request not yet opened.
 
 ## 13. Build results
-Filled in during the build.
+### 13.1 Commits
+Newest first: 06fbf79 step 4, 9578526 step 3, 12efbcc step 2, ea55cfe step 1 with this file. main was c5dad53.
+
+### 13.2 Local run
+On 06fbf79's code (2026-11-01, all with --rerun-tasks): spotlessCheck green; debug build green, no compiler warnings printed; 503 tests, 0 failures (Balance 11, CashAccount 20, CashEntriesReverse 12, CashEntries 27, Fraction 12, Holdings 15, MarketDate 10, Money 21, OpeningBalance 9, Portfolios 23, Quantity 10, Sells 19, Splits 23, TickerCheck 16, Transactions 18, RowMapping 8, AppLock 12, FinnhubSource 18, TickerVerifier 6, AppViewModel 120, BuyFlow 29, DateDigits 7, HoldingDetailFlow 11, SellFlow 21, SplitFlow 17, TransactionDetailFlow 8); lint: the 4 listed findings, none silenced (AndroidGradlePluginVersion, open item 31; NewerVersionAvailable for kotlinx-coroutines-test and for sqlcipher-android, open item 43; TypographyDashes on date_not_a_date, strings.xml:86), report written 20:52:29. Release build on the same code green (R8 ran; unsigned; "Unable to strip" names libandroidx.graphics.path.so and libsqlcipher.so, as known). Debug APK versionCode 13 (aapt2). Step 3 was committed after step 4's run with your approval, each step with its own files (you were away from the pinentry window).
+
+### 13.3 Phone results (Android 17, debug build versionCode 13, your reports)
+Checks 1 to 8 all yes. Notes:
+- 1: installed over the 12 build (lastUpdateTime 20:12:36, firstInstallTime 2026-10-29 10:44:04 unchanged); net worth $4,191.87, AAPL at 1 share and $150.00, its Transactions as before (criterion 35).
+- 2: the 2026-10-31 buy of 10 opened "< Buy AAPL" with Main, the date, 10, $1,500.00, $150.00 per share, "Lot 0 left", "Cash −$1,500.00 >" and "Not reversed.", no Reverse; the 2026-11-01 buy of 1 showed "Lot 1 left, $150.00 per share"; "<" and Back returned to AAPL.
+- 3: the sell of 4.66666667 showed $257.14 per share, its three lots used (proceeds $171.43, $857.14 and $171.43; gains +$21.43, +$107.14 and +$21.43 in green), cost $1,050.00, realized +$150.00 in green and "Cash +$1,200.00 >".
+- 4: the 1 for 3 split showed 14 and 4.66666667 with no cash row; the 2 for 1 of 2026-10-31 showed 6 and 12.
+- 5: the buy's cash link opened the trade line's detail ("Back", "Buy AAPL", "For portfolio Main", the card, "Open the buy or sell to reverse it." and the link); the link, the Back button and Android Back each went one step back, with no loop (decision 3).
+- 6: on the Cash tab, "Sell AAPL" +$1,200.00 and "Buy AAPL" −$150.00 opened their transactions and "<" and Back returned to the Cash tab (criterion 29); the opening balance still opened its 05 detail.
+- 7: largest font, portrait and landscape, light and dark: the details and the trade line's detail scroll and wrap, the gains readable on dark; TalkBack read the rows and trade lines as their sentences with "Button", the lot as "Lot, 0 left", the cash link and the trade line's link as section 11.
+- 8: Logcat cleared at 20:49:51 while details were opened; the app's uid 10454 had 59 lines, all from system tags (WindowOnBackDispatcher, Surface and single lines). No ticker, portfolio name, amount, quantity, detail word, key or token. Counts only.
+- No data was changed.
+
+### 13.4 Not run or not checked
+CI and the pull request; open item 33 (34); the release APK on a device (unsigned, open item 4); contrast measurement (by eye on the phone); network traffic (open item 39); a buy dated after today on the phone ("1 from ‹date› ET"; unit tested only, no such buy on the phone); the screens in a JVM test (none in the project; the navigation and figures are tested in step 2).
 
 ## 14. Departures from the plan
-None yet.
+1. The trade line's detail is titled with its buy or sell ("Buy AAPL") and "For portfolio Main" instead of 05's "Trade", and keeps 05's "Back" button above the title rather than frame H's "<" title row (your wording 3, header option A). A trade line's detail shows frame H's "Open the buy or sell to reverse it." with the link, in place of "Not reversed."; Reverse itself comes in 13b.
+2. A shared Modifier.opensWith gives every row that opens (Holding detail's rows, the Cash tab's trade lines, the cash link) one tap target, its spoken sentence and the button role; Sell's PieceRows and a transactionTitle function are shared with the detail (step 3).
+3. Phone check 2 opened a sold-out buy and a buy with shares, so both forms of the lot line were seen (your note on the 2026-10-30 buy, step 3 wording).
