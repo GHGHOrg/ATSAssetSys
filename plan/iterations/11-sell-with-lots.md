@@ -89,7 +89,7 @@ Settled by the spec, no question asked: the portfolio opens on the one you came 
 - New, asked in step 5: the dropped-pick line; the pick-over-remainder refusal; "Nothing to sell" from the header; the line for a portfolio with nothing held; the trade line "Sell AAPL"; the TalkBack sentences for the chips, a lot, a pick, the count line, the review and a realized gain or loss.
 
 ## 12. Status and notes
-Built 2026-10-31 to 2026-11-01 (steps 1 to 6); phone checks 2026-10-31 to 2026-11-01, all yes, no fix needed. Pull request not yet opened.
+Done. Built 2026-10-31 to 2026-11-01 (steps 1 to 6); phone checks 2026-10-31 to 2026-11-01, all yes, no fix needed; pull request #104 merged as e689af9 (2026-11-01), CI green on the pull request (3 checks) and on main (2m 16s) (your reports).
 
 ## 13. Build results
 ### 13.1 Commits
