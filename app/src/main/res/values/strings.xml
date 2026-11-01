@@ -266,4 +266,34 @@
     <string name="trade_line_reverse_hint">Open the buy or sell to reverse it.</string>
     <string name="transaction_link">%1$s, %2$s ET</string>
     <string name="transaction_link_spoken">%1$s, %2$s Eastern Time, opens it</string>
+    <!-- Iteration 13b: reversing a transaction (wording approved 2026-11-01, 13b file section 11). -->
+    <string name="transaction_type_buy_lower">buy</string>
+    <string name="transaction_type_sell_lower">sell</string>
+    <string name="transaction_type_split_lower">split</string>
+    <string name="reverse_title_buy">Reverse buy %1$s</string>
+    <string name="reverse_title_sell">Reverse sell %1$s</string>
+    <string name="reverse_title_split">Reverse split %1$s</string>
+    <string name="reverse_button_spoken">Reverse %1$s %2$s of %3$s</string>
+    <string name="reversal_reverses_spoken">Reverses %1$s, %2$s Eastern Time, %3$s, %4$s, %5$s dollars</string>
+    <string name="reversal_reverses_split_spoken">Reverses split, %1$s Eastern Time, %2$s, %3$s</string>
+    <string name="reversal_shares_removed">Shares removed (split applied)</string>
+    <string name="reversal_shares_removed_spoken">Shares removed, %1$s</string>
+    <string name="reversal_cash_effect_spoken">Cash effect, %1$s dollars</string>
+    <string name="reversal_realized_zero">Realized gain/loss: %1$s</string>
+    <string name="reversal_lots_restored">Lots restored (split applied)</string>
+    <string name="reversal_lot_restored_spoken">Lot of %1$s Eastern Time, %2$s restored</string>
+    <string name="reversal_realized_removed">Realized gain/loss removed</string>
+    <string name="reversal_realized_removed_spoken">Realized gain or loss removed, %1$s dollars</string>
+    <string name="reversal_ratio_applied">Ratio applied</string>
+    <string name="reversal_shares_after">Shares after reversal</string>
+    <string name="reversal_sell_not_reversed">Not saved. Shares would be %1$s on %2$s. Reverse the sell of %3$s first, then reverse this entry dated on or after that reversal.</string>
+    <string name="reversal_too_early">Not saved. Shares would be %1$s on %2$s, because this reversal, dated %3$s, is applied before the sell of %2$s. Pick a reversal date of %4$s or later (the date the sell was reversed).</string>
+    <string name="reversal_sell_short">Not saved. With this reversal, the sell of %1$s would take more shares than its lot holds.</string>
+    <string name="reversal_not_reversible">Not saved. This entry cannot be reversed.</string>
+    <string name="reversal_of_buy_title">Reversal of buy %1$s</string>
+    <string name="reversal_of_sell_title">Reversal of sell %1$s</string>
+    <string name="reversal_of_split_title">Reversal of split %1$s</string>
+    <string name="reversal_of_link">Reversal of the %1$s of %2$s ET</string>
+    <string name="holding_reversal_row_spoken">%1$s Eastern Time, reversal of the %2$s of %3$s Eastern Time</string>
+    <string name="trade_reversal_spoken">%1$s, for portfolio %2$s, %3$s Eastern Time, %4$s dollars, balance %5$s dollars</string>
 </resources>

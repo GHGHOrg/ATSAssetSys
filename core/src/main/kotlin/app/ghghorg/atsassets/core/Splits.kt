@@ -113,7 +113,7 @@ object Splits {
                 totalCents = 0L,
                 split = ratio,
             )
-        val short = firstShortSell(transactions + transaction, portfolioId, upperTicker)
+        val short = Holdings.firstNegative(transactions + transaction, portfolioId, upperTicker)?.place?.date
         return if (short == null) SplitResult.Created(transaction) else SplitResult.Refused(SplitRefusal.SellShort(short))
     }
 
@@ -129,23 +129,5 @@ object Splits {
                 .filter { it.place <= justBefore }
                 .fold(Fraction.ZERO) { sum, buy -> sum + Holdings.quantityAt(transactions, buy, justBefore) }
         return SplitEffect(before, before * (split.split?.factor ?: Fraction.ONE))
-    }
-
-    /** The date of the first sell, in the 4.1 order, that would leave one of the holding's lots below 0; null if none. */
-    private fun firstShortSell(
-        transactions: List<Transaction>,
-        portfolioId: String,
-        ticker: String,
-    ): LocalDate? {
-        val buys = transactions.filter { it.type == TransactionType.BUY && it.portfolioId == portfolioId && it.ticker == ticker }
-        return transactions
-            .filter { it.type == TransactionType.SELL && it.portfolioId == portfolioId && it.ticker == ticker }
-            .sortedWith(compareBy<Transaction>({ it.date }, { it.enteredSeq }))
-            .firstOrNull { sell ->
-                sell.allocations.any { allocation ->
-                    val buy = buys.firstOrNull { it.id == allocation.lotId }
-                    buy != null && Holdings.quantityAt(transactions, buy, sell.place).signum() < 0
-                }
-            }?.date
     }
 }

@@ -9,19 +9,24 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.Button
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedCard
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import app.ghghorg.atsassets.R
 import app.ghghorg.atsassets.core.CashEntry
 import app.ghghorg.atsassets.core.Money
 import app.ghghorg.atsassets.core.Quantity
+import app.ghghorg.atsassets.core.Reversals
 import app.ghghorg.atsassets.core.Transaction
 import app.ghghorg.atsassets.core.TransactionType
 import app.ghghorg.atsassets.core.Transactions
@@ -31,13 +36,16 @@ import app.ghghorg.atsassets.ui.theme.gainLossColor
 class TransactionActions(
     val onBack: () -> Unit,
     val onOpenCashLine: () -> Unit,
+    val onReverse: () -> Unit,
+    val onOpenLink: () -> Unit,
 )
 
 /**
- * A buy, sell or split (wireframe 10b frame G; iteration 13a): "<" and the title, the entered values with the quantity
- * as originally traded, then what it did: a buy's lot as of today (decision 2), the lots a sell used with their gains
- * as on its review (decision 1), a split's shares before and after. A buy or sell links to its cash line. Every
- * transaction is "Not reversed." until 13b. The whole screen scrolls as one (criterion 39).
+ * A buy, sell, split or reversal (wireframe 10b frame G; iterations 13a and 13b): "<" and the title, the entered values
+ * with the quantity as originally traded, then what it did: a buy's lot as of today (13a decision 2), the lots a sell
+ * used with their gains as on its review (13a decision 1), a split's shares before and after, a reversal's effect. A
+ * buy, sell or their reversal links to its cash line. Then "Not reversed." with Reverse, "Reversed on …", or for a
+ * reversal "Reversal of the … of …" (frame G marker 14; 13b wording 5). The whole screen scrolls as one (criterion 39).
  */
 @Composable
 fun TransactionDetailScreen(
@@ -52,7 +60,7 @@ fun TransactionDetailScreen(
         modifier = modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(16.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
-        TitleRow(transactionTitle(transaction), actions.onBack)
+        TitleRow(transactionTitle(transaction, state.transactions), actions.onBack)
         OutlinedCard(modifier = Modifier.fillMaxWidth()) {
             Column(
                 modifier = Modifier.padding(12.dp),
@@ -72,28 +80,83 @@ fun TransactionDetailScreen(
                     }
 
                     TransactionType.SPLIT -> SplitRows(state, transaction)
+
+                    TransactionType.REVERSAL -> state.transactionShownEffect?.let { EffectRows(it) }
                 }
             }
         }
         state.transactionCashLine?.let { CashLink(it, actions.onOpenCashLine) }
-        Text(
-            text = stringResource(R.string.detail_not_reversed),
-            style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-        )
+        ReversalStatus(state, transaction, actions)
     }
 }
 
-/** "Buy AAPL", "Sell AAPL" (the trade lines' titles) or "Split AAPL" (13a wording 2). */
+/**
+ * The last part (frame G marker 14; 13b wording 5): a reversal links to its original; a reversed entry links to its
+ * reversal; any other shows "Not reversed." and Reverse.
+ */
 @Composable
-internal fun transactionTitle(transaction: Transaction): String = stringResource(
-    when (transaction.type) {
-        TransactionType.BUY -> R.string.trade_buy_title
-        TransactionType.SELL -> R.string.trade_sell_title
-        TransactionType.SPLIT -> R.string.transaction_split_title
-    },
-    transaction.ticker,
-)
+private fun ReversalStatus(
+    state: AppState,
+    transaction: Transaction,
+    actions: TransactionActions,
+) {
+    val original = state.transactionOriginal
+    val reversal = state.transactionReversal
+    when {
+        original != null ->
+            TextButton(onClick = actions.onOpenLink) {
+                Text(text = stringResource(R.string.reversal_of_link, transactionTypeLower(original.type), original.date.toString()) + " >")
+            }
+
+        reversal != null ->
+            TextButton(onClick = actions.onOpenLink) {
+                Text(text = stringResource(R.string.detail_reversed_on, reversal.date.toString()) + " >")
+            }
+
+        else -> {
+            Text(
+                text = stringResource(R.string.detail_not_reversed),
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+            if (state.transactionReverseOffered) {
+                val spoken =
+                    stringResource(
+                        R.string.reverse_button_spoken,
+                        transactionTypeLower(transaction.type),
+                        transaction.ticker,
+                        transaction.date.toString(),
+                    )
+                Button(onClick = actions.onReverse, modifier = Modifier.semantics { contentDescription = spoken }) {
+                    Text(text = stringResource(R.string.reverse_button))
+                }
+            }
+        }
+    }
+}
+
+/**
+ * "Buy AAPL", "Sell AAPL" (the trade lines' titles) or "Split AAPL" (13a wording 2); a reversal reads "Reversal of buy
+ * AAPL", "Reversal of sell AAPL" or "Reversal of split AAPL" (13b wording 5), from its original in [transactions].
+ */
+@Composable
+internal fun transactionTitle(
+    transaction: Transaction,
+    transactions: List<Transaction>,
+): String {
+    val original = if (transaction.type == TransactionType.REVERSAL) Reversals.originalOf(transactions, transaction) else null
+    return stringResource(
+        when {
+            original?.type == TransactionType.SELL -> R.string.reversal_of_sell_title
+            original?.type == TransactionType.SPLIT -> R.string.reversal_of_split_title
+            original != null -> R.string.reversal_of_buy_title
+            transaction.type == TransactionType.SELL -> R.string.trade_sell_title
+            transaction.type == TransactionType.SPLIT -> R.string.transaction_split_title
+            else -> R.string.trade_buy_title
+        },
+        transaction.ticker,
+    )
+}
 
 /** Quantity as traded, total amount and price per share (frame G). */
 @Composable

@@ -50,6 +50,13 @@ internal data class Place(
 
 internal val Transaction.place: Place get() = Place(date, enteredSeq)
 
+/** Where a lot would go below 0 (4.1): the place, the lot's buy id and what it would hold there, in that place's units. */
+internal data class Shortfall(
+    val place: Place,
+    val lotId: String,
+    val held: Fraction,
+)
+
 /** K3, read only: lots and holdings from the transactions, as of a date (4.8). */
 object Holdings {
     /**
@@ -82,9 +89,16 @@ object Holdings {
             }
     }
 
+    /** The transaction [reversal] reverses, if it is a reversal and its original is there (4.6). */
+    internal fun originalOf(
+        transactions: List<Transaction>,
+        reversal: Transaction,
+    ): Transaction? = reversal.reversesId?.let { id -> transactions.firstOrNull { it.id == id } }
+
     /**
      * The product of the ratios of one holding's splits placed after [after] and not after [upTo] (4.5): what a
-     * quantity in the units of [after] is multiplied by to be in the units of [upTo].
+     * quantity in the units of [after] is multiplied by to be in the units of [upTo]. A split's reversal counts as a
+     * split with the inverse ratio at its own place (4.6).
      */
     internal fun splitFactor(
         transactions: List<Transaction>,
@@ -93,13 +107,25 @@ object Holdings {
         after: Place,
         upTo: Place,
     ): Fraction = transactions
-        .filter { it.type == TransactionType.SPLIT && it.portfolioId == portfolioId && it.ticker == ticker }
-        .filter { it.place > after && it.place <= upTo }
-        .fold(Fraction.ONE) { factor, split -> factor * (split.split?.factor ?: Fraction.ONE) }
+        .filter { it.portfolioId == portfolioId && it.ticker == ticker && it.place > after && it.place <= upTo }
+        .fold(Fraction.ONE) { factor, transaction ->
+            when (transaction.type) {
+                TransactionType.SPLIT -> factor * (transaction.split?.factor ?: Fraction.ONE)
+
+                TransactionType.REVERSAL -> {
+                    val ratio = originalOf(transactions, transaction)?.takeIf { it.type == TransactionType.SPLIT }?.split
+                    if (ratio == null) factor else factor / ratio.factor
+                }
+
+                else -> factor
+            }
+        }
 
     /**
-     * What the lot of [buy] holds at [at], in the units of [at]: its quantity as traded with the splits since, less
-     * what each sell placed up to [at] took from it, each allocation (in its sell's units) with the splits since (4.10).
+     * What the lot of [buy] holds at [at], in the units of [at] (4.10): its quantity as traded with the splits since,
+     * less what each sell placed up to [at] took from it and plus what each reversal of such a sell put back, each
+     * allocation (in its sell's units) with the splits since the sell; a reversal of the buy itself takes its whole
+     * quantity, with the splits since, back out (4.6).
      */
     internal fun quantityAt(
         transactions: List<Transaction>,
@@ -107,11 +133,44 @@ object Holdings {
         at: Place,
     ): Fraction {
         fun since(from: Place) = splitFactor(transactions, buy.portfolioId, buy.ticker, from, at)
+
+        fun taken(sell: Transaction): Fraction {
+            val quantity = sell.allocations.filter { it.lotId == buy.id }.fold(Fraction.ZERO) { sum, it -> sum + it.quantity }
+            return quantity * since(sell.place)
+        }
+        val bought = Fraction.of(buy.quantity) * since(buy.place)
         return transactions
-            .filter { it.type == TransactionType.SELL && it.place <= at }
-            .fold(Fraction.of(buy.quantity) * since(buy.place)) { left, sell ->
-                sell.allocations.filter { it.lotId == buy.id }.fold(left) { rest, allocation -> rest - allocation.quantity * since(sell.place) }
+            .filter { it.place <= at && (it.type == TransactionType.SELL || it.type == TransactionType.REVERSAL) }
+            .fold(bought) { left, transaction ->
+                if (transaction.type == TransactionType.SELL) return@fold left - taken(transaction)
+                val original = originalOf(transactions, transaction)
+                when {
+                    original == null -> left
+                    original.type == TransactionType.SELL -> left + taken(original)
+                    original.id == buy.id -> left - bought
+                    else -> left
+                }
             }
+    }
+
+    /**
+     * The first place, in the 4.1 order, where one of the holding's lots would be below 0 (4.1): the place, the lot and
+     * what it would hold there. Null when every lot stays at or above 0.
+     */
+    internal fun firstNegative(
+        transactions: List<Transaction>,
+        portfolioId: String,
+        ticker: String,
+    ): Shortfall? {
+        val ofHolding = transactions.filter { it.portfolioId == portfolioId && it.ticker == ticker }
+        val buys = ofHolding.filter { it.type == TransactionType.BUY }
+        for (place in ofHolding.map { it.place }.sorted()) {
+            for (buy in buys.filter { it.place <= place }) {
+                val held = quantityAt(transactions, buy, place)
+                if (held.signum() < 0) return Shortfall(place, buy.id, held)
+            }
+        }
+        return null
     }
 
     /**

@@ -38,6 +38,12 @@ interface RecordStore {
     /** Saves a split with its ratio; it has no cash line (4.5). */
     suspend fun saveSplit(transaction: Transaction)
 
+    /** Saves a reversal and, for a buy's or sell's reversal, its trade cash line together: both or neither (4.6). */
+    suspend fun saveReversal(
+        transaction: Transaction,
+        cashLine: CashEntry?,
+    )
+
     /** Throws [UnreadableDataException] if stored data exists but cannot be read. */
     suspend fun loadInstruments(): List<Instrument>
 

@@ -28,6 +28,7 @@ import androidx.compose.ui.unit.dp
 import app.ghghorg.atsassets.R
 import app.ghghorg.atsassets.core.CashEntry
 import app.ghghorg.atsassets.core.CashType
+import app.ghghorg.atsassets.core.TransactionType
 
 /**
  * The cash entry detail (wireframe 10b, frame H; iteration 05): type, date with ET, signed amount and note, then
@@ -57,7 +58,7 @@ fun CashEntryDetail(
             Text(text = stringResource(R.string.back_button))
         }
         Text(
-            text = trade?.let { transactionTitle(it) } ?: cashTypeLabel(entry.type),
+            text = trade?.let { transactionTitle(it, state.transactions) } ?: cashTypeLabel(entry.type),
             style = MaterialTheme.typography.titleLarge,
         )
         trade?.let { transaction ->
@@ -69,8 +70,9 @@ fun CashEntryDetail(
             entry.type == CashType.OPENING_BALANCE -> StatusLine(stringResource(R.string.detail_opening_not_reversible))
 
             trade != null -> {
-                StatusLine(stringResource(R.string.trade_line_reverse_hint))
-                val title = transactionTitle(trade)
+                // A reversal's line only links to it (frame H: a reversal shows the link to the other entry).
+                if (trade.type != TransactionType.REVERSAL) StatusLine(stringResource(R.string.trade_line_reverse_hint))
+                val title = transactionTitle(trade, state.transactions)
                 val date = trade.date.toString()
                 val spoken = stringResource(R.string.transaction_link_spoken, title, date)
                 TextButton(onClick = onOpenTransaction, modifier = Modifier.semantics { contentDescription = spoken }) {

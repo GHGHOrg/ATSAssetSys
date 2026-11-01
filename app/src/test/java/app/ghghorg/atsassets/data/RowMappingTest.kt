@@ -136,4 +136,47 @@ class RowMappingTest {
             )
         damaged.forEach { assertThrows(UnreadableDataException::class.java) { it.toTransaction() } }
     }
+
+    private val reversal =
+        buy.copy(
+            id = "r1",
+            type = TransactionType.REVERSAL,
+            date = LocalDate.of(2026, 3, 2),
+            enteredSeq = 8L,
+            quantity = BigDecimal.ZERO,
+            totalCents = 0L,
+            reversesId = "t1",
+        )
+
+    @Test
+    fun aReversal_keepsOnlyItsLink_andIsReadBackUnchanged() {
+        val row = reversal.toRow()
+        assertEquals("REVERSAL", row.type)
+        assertEquals("t1", row.reversesId)
+        assertEquals("0", row.quantity)
+        assertEquals(0L, row.totalCents)
+        assertEquals(null, row.splitTo)
+        assertEquals(reversal, row.toTransaction())
+        assertEquals(listOf(buy, reversal), checkReversals(listOf(buy, reversal)))
+    }
+
+    @Test
+    fun aReversalWithoutItsLink_orABuyWithOne_isUnreadable() {
+        assertThrows(UnreadableDataException::class.java) { reversal.toRow().copy(reversesId = null).toTransaction() }
+        assertThrows(UnreadableDataException::class.java) { buy.toRow().copy(reversesId = "t9").toTransaction() }
+    }
+
+    @Test
+    fun aReversalOfNothing_ofAReversal_aSecondOne_oneDatedBeforeItsOriginal_orInAnotherHolding_isUnreadable() {
+        val damaged =
+            listOf(
+                listOf(reversal),
+                listOf(buy, reversal, reversal.copy(id = "r2", reversesId = "r1")),
+                listOf(buy, reversal, reversal.copy(id = "r2", enteredSeq = 9L)),
+                listOf(buy, reversal.copy(date = LocalDate.of(2026, 1, 31))),
+                listOf(buy, reversal.copy(ticker = "SPY")),
+                listOf(buy, reversal.copy(portfolioId = "p2")),
+            )
+        damaged.forEach { assertThrows(UnreadableDataException::class.java) { checkReversals(it) } }
+    }
 }

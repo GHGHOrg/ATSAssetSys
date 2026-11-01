@@ -91,11 +91,19 @@ fun CashScreen(
                         val trade = state.transactions.firstOrNull { it.id == row.entry.transactionId }
                         if (trade != null) {
                             val portfolio = state.portfolios.firstOrNull { it.id == trade.portfolioId }?.name.orEmpty()
+                            val title = transactionTitle(trade, state.transactions)
+                            val reversal = trade.type == TransactionType.REVERSAL
                             TradeRow(
                                 row = row,
-                                ticker = trade.ticker,
+                                title = title,
                                 portfolio = portfolio,
-                                sell = trade.type == TransactionType.SELL,
+                                spokenFormat =
+                                when (trade.type) {
+                                    TransactionType.SELL -> R.string.trade_sell_spoken
+                                    TransactionType.BUY -> R.string.trade_buy_spoken
+                                    else -> R.string.trade_reversal_spoken
+                                },
+                                spokenFirst = if (reversal) title else trade.ticker,
                                 onOpen = { onOpenTransaction(trade.id) },
                             )
                         } else {
@@ -327,25 +335,27 @@ private fun EntryRow(
 }
 
 /**
- * A buy's or sell's trade line (view 7; 09 wording 3, 11 wording 4): "Buy AAPL" or "Sell AAPL", the date with "ET"
- * and the balance after it, and "For portfolio Main" where a direct entry shows its note. Tapping opens the buy or
- * sell (criterion 29; 13a wording 4).
+ * A trade line (view 7; 09 wording 3, 11 wording 4, 13b wording 5): "Buy AAPL", "Sell AAPL" or "Reversal of buy AAPL"
+ * as [title], the date with "ET" and the balance after it, and "For portfolio Main" where a direct entry shows its
+ * note. Read by TalkBack with [spokenFormat], whose first value is [spokenFirst]. Tapping opens its transaction
+ * (criterion 29; 13a wording 4).
  */
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
 private fun TradeRow(
     row: CashRow,
-    ticker: String,
+    title: String,
     portfolio: String,
-    sell: Boolean,
+    spokenFormat: Int,
+    spokenFirst: String,
     onOpen: () -> Unit,
 ) {
     val entry = row.entry
     val date = entry.date.toString()
     val spoken =
         stringResource(
-            if (sell) R.string.trade_sell_spoken else R.string.trade_buy_spoken,
-            ticker,
+            spokenFormat,
+            spokenFirst,
             portfolio,
             date,
             spokenSigned(entry.amountCents),
@@ -358,7 +368,7 @@ private fun TradeRow(
     ) {
         Column {
             Text(
-                text = stringResource(if (sell) R.string.trade_sell_title else R.string.trade_buy_title, ticker),
+                text = title,
                 style = MaterialTheme.typography.bodyLarge,
                 fontWeight = FontWeight.Medium,
             )
