@@ -225,13 +225,12 @@ private fun LotList(
         }
     }
     val quantity = (Quantity.parse(state.sellForm.quantityText) as? QuantityResult.Exact)?.value
-    val picked = Quantity.format(state.sellPicked)
     Text(
         text =
         if (quantity == null) {
-            stringResource(R.string.sell_picked, picked)
+            stringResource(R.string.sell_picked, sharesText(state.sellPicked))
         } else {
-            stringResource(R.string.sell_picked_of, picked, Quantity.format(quantity))
+            stringResource(R.string.sell_picked_of, Quantity.format(state.sellPicked), sharesText(quantity))
         },
         style = MaterialTheme.typography.bodyLarge,
     )
@@ -369,7 +368,7 @@ private fun LotText(
 
 /** A refusal: plain text with "Not saved", read by TalkBack when it appears (wireframe 10a marker 16). */
 @Composable
-private fun Message(text: String) {
+internal fun Message(text: String) {
     Text(
         text = text,
         style = MaterialTheme.typography.bodyMedium,
@@ -545,7 +544,7 @@ private fun sellRuleMessage(
             stringResource(
                 R.string.sell_more_than_held,
                 portfolio,
-                Quantity.format(refusal.held),
+                sharesText(refusal.held),
                 form.ticker.orEmpty(),
                 refusal.date.toString(),
                 Quantity.format(refusal.quantity),
@@ -553,11 +552,11 @@ private fun sellRuleMessage(
         }
 
         is SellRefusal.PicksDoNotAddUp ->
-            stringResource(R.string.sell_picks_do_not_add_up, Quantity.format(refusal.picked), Quantity.format(refusal.quantity))
+            stringResource(R.string.sell_picks_do_not_add_up, sharesText(refusal.picked), Quantity.format(refusal.quantity))
 
         is SellRefusal.PickOverRemainder -> {
             val pick = form.picks[refusal.lotId]?.let { (Quantity.parse(it) as? QuantityResult.Exact)?.value } ?: BigDecimal.ZERO
-            stringResource(R.string.sell_pick_over_remainder, lotDate(refusal.lotId), Quantity.format(refusal.remainder), Quantity.format(pick))
+            stringResource(R.string.sell_pick_over_remainder, lotDate(refusal.lotId), sharesText(refusal.remainder), Quantity.format(pick))
         }
 
         is SellRefusal.PickNotAvailable ->

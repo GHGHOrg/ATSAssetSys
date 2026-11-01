@@ -35,6 +35,9 @@ interface RecordStore {
         cashLine: CashEntry,
     )
 
+    /** Saves a split with its ratio; it has no cash line (4.5). */
+    suspend fun saveSplit(transaction: Transaction)
+
     /** Throws [UnreadableDataException] if stored data exists but cannot be read. */
     suspend fun loadInstruments(): List<Instrument>
 

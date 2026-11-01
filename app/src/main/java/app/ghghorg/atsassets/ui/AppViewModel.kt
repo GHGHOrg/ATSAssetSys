@@ -42,6 +42,11 @@ import app.ghghorg.atsassets.core.SellRefusal
 import app.ghghorg.atsassets.core.SellResult
 import app.ghghorg.atsassets.core.Sells
 import app.ghghorg.atsassets.core.SoldPiece
+import app.ghghorg.atsassets.core.SplitEffect
+import app.ghghorg.atsassets.core.SplitRatio
+import app.ghghorg.atsassets.core.SplitRefusal
+import app.ghghorg.atsassets.core.SplitResult
+import app.ghghorg.atsassets.core.Splits
 import app.ghghorg.atsassets.core.TickerCheck
 import app.ghghorg.atsassets.core.Transaction
 import app.ghghorg.atsassets.core.Transactions
@@ -84,6 +89,10 @@ enum class Screen {
     // Sell entry with the lot picker, and its review (wireframe 10a frames C to E, iteration 11).
     SELL,
     SELL_REVIEW,
+
+    // Split entry and its review (wireframe 10b frames E and F, iteration 12), opened from a holding's header only.
+    SPLIT,
+    SPLIT_REVIEW,
 }
 
 /** Holding detail's tabs (view 6). Classification joins in 23 (10 decision 1). Never saved. */
@@ -131,6 +140,58 @@ data class SellRefusals(
     val rule: SellRefusal? = null,
     val save: SaveRefusal? = null,
 )
+
+/**
+ * The split entry as typed (wireframe 10b frame E): the portfolio and a ticker with a buy there, chosen with chips
+ * (12 decision 1), the date, and the ratio "to for from" as typed.
+ */
+data class SplitForm(
+    val portfolioId: String? = null,
+    val ticker: String? = null,
+    val dateText: String = "",
+    val toText: String = "",
+    val fromText: String = "",
+)
+
+/** Why a ratio number was refused as typed (4.5, 12 decision 3). Reasons only; the wording is D9. */
+enum class RatioError {
+    EMPTY,
+
+    // Anything but the digits 0 to 9: a sign, a dot, a space.
+    NOT_WHOLE,
+    ZERO,
+
+    // Above Splits.MAX_RATIO.
+    TOO_LARGE,
+}
+
+/**
+ * Why a split was refused, reasons only (D9). The field rules show together; [rule] (K1) runs with stand-ins whenever
+ * the date passes, so a bad number does not hide the date rule (CLAUDE.md pitfall).
+ */
+data class SplitRefusals(
+    val tickerMissing: Boolean = false,
+    val date: DateRefusal? = null,
+    val to: RatioError? = null,
+    val from: RatioError? = null,
+    val rule: SplitRefusal? = null,
+    val save: SaveRefusal? = null,
+)
+
+/** A ratio number as typed: digits only, a whole number from 1 to [Splits.MAX_RATIO]; leading zeros are allowed. */
+internal fun ratioError(text: String): RatioError? {
+    if (text.isEmpty()) return RatioError.EMPTY
+    if (!text.all { it in '0'..'9' }) return RatioError.NOT_WHOLE
+    val digits = text.trimStart('0')
+    return when {
+        digits.isEmpty() -> RatioError.ZERO
+        digits.length > Splits.MAX_RATIO.toString().length || digits.toInt() > Splits.MAX_RATIO -> RatioError.TOO_LARGE
+        else -> null
+    }
+}
+
+/** The number [ratioError] accepts, or null. */
+internal fun ratioNumber(text: String): Int? = if (ratioError(text) == null) text.trimStart('0').toInt() else null
 
 /** The buy entry as typed (wireframe 10a frame A). The ticker is kept in capitals; the rest as typed. */
 data class BuyForm(
@@ -269,6 +330,11 @@ data class AppState(
     val sellFromHolding: Boolean = false,
     // The sell shown on SELL_REVIEW, as K1 made it at Review.
     val sellReview: SellResult.Created? = null,
+    // The split entry; Back and a save return to the holding it was opened from (12 decision 1).
+    val splitForm: SplitForm = SplitForm(),
+    val splitRefusals: SplitRefusals = SplitRefusals(),
+    // The split shown on SPLIT_REVIEW, as K1 made it at Review.
+    val splitReview: SplitResult.Created? = null,
     // Today in New York at the last load or save; holdings and lots are as of this date (4.8).
     val today: LocalDate = LocalDate.MIN,
     // The entry shown on DETAIL; on REVERSAL, the entry being reversed.
@@ -356,6 +422,13 @@ data class AppState(
     /** The pieces of the reviewed sell, oldest lot first (wireframe 10a frame E). */
     val sellPieces: List<SoldPiece>
         get() = sellReview?.let { Sells.pieces(transactions + it.transaction, it.transaction) }.orEmpty()
+
+    /** The tickers with a buy in the split's portfolio, in ticker order (section 6, 12 decision 1). */
+    val splitTickers: List<String> get() = splitForm.portfolioId?.let { Splits.tickers(transactions, it) }.orEmpty()
+
+    /** The shares at the reviewed split's place, before and after (wireframe 10b frame F). */
+    val splitEffect: SplitEffect?
+        get() = splitReview?.let { Splits.effect(transactions + it.transaction, it.transaction) }
 
     /**
      * The fields take digits only (YYYYMMDD): any other character is refused at once, eight digits that are no
@@ -470,6 +543,8 @@ class AppViewModel(
                 sellPicksDropped = false,
                 sellFromHolding = false,
                 sellReview = null,
+                splitRefusals = SplitRefusals(),
+                splitReview = null,
             )
         }
     }
@@ -1381,6 +1456,199 @@ class AppViewModel(
         )
     }
 
+    /**
+     * Split in the holding's header (navigation outline): the holding's portfolio and ticker chosen (12 decision 1),
+     * also at 0 shares (12 decision 2). The typed text is kept until a split is saved; the date is filled with today
+     * in New York only if it is empty.
+     */
+    fun splitFromHolding() {
+        val current = mutableState.value
+        if (current.screen != Screen.HOLDING || current.saving) return
+        val portfolioId = current.portfolioId ?: return
+        val ticker = current.holdingTicker ?: return
+        mutableState.update {
+            val form = it.splitForm
+            it.copy(
+                screen = Screen.SPLIT,
+                buyNotice = null,
+                splitForm =
+                form.copy(
+                    portfolioId = portfolioId,
+                    ticker = ticker,
+                    dateText = form.dateText.ifEmpty { marketDate.today().toString().replace("-", "") },
+                ),
+                splitRefusals = SplitRefusals(),
+                splitReview = null,
+            )
+        }
+    }
+
+    /** One of the portfolios only. The ticker becomes its first with a buy, or none. */
+    fun onSplitPortfolioChange(id: String) {
+        val current = mutableState.value
+        if (current.portfolios.none { it.id == id }) return
+        mutableState.update {
+            it.copy(
+                splitForm = it.splitForm.copy(portfolioId = id, ticker = Splits.tickers(it.transactions, id).firstOrNull()),
+                splitRefusals = it.splitRefusals.copy(tickerMissing = false, rule = null),
+            )
+        }
+    }
+
+    /** One of the tickers with a buy in the chosen portfolio only. */
+    fun onSplitTickerChange(ticker: String) {
+        if (ticker !in mutableState.value.splitTickers) return
+        mutableState.update {
+            it.copy(splitForm = it.splitForm.copy(ticker = ticker), splitRefusals = it.splitRefusals.copy(tickerMissing = false, rule = null))
+        }
+    }
+
+    /** Digits only, as Buy's and Sell's date (09 decision 10). */
+    fun onSplitDateChange(text: String) {
+        if (tooManyDigits(text)) return
+        val refusal = if (DateDigits.isDigits(text)) null else DateRefusal.NOT_DIGITS
+        mutableState.update {
+            it.copy(splitForm = it.splitForm.copy(dateText = text), splitRefusals = it.splitRefusals.copy(date = refusal, rule = null))
+        }
+    }
+
+    fun onSplitToChange(text: String) = mutableState.update {
+        it.copy(splitForm = it.splitForm.copy(toText = text), splitRefusals = it.splitRefusals.copy(to = null, rule = null))
+    }
+
+    fun onSplitFromChange(text: String) = mutableState.update {
+        it.copy(splitForm = it.splitForm.copy(fromText = text), splitRefusals = it.splitRefusals.copy(from = null, rule = null))
+    }
+
+    /** Back from the split entry to the holding it came from. The typed text is kept. */
+    fun closeSplit() {
+        if (mutableState.value.screen != Screen.SPLIT) return
+        mutableState.update { it.copy(screen = Screen.HOLDING, splitRefusals = SplitRefusals()) }
+    }
+
+    /**
+     * Review (wireframe 10b marker 10): the field rules and, with stand-ins, K1's rules (4.1, 4.5) together. A stand-in
+     * ratio makes the ratio and replay rules meaningless, and a missing ticker the ticker rule; the field refusals say
+     * why. No ticker check: a split never needs one (4.6). Shows the review only if the save would pass.
+     */
+    fun reviewSplit() {
+        val current = mutableState.value
+        if (current.screen != Screen.SPLIT || current.saving) return
+        val form = current.splitForm
+        val fieldRefusals =
+            SplitRefusals(
+                tickerMissing = form.ticker == null,
+                date = digitsDateRefusal(form.dateText),
+                to = ratioError(form.toText),
+                from = ratioError(form.fromText),
+            )
+        val probe = splitOf(current, PROBE_ID, standIns = true)
+        val reason = (probe as? SplitResult.Refused)?.reason
+        val ratioStandIn = fieldRefusals.to != null || fieldRefusals.from != null
+        val rule =
+            when {
+                ratioStandIn && (reason is SplitRefusal.SellShort || reason == SplitRefusal.RatioEqual) -> null
+                form.ticker == null && reason == SplitRefusal.TickerNotBought -> null
+                else -> reason
+            }
+        val refusals = fieldRefusals.copy(rule = rule)
+        if (refusals != SplitRefusals() || probe !is SplitResult.Created) {
+            mutableState.update { it.copy(splitRefusals = refusals) }
+            return
+        }
+        mutableState.update { it.copy(screen = Screen.SPLIT_REVIEW, splitReview = probe, splitRefusals = SplitRefusals()) }
+    }
+
+    /** Back to edit from the split review. The typed text is kept. */
+    fun backToSplit() {
+        val current = mutableState.value
+        if (current.screen != Screen.SPLIT_REVIEW || current.saving) return
+        mutableState.update { it.copy(screen = Screen.SPLIT, splitRefusals = SplitRefusals(), splitReview = null) }
+    }
+
+    /**
+     * Confirm and save: K1's rules again with a real id, then the split is saved; it has no cash line (4.5). A rule
+     * that fails now returns to the entry with the reason. A save returns to the holding the split was opened from.
+     */
+    fun confirmSplit() {
+        val current = mutableState.value
+        if (current.screen != Screen.SPLIT_REVIEW || current.saving) return
+        val target = store ?: return
+        val created =
+            when (val result = splitOf(current, newId())) {
+                is SplitResult.Created -> result
+
+                is SplitResult.Refused -> {
+                    mutableState.update { it.copy(screen = Screen.SPLIT, splitRefusals = SplitRefusals(rule = result.reason), splitReview = null) }
+                    return
+                }
+
+                null -> {
+                    mutableState.update { it.copy(screen = Screen.SPLIT, splitReview = null) }
+                    return
+                }
+            }
+        mutableState.update { it.copy(saving = true, splitRefusals = SplitRefusals()) }
+        viewModelScope.launch {
+            try {
+                target.saveSplit(created.transaction)
+                mutableState.update {
+                    valued(
+                        it.copy(
+                            screen = Screen.HOLDING,
+                            transactions = it.transactions + created.transaction,
+                            splitForm = SplitForm(),
+                            splitRefusals = SplitRefusals(),
+                            saving = false,
+                            splitReview = null,
+                        ),
+                    )
+                }
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: UnreadableDataException) {
+                mutableState.update { it.copy(screen = Screen.UNREADABLE, saving = false) }
+            } catch (e: Exception) {
+                mutableState.update { it.copy(saving = false, splitRefusals = SplitRefusals(save = SaveRefusal.SAVE_FAILED)) }
+            }
+        }
+    }
+
+    /**
+     * K1's split rules on the typed values; null when the date does not parse (the field rules decide then). Without
+     * [standIns] it is also null when a number or the ticker is missing. With [standIns], a bad number makes the ratio
+     * 2 for 1 and a missing ticker a placeholder.
+     */
+    private fun splitOf(
+        current: AppState,
+        transactionId: String,
+        standIns: Boolean = false,
+    ): SplitResult? {
+        val form = current.splitForm
+        val date = DateDigits.toDate(form.dateText) ?: return null
+        val to = ratioNumber(form.toText)
+        val from = ratioNumber(form.fromText)
+        val ratio =
+            if (to != null && from != null) {
+                SplitRatio(to, from)
+            } else if (standIns) {
+                SplitRatio(2, 1)
+            } else {
+                return null
+            }
+        val ticker = form.ticker ?: if (standIns) PROBE_ID else return null
+        return Splits.split(
+            cashEntries = current.entries,
+            transactions = current.transactions,
+            portfolios = current.portfolios,
+            transactionId = transactionId,
+            portfolioId = form.portfolioId.orEmpty(),
+            ticker = ticker,
+            date = date,
+            ratio = ratio,
+        )
+    }
+
     fun dismissBuyNotice() = mutableState.update { it.copy(buyNotice = null) }
 
     /** Create a portfolio from the Buy notice: the New portfolio dialog, then Buy once it is created (criterion 24). */
@@ -1621,6 +1889,8 @@ class AppViewModel(
                 Screen.HOLDING,
                 Screen.SELL,
                 Screen.SELL_REVIEW,
+                Screen.SPLIT,
+                Screen.SPLIT_REVIEW,
             )
     }
 }

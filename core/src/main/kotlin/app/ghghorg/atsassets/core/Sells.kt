@@ -56,7 +56,10 @@ sealed interface SellRefusal {
         val openingDate: LocalDate,
     ) : SellRefusal
 
-    /** The shares the portfolio can sell on [date] (the lots that pass the lot rules), and the sell quantity. */
+    /**
+     * The shares the portfolio can sell on [date]: the lots that pass the lot rules, each at its remainder to 8 places
+     * (4.4), and the sell quantity.
+     */
     data class MoreThanHeld(
         val date: LocalDate,
         val held: Fraction,
@@ -112,9 +115,11 @@ sealed interface SellResult {
 object Sells {
     /**
      * The lots of one holding for a sell dated [sellDate] with entry order [sellSeq], oldest first (4.4). A lot's
-     * available quantity is what it holds on the sell date after counting every sell of any date: lots only shrink
-     * until splits (12), so that is the least it holds on that date or later. Lots with nothing available are left
-     * out; lots that fail the lot rules stay in their place with the reason.
+     * available quantity is the least it holds on the sell date or any later date, in the units of the sell date. In
+     * those units only sells lower it (a split changes the units, not the share of the lot), so it is what the lot holds
+     * after every entry, taken back through the splits placed after the sell. A lot bought after the sell is shown in
+     * its own units. Lots with nothing available are left out; lots that fail the lot rules stay in their place with
+     * the reason.
      */
     fun lotChoices(
         transactions: List<Transaction>,
@@ -123,18 +128,20 @@ object Sells {
         sellDate: LocalDate,
         sellSeq: Long,
     ): List<LotChoice> {
-        val taken = Holdings.takenFromLots(transactions.filter { it.type == TransactionType.SELL })
+        val sellPlace = Place(sellDate, sellSeq)
         return transactions
             .filter { it.type == TransactionType.BUY && it.portfolioId == portfolioId && it.ticker == ticker }
             .sortedWith(compareBy<Transaction>({ it.date }, { it.enteredSeq }))
             .map { buy ->
-                val original = Fraction.of(buy.quantity)
+                val from = maxOf(buy.place, sellPlace)
+                val afterwards = Holdings.splitFactor(transactions, portfolioId, ticker, from, Place.END)
+                val before = Holdings.splitFactor(transactions, portfolioId, ticker, buy.place, from)
                 LotChoice(
                     buyId = buy.id,
                     buyDate = buy.date,
                     enteredSeq = buy.enteredSeq,
-                    available = original - (taken[buy.id] ?: Fraction.ZERO),
-                    costPerShare = Fraction.ofCents(buy.totalCents) / original,
+                    available = Holdings.quantityAt(transactions, buy, Place.END) / afterwards,
+                    costPerShare = Fraction.ofCents(buy.totalCents) / (Fraction.of(buy.quantity) * before),
                     unavailable =
                     when {
                         buy.date.isAfter(sellDate) -> LotUnavailable.BOUGHT_AFTER_SELL_DATE
@@ -193,7 +200,12 @@ object Sells {
         val seq = Transactions.nextSeq(cashEntries, transactions)
         val upperTicker = ticker.trim().uppercase(Locale.ROOT)
         val choices = lotChoices(transactions, portfolioId, upperTicker, date, seq)
-        val held = choices.filter { it.unavailable == null }.fold(Fraction.ZERO) { sum, choice -> sum + choice.available }
+        // What the picks can take: each lot that passes at its remainder to 8 places, the figure the picker shows and a
+        // pick may reach (4.4; 12, fix after phone check 6). The exact sum can be below it when remainders round up.
+        val held =
+            choices
+                .filter { it.unavailable == null }
+                .fold(Fraction.ZERO) { sum, choice -> sum + Fraction.of(choice.available.rounded(Quantity.MAX_DECIMALS)) }
         if (Fraction.of(quantity) > held) {
             return SellResult.Refused(SellRefusal.MoreThanHeld(date, held, quantity))
         }
@@ -264,8 +276,8 @@ object Sells {
 
     /**
      * The pieces of a saved or reviewed [sell], in its allocation order (4.10): a piece's cost is the lot's cost per
-     * share times the exact quantity taken (until splits in 12 the lot's cost over its quantity is that figure), and
-     * its proceeds are the sell total times the quantity taken over the sum taken by the sell.
+     * share on the sell's date (the splits before the sell applied) times the exact quantity taken, and its proceeds
+     * are the sell total times the quantity taken over the sum taken by the sell.
      */
     fun pieces(
         transactions: List<Transaction>,
@@ -275,11 +287,12 @@ object Sells {
         val sumTaken = sell.allocations.fold(Fraction.ZERO) { sum, allocation -> sum + allocation.quantity }
         return sell.allocations.map { allocation ->
             val buy = buys.getValue(allocation.lotId)
+            val factor = Holdings.splitFactor(transactions, buy.portfolioId, buy.ticker, buy.place, sell.place)
             SoldPiece(
                 lotId = allocation.lotId,
                 buyDate = buy.date,
                 quantity = allocation.quantity,
-                cost = Fraction.ofCents(buy.totalCents) * allocation.quantity / Fraction.of(buy.quantity),
+                cost = Fraction.ofCents(buy.totalCents) * allocation.quantity / (Fraction.of(buy.quantity) * factor),
                 proceeds = Fraction.ofCents(sell.totalCents) * allocation.quantity / sumTaken,
             )
         }

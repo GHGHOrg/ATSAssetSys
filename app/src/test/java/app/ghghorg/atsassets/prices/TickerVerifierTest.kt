@@ -59,6 +59,8 @@ class TickerVerifierTest {
             cashLine: CashEntry,
         ) = error("not used")
 
+        override suspend fun saveSplit(transaction: Transaction) = error("not used")
+
         override suspend fun loadInstruments(): List<Instrument> = error("not used")
     }
 

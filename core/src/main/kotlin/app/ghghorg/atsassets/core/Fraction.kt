@@ -55,6 +55,8 @@ class Fraction private constructor(
 
         val ZERO: Fraction = of(BigInteger.ZERO, BigInteger.ONE)
 
+        val ONE: Fraction = of(BigInteger.ONE, BigInteger.ONE)
+
         /** Throws IllegalArgumentException when [denominator] is zero. */
         fun of(
             numerator: BigInteger,

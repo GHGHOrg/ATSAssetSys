@@ -4,6 +4,7 @@ import app.ghghorg.atsassets.core.AssetType
 import app.ghghorg.atsassets.core.Fraction
 import app.ghghorg.atsassets.core.Instrument
 import app.ghghorg.atsassets.core.SellAllocation
+import app.ghghorg.atsassets.core.SplitRatio
 import app.ghghorg.atsassets.core.Transaction
 import app.ghghorg.atsassets.core.TransactionType
 import app.ghghorg.atsassets.core.UnreadableDataException
@@ -94,5 +95,45 @@ class RowMappingTest {
         assertThrows(UnreadableDataException::class.java) { withAllocations(bare, emptyList()) }
         val stray = sell.allocationRows() + SellAllocationRow(sellId = "s9", lotId = "t1", quantity = "1/1")
         assertThrows(UnreadableDataException::class.java) { withAllocations(bare, stray) }
+    }
+
+    private val split =
+        buy.copy(
+            id = "x1",
+            type = TransactionType.SPLIT,
+            date = LocalDate.of(2026, 3, 1),
+            enteredSeq = 7L,
+            quantity = BigDecimal.ZERO,
+            totalCents = 0L,
+            split = SplitRatio(1, 3),
+        )
+
+    @Test
+    fun aSplit_keepsItsRatioInTwoColumns_andEveryOtherRowLeavesThemEmpty() {
+        val row = split.toRow()
+        assertEquals("SPLIT", row.type)
+        assertEquals(1, row.splitTo)
+        assertEquals(3, row.splitFrom)
+        assertEquals(split, row.toTransaction())
+        assertEquals(null, buy.toRow().splitTo)
+        assertEquals(null, sell.toRow().splitFrom)
+        assertEquals(1_000_000, split.copy(split = SplitRatio(1_000_000, 1)).toRow().toTransaction().split?.to)
+    }
+
+    @Test
+    fun aSplitWithoutAnAllowedRatio_orABuyOrSellWithOne_isUnreadable() {
+        val row = split.toRow()
+        val damaged =
+            listOf(
+                row.copy(splitTo = null),
+                row.copy(splitFrom = null),
+                row.copy(splitTo = 0),
+                row.copy(splitFrom = -1),
+                row.copy(splitTo = 1_000_001),
+                row.copy(splitTo = 3),
+                buy.toRow().copy(splitTo = 2, splitFrom = 1),
+                sell.toRow().copy(splitFrom = 1),
+            )
+        damaged.forEach { assertThrows(UnreadableDataException::class.java) { it.toTransaction() } }
     }
 }

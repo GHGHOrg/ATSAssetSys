@@ -145,6 +145,7 @@ private fun BarContent(
                 onTab = viewModel::selectHoldingTab,
                 onBuy = viewModel::buyFromHolding,
                 onSell = viewModel::sellFromHolding,
+                onSplit = viewModel::splitFromHolding,
             ),
         )
 
@@ -182,6 +183,22 @@ private fun BarContent(
         )
 
         Screen.SELL_REVIEW -> SellReviewScreen(state, viewModel::confirmSell, viewModel::backToSell)
+
+        Screen.SPLIT -> SplitEntryScreen(
+            state = state,
+            actions =
+            SplitActions(
+                onPortfolioChange = viewModel::onSplitPortfolioChange,
+                onTickerChange = viewModel::onSplitTickerChange,
+                onDateChange = viewModel::onSplitDateChange,
+                onToChange = viewModel::onSplitToChange,
+                onFromChange = viewModel::onSplitFromChange,
+                onReview = viewModel::reviewSplit,
+                onBack = viewModel::closeSplit,
+            ),
+        )
+
+        Screen.SPLIT_REVIEW -> SplitReviewScreen(state, viewModel::confirmSplit, viewModel::backToSplit)
 
         else -> TabContent(state, viewModel)
     }

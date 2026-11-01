@@ -8,6 +8,8 @@ import app.ghghorg.atsassets.core.Instrument
 import app.ghghorg.atsassets.core.Portfolio
 import app.ghghorg.atsassets.core.RecordStore
 import app.ghghorg.atsassets.core.SellAllocation
+import app.ghghorg.atsassets.core.SplitRatio
+import app.ghghorg.atsassets.core.Splits
 import app.ghghorg.atsassets.core.Transaction
 import app.ghghorg.atsassets.core.TransactionType
 import app.ghghorg.atsassets.core.UnreadableDataException
@@ -150,6 +152,21 @@ class RoomRecordStore(
         dao.insertSell(transaction.toRow(), cashLine.toRow(), transaction.allocationRows())
     }
 
+    override suspend fun saveSplit(transaction: Transaction) {
+        val dao = withContext(Dispatchers.IO) {
+            try {
+                database.transactionDao()
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: UnreadableDataException) {
+                throw e
+            } catch (e: Exception) {
+                throw UnreadableDataException("The stored data could not be opened.", e)
+            }
+        }
+        dao.insertTransaction(transaction.toRow())
+    }
+
     override suspend fun loadInstruments(): List<Instrument> = withContext(Dispatchers.IO) {
         try {
             database.instrumentDao().loadAll().map { it.toInstrument() }
@@ -189,19 +206,41 @@ internal fun Transaction.toRow() = TransactionRow(
     quantity = quantity.toPlainString(),
     totalCents = totalCents,
     reversesId = reversesId,
+    splitTo = split?.to,
+    splitFrom = split?.from,
 )
 
-internal fun TransactionRow.toTransaction() = Transaction(
-    id = id,
-    portfolioId = portfolioId,
-    ticker = ticker,
-    type = TransactionType.valueOf(type),
-    date = LocalDate.parse(date),
-    enteredSeq = enteredSeq,
-    quantity = BigDecimal(quantity),
-    totalCents = totalCents,
-    reversesId = reversesId,
-)
+/**
+ * Throws [UnreadableDataException] for a split without a ratio that 4.5 allows (whole numbers from 1 to
+ * [Splits.MAX_RATIO], not equal), or a buy or sell with a ratio. The messages name no value (spec section 9).
+ */
+internal fun TransactionRow.toTransaction(): Transaction {
+    val transactionType = TransactionType.valueOf(type)
+    val ratio =
+        if (transactionType == TransactionType.SPLIT) {
+            val to = splitTo ?: throw UnreadableDataException("A stored split has no ratio.")
+            val from = splitFrom ?: throw UnreadableDataException("A stored split has no ratio.")
+            if (to !in 1..Splits.MAX_RATIO || from !in 1..Splits.MAX_RATIO || to == from) {
+                throw UnreadableDataException("A stored split ratio could not be read.")
+            }
+            SplitRatio(to, from)
+        } else {
+            if (splitTo != null || splitFrom != null) throw UnreadableDataException("A stored buy or sell has a split ratio.")
+            null
+        }
+    return Transaction(
+        id = id,
+        portfolioId = portfolioId,
+        ticker = ticker,
+        type = transactionType,
+        date = LocalDate.parse(date),
+        enteredSeq = enteredSeq,
+        quantity = BigDecimal(quantity),
+        totalCents = totalCents,
+        reversesId = reversesId,
+        split = ratio,
+    )
+}
 
 /** A sell's allocations as rows, each quantity in its stored form (11 decision 3); none for a buy. */
 internal fun Transaction.allocationRows(): List<SellAllocationRow> = allocations.map {
