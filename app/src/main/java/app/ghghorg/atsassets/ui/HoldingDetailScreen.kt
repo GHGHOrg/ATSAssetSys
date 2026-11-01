@@ -49,6 +49,7 @@ import app.ghghorg.atsassets.core.Holding
 import app.ghghorg.atsassets.core.Lot
 import app.ghghorg.atsassets.core.Money
 import app.ghghorg.atsassets.core.Quantity
+import app.ghghorg.atsassets.core.Reversals
 import app.ghghorg.atsassets.core.SplitRatio
 import app.ghghorg.atsassets.core.Transaction
 import app.ghghorg.atsassets.core.TransactionType
@@ -168,7 +169,12 @@ private fun TabContent(
                 RowList(state.holdingTransactions) {
                     val open = { onOpenTransaction(it.id) }
                     val ratio = it.split
-                    if (ratio == null) TransactionRow(it, open) else SplitRow(it, ratio, open)
+                    val original = Reversals.originalOf(state.transactions, it)
+                    when {
+                        original != null -> ReversalRow(it, original, open)
+                        ratio != null -> SplitRow(it, ratio, open)
+                        else -> TransactionRow(it, open)
+                    }
                 }
 
             HoldingTab.LOTS -> {
@@ -348,6 +354,34 @@ internal fun Modifier.opensWith(
             true
         }
     }
+
+/**
+ * A reversal (13b wording 5): one line, its date, then "Reversal of the buy of 2026-01-02 ET"; no amount, which shows
+ * on the Cash tab and in its detail. It wraps at the largest font.
+ */
+@OptIn(ExperimentalLayoutApi::class)
+@Composable
+private fun ReversalRow(
+    reversal: Transaction,
+    original: Transaction,
+    onOpen: () -> Unit,
+) {
+    val date = reversal.date.toString()
+    val type = transactionTypeLower(original.type)
+    val spoken = stringResource(R.string.holding_reversal_row_spoken, date, type, original.date.toString())
+    FlowRow(
+        modifier = Modifier.fillMaxWidth().opensWith(spoken, onOpen),
+        horizontalArrangement = Arrangement.spacedBy(16.dp),
+        verticalArrangement = Arrangement.spacedBy(2.dp),
+    ) {
+        Text(text = stringResource(R.string.date_with_et, date), style = MaterialTheme.typography.bodyLarge)
+        Text(
+            text = stringResource(R.string.reversal_of_link, type, original.date.toString()),
+            style = MaterialTheme.typography.bodyLarge,
+            fontWeight = FontWeight.Medium,
+        )
+    }
+}
 
 /** A split (12 wording 4): one line, the date first, then "Split" and the ratio; no amount, as a split has no cash. */
 @OptIn(ExperimentalLayoutApi::class)

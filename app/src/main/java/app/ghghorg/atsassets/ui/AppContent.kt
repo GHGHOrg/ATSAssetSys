@@ -153,7 +153,23 @@ private fun BarContent(
 
         Screen.TRANSACTION -> TransactionDetailScreen(
             state = state,
-            actions = TransactionActions(onBack = viewModel::closeTransaction, onOpenCashLine = viewModel::openCashLine),
+            actions =
+            TransactionActions(
+                onBack = viewModel::closeTransaction,
+                onOpenCashLine = viewModel::openCashLine,
+                onReverse = viewModel::openTransactionReversal,
+                onOpenLink = viewModel::openTransactionLink,
+            ),
+        )
+
+        Screen.REVERSE_TRANSACTION -> TransactionReversalScreen(
+            state = state,
+            actions =
+            ReversalActions(
+                onDateChange = viewModel::onTransactionReversalDateChange,
+                onConfirm = viewModel::confirmTransactionReversal,
+                onCancel = viewModel::cancelTransactionReversal,
+            ),
         )
 
         Screen.BUY -> BuyEntryScreen(
