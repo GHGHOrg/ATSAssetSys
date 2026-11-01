@@ -1715,6 +1715,15 @@ internal class FakeStore(
         stored = stored + cashLine
     }
 
+    val savedSplits = mutableListOf<Transaction>()
+
+    override suspend fun saveSplit(transaction: Transaction) {
+        gate?.await()
+        saveError?.let { throw it }
+        savedSplits.add(transaction)
+        storedTransactions = storedTransactions + transaction
+    }
+
     override suspend fun loadInstruments(): List<Instrument> {
         loadError?.let { throw it }
         return storedInstruments

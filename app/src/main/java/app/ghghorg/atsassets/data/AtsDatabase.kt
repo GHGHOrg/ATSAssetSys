@@ -34,7 +34,8 @@ data class PortfolioRow(
 
 /**
  * One transaction row (spec 3). The date is text (YYYY-MM-DD), the quantity is the exact decimal as typed, as text
- * (4.10), the total is integer cents.
+ * (4.10), the total is integer cents. A split keeps its ratio in splitTo and splitFrom (section 8's columns); every
+ * other row leaves them empty.
  */
 @Entity(tableName = "transactions")
 data class TransactionRow(
@@ -47,6 +48,8 @@ data class TransactionRow(
     val quantity: String,
     val totalCents: Long,
     val reversesId: String?,
+    val splitTo: Int? = null,
+    val splitFrom: Int? = null,
 )
 
 /**
@@ -150,12 +153,18 @@ interface InstrumentDao {
 
 /**
  * Version 2 (iteration 07) adds the portfolios table, version 3 (09) the transactions and instruments tables, version 4
- * (11) the sell_allocations table; Room generates each step out of the schemas in app/schemas.
+ * (11) the sell_allocations table, version 5 (12) the two split columns of transactions; Room generates each step out
+ * of the schemas in app/schemas.
  */
 @Database(
     entities = [CashEntryRow::class, PortfolioRow::class, TransactionRow::class, InstrumentRow::class, SellAllocationRow::class],
-    version = 4,
-    autoMigrations = [AutoMigration(from = 1, to = 2), AutoMigration(from = 2, to = 3), AutoMigration(from = 3, to = 4)],
+    version = 5,
+    autoMigrations = [
+        AutoMigration(from = 1, to = 2),
+        AutoMigration(from = 2, to = 3),
+        AutoMigration(from = 3, to = 4),
+        AutoMigration(from = 4, to = 5),
+    ],
 )
 abstract class AtsDatabase : RoomDatabase() {
     abstract fun cashEntryDao(): CashEntryDao
