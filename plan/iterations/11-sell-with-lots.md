@@ -89,10 +89,38 @@ Settled by the spec, no question asked: the portfolio opens on the one you came 
 - New, asked in step 5: the dropped-pick line; the pick-over-remainder refusal; "Nothing to sell" from the header; the line for a portfolio with nothing held; the trade line "Sell AAPL"; the TalkBack sentences for the chips, a lot, a pick, the count line, the review and a realized gain or loss.
 
 ## 12. Status and notes
-Approved 2026-10-31. Not built.
+Built 2026-10-31 to 2026-11-01 (steps 1 to 6); phone checks 2026-10-31 to 2026-11-01, all yes, no fix needed. Pull request not yet opened.
 
 ## 13. Build results
-Filled in during the build.
+### 13.1 Commits
+Newest first: e83a22b step 6, 63492c8 step 5, 5eb188a step 4, 39c4996 step 3, 0ca5ea6 step 2, 32b5fc6 step 1 with this file. main was 385f3fb.
+
+### 13.2 Local run
+On e83a22b's code (2026-11-01, all with --rerun-tasks): spotlessCheck green; debug build green, no compiler warnings printed; 453 tests, 0 failures (Balance 11, CashAccount 20, CashEntriesReverse 12, CashEntries 27, Fraction 12, Holdings 15, MarketDate 10, Money 21, OpeningBalance 9, Portfolios 23, Quantity 10, Sells 19, TickerCheck 16, Transactions 18, RowMapping 6, AppLock 12, FinnhubSource 18, TickerVerifier 6, AppViewModel 120, BuyFlow 29, DateDigits 7, HoldingDetailFlow 11, SellFlow 21); lint: the same 3 listed findings, none silenced (AndroidGradlePluginVersion, open item 31; NewerVersionAvailable; TypographyDashes on date_not_a_date), report written 10:40:37. Release build on the same code green (R8 ran; unsigned; "Unable to strip" names libandroidx.graphics.path.so and libsqlcipher.so, as known). Debug APK versionCode 11 (aapt2).
+
+### 13.3 Phone results (Android 17, debug build versionCode 11, your reports)
+Checks 1 to 11 all yes. Notes:
+- 1: installed over the 10 build (adb install -r, lastUpdateTime 2026-10-31 23:34:46, firstInstallTime 2026-10-29 10:44:04 unchanged); the data, the buys and both portfolios as before, so the migration to version 4 ran (criterion 35).
+- 2: two taps from Overall opened Sell, the stub line gone; Main and 投資信託 as chips, AAPL chosen, the two AAPL lots oldest first in entry order with "no price", "Picked 0 shares"; 投資信託 showed its "holds no shares to sell" line; "<" returned to Overall and Sell reopened with the text kept.
+- 3: a sell of 3 AAPL for $480.00 dated 2026-10-31, lot 1 edited to 3: the review showed the lot used (2026-10-31 ET, 3 shares, cost $450.00, proceeds $480.00, gain +$30.00 in green), realized +$30.00 in green and cash +$480.00. It was started from AAPL's header (section 14, item 6), so the save returned to the holding, as decision 2 says. Cash "Sell AAPL" +$480.00 with the balance; AAPL 8 shares, cost $1,200.00, the sell first; lot 1 at 7 left, lot 2 at 1; under 30 seconds (criterion 3).
+- 4: dated 2026-10-30, both lots greyed with "Not available: bought after the sell date"; the pick was dropped with its line and the count went to "Picked 0 shares".
+- 5: a pick of 2 for a sell of 3: "Not saved. The picked lots add up to 2 shares, but the sell is for 3."; the text kept.
+- 6: each refusal on its own, the text kept, nothing saved: more than held (9 of 8), a pick of 2 on the 1-share lot (it reads "1 shares left": section 14, item 7), a ninth decimal, quantity 0, a date before the opening balance.
+- 7: from Overall's menu, Sell all of SPY for $0.00: the loss in red with its minus sign; the save returned to Overall (the first sell from the menu seen returning to its tab); Cash "Sell SPY" $0.00; SPY at 0 shares with no flag, still counted on the Portfolios row; "No lots with shares"; Sell in its header said "Nothing to sell: … holds no shares of SPY."
+- 8: Sell from AAPL's header chose Main and AAPL; "<" and Back returned to the holding; Back from the review kept the text. The saved sell's return to the holding was seen in check 3.
+- 9: at the largest font, in portrait and landscape, light and dark: the entry and the review scroll as one; the gain green and a loss red (a $100.00 total on the review, not saved) readable in both themes; greyed lots readable. TalkBack read the lots, the pick field, Sell all, the count line, the lots used and the realized gain as section 11; a sell of 1 AAPL for $160.00 was saved with it (AAPL 7 shares, lot 1 at 6 left).
+- 10: closed from Recents and reopened: the sells, the lots and the cash lines kept.
+- 11: Logcat cleared at 10:36:59, then one sell of 1 AAPL for $160.00; the app's uid 10454 had 72 lines, all from system tags (WindowOnBackDispatcher, ImeTracker, InsetsController, Surface, VRI[MainActivity], AssistStructure and single lines). No ticker, portfolio name, amount, quantity word, key or token as a whole word; the broad first count's hits were class names (MainActivity once, Kotlin's $1-style suffixes 14 times). Counts only.
+- The phone now holds four sells: AAPL 3 for $480.00, all of SPY for $0.00, and AAPL 1 for $160.00 twice; AAPL at 6 shares (lot 1 at 5 left, lot 2 at 1).
+
+### 13.4 Not run or not checked
+CI and the pull request; open item 33 (34); the release APK on a device (unsigned, open item 4); a failed write of the sell, its cash line and its allocations (open item 14: not provoked); contrast measurement (calculated in step 5, by eye on the phone); network traffic (open item 39); a lot with a remainder of more than 8 places on the phone (12); Compose UI tests (none in the project).
 
 ## 14. Departures from the plan
-None yet.
+1. A sell's allocations travel inside its Transaction (step 2), and RecordStore loads them with it (step 3), instead of a separate load; the signatures of Holdings and Valuation did not change.
+2. Lot gained its original cost (step 2), so a lot's cost shrinks with what is left.
+3. Wording added in step 5 without asking: "Not saved. The lot of … was entered after this sell on the same date." It pairs with the approved line "Not available: bought on the sell date, entered after this sell". Approved by you after the fact in step 8 (A, 2026-11-01).
+4. The total's bad-format message is Buy's ("like 1500.00"), shared with Sell (step 5).
+5. Buy's screen parts (title row, portfolio chips, number field, spoken labels, quantity and total messages) are shared with Sell (step 5).
+6. My phone-check instructions, not the app: check 3's step 1 did not say where to start or which Sell to tap, step 2 was garbled, and step 6 named Overall as the place to return to. Check 3 was done from AAPL's header, which returned to the holding as decision 2 says. Found 2026-11-01 with you; checks 4 to 11 were rewritten from the state each check leaves, each with its start named. A sell from the menu returning to its tab was seen in check 7.
+7. "1 shares" (check 6b) is kept in 11. Singular and plural "share" in every quantity line goes to 12 (your decision A, open item 41).
