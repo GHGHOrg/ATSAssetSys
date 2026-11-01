@@ -3,9 +3,11 @@ package app.ghghorg.atsassets.data
 import app.ghghorg.atsassets.core.AssetType
 import app.ghghorg.atsassets.core.CashEntry
 import app.ghghorg.atsassets.core.CashType
+import app.ghghorg.atsassets.core.Fraction
 import app.ghghorg.atsassets.core.Instrument
 import app.ghghorg.atsassets.core.Portfolio
 import app.ghghorg.atsassets.core.RecordStore
+import app.ghghorg.atsassets.core.SellAllocation
 import app.ghghorg.atsassets.core.Transaction
 import app.ghghorg.atsassets.core.TransactionType
 import app.ghghorg.atsassets.core.UnreadableDataException
@@ -101,7 +103,8 @@ class RoomRecordStore(
 
     override suspend fun loadTransactions(): List<Transaction> = withContext(Dispatchers.IO) {
         try {
-            database.transactionDao().loadAll().map { it.toTransaction() }
+            val dao = database.transactionDao()
+            withAllocations(dao.loadAll().map { it.toTransaction() }, dao.loadAllocations())
         } catch (e: CancellationException) {
             throw e
         } catch (e: UnreadableDataException) {
@@ -127,6 +130,24 @@ class RoomRecordStore(
             }
         }
         dao.insertBuy(transaction.toRow(), cashLine.toRow())
+    }
+
+    override suspend fun saveSell(
+        transaction: Transaction,
+        cashLine: CashEntry,
+    ) {
+        val dao = withContext(Dispatchers.IO) {
+            try {
+                database.transactionDao()
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: UnreadableDataException) {
+                throw e
+            } catch (e: Exception) {
+                throw UnreadableDataException("The stored data could not be opened.", e)
+            }
+        }
+        dao.insertSell(transaction.toRow(), cashLine.toRow(), transaction.allocationRows())
     }
 
     override suspend fun loadInstruments(): List<Instrument> = withContext(Dispatchers.IO) {
@@ -181,6 +202,38 @@ internal fun TransactionRow.toTransaction() = Transaction(
     totalCents = totalCents,
     reversesId = reversesId,
 )
+
+/** A sell's allocations as rows, each quantity in its stored form (11 decision 3); none for a buy. */
+internal fun Transaction.allocationRows(): List<SellAllocationRow> = allocations.map {
+    SellAllocationRow(sellId = id, lotId = it.lotId, quantity = it.quantity.stored())
+}
+
+/**
+ * Puts each stored allocation back into its sell, oldest lot first (4.4). The messages name no value (spec section 9).
+ * Throws [UnreadableDataException] for a quantity not in the stored form, an allocation of no sell, or a sell with none.
+ */
+internal fun withAllocations(
+    transactions: List<Transaction>,
+    rows: List<SellAllocationRow>,
+): List<Transaction> {
+    val sellIds = transactions.filter { it.type == TransactionType.SELL }.map { it.id }.toSet()
+    if (rows.any { it.sellId !in sellIds }) throw UnreadableDataException("A stored sell allocation belongs to no sell.")
+    val lotOrder = transactions.filter { it.type == TransactionType.BUY }.associate { it.id to (it.date to it.enteredSeq) }
+    val bySell = rows.groupBy { it.sellId }
+    return transactions.map { transaction ->
+        if (transaction.type != TransactionType.SELL) return@map transaction
+        val own = bySell[transaction.id] ?: throw UnreadableDataException("A stored sell has no allocations.")
+        val allocations =
+            own
+                .sortedWith(compareBy({ lotOrder[it.lotId]?.first }, { lotOrder[it.lotId]?.second }))
+                .map { row ->
+                    val quantity =
+                        Fraction.fromStored(row.quantity) ?: throw UnreadableDataException("A stored sell allocation could not be read.")
+                    SellAllocation(row.lotId, quantity)
+                }
+        transaction.copy(allocations = allocations)
+    }
+}
 
 internal fun Instrument.toRow() = InstrumentRow(ticker = ticker, assetType = assetType.name, verified = verified)
 

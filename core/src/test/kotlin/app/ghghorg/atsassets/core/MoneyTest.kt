@@ -143,4 +143,18 @@ class MoneyTest {
         assertEquals("\$0.3333", Money.formatPerShare(dollars(1, 3)))
         assertEquals("\$0.0089", Money.formatPerShare(dollars(89, 10_000)))
     }
+
+    @Test
+    fun partsInCents_addUpToTheRoundedTotal_leftoverCentsToTheLargestRemainders_tiesToTheEarlierRow() {
+        assertEquals(listOf(34L, 33L, 33L), Money.partsInCents(listOf(dollars(1, 3), dollars(1, 3), dollars(1, 3))))
+        assertEquals(listOf(33L, 34L, 33L), Money.partsInCents(listOf(dollars(331, 1_000), dollars(336, 1_000), dollars(333, 1_000))))
+        assertEquals(listOf(1_000L, 30_000L), Money.partsInCents(listOf(dollars(10, 1), dollars(300, 1))))
+        assertEquals(emptyList<Long>(), Money.partsInCents(emptyList()))
+    }
+
+    @Test
+    fun partsInCents_ofLosses_addUpToTheRoundedTotal_too() {
+        assertEquals(listOf(-33L, -33L, -34L), Money.partsInCents(listOf(dollars(-1, 3), dollars(-1, 3), dollars(-1, 3))))
+        assertEquals(listOf(150L, -50L), Money.partsInCents(listOf(dollars(3, 2), dollars(-1, 2))))
+    }
 }

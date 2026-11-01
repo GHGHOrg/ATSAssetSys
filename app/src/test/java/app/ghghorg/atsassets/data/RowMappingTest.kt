@@ -1,12 +1,17 @@
 package app.ghghorg.atsassets.data
 
 import app.ghghorg.atsassets.core.AssetType
+import app.ghghorg.atsassets.core.Fraction
 import app.ghghorg.atsassets.core.Instrument
+import app.ghghorg.atsassets.core.SellAllocation
 import app.ghghorg.atsassets.core.Transaction
 import app.ghghorg.atsassets.core.TransactionType
+import app.ghghorg.atsassets.core.UnreadableDataException
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertThrows
 import org.junit.Test
 import java.math.BigDecimal
+import java.math.BigInteger
 import java.time.LocalDate
 
 class RowMappingTest {
@@ -44,5 +49,50 @@ class RowMappingTest {
         val instrument = Instrument(ticker = "SPY", assetType = AssetType.ETF, verified = true)
         assertEquals("ETF", instrument.toRow().assetType)
         assertEquals(instrument, instrument.toRow().toInstrument())
+    }
+
+    private val laterBuy = buy.copy(id = "t2", date = LocalDate.of(2026, 2, 3), enteredSeq = 5L, quantity = BigDecimal("10"))
+
+    private val sell =
+        buy.copy(
+            id = "s1",
+            type = TransactionType.SELL,
+            date = LocalDate.of(2026, 3, 1),
+            enteredSeq = 6L,
+            quantity = BigDecimal("3.5"),
+            totalCents = 70_000L,
+            allocations =
+            listOf(
+                SellAllocation("t1", Fraction.of(BigDecimal("2.5"))),
+                SellAllocation("t2", Fraction.of(BigInteger.ONE, BigInteger.ONE)),
+            ),
+        )
+
+    @Test
+    fun sellAllocations_areStoredAsReducedFractions_andReadBackIntoTheirSell() {
+        val rows = sell.allocationRows()
+        assertEquals(listOf("s1", "s1"), rows.map { it.sellId })
+        assertEquals(listOf("t1", "t2"), rows.map { it.lotId })
+        assertEquals(listOf("5/2", "1/1"), rows.map { it.quantity })
+        assertEquals("SELL", sell.toRow().type)
+        val read = withAllocations(listOf(buy.toRow(), laterBuy.toRow(), sell.toRow()).map { it.toTransaction() }, rows)
+        assertEquals(listOf(buy, laterBuy, sell), read)
+        assertEquals(emptyList<SellAllocationRow>(), buy.allocationRows())
+    }
+
+    @Test
+    fun sellAllocations_areReadBackOldestLotFirst_whateverTheRowOrder() {
+        val read = withAllocations(listOf(buy, laterBuy, sell.copy(allocations = emptyList())), sell.allocationRows().reversed())
+        assertEquals(listOf("t1", "t2"), read.last().allocations.map { it.lotId })
+    }
+
+    @Test
+    fun aDamagedAllocation_aSellWithoutAllocations_orAnAllocationOfNoSell_isUnreadable() {
+        val bare = listOf(buy, laterBuy, sell.copy(allocations = emptyList()))
+        val damaged = sell.allocationRows().map { it.copy(quantity = "10/2") }
+        assertThrows(UnreadableDataException::class.java) { withAllocations(bare, damaged) }
+        assertThrows(UnreadableDataException::class.java) { withAllocations(bare, emptyList()) }
+        val stray = sell.allocationRows() + SellAllocationRow(sellId = "s9", lotId = "t1", quantity = "1/1")
+        assertThrows(UnreadableDataException::class.java) { withAllocations(bare, stray) }
     }
 }

@@ -78,6 +78,27 @@ object Money {
         return formatDecimal(dollars.rounded(if (underOneDollar) 4 else 2))
     }
 
+    /**
+     * Parts shown beside the total they add up to, in cents, by largest remainder (4.10): each part rounded down to a
+     * cent, and the cents left over to reach the rounded total given one each to the parts with the largest dropped
+     * remainders, ties to the earlier row.
+     */
+    fun partsInCents(parts: List<Fraction>): List<Long> {
+        val hundred = Fraction.of(HUNDRED, BigInteger.ONE)
+        val scaled = parts.map { it * hundred }
+        val floors = scaled.map { floorOf(it) }
+        val total = parts.fold(Fraction.ZERO) { sum, part -> sum + part }.rounded(2).movePointRight(2).toBigIntegerExact()
+        val leftover = (total - floors.fold(BigInteger.ZERO) { sum, floor -> sum + floor }).toInt()
+        val remainders = scaled.indices.map { scaled[it] - Fraction.of(floors[it], BigInteger.ONE) }
+        val topped = scaled.indices.sortedWith(compareByDescending<Int> { remainders[it] }.thenBy { it }).take(leftover).toSet()
+        return floors.mapIndexed { index, floor -> (if (index in topped) floor + BigInteger.ONE else floor).longValueExact() }
+    }
+
+    private fun floorOf(value: Fraction): BigInteger {
+        val (quotient, remainder) = value.numerator.divideAndRemainder(value.denominator)
+        return if (remainder.signum() < 0) quotient - BigInteger.ONE else quotient
+    }
+
     private fun formatDecimal(value: BigDecimal): String {
         val plain = value.abs().toPlainString()
         val grouped = plain.substringBefore('.').reversed().chunked(3).joinToString(",").reversed()

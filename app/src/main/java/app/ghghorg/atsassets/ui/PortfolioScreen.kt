@@ -192,7 +192,8 @@ private fun SummaryLine(
 
 /**
  * A holding (wireframe 3 marker 5, format of marker 6): ticker and shares, the value at cost and "no price, at cost"
- * in place of a gain/loss (4.8). One tap target opening Holding detail (iteration 10), read by TalkBack as one button.
+ * in place of a gain/loss (4.8); a sold-out holding shows 0 shares and $0.00 with no flag (11 wording 4). One tap
+ * target opening Holding detail (iteration 10), read by TalkBack as one button.
  */
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
@@ -202,7 +203,14 @@ private fun HoldingRow(
 ) {
     val shares = sharesText(holding.shares)
     val value = Money.format(holding.cost)
-    val spoken = stringResource(R.string.holding_row_spoken, holding.ticker, shares, value.substringAfter('$'))
+    val soldOut = holding.shares.signum() == 0
+    val spoken =
+        stringResource(
+            if (soldOut) R.string.holding_row_sold_out_spoken else R.string.holding_row_spoken,
+            holding.ticker,
+            shares,
+            value.substringAfter('$'),
+        )
     FlowRow(
         modifier =
         Modifier
@@ -240,12 +248,14 @@ private fun HoldingRow(
                 style = MaterialTheme.typography.bodyLarge,
                 textAlign = TextAlign.End,
             )
-            Text(
-                text = stringResource(R.string.holding_no_price),
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                textAlign = TextAlign.End,
-            )
+            if (!soldOut) {
+                Text(
+                    text = stringResource(R.string.holding_no_price),
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    textAlign = TextAlign.End,
+                )
+            }
         }
     }
 }
@@ -258,8 +268,11 @@ internal fun sharesText(shares: Fraction): String {
     return stringResource(if (one) R.string.holding_share_one else R.string.holding_shares, shown)
 }
 
-/** No holding has a price before iteration 16, so every portfolio with holdings is all at cost (wording 4). */
-internal fun allAtCost(holdings: List<Holding>): Boolean = holdings.isNotEmpty()
+/**
+ * No holding has a price before iteration 16, so every portfolio with shares is all at cost (09 wording 4). A sold-out
+ * holding is valued at nothing, not at cost (11 wording 4).
+ */
+internal fun allAtCost(holdings: List<Holding>): Boolean = holdings.any { it.shares.signum() > 0 }
 
 /**
  * The ⋮ menu (08 decision 1), drawn inside the activity window: a clear layer that closes the menu on a tap outside,

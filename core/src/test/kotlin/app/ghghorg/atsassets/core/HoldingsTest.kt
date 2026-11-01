@@ -170,6 +170,66 @@ class HoldingsTest {
         assertEquals(dollars(10_000), Valuation.netWorth(cashEntries, transactions, today))
     }
 
+    private fun sold(
+        id: String,
+        date: String,
+        seq: Long,
+        vararg taken: Pair<String, Long>,
+    ): Transaction = Transaction(
+        id = id,
+        portfolioId = "p1",
+        ticker = "AAPL",
+        type = TransactionType.SELL,
+        date = LocalDate.parse(date),
+        enteredSeq = seq,
+        quantity = BigDecimal(taken.sumOf { it.second }),
+        totalCents = 1_000L,
+        allocations = taken.map { SellAllocation(it.first, dollars(it.second)) },
+    )
+
+    @Test
+    fun aSell_takesItsAllocationsOutOfTheLots_andTheCostWithThem() {
+        val transactions =
+            listOf(
+                bought("b1", "2026-01-02", "10", 100_000L, 2L),
+                bought("b2", "2026-02-01", "10", 150_000L, 3L),
+                sold("s1", "2026-03-01", 4L, "b1" to 10L, "b2" to 2L),
+            )
+        val lots = Holdings.lots(transactions, today)
+        assertEquals(listOf(shares("0"), shares("8")), lots.map { it.remainingQuantity })
+        assertEquals(listOf(Fraction.ZERO, dollars(1_200)), lots.map { it.cost })
+        assertEquals(listOf(dollars(100), dollars(150)), lots.map { it.costPerShare })
+        assertEquals(shares("8"), Holdings.holdings(transactions, today)[0].shares)
+        assertEquals(shares("20"), Holdings.holdings(transactions, LocalDate.of(2026, 2, 28))[0].shares)
+    }
+
+    @Test
+    fun aSoldOutHolding_staysAtZeroShares_withNoLotsListed_andAddsNothingToTheValue() {
+        val transactions =
+            listOf(
+                bought("b1", "2026-01-02", "10", 100_000L, 2L),
+                sold("s1", "2026-03-01", 3L, "b1" to 10L),
+            )
+        val holdings = Holdings.holdings(transactions, today)
+        assertEquals(1, holdings.size)
+        assertEquals(Fraction.ZERO, holdings[0].shares)
+        assertEquals(Fraction.ZERO, holdings[0].cost)
+        assertEquals(emptyList<Lot>(), Holdings.lotsOf(transactions, "p1", "AAPL", today))
+        assertEquals(Fraction.ZERO, Valuation.portfolioValue(transactions, "p1", today))
+        val cashEntries = listOf(CashEntry("e1", LocalDate.of(2026, 1, 1), 1_000_000L, CashType.OPENING_BALANCE, "", 1L))
+        assertEquals(dollars(10_000), Valuation.netWorth(cashEntries, transactions, today))
+    }
+
+    @Test
+    fun transactionsOf_aHolding_listsItsSells_too() {
+        val transactions =
+            listOf(
+                bought("b1", "2026-01-02", "10", 100_000L, 2L),
+                sold("s1", "2026-03-01", 3L, "b1" to 4L),
+            )
+        assertEquals(listOf("s1", "b1"), Holdings.transactionsOf(transactions, "p1", "AAPL").map { it.id })
+    }
+
     @Test
     fun portfolioValue_isTheCostOfItsHoldings_whileThereIsNoPrice() {
         val transactions =

@@ -96,12 +96,12 @@ private fun NoticeCard(
     notice: BuyNotice,
     actions: BuySellActions,
 ) {
+    // NOTHING_TO_SELL_IN_HOLDING is raised on Holding detail only, which draws its own line (11 decision 2).
     val text =
         when (notice) {
             BuyNotice.NEEDS_OPENING_BALANCE -> stringResource(R.string.opening_balance_first)
             BuyNotice.NEEDS_PORTFOLIO -> stringResource(R.string.buy_needs_portfolio)
-            BuyNotice.NOTHING_TO_SELL -> stringResource(R.string.sell_nothing_held)
-            BuyNotice.SELL_LATER -> stringResource(R.string.sell_later_build)
+            BuyNotice.NOTHING_TO_SELL, BuyNotice.NOTHING_TO_SELL_IN_HOLDING -> stringResource(R.string.sell_nothing_held)
         }
     Column(
         modifier = Modifier.padding(16.dp),
@@ -121,7 +121,7 @@ private fun NoticeCard(
                 Text(text = stringResource(R.string.create_portfolio))
             }
 
-            BuyNotice.NOTHING_TO_SELL, BuyNotice.SELL_LATER -> Unit
+            BuyNotice.NOTHING_TO_SELL, BuyNotice.NOTHING_TO_SELL_IN_HOLDING -> Unit
         }
     }
 }

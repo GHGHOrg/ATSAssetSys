@@ -148,7 +148,7 @@ class BuyFlowTest {
     }
 
     @Test
-    fun sell_withNothingHeld_saysSo_andWithAHolding_pointsToALaterBuild() {
+    fun sell_withNothingHeld_saysSo_andWithAHolding_opensTheSellEntry() {
         val empty = started(storeWithCash())
         empty.openBuySellMenu()
         empty.chooseSell()
@@ -161,9 +161,10 @@ class BuyFlowTest {
         val holding = started(store)
         holding.openBuySellMenu()
         holding.chooseSell()
-        assertEquals(BuyNotice.SELL_LATER, holding.state.value.buyNotice)
-        holding.dismissBuyNotice()
         assertEquals(null, holding.state.value.buyNotice)
+        assertEquals(Screen.SELL, holding.state.value.screen)
+        empty.dismissBuyNotice()
+        assertEquals(null, empty.state.value.buyNotice)
     }
 
     @Test

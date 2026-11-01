@@ -41,6 +41,7 @@ import app.ghghorg.atsassets.core.AmountError
 import app.ghghorg.atsassets.core.AmountResult
 import app.ghghorg.atsassets.core.BuyRefusal
 import app.ghghorg.atsassets.core.Money
+import app.ghghorg.atsassets.core.Portfolio
 import app.ghghorg.atsassets.core.Quantity
 import app.ghghorg.atsassets.core.QuantityError
 import app.ghghorg.atsassets.core.QuantityResult
@@ -80,7 +81,7 @@ fun BuyEntryScreen(
         verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
         TitleRow(stringResource(R.string.buy_button), actions.onBack)
-        PortfolioChips(state, actions.onPortfolioChange)
+        PortfolioChips(state.portfolios, form.portfolioId, actions.onPortfolioChange)
         OutlinedTextField(
             value = form.tickerText,
             onValueChange = actions.onTickerChange,
@@ -237,9 +238,9 @@ fun BuyReviewScreen(
     }
 }
 
-/** "<" and the title, as on a portfolio's screen; TalkBack reads "<" as Back. */
+/** "<" and the title, as on a portfolio's screen; TalkBack reads "<" as Back. Shared with Sell (11). */
 @Composable
-private fun TitleRow(
+internal fun TitleRow(
     title: String,
     onBack: () -> Unit,
     enabled: Boolean = true,
@@ -257,11 +258,12 @@ private fun TitleRow(
     }
 }
 
-/** One chip per portfolio, in creation order, one selected (09 decision 11: no dropdown window). */
+/** One chip per portfolio, in creation order, one selected (09 decision 11: no dropdown window). Shared with Sell. */
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
-private fun PortfolioChips(
-    state: AppState,
+internal fun PortfolioChips(
+    portfolios: List<Portfolio>,
+    selectedId: String?,
     onChange: (String) -> Unit,
 ) {
     Column {
@@ -273,9 +275,9 @@ private fun PortfolioChips(
             modifier = Modifier.selectableGroup(),
             horizontalArrangement = Arrangement.spacedBy(8.dp),
         ) {
-            for (portfolio in state.portfolios) {
+            for (portfolio in portfolios) {
                 FilterChip(
-                    selected = portfolio.id == state.buyForm.portfolioId,
+                    selected = portfolio.id == selectedId,
                     onClick = { onChange(portfolio.id) },
                     label = { Text(text = portfolio.name) },
                 )
@@ -285,7 +287,7 @@ private fun PortfolioChips(
 }
 
 @Composable
-private fun NumberField(
+internal fun NumberField(
     value: String,
     onChange: (String) -> Unit,
     label: String,
@@ -305,13 +307,13 @@ private fun NumberField(
 
 /** "Label, 150.00 dollars" for TalkBack, from a shown dollar figure such as "$150.00". */
 @Composable
-private fun spokenLabel(
+internal fun spokenLabel(
     label: String,
     shown: String,
 ): String = stringResource(R.string.spoken_label_dollars, label, shown.substringAfter('$'))
 
 @Composable
-private fun quantityMessage(error: QuantityError?): String? = when (error) {
+internal fun quantityMessage(error: QuantityError?): String? = when (error) {
     null -> null
     QuantityError.EMPTY -> stringResource(R.string.quantity_empty)
     QuantityError.BAD_FORMAT -> stringResource(R.string.quantity_bad_format)
@@ -320,7 +322,7 @@ private fun quantityMessage(error: QuantityError?): String? = when (error) {
 }
 
 @Composable
-private fun totalMessage(error: AmountError?): String? = when (error) {
+internal fun totalMessage(error: AmountError?): String? = when (error) {
     null -> null
     AmountError.EMPTY -> stringResource(R.string.total_empty)
     AmountError.BAD_FORMAT -> stringResource(R.string.total_bad_format)
