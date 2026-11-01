@@ -298,7 +298,8 @@ when it adds a command, a convention or a pitfall.
 | Iteration 09 | done: built 2026-10-31 (steps 1 to 10 and two fixes); phone checks 2026-10-31 all yes; 388 tests; pull request #100 merged as e31c558, CI green on the pull request and on main (3m 25s) (your reports) |
 | Iteration 10 | done: built 2026-10-31 (steps 1 to 6 and one fix); phone checks 2026-10-31 all yes; 402 tests; pull request #102 merged as 43a2c7f, CI green on the pull request and on main (2m 24s) (your reports) |
 | Iteration 11 | done: built 2026-10-31 to 2026-11-01 (steps 1 to 6); phone checks 2026-10-31 to 2026-11-01 all yes; 453 tests; pull request #104 merged as e689af9, CI green on the pull request and on main (2m 16s) (your reports) |
-| Iterations 12 to 35 | not started, files not written |
+| Iteration 12 | file approved 2026-11-01 (decisions 1 to 4); branch iter-12-split; not built |
+| Iterations 13 to 35 | not started, files not written |
 
 ## 12. Change log
 Each departure from this plan is recorded here with its date and the reason.
@@ -373,6 +374,7 @@ Each departure from this plan is recorded here with its date and the reason.
 - 2026-10-31: pull request #103 (docs: the 10 merge record) was merged as 385f3fb, CI green on the pull request and on main (2m 30s) (your reports). The 11 file was approved with decisions 1 to 3: the ticker on Sell is chosen with chips (not the wireframe's dropdown, which opens a separate window), Sell sits beside Buy in Holding detail's header and returns to the holding, and a sell allocation's exact quantity is stored as a reduced fraction in one text column (table sell_allocations, schema version 4).
 - 2026-11-01: 11 built and checked on the phone, with no defect found. Database version 4 adds the sell_allocations table; a sell, its cash line and its allocations are written as one action. My instructions for phone check 3 did not say where to start, so it ran from the holding's Sell; the checks after it were rewritten with their start named (11 file, section 14). "1 shares" stays until 12, which takes singular and plural "share" (open item 41). Criterion 35's install-over is checked again (versionCode 11).
 - 2026-11-01: pull request #104 (iteration 11) was merged as e689af9. CI on the pull request (3 checks: build, Analyze (actions), CodeQL) and on main (the run for e689af9, 2m 16s) were reported successful by you. The status lines above were updated. The 11 file's sections 13 and 14 are left as written at build time.
+- 2026-11-01: pull request #105 (docs: the 11 merge record) was merged as dde7568, CI green on the pull request and on main (1m 54s) (your reports). The 12 file was approved with decisions 1 to 4: the Split screen chooses with chips like Sell, a split at 0 shares is allowed, each ratio number is a whole number from 1 to 1,000,000, and "share" is used only for a quantity shown as exactly 1 (open item 41). Split stays a header button as view 6 and criterion 48 say; a ⋮ menu for it is open item 42.
 
 ## 13. Out of scope for this plan
 Performance over time, per-holding dividends, ETF look-through, the next intent.md items,
