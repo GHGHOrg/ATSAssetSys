@@ -144,6 +144,25 @@ interface TransactionDao {
         insertAllocations(allocations)
     }
 
+    /**
+     * A Reverse and re-enter pair in one database transaction: the reversal and its trade cash line, then the new buy
+     * or sell, its trade cash line and a new sell's allocations; all or nothing (4.6, K2).
+     */
+    @Transaction
+    suspend fun insertPair(
+        reversal: TransactionRow,
+        reversalCashLine: CashEntryRow,
+        replacement: TransactionRow,
+        replacementCashLine: CashEntryRow,
+        allocations: List<SellAllocationRow>,
+    ) {
+        insertTransaction(reversal)
+        insertCashEntry(reversalCashLine)
+        insertTransaction(replacement)
+        insertCashEntry(replacementCashLine)
+        if (allocations.isNotEmpty()) insertAllocations(allocations)
+    }
+
     @Query("SELECT * FROM transactions ORDER BY date, enteredSeq")
     suspend fun loadAll(): List<TransactionRow>
 

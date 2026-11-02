@@ -179,4 +179,32 @@ class RowMappingTest {
             )
         damaged.forEach { assertThrows(UnreadableDataException::class.java) { checkReversals(it) } }
     }
+
+    // 14a: a Reverse and re-enter pair is stored as a reversal and a normal entry; the new entry has no link (4.6).
+    @Test
+    fun aBuyPair_withTheNewBuyDatedBeforeItsReversal_isReadBackUnchanged() {
+        val later = reversal.copy(date = LocalDate.of(2026, 3, 3))
+        val newBuy = buy.copy(id = "n1", enteredSeq = 9L, quantity = BigDecimal("100"))
+        val rows = listOf(buy, later, newBuy).map { it.toRow() }
+        assertEquals(null, rows.last().reversesId)
+        assertEquals(listOf(buy, later, newBuy), checkReversals(withAllocations(rows.map { it.toTransaction() }, emptyList())))
+        assertEquals(emptyList<SellAllocationRow>(), later.allocationRows())
+    }
+
+    @Test
+    fun aSellPair_isReadBackWithTheOriginalsAndTheNewSellsAllocations_eachInItsOwnSell() {
+        val sellReversal = reversal.copy(id = "r2", reversesId = "s1", date = LocalDate.of(2026, 3, 1), enteredSeq = 9L)
+        val newSell =
+            sell.copy(
+                id = "n2",
+                enteredSeq = 10L,
+                totalCents = 80_000L,
+                allocations = listOf(SellAllocation("t1", Fraction.of(BigInteger.valueOf(5), BigInteger.valueOf(3)))),
+            )
+        val transactions = listOf(buy, laterBuy, sell, sellReversal, newSell)
+        val rows = sell.allocationRows() + newSell.allocationRows()
+        assertEquals(listOf("5/3"), newSell.allocationRows().map { it.quantity })
+        val read = checkReversals(withAllocations(transactions.map { it.toRow().toTransaction() }, rows))
+        assertEquals(transactions, read)
+    }
 }

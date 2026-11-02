@@ -44,6 +44,17 @@ interface RecordStore {
         cashLine: CashEntry?,
     )
 
+    /**
+     * Saves a Reverse and re-enter pair together: the reversal, its trade cash line, the new buy or sell, its trade cash
+     * line and a new sell's allocations; all or nothing (4.6, K2).
+     */
+    suspend fun savePair(
+        reversal: Transaction,
+        reversalCashLine: CashEntry,
+        replacement: Transaction,
+        replacementCashLine: CashEntry,
+    )
+
     /** Throws [UnreadableDataException] if stored data exists but cannot be read. */
     suspend fun loadInstruments(): List<Instrument>
 
