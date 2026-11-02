@@ -211,6 +211,24 @@ class RoomRecordStore(
         )
     }
 
+    override suspend fun saveSplitPair(
+        reversal: Transaction,
+        replacement: Transaction,
+    ) {
+        val dao = withContext(Dispatchers.IO) {
+            try {
+                database.transactionDao()
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: UnreadableDataException) {
+                throw e
+            } catch (e: Exception) {
+                throw UnreadableDataException("The stored data could not be opened.", e)
+            }
+        }
+        dao.insertSplitPair(reversal.toRow(), replacement.toRow())
+    }
+
     override suspend fun loadInstruments(): List<Instrument> = withContext(Dispatchers.IO) {
         try {
             database.instrumentDao().loadAll().map { it.toInstrument() }

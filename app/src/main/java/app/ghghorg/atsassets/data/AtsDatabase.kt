@@ -163,6 +163,16 @@ interface TransactionDao {
         if (allocations.isNotEmpty()) insertAllocations(allocations)
     }
 
+    /** A split's Reverse and re-enter pair in one database transaction: the reversal and the new split; both or neither (14b). */
+    @Transaction
+    suspend fun insertSplitPair(
+        reversal: TransactionRow,
+        replacement: TransactionRow,
+    ) {
+        insertTransaction(reversal)
+        insertTransaction(replacement)
+    }
+
     @Query("SELECT * FROM transactions ORDER BY date, enteredSeq")
     suspend fun loadAll(): List<TransactionRow>
 
