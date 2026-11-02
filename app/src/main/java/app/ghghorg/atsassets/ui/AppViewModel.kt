@@ -1318,7 +1318,10 @@ class AppViewModel(
         val dateRefusal = digitsDateRefusal(current.replaceReversalDate)
         val date = DateDigits.toDate(current.replaceReversalDate)
         if (dateRefusal != null || date == null) {
-            mutableState.update { it.copy(replaceRefusals = ReplaceRefusals(date = dateRefusal ?: DateRefusal.NOT_A_DATE)) }
+            // The field shows the reason, so it is open whenever the date is refused (14a Deploy finding 1).
+            mutableState.update {
+                it.copy(replaceRefusals = ReplaceRefusals(date = dateRefusal ?: DateRefusal.NOT_A_DATE), replaceDateEditing = true)
+            }
             return
         }
         val created =
@@ -1959,6 +1962,7 @@ class AppViewModel(
                 sellRefusals = SellRefusals(),
                 replaceReview = review.created,
                 replaceRefusals = ReplaceRefusals(rule = (review as? PairReview.OnReview)?.refusal),
+                replaceDateEditing = DateDigits.toDate(it.replaceReversalDate) == null,
             )
         }
     }
@@ -2411,6 +2415,8 @@ class AppViewModel(
                             checking = false,
                             replaceReview = pair?.created,
                             replaceRefusals = ReplaceRefusals(rule = (pair as? PairReview.OnReview)?.refusal),
+                            // An unfinished reversal date kept through Back to edit opens in its field (Deploy finding 1).
+                            replaceDateEditing = replacing && DateDigits.toDate(state.replaceReversalDate) == null,
                         )
                     }
 

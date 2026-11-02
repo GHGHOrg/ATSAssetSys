@@ -308,6 +308,25 @@ class ReenterFlowTest {
         assertEquals(Screen.REPLACE_REVIEW, vm.state.value.screen)
     }
 
+    // 14a Deploy finding 1: an unfinished reversal date must never leave Confirm without a visible reason.
+    @Test
+    fun anUnfinishedReversalDate_keptThroughBackToEdit_opensTheReviewWithTheDateField_andConfirmShowsWhy() {
+        val store = store()
+        val vm = onTransaction("b2", store)
+        vm.openReenter()
+        vm.reviewBuy()
+        vm.changeReplaceDate()
+        vm.onReplaceDateChange("2026")
+        vm.backToReplaceEntry()
+        vm.reviewBuy()
+        assertEquals(Screen.REPLACE_REVIEW, vm.state.value.screen)
+        assertTrue(vm.state.value.replaceDateEditing)
+        vm.confirmReplace()
+        assertEquals(DateRefusal.NOT_A_DATE, vm.state.value.replaceRefusals.date)
+        assertTrue(vm.state.value.replaceDateEditing)
+        assertTrue(store.savedPairs.isEmpty())
+    }
+
     @Test
     fun onASell_theSellScreenStartsFromTheOriginalPicks_withTheLotsAsAfterTheReversal_andShowsTheNewGain() {
         val store = store()
