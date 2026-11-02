@@ -97,12 +97,11 @@ sealed interface ReentryResult {
  * The ticker check of 4.3 is K5's, for a new buy only.
  */
 object Reentries {
-    /** Offered on a buy or sell that is not reversed yet; never on a reversal (4.6). A split and a cash entry come in 14b. */
+    /** Offered on a buy, sell (14a) or split (14b) that is not reversed yet; never on a reversal (4.6). A cash entry: [cashOffered]. */
     fun offered(
         transactions: List<Transaction>,
         transaction: Transaction,
-    ): Boolean = (transaction.type == TransactionType.BUY || transaction.type == TransactionType.SELL) &&
-        Reversals.offered(transactions, transaction)
+    ): Boolean = Reversals.offered(transactions, transaction)
 
     fun reenterBuy(
         cashEntries: List<CashEntry>,

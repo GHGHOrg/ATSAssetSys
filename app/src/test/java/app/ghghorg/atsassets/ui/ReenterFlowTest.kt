@@ -1,8 +1,10 @@
 package app.ghghorg.atsassets.ui
 
+import app.ghghorg.atsassets.core.AmountError
 import app.ghghorg.atsassets.core.AssetType
 import app.ghghorg.atsassets.core.BuyRefusal
 import app.ghghorg.atsassets.core.CashEntry
+import app.ghghorg.atsassets.core.CashEntryRefusal
 import app.ghghorg.atsassets.core.CashType
 import app.ghghorg.atsassets.core.Fraction
 import app.ghghorg.atsassets.core.Instrument
@@ -15,6 +17,7 @@ import app.ghghorg.atsassets.core.ReversalRefusal
 import app.ghghorg.atsassets.core.SellAllocation
 import app.ghghorg.atsassets.core.Sells
 import app.ghghorg.atsassets.core.SplitRatio
+import app.ghghorg.atsassets.core.SplitRefusal
 import app.ghghorg.atsassets.core.Transaction
 import app.ghghorg.atsassets.core.TransactionType
 import app.ghghorg.atsassets.prices.CheckRefusal
@@ -166,18 +169,224 @@ class ReenterFlowTest {
         return vm
     }
 
+    // 14b: a split is offered too (it was not in 14a).
     @Test
-    fun reverseAndReenter_isOfferedOnABuyOrSell_notOnASplit_aReversal_orAReversedEntry() {
+    fun reverseAndReenter_isOfferedOnABuySellOrSplit_notOnAReversal_orAReversedEntry() {
         val vm = onTransaction("b2")
         assertTrue(vm.state.value.transactionReenterOffered)
         val onSplit = onTransaction("x1")
-        assertFalse(onSplit.state.value.transactionReenterOffered)
+        assertTrue(onSplit.state.value.transactionReenterOffered)
         onSplit.openReenter()
-        assertEquals(Screen.TRANSACTION, onSplit.state.value.screen)
+        assertEquals(Screen.SPLIT, onSplit.state.value.screen)
         val withReversal = onTransaction("s1", store(listOf(b1, s1, b2, x1, r1)))
         assertFalse(withReversal.state.value.transactionReenterOffered)
         withReversal.openTransactionLink()
         assertFalse(withReversal.state.value.transactionReenterOffered)
+    }
+
+    // --- 14b: a split ---
+
+    // b2 (10 on Feb 1) and the 2 for 1 of Apr 1 (x1): 20 shares; s5 sells 20 on Apr 2.
+    private val s5 =
+        Transaction(
+            id = "s5",
+            portfolioId = "p1",
+            ticker = "AAPL",
+            type = TransactionType.SELL,
+            date = LocalDate.of(2026, 4, 2),
+            enteredSeq = 6L,
+            quantity = BigDecimal("20"),
+            totalCents = 300_000L,
+            allocations = listOf(SellAllocation("b2", shares(20))),
+        )
+
+    @Test
+    fun onASplit_theSplitScreenOpensPrefilled_andBackLeavesNothingSaved() {
+        val store = store(listOf(b2, x1))
+        val vm = onTransaction("x1", store)
+        vm.openReenter()
+        val state = vm.state.value
+        assertEquals(Screen.SPLIT, state.screen)
+        assertEquals(SplitForm(portfolioId = "p1", ticker = "AAPL", dateText = "20260401", toText = "2", fromText = "1"), state.splitForm)
+        assertEquals("x1", state.replacingId)
+        vm.closeSplit()
+        assertEquals(Screen.TRANSACTION, vm.state.value.screen)
+        assertEquals(x1, vm.state.value.shownTransaction)
+        assertNull(vm.state.value.replacingId)
+        assertEquals(SplitForm(), vm.state.value.splitForm)
+        assertTrue(store.savedSplitPairs.isEmpty())
+    }
+
+    @Test
+    fun aTwoForOneReenteredAsThreeForOne_showsBothParts_andConfirmSavesThePair_andReturnsToTheOriginal() {
+        val store = store(listOf(b2, x1))
+        val vm = onTransaction("x1", store)
+        vm.openReenter()
+        vm.onSplitToChange("3")
+        vm.reviewSplit()
+        val review = vm.state.value
+        assertEquals(Screen.REPLACE_REVIEW, review.screen)
+        assertEquals(ReversalEffect.OfSplit(SplitRatio(1, 2), shares(20), shares(10)), review.replaceReversalEffect)
+        assertEquals(SplitRatio(3, 1), review.replaceSplitReview?.replacement?.split)
+        assertNull(review.replaceCombinedCents)
+        vm.confirmReplace()
+        val state = vm.state.value
+        assertEquals(Screen.TRANSACTION, state.screen)
+        assertEquals(x1, state.shownTransaction)
+        assertEquals("x1", state.transactionReversal?.reversesId)
+        assertEquals(1, store.savedSplitPairs.size)
+        assertEquals(shares(30), state.holdings.single().shares)
+        assertEquals(SplitForm(), state.splitForm)
+    }
+
+    @Test
+    fun aSplitPairThatLeavesALaterSellShort_keepsTheSplitScreen_withTheNewSplitsRule() {
+        val store = store(listOf(b2, x1, s5))
+        val vm = onTransaction("x1", store)
+        vm.openReenter()
+        vm.onSplitToChange("3")
+        vm.onSplitFromChange("2")
+        vm.reviewSplit()
+        assertEquals(Screen.SPLIT, vm.state.value.screen)
+        assertEquals(SplitRefusal.SellShort(LocalDate.of(2026, 4, 2)), vm.state.value.splitRefusals.rule)
+        assertTrue(store.savedSplitPairs.isEmpty())
+    }
+
+    // --- 14b: a cash entry ---
+
+    private val deposit500 = CashEntry("d1", LocalDate.of(2026, 4, 20), 50_000L, CashType.DEPOSIT, "Salary", 2L)
+    private val reversalNote = "Reversal of the deposit of 2026-04-20 ET"
+
+    private fun cashStore(
+        vararg more: CashEntry,
+        saveError: Exception? = null,
+    ): FakeStore {
+        val store = FakeStore(stored = listOf(opening(), deposit500) + more, saveError = saveError)
+        store.storedPortfolios = listOf(main)
+        return store
+    }
+
+    private fun onCashEntry(
+        id: String,
+        store: FakeStore,
+    ): AppViewModel {
+        val vm = started(store, newId = { "id${++nextId}" })
+        vm.selectTab(Tab.CASH)
+        vm.openDetail(id)
+        return vm
+    }
+
+    @Test
+    fun reverseAndReenter_isOfferedOnADirectCashEntry_notOnTheOpeningBalance_aTradeLine_aReversal_orAReversedEntry() {
+        val trade = CashEntry("t1", LocalDate.of(2026, 4, 21), -10_000L, CashType.TRADE, "", 3L)
+        val adjustment = CashEntry("a1", LocalDate.of(2026, 4, 22), 5_000L, CashType.ADJUSTMENT, "fix", 4L, reversesId = "d9")
+        val store = cashStore(trade, adjustment, CashEntry("d9", LocalDate.of(2026, 4, 22), -5_000L, CashType.WITHDRAWAL, "", 5L))
+        assertTrue(onCashEntry("d1", store).state.value.detailReenterOffered)
+        assertFalse(onCashEntry("o1", store).state.value.detailReenterOffered)
+        assertFalse(onCashEntry("t1", store).state.value.detailReenterOffered)
+        assertFalse(onCashEntry("a1", store).state.value.detailReenterOffered)
+        val reversed = onCashEntry("d9", store)
+        assertFalse(reversed.state.value.detailReenterOffered)
+        reversed.openReenterCash(reversalNote)
+        assertEquals(Screen.DETAIL, reversed.state.value.screen)
+    }
+
+    @Test
+    fun onACashEntry_theFormOpensPrefilled_andBackReturnsToTheDetail_withNothingSaved() {
+        val store = cashStore()
+        val vm = onCashEntry("d1", store)
+        vm.openReenterCash(reversalNote)
+        val state = vm.state.value
+        assertEquals(Screen.FORM, state.screen)
+        assertEquals(FormState(dateText = "2026-04-20", amountText = "500.00", noteText = "Salary", type = CashType.DEPOSIT), state.form)
+        assertEquals("d1", state.replacingCashId)
+        assertEquals(deposit500, state.replacedCashEntry)
+        assertEquals("20260420", state.replaceReversalDate)
+        vm.closeForm()
+        assertEquals(Screen.DETAIL, vm.state.value.screen)
+        assertEquals(deposit500, vm.state.value.detailEntry)
+        assertNull(vm.state.value.replacingCashId)
+        assertEquals(FormState(), vm.state.value.form)
+        assertTrue(store.saved.isEmpty())
+    }
+
+    @Test
+    fun frameE_aDepositOf500ReenteredAs50_showsTheAdjustmentAndTheNewDeposit_combinedMinus450_andSavesBothInOneBatch() {
+        val store = cashStore()
+        val vm = onCashEntry("d1", store)
+        vm.openReenterCash(reversalNote)
+        vm.onAmountChange("50.00")
+        vm.review()
+        val review = vm.state.value
+        assertEquals(Screen.REPLACE_REVIEW, review.screen)
+        val pair = review.replaceCashReview ?: error("no pair")
+        assertEquals(CashType.ADJUSTMENT, pair.reversal.type)
+        assertEquals(-50_000L, pair.reversal.amountCents)
+        assertEquals(reversalNote, pair.reversal.note)
+        assertEquals(5_000L, pair.replacement.amountCents)
+        assertEquals(-45_000L, review.replaceCombinedCents)
+        vm.confirmReplace()
+        val state = vm.state.value
+        assertEquals(Screen.DETAIL, state.screen)
+        assertEquals(deposit500, state.detailEntry)
+        val batch = store.saved.single()
+        assertEquals(2, batch.size)
+        assertEquals("d1", batch.first().reversesId)
+        assertEquals(batch.first(), state.detailReversedBy)
+        assertEquals(1_005_000L, state.cashBalanceCents)
+        assertEquals(FormState(), state.form)
+    }
+
+    @Test
+    fun bothOrNeither_aCashPairThatTakesCashBelowZero_keepsTheForm_withTheNewEntrysCashRule() {
+        val store = cashStore()
+        val vm = onCashEntry("d1", store)
+        vm.openReenterCash(reversalNote)
+        vm.onTypeChange(CashType.WITHDRAWAL)
+        // $10,000 + $500 − $500 back − $10,000.01 = −$0.01 on Apr 20.
+        vm.onAmountChange("10000.01")
+        vm.review()
+        assertEquals(Screen.FORM, vm.state.value.screen)
+        assertEquals(CashEntryRefusal.NegativeCash(LocalDate.of(2026, 4, 20), 1L), vm.state.value.refusals.cash)
+        assertTrue(store.saved.isEmpty())
+    }
+
+    @Test
+    fun onACashPair_theFieldRulesShowTogether_andAReversalDateBeforeTheOriginalIsRefusedOnTheReview() {
+        val vm = onCashEntry("d1", cashStore())
+        vm.openReenterCash(reversalNote)
+        vm.onTypeChange(CashType.ADJUSTMENT)
+        vm.onNoteChange(" ")
+        vm.onAmountChange("abc")
+        vm.review()
+        assertEquals(Screen.FORM, vm.state.value.screen)
+        assertTrue(vm.state.value.refusals.noteRequired)
+        assertEquals(AmountError.BAD_FORMAT, vm.state.value.refusals.amount)
+        vm.onNoteChange("fix")
+        vm.onAmountChange("50.00")
+        vm.review()
+        assertEquals(Screen.REPLACE_REVIEW, vm.state.value.screen)
+        vm.changeReplaceDate()
+        vm.onReplaceDateChange("20260419")
+        assertEquals(
+            ReentryRefusal.OfCashReversal(CashEntryRefusal.BeforeOriginal(LocalDate.of(2026, 4, 20))),
+            vm.state.value.replaceRefusals.rule,
+        )
+    }
+
+    @Test
+    fun aFailedCashPairSave_staysOnTheReview_withNothingSaved_andABottomTabLeaves() {
+        val failing = cashStore(saveError = IllegalStateException("disk"))
+        val vm = onCashEntry("d1", failing)
+        vm.openReenterCash(reversalNote)
+        vm.review()
+        vm.confirmReplace()
+        assertEquals(Screen.REPLACE_REVIEW, vm.state.value.screen)
+        assertEquals(SaveRefusal.SAVE_FAILED, vm.state.value.replaceRefusals.save)
+        assertTrue(failing.saved.isEmpty())
+        vm.selectTab(Tab.OVERALL)
+        assertNull(vm.state.value.replacingCashId)
+        assertEquals(FormState(), vm.state.value.form)
     }
 
     @Test
