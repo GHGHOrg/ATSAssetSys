@@ -287,6 +287,30 @@ class ReentriesTest {
         assertEquals(listOf(Pick("b1", BigDecimal("12"))), Reentries.startingPicks(transactions + reversal, sale, sale.date, reversal.enteredSeq + 1))
     }
 
+    // 14a fix (phone check 2): the new entry goes after a split entered later on the original's date, so its first
+    // quantity carries that split, as its picks do.
+    @Test
+    fun theStartingQuantity_ofABuyWithASplitEnteredAfterItThatDay_carriesTheSplit() {
+        val one = bought("b1", "2026-01-02", "1", 15_000L, 2L)
+        val split = splitOn("x1", "2026-01-02", 2, 1, 3L)
+        val transactions = listOf(one, split)
+        val reversal = Reversals.draft(listOf(opening()) + linesOf(transactions), transactions, one, "r0", one.date)
+        assertEquals(BigDecimal("2"), Reentries.startingQuantity(transactions + reversal, one, one.date, reversal.enteredSeq + 1))
+    }
+
+    @Test
+    fun theStartingQuantity_after1For3_isRoundedTo8Places_andWithNoSplitBetween_keepsTheOriginalText() {
+        val one = bought("b1", "2026-01-02", "1", 15_000L, 2L)
+        val oneForThree = splitOn("x1", "2026-01-02", 1, 3, 3L)
+        val withSplit = listOf(one, oneForThree)
+        val r1 = Reversals.draft(listOf(opening()) + linesOf(withSplit), withSplit, one, "r0", one.date)
+        assertEquals(BigDecimal("0.33333333"), Reentries.startingQuantity(withSplit + r1, one, one.date, r1.enteredSeq + 1))
+        val typed = bought("b2", "2026-01-02", "2.50", 25_000L, 2L)
+        val r2 = Reversals.draft(listOf(opening()) + linesOf(listOf(typed)), listOf(typed), typed, "r0", typed.date)
+        val kept = Reentries.startingQuantity(listOf(typed, r2), typed, typed.date, r2.enteredSeq + 1)
+        assertEquals("2.50", kept.toPlainString())
+    }
+
     // Rounding (CLAUDE.md pitfall from 12): 1/7 rounds down to 0.14285714 and 3/7 rounds up to 0.42857143.
     @Test
     fun aSellAllOfSevenths_reenteredWithANewTotal_takesTheExactRemaindersAgain_andLeavesBothLotsAtZero() {

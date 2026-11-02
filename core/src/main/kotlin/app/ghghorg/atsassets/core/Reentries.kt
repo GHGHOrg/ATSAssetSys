@@ -163,6 +163,21 @@ object Reentries {
         return original.allocations.map { Pick(it.lotId, Sells.shown(it.quantity * factor)) }
     }
 
+    /**
+     * A new buy's first quantity: the original's, with the splits between the original and the new entry's place (date
+     * [date], entry order [seq]) applied, as its picks are; to 8 places, as a quantity is typed (4.3). With no split
+     * between, the original as typed, so "2.50" stays "2.50" (14a fix after phone check 2; decision B).
+     */
+    fun startingQuantity(
+        transactions: List<Transaction>,
+        original: Transaction,
+        date: LocalDate,
+        seq: Long,
+    ): BigDecimal {
+        val factor = Holdings.splitFactor(transactions, original.portfolioId, original.ticker, original.place, Place(date, seq))
+        return if (factor == Fraction.ONE) original.quantity else Sells.shown(Fraction.of(original.quantity) * factor)
+    }
+
     private sealed interface FirstPart {
         data class Ready(
             val reversal: Transaction,

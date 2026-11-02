@@ -334,6 +334,52 @@ class ReenterFlowTest {
         assertEquals(SellForm(), vm.state.value.sellForm)
     }
 
+    // 14a fix (phone check 2): as on the phone's 2026-10-31, a 2 for 1 entered after the trades that day. Re-entered with
+    // nothing changed, the sell and the buy start with the split applied, pass Review, and leave the holding as it was.
+    private val b10 = bought("b10", "2026-01-05", "10", 150_000L, 2L)
+    private val b11 = bought("b11", "2026-01-05", "1", 15_000L, 3L)
+    private val s13 = sold("s13", "2026-01-05", "3", 48_000L, 4L, "b10")
+    private val x14 =
+        Transaction(
+            id = "x14",
+            portfolioId = "p1",
+            ticker = "AAPL",
+            type = TransactionType.SPLIT,
+            date = LocalDate.of(2026, 1, 5),
+            enteredSeq = 5L,
+            quantity = BigDecimal.ZERO,
+            totalCents = 0L,
+            split = SplitRatio(2, 1),
+        )
+
+    @Test
+    fun aSellWithASplitEnteredAfterItThatDay_startsWithTheSplitApplied_andUnchangedLeavesTheHoldingAsItWas() {
+        val store = store(listOf(b10, b11, s13, x14))
+        val vm = onTransaction("s13", store)
+        assertEquals(shares(16), vm.state.value.shownHolding?.shares)
+        vm.openReenter()
+        assertEquals("6", vm.state.value.sellForm.quantityText)
+        assertEquals(mapOf("b10" to "6"), vm.state.value.sellForm.picks)
+        vm.reviewSell()
+        assertEquals(Screen.REPLACE_REVIEW, vm.state.value.screen)
+        vm.confirmReplace()
+        assertEquals(1, store.savedPairs.size)
+        assertEquals(shares(16), vm.state.value.shownHolding?.shares)
+    }
+
+    @Test
+    fun aBuyWithASplitEnteredAfterItThatDay_startsWithTheSplitApplied_andUnchangedLeavesTheHoldingAsItWas() {
+        val store = store(listOf(b10, b11, s13, x14))
+        val vm = onTransaction("b11", store)
+        vm.openReenter()
+        assertEquals("2", vm.state.value.buyForm.quantityText)
+        vm.reviewBuy()
+        assertEquals(Screen.REPLACE_REVIEW, vm.state.value.screen)
+        vm.confirmReplace()
+        assertEquals(1, store.savedPairs.size)
+        assertEquals(shares(16), vm.state.value.shownHolding?.shares)
+    }
+
     @Test
     fun criterion60b_aSellAtZero_reenteredAt50Offline_needsNoTickerCheck_andTheHoldingStaysAtZero() {
         val oldco = bought("b9", "2026-01-05", "10", 20_000L, 2L, ticker = "OLDCO")

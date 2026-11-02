@@ -1212,8 +1212,9 @@ class AppViewModel(
 
     /**
      * Reverse and re-enter on a buy or sell (4.6, wireframe 10c marker 1): the normal entry screen with the original's
-     * values, its date included; the reversal is dated the original's date (marker 5). A sell starts from the original's
-     * picks, with the splits since applied (marker 9).
+     * values, its date included; the reversal is dated the original's date (marker 5). The new entry goes after the
+     * reversal, so its quantity and a sell's picks start with the splits since the original applied, and an unchanged
+     * pair leaves the holding as it was (marker 9; 14a fix after phone check 2). A sell's quantity is its picks' sum.
      */
     fun openReenter() {
         val current = mutableState.value
@@ -1221,6 +1222,8 @@ class AppViewModel(
         val original = current.shownTransaction ?: return
         val date = original.date.toString().replace("-", "")
         val total = BigDecimal.valueOf(original.totalCents, 2).toPlainString()
+        val draft = Reversals.draft(current.entries, current.transactions, original, PREVIEW_ID, original.date)
+        val after = current.transactions + draft
         val replacing =
             current.copy(
                 replacingId = original.id,
@@ -1231,20 +1234,20 @@ class AppViewModel(
             )
         mutableState.value =
             when (original.type) {
-                TransactionType.BUY ->
+                TransactionType.BUY -> {
+                    val quantity = Reentries.startingQuantity(after, original, original.date, draft.enteredSeq + 1)
                     replacing.copy(
                         screen = Screen.BUY,
-                        buyForm = BuyForm(original.portfolioId, original.ticker, date, original.quantity.toPlainString(), total),
+                        buyForm = BuyForm(original.portfolioId, original.ticker, date, quantity.toPlainString(), total),
                         buyRefusals = BuyRefusals(),
                         buyFromHolding = false,
                     )
+                }
 
                 TransactionType.SELL -> {
-                    val draft = Reversals.draft(current.entries, current.transactions, original, PREVIEW_ID, original.date)
-                    val picks =
-                        Reentries
-                            .startingPicks(current.transactions + draft, original, original.date, draft.enteredSeq + 1)
-                            .associate { it.lotId to it.quantity.toPlainString() }
+                    val starting = Reentries.startingPicks(after, original, original.date, draft.enteredSeq + 1)
+                    val picks = starting.associate { it.lotId to it.quantity.toPlainString() }
+                    val quantity = starting.fold(BigDecimal.ZERO) { sum, pick -> sum + pick.quantity }
                     replacing.copy(
                         screen = Screen.SELL,
                         sellForm =
@@ -1252,7 +1255,7 @@ class AppViewModel(
                             portfolioId = original.portfolioId,
                             ticker = original.ticker,
                             dateText = date,
-                            quantityText = original.quantity.toPlainString(),
+                            quantityText = quantity.toPlainString(),
                             totalText = total,
                             picks = picks,
                         ),
