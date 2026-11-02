@@ -1,6 +1,6 @@
 # plan/iterations/14a-reverse-and-reenter-trades.md
 
-Stage: Build. Status: approved 2026-11-02, not built. Decisions 1 to 5 settled (section 10).
+Stage: Build. Status: approved 2026-11-02, built and checked 2026-11-02 (section 12). Decisions 1 to 5 settled (section 10).
 Source: plan/plan.md section 4 (row 14a), intent/intent.md v52 (final), spec/spec.md v4 (final). "My reading" is an interpretation, not a test.
 
 ## 1. Outcome
@@ -83,4 +83,40 @@ Settled by the spec, no question asked: the normal entry screen prefilled with a
 - New, asked in step 5: the other refusals in the pair form (the new entry's own rules named as part 2), the reversal date refused as earlier than the original on the review, and the TalkBack sentences.
 
 ## 12. Status and notes
-Approved 2026-11-02 (decisions 1 to 4). Not built.
+Built 2026-11-02 (steps 1 to 6 and one fix); phone checks 2026-11-02, all yes after the fix (section 14, item 11). Pull request not yet opened.
+
+## 13. Build results
+### 13.1 Commits
+Newest first: 422b17e fix, ddde6ce step 6, 2515270 step 5, cb3dee3 step 4, 6e47c1c step 3, c87b1c5 step 2 (decision 5), 42b6ea9 step 2, e6c17cd step 1 with this file. main was 8d2769f.
+
+### 13.2 Local run
+On 422b17e's code (2026-11-02, all with --rerun-tasks): spotlessCheck green; debug build green, no compiler warnings printed; 563 tests, 0 failures (Balance 11, CashAccount 20, CashEntriesReverse 12, CashEntries 27, Fraction 12, Holdings 15, MarketDate 10, Money 21, OpeningBalance 9, Portfolios 23, Quantity 10, Reentries 20, Reversals 14, Sells 19, Splits 23, TickerCheck 16, Transactions 18, RowMapping 13, AppLock 12, FinnhubSource 18, TickerVerifier 6, AppViewModel 120, BuyFlow 29, DateDigits 7, HoldingDetailFlow 11, ReenterFlow 14, ReversalFlow 7, SellFlow 21, SplitFlow 17, TransactionDetailFlow 8); lint: the 4 listed findings, none silenced (AndroidGradlePluginVersion, open item 31; NewerVersionAvailable for kotlinx-coroutines-test and for sqlcipher-android, open item 43; TypographyDashes on date_not_a_date, strings.xml:86), report written 15:05:21. Release build on the same code green (R8 ran; unsigned; "Unable to strip" names libandroidx.graphics.path.so and libsqlcipher.so, as known). Debug APK versionCode 15 (aapt2 36.0.0). No schema change (still 5.json).
+
+### 13.3 Phone results (Android 17, debug build versionCode 15, your reports)
+Checks 1 to 10 all yes. Each check's figures were worked out from the data on the phone (your photo of AAPL's Transactions tab) before it was given; where my figures were wrong, the note says so.
+- 1: installed over the 13b build (lastUpdateTime 2026-11-02 12:17:52, after the fix 13:20:28; firstInstallTime 2026-10-29 10:44:04 unchanged); net worth $4,031.87, cash $2,981.87, AAPL 9.33333333 shares at $1,050.00, lots 8 and 1.33333333 at $112.50 (criterion 35).
+- 2: Reverse and re-enter on a buy and a sell, not on a split, a reversal or a reversed entry; the 2026-10-31 buy of 1 share for $150.00 opened "< Buy (replacing)" with the banner, quantity 2 (the 2 for 1 entered after it that day applied; section 14, item 11) with "Original: 1", price $75.00; a changed quantity kept the hint; "<" saved nothing.
+- 3: that buy re-entered as 3 for $150.00: the review opened with the reversal-date refusal (frame F, the third message: −0.66666667 shares at the 2026-11-01 sell, a date of 2026-11-01 or later), as decision 3 has it. My figures had missed that the 2026-11-01 sell, since reversed, took this lot's 0.66666667. Confirm refused; Change to 2026-11-01 removed the message (1.33333333 shares removed, +$150.00, combined $0.00); saved with the new buy dated 2026-10-31, before its reversal (criterion 54's case); "Reversed on 2026-11-01 ET >"; AAPL 10 shares at $1,050.00, lots 8 at $112.50 and 2 at $75.00; cash and net worth unchanged.
+- 4: both or neither: the new 3-share buy re-entered with a total of $4,000.00: "Not saved. Nothing was changed. With the replacement, cash would be negative on 2026-10-31 by $1,168.13."; nothing saved.
+- 5: the 2026-10-31 sell of 3 for $480.00 re-entered at $540.00: quantity 6 with "Original: 3", the lots as after the reversal (8 left at $75.00 picked 6; 3 left at $50.00), "(the original's picks)"; review: 6 shares put back, −$30.00 removed, −$480.00; new sell +$90.00 realized, cost $450.00, +$540.00; combined +$60.00; saved; cash $3,041.87, net worth $4,091.87.
+- 6: the 2026-10-31 buy of 10 refused on the entry screen: "… hold −8 shares on 2026-10-31. Reverse the sell of 2026-10-31 first, …"; nothing saved.
+- 7: online, the new buy with JNJ ran the ticker check and opened the review; offline, a second unverified ticker was refused with the offline message and no look-up; offline, the new sell opened its review with no check (criterion 60(b) in part).
+- 8: largest font, portrait and landscape, light and dark: the entry screens, the review and the inline date field with the keyboard readable, the gain green, the message red; TalkBack through a whole pair (the new 3-share buy re-entered unchanged and saved; nothing moved), read as wording 3.
+- 9: closed and reopened: the pairs, their links and cash lines kept. My check said "<" on the cash line's detail, which has 05's "Back" (13a); the app was right.
+- 10: Logcat cleared at 15:00:33, then a pair (the 3-share buy re-entered unchanged); the app's uid 10454 had 24 lines, 1 the log header and 23 D/WindowOnBackDispatcher; no ticker, portfolio name, amount, quantity, date, ratio, reversal or replacing word, or key; 13 "$ and digit" matches were all inner-class names (after a letter or digit). Counts only. Afterwards: AAPL 10 shares at $1,050.00, cash $3,041.87, net worth $4,091.87.
+
+### 13.4 Not run or not checked
+CI and the pull request; open item 33 (34); the release APK on a device (unsigned, open item 4); a failed pair save (open item 14: not provoked; atomic by Room's @Transaction, as the other saves); on the phone, a reversal part refused for cash before the new entry's date and a sell pair judged as one point on a shared date (decision 5), unit tested only; contrast measurement (by eye on the phone); network traffic (open item 39); the screens in a JVM test (none in the project); a split's and a cash entry's Reverse and re-enter (14b); 60(b)'s restore, hidden and Realized gains parts (34, 15, 26).
+
+## 14. Departures from the plan
+1. The pair is in a new core file, Reentries.kt, not in Reversals.kt, which only made sharesRefusal internal; 14b extends it (step 2).
+2. Sells.kt is unchanged: the lot list as after the reversal is Sells.lotChoices with the drafted reversal included (step 2).
+3. RecordStore.savePair moved from step 2 to step 3, since adding it to the interface would not build without the data layer.
+4. In steps 2 and 4 the tests were written before the code but not run red first; they passed on their first run. Decision 5 and the fix (item 11) were shown failing first.
+5. Decision 5 was asked after step 2; it added an optional set of entries not judged on their own to CashRules.replay (OpeningBalance.kt, not in section 4's list). A new sell's own replay runs without the reversal's line, as a sell only adds cash; the pair's replay judges both.
+6. A refusal that a reversal date typed with Change brings shows on the review, since only that date can change there (my reading of decision 3; step 4).
+7. Back, a bottom tab or a save from a replacing entry clears the filled-in text, so a plain buy or sell typed earlier and not saved is not kept (one form for both; step 4).
+8. Wording 1 is three strings and a helper that turns "Not saved." into "Not saved. Nothing was changed." in front of the 09 and 11 messages, not about 13 strings; the wording is as approved (step 5).
+9. The new sell's lots on the review are one row, "Lots used 6 shares", as frame D shows, not the per-lot rows of the sell review (step 5).
+10. replaceStartingPicks was added to the state in step 5 for "(the original's picks)".
+11. Defect found while working out phone check 2's figures, before the check was given: the new entry goes after every entry of the original's date, so a split entered later that day applies to it; the picks carried that split but the quantity did not, so a re-entered sell opened refused (pick 6 against quantity 3) and an unchanged buy would have saved half its shares. Fixed in 422b17e (your decision B): the first quantity carries the splits since the original, as the picks do, and a sell's is its picks' sum; failing tests first at core (2) and ViewModel (2); reinstalled at versionCode 15. Limit: a buy's quantity is typed to 8 places, so after a 1 for 3 an unchanged pair can leave its lot short by less than 0.00000001 (open item 46).
