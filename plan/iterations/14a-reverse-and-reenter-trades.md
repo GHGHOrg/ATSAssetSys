@@ -1,6 +1,6 @@
 # plan/iterations/14a-reverse-and-reenter-trades.md
 
-Stage: Build. Status: approved 2026-11-02, built and checked 2026-11-02 (section 12). Decisions 1 to 5 settled (section 10).
+Stage: Build. Status: approved 2026-11-02, built, checked and merged 2026-11-02 (section 12). Decisions 1 to 5 settled (section 10).
 Source: plan/plan.md section 4 (row 14a), intent/intent.md v52 (final), spec/spec.md v4 (final). "My reading" is an interpretation, not a test.
 
 ## 1. Outcome
@@ -83,7 +83,7 @@ Settled by the spec, no question asked: the normal entry screen prefilled with a
 - New, asked in step 5: the other refusals in the pair form (the new entry's own rules named as part 2), the reversal date refused as earlier than the original on the review, and the TalkBack sentences.
 
 ## 12. Status and notes
-Built 2026-11-02 (steps 1 to 6 and one fix); phone checks 2026-11-02, all yes after the fix (section 14, item 11). Pull request not yet opened.
+Done. Built 2026-11-02 (steps 1 to 6, one fix and one Deploy fix); phone checks 2026-11-02, all yes after the fix (section 14, items 11 and 12); pull request #112 merged as bcd5e3b (2026-11-02), CI green on the pull request (3 checks) and on main (2m 59s) (your reports).
 
 ## 13. Build results
 ### 13.1 Commits
