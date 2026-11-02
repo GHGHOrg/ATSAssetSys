@@ -186,7 +186,7 @@ object Reversals {
      * Why the lots refuse [reversal]. For a buy: the earliest sell from its lot not yet reversed, else the latest date
      * one of them was reversed (13b decision 3). For a split or a sell: the date an entry would be left short.
      */
-    private fun sharesRefusal(
+    internal fun sharesRefusal(
         transactions: List<Transaction>,
         original: Transaction,
         reversal: Transaction,
