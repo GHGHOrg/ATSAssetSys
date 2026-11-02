@@ -71,17 +71,19 @@ object CashRules {
     /**
      * Replays the cash balance in the 4.1 order (date, then entered_seq) and judges it after every entry
      * dated [from] or later (03 decision 5). Null when every entry passes; only NegativeCash or TooLarge otherwise.
-     * Used by cash entries (03 to 05) and buys (09).
+     * Used by cash entries (03 to 05) and buys (09). An entry whose id is in [notJudged] is judged with the next one:
+     * a Reverse and re-enter pair on one date is one point (14a decision 6).
      */
     internal fun replay(
         entries: List<CashEntry>,
         from: LocalDate,
+        notJudged: Set<String> = emptySet(),
     ): CashEntryRefusal? {
         var balance = 0L
         try {
             for (entry in entries.sortedWith(compareBy<CashEntry>({ it.date }, { it.enteredSeq }))) {
                 balance = Math.addExact(balance, entry.amountCents)
-                if (!entry.date.isBefore(from) && balance < 0L) {
+                if (entry.id !in notJudged && !entry.date.isBefore(from) && balance < 0L) {
                     return CashEntryRefusal.NegativeCash(entry.date, -balance)
                 }
             }

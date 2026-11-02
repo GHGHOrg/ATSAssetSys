@@ -94,7 +94,11 @@ object Reentries {
             )
         return when (buy) {
             is BuyResult.Refused -> ReentryResult.Refused(ReentryRefusal.OfBuy(buy.reason))
-            is BuyResult.Created -> finish(cashEntries, part, buy.transaction, buy.cashLine)
+
+            is BuyResult.Created ->
+                finish(cashEntries, part, buy.transaction, buy.cashLine) { date, cents ->
+                    ReentryRefusal.OfBuy(BuyRefusal.NegativeCash(date, cents))
+                }
         }
     }
 
@@ -117,9 +121,12 @@ object Reentries {
                 is FirstPart.Refused -> return ReentryResult.Refused(ReentryRefusal.OfReversal(first.reason))
                 is FirstPart.Ready -> first
             }
+        // Without the reversal's cash line: a sell only adds cash, so its own replay can pass where the pair fails, never
+        // the other way; [finish] judges the pair, on a shared date as one point (14a decision 6). The entry order still
+        // comes after the reversal, which is in the transactions.
         val sell =
             Sells.sell(
-                cashEntries = cashEntries + part.cashLine,
+                cashEntries = cashEntries,
                 transactions = transactions + part.reversal,
                 portfolios = portfolios,
                 transactionId = ids.replacementId,
@@ -133,7 +140,11 @@ object Reentries {
             )
         return when (sell) {
             is SellResult.Refused -> ReentryResult.Refused(ReentryRefusal.OfSell(sell.reason))
-            is SellResult.Created -> finish(cashEntries, part, sell.transaction, sell.cashLine)
+
+            is SellResult.Created ->
+                finish(cashEntries, part, sell.transaction, sell.cashLine) { date, cents ->
+                    ReentryRefusal.OfSell(SellRefusal.NegativeCash(date, cents))
+                }
         }
     }
 
@@ -195,21 +206,36 @@ object Reentries {
     }
 
     /**
-     * The new entry's own replay ran from its date with the reversal in it; this one starts at the reversal's date, so a
-     * reversal dated before the new entry is judged on the days between, where only the reversal acts (4.1).
+     * One cash replay with both entries, from the earlier of their dates (4.1, 4.6). On a shared date the reversal is
+     * judged with the new entry after it, as one point (14a decision 6). A negative balance before the new entry's date
+     * is the reversal's, where only it acts; from that date on it is the new entry's ("with the replacement", frame F).
      */
     private fun finish(
         cashEntries: List<CashEntry>,
         part: FirstPart.Ready,
         replacement: Transaction,
         replacementCashLine: CashEntry,
+        replacementShort: (LocalDate, Long) -> ReentryRefusal,
     ): ReentryResult {
         val all = cashEntries + part.cashLine + replacementCashLine
-        return when (val replayed = CashRules.replay(all, from = part.reversal.date)) {
+        val sharedDate = part.reversal.date == replacement.date
+        val replayed =
+            CashRules.replay(
+                all,
+                from = minOf(part.reversal.date, replacement.date),
+                notJudged = if (sharedDate) setOf(part.cashLine.id) else emptySet(),
+            )
+        return when (replayed) {
             null -> ReentryResult.Created(part.reversal, part.cashLine, replacement, replacementCashLine)
 
             is CashEntryRefusal.NegativeCash ->
-                ReentryResult.Refused(ReentryRefusal.OfReversal(ReversalRefusal.NegativeCash(replayed.date, replayed.shortfallCents)))
+                ReentryResult.Refused(
+                    if (replayed.date.isBefore(replacement.date)) {
+                        ReentryRefusal.OfReversal(ReversalRefusal.NegativeCash(replayed.date, replayed.shortfallCents))
+                    } else {
+                        replacementShort(replayed.date, replayed.shortfallCents)
+                    },
+                )
 
             else -> ReentryResult.Refused(ReentryRefusal.OfReversal(ReversalRefusal.TooLarge))
         }

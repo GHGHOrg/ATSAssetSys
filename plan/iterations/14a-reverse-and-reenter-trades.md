@@ -1,6 +1,6 @@
 # plan/iterations/14a-reverse-and-reenter-trades.md
 
-Stage: Build. Status: approved 2026-11-02, not built. Decisions 1 to 4 settled (section 10).
+Stage: Build. Status: approved 2026-11-02, not built. Decisions 1 to 5 settled (section 10).
 Source: plan/plan.md section 4 (row 14a), intent/intent.md v52 (final), spec/spec.md v4 (final). "My reading" is an interpretation, not a test.
 
 ## 1. Outcome
@@ -73,6 +73,7 @@ None planned; no new library and no network.
 2. After Confirm and save both the app returns to the original's detail, as 13b does (option A).
 3. Only a refusal about the reversal date opens the combined review, with the message under part 1 next to Change; every other refusal keeps the entry screen with what was typed (option A).
 4. Change turns the reversal date row into the inline digits-only date field of 13b's reversal screen, with its note, the effect updating as typed (option A).
+5. (Asked after step 2, 2026-11-02.) When the reversal and the new entry share a date, the cash replay judges them as one point, after the new entry, so a sell's reversal may take cash below 0 for a moment before the new sell puts proceeds back (4.6 "checked as a unit"); on different dates every entry is judged, as 03 decision 5 (option B).
 Settled by the spec, no question asked: the normal entry screen prefilled with a banner and "Original: …" hints, one combined review with a Change link, Confirm and save both as the only save, a sell's picks from the original's with the lot list as after the reversal (section 6, 10c); the pair checked in one replay and written as one action (4.6, K1, K2); the ticker check on a buy only (4.6); not offered on a reversal, an entry already reversed or a trade line (4.6).
 
 ## 11. Wording to approve (D9; * = given by the wireframes or earlier iterations)

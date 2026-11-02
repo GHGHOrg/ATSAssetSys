@@ -351,15 +351,26 @@ class ReentriesTest {
         assertFalse(refused.fixedOnReview)
     }
 
+    // 14a decision 6: on a shared date the pair is one point in the replay, judged only after the new entry.
     @Test
-    fun aSellPair_isJudgedAfterEveryEntry_soTheReversalCannotTakeCashBelowZeroBeforeTheNewSell() {
-        // Cash is $0 after the Jan 3 SPY buy spends the sell's $1,200; the reversal takes $1,200 out before the new sell.
+    fun aSellPair_onASharedDate_isJudgedOnlyAfterBothEntries_soTheReversalMayTakeCashBelowZeroBeforeTheNewSell() {
+        // Cash is $0 after the Jan 3 SPY buy spends the sell's $1,200; the reversal takes $1,200 out, the new sell puts $1,300 in.
         val sale = sold("s1", "2026-01-03", "10", 120_000L, 3L, listOf(SellAllocation("b1", fraction(10))))
         val spy = bought("b2", "2026-01-03", "1", 120_000L, 4L, ticker = "SPY")
         val transactions = listOf(tenFor1000, sale, spy)
         val cash = listOf(opening(100_000L)) + linesOf(transactions)
-        val refused = refusal(reenterSell(transactions, "s1", "2026-01-03", "2026-01-03", "10", 130_000L, listOf(Pick("b1", BigDecimal("10"))), cash))
-        assertEquals(ReentryRefusal.OfSell(SellRefusal.NegativeCash(LocalDate.of(2026, 1, 3), 120_000L)), refused)
+        val result = created(reenterSell(transactions, "s1", "2026-01-03", "2026-01-03", "10", 130_000L, listOf(Pick("b1", BigDecimal("10"))), cash))
+        assertEquals(10_000L, CashRules.balanceOn(cashAfter(cash, result), day))
+    }
+
+    @Test
+    fun aSellPair_onASharedDate_isRefusedAsTheNewSellsCash_whenCashIsStillNegativeAfterBothEntries() {
+        val sale = sold("s1", "2026-01-03", "10", 120_000L, 3L, listOf(SellAllocation("b1", fraction(10))))
+        val spy = bought("b2", "2026-01-03", "1", 120_000L, 4L, ticker = "SPY")
+        val transactions = listOf(tenFor1000, sale, spy)
+        val cash = listOf(opening(100_000L)) + linesOf(transactions)
+        val refused = refusal(reenterSell(transactions, "s1", "2026-01-03", "2026-01-03", "10", 110_000L, listOf(Pick("b1", BigDecimal("10"))), cash))
+        assertEquals(ReentryRefusal.OfSell(SellRefusal.NegativeCash(LocalDate.of(2026, 1, 3), 10_000L)), refused)
     }
 
     @Test
