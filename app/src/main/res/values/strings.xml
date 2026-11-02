@@ -296,4 +296,46 @@
     <string name="reversal_of_link">Reversal of the %1$s of %2$s ET</string>
     <string name="holding_reversal_row_spoken">%1$s Eastern Time, reversal of the %2$s of %3$s Eastern Time</string>
     <string name="trade_reversal_spoken">%1$s, for portfolio %2$s, %3$s Eastern Time, %4$s dollars, balance %5$s dollars</string>
+    <!-- Iteration 14a: Reverse and re-enter a buy or sell (wireframe 10c; wording 1 to 3 approved 2026-11-02, 14a file section 11). -->
+    <string name="reenter_button">Reverse and re-enter</string>
+    <string name="reenter_button_spoken">Reverse and re-enter %1$s %2$s of %3$s Eastern Time</string>
+    <string name="buy_replacing_title">Buy (replacing)</string>
+    <string name="sell_replacing_title">Sell (replacing)</string>
+    <string name="replacing_banner">Replacing the %1$s of %2$s ET: %3$s %4$s, %5$s. Nothing changes until you confirm.</string>
+    <string name="replacing_banner_spoken">Replacing the %1$s of %2$s Eastern Time: %3$s %4$s, %5$s dollars. Nothing changes until you confirm.</string>
+    <string name="original_hint">Original: %1$s</string>
+    <string name="original_hint_spoken">Original value: %1$s</string>
+    <string name="original_hint_dollars_spoken">Original value: %1$s dollars</string>
+    <string name="replace_lots_heading">Lots, as they will be after the reversal</string>
+    <string name="replace_original_picks">(the original\'s picks)</string>
+    <string name="replace_review_title">Review both</string>
+    <string name="replace_part_reversal">1. Reverse the original</string>
+    <string name="replace_part_replacement">2. Enter the replacement</string>
+    <string name="replace_reverses_spoken">Reverses %1$s, %2$s Eastern Time</string>
+    <string name="replace_reversal_date_spoken">Reversal date, %1$s Eastern Time</string>
+    <string name="change_button">Change</string>
+    <string name="change_reversal_date_spoken">Change reversal date</string>
+    <string name="replace_shares_removed">Shares removed</string>
+    <string name="replace_lots_put_back">Lots put back</string>
+    <string name="replace_lots_put_back_spoken">Lots put back, %1$s</string>
+    <string name="replace_realized_removed">Realized gain removed</string>
+    <string name="replace_realized_removed_spoken">Realized gain removed, %1$s dollars</string>
+    <string name="replace_new_entry">%1$s %2$s, %3$s</string>
+    <string name="replace_new_entry_spoken">%1$s %2$s, portfolio %3$s, %4$s Eastern Time</string>
+    <string name="replace_quantity_total">Quantity, total</string>
+    <string name="replace_quantity_total_value">%1$s, %2$s</string>
+    <string name="replace_quantity_total_spoken">Quantity %1$s, total %2$s dollars</string>
+    <string name="replace_combined_effect">Combined cash effect</string>
+    <string name="replace_combined_effect_spoken">Combined cash effect, %1$s dollars</string>
+    <string name="replace_both_or_neither">Both are saved together, or neither is.</string>
+    <string name="replace_confirm_button">Confirm and save both</string>
+    <!-- Wording 1: a refusal of the new entry keeps its 09 or 11 body after "Not saved. Nothing was changed." -->
+    <string name="not_saved">Not saved.</string>
+    <string name="replace_not_saved">Not saved. Nothing was changed.</string>
+    <string name="replace_cash_negative">Not saved. Nothing was changed. With the replacement, cash would be negative on %1$s by %2$s.</string>
+    <!-- Wording 2 and frame F: the reversal part's refusals. -->
+    <string name="replace_sell_not_reversed">Not saved. Nothing was changed. The reversal would make the lot of %1$s ET hold %2$s on %3$s. Reverse the sell of %4$s first, then use Reverse and re-enter with the reversal dated on or after that reversal.</string>
+    <string name="replace_too_early">Not saved. Nothing was changed. The reversal, dated %1$s, is applied before the sell of %2$s and would make the lot of %3$s ET hold %4$s. Use Change to pick a reversal date of %5$s or later (the date the sell was reversed).</string>
+    <string name="replace_reversal_cash">Not saved. Nothing was changed. The reversal would make cash negative on %1$s by %2$s.</string>
+    <string name="replace_not_reversible">Not saved. Nothing was changed. This entry cannot be reversed.</string>
 </resources>

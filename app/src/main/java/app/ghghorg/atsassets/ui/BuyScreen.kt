@@ -64,7 +64,8 @@ class BuyActions(
  * Buy entry (wireframe 10a frame A; 09 decisions 10 and 11): the portfolio as chips (no dropdown window), the ticker
  * in capitals, the date as digits like the Cash filters, quantity and total on a number keyboard, and the price per
  * share as the fields change. The refusals of the fields, of K1 and of the ticker check show here; the typed text
- * lives in the ViewModel.
+ * lives in the ViewModel. While a buy is replaced (14a), the title says so, a banner names the original, a changed field
+ * shows the original value beneath it, and refusals say nothing was changed (wireframe 10c frame A; wording 1 and 2).
  */
 @Composable
 fun BuyEntryScreen(
@@ -76,18 +77,32 @@ fun BuyEntryScreen(
     val form = state.buyForm
     val refusals = state.buyRefusals
     val ticker = TickerCheck.normalize(form.tickerText).orEmpty()
+    val original = state.replacedTransaction
+    val tickerChanged = original != null && ticker != original.ticker
     Column(
         modifier = modifier.fillMaxSize().imePadding().verticalScroll(rememberScrollState()).padding(16.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
-        TitleRow(stringResource(R.string.buy_button), actions.onBack)
+        TitleRow(stringResource(if (original != null) R.string.buy_replacing_title else R.string.buy_button), actions.onBack)
+        original?.let { ReplacingBanner(it) }
         PortfolioChips(state.portfolios, form.portfolioId, actions.onPortfolioChange)
+        PortfolioHint(state, form.portfolioId)
         OutlinedTextField(
             value = form.tickerText,
             onValueChange = actions.onTickerChange,
             modifier = Modifier.fillMaxWidth(),
             label = { Text(text = stringResource(R.string.buy_ticker_label)) },
-            supportingText = if (refusals.tickerEmpty) ({ Text(text = stringResource(R.string.buy_ticker_empty)) }) else null,
+            supportingText =
+            if (refusals.tickerEmpty || tickerChanged) {
+                {
+                    Column {
+                        if (refusals.tickerEmpty) Text(text = stringResource(R.string.buy_ticker_empty))
+                        TickerHint(original, ticker)
+                    }
+                }
+            } else {
+                null
+            },
             isError = refusals.tickerEmpty,
             keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.Characters, autoCorrectEnabled = false),
             singleLine = true,
@@ -101,6 +116,7 @@ fun BuyEntryScreen(
                 Column {
                     dateMessage(refusals.date)?.let { Text(text = it) }
                     Text(text = stringResource(R.string.date_note))
+                    DateHint(original, form.dateText)
                 }
             },
             isError = refusals.date != null,
@@ -113,12 +129,14 @@ fun BuyEntryScreen(
             onChange = actions.onQuantityChange,
             label = stringResource(R.string.buy_quantity_label),
             error = quantityMessage(refusals.quantity),
+            hint = { QuantityHint(original, form.quantityText) },
         )
         NumberField(
             value = form.totalText,
             onChange = actions.onTotalChange,
             label = stringResource(R.string.buy_total_label),
             error = totalMessage(refusals.total),
+            hint = { TotalHint(original, form.totalText, Money::parseCents) },
         )
         state.buyPricePerShare?.let { price ->
             val shown = Money.formatPerShare(price)
@@ -129,7 +147,17 @@ fun BuyEntryScreen(
                 modifier = Modifier.clearAndSetSemantics { contentDescription = spoken },
             )
         }
-        val messages = listOfNotNull(saveMessage(refusals.save), ruleMessage(refusals.rule), checkMessage(refusals.check, ticker))
+        val messages =
+            if (original != null) {
+                listOfNotNull(
+                    saveMessage(refusals.save),
+                    replacingMessage(ruleMessage(refusals.rule, replacing = true)),
+                    replacingMessage(checkMessage(refusals.check, ticker)),
+                    replaceRuleMessage(state, state.replaceRefusals.rule),
+                )
+            } else {
+                listOfNotNull(saveMessage(refusals.save), ruleMessage(refusals.rule), checkMessage(refusals.check, ticker))
+            }
         messages.forEach { message ->
             Text(
                 text = message,
@@ -286,19 +314,31 @@ internal fun PortfolioChips(
     }
 }
 
+// [hint], when given, shows under the error: the original value while an entry is replaced (14a).
 @Composable
 internal fun NumberField(
     value: String,
     onChange: (String) -> Unit,
     label: String,
     error: String?,
+    hint: (@Composable () -> Unit)? = null,
 ) {
     OutlinedTextField(
         value = value,
         onValueChange = onChange,
         modifier = Modifier.fillMaxWidth(),
         label = { Text(text = label) },
-        supportingText = error?.let { { Text(text = it) } },
+        supportingText =
+        if (error != null || hint != null) {
+            {
+                Column {
+                    error?.let { Text(text = it) }
+                    hint?.invoke()
+                }
+            }
+        } else {
+            null
+        },
         isError = error != null,
         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
         singleLine = true,
@@ -332,11 +372,18 @@ internal fun totalMessage(error: AmountError?): String? = when (error) {
 }
 
 // The field reasons of K1 (no opening balance, ticker, quantity, total) cannot reach here: the menu and the field
-// rules catch them first.
+// rules catch them first. While [replacing], the cash rule names the replacement (frame F).
 @Composable
-private fun ruleMessage(refusal: BuyRefusal?): String? = when (refusal) {
+private fun ruleMessage(
+    refusal: BuyRefusal?,
+    replacing: Boolean = false,
+): String? = when (refusal) {
     is BuyRefusal.NegativeCash ->
-        stringResource(R.string.cash_negative, refusal.date.toString(), Money.format(refusal.shortfallCents))
+        stringResource(
+            if (replacing) R.string.replace_cash_negative else R.string.cash_negative,
+            refusal.date.toString(),
+            Money.format(refusal.shortfallCents),
+        )
 
     is BuyRefusal.BeforeOpeningBalance ->
         stringResource(R.string.buy_before_opening_balance, refusal.openingDate.toString())

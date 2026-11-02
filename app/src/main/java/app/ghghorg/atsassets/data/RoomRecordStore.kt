@@ -185,6 +185,32 @@ class RoomRecordStore(
         dao.insertTransaction(transaction.toRow())
     }
 
+    override suspend fun savePair(
+        reversal: Transaction,
+        reversalCashLine: CashEntry,
+        replacement: Transaction,
+        replacementCashLine: CashEntry,
+    ) {
+        val dao = withContext(Dispatchers.IO) {
+            try {
+                database.transactionDao()
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: UnreadableDataException) {
+                throw e
+            } catch (e: Exception) {
+                throw UnreadableDataException("The stored data could not be opened.", e)
+            }
+        }
+        dao.insertPair(
+            reversal = reversal.toRow(),
+            reversalCashLine = reversalCashLine.toRow(),
+            replacement = replacement.toRow(),
+            replacementCashLine = replacementCashLine.toRow(),
+            allocations = replacement.allocationRows(),
+        )
+    }
+
     override suspend fun loadInstruments(): List<Instrument> = withContext(Dispatchers.IO) {
         try {
             database.instrumentDao().loadAll().map { it.toInstrument() }
