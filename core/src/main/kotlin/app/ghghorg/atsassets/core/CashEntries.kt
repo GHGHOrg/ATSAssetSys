@@ -80,6 +80,17 @@ object CashEntries {
         amountCents: Long,
         note: String,
         direction: CashDirection = CashDirection.IN,
+    ): CashEntryResult = replayed(existing, draftCreate(existing, id, type, date, amountCents, note, direction))
+
+    /** [create]'s rules and entry without the replay, for a Reverse and re-enter pair, which replays both (14b). */
+    internal fun draftCreate(
+        existing: List<CashEntry>,
+        id: String,
+        type: CashType,
+        date: LocalDate,
+        amountCents: Long,
+        note: String,
+        direction: CashDirection = CashDirection.IN,
     ): CashEntryResult {
         val refusal =
             when {
@@ -106,8 +117,7 @@ object CashEntries {
                 note = note,
                 enteredSeq = CashRules.nextSeq(existing),
             )
-        val replayed = CashRules.replay(existing + entry, from = date)
-        return if (replayed == null) CashEntryResult.Created(entry) else CashEntryResult.Refused(replayed)
+        return CashEntryResult.Created(entry)
     }
 
     /**
@@ -116,6 +126,15 @@ object CashEntries {
      * required: the reversal is an adjustment), date, then the replay. The note is stored as typed.
      */
     fun reverse(
+        existing: List<CashEntry>,
+        id: String,
+        originalId: String,
+        date: LocalDate,
+        note: String,
+    ): CashEntryResult = replayed(existing, draftReverse(existing, id, originalId, date, note))
+
+    /** [reverse]'s rules and entry without the replay, for a Reverse and re-enter pair, which replays both (14b). */
+    internal fun draftReverse(
         existing: List<CashEntry>,
         id: String,
         originalId: String,
@@ -156,7 +175,16 @@ object CashEntries {
                 enteredSeq = CashRules.nextSeq(existing),
                 reversesId = original.id,
             )
-        val replayed = CashRules.replay(existing + entry, from = date)
-        return if (replayed == null) CashEntryResult.Created(entry) else CashEntryResult.Refused(replayed)
+        return CashEntryResult.Created(entry)
+    }
+
+    // A draft's entry, kept if the replay from its date passes (4.1; 03 decision 5); a refusal passes through.
+    private fun replayed(
+        existing: List<CashEntry>,
+        draft: CashEntryResult,
+    ): CashEntryResult {
+        val entry = (draft as? CashEntryResult.Created)?.entry ?: return draft
+        val replayed = CashRules.replay(existing + entry, from = entry.date)
+        return if (replayed == null) draft else CashEntryResult.Refused(replayed)
     }
 }
