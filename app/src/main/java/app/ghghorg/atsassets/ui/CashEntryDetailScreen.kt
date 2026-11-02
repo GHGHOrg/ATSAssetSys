@@ -14,6 +14,7 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedCard
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
@@ -41,6 +42,7 @@ fun CashEntryDetail(
     onOpenEntry: (String) -> Unit,
     onOpenTransaction: () -> Unit,
     onReverse: (String) -> Unit,
+    onReenter: (String) -> Unit,
     onBack: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -92,6 +94,13 @@ fun CashEntryDetail(
         if (state.reverseOffered) {
             Button(onClick = { onReverse(defaultNote) }) {
                 Text(text = stringResource(R.string.reverse_button))
+            }
+        }
+        // Reverse and re-enter on a direct cash entry (14b; 10b marker 19), its reversal with the same fixed note.
+        if (state.detailReenterOffered) {
+            val spoken = stringResource(R.string.reenter_cash_spoken, cashTypeLower(entry.type), entry.date.toString())
+            OutlinedButton(onClick = { onReenter(defaultNote) }, modifier = Modifier.semantics { contentDescription = spoken }) {
+                Text(text = stringResource(R.string.reenter_button))
             }
         }
     }
@@ -243,9 +252,9 @@ private fun ReversalButtons(
     }
 }
 
-/** The type in lower case, for the reversal title and the pre-filled note (wireframe 10b, marker 19). */
+/** The type in lower case, for the reversal title and the pre-filled note (wireframe 10b, marker 19); also 14b's banner. */
 @Composable
-private fun cashTypeLower(type: CashType): String = when (type) {
+internal fun cashTypeLower(type: CashType): String = when (type) {
     CashType.DEPOSIT -> stringResource(R.string.cash_type_deposit_lower)
     CashType.WITHDRAWAL -> stringResource(R.string.cash_type_withdrawal_lower)
     CashType.INTEREST_DIVIDEND -> stringResource(R.string.cash_type_interest_dividend_lower)

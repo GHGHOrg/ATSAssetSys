@@ -13,6 +13,7 @@ import app.ghghorg.atsassets.core.CashEntry
 import app.ghghorg.atsassets.core.CashEntryRefusal
 import app.ghghorg.atsassets.core.CashEntryResult
 import app.ghghorg.atsassets.core.CashFilter
+import app.ghghorg.atsassets.core.CashPairResult
 import app.ghghorg.atsassets.core.CashRow
 import app.ghghorg.atsassets.core.CashRules
 import app.ghghorg.atsassets.core.CashType
@@ -51,6 +52,7 @@ import app.ghghorg.atsassets.core.SellResult
 import app.ghghorg.atsassets.core.Sells
 import app.ghghorg.atsassets.core.SoldPiece
 import app.ghghorg.atsassets.core.SplitEffect
+import app.ghghorg.atsassets.core.SplitPairResult
 import app.ghghorg.atsassets.core.SplitRatio
 import app.ghghorg.atsassets.core.SplitRefusal
 import app.ghghorg.atsassets.core.SplitResult
@@ -120,16 +122,42 @@ private const val PREVIEW_ID = "preview"
 // replay leaves the reversal's line unjudged by its id on a shared date (14a decision 5).
 private val PROBE_IDS = ReentryIds("check-r", "check-rc", "check-n", "check-nc")
 
+/** A pair K1 passed: a buy or sell with their cash lines (14a), a split, or a cash entry (14b). */
+private sealed interface ReplacePair {
+    data class Trade(
+        val created: ReentryResult.Created,
+    ) : ReplacePair
+
+    data class Split(
+        val created: SplitPairResult.Created,
+    ) : ReplacePair
+
+    data class Cash(
+        val created: CashPairResult.Created,
+    ) : ReplacePair
+}
+
+/** K1's answer for a pair of any kind. */
+private sealed interface PairCheck {
+    data class Passed(
+        val pair: ReplacePair,
+    ) : PairCheck
+
+    data class Refused(
+        val reason: ReentryRefusal,
+    ) : PairCheck
+}
+
 /** The pair at Review (14a decision 3): it passes, opens the review with a reversal-date refusal, or stays on the entry. */
 private sealed interface PairReview {
-    val created: ReentryResult.Created?
+    val created: ReplacePair?
 
     data class Passes(
-        override val created: ReentryResult.Created,
+        override val created: ReplacePair,
     ) : PairReview
 
     data class OnReview(
-        override val created: ReentryResult.Created,
+        override val created: ReplacePair,
         val refusal: ReentryRefusal,
     ) : PairReview
 
@@ -137,24 +165,35 @@ private sealed interface PairReview {
     data class OnEntry(
         val reason: ReentryRefusal?,
     ) : PairReview {
-        override val created: ReentryResult.Created? get() = null
+        override val created: ReplacePair? get() = null
     }
 }
 
-// Leaves Reverse and re-enter: the pair's state is cleared and the entry text it filled in is not kept (14a).
-private fun AppState.leftReplace(): AppState = if (replacingId == null) {
-    this
-} else {
-    copy(
+// The pair shown on the combined review, in the field of its kind; the others cleared.
+private fun AppState.withPair(pair: ReplacePair?): AppState = copy(
+    replaceReview = (pair as? ReplacePair.Trade)?.created,
+    replaceSplitReview = (pair as? ReplacePair.Split)?.created,
+    replaceCashReview = (pair as? ReplacePair.Cash)?.created,
+)
+
+// Leaves Reverse and re-enter: the pair's state is cleared and the entry text it filled in is not kept (14a, 14b). Only
+// the form of the replaced entry's kind is cleared.
+private fun AppState.leftReplace(): AppState {
+    if (replacingId == null && replacingCashId == null) return this
+    val kind = replacedTransaction?.type
+    return copy(
         replacingId = null,
+        replacingCashId = null,
         replaceReversalDate = "",
+        replaceReversalNote = "",
         replaceDateEditing = false,
         replaceRefusals = ReplaceRefusals(),
-        replaceReview = null,
         replaceStartingPicks = emptyMap(),
-        buyForm = BuyForm(),
-        sellForm = SellForm(),
-    )
+        buyForm = if (kind == TransactionType.BUY) BuyForm() else buyForm,
+        sellForm = if (kind == TransactionType.SELL) SellForm() else sellForm,
+        splitForm = if (kind == TransactionType.SPLIT) SplitForm() else splitForm,
+        form = if (replacingCashId != null) FormState() else form,
+    ).withPair(null)
 }
 
 /** Why a transaction's reversal was refused, reasons only (D9): the date field, K1's rule, or the save. */
@@ -437,6 +476,12 @@ data class AppState(
     val replaceReview: ReentryResult.Created? = null,
     // A replaced sell's first picks as typed, for "(the original's picks)" while they are unchanged (10c marker 9).
     val replaceStartingPicks: Map<String, String> = emptyMap(),
+    // 14b: the cash entry being replaced (FORM), the reversal's fixed note (decision 1), and the pair K1 made at Review
+    // for a cash entry or a split.
+    val replacingCashId: String? = null,
+    val replaceReversalNote: String = "",
+    val replaceCashReview: CashPairResult.Created? = null,
+    val replaceSplitReview: SplitPairResult.Created? = null,
     val reversal: ReversalForm = ReversalForm(),
     val cashFilterForm: CashFilterForm = CashFilterForm(),
     // In the order they were created (spec 3).
@@ -522,6 +567,12 @@ data class AppState(
             return transactions + Reversals.draft(entries, transactions, original, PREVIEW_ID, date)
         }
 
+    /** The cash entry Reverse and re-enter replaces (14b), for the banner and the "Original: …" hints. */
+    val replacedCashEntry: CashEntry? get() = replacingCashId?.let { id -> entries.firstOrNull { it.id == id } }
+
+    /** Reverse and re-enter on a direct cash entry not yet reversed, not a reversal (4.6; 14b). */
+    val detailReenterOffered: Boolean get() = detailEntry?.let { Reentries.cashOffered(entries, it) } ?: false
+
     /** The original Reverse and re-enter replaces (14a), for the banner and the "Original: …" hints (10c marker 2). */
     val replacedTransaction: Transaction? get() = replacingId?.let { id -> transactions.firstOrNull { it.id == id } }
 
@@ -537,9 +588,14 @@ data class AppState(
             return Reversals.effect(transactions + draft, draft)
         }
 
-    /** The sum of both parts' cash effects (10c marker 7). */
+    /** The new split's shares at its place, before and after, on the combined review (14b; 10c marker 11). */
+    val replaceSplitEffect: SplitEffect?
+        get() = replaceSplitReview?.let { Splits.effect(transactions + it.reversal + it.replacement, it.replacement) }
+
+    /** The sum of both parts' cash effects (10c marker 7); none for a split. */
     val replaceCombinedCents: Long?
         get() = replaceReview?.let { it.reversalCashLine.amountCents + it.replacementCashLine.amountCents }
+            ?: replaceCashReview?.let { it.reversal.amountCents + it.replacement.amountCents }
 
     /** The pieces of the new sell on the combined review, oldest lot first (10c marker 10). */
     val replacePieces: List<SoldPiece>
@@ -787,9 +843,17 @@ class AppViewModel(
         mutableState.update { it.copy(form = it.form.copy(direction = direction), refusals = it.refusals.copy(cash = null)) }
     }
 
-    /** Back from the form to the tab it was opened from. The typed text is kept and the refusals are cleared. Ignored outside FORM. */
+    /**
+     * Back from the form to the tab it was opened from; the typed text is kept and the refusals are cleared. While a cash
+     * entry is replaced, back to its detail, nothing kept (14b). Ignored outside FORM.
+     */
     fun closeForm() {
-        if (mutableState.value.screen != Screen.FORM) return
+        val current = mutableState.value
+        if (current.screen != Screen.FORM) return
+        if (current.replacingCashId != null) {
+            mutableState.update { it.copy(screen = Screen.DETAIL, refusals = Refusals()).leftReplace() }
+            return
+        }
         mutableState.update { it.copy(screen = Screen.TABS, refusals = Refusals()) }
     }
 
@@ -824,6 +888,10 @@ class AppViewModel(
                 else -> null
             }
         val cents = (amount as? AmountResult.Cents)?.value
+        if (current.replacingCashId != null) {
+            reviewReplacedCash(current, Refusals(amount = amountError, date = dateRefusal))
+            return
+        }
         val ruleRefusals =
             if (form.type == CashType.OPENING_BALANCE) {
                 openingBalanceRefusals(current, date, cents)
@@ -834,6 +902,39 @@ class AppViewModel(
         val allFine = refusals == Refusals()
         mutableState.update {
             it.copy(screen = if (allFine) Screen.REVIEW else Screen.FORM, refusals = refusals)
+        }
+    }
+
+    /**
+     * Review of a replacing cash entry (14b): the field rules and the note rules (judged on their own, with stand-ins),
+     * then K1's pair rules; the new entry's cash rules show as on the plain form, the reversal's in replaceRefusals, and
+     * only a reversal-date refusal opens the combined review (14a decision 3).
+     */
+    private fun reviewReplacedCash(
+        current: AppState,
+        fieldRefusals: Refusals,
+    ) {
+        val noteRule = cashNoteRule(current)
+        val review = pairAtReview(current)
+        val entryRule = (review as? PairReview.OnEntry)?.reason
+        val refusals =
+            fieldRefusals.copy(
+                noteHasLineBreak = noteRule == CashEntryRefusal.NoteHasLineBreak,
+                noteRequired = noteRule == CashEntryRefusal.NoteRequired,
+                cash = (entryRule as? ReentryRefusal.OfCash)?.reason,
+            )
+        if (refusals != Refusals() || review is PairReview.OnEntry) {
+            val reversalRule = entryRule as? ReentryRefusal.OfCashReversal
+            mutableState.update { it.copy(refusals = refusals, replaceRefusals = ReplaceRefusals(rule = reversalRule)) }
+            return
+        }
+        mutableState.update {
+            it.copy(
+                screen = Screen.REPLACE_REVIEW,
+                refusals = Refusals(),
+                replaceRefusals = ReplaceRefusals(rule = (review as? PairReview.OnReview)?.refusal),
+                replaceDateEditing = DateDigits.toDate(it.replaceReversalDate) == null,
+            ).withPair(review.created)
         }
     }
 
@@ -1230,10 +1331,27 @@ class AppViewModel(
                 replaceReversalDate = date,
                 replaceDateEditing = false,
                 replaceRefusals = ReplaceRefusals(),
-                replaceReview = null,
-            )
+            ).withPair(null)
         mutableState.value =
             when (original.type) {
+                // A split starts with its own ratio (14b; 10c marker 11).
+                TransactionType.SPLIT -> {
+                    val ratio = original.split ?: return
+                    replacing.copy(
+                        screen = Screen.SPLIT,
+                        splitForm =
+                        SplitForm(
+                            portfolioId = original.portfolioId,
+                            ticker = original.ticker,
+                            dateText = date,
+                            toText = ratio.to.toString(),
+                            fromText = ratio.from.toString(),
+                        ),
+                        splitRefusals = SplitRefusals(),
+                        splitReview = null,
+                    )
+                }
+
                 TransactionType.BUY -> {
                     val quantity = Reentries.startingQuantity(after, original, original.date, draft.enteredSeq + 1)
                     replacing.copy(
@@ -1271,6 +1389,36 @@ class AppViewModel(
             }
     }
 
+    /**
+     * Reverse and re-enter on a direct cash entry (14b; 10c frame E): the cash form with the original's type, date,
+     * amount (as a positive number with its direction) and note. The reversal's note is [defaultNote], fixed (decision
+     * 1); the screen passes it because its wording is D9 and lives in the strings, as for Reverse (05).
+     */
+    fun openReenterCash(defaultNote: String) {
+        val current = mutableState.value
+        if (current.screen != Screen.DETAIL || !current.detailReenterOffered) return
+        val original = current.detailEntry ?: return
+        val outgoing = original.amountCents < 0L
+        mutableState.value =
+            current.copy(
+                screen = Screen.FORM,
+                form =
+                FormState(
+                    dateText = original.date.toString(),
+                    amountText = BigDecimal.valueOf(Math.absExact(original.amountCents), 2).toPlainString(),
+                    noteText = original.note,
+                    type = original.type,
+                    direction = if (original.type == CashType.ADJUSTMENT && outgoing) CashDirection.OUT else CashDirection.IN,
+                ),
+                refusals = Refusals(),
+                replacingCashId = original.id,
+                replaceReversalNote = defaultNote,
+                replaceReversalDate = original.date.toString().replace("-", ""),
+                replaceDateEditing = false,
+                replaceRefusals = ReplaceRefusals(),
+            ).withPair(null)
+    }
+
     /** Change on the combined review: the reversal date becomes an inline field (14a decision 4). */
     fun changeReplaceDate() {
         val current = mutableState.value
@@ -1289,9 +1437,9 @@ class AppViewModel(
         val dated = current.copy(replaceReversalDate = text, replaceRefusals = ReplaceRefusals(date = refusal))
         val date = DateDigits.toDate(text)
         mutableState.value =
-            when (val result = date?.let { pairOf(dated, PROBE_IDS, it) }) {
-                is ReentryResult.Created -> dated.copy(replaceReview = result)
-                is ReentryResult.Refused -> dated.copy(replaceRefusals = ReplaceRefusals(rule = result.reason))
+            when (val result = date?.let { pairCheck(dated, PROBE_IDS, it) }) {
+                is PairCheck.Passed -> dated.withPair(result.pair)
+                is PairCheck.Refused -> dated.copy(replaceRefusals = ReplaceRefusals(rule = result.reason))
                 null -> dated
             }
     }
@@ -1300,9 +1448,15 @@ class AppViewModel(
     fun backToReplaceEntry() {
         val current = mutableState.value
         if (current.screen != Screen.REPLACE_REVIEW || current.saving) return
-        val entry = if (current.replacedTransaction?.type == TransactionType.SELL) Screen.SELL else Screen.BUY
+        val entry =
+            when {
+                current.replacingCashId != null -> Screen.FORM
+                current.replacedTransaction?.type == TransactionType.SELL -> Screen.SELL
+                current.replacedTransaction?.type == TransactionType.SPLIT -> Screen.SPLIT
+                else -> Screen.BUY
+            }
         mutableState.update {
-            it.copy(screen = entry, replaceRefusals = ReplaceRefusals(), replaceReview = null, replaceDateEditing = false)
+            it.copy(screen = entry, replaceRefusals = ReplaceRefusals(), replaceDateEditing = false).withPair(null)
         }
     }
 
@@ -1314,7 +1468,7 @@ class AppViewModel(
         val current = mutableState.value
         if (current.screen != Screen.REPLACE_REVIEW || current.saving) return
         val target = store ?: return
-        val original = current.replacedTransaction ?: return
+        if (current.replacedTransaction == null && current.replacedCashEntry == null) return
         val dateRefusal = digitsDateRefusal(current.replaceReversalDate)
         val date = DateDigits.toDate(current.replaceReversalDate)
         if (dateRefusal != null || date == null) {
@@ -1324,11 +1478,11 @@ class AppViewModel(
             }
             return
         }
-        val created =
-            when (val result = pairOf(current, ReentryIds(newId(), newId(), newId(), newId()), date)) {
-                is ReentryResult.Created -> result
+        val pair =
+            when (val result = pairCheck(current, ReentryIds(newId(), newId(), newId(), newId()), date)) {
+                is PairCheck.Passed -> result.pair
 
-                is ReentryResult.Refused -> {
+                is PairCheck.Refused -> {
                     mutableState.update { it.copy(replaceRefusals = ReplaceRefusals(rule = result.reason)) }
                     return
                 }
@@ -1341,18 +1495,14 @@ class AppViewModel(
         mutableState.update { it.copy(saving = true, replaceRefusals = ReplaceRefusals()) }
         viewModelScope.launch {
             try {
-                target.savePair(created.reversal, created.reversalCashLine, created.replacement, created.replacementCashLine)
-                mutableState.update {
-                    valued(
-                        it.copy(
-                            screen = Screen.TRANSACTION,
-                            transactionId = original.id,
-                            transactions = it.transactions + created.reversal + created.replacement,
-                            entries = it.entries + created.reversalCashLine + created.replacementCashLine,
-                            saving = false,
-                        ).leftReplace(),
-                    )
+                // Each kind is saved as one action (K2): a trade pair with its cash lines, a split pair, or the two cash
+                // entries as one batch. The app returns to the original's detail (14a decision 2; 05).
+                when (pair) {
+                    is ReplacePair.Trade -> pair.created.let { target.savePair(it.reversal, it.reversalCashLine, it.replacement, it.replacementCashLine) }
+                    is ReplacePair.Split -> target.saveSplitPair(pair.created.reversal, pair.created.replacement)
+                    is ReplacePair.Cash -> target.saveCashEntries(listOf(pair.created.reversal, pair.created.replacement))
                 }
+                mutableState.update { valued(saved(it, pair).copy(saving = false).leftReplace()) }
             } catch (e: CancellationException) {
                 throw e
             } catch (e: UnreadableDataException) {
@@ -1360,6 +1510,122 @@ class AppViewModel(
             } catch (e: Exception) {
                 mutableState.update { it.copy(saving = false, replaceRefusals = ReplaceRefusals(save = SaveRefusal.SAVE_FAILED)) }
             }
+        }
+    }
+
+    // The records of a saved pair added, on the original's detail: a transaction's, or a cash entry's.
+    private fun saved(
+        state: AppState,
+        pair: ReplacePair,
+    ): AppState = when (pair) {
+        is ReplacePair.Trade ->
+            state.copy(
+                screen = Screen.TRANSACTION,
+                transactions = state.transactions + pair.created.reversal + pair.created.replacement,
+                entries = state.entries + pair.created.reversalCashLine + pair.created.replacementCashLine,
+            )
+
+        is ReplacePair.Split ->
+            state.copy(screen = Screen.TRANSACTION, transactions = state.transactions + pair.created.reversal + pair.created.replacement)
+
+        is ReplacePair.Cash ->
+            state.copy(screen = Screen.DETAIL, entries = state.entries + pair.created.reversal + pair.created.replacement)
+    }
+
+    /** K1's pair rules for the replaced entry of any kind; null when an entry field does not parse. */
+    private fun pairCheck(
+        current: AppState,
+        ids: ReentryIds,
+        reversalDate: LocalDate,
+        standIns: Boolean = false,
+    ): PairCheck? {
+        current.replacedCashEntry?.let { return cashPairOf(current, it, ids, reversalDate, standIns) }
+        val original = current.replacedTransaction ?: return null
+        if (original.type == TransactionType.SPLIT) return splitPairOf(current, original, ids, reversalDate, standIns)
+        return when (val result = pairOf(current, ids, reversalDate, standIns)) {
+            is ReentryResult.Created -> PairCheck.Passed(ReplacePair.Trade(result))
+            is ReentryResult.Refused -> PairCheck.Refused(result.reason)
+            null -> null
+        }
+    }
+
+    /** A split's pair on the typed split (14b); with [standIns], a bad number makes the ratio 2 for 1, as reviewSplit does. */
+    private fun splitPairOf(
+        current: AppState,
+        original: Transaction,
+        ids: ReentryIds,
+        reversalDate: LocalDate,
+        standIns: Boolean,
+    ): PairCheck? {
+        val form = current.splitForm
+        val date = DateDigits.toDate(form.dateText) ?: return null
+        val to = ratioNumber(form.toText)
+        val from = ratioNumber(form.fromText)
+        val ratio =
+            when {
+                to != null && from != null -> SplitRatio(to, from)
+                standIns -> SplitRatio(2, 1)
+                else -> return null
+            }
+        val result =
+            Reentries.reenterSplit(
+                cashEntries = current.entries,
+                transactions = current.transactions,
+                portfolios = current.portfolios,
+                reversalId = ids.reversalId,
+                replacementId = ids.replacementId,
+                originalId = original.id,
+                reversalDate = reversalDate,
+                portfolioId = form.portfolioId.orEmpty(),
+                ticker = form.ticker ?: if (standIns) PROBE_ID else return null,
+                date = date,
+                ratio = ratio,
+            )
+        return when (result) {
+            is SplitPairResult.Created -> PairCheck.Passed(ReplacePair.Split(result))
+            is SplitPairResult.Refused -> PairCheck.Refused(result.reason)
+        }
+    }
+
+    /** The form's note judged on its own, with a stand-in date and amount; null when the note passes. */
+    private fun cashNoteRule(current: AppState): CashEntryRefusal? {
+        val form = current.form
+        val probe = CashEntries.create(current.entries, PROBE_ID, form.type, marketDate.today(), 1L, form.noteText, form.direction)
+        return (probe as? CashEntryResult.Refused)?.reason
+    }
+
+    /**
+     * A cash entry's pair on the typed form (14b), the reversal with its fixed note (decision 1); null when the date or
+     * amount does not parse. With [standIns], a refused note is replaced by a stand-in, so the cash rule shows beside the
+     * note's; a note that passes is kept, as the review shows it (14b phone check 3).
+     */
+    private fun cashPairOf(
+        current: AppState,
+        original: CashEntry,
+        ids: ReentryIds,
+        reversalDate: LocalDate,
+        standIns: Boolean,
+    ): PairCheck? {
+        val form = current.form
+        val date = MarketDate.parse(form.dateText.trim()) ?: return null
+        val cents = (Money.parseCents(form.amountText) as? AmountResult.Cents)?.value ?: return null
+        val result =
+            Reentries.reenterCash(
+                existing = current.entries,
+                reversalId = ids.reversalId,
+                originalId = original.id,
+                reversalDate = reversalDate,
+                reversalNote = current.replaceReversalNote,
+                replacementId = ids.replacementId,
+                type = form.type,
+                date = date,
+                amountCents = cents,
+                note = if (standIns && cashNoteRule(current) != null) PROBE_NOTE else form.noteText,
+                direction = form.direction,
+            )
+        return when (result) {
+            is CashPairResult.Created -> PairCheck.Passed(ReplacePair.Cash(result))
+            is CashPairResult.Refused -> PairCheck.Refused(result.reason)
         }
     }
 
@@ -1429,24 +1695,24 @@ class AppViewModel(
      * refusal stays on the entry screen.
      */
     private fun pairAtReview(current: AppState): PairReview {
-        val original = current.replacedTransaction ?: return PairReview.OnEntry(null)
-        val date = DateDigits.toDate(current.replaceReversalDate) ?: original.date
-        return when (val result = pairOf(current, PROBE_IDS, date, standIns = true)) {
+        val originalDate = current.replacedCashEntry?.date ?: current.replacedTransaction?.date ?: return PairReview.OnEntry(null)
+        val date = DateDigits.toDate(current.replaceReversalDate) ?: originalDate
+        return when (val result = pairCheck(current, PROBE_IDS, date, standIns = true)) {
             null -> PairReview.OnEntry(null)
 
-            is ReentryResult.Created -> PairReview.Passes(result)
+            is PairCheck.Passed -> PairReview.Passes(result.pair)
 
-            is ReentryResult.Refused -> {
+            is PairCheck.Refused -> {
                 val reason = (result.reason as? ReentryRefusal.OfReversal)?.reason
                 val earliest =
                     when {
                         !result.reason.fixedOnReview -> null
                         reason is ReversalRefusal.TooEarly -> reason.earliest
-                        else -> original.date
+                        else -> originalDate
                     }
-                when (val retried = earliest?.let { pairOf(current, PROBE_IDS, it, standIns = true) }) {
-                    is ReentryResult.Created -> PairReview.OnReview(retried, result.reason)
-                    is ReentryResult.Refused -> PairReview.OnEntry(retried.reason)
+                when (val retried = earliest?.let { pairCheck(current, PROBE_IDS, it, standIns = true) }) {
+                    is PairCheck.Passed -> PairReview.OnReview(retried.pair, result.reason)
+                    is PairCheck.Refused -> PairReview.OnEntry(retried.reason)
                     null -> PairReview.OnEntry(result.reason)
                 }
             }
@@ -1960,10 +2226,9 @@ class AppViewModel(
             it.copy(
                 screen = Screen.REPLACE_REVIEW,
                 sellRefusals = SellRefusals(),
-                replaceReview = review.created,
                 replaceRefusals = ReplaceRefusals(rule = (review as? PairReview.OnReview)?.refusal),
                 replaceDateEditing = DateDigits.toDate(it.replaceReversalDate) == null,
-            )
+            ).withPair(review.created)
         }
     }
 
@@ -2150,9 +2415,17 @@ class AppViewModel(
         it.copy(splitForm = it.splitForm.copy(fromText = text), splitRefusals = it.splitRefusals.copy(from = null, rule = null))
     }
 
-    /** Back from the split entry to the holding it came from. The typed text is kept. */
+    /**
+     * Back from the split entry to the holding it came from; the typed text is kept. While a split is replaced, back to
+     * its detail, nothing kept (14b).
+     */
     fun closeSplit() {
-        if (mutableState.value.screen != Screen.SPLIT) return
+        val current = mutableState.value
+        if (current.screen != Screen.SPLIT) return
+        if (current.replacingId != null) {
+            mutableState.update { it.copy(screen = Screen.TRANSACTION, splitRefusals = SplitRefusals()).leftReplace() }
+            return
+        }
         mutableState.update { it.copy(screen = Screen.HOLDING, splitRefusals = SplitRefusals()) }
     }
 
@@ -2172,21 +2445,56 @@ class AppViewModel(
                 to = ratioError(form.toText),
                 from = ratioError(form.fromText),
             )
+        if (current.replacingId != null) {
+            reviewReplacedSplit(current, fieldRefusals)
+            return
+        }
         val probe = splitOf(current, PROBE_ID, standIns = true)
-        val reason = (probe as? SplitResult.Refused)?.reason
-        val ratioStandIn = fieldRefusals.to != null || fieldRefusals.from != null
-        val rule =
-            when {
-                ratioStandIn && (reason is SplitRefusal.SellShort || reason == SplitRefusal.RatioEqual) -> null
-                form.ticker == null && reason == SplitRefusal.TickerNotBought -> null
-                else -> reason
-            }
-        val refusals = fieldRefusals.copy(rule = rule)
+        val refusals = fieldRefusals.copy(rule = shownSplitRule(current, fieldRefusals, (probe as? SplitResult.Refused)?.reason))
         if (refusals != SplitRefusals() || probe !is SplitResult.Created) {
             mutableState.update { it.copy(splitRefusals = refusals) }
             return
         }
         mutableState.update { it.copy(screen = Screen.SPLIT_REVIEW, splitReview = probe, splitRefusals = SplitRefusals()) }
+    }
+
+    // Review of a replacing split (14b): the new split's rules show as on the plain screen, the reversal's in
+    // replaceRefusals; only a reversal-date refusal opens the combined review (14a decision 3).
+    private fun reviewReplacedSplit(
+        current: AppState,
+        fieldRefusals: SplitRefusals,
+    ) {
+        val review = pairAtReview(current)
+        val entryRule = (review as? PairReview.OnEntry)?.reason
+        val refusals = fieldRefusals.copy(rule = shownSplitRule(current, fieldRefusals, (entryRule as? ReentryRefusal.OfSplit)?.reason))
+        if (refusals != SplitRefusals() || review is PairReview.OnEntry) {
+            val reversalRule = entryRule as? ReentryRefusal.OfReversal
+            mutableState.update { it.copy(splitRefusals = refusals, replaceRefusals = ReplaceRefusals(rule = reversalRule)) }
+            return
+        }
+        mutableState.update {
+            it.copy(
+                screen = Screen.REPLACE_REVIEW,
+                splitRefusals = SplitRefusals(),
+                replaceRefusals = ReplaceRefusals(rule = (review as? PairReview.OnReview)?.refusal),
+                replaceDateEditing = DateDigits.toDate(it.replaceReversalDate) == null,
+            ).withPair(review.created)
+        }
+    }
+
+    // A stand-in ratio makes the ratio and replay rules meaningless, and a missing ticker the ticker rule; the field
+    // refusals say why (12).
+    private fun shownSplitRule(
+        current: AppState,
+        fieldRefusals: SplitRefusals,
+        reason: SplitRefusal?,
+    ): SplitRefusal? {
+        val ratioStandIn = fieldRefusals.to != null || fieldRefusals.from != null
+        return when {
+            ratioStandIn && (reason is SplitRefusal.SellShort || reason == SplitRefusal.RatioEqual) -> null
+            current.splitForm.ticker == null && reason == SplitRefusal.TickerNotBought -> null
+            else -> reason
+        }
     }
 
     /** Back to edit from the split review. The typed text is kept. */
@@ -2413,11 +2721,10 @@ class AppViewModel(
                             screen = if (replacing) Screen.REPLACE_REVIEW else Screen.BUY_REVIEW,
                             instruments = instruments,
                             checking = false,
-                            replaceReview = pair?.created,
                             replaceRefusals = ReplaceRefusals(rule = (pair as? PairReview.OnReview)?.refusal),
                             // An unfinished reversal date kept through Back to edit opens in its field (Deploy finding 1).
                             replaceDateEditing = replacing && DateDigits.toDate(state.replaceReversalDate) == null,
-                        )
+                        ).withPair(pair?.created)
                     }
 
                     is Verification.Refused -> mutableState.update {

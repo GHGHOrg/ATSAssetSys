@@ -1754,6 +1754,19 @@ internal class FakeStore(
         stored = stored + reversalCashLine + replacementCashLine
     }
 
+    val savedSplitPairs = mutableListOf<Pair<Transaction, Transaction>>()
+
+    /** Both or neither, as the Room store: a failure saves nothing. */
+    override suspend fun saveSplitPair(
+        reversal: Transaction,
+        replacement: Transaction,
+    ) {
+        gate?.await()
+        saveError?.let { throw it }
+        savedSplitPairs.add(reversal to replacement)
+        storedTransactions = storedTransactions + reversal + replacement
+    }
+
     override suspend fun loadInstruments(): List<Instrument> {
         loadError?.let { throw it }
         return storedInstruments

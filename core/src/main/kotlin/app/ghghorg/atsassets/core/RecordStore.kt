@@ -55,6 +55,15 @@ interface RecordStore {
         replacementCashLine: CashEntry,
     )
 
+    /**
+     * Saves a split's Reverse and re-enter pair together: the reversal and the new split, neither with a cash line; both
+     * or neither (4.6, K2). A cash entry's pair is two cash entries, saved by [saveCashEntries] as one batch.
+     */
+    suspend fun saveSplitPair(
+        reversal: Transaction,
+        replacement: Transaction,
+    )
+
     /** Throws [UnreadableDataException] if stored data exists but cannot be read. */
     suspend fun loadInstruments(): List<Instrument>
 

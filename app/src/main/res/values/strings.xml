@@ -338,4 +338,13 @@
     <string name="replace_too_early">Not saved. Nothing was changed. The reversal, dated %1$s, is applied before the sell of %2$s and would make the lot of %3$s ET hold %4$s. Use Change to pick a reversal date of %5$s or later (the date the sell was reversed).</string>
     <string name="replace_reversal_cash">Not saved. Nothing was changed. The reversal would make cash negative on %1$s by %2$s.</string>
     <string name="replace_not_reversible">Not saved. Nothing was changed. This entry cannot be reversed.</string>
+    <!-- Iteration 14b: Reverse and re-enter a split or a cash entry (wording 1 approved 2026-11-02, 14b file section 11). -->
+    <string name="cash_replacing_title">Cash entry (replacing)</string>
+    <string name="split_replacing_title">Split (replacing)</string>
+    <string name="replacing_banner_cash">Replacing the %1$s of %2$s ET: %3$s. Nothing changes until you confirm.</string>
+    <string name="replacing_banner_cash_spoken">Replacing the %1$s of %2$s Eastern Time: %3$s dollars. Nothing changes until you confirm.</string>
+    <string name="replacing_banner_split">Replacing the split of %1$s ET: %2$s %3$s. Nothing changes until you confirm.</string>
+    <string name="replacing_banner_split_spoken">Replacing the split of %1$s Eastern Time: %2$s %3$s. Nothing changes until you confirm.</string>
+    <string name="reenter_cash_spoken">Reverse and re-enter %1$s of %2$s Eastern Time</string>
+    <string name="replace_new_cash_spoken">%1$s, %2$s Eastern Time, %3$s dollars</string>
 </resources>

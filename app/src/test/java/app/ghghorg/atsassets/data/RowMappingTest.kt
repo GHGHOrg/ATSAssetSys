@@ -191,6 +191,18 @@ class RowMappingTest {
         assertEquals(emptyList<SellAllocationRow>(), later.allocationRows())
     }
 
+    // 14b: a split's pair is a reversal of the split and a new split, neither with a cash line or allocations.
+    @Test
+    fun aSplitPair_isReadBackUnchanged_throughTheStoredChecks() {
+        val splitReversal = reversal.copy(id = "r3", reversesId = "x1", date = LocalDate.of(2026, 3, 1), enteredSeq = 9L)
+        val newSplit = split.copy(id = "n3", enteredSeq = 10L, split = SplitRatio(1, 2))
+        val transactions = listOf(buy, split, splitReversal, newSplit)
+        assertEquals(emptyList<SellAllocationRow>(), newSplit.allocationRows())
+        assertEquals(null, newSplit.toRow().reversesId)
+        val read = checkReversals(withAllocations(transactions.map { it.toRow().toTransaction() }, emptyList()))
+        assertEquals(transactions, read)
+    }
+
     @Test
     fun aSellPair_isReadBackWithTheOriginalsAndTheNewSellsAllocations_eachInItsOwnSell() {
         val sellReversal = reversal.copy(id = "r2", reversesId = "s1", date = LocalDate.of(2026, 3, 1), enteredSeq = 9L)

@@ -442,14 +442,15 @@ class ReentriesTest {
         )
     }
 
+    // 14b: a split is offered too (it was not in 14a).
     @Test
-    fun reverseAndReenter_isOffered_onABuyOrSell_notReversed_andNotOnASplitOrAReversal() {
+    fun reverseAndReenter_isOffered_onABuySellOrSplit_notReversed_andNotOnAReversal() {
         val sale = sold("s1", "2026-03-01", "10", 120_000L, 3L, listOf(SellAllocation("b1", fraction(10))))
         val split = splitOn("x1", "2026-02-01", 2, 1, 4L)
         val transactions = listOf(tenFor1000, sale, split)
         assertTrue(Reentries.offered(transactions, tenFor1000))
         assertTrue(Reentries.offered(transactions, sale))
-        assertFalse(Reentries.offered(transactions, split))
+        assertTrue(Reentries.offered(transactions, split))
         val result = created(reenterSell(listOf(tenFor1000, sale), "s1", "2026-03-01", "2026-03-01", "10", 130_000L, listOf(Pick("b1", BigDecimal("10")))))
         val after = saved(listOf(tenFor1000, sale), result)
         assertFalse(Reentries.offered(after, sale))

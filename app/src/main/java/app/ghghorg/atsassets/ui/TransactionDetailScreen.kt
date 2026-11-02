@@ -133,7 +133,7 @@ private fun ReversalStatus(
                     Text(text = stringResource(R.string.reverse_button))
                 }
             }
-            // Reverse and re-enter on a buy or sell (14a; wireframe 10c marker 1); a split's comes in 14b.
+            // Reverse and re-enter on a buy or sell (14a; wireframe 10c marker 1) or a split (14b; marker 11).
             if (state.transactionReenterOffered) {
                 val spoken =
                     stringResource(

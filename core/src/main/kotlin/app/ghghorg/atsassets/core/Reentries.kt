@@ -28,9 +28,52 @@ sealed interface ReentryRefusal {
         val reason: SellRefusal,
     ) : ReentryRefusal
 
+    /** Part 1 of a cash entry's pair: its reversal, under the rules of 05 (14b). */
+    data class OfCashReversal(
+        val reason: CashEntryRefusal,
+    ) : ReentryRefusal
+
+    /** Part 2: the new cash entry, under the rules of 4.1 and 4.2, with the reversal applied (14b). */
+    data class OfCash(
+        val reason: CashEntryRefusal,
+    ) : ReentryRefusal
+
+    /** Part 2: the new split, under the rules of 4.1 and 4.5, with the reversal applied (14b). */
+    data class OfSplit(
+        val reason: SplitRefusal,
+    ) : ReentryRefusal
+
     /** A refusal about the reversal date, which Change on the combined review fixes (14a decision 3). */
     val fixedOnReview: Boolean
-        get() = this is OfReversal && (reason is ReversalRefusal.TooEarly || reason is ReversalRefusal.BeforeOriginal)
+        get() = when (this) {
+            is OfReversal -> reason is ReversalRefusal.TooEarly || reason is ReversalRefusal.BeforeOriginal
+            is OfCashReversal -> reason is CashEntryRefusal.BeforeOriginal
+            else -> false
+        }
+}
+
+sealed interface CashPairResult {
+    /** The reversal (an Adjustment) and the new cash entry, to be saved together as one batch (4.6, K2). */
+    data class Created(
+        val reversal: CashEntry,
+        val replacement: CashEntry,
+    ) : CashPairResult
+
+    data class Refused(
+        val reason: ReentryRefusal,
+    ) : CashPairResult
+}
+
+sealed interface SplitPairResult {
+    /** The split's reversal and the new split, to be saved together as one action (4.6, K2); neither has a cash line. */
+    data class Created(
+        val reversal: Transaction,
+        val replacement: Transaction,
+    ) : SplitPairResult
+
+    data class Refused(
+        val reason: ReentryRefusal,
+    ) : SplitPairResult
 }
 
 sealed interface ReentryResult {
@@ -54,12 +97,11 @@ sealed interface ReentryResult {
  * The ticker check of 4.3 is K5's, for a new buy only.
  */
 object Reentries {
-    /** Offered on a buy or sell that is not reversed yet; never on a reversal (4.6). A split and a cash entry come in 14b. */
+    /** Offered on a buy, sell (14a) or split (14b) that is not reversed yet; never on a reversal (4.6). A cash entry: [cashOffered]. */
     fun offered(
         transactions: List<Transaction>,
         transaction: Transaction,
-    ): Boolean = (transaction.type == TransactionType.BUY || transaction.type == TransactionType.SELL) &&
-        Reversals.offered(transactions, transaction)
+    ): Boolean = Reversals.offered(transactions, transaction)
 
     fun reenterBuy(
         cashEntries: List<CashEntry>,
@@ -176,6 +218,104 @@ object Reentries {
     ): BigDecimal {
         val factor = Holdings.splitFactor(transactions, original.portfolioId, original.ticker, original.place, Place(date, seq))
         return if (factor == Fraction.ONE) original.quantity else Sells.shown(Fraction.of(original.quantity) * factor)
+    }
+
+    /** Offered on a direct cash entry that is not a reversal and not reversed; never the opening balance or a trade line (4.6). */
+    fun cashOffered(
+        existing: List<CashEntry>,
+        entry: CashEntry,
+    ): Boolean = entry.type != CashType.OPENING_BALANCE &&
+        entry.type != CashType.TRADE &&
+        entry.reversesId == null &&
+        existing.none { it.reversesId == entry.id }
+
+    /**
+     * Reverse and re-enter of a direct cash entry (14b; 10c frame E): the reversal, an Adjustment of the opposite
+     * amount with [reversalNote] (05), then the new entry as a normal one after it, then one cash replay with both from
+     * the earlier of their dates, a shared date judged as one point (14a decision 5). A negative balance before the new
+     * entry's date is the reversal's; from that date on it is the new entry's.
+     */
+    fun reenterCash(
+        existing: List<CashEntry>,
+        reversalId: String,
+        originalId: String,
+        reversalDate: LocalDate,
+        reversalNote: String,
+        replacementId: String,
+        type: CashType,
+        date: LocalDate,
+        amountCents: Long,
+        note: String,
+        direction: CashDirection,
+    ): CashPairResult {
+        val reversal =
+            when (val first = CashEntries.draftReverse(existing, reversalId, originalId, reversalDate, reversalNote)) {
+                is CashEntryResult.Refused -> return CashPairResult.Refused(ReentryRefusal.OfCashReversal(first.reason))
+                is CashEntryResult.Created -> first.entry
+            }
+        val replacement =
+            when (val second = CashEntries.draftCreate(existing + reversal, replacementId, type, date, amountCents, note, direction)) {
+                is CashEntryResult.Refused -> return CashPairResult.Refused(ReentryRefusal.OfCash(second.reason))
+                is CashEntryResult.Created -> second.entry
+            }
+        val replayed =
+            CashRules.replay(
+                existing + reversal + replacement,
+                from = minOf(reversal.date, replacement.date),
+                notJudged = if (reversal.date == replacement.date) setOf(reversal.id) else emptySet(),
+            )
+        val refusal =
+            when {
+                replayed == null -> return CashPairResult.Created(reversal, replacement)
+                replayed is CashEntryRefusal.NegativeCash && replayed.date.isBefore(replacement.date) -> ReentryRefusal.OfCashReversal(replayed)
+                else -> ReentryRefusal.OfCash(replayed)
+            }
+        return CashPairResult.Refused(refusal)
+    }
+
+    /**
+     * Reverse and re-enter of a split (14b; 10c marker 11): the reversal under the rules of 13b (the original, whether it
+     * can be reversed, the date), then the new split as a normal one after it. The lots are checked once with both
+     * splits applied (4.6), so a later sell left short is the new split's: the reversal alone may take a lot below
+     * what a later sell took, which the new ratio puts back.
+     */
+    fun reenterSplit(
+        cashEntries: List<CashEntry>,
+        transactions: List<Transaction>,
+        portfolios: List<Portfolio>,
+        reversalId: String,
+        replacementId: String,
+        originalId: String,
+        reversalDate: LocalDate,
+        portfolioId: String,
+        ticker: String,
+        date: LocalDate,
+        ratio: SplitRatio,
+    ): SplitPairResult {
+        val original =
+            transactions.firstOrNull { it.id == originalId && it.type == TransactionType.SPLIT }
+                ?: return SplitPairResult.Refused(ReentryRefusal.OfReversal(ReversalRefusal.NotFound))
+        val refusal =
+            when {
+                !Reversals.offered(transactions, original) -> ReversalRefusal.NotReversible
+                reversalDate.isBefore(original.date) -> ReversalRefusal.BeforeOriginal(original.date)
+                else -> null
+            }
+        if (refusal != null) return SplitPairResult.Refused(ReentryRefusal.OfReversal(refusal))
+        val reversal = Reversals.draft(cashEntries, transactions, original, reversalId, reversalDate)
+        val replacement =
+            when (val split = Splits.split(cashEntries, transactions + reversal, portfolios, replacementId, portfolioId, ticker, date, ratio)) {
+                is SplitResult.Refused -> return SplitPairResult.Refused(ReentryRefusal.OfSplit(split.reason))
+                is SplitResult.Created -> split.transaction
+            }
+        // A new split on another holding leaves the original's with the reversal alone, which Splits.split does not check
+        // (14b Deploy finding 1).
+        if (portfolioId != original.portfolioId || replacement.ticker != original.ticker) {
+            Holdings.firstNegative(transactions + reversal + replacement, original.portfolioId, original.ticker)?.let { short ->
+                return SplitPairResult.Refused(ReentryRefusal.OfReversal(ReversalRefusal.SellShort(short.place.date)))
+            }
+        }
+        return SplitPairResult.Created(reversal, replacement)
     }
 
     private sealed interface FirstPart {

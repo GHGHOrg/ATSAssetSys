@@ -66,6 +66,8 @@ fun CashEntryForm(
     val dateError = dateMessage(refusals.date)
     val amountError = amountMessage(refusals.amount)
     val noteError = noteMessage(refusals.noteHasLineBreak, refusals.noteRequired)
+    // A cash entry replaced by Reverse and re-enter (14b; wording 1): its values, for the banner and the hints.
+    val original = state.replacedCashEntry
     Column(
         modifier = modifier.fillMaxSize().imePadding().verticalScroll(rememberScrollState()).padding(16.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp),
@@ -74,9 +76,17 @@ fun CashEntryForm(
             Text(text = stringResource(R.string.back_button))
         }
         Text(
-            text = stringResource(if (opening) R.string.opening_balance else R.string.cash_entry_button),
+            text =
+            stringResource(
+                when {
+                    original != null -> R.string.cash_replacing_title
+                    opening -> R.string.opening_balance
+                    else -> R.string.cash_entry_button
+                },
+            ),
             style = MaterialTheme.typography.titleLarge,
         )
+        original?.let { CashReplacingBanner(it) }
         OutlinedCard(modifier = Modifier.fillMaxWidth()) {
             Column(modifier = Modifier.padding(12.dp)) {
                 Text(
@@ -96,6 +106,10 @@ fun CashEntryForm(
                 } else {
                     TypeChips(type, onTypeChange)
                 }
+                if (original != null && type != original.type) {
+                    val shown = cashTypeLabel(original.type)
+                    OriginalHint(shown, stringResource(R.string.original_hint_spoken, shown))
+                }
             }
         }
         OutlinedTextField(
@@ -107,6 +121,10 @@ fun CashEntryForm(
                 Column {
                     if (dateError != null) Text(text = dateError)
                     Text(text = stringResource(R.string.date_note))
+                    if (original != null && MarketDate.parse(state.form.dateText.trim()) != original.date) {
+                        val shown = original.date.toString()
+                        OriginalHint(shown, stringResource(R.string.original_hint_spoken, shown))
+                    }
                 }
             },
             isError = refusals.date != null,
@@ -120,6 +138,13 @@ fun CashEntryForm(
                     style = MaterialTheme.typography.bodyMedium,
                 )
                 DirectionChips(state.form.direction, onDirectionChange)
+                if (original?.type == CashType.ADJUSTMENT) {
+                    val was = if (original.amountCents < 0L) CashDirection.OUT else CashDirection.IN
+                    if (state.form.direction != was) {
+                        val shown = stringResource(if (was == CashDirection.OUT) R.string.direction_out else R.string.direction_in)
+                        OriginalHint(shown, stringResource(R.string.original_hint_spoken, shown))
+                    }
+                }
             }
         }
         OutlinedTextField(
@@ -131,6 +156,13 @@ fun CashEntryForm(
                 Column {
                     if (amountError != null) Text(text = amountError)
                     amountLine(type)?.let { Text(text = it) }
+                    if (original != null) {
+                        val cents = (Money.parseCents(state.form.amountText) as? AmountResult.Cents)?.value
+                        if (cents != Math.absExact(original.amountCents)) {
+                            val shown = Money.format(Math.absExact(original.amountCents))
+                            OriginalHint(shown, stringResource(R.string.original_hint_dollars_spoken, shown.substringAfter('$')))
+                        }
+                    }
                 }
             },
             isError = refusals.amount != null,
@@ -142,11 +174,29 @@ fun CashEntryForm(
             onValueChange = onNoteChange,
             modifier = Modifier.fillMaxWidth(),
             label = { Text(text = stringResource(if (adjustment) R.string.note_label_required else R.string.note_label)) },
-            supportingText = { if (noteError != null) Text(text = noteError) },
+            supportingText = {
+                Column {
+                    if (noteError != null) Text(text = noteError)
+                    if (original != null && state.form.noteText != original.note) {
+                        val shown = original.note.ifEmpty { stringResource(R.string.note_none) }
+                        OriginalHint(shown, stringResource(R.string.original_hint_spoken, shown))
+                    }
+                }
+            },
             isError = noteError != null,
             keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
         )
-        listOfNotNull(saveMessage(refusals.save), cashMessage(refusals.cash)).forEach { message ->
+        val messages =
+            if (original != null) {
+                listOfNotNull(
+                    saveMessage(refusals.save),
+                    replacingMessage(cashMessage(refusals.cash, replacing = true)),
+                    replaceRuleMessage(state, state.replaceRefusals.rule),
+                )
+            } else {
+                listOfNotNull(saveMessage(refusals.save), cashMessage(refusals.cash))
+            }
+        messages.forEach { message ->
             Text(
                 text = message,
                 style = MaterialTheme.typography.bodyMedium,
@@ -328,11 +378,19 @@ private fun amountLine(type: CashType): String? = when (type) {
 }
 
 // Shared with the reversal screen. The other reasons cannot reach here: the form and the detail only offer
-// what K1 allows, and the amount and note rules are shown on their own fields.
+// what K1 allows, and the amount and note rules are shown on their own fields. While [replacing], the cash rule names
+// the replacement (14a wording 1).
 @Composable
-internal fun cashMessage(refusal: CashEntryRefusal?): String? = when (refusal) {
+internal fun cashMessage(
+    refusal: CashEntryRefusal?,
+    replacing: Boolean = false,
+): String? = when (refusal) {
     is CashEntryRefusal.NegativeCash ->
-        stringResource(R.string.cash_negative, refusal.date.toString(), Money.format(refusal.shortfallCents))
+        stringResource(
+            if (replacing) R.string.replace_cash_negative else R.string.cash_negative,
+            refusal.date.toString(),
+            Money.format(refusal.shortfallCents),
+        )
 
     is CashEntryRefusal.BeforeOpeningBalance ->
         stringResource(R.string.cash_before_opening_balance, refusal.openingDate.toString())

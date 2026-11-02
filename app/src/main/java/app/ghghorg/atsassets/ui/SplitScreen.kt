@@ -33,6 +33,7 @@ import app.ghghorg.atsassets.R
 import app.ghghorg.atsassets.core.Quantity
 import app.ghghorg.atsassets.core.SplitRatio
 import app.ghghorg.atsassets.core.SplitRefusal
+import app.ghghorg.atsassets.core.TransactionType
 
 /** The split entry's callbacks, passed together. */
 class SplitActions(
@@ -59,13 +60,18 @@ fun SplitEntryScreen(
     BackHandler(enabled = !state.saving, onBack = actions.onBack)
     val form = state.splitForm
     val refusals = state.splitRefusals
+    // A split replaced by Reverse and re-enter (14b; wording 1): the title, the banner, the hints and the pair's messages.
+    val original = state.replacedTransaction?.takeIf { it.type == TransactionType.SPLIT }
     Column(
         modifier = modifier.fillMaxSize().imePadding().verticalScroll(rememberScrollState()).padding(16.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
-        TitleRow(stringResource(R.string.split_button), actions.onBack)
+        TitleRow(stringResource(if (original != null) R.string.split_replacing_title else R.string.split_button), actions.onBack)
+        original?.let { SplitReplacingBanner(it) }
         PortfolioChips(state.portfolios, form.portfolioId, actions.onPortfolioChange)
+        PortfolioHint(state, form.portfolioId)
         TickerChips(state, actions.onTickerChange)
+        TickerHint(original, form.ticker)
         OutlinedTextField(
             value = form.dateText,
             onValueChange = actions.onDateChange,
@@ -75,6 +81,7 @@ fun SplitEntryScreen(
                 Column {
                     dateMessage(refusals.date)?.let { Text(text = it) }
                     Text(text = stringResource(R.string.date_note))
+                    DateHint(original, form.dateText)
                 }
             },
             isError = refusals.date != null,
@@ -83,8 +90,24 @@ fun SplitEntryScreen(
             singleLine = true,
         )
         RatioFields(form, refusals, actions)
+        original?.split?.let { ratio ->
+            if (ratioNumber(form.toText) != ratio.to || ratioNumber(form.fromText) != ratio.from) {
+                val shown = ratioText(ratio)
+                OriginalHint(shown, stringResource(R.string.original_hint_spoken, shown))
+            }
+        }
         if (refusals.tickerMissing) Message(stringResource(R.string.sell_choose_ticker))
-        listOfNotNull(saveMessage(refusals.save), splitRuleMessage(refusals.rule)).forEach { Message(it) }
+        val messages =
+            if (original != null) {
+                listOfNotNull(
+                    saveMessage(refusals.save),
+                    replacingMessage(splitRuleMessage(refusals.rule)),
+                    replaceRuleMessage(state, state.replaceRefusals.rule),
+                )
+            } else {
+                listOfNotNull(saveMessage(refusals.save), splitRuleMessage(refusals.rule))
+            }
+        messages.forEach { Message(it) }
         Button(
             onClick = actions.onReview,
             enabled = !state.saving,

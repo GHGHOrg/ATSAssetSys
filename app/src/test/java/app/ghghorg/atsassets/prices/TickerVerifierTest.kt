@@ -73,6 +73,11 @@ class TickerVerifierTest {
             replacementCashLine: CashEntry,
         ) = error("not used")
 
+        override suspend fun saveSplitPair(
+            reversal: Transaction,
+            replacement: Transaction,
+        ) = error("not used")
+
         override suspend fun loadInstruments(): List<Instrument> = error("not used")
     }
 
