@@ -1,6 +1,6 @@
 # plan/iterations/14b-reverse-and-reenter-split-cash.md
 
-Stage: Build. Status: approved 2026-11-02, not built. Decision 1 settled (section 10).
+Stage: Build. Status: approved 2026-11-02, built 2026-11-02 and checked 2026-11-03 (section 12). Decision 1 settled (section 10).
 Source: plan/plan.md section 4 (row 14b), intent/intent.md v52 (final), spec/spec.md v4 (final). "My reading" is an interpretation, not a test.
 
 ## 1. Outcome
@@ -71,6 +71,40 @@ Settled by the spec or by 14a and 05, no question asked: the normal cash form or
 ## 11. Wording to approve (D9; * = given by the wireframes or earlier iterations)
 - "Reverse and re-enter"*, "Replacing the … of … ET: … Nothing changes until you confirm."* (14a), "Original: …"*, "< Review both"*, "1. Reverse the original"*, "2. Enter the replacement"*, "Type"*, "Adjustment"*, "Note"*, "Reversal of the deposit of 2026-04-20 ET"* (05), "Combined cash effect"*, "Confirm and save both"*, "Back to edit"*, "Change"*, the 14a messages*.
 - New, asked in step 5: the titles of the replacing cash form and split screen, the banner for a cash entry and a split, part 1 and part 2 for a split (the ratios and shares), the cash and split refusals in the pair form, and the TalkBack sentences.
+- Approved in step 5 (your answers 2026-11-02):
+  - Wording 1 (option A): "Cash entry (replacing)", "Split (replacing)"; "Replacing the deposit of 2026-10-29 ET: +$100.00. Nothing changes until you confirm."; "Replacing the split of 2026-11-01 ET: 2 for 1 AAPL. Nothing changes until you confirm."; part 1 for a cash entry as Type, Note and Cash effect, for a split as 13b's Ratio applied, Shares at this point and Shares after reversal; part 2 for a split as "Split AAPL, Main", the ratio, Shares at this point and Shares after split, with no combined cash effect; the refusals in the pair form as 14a's, "Not saved. Nothing was changed." in front, the cash one naming the replacement or the reversal; the TalkBack sentences "Reverse and re-enter deposit of 2026-01-10 Eastern Time", the banners read as one sentence, "Deposit, 2026-01-10 Eastern Time, plus 60.00 dollars".
+  - Wording 2 (option A): the direction hint under a changed direction shows the chip's own label, "Original: Withdrawal (−)" or "Original: Deposit (+)", not "Original: Out".
 
 ## 12. Status and notes
-Approved 2026-11-02 (decision 1). Not built.
+Built 2026-11-02 (steps 1 to 6) and one fix 2026-11-03 (section 14, item 6); phone checks 2026-11-02 to 2026-11-03, all yes after the fix. Not yet reviewed (Deploy) or merged.
+
+## 13. Build results
+### 13.1 Commits
+Newest first: c7e67eb fix (step 7), 032e5cb step 6, f6726dc step 5, 797b766 step 4, c2c40f6 step 3, eb85840 step 2, 97f7995 step 1 with this file. main was c509d66.
+
+### 13.2 Local run
+On c7e67eb's code (2026-11-03, all with --rerun-tasks): spotlessCheck green; debug build green, no compiler warnings printed; 591 tests, 0 failures (Balance 11, CashAccount 20, CashEntriesReverse 12, CashEntries 27, Fraction 12, Holdings 15, MarketDate 10, Money 21, OpeningBalance 9, Portfolios 23, Quantity 10, ReentriesSplitCash 14, Reentries 20, Reversals 14, Sells 19, Splits 23, TickerCheck 16, Transactions 18, RowMapping 14, AppLock 12, FinnhubSource 18, TickerVerifier 6, AppViewModel 120, BuyFlow 29, DateDigits 7, HoldingDetailFlow 11, ReenterFlow 27, ReversalFlow 7, SellFlow 21, SplitFlow 17, TransactionDetailFlow 8); lint: the 4 listed findings, none silenced (AndroidGradlePluginVersion, open item 31; NewerVersionAvailable for kotlinx-coroutines-test and for sqlcipher-android, open item 43; TypographyDashes on date_not_a_date, strings.xml:86), report written 01:09:14. Release build on the same code green (R8 ran; unsigned; its strip step was up to date, so "Unable to strip" was not printed again). Debug APK versionCode 16 (aapt2 36.0.0). No schema change (still 5.json).
+
+### 13.3 Phone results (Android 17, debug build versionCode 16, your reports)
+Checks 1 to 9 all yes. Each check's figures were worked out from the data on the phone (your photos of the Cash tab and of AAPL's Transactions and Lots tabs) before it was given.
+- 1: installed over the 14a build (lastUpdateTime 2026-11-02 20:59:33, after the fix 2026-11-03 01:11:58; firstInstallTime 2026-10-29 10:44:04 unchanged); net worth $4,091.87, cash $3,041.87, AAPL 10 shares at $1,050.00, lots 8 at $112.50 and 2 at $75.00 (criterion 35).
+- 2: Reverse and re-enter not on the opening balance, a reversal (the 2026-10-30 adjustment and zqxrevcheck), or an entry already reversed (the Fee, the interest/dividend); on the 2026-10-29 deposit of $100.00 it opened "Cash entry (replacing)" with the banner and the original's values; a changed amount showed "Original: $100.00"; Back saved nothing; on a split it opened "Split (replacing)" with its banner; Back saved nothing. A trade line on the Cash tab opens its trade (criterion 29), so "not on a trade line" is unit tested only.
+- 3: that deposit re-entered as $150.00: part 2 showed the note "check" where none was typed; fixed (section 14, item 6) and checked again: part 1 an Adjustment of −$100.00 with the fixed note "Reversal of the deposit of 2026-10-29 ET", part 2 +$150.00 with no note, combined +$50.00; saved; "Reversed on 2026-10-29 ET"; cash $3,091.87, net worth $4,141.87, the balances after it $50.00 higher.
+- 4: both or neither: the 2026-01-06 withdrawal of $500.00 re-entered as $801.00: "Not saved. Nothing was changed. With the replacement, cash would be negative on 2026-01-10 by $101.00."; the 2026-01-05 deposit re-entered on 2026-01-11: "Not saved. Nothing was changed. The reversal would make cash negative on 2026-01-10 by $300.00."; nothing saved.
+- 5: the 2026-11-01 split 2 for 1 (every entry after it reversed) re-entered as 3 for 1: part 1 ratio applied 1 for 2, 10 to 5 shares; part 2 5 to 15 shares; no cash; saved; "Reversed on 2026-11-01 ET"; AAPL 15 shares at $1,050.00, lots 12 at $75.00 and 3 at $50.00.
+- 6: the 2026-10-31 split 2 for 1 re-entered as 1 for 4: "Not saved. Nothing was changed. With this split, the sell of 2026-11-01 would take more shares than its lot holds." (that sell, reversed later that day, still counts at its place); nothing saved.
+- 7: largest font and display size, landscape, light and dark: the replacing cash form, the split screen, the review and the inline date field with the keyboard readable and reachable; TalkBack through a whole pair (the 2026-01-10 deposit of $50.00 re-entered as $60.00, saved), read as wording 1; cash $3,101.87, net worth $4,151.87.
+- 8: closed and reopened: both cash pairs, the split pair and their links kept; AAPL 15 shares, lots unchanged.
+- 9: Logcat cleared at 02:01:26, then a cash pair (the "Match broker balance" adjustment of $20.00 re-entered as $23.45 with the note zqxpaircheck, saved) and a refused split pair; 6,613 lines, 473 from the app's uid 10454; no note, ticker, portfolio name, ratio, new amount or balance in the app's lines; its "Main" hits were all the class name MainActivity and its "20.00" hits all frame rates (120.0000x). Counts only. Afterwards: cash $3,105.32, net worth $4,155.32.
+
+### 13.4 Not run or not checked
+CI and the pull request; open item 33 (34); the release APK on a device (unsigned, open item 4); a failed pair save on the phone (open item 14; unit tested, and atomic by Room's @Transaction or one batch); "not on a trade line" for a cash line on the phone (unreachable, see check 2); a shared-date cash pair judged as one point and a split pair refused by its reversal alone (unit tested only); contrast measurement (by eye on the phone); network traffic (open item 39); the screens in a JVM test (none in the project).
+
+## 14. Departures from the plan
+1. CashEntries.kt (not in section 4's list) was split into drafts and one replay, so a cash pair is judged in one replay; create and reverse behave as before, and their 39 tests are unchanged (step 2).
+2. Reentries.offered now uses Reversals.offered, which includes a split; 14a's test that a split is not offered was changed to expect it, as 14b intends (steps 2 and 4).
+3. TransactionDetailScreen.kt (in section 4's list) is unchanged: its Reverse and re-enter button already follows the ViewModel's offer, which now includes a split (step 4).
+4. Steps 2 to 4 were built before their commits on your request ("continue now, commit later"), but each step was committed on its own, in order.
+5. Wording 2 was asked in step 5 because the direction hint differed from the wireframe's "Original: Out" (option A, the chip's label).
+6. Defect found in phone check 3: the combined review of a cash pair showed the stand-in note "check" instead of the typed note, because the review showed the pair from the check with stand-ins (used so the note's refusal and the cash rule show together). Confirm saved the real note. Fixed in c7e67eb (your decision A): the stand-in is used only when the note itself is refused; failing ViewModel tests first (2, plus 1 that the note and cash refusals still show together); reinstalled at versionCode 16; check 3 passed again.
+7. Phone check 6 ran on the phone: the data had a later sell left short by a split pair.
