@@ -116,6 +116,7 @@ private fun BarContent(
             onOpenTransaction = viewModel::openLinkedTransaction,
             onReverse = viewModel::openReversal,
             onBack = viewModel::closeDetail,
+            onReenter = viewModel::openReenterCash,
         )
 
         Screen.REVERSAL -> CashReversal(

@@ -588,6 +588,10 @@ data class AppState(
             return Reversals.effect(transactions + draft, draft)
         }
 
+    /** The new split's shares at its place, before and after, on the combined review (14b; 10c marker 11). */
+    val replaceSplitEffect: SplitEffect?
+        get() = replaceSplitReview?.let { Splits.effect(transactions + it.reversal + it.replacement, it.replacement) }
+
     /** The sum of both parts' cash effects (10c marker 7); none for a split. */
     val replaceCombinedCents: Long?
         get() = replaceReview?.let { it.reversalCashLine.amountCents + it.replacementCashLine.amountCents }

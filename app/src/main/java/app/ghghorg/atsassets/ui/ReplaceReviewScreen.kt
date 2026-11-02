@@ -33,6 +33,9 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import app.ghghorg.atsassets.R
 import app.ghghorg.atsassets.core.AmountResult
+import app.ghghorg.atsassets.core.CashEntry
+import app.ghghorg.atsassets.core.CashEntryRefusal
+import app.ghghorg.atsassets.core.CashType
 import app.ghghorg.atsassets.core.Fraction
 import app.ghghorg.atsassets.core.Money
 import app.ghghorg.atsassets.core.Quantity
@@ -44,6 +47,7 @@ import app.ghghorg.atsassets.core.Transaction
 import app.ghghorg.atsassets.core.TransactionType
 import app.ghghorg.atsassets.core.Transactions
 import app.ghghorg.atsassets.ui.theme.gainLossColor
+import java.time.LocalDate
 
 /** The combined review's callbacks, passed together. */
 class ReplaceReviewActions(
@@ -66,30 +70,28 @@ fun ReplaceReviewScreen(
     modifier: Modifier = Modifier,
 ) {
     BackHandler(enabled = !state.saving, onBack = actions.onBack)
-    val original = state.replacedTransaction ?: return
+    val trade = state.replacedTransaction
+    val cash = state.replacedCashEntry
     Column(
         modifier = modifier.fillMaxSize().imePadding().verticalScroll(rememberScrollState()).padding(16.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
         TitleRow(stringResource(R.string.replace_review_title), actions.onBack, enabled = !state.saving)
-        OutlinedCard(modifier = Modifier.fillMaxWidth()) {
-            Column(
-                modifier = Modifier.padding(12.dp),
-                verticalArrangement = Arrangement.spacedBy(6.dp),
-            ) {
-                ReversalPart(state, original, actions)
+        PartCard {
+            when {
+                // A cash entry's reversal (14b; frame E): an Adjustment of the opposite amount with its fixed note.
+                cash != null ->
+                    ReversalPart(state, cashTypeLabel(cash.type), cashTypeLower(cash.type), cash.date, actions) { CashPartOne(state, cash) }
+
+                trade != null ->
+                    ReversalPart(state, entryTypeLabel(trade.type), transactionTypeLower(trade.type), trade.date, actions) {
+                        state.replaceReversalEffect?.let { PartOneEffect(it) }
+                    }
             }
         }
-        state.replaceReview?.let { review ->
-            OutlinedCard(modifier = Modifier.fillMaxWidth()) {
-                Column(
-                    modifier = Modifier.padding(12.dp),
-                    verticalArrangement = Arrangement.spacedBy(6.dp),
-                ) {
-                    ReplacementPart(state, review.replacement, review.replacementCashLine.amountCents)
-                }
-            }
-        }
+        state.replaceReview?.let { review -> PartCard { ReplacementPart(state, review.replacement, review.replacementCashLine.amountCents) } }
+        state.replaceSplitReview?.let { review -> PartCard { SplitReplacementPart(state, review.replacement) } }
+        state.replaceCashReview?.let { review -> PartCard { CashReplacementPart(review.replacement) } }
         state.replaceCombinedCents?.let { cents ->
             OutlinedCard(modifier = Modifier.fillMaxWidth()) {
                 Column(modifier = Modifier.padding(12.dp)) {
@@ -111,23 +113,45 @@ fun ReplaceReviewScreen(
     }
 }
 
-/** Part 1 (10c markers 4 and 5): what is reversed, the reversal date with Change, and the effect at that date. */
+@Composable
+private fun PartCard(content: @Composable () -> Unit) {
+    OutlinedCard(modifier = Modifier.fillMaxWidth()) {
+        Column(
+            modifier = Modifier.padding(12.dp),
+            verticalArrangement = Arrangement.spacedBy(6.dp),
+        ) {
+            content()
+        }
+    }
+}
+
+/**
+ * Part 1 (10c markers 4 and 5): what is reversed ([kind] and its date), the reversal date with Change, then [effect] at
+ * that date and a refusal of this part. A date before the original shows at the date field.
+ */
 @Composable
 private fun ReversalPart(
     state: AppState,
-    original: Transaction,
+    kind: String,
+    kindLower: String,
+    originalDate: LocalDate,
     actions: ReplaceReviewActions,
+    effect: @Composable () -> Unit,
 ) {
     PartHeading(stringResource(R.string.replace_part_reversal))
-    val type = transactionTypeLower(original.type)
-    val date = original.date.toString()
+    val date = originalDate.toString()
     ReviewRow(
         stringResource(R.string.reversal_reverses_label),
-        stringResource(R.string.transaction_link, entryTypeLabel(original.type), date),
-        spoken = stringResource(R.string.replace_reverses_spoken, type, date),
+        stringResource(R.string.transaction_link, kind, date),
+        spoken = stringResource(R.string.replace_reverses_spoken, kindLower, date),
     )
     val refusals = state.replaceRefusals
-    val beforeOriginal = (refusals.rule as? ReentryRefusal.OfReversal)?.reason as? ReversalRefusal.BeforeOriginal
+    val beforeOriginal =
+        when (val rule = refusals.rule) {
+            is ReentryRefusal.OfReversal -> (rule.reason as? ReversalRefusal.BeforeOriginal)?.originalDate
+            is ReentryRefusal.OfCashReversal -> (rule.reason as? CashEntryRefusal.BeforeOriginal)?.originalDate
+            else -> null
+        }
     if (state.replaceDateEditing) {
         OutlinedTextField(
             value = state.replaceReversalDate,
@@ -137,7 +161,7 @@ private fun ReversalPart(
             supportingText = {
                 Column {
                     dateMessage(refusals.date)?.let { Text(text = it) }
-                    beforeOriginal?.let { Text(text = stringResource(R.string.reversal_before_original, it.originalDate.toString())) }
+                    beforeOriginal?.let { Text(text = stringResource(R.string.reversal_before_original, it.toString())) }
                     Text(text = stringResource(R.string.reversal_date_note, date))
                 }
             },
@@ -149,8 +173,60 @@ private fun ReversalPart(
     } else {
         ReversalDateRow(state.replaceReversalDate, state.saving, actions.onChangeDate)
     }
-    state.replaceReversalEffect?.let { PartOneEffect(it) }
+    effect()
     if (beforeOriginal == null) replaceRuleMessage(state, refusals.rule)?.let { Message(it) }
+}
+
+/** A cash entry's reversal (frame E): type Adjustment, the fixed note (decision 1) and the opposite amount; any date. */
+@Composable
+private fun CashPartOne(
+    state: AppState,
+    original: CashEntry,
+) {
+    ReviewRow(stringResource(R.string.type_label), cashTypeLabel(CashType.ADJUSTMENT))
+    ReviewRow(stringResource(R.string.note_row_label), state.replaceReversalNote, alignStart = true)
+    CashEffectRow(-original.amountCents)
+}
+
+/** Part 2 for a split (10c marker 11): the new split, its ratio, and the shares at its place before and after. */
+@Composable
+private fun SplitReplacementPart(
+    state: AppState,
+    replacement: Transaction,
+) {
+    PartHeading(stringResource(R.string.replace_part_replacement))
+    val portfolio = state.portfolios.firstOrNull { it.id == replacement.portfolioId }?.name.orEmpty()
+    val kind = entryTypeLabel(replacement.type)
+    val date = replacement.date.toString()
+    ReviewRow(
+        stringResource(R.string.replace_new_entry, kind, replacement.ticker, portfolio),
+        stringResource(R.string.date_with_et, date),
+        spoken = stringResource(R.string.replace_new_entry_spoken, kind, replacement.ticker, portfolio, date),
+    )
+    replacement.split?.let { ReviewRow(stringResource(R.string.split_button), ratioText(it)) }
+    state.replaceSplitEffect?.let { effect ->
+        ReviewRow(stringResource(R.string.split_shares_at_point), Quantity.format(effect.before))
+        ReviewRow(stringResource(R.string.split_shares_after), Quantity.format(effect.after), bold = true)
+    }
+}
+
+/** Part 2 for a cash entry (frame E): its type, date and signed amount, its note, and its cash effect. */
+@Composable
+private fun CashReplacementPart(replacement: CashEntry) {
+    PartHeading(stringResource(R.string.replace_part_replacement))
+    val kind = cashTypeLabel(replacement.type)
+    val date = replacement.date.toString()
+    ReviewRow(
+        stringResource(R.string.transaction_link, kind, date),
+        signedAmount(replacement.amountCents),
+        spoken = stringResource(R.string.replace_new_cash_spoken, kind, date, spokenSigned(replacement.amountCents)),
+    )
+    if (replacement.note.isEmpty()) {
+        ReviewRow(stringResource(R.string.note_row_label), stringResource(R.string.note_none), muted = true, alignStart = true)
+    } else {
+        ReviewRow(stringResource(R.string.note_row_label), replacement.note, alignStart = true)
+    }
+    CashEffectRow(replacement.amountCents)
 }
 
 /** "Reversal date 2026-01-02 ET" with Change beside it (10c marker 5). */
@@ -285,10 +361,14 @@ private fun ReplaceButtons(
     }
 }
 
-/** "Buy" or "Sell", capitalized, as in the review's rows. */
+/** "Buy", "Sell" or "Split", capitalized, as in the review's rows. */
 @Composable
 private fun entryTypeLabel(type: TransactionType): String = stringResource(
-    if (type == TransactionType.SELL) R.string.holding_transaction_sell else R.string.holding_transaction_buy,
+    when (type) {
+        TransactionType.SELL -> R.string.holding_transaction_sell
+        TransactionType.SPLIT -> R.string.holding_transaction_split
+        else -> R.string.holding_transaction_buy
+    },
 )
 
 /** "10 + 2 shares" (10c): the quantities joined, with "share" or "shares" after the last as [sharesText] gives it. */
@@ -314,6 +394,36 @@ internal fun ReplacingBanner(original: Transaction) {
     val quantity = Quantity.format(original.quantity)
     val total = Money.format(original.totalCents)
     val spoken = stringResource(R.string.replacing_banner_spoken, type, date, quantity, original.ticker, total.substringAfter('$'))
+    BannerCard(stringResource(R.string.replacing_banner, type, date, quantity, original.ticker, total), spoken)
+}
+
+/** The banner over a replacing split (14b wording 1): its date, ratio and ticker. */
+@Composable
+internal fun SplitReplacingBanner(original: Transaction) {
+    val date = original.date.toString()
+    val ratio = original.split?.let { ratioText(it) }.orEmpty()
+    BannerCard(
+        stringResource(R.string.replacing_banner_split, date, ratio, original.ticker),
+        stringResource(R.string.replacing_banner_split_spoken, date, ratio, original.ticker),
+    )
+}
+
+/** The banner over a replacing cash entry (14b wording 1): its type, date and signed amount, as on the Cash tab. */
+@Composable
+internal fun CashReplacingBanner(original: CashEntry) {
+    val type = cashTypeLower(original.type)
+    val date = original.date.toString()
+    BannerCard(
+        stringResource(R.string.replacing_banner_cash, type, date, signedAmount(original.amountCents)),
+        stringResource(R.string.replacing_banner_cash_spoken, type, date, spokenSigned(original.amountCents)),
+    )
+}
+
+@Composable
+private fun BannerCard(
+    text: String,
+    spoken: String,
+) {
     Card(
         modifier = Modifier.fillMaxWidth().clearAndSetSemantics { contentDescription = spoken },
         colors =
@@ -323,7 +433,7 @@ internal fun ReplacingBanner(original: Transaction) {
         ),
     ) {
         Text(
-            text = stringResource(R.string.replacing_banner, type, date, quantity, original.ticker, total),
+            text = text,
             style = MaterialTheme.typography.bodyMedium,
             modifier = Modifier.padding(12.dp),
         )
@@ -419,6 +529,7 @@ internal fun replaceRuleMessage(
     state: AppState,
     refusal: ReentryRefusal?,
 ): String? {
+    if (refusal is ReentryRefusal.OfCashReversal) return cashReversalMessage(refusal.reason)
     val reason = (refusal as? ReentryRefusal.OfReversal)?.reason ?: return null
     val lotDate = state.replacedTransaction?.date?.toString().orEmpty()
     return when (reason) {
@@ -445,6 +556,15 @@ internal fun replaceRuleMessage(
 
         is ReversalRefusal.BeforeOriginal -> stringResource(R.string.reversal_before_original, reason.originalDate.toString())
     }
+}
+
+/** A cash entry's reversal refused in the pair (14b; 14a wording 2): cash, an entry that cannot be reversed, the date. */
+@Composable
+private fun cashReversalMessage(reason: CashEntryRefusal): String? = when (reason) {
+    is CashEntryRefusal.NegativeCash -> stringResource(R.string.replace_reversal_cash, reason.date.toString(), Money.format(reason.shortfallCents))
+    is CashEntryRefusal.NotReversible, CashEntryRefusal.OriginalNotFound -> stringResource(R.string.replace_not_reversible)
+    is CashEntryRefusal.BeforeOriginal -> stringResource(R.string.reversal_before_original, reason.originalDate.toString())
+    else -> replacingMessage(cashMessage(reason))
 }
 
 /** "−10 shares": a lot's figure below 0 with a real minus sign and its noun (frame F). */
