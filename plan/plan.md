@@ -65,7 +65,8 @@ Rules for the list:
 | 12 | split | Record a stock split | 09 | 4.5, crit. 53 |
 | 13a | transaction-detail | Open a buy, sell or split from Holding detail or a cash trade line | 11, 12 | view 7, 10b frames G and H, crit. 29, 53 |
 | 13b | reverse-transaction | Reverse a buy, sell or split | 13a | 4.6, crit. 53 |
-| 14 | reverse-and-reenter | Reverse and re-enter, trades and cash | 13, 05 | 4.6, crit. 21, 54, 60(b) |
+| 14a | reverse-and-reenter-trades | Reverse and re-enter a buy or sell | 13b | 4.6, crit. 21, 54, 60(b) |
+| 14b | reverse-and-reenter-split-cash | Reverse and re-enter a split or cash entry | 14a, 05 | 4.6, 10c frame E, crit. 21 |
 | 15 | hide-holdings | Hide and unhide sold-out holdings | 13 | 4.4, crit. 27, 51, 60(a) |
 | 16 | live-prices | See prices, their age, stale marker, unrealized gain/loss | 09, price spike | 7, 4.8, crit. 5, 41, 42 |
 | 17 | net-worth-screen | Net Worth (Total) with composition | 16 | 4.8, crit. 34, 44 |
@@ -89,9 +90,9 @@ Rules for the list:
 | 35 | restore-over-data | Restore onto an app that holds data | 34 | 8, crit. 17, 56 |
 
 ### Examples as automated tests (K1, crit. 2; my reading)
-A in 11, B in 12, C in 09 (it needs a buy), D and F in 13, G in 14, E in 29. Criteria 59
+A in 11, B in 12, C in 09 (it needs a buy), D and F in 13, G in 14a, E in 29. Criteria 59
 and 60 are tested in the iterations whose rules they cover (integer-cent arithmetic from 02a, exact fractions from 09 and 11,
-60(a) in 15, 60(b) in 14, 60(c) in 17, 60(d) in 11).
+60(a) in 15, 60(b) in 14a, 60(c) in 17, 60(d) in 11).
 
 ### Where components first appear (my reading)
 | Component | First built | Grows in |
@@ -301,8 +302,10 @@ when it adds a command, a convention or a pitfall.
 | Iteration 11 | done: built 2026-10-31 to 2026-11-01 (steps 1 to 6); phone checks 2026-10-31 to 2026-11-01 all yes; 453 tests; pull request #104 merged as e689af9, CI green on the pull request and on main (2m 16s) (your reports) |
 | Iteration 12 | done: built 2026-11-01 (steps 1 to 6 and one fix); phone checks 2026-11-01 all yes after the fix; 495 tests; pull request #106 merged as 08198bd, CI green on the pull request and on main (2m 51s) (your reports) |
 | Iteration 13a | done: built 2026-11-01 (steps 1 to 4); phone checks 2026-11-01 all yes; 503 tests; pull request #108 merged as 07dd814, CI green on the pull request and on main (2m 5s) (your reports) |
-| Iteration 13b | built 2026-11-01 to 2026-11-02 (steps 1 to 6); phone checks 2026-11-02 all yes; 527 tests; pull request #110 merged as e5edb0e, CI green on the pull request and on main (2m 21s) (your reports) |
-| Iterations 14 to 35 | not started, files not written |
+| Iteration 13b | done: built 2026-11-01 to 2026-11-02 (steps 1 to 6); phone checks 2026-11-02 all yes; 527 tests; pull request #110 merged as e5edb0e, CI green on the pull request and on main (2m 21s) (your reports) |
+| Iteration 14a | file approved 2026-11-02 (decisions 1 to 4); branch iter-14a-reverse-and-reenter-trades; not built |
+| Iteration 14b | not started, file not written |
+| Iterations 15 to 35 | not started, files not written |
 
 ## 12. Change log
 Each departure from this plan is recorded here with its date and the reason.
@@ -386,6 +389,7 @@ Each departure from this plan is recorded here with its date and the reason.
 - 2026-11-01: pull request #109 (docs: the 13a merge record) was merged as 460d3b6, CI green on the pull request and on main (2m 39s) (your reports). The 13b file was approved with decisions 1 to 3: a reversal is stored as a REVERSAL holding only its link, date and entry order, with every figure worked out from the original; Reverse is on the original's detail only; a refused buy reversal names the earliest sell not yet reversed.
 - 2026-11-02: 13b built and checked on the phone, with no defect found and no schema change. A reversal is a REVERSAL row holding its link; Examples D and F hold on the phone. A lot's remainder for a pick is now the least it holds on the sell date or later, since a reversal can raise a lot again. A split's reversal applies its inverse ratio to every lot placed before it, as 4.6 is written (your decision; 13b file, section 14). Steps 1 to 6 were committed together on your request, so the intermediate commits do not build alone. Criterion 35's install-over is checked again (versionCode 14).
 - 2026-11-02: pull request #110 (iteration 13b) was merged as e5edb0e. CI on the pull request and on main (the run for e5edb0e, 2m 21s) were reported successful by you. The status lines above were updated. The 13b file's sections 13 and 14 are left as written at build time.
+- 2026-11-02: pull request #111 (docs: the 13b merge record) was merged as 8d2769f, CI green on the pull request (3 checks) and on main (2m 49s) (your reports). The 13b status row now starts with "done:", which #111 left out. Iteration 14 split into 14a (reverse-and-reenter-trades) and 14b (reverse-and-reenter-split-cash) before it started, as section 5 requires (your decision): Reverse and re-enter on a buy or sell, which carries the pair check, the combined review and every criterion figure (21, 54, 60(b) in part), and then on a split or cash entry, reusing them. 60(b)'s restore, hidden and Realized gains parts wait for 34, 15 and 26. The 14a file was approved with decisions 1 to 4: the split; after the save the app returns to the original's detail; only a refusal about the reversal date opens the combined review; Change opens an inline date field there.
 
 ## 13. Out of scope for this plan
 Performance over time, per-holding dividends, ETF look-through, the next intent.md items,
