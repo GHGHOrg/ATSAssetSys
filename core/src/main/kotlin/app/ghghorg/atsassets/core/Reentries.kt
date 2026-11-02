@@ -303,10 +303,19 @@ object Reentries {
             }
         if (refusal != null) return SplitPairResult.Refused(ReentryRefusal.OfReversal(refusal))
         val reversal = Reversals.draft(cashEntries, transactions, original, reversalId, reversalDate)
-        return when (val split = Splits.split(cashEntries, transactions + reversal, portfolios, replacementId, portfolioId, ticker, date, ratio)) {
-            is SplitResult.Refused -> SplitPairResult.Refused(ReentryRefusal.OfSplit(split.reason))
-            is SplitResult.Created -> SplitPairResult.Created(reversal, split.transaction)
+        val replacement =
+            when (val split = Splits.split(cashEntries, transactions + reversal, portfolios, replacementId, portfolioId, ticker, date, ratio)) {
+                is SplitResult.Refused -> return SplitPairResult.Refused(ReentryRefusal.OfSplit(split.reason))
+                is SplitResult.Created -> split.transaction
+            }
+        // A new split on another holding leaves the original's with the reversal alone, which Splits.split does not check
+        // (14b Deploy finding 1).
+        if (portfolioId != original.portfolioId || replacement.ticker != original.ticker) {
+            Holdings.firstNegative(transactions + reversal + replacement, original.portfolioId, original.ticker)?.let { short ->
+                return SplitPairResult.Refused(ReentryRefusal.OfReversal(ReversalRefusal.SellShort(short.place.date)))
+            }
         }
+        return SplitPairResult.Created(reversal, replacement)
     }
 
     private sealed interface FirstPart {

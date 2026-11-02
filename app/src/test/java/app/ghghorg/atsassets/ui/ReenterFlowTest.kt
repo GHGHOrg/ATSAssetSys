@@ -253,6 +253,20 @@ class ReenterFlowTest {
         assertTrue(store.savedSplitPairs.isEmpty())
     }
 
+    // 14b Deploy finding 1: moved to MSFT, the pair leaves AAPL with the reversal alone (10 shares), short of s5's 20.
+    @Test
+    fun aSplitPairMovedToAnotherTicker_thatLeavesTheOriginalHoldingShort_keepsTheSplitScreen_withTheReversalsRule() {
+        val msft = b2.copy(id = "m1", ticker = "MSFT", enteredSeq = 7L)
+        val store = store(listOf(b2, x1, s5, msft))
+        val vm = onTransaction("x1", store)
+        vm.openReenter()
+        vm.onSplitTickerChange("MSFT")
+        vm.reviewSplit()
+        assertEquals(Screen.SPLIT, vm.state.value.screen)
+        assertEquals(ReentryRefusal.OfReversal(ReversalRefusal.SellShort(LocalDate.of(2026, 4, 2))), vm.state.value.replaceRefusals.rule)
+        assertTrue(store.savedSplitPairs.isEmpty())
+    }
+
     // --- 14b: a cash entry ---
 
     private val deposit500 = CashEntry("d1", LocalDate.of(2026, 4, 20), 50_000L, CashType.DEPOSIT, "Salary", 2L)

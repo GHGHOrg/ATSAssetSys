@@ -11,6 +11,7 @@ import java.time.LocalDate
 // 14b: Reverse and re-enter of a split or a direct cash entry (spec 4.6; wireframe 10c frame E, marker 11).
 class ReentriesSplitCashTest {
     private val portfolioP = Portfolio(id = "p1", name = "Portfolio P", createdSeq = 1L)
+    private val portfolioQ = Portfolio(id = "p2", name = "Portfolio Q", createdSeq = 2L)
 
     private fun opening(cents: Long = 1_000_000L): CashEntry = CashEntry("e1", LocalDate.of(2026, 1, 1), cents, CashType.OPENING_BALANCE, "", 1L)
 
@@ -135,16 +136,18 @@ class ReentriesSplitCashTest {
         to: Int,
         from: Int,
         cashEntries: List<CashEntry> = listOf(opening()) + linesOf(transactions),
+        portfolioId: String = "p1",
+        ticker: String = "AAPL",
     ): SplitPairResult = Reentries.reenterSplit(
         cashEntries = cashEntries,
         transactions = transactions,
-        portfolios = listOf(portfolioP),
+        portfolios = listOf(portfolioP, portfolioQ),
         reversalId = "r1",
         replacementId = "n1",
         originalId = originalId,
         reversalDate = LocalDate.parse(reversalDate),
-        portfolioId = "p1",
-        ticker = "AAPL",
+        portfolioId = portfolioId,
+        ticker = ticker,
         date = LocalDate.parse(date),
         ratio = SplitRatio(to, from),
     )
@@ -298,6 +301,31 @@ class ReentriesSplitCashTest {
 
     // Rounding (CLAUDE.md pitfall from 12): a 1 for 3 leaves 10/3 (3.33333333, rounded down), sold in full; re-entered as
     // 1 for 2 the lot ends at 5 − 10/3 = 5/3 (1.66666667, rounded up); as 1 for 7 (10/7 < 10/3) the sell is left short.
+    // 14b Deploy finding 1: the new split on another ticker or portfolio leaves the original holding with only the
+    // reversal (1 for 2), so the Apr 1 sell of 15 takes more than the lot's 10; that is part 1's refusal.
+    @Test
+    fun aSplitPairMovedToAnotherTicker_orPortfolio_isRefusedAsPart1_whenTheReversalLeavesTheOriginalHoldingShort() {
+        val sale = sold("s1", "2026-04-01", fraction(15), 90_000L, 4L)
+        val msft = bought("m1", "2026-01-03", "5", 50_000L, 5L).copy(ticker = "MSFT")
+        val aaplInQ = bought("q1", "2026-01-03", "5", 50_000L, 6L).copy(portfolioId = "p2")
+        val transactions = listOf(tenFor1000, twoForOne, sale, msft, aaplInQ)
+        val short = ReentryRefusal.OfReversal(ReversalRefusal.SellShort(LocalDate.of(2026, 4, 1)))
+        val otherTicker = splitRefusal(reenterSplit(transactions, "x1", "2026-03-01", "2026-03-01", 2, 1, ticker = "MSFT"))
+        assertEquals(short, otherTicker)
+        assertFalse(otherTicker.fixedOnReview)
+        assertEquals(short, splitRefusal(reenterSplit(transactions, "x1", "2026-03-01", "2026-03-01", 2, 1, portfolioId = "p2")))
+    }
+
+    @Test
+    fun aSplitPairMovedToAnotherTicker_isSaved_whenTheOriginalHoldingStaysWhole_andEachHoldingHasItsOwnSplit() {
+        val msft = bought("m1", "2026-01-03", "5", 50_000L, 5L).copy(ticker = "MSFT")
+        val transactions = listOf(tenFor1000, twoForOne, msft)
+        val result = splitCreated(reenterSplit(transactions, "x1", "2026-03-01", "2026-03-01", 2, 1, ticker = "MSFT"))
+        val after = transactions + result.reversal + result.replacement
+        assertEquals(fraction(10), lot(after).remainingQuantity)
+        assertEquals(fraction(10), Holdings.lots(after, day).first { it.buyId == "m1" }.remainingQuantity)
+    }
+
     @Test
     fun aOneForThreeWhoseLotWasSoldInFull_reenteredAsOneForTwo_leavesExactly5Over3_andAsOneForSeven_isRefused() {
         val oneForThree = splitOn("x1", "2026-03-01", 1, 3, 3L)
