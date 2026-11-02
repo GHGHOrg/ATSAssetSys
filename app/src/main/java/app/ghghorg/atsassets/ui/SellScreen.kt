@@ -78,7 +78,9 @@ class SellActions(
  * Sell entry (wireframe 10a frames C and D; iteration 11): one scrolling screen with the portfolio and ticker chips
  * (decision 1), the date as digits, quantity and total (zero allowed), the price per share, Sell all, then the lot list
  * oldest first, the "Picked X of Y shares" line and Review. The whole screen scrolls as one, so nothing is hidden at
- * the largest font (criterion 39).
+ * the largest font (criterion 39). While a sell is replaced (14a), the title says so, a banner names the original, a
+ * changed field shows the original value, the lots are as after the reversal, and refusals say nothing was changed
+ * (wireframe 10c frame C; wording 1 and 2).
  */
 @Composable
 fun SellEntryScreen(
@@ -89,13 +91,17 @@ fun SellEntryScreen(
     BackHandler(enabled = !state.saving, onBack = actions.onBack)
     val form = state.sellForm
     val refusals = state.sellRefusals
+    val original = state.replacedTransaction
     Column(
         modifier = modifier.fillMaxSize().imePadding().verticalScroll(rememberScrollState()).padding(16.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
-        TitleRow(stringResource(R.string.sell_button), actions.onBack)
+        TitleRow(stringResource(if (original != null) R.string.sell_replacing_title else R.string.sell_button), actions.onBack)
+        original?.let { ReplacingBanner(it) }
         PortfolioChips(state.portfolios, form.portfolioId, actions.onPortfolioChange)
+        PortfolioHint(state, form.portfolioId)
         TickerChips(state, actions.onTickerChange)
+        TickerHint(original, form.ticker)
         OutlinedTextField(
             value = form.dateText,
             onValueChange = actions.onDateChange,
@@ -105,6 +111,7 @@ fun SellEntryScreen(
                 Column {
                     dateMessage(refusals.date)?.let { Text(text = it) }
                     Text(text = stringResource(R.string.date_note))
+                    DateHint(original, form.dateText)
                 }
             },
             isError = refusals.date != null,
@@ -117,12 +124,14 @@ fun SellEntryScreen(
             onChange = actions.onQuantityChange,
             label = stringResource(R.string.buy_quantity_label),
             error = quantityMessage(refusals.quantity),
+            hint = { QuantityHint(original, form.quantityText) },
         )
         NumberField(
             value = form.totalText,
             onChange = actions.onTotalChange,
             label = stringResource(R.string.sell_total_label),
             error = totalMessage(refusals.total),
+            hint = { TotalHint(original, form.totalText, ::sellTotal) },
         )
         state.sellPricePerShare?.let { price ->
             val shown = Money.formatPerShare(price)
@@ -141,7 +150,16 @@ fun SellEntryScreen(
             Text(text = stringResource(R.string.sell_all_button))
         }
         LotList(state, actions)
-        val messages = listOfNotNull(saveMessage(refusals.save), sellRuleMessage(state, refusals.rule))
+        val messages =
+            if (original != null) {
+                listOfNotNull(
+                    saveMessage(refusals.save),
+                    replacingMessage(sellRuleMessage(state, refusals.rule, replacing = true)),
+                    replaceRuleMessage(state, state.replaceRefusals.rule),
+                )
+            } else {
+                listOfNotNull(saveMessage(refusals.save), sellRuleMessage(state, refusals.rule))
+            }
         if (refusals.tickerMissing) Message(stringResource(R.string.sell_choose_ticker))
         messages.forEach { Message(it) }
         Button(
@@ -200,8 +218,9 @@ private fun LotList(
     actions: SellActions,
 ) {
     val choices = state.sellLotChoices
+    val replacing = state.replacingId != null
     Text(
-        text = stringResource(R.string.sell_lots_heading),
+        text = stringResource(if (replacing) R.string.replace_lots_heading else R.string.sell_lots_heading),
         style = MaterialTheme.typography.titleMedium,
         modifier = Modifier.semantics { heading() },
     )
@@ -225,13 +244,16 @@ private fun LotList(
         }
     }
     val quantity = (Quantity.parse(state.sellForm.quantityText) as? QuantityResult.Exact)?.value
-    Text(
-        text =
+    val picked =
         if (quantity == null) {
             stringResource(R.string.sell_picked, sharesText(state.sellPicked))
         } else {
             stringResource(R.string.sell_picked_of, Quantity.format(state.sellPicked), sharesText(quantity))
-        },
+        }
+    // While the picks are still the replaced sell's own, the line says so (10c marker 9).
+    val originals = replacing && state.sellForm.picks.isNotEmpty() && state.sellForm.picks == state.replaceStartingPicks
+    Text(
+        text = if (originals) picked + " " + stringResource(R.string.replace_original_picks) else picked,
         style = MaterialTheme.typography.bodyLarge,
     )
     if (state.sellPicksDropped) {
@@ -530,11 +552,15 @@ private fun pickMessage(error: QuantityError?): String? = when (error) {
     QuantityError.ZERO -> stringResource(R.string.pick_zero)
 }
 
-/** K1's sell refusals (11 wording 2). The field reasons cannot reach here: the field rules catch them first. */
+/**
+ * K1's sell refusals (11 wording 2). The field reasons cannot reach here: the field rules catch them first. While
+ * [replacing], the cash rule names the replacement (frame F).
+ */
 @Composable
 private fun sellRuleMessage(
     state: AppState,
     refusal: SellRefusal?,
+    replacing: Boolean = false,
 ): String? {
     val form = state.sellForm
     val lotDate: (String) -> String = { id -> state.transactions.firstOrNull { it.id == id }?.date?.toString().orEmpty() }
@@ -570,7 +596,12 @@ private fun sellRuleMessage(
 
         is SellRefusal.BeforeOpeningBalance -> stringResource(R.string.sell_before_opening_balance, refusal.openingDate.toString())
 
-        is SellRefusal.NegativeCash -> stringResource(R.string.cash_negative, refusal.date.toString(), Money.format(refusal.shortfallCents))
+        is SellRefusal.NegativeCash ->
+            stringResource(
+                if (replacing) R.string.replace_cash_negative else R.string.cash_negative,
+                refusal.date.toString(),
+                Money.format(refusal.shortfallCents),
+            )
 
         SellRefusal.PortfolioNotFound -> stringResource(R.string.buy_choose_portfolio)
 

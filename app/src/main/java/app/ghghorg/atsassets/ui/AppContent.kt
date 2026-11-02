@@ -159,6 +159,18 @@ private fun BarContent(
                 onOpenCashLine = viewModel::openCashLine,
                 onReverse = viewModel::openTransactionReversal,
                 onOpenLink = viewModel::openTransactionLink,
+                onReenter = viewModel::openReenter,
+            ),
+        )
+
+        Screen.REPLACE_REVIEW -> ReplaceReviewScreen(
+            state = state,
+            actions =
+            ReplaceReviewActions(
+                onChangeDate = viewModel::changeReplaceDate,
+                onDateChange = viewModel::onReplaceDateChange,
+                onConfirm = viewModel::confirmReplace,
+                onBack = viewModel::backToReplaceEntry,
             ),
         )
 

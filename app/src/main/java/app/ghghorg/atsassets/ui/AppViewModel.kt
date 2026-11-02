@@ -151,6 +151,7 @@ private fun AppState.leftReplace(): AppState = if (replacingId == null) {
         replaceDateEditing = false,
         replaceRefusals = ReplaceRefusals(),
         replaceReview = null,
+        replaceStartingPicks = emptyMap(),
         buyForm = BuyForm(),
         sellForm = SellForm(),
     )
@@ -434,6 +435,8 @@ data class AppState(
     val replaceDateEditing: Boolean = false,
     val replaceRefusals: ReplaceRefusals = ReplaceRefusals(),
     val replaceReview: ReentryResult.Created? = null,
+    // A replaced sell's first picks as typed, for "(the original's picks)" while they are unchanged (10c marker 9).
+    val replaceStartingPicks: Map<String, String> = emptyMap(),
     val reversal: ReversalForm = ReversalForm(),
     val cashFilterForm: CashFilterForm = CashFilterForm(),
     // In the order they were created (spec 3).
@@ -1238,7 +1241,10 @@ class AppViewModel(
 
                 TransactionType.SELL -> {
                     val draft = Reversals.draft(current.entries, current.transactions, original, PREVIEW_ID, original.date)
-                    val picks = Reentries.startingPicks(current.transactions + draft, original, original.date, draft.enteredSeq + 1)
+                    val picks =
+                        Reentries
+                            .startingPicks(current.transactions + draft, original, original.date, draft.enteredSeq + 1)
+                            .associate { it.lotId to it.quantity.toPlainString() }
                     replacing.copy(
                         screen = Screen.SELL,
                         sellForm =
@@ -1248,8 +1254,9 @@ class AppViewModel(
                             dateText = date,
                             quantityText = original.quantity.toPlainString(),
                             totalText = total,
-                            picks = picks.associate { it.lotId to it.quantity.toPlainString() },
+                            picks = picks,
                         ),
+                        replaceStartingPicks = picks,
                         sellRefusals = SellRefusals(),
                         sellPicksDropped = false,
                         sellFromHolding = false,

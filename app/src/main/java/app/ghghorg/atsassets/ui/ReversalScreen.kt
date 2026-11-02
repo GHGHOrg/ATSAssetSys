@@ -225,7 +225,7 @@ internal fun EffectRows(effect: ReversalEffect) {
 }
 
 @Composable
-private fun CashEffectRow(cents: Long) {
+internal fun CashEffectRow(cents: Long) {
     ReviewRow(
         stringResource(R.string.cash_effect_label),
         signedAmount(cents),
@@ -238,7 +238,7 @@ private fun CashEffectRow(cents: Long) {
 private fun spokenRealizedZero(): String = stringResource(R.string.sell_realized_spoken, Money.format(0L).substringAfter('$'))
 
 /** A value shown alone, rounded half away from zero to cents (4.10). */
-private fun centsOf(dollars: Fraction): Long = dollars.rounded(2).movePointRight(2).longValueExact()
+internal fun centsOf(dollars: Fraction): Long = dollars.rounded(2).movePointRight(2).longValueExact()
 
 /** Read by TalkBack as [spoken] alone. */
 private fun Modifier.semanticsReadAs(spoken: String): Modifier = clearAndSetSemantics { contentDescription = spoken }

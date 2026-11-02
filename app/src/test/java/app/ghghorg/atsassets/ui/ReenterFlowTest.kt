@@ -319,6 +319,7 @@ class ReenterFlowTest {
             SellForm(portfolioId = "p1", ticker = "AAPL", dateText = "20260103", quantityText = "10", totalText = "1200.00", picks = mapOf("b1" to "10")),
             state.sellForm,
         )
+        assertEquals(mapOf("b1" to "10"), state.replaceStartingPicks)
         assertEquals(shares(10), state.sellLotChoices.first { it.buyId == "b1" }.available)
         vm.onSellTotalChange("1300.00")
         vm.reviewSell()

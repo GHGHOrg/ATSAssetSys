@@ -11,6 +11,7 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedCard
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -38,6 +39,7 @@ class TransactionActions(
     val onOpenCashLine: () -> Unit,
     val onReverse: () -> Unit,
     val onOpenLink: () -> Unit,
+    val onReenter: () -> Unit,
 )
 
 /**
@@ -129,6 +131,19 @@ private fun ReversalStatus(
                     )
                 Button(onClick = actions.onReverse, modifier = Modifier.semantics { contentDescription = spoken }) {
                     Text(text = stringResource(R.string.reverse_button))
+                }
+            }
+            // Reverse and re-enter on a buy or sell (14a; wireframe 10c marker 1); a split's comes in 14b.
+            if (state.transactionReenterOffered) {
+                val spoken =
+                    stringResource(
+                        R.string.reenter_button_spoken,
+                        transactionTypeLower(transaction.type),
+                        transaction.ticker,
+                        transaction.date.toString(),
+                    )
+                OutlinedButton(onClick = actions.onReenter, modifier = Modifier.semantics { contentDescription = spoken }) {
+                    Text(text = stringResource(R.string.reenter_button))
                 }
             }
         }
