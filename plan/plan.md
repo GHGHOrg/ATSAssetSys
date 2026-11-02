@@ -304,7 +304,7 @@ when it adds a command, a convention or a pitfall.
 | Iteration 13a | done: built 2026-11-01 (steps 1 to 4); phone checks 2026-11-01 all yes; 503 tests; pull request #108 merged as 07dd814, CI green on the pull request and on main (2m 5s) (your reports) |
 | Iteration 13b | done: built 2026-11-01 to 2026-11-02 (steps 1 to 6); phone checks 2026-11-02 all yes; 527 tests; pull request #110 merged as e5edb0e, CI green on the pull request and on main (2m 21s) (your reports) |
 | Iteration 14a | done: built 2026-11-02 (steps 1 to 6, one fix and one Deploy fix); phone checks 2026-11-02 all yes after the fix; 564 tests; pull request #112 merged as bcd5e3b, CI green on the pull request and on main (2m 59s) (your reports) |
-| Iteration 14b | not started, file not written |
+| Iteration 14b | file approved 2026-11-02 (decision 1); branch iter-14b-reverse-and-reenter-split-cash; not built |
 | Iterations 15 to 35 | not started, files not written |
 
 ## 12. Change log
@@ -393,6 +393,7 @@ Each departure from this plan is recorded here with its date and the reason.
 - 2026-11-02: 14a built and checked on the phone, with no schema change. A pair is a reversal and a normal buy or sell saved in one database transaction; Example G and criterion 54 hold on the phone, with a new buy dated before its reversal. Decision 5 was added after step 2: on a shared date the cash replay judges the pair as one point. A defect found while working out phone check 2 was fixed with failing tests first: a re-entered entry's first quantity now carries the splits entered later on the original's date, as its picks do (your decision B; 14a file, section 14, item 11; open item 46 for the 8-place limit). Criterion 35's install-over is checked again (versionCode 15).
 - 2026-11-02: the 14a Deploy review found one Medium bug, fixed on the branch with a failing test first (your decision A): Confirm on the combined review could refuse an unfinished reversal date without showing why (14a file, section 14, item 12). The other findings are covered by open items 45 and 46.
 - 2026-11-02: pull request #112 (iteration 14a) was merged as bcd5e3b. CI on the pull request (3 checks: build, Analyze (actions), CodeQL) and on main (the run for bcd5e3b, 2m 59s) were reported successful by you. The status lines above were updated. The 14a file's sections 13 and 14 are left as written at build time.
+- 2026-11-02: pull request #113 (docs: the 14a merge record) was merged as c509d66, CI green on the pull request (3 checks) and on main (2m 56s) (your reports). The 14b file was approved with decision 1: in a cash entry's Reverse and re-enter, the reversal's note is the pre-filled one and cannot be edited; a plain Reverse still lets it be edited.
 
 ## 13. Out of scope for this plan
 Performance over time, per-holding dividends, ETF look-through, the next intent.md items,
