@@ -81,7 +81,7 @@ Settled by the spec, no question asked: one screen with Confirm and save and no 
 - New, asked in step 5: a sell's and a split's reversal screen (the lots restored, the realized gain removed; the inverse ratio and the shares before and after), the refusal for a split's reversal that leaves a later sell short, the reversal rows in Holding detail, the reversal's detail and its title, and the TalkBack sentences.
 
 ## 12. Status and notes
-Built 2026-11-01 to 2026-11-02 (steps 1 to 6); phone checks 2026-11-02, all yes, no fix needed. Pull request not yet opened.
+Done. Built 2026-11-01 to 2026-11-02 (steps 1 to 6); phone checks 2026-11-02, all yes, no fix needed; pull request #110 merged as e5edb0e (2026-11-02), CI green on the pull request and on main (2m 21s) (your reports).
 
 ## 13. Build results
 ### 13.1 Commits
