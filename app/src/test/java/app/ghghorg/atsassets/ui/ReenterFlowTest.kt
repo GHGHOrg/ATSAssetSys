@@ -3,6 +3,7 @@ package app.ghghorg.atsassets.ui
 import app.ghghorg.atsassets.core.AmountError
 import app.ghghorg.atsassets.core.AssetType
 import app.ghghorg.atsassets.core.BuyRefusal
+import app.ghghorg.atsassets.core.CashDirection
 import app.ghghorg.atsassets.core.CashEntry
 import app.ghghorg.atsassets.core.CashEntryRefusal
 import app.ghghorg.atsassets.core.CashType
@@ -335,6 +336,44 @@ class ReenterFlowTest {
         assertEquals(batch.first(), state.detailReversedBy)
         assertEquals(1_005_000L, state.cashBalanceCents)
         assertEquals(FormState(), state.form)
+    }
+
+    // 14b phone check 3: part 2 showed the stand-in note "check" instead of the typed one.
+    @Test
+    fun theCombinedReview_showsTheTypedNote_andConfirmSavesTheSameNote() {
+        val store = cashStore()
+        val vm = onCashEntry("d1", store)
+        vm.openReenterCash(reversalNote)
+        vm.onAmountChange("50.00")
+        vm.review()
+        assertEquals("Salary", vm.state.value.replaceCashReview?.replacement?.note)
+        vm.confirmReplace()
+        assertEquals("Salary", store.saved.single().last().note)
+    }
+
+    @Test
+    fun theCombinedReview_showsAnEmptyNoteAsEmpty() {
+        val vm = onCashEntry("d1", cashStore())
+        vm.openReenterCash(reversalNote)
+        vm.onNoteChange("")
+        vm.review()
+        assertEquals(Screen.REPLACE_REVIEW, vm.state.value.screen)
+        assertEquals("", vm.state.value.replaceCashReview?.replacement?.note)
+    }
+
+    @Test
+    fun anAdjustmentWithNoNote_stillShowsTheNoteRefusal_togetherWithTheCashShortfall() {
+        val vm = onCashEntry("d1", cashStore())
+        vm.openReenterCash(reversalNote)
+        vm.onTypeChange(CashType.ADJUSTMENT)
+        vm.onDirectionChange(CashDirection.OUT)
+        vm.onNoteChange("")
+        // $10,000 + $500 − $500 back − $10,000.01 = −$0.01 on Apr 20.
+        vm.onAmountChange("10000.01")
+        vm.review()
+        assertEquals(Screen.FORM, vm.state.value.screen)
+        assertTrue(vm.state.value.refusals.noteRequired)
+        assertEquals(CashEntryRefusal.NegativeCash(LocalDate.of(2026, 4, 20), 1L), vm.state.value.refusals.cash)
     }
 
     @Test

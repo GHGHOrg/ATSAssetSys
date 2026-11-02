@@ -914,9 +914,7 @@ class AppViewModel(
         current: AppState,
         fieldRefusals: Refusals,
     ) {
-        val form = current.form
-        val noteProbe = CashEntries.create(current.entries, PROBE_ID, form.type, marketDate.today(), 1L, form.noteText, form.direction)
-        val noteRule = (noteProbe as? CashEntryResult.Refused)?.reason
+        val noteRule = cashNoteRule(current)
         val review = pairAtReview(current)
         val entryRule = (review as? PairReview.OnEntry)?.reason
         val refusals =
@@ -1589,9 +1587,17 @@ class AppViewModel(
         }
     }
 
+    /** The form's note judged on its own, with a stand-in date and amount; null when the note passes. */
+    private fun cashNoteRule(current: AppState): CashEntryRefusal? {
+        val form = current.form
+        val probe = CashEntries.create(current.entries, PROBE_ID, form.type, marketDate.today(), 1L, form.noteText, form.direction)
+        return (probe as? CashEntryResult.Refused)?.reason
+    }
+
     /**
      * A cash entry's pair on the typed form (14b), the reversal with its fixed note (decision 1); null when the date or
-     * amount does not parse. With [standIns], the note is a stand-in: the form's note rules are judged on their own.
+     * amount does not parse. With [standIns], a refused note is replaced by a stand-in, so the cash rule shows beside the
+     * note's; a note that passes is kept, as the review shows it (14b phone check 3).
      */
     private fun cashPairOf(
         current: AppState,
@@ -1614,7 +1620,7 @@ class AppViewModel(
                 type = form.type,
                 date = date,
                 amountCents = cents,
-                note = if (standIns) PROBE_NOTE else form.noteText,
+                note = if (standIns && cashNoteRule(current) != null) PROBE_NOTE else form.noteText,
                 direction = form.direction,
             )
         return when (result) {
