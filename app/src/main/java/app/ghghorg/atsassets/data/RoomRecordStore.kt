@@ -4,6 +4,8 @@ import app.ghghorg.atsassets.core.AssetType
 import app.ghghorg.atsassets.core.CashEntry
 import app.ghghorg.atsassets.core.CashType
 import app.ghghorg.atsassets.core.Fraction
+import app.ghghorg.atsassets.core.HiddenHolding
+import app.ghghorg.atsassets.core.Holdings
 import app.ghghorg.atsassets.core.Instrument
 import app.ghghorg.atsassets.core.Portfolio
 import app.ghghorg.atsassets.core.RecordStore
@@ -119,7 +121,10 @@ class RoomRecordStore(
     override suspend fun saveReversal(
         transaction: Transaction,
         cashLine: CashEntry?,
+        unhide: List<HiddenHolding>,
     ) {
+        // A split's reversal has no cash line and never takes a holding from 0 to shares (4.4).
+        require(cashLine != null || unhide.isEmpty()) { "A reversal without a cash line unhides nothing." }
         val dao = withContext(Dispatchers.IO) {
             try {
                 database.transactionDao()
@@ -131,12 +136,17 @@ class RoomRecordStore(
                 throw UnreadableDataException("The stored data could not be opened.", e)
             }
         }
-        if (cashLine == null) dao.insertTransaction(transaction.toRow()) else dao.insertReversal(transaction.toRow(), cashLine.toRow())
+        if (cashLine == null) {
+            dao.insertTransaction(transaction.toRow())
+        } else {
+            dao.insertReversal(transaction.toRow(), cashLine.toRow(), unhide.map { it.toRow() })
+        }
     }
 
     override suspend fun saveBuy(
         transaction: Transaction,
         cashLine: CashEntry,
+        unhide: List<HiddenHolding>,
     ) {
         val dao = withContext(Dispatchers.IO) {
             try {
@@ -149,7 +159,7 @@ class RoomRecordStore(
                 throw UnreadableDataException("The stored data could not be opened.", e)
             }
         }
-        dao.insertBuy(transaction.toRow(), cashLine.toRow())
+        dao.insertBuy(transaction.toRow(), cashLine.toRow(), unhide.map { it.toRow() })
     }
 
     override suspend fun saveSell(
@@ -190,6 +200,7 @@ class RoomRecordStore(
         reversalCashLine: CashEntry,
         replacement: Transaction,
         replacementCashLine: CashEntry,
+        unhide: List<HiddenHolding>,
     ) {
         val dao = withContext(Dispatchers.IO) {
             try {
@@ -208,6 +219,7 @@ class RoomRecordStore(
             replacement = replacement.toRow(),
             replacementCashLine = replacementCashLine.toRow(),
             allocations = replacement.allocationRows(),
+            unhide = unhide.map { it.toRow() },
         )
     }
 
@@ -254,6 +266,41 @@ class RoomRecordStore(
             }
         }
         dao.upsert(instrument.toRow())
+    }
+
+    override suspend fun loadHidden(): List<HiddenHolding> {
+        val transactions = loadTransactions()
+        return withContext(Dispatchers.IO) {
+            try {
+                checkHidden(transactions, database.transactionDao().loadHidden().map { it.toHidden() })
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: UnreadableDataException) {
+                throw e
+            } catch (e: Exception) {
+                throw UnreadableDataException("The stored data could not be read.", e)
+            }
+        }
+    }
+
+    override suspend fun hide(holding: HiddenHolding) {
+        hiddenDao().insertHidden(holding.toRow())
+    }
+
+    override suspend fun unhide(holding: HiddenHolding) {
+        hiddenDao().unhide(holding.toRow())
+    }
+
+    private suspend fun hiddenDao(): TransactionDao = withContext(Dispatchers.IO) {
+        try {
+            database.transactionDao()
+        } catch (e: CancellationException) {
+            throw e
+        } catch (e: UnreadableDataException) {
+            throw e
+        } catch (e: Exception) {
+            throw UnreadableDataException("The stored data could not be opened.", e)
+        }
     }
 }
 
@@ -407,3 +454,26 @@ private fun CashEntryRow.toEntry() = CashEntry(
     reversesId = reversesId,
     transactionId = transactionId,
 )
+
+internal fun HiddenHolding.toRow() = HiddenHoldingRow(portfolioId = portfolioId, ticker = ticker)
+
+internal fun HiddenHoldingRow.toHidden() = HiddenHolding(portfolioId = portfolioId, ticker = ticker)
+
+/**
+ * Checks the stored hidden holdings against the transactions (4.4, section 8; 15 decision 1): each holding exists and
+ * has 0 shares counting every entry. Throws [UnreadableDataException] otherwise; nothing is guessed. The messages name
+ * no value (spec section 9).
+ */
+internal fun checkHidden(
+    transactions: List<Transaction>,
+    hidden: List<HiddenHolding>,
+): List<HiddenHolding> {
+    val held = Holdings.holdings(transactions, LocalDate.MAX)
+    for (holding in hidden) {
+        val shares =
+            held.firstOrNull { it.portfolioId == holding.portfolioId && it.ticker == holding.ticker }?.shares
+                ?: throw UnreadableDataException("A stored hidden holding has no transactions.")
+        if (shares.signum() != 0) throw UnreadableDataException("A stored hidden holding has shares.")
+    }
+    return hidden
+}

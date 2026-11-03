@@ -63,6 +63,16 @@ data class SellAllocationRow(
     val quantity: String,
 )
 
+/**
+ * One hidden holding (spec 3, 4.4; section 8's `hidden` row): a ticker within a portfolio, hidden by you. A holding is
+ * not stored otherwise; it is worked out from its transactions.
+ */
+@Entity(tableName = "hidden_holdings", primaryKeys = ["portfolioId", "ticker"])
+data class HiddenHoldingRow(
+    val portfolioId: String,
+    val ticker: String,
+)
+
 /** One instrument row (spec 3): a verified ticker and its asset type. Prices and classification join later (16, 23). */
 @Entity(tableName = "instruments")
 data class InstrumentRow(
@@ -108,24 +118,62 @@ interface TransactionDao {
     @Insert
     suspend fun insertCashEntry(row: CashEntryRow)
 
-    /** A buy and its trade cash line in one database transaction: both or neither (open item 14). */
+    /** The default conflict rule (abort) is kept: a holding is hidden once. */
+    @Insert
+    suspend fun insertHidden(row: HiddenHoldingRow)
+
+    /** Returns the number of rows removed. */
+    @Query("DELETE FROM hidden_holdings WHERE portfolioId = :portfolioId AND ticker = :ticker")
+    suspend fun deleteHidden(
+        portfolioId: String,
+        ticker: String,
+    ): Int
+
+    @Query("SELECT * FROM hidden_holdings ORDER BY portfolioId, ticker")
+    suspend fun loadHidden(): List<HiddenHoldingRow>
+
+    /** Removes each of [rows]; one that is not there fails the whole database transaction it runs in (15 decision 2). */
+    suspend fun unhideAll(rows: List<HiddenHoldingRow>) {
+        for (row in rows) {
+            val removed = deleteHidden(row.portfolioId, row.ticker)
+            check(removed == 1) { "An unhide removed $removed rows instead of 1." }
+        }
+    }
+
+    /** One unhide in its own database transaction (view 9). */
+    @Transaction
+    suspend fun unhide(row: HiddenHoldingRow) {
+        unhideAll(listOf(row))
+    }
+
+    /**
+     * A buy, its trade cash line and the unhiding of [unhide] in one database transaction: all or nothing (open item
+     * 14; 4.4; 15 decision 2).
+     */
     @Transaction
     suspend fun insertBuy(
         transaction: TransactionRow,
         cashLine: CashEntryRow,
+        unhide: List<HiddenHoldingRow>,
     ) {
         insertTransaction(transaction)
         insertCashEntry(cashLine)
+        unhideAll(unhide)
     }
 
-    /** A reversal of a buy or sell and its trade cash line in one database transaction: both or neither (4.6). */
+    /**
+     * A reversal of a buy or sell, its trade cash line and the unhiding of [unhide] in one database transaction: all or
+     * nothing (4.4, 4.6; 15 decision 2).
+     */
     @Transaction
     suspend fun insertReversal(
         transaction: TransactionRow,
         cashLine: CashEntryRow,
+        unhide: List<HiddenHoldingRow>,
     ) {
         insertTransaction(transaction)
         insertCashEntry(cashLine)
+        unhideAll(unhide)
     }
 
     /** The default conflict rule (abort) is kept. */
@@ -146,7 +194,8 @@ interface TransactionDao {
 
     /**
      * A Reverse and re-enter pair in one database transaction: the reversal and its trade cash line, then the new buy
-     * or sell, its trade cash line and a new sell's allocations; all or nothing (4.6, K2).
+     * or sell, its trade cash line and a new sell's allocations, and the unhiding of [unhide]; all or nothing (4.4,
+     * 4.6, K2; 15 decision 2).
      */
     @Transaction
     suspend fun insertPair(
@@ -155,12 +204,14 @@ interface TransactionDao {
         replacement: TransactionRow,
         replacementCashLine: CashEntryRow,
         allocations: List<SellAllocationRow>,
+        unhide: List<HiddenHoldingRow>,
     ) {
         insertTransaction(reversal)
         insertCashEntry(reversalCashLine)
         insertTransaction(replacement)
         insertCashEntry(replacementCashLine)
         if (allocations.isNotEmpty()) insertAllocations(allocations)
+        unhideAll(unhide)
     }
 
     /** A split's Reverse and re-enter pair in one database transaction: the reversal and the new split; both or neither (14b). */
@@ -192,17 +243,25 @@ interface InstrumentDao {
 
 /**
  * Version 2 (iteration 07) adds the portfolios table, version 3 (09) the transactions and instruments tables, version 4
- * (11) the sell_allocations table, version 5 (12) the two split columns of transactions; Room generates each step out
- * of the schemas in app/schemas.
+ * (11) the sell_allocations table, version 5 (12) the two split columns of transactions, version 6 (15) the
+ * hidden_holdings table; Room generates each step out of the schemas in app/schemas.
  */
 @Database(
-    entities = [CashEntryRow::class, PortfolioRow::class, TransactionRow::class, InstrumentRow::class, SellAllocationRow::class],
-    version = 5,
+    entities = [
+        CashEntryRow::class,
+        PortfolioRow::class,
+        TransactionRow::class,
+        InstrumentRow::class,
+        SellAllocationRow::class,
+        HiddenHoldingRow::class,
+    ],
+    version = 6,
     autoMigrations = [
         AutoMigration(from = 1, to = 2),
         AutoMigration(from = 2, to = 3),
         AutoMigration(from = 3, to = 4),
         AutoMigration(from = 4, to = 5),
+        AutoMigration(from = 5, to = 6),
     ],
 )
 abstract class AtsDatabase : RoomDatabase() {

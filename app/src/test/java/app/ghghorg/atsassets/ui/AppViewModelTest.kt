@@ -5,6 +5,7 @@ import app.ghghorg.atsassets.core.CashDirection
 import app.ghghorg.atsassets.core.CashEntry
 import app.ghghorg.atsassets.core.CashEntryRefusal
 import app.ghghorg.atsassets.core.CashType
+import app.ghghorg.atsassets.core.HiddenHolding
 import app.ghghorg.atsassets.core.Instrument
 import app.ghghorg.atsassets.core.Lookup
 import app.ghghorg.atsassets.core.Portfolio
@@ -1693,12 +1694,14 @@ internal class FakeStore(
     override suspend fun saveBuy(
         transaction: Transaction,
         cashLine: CashEntry,
+        unhide: List<HiddenHolding>,
     ) {
         gate?.await()
         saveError?.let { throw it }
         savedBuys.add(transaction to cashLine)
         storedTransactions = storedTransactions + transaction
         stored = stored + cashLine
+        storedHidden = storedHidden - unhide.toSet()
     }
 
     val savedSells = mutableListOf<Pair<Transaction, CashEntry>>()
@@ -1730,12 +1733,14 @@ internal class FakeStore(
     override suspend fun saveReversal(
         transaction: Transaction,
         cashLine: CashEntry?,
+        unhide: List<HiddenHolding>,
     ) {
         gate?.await()
         saveError?.let { throw it }
         savedReversals.add(transaction to cashLine)
         storedTransactions = storedTransactions + transaction
         cashLine?.let { stored = stored + it }
+        storedHidden = storedHidden - unhide.toSet()
     }
 
     val savedPairs = mutableListOf<List<Any>>()
@@ -1746,12 +1751,14 @@ internal class FakeStore(
         reversalCashLine: CashEntry,
         replacement: Transaction,
         replacementCashLine: CashEntry,
+        unhide: List<HiddenHolding>,
     ) {
         gate?.await()
         saveError?.let { throw it }
         savedPairs.add(listOf(reversal, reversalCashLine, replacement, replacementCashLine))
         storedTransactions = storedTransactions + reversal + replacement
         stored = stored + reversalCashLine + replacementCashLine
+        storedHidden = storedHidden - unhide.toSet()
     }
 
     val savedSplitPairs = mutableListOf<Pair<Transaction, Transaction>>()
@@ -1776,5 +1783,26 @@ internal class FakeStore(
         saveError?.let { throw it }
         savedInstruments.add(instrument)
         storedInstruments = storedInstruments.filter { it.ticker != instrument.ticker } + instrument
+    }
+
+    var storedHidden: List<HiddenHolding> = emptyList()
+
+    override suspend fun loadHidden(): List<HiddenHolding> {
+        loadError?.let { throw it }
+        return storedHidden
+    }
+
+    override suspend fun hide(holding: HiddenHolding) {
+        gate?.await()
+        saveError?.let { throw it }
+        check(holding !in storedHidden) { "already hidden" }
+        storedHidden = storedHidden + holding
+    }
+
+    override suspend fun unhide(holding: HiddenHolding) {
+        gate?.await()
+        saveError?.let { throw it }
+        check(holding in storedHidden) { "not hidden" }
+        storedHidden = storedHidden - holding
     }
 }

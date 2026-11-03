@@ -2,6 +2,7 @@ package app.ghghorg.atsassets.data
 
 import app.ghghorg.atsassets.core.AssetType
 import app.ghghorg.atsassets.core.Fraction
+import app.ghghorg.atsassets.core.HiddenHolding
 import app.ghghorg.atsassets.core.Instrument
 import app.ghghorg.atsassets.core.SellAllocation
 import app.ghghorg.atsassets.core.SplitRatio
@@ -236,5 +237,32 @@ class RowMappingTest {
         assertEquals(listOf("5/3"), newSell.allocationRows().map { it.quantity })
         val read = checkReversals(withAllocations(transactions.map { it.toRow().toTransaction() }, rows))
         assertEquals(transactions, read)
+    }
+
+    // 15: a hidden holding is a portfolio id and a ticker (section 8's hidden row).
+    @Test
+    fun aHiddenHolding_isStoredAsItsPortfolioAndTicker_andReadBackUnchanged() {
+        val hidden = HiddenHolding("p1", "AAPL")
+        val row = hidden.toRow()
+        assertEquals("p1", row.portfolioId)
+        assertEquals("AAPL", row.ticker)
+        assertEquals(hidden, row.toHidden())
+    }
+
+    private val soldOut =
+        sell.copy(
+            id = "s2",
+            quantity = BigDecimal("2.50"),
+            allocations = listOf(SellAllocation("t1", Fraction.of(BigDecimal("2.50")))),
+        )
+
+    // A hidden holding always has 0 shares, counting every entry (4.4, section 8; 15 decision 1): one with shares,
+    // or with no transaction at all, is damaged data and is not guessed at.
+    @Test
+    fun aHiddenHoldingAtZero_isReadable_andOneWithShares_orWithNoHolding_isUnreadable() {
+        val hidden = listOf(HiddenHolding("p1", "AAPL"))
+        assertEquals(hidden, checkHidden(listOf(buy, soldOut), hidden))
+        assertThrows(UnreadableDataException::class.java) { checkHidden(listOf(buy), hidden) }
+        assertThrows(UnreadableDataException::class.java) { checkHidden(listOf(buy, soldOut), listOf(HiddenHolding("p1", "MSFT"))) }
     }
 }

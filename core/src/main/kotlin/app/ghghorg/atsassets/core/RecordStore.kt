@@ -23,10 +23,14 @@ interface RecordStore {
     /** Each sell with its allocations. Throws [UnreadableDataException] if stored data exists but cannot be read. */
     suspend fun loadTransactions(): List<Transaction>
 
-    /** Saves a buy and its trade cash line together: both or neither (open item 14). */
+    /**
+     * Saves a buy and its trade cash line together: both or neither (open item 14). The hidden holdings it gives shares
+     * again, [unhide], are unhidden in the same action (4.4; 15 decision 2).
+     */
     suspend fun saveBuy(
         transaction: Transaction,
         cashLine: CashEntry,
+        unhide: List<HiddenHolding> = emptyList(),
     )
 
     /** Saves a sell, its trade cash line and its allocations together: all or nothing (open item 14). */
@@ -38,21 +42,26 @@ interface RecordStore {
     /** Saves a split with its ratio; it has no cash line (4.5). */
     suspend fun saveSplit(transaction: Transaction)
 
-    /** Saves a reversal and, for a buy's or sell's reversal, its trade cash line together: both or neither (4.6). */
+    /**
+     * Saves a reversal and, for a buy's or sell's reversal, its trade cash line together: both or neither (4.6). A sell's
+     * reversal unhides [unhide] in the same action (4.4; 15 decision 2); a split's reversal never unhides.
+     */
     suspend fun saveReversal(
         transaction: Transaction,
         cashLine: CashEntry?,
+        unhide: List<HiddenHolding> = emptyList(),
     )
 
     /**
      * Saves a Reverse and re-enter pair together: the reversal, its trade cash line, the new buy or sell, its trade cash
-     * line and a new sell's allocations; all or nothing (4.6, K2).
+     * line and a new sell's allocations, and the unhiding of [unhide]; all or nothing (4.4, 4.6, K2; 15 decision 2).
      */
     suspend fun savePair(
         reversal: Transaction,
         reversalCashLine: CashEntry,
         replacement: Transaction,
         replacementCashLine: CashEntry,
+        unhide: List<HiddenHolding> = emptyList(),
     )
 
     /**
@@ -69,6 +78,15 @@ interface RecordStore {
 
     /** Saves an instrument, replacing the one with the same ticker (K4 only). */
     suspend fun saveInstrument(instrument: Instrument)
+
+    /** The hidden holdings, each at 0 shares. Throws [UnreadableDataException] if stored data cannot be read or checked. */
+    suspend fun loadHidden(): List<HiddenHolding>
+
+    /** Hides [holding] (4.4). Not a transaction; no cash effect. Throws if it is already hidden. */
+    suspend fun hide(holding: HiddenHolding)
+
+    /** Unhides [holding] (view 9). Throws if it was not hidden. */
+    suspend fun unhide(holding: HiddenHolding)
 }
 
 class UnreadableDataException(

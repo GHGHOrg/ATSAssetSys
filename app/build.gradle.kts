@@ -21,7 +21,7 @@ android {
         applicationId = "app.ghghorg.atsassets"
         minSdk = 33
         targetSdk = 37
-        versionCode = 18
+        versionCode = 19
         versionName = "1.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"

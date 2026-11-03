@@ -250,6 +250,19 @@
     <string name="split_sell_short">Not saved. With this split, the sell of %1$s would take more shares than its lot holds.</string>
     <string name="split_before_opening_balance">Not saved. A split cannot be dated before the opening balance (%1$s).</string>
     <string name="holding_split_spoken">Split %1$s in %2$s</string>
+    <!-- Iteration 15: Hide and Hidden holdings (view 9; 15 wording 1 to 7). -->
+    <string name="hide_button">Hide</string>
+    <string name="hide_spoken">Hide %1$s in %2$s</string>
+    <string name="hidden_link">Hidden holdings</string>
+    <string name="hidden_link_spoken">Hidden holdings, opens a list</string>
+    <string name="hidden_title">Hidden holdings</string>
+    <string name="hidden_portfolio_label">Portfolio</string>
+    <string name="hidden_title_spoken">Hidden holdings, portfolio %1$s</string>
+    <string name="hidden_none">No hidden holdings</string>
+    <string name="hidden_last">Last transaction %1$s ET</string>
+    <string name="hidden_row_spoken">%1$s, %2$s, last transaction %3$s Eastern Time</string>
+    <string name="unhide_button">Unhide</string>
+    <string name="unhide_spoken">Unhide %1$s</string>
     <string name="holding_transaction_split">Split</string>
     <string name="holding_transaction_split_spoken">%1$s Eastern Time, split, %2$s</string>
     <!-- Iteration 13a: transaction detail (wording approved 2026-11-01, 13a file section 11). -->

@@ -2,6 +2,7 @@ package app.ghghorg.atsassets.prices
 
 import app.ghghorg.atsassets.core.AssetType
 import app.ghghorg.atsassets.core.CashEntry
+import app.ghghorg.atsassets.core.HiddenHolding
 import app.ghghorg.atsassets.core.Instrument
 import app.ghghorg.atsassets.core.Listing
 import app.ghghorg.atsassets.core.Lookup
@@ -52,6 +53,7 @@ class TickerVerifierTest {
         override suspend fun saveBuy(
             transaction: Transaction,
             cashLine: CashEntry,
+            unhide: List<HiddenHolding>,
         ) = error("not used")
 
         override suspend fun saveSell(
@@ -64,6 +66,7 @@ class TickerVerifierTest {
         override suspend fun saveReversal(
             transaction: Transaction,
             cashLine: CashEntry?,
+            unhide: List<HiddenHolding>,
         ) = error("not used")
 
         override suspend fun savePair(
@@ -71,6 +74,7 @@ class TickerVerifierTest {
             reversalCashLine: CashEntry,
             replacement: Transaction,
             replacementCashLine: CashEntry,
+            unhide: List<HiddenHolding>,
         ) = error("not used")
 
         override suspend fun saveSplitPair(
@@ -79,6 +83,12 @@ class TickerVerifierTest {
         ) = error("not used")
 
         override suspend fun loadInstruments(): List<Instrument> = error("not used")
+
+        override suspend fun loadHidden(): List<HiddenHolding> = error("not used")
+
+        override suspend fun hide(holding: HiddenHolding) = error("not used")
+
+        override suspend fun unhide(holding: HiddenHolding) = error("not used")
     }
 
     private val aapl = Listing(type = "Common Stock", exchange = "XNAS", currency = "USD")
