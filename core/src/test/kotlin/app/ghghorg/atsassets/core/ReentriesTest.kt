@@ -457,4 +457,103 @@ class ReentriesTest {
         assertFalse(Reentries.offered(after, result.reversal))
         assertTrue(Reentries.offered(after, result.replacement))
     }
+
+    private fun reenterBuyAsFilledIn(
+        transactions: List<Transaction>,
+        originalId: String,
+        quantity: String,
+        totalCents: Long,
+    ): ReentryResult {
+        val original = transactions.first { it.id == originalId }
+        return Reentries.reenterBuy(
+            cashEntries = listOf(opening()) + linesOf(transactions),
+            transactions = transactions,
+            portfolios = listOf(portfolioP),
+            ids = ids(),
+            originalId = originalId,
+            reversalDate = original.date,
+            portfolioId = "p1",
+            ticker = "AAPL",
+            date = original.date,
+            quantity = BigDecimal(quantity),
+            totalCents = totalCents,
+            asFilledIn = true,
+        )
+    }
+
+    /** Example I (CR1): 1 share for $100.00, then a 1 for 3 split dated Jan 2 entered after it; the lot is exactly 1/3. */
+    private val exampleI = listOf(bought("b1", "2026-01-02", "1", 10_000L, 2L), splitOn("x1", "2026-01-02", 1, 3, 3L))
+
+    @Test
+    fun exampleI_aBuyReenteredAsFilledIn_storesTheOriginalsQuantityAndTheRatio_soItsLotIsExactlyOneThird() {
+        val result = created(reenterBuyAsFilledIn(exampleI, "b1", "0.33333333", 10_000L))
+        assertEquals(BigDecimal("1"), result.replacement.quantity)
+        assertEquals(SplitRatio(1, 3), result.replacement.quantityRatio)
+        val after = saved(exampleI, result)
+        assertEquals(fraction(1, 3), lot(after, result.replacement.id).remainingQuantity)
+        assertEquals(fraction(300), lot(after, result.replacement.id).costPerShare)
+        val threeForOne = splitOn("x2", "2026-01-10", 3, 1, result.replacement.enteredSeq + 1)
+        assertEquals(fraction(1), Holdings.holdings(after + threeForOne, day)[0].shares)
+    }
+
+    @Test
+    fun exampleI_aTypedQuantity_makesAnOrdinaryBuy_and0_99999999AfterThe3For1() {
+        val result = created(reenterBuy(exampleI, "b1", "2026-01-02", "2026-01-02", "0.33333333", 10_000L))
+        assertEquals(BigDecimal("0.33333333"), result.replacement.quantity)
+        assertEquals(null, result.replacement.quantityRatio)
+        val threeForOne = splitOn("x2", "2026-01-10", 3, 1, result.replacement.enteredSeq + 1)
+        assertEquals(Fraction.of(BigDecimal("0.99999999")), Holdings.holdings(saved(exampleI, result) + threeForOne, day)[0].shares)
+    }
+
+    @Test
+    fun aBuyReenteredAsFilledIn_withNoRoundingNeeded_storesNoRatio() {
+        val result = created(reenterBuyAsFilledIn(listOf(tenFor1000), "b1", "10", 100_000L))
+        assertEquals(BigDecimal("10"), result.replacement.quantity)
+        assertEquals(null, result.replacement.quantityRatio)
+    }
+
+    @Test
+    fun theReversalOfABuyWithARatio_removesExactlyItsShares() {
+        val result = created(reenterBuyAsFilledIn(exampleI, "b1", "0.33333333", 10_000L))
+        val after = saved(exampleI, result)
+        val cash = cashAfter(listOf(opening()) + linesOf(exampleI), result)
+        val reversal = Reversals.draft(cash, after, result.replacement, "r9", result.replacement.date)
+        val effect = Reversals.effect(after + reversal, reversal) as ReversalEffect.OfBuy
+        assertEquals(fraction(1, 3), effect.sharesRemoved)
+        assertEquals(Fraction.ZERO, lot(after + reversal, result.replacement.id).remainingQuantity)
+    }
+
+    @Test
+    fun aBuyWithARatio_reenteredAgainAfterAnother1For3_chainsTheRatio() {
+        val first = created(reenterBuyAsFilledIn(exampleI, "b1", "0.33333333", 10_000L))
+        val afterFirst = saved(exampleI, first)
+        val again = splitOn("x2", "2026-01-02", 1, 3, first.replacement.enteredSeq + 1)
+        val transactions = afterFirst + again
+        val draft = Reversals.draft(listOf(opening()) + linesOf(transactions), transactions, first.replacement, "r0", first.replacement.date)
+        val starting = Reentries.startingQuantity(transactions + draft, first.replacement, first.replacement.date, draft.enteredSeq + 1)
+        assertEquals(BigDecimal("0.11111111"), starting)
+        val second = created(reenterBuyAsFilledIn(transactions, first.replacement.id, starting.toPlainString(), 10_000L))
+        assertEquals(BigDecimal("1"), second.replacement.quantity)
+        assertEquals(SplitRatio(1, 9), second.replacement.quantityRatio)
+        assertEquals(fraction(1, 9), lot(saved(transactions, second), second.replacement.id).remainingQuantity)
+    }
+
+    @Test
+    fun theStartingQuantity_ofABuyWithARatio_isItsExactQuantityShown() {
+        val first = created(reenterBuyAsFilledIn(exampleI, "b1", "0.33333333", 10_000L))
+        val after = saved(exampleI, first)
+        val draft = Reversals.draft(listOf(opening()) + linesOf(after), after, first.replacement, "r0", first.replacement.date)
+        assertEquals(BigDecimal("0.33333333"), Reentries.startingQuantity(after + draft, first.replacement, first.replacement.date, draft.enteredSeq + 1))
+    }
+
+    @Test
+    fun aRatioTooLargeForItsColumns_refusesThePair() {
+        val transactions =
+            listOf(
+                bought("b1", "2026-01-02", "1", 10_000L, 2L),
+                splitOn("x1", "2026-01-02", 1, 100_000, 3L),
+                splitOn("x2", "2026-01-02", 1, 100_000, 4L),
+            )
+        assertEquals(ReentryRefusal.QuantityRatioTooLarge, refusal(reenterBuyAsFilledIn(transactions, "b1", "0.00000001", 10_000L)))
+    }
 }

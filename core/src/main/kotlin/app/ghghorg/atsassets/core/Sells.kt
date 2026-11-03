@@ -145,7 +145,7 @@ object Sells {
                     buyDate = buy.date,
                     enteredSeq = buy.enteredSeq,
                     available = least,
-                    costPerShare = Fraction.ofCents(buy.totalCents) / (Fraction.of(buy.quantity) * before),
+                    costPerShare = Fraction.ofCents(buy.totalCents) / (buy.boughtQuantity * before),
                     unavailable =
                     when {
                         buy.date.isAfter(sellDate) -> LotUnavailable.BOUGHT_AFTER_SELL_DATE
@@ -296,7 +296,7 @@ object Sells {
                 lotId = allocation.lotId,
                 buyDate = buy.date,
                 quantity = allocation.quantity,
-                cost = Fraction.ofCents(buy.totalCents) * allocation.quantity / (Fraction.of(buy.quantity) * factor),
+                cost = Fraction.ofCents(buy.totalCents) * allocation.quantity / (buy.boughtQuantity * factor),
                 proceeds = Fraction.ofCents(sell.totalCents) * allocation.quantity / sumTaken,
             )
         }

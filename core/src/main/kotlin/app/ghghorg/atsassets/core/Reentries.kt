@@ -1,6 +1,7 @@
 package app.ghghorg.atsassets.core
 
 import java.math.BigDecimal
+import java.math.BigInteger
 import java.time.LocalDate
 
 /** The ids of the four records a Reverse and re-enter pair saves: the reversal, the new entry and their cash lines. */
@@ -42,6 +43,9 @@ sealed interface ReentryRefusal {
     data class OfSplit(
         val reason: SplitRefusal,
     ) : ReentryRefusal
+
+    /** Part 2: a buy left as filled in whose quantity ratio does not fit two 32-bit whole numbers (14c decision 1). */
+    data object QuantityRatioTooLarge : ReentryRefusal
 
     /** A refusal about the reversal date, which Change on the combined review fixes (14a decision 3). */
     val fixedOnReview: Boolean
@@ -103,6 +107,11 @@ object Reentries {
         transaction: Transaction,
     ): Boolean = Reversals.offered(transactions, transaction)
 
+    /**
+     * [asFilledIn]: the quantity was left as the form filled it in (14c decision 2). If its exact figure has more than 8
+     * places, the new buy stores the original's quantity and the ratio of the splits between, so its lot has exactly
+     * the original's shares (4.6, CR1).
+     */
     fun reenterBuy(
         cashEntries: List<CashEntry>,
         transactions: List<Transaction>,
@@ -115,24 +124,38 @@ object Reentries {
         date: LocalDate,
         quantity: BigDecimal,
         totalCents: Long,
+        asFilledIn: Boolean = false,
     ): ReentryResult {
         val part =
             when (val first = reversalPart(cashEntries, transactions, ids, originalId, TransactionType.BUY, reversalDate)) {
                 is FirstPart.Refused -> return ReentryResult.Refused(ReentryRefusal.OfReversal(first.reason))
                 is FirstPart.Ready -> first
             }
+        val withReversal = transactions + part.reversal
+        val kept =
+            if (asFilledIn) {
+                val seq = Transactions.nextSeq(cashEntries + part.cashLine, withReversal)
+                when (val ratio = keptRatio(withReversal, withReversal.first { it.id == originalId }, Place(date, seq), quantity)) {
+                    KeptRatio.TooLarge -> return ReentryResult.Refused(ReentryRefusal.QuantityRatioTooLarge)
+                    is KeptRatio.Fits -> ratio
+                    null -> null
+                }
+            } else {
+                null
+            }
         val buy =
             Transactions.buy(
                 cashEntries = cashEntries + part.cashLine,
-                transactions = transactions + part.reversal,
+                transactions = withReversal,
                 portfolios = portfolios,
                 transactionId = ids.replacementId,
                 cashEntryId = ids.replacementCashId,
                 portfolioId = portfolioId,
                 ticker = ticker,
                 date = date,
-                quantity = quantity,
+                quantity = kept?.quantity ?: quantity,
                 totalCents = totalCents,
+                quantityRatio = kept?.ratio,
             )
         return when (buy) {
             is BuyResult.Refused -> ReentryResult.Refused(ReentryRefusal.OfBuy(buy.reason))
@@ -217,7 +240,37 @@ object Reentries {
         seq: Long,
     ): BigDecimal {
         val factor = Holdings.splitFactor(transactions, original.portfolioId, original.ticker, original.place, Place(date, seq))
-        return if (factor == Fraction.ONE) original.quantity else Sells.shown(Fraction.of(original.quantity) * factor)
+        val exact = original.boughtQuantity * factor
+        return if (exact == Fraction.of(original.quantity)) original.quantity else Sells.shown(exact)
+    }
+
+    private sealed interface KeptRatio {
+        data class Fits(
+            val quantity: BigDecimal,
+            val ratio: SplitRatio,
+        ) : KeptRatio
+
+        data object TooLarge : KeptRatio
+    }
+
+    /**
+     * What a new buy at [place] stores when its [quantity] was left as filled in: the original's quantity and the ratio
+     * of its own ratio and the splits between (4.6, CR1). Null when the quantity is not the shown figure of the
+     * original's exact shares there, or already is them exactly, so an ordinary buy does.
+     */
+    private fun keptRatio(
+        transactions: List<Transaction>,
+        original: Transaction,
+        place: Place,
+        quantity: BigDecimal,
+    ): KeptRatio? {
+        val factor = Holdings.splitFactor(transactions, original.portfolioId, original.ticker, original.place, place)
+        val exact = original.boughtQuantity * factor
+        if (Quantity.shown(exact).compareTo(quantity) != 0 || exact == Fraction.of(quantity)) return null
+        val ratio = (original.quantityRatio?.factor ?: Fraction.ONE) * factor
+        val limit = BigInteger.valueOf(Int.MAX_VALUE.toLong())
+        if (ratio.numerator > limit || ratio.denominator > limit) return KeptRatio.TooLarge
+        return KeptRatio.Fits(original.quantity, SplitRatio(ratio.numerator.toInt(), ratio.denominator.toInt()))
     }
 
     /** Offered on a direct cash entry that is not a reversal and not reversed; never the opening balance or a trade line (4.6). */
