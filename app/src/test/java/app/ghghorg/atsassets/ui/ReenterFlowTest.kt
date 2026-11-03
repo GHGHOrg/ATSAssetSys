@@ -486,6 +486,20 @@ class ReenterFlowTest {
         assertEquals(BuyForm(), state.buyForm)
     }
 
+    // 15a (CR2): the combined review reaches the state as its model (decision 1: one wiring test per screen).
+    @Test
+    fun exampleG_theCombinedReview_reachesTheStateAsItsModel() {
+        val vm = onTransaction("b2", store())
+        vm.openReenter()
+        vm.onBuyQuantityChange("100")
+        vm.reviewBuy()
+        val model = vm.state.value.replaceReviewModel
+        assertEquals(ReversedEntry.Trade(TransactionType.BUY, "2026-02-01"), model?.reverses)
+        assertEquals(ReversalPartModel.OfBuy(sharesRemoved = "10", cashCents = 150_000L), model?.partOne)
+        assertEquals(ReplacementPartModel.Buy("AAPL", "Main", "2026-02-01", "100", "$1,500.00", "$15.00", -150_000L), model?.partTwo)
+        assertEquals(0L, model?.combinedCents)
+    }
+
     @Test
     fun bothOrNeither_aTotalThatTakesCashBelowZero_keepsTheBuyScreen_withTheNewBuysCashRule_andSavesNothing() {
         val store = store()

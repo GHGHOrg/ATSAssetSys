@@ -48,6 +48,7 @@ CI (.github/workflows/ci.yml) runs the style check and then the same three steps
 - K3 and K9 only read data. K4 only writes prices and instrument data. These boundaries are kept by review and checked at Deploy.
 - Exact arithmetic only (spec 4.10).
 - A change request (Ruleset A rule 7) gets its own intent file, intent/intent-cr-NN-short-name.md, and plan.md's iteration row links to it. intent.md stays at v52. spec.md stays one file, and each change edits it (decided 2026-11-03, CR1).
+- A new or changed screen shows only what its screen model prepares (plan.md section 3; CR2). Build the model in a builder with unit tests, plus one ViewModel wiring test per screen; the screen only picks the approved string and puts the model's values in. Don't format or work out a shown figure, text or message inside a composable. Screens built before 15a are open item 48: give one a model when you change it.
 
 ## 5. Where things are
 - intent/intent.md (v52, final) and one file per change request (intent/intent-cr-NN-short-name.md; CR1 is intent-cr-01-tiny-remainders.md), spec/spec.md (v5, final, one file), spec/wireframes/, plan/plan.md, plan/setup.md.
@@ -128,6 +129,7 @@ Commits and pull requests:
 Other:
 - Start sub-agents only when I ask.
 - Ask one question at a time, tagged with a stage, with the options, what each means for the end user, and your leaning marked. Each option starts with a short letter tag (A, B, C).
+- For a Build choice between ways to write the code, weigh my leaning by three criteria and show them for each option: code maintainability, test run time, and APK size. Say when an option makes no real difference on a criterion, and give the measured or expected size of the difference. The leaning follows from these, plus what the option means for you as the user (decided 2026-11-03, 15a decision 1).
 - Do not write security-relevant code from memory. Look up versions on the day. When a request conflicts with intent.md or spec.md, stop and offer a choice.
 - Wording that spec.md does not give (messages, labels) is written by you, shown to me and approved before use (D9).
 - Auto memory is off. If I correct you, propose the change as a CLAUDE.md edit.

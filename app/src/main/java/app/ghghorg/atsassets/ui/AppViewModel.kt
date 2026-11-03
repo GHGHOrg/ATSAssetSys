@@ -558,6 +558,14 @@ data class AppState(
             return Holdings.transactionsOf(transactions, id, ticker)
         }
 
+    /** Its Transactions tab's rows, as the screen draws them (view 6; CR2, 15a decision 1). */
+    val holdingRows: List<HoldingRowModel>
+        get() {
+            val id = portfolioId ?: return emptyList()
+            val ticker = holdingTicker ?: return emptyList()
+            return HoldingRows.of(transactions, id, ticker)
+        }
+
     /** Its lots with shares as of today, oldest first (view 6, 4.4). */
     val holdingLots: List<Lot>
         get() {
@@ -640,6 +648,22 @@ data class AppState(
     val replaceCombinedCents: Long?
         get() = replaceReview?.let { it.reversalCashLine.amountCents + it.replacementCashLine.amountCents }
             ?: replaceCashReview?.let { it.reversal.amountCents + it.replacement.amountCents }
+
+    /** The combined review as the screen draws it (4.6, wireframe 10c; CR2, 15a decision 1); null with nothing replaced. */
+    val replaceReviewModel: ReplaceReviewModel?
+        get() = ReplaceReview.of(
+            original = replacedTransaction,
+            originalCash = replacedCashEntry,
+            reversalNote = replaceReversalNote,
+            reversalEffect = replaceReversalEffect,
+            trade = replaceReview,
+            pieces = replacePieces,
+            split = replaceSplitReview,
+            splitEffect = replaceSplitEffect,
+            cash = replaceCashReview,
+            combinedCents = replaceCombinedCents,
+            portfolios = portfolios,
+        )
 
     /** The pieces of the new sell on the combined review, oldest lot first (10c marker 10). */
     val replacePieces: List<SoldPiece>

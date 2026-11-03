@@ -59,13 +59,14 @@ fun CashEntryForm(
     modifier: Modifier = Modifier,
 ) {
     BackHandler(onBack = onBack)
-    val refusals = state.refusals
+    // The messages come only from their model (CR2): the screen picks the approved string for each.
+    val shown = state.cashFormMessages
     val type = state.form.type
     val opening = type == CashType.OPENING_BALANCE
     val adjustment = type == CashType.ADJUSTMENT
-    val dateError = dateMessage(refusals.date)
-    val amountError = amountMessage(refusals.amount)
-    val noteError = noteMessage(refusals.noteHasLineBreak, refusals.noteRequired)
+    val dateError = dateMessage(shown.date)
+    val amountError = amountMessage(shown.amount)
+    val noteError = noteMessage(shown.note == NoteMessage.LINE_BREAK, shown.note == NoteMessage.REQUIRED)
     // A cash entry replaced by Reverse and re-enter (14b; wording 1): its values, for the banner and the hints.
     val original = state.replacedCashEntry
     Column(
@@ -127,7 +128,7 @@ fun CashEntryForm(
                     }
                 }
             },
-            isError = refusals.date != null,
+            isError = shown.date != null,
             singleLine = true,
         )
         if (adjustment) {
@@ -165,7 +166,7 @@ fun CashEntryForm(
                     }
                 }
             },
-            isError = refusals.amount != null,
+            isError = shown.amount != null,
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
             singleLine = true,
         )
@@ -187,14 +188,19 @@ fun CashEntryForm(
             keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
         )
         val messages =
-            if (original != null) {
-                listOfNotNull(
-                    saveMessage(refusals.save),
-                    replacingMessage(cashMessage(refusals.cash, replacing = true)),
-                    replaceRuleMessage(state, state.replaceRefusals.rule),
-                )
-            } else {
-                listOfNotNull(saveMessage(refusals.save), cashMessage(refusals.cash))
+            shown.below.mapNotNull { message ->
+                when (message) {
+                    is CashFormMessage.Save -> saveMessage(message.refusal)
+
+                    is CashFormMessage.Cash ->
+                        if (message.replacing) {
+                            replacingMessage(cashMessage(message.refusal, replacing = true))
+                        } else {
+                            cashMessage(message.refusal)
+                        }
+
+                    is CashFormMessage.Replace -> replaceRuleMessage(state, message.refusal)
+                }
             }
         messages.forEach { message ->
             Text(

@@ -185,15 +185,14 @@ private fun TabContent(
 ) {
     Column(modifier = modifier) {
         when (state.holdingTab) {
+            // Drawn only from the rows' models (CR2): the screen picks the approved string and puts the values in.
             HoldingTab.TRANSACTIONS ->
-                RowList(state.holdingTransactions) {
-                    val open = { onOpenTransaction(it.id) }
-                    val ratio = it.split
-                    val original = Reversals.originalOf(state.transactions, it)
-                    when {
-                        original != null -> ReversalRow(it, original, open)
-                        ratio != null -> SplitRow(it, ratio, open)
-                        else -> TransactionRow(it, open)
+                RowList(state.holdingRows) {
+                    val open = { onOpenTransaction(it.transactionId) }
+                    when (it) {
+                        is HoldingRowModel.Reversal -> ReversalRow(it, open)
+                        is HoldingRowModel.Split -> SplitRow(it, open)
+                        is HoldingRowModel.Trade -> TransactionRow(it, open)
                     }
                 }
 
@@ -323,13 +322,13 @@ private fun <T> RowList(
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
 private fun TransactionRow(
-    transaction: Transaction,
+    row: HoldingRowModel.Trade,
     onOpen: () -> Unit,
 ) {
-    val date = transaction.date.toString()
-    val shares = sharesText(transaction.boughtQuantity)
-    val amount = Money.format(transaction.totalCents)
-    val sell = transaction.type == TransactionType.SELL
+    val date = row.date
+    val shares = stringResource(if (row.oneShare) R.string.holding_share_one else R.string.holding_shares, row.shares)
+    val amount = row.amount
+    val sell = row.sell
     val spoken =
         stringResource(
             if (sell) R.string.holding_transaction_sell_spoken else R.string.holding_transaction_spoken,
@@ -382,13 +381,12 @@ internal fun Modifier.opensWith(
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
 private fun ReversalRow(
-    reversal: Transaction,
-    original: Transaction,
+    row: HoldingRowModel.Reversal,
     onOpen: () -> Unit,
 ) {
-    val date = reversal.date.toString()
-    val type = transactionTypeLower(original.type)
-    val spoken = stringResource(R.string.holding_reversal_row_spoken, date, type, original.date.toString())
+    val date = row.date
+    val type = transactionTypeLower(row.originalType)
+    val spoken = stringResource(R.string.holding_reversal_row_spoken, date, type, row.originalDate)
     FlowRow(
         modifier = Modifier.fillMaxWidth().opensWith(spoken, onOpen),
         horizontalArrangement = Arrangement.spacedBy(16.dp),
@@ -396,7 +394,7 @@ private fun ReversalRow(
     ) {
         Text(text = stringResource(R.string.date_with_et, date), style = MaterialTheme.typography.bodyLarge)
         Text(
-            text = stringResource(R.string.reversal_of_link, type, original.date.toString()),
+            text = stringResource(R.string.reversal_of_link, type, row.originalDate),
             style = MaterialTheme.typography.bodyLarge,
             fontWeight = FontWeight.Medium,
         )
@@ -407,12 +405,11 @@ private fun ReversalRow(
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
 private fun SplitRow(
-    transaction: Transaction,
-    ratio: SplitRatio,
+    row: HoldingRowModel.Split,
     onOpen: () -> Unit,
 ) {
-    val date = transaction.date.toString()
-    val shown = ratioText(ratio)
+    val date = row.date
+    val shown = ratioText(row.ratio)
     val spoken = stringResource(R.string.holding_transaction_split_spoken, date, shown)
     FlowRow(
         modifier = Modifier.fillMaxWidth().opensWith(spoken, onOpen),
