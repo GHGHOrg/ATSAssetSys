@@ -62,10 +62,10 @@ By hand on the phone, with 14c's data (Main: AAPL 15 shares, V 0 shares, MA 1 sh
 ## 9. Research
 - None expected: Room's AutoMigration for a new table is used as in 1 to 5; the exported schema shows the SQL.
 
-## 10. Decisions needed from you (Build; asked one at a time)
-1. Hide is offered at exactly 0 shares counting every entry, later-dated ones included, so a hidden holding is always at 0 as section 8 needs; or at 0 as of today only.
-2. Unhiding is saved in the same database transaction as the save that causes it, so it is never half done; or right after the save.
-3. Back from a Holding detail opened from Hidden holdings returns to Hidden holdings (wireframe 06 lists it as a way in); or to the portfolio's screen.
+## 10. Decisions (Build, settled by you 2026-11-03)
+1. Hide is offered only at exactly 0 shares counting every entry, later-dated ones included, so a hidden holding is always at 0 as section 8 needs (your A).
+2. An unhide is saved in the same database transaction as the save that causes it, so it is never half done (your A).
+3. Back from a Holding detail opened from Hidden holdings returns to Hidden holdings (wireframe 06 lists it as a way in) (your A).
 
 ## 11. Wording to approve (D9)
 - Asked in step 5: Hide; Unhide; the "Hidden holdings" link and title; "No hidden holdings"; "0 shares"; "Last transaction %s ET"; the TalkBack sentences for a row and the buttons. The wireframes give placeholders only.
