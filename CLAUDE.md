@@ -47,15 +47,18 @@ CI (.github/workflows/ci.yml) runs the style check and then the same three steps
 - core/ is pure Kotlin/JVM: no Android classes, no database, no network.
 - K3 and K9 only read data. K4 only writes prices and instrument data. These boundaries are kept by review and checked at Deploy.
 - Exact arithmetic only (spec 4.10).
+- A change request (Ruleset A rule 7) gets its own intent file, intent/intent-cr-NN-short-name.md, and plan.md's iteration row links to it. intent.md stays at v52. spec.md stays one file, and each change edits it (decided 2026-11-03, CR1).
 
 ## 5. Where things are
-- intent/intent.md (v52, final), spec/spec.md (v4, final, one file), spec/wireframes/, plan/plan.md, plan/setup.md.
+- intent/intent.md (v52, final) and one file per change request (intent/intent-cr-NN-short-name.md; CR1 is intent-cr-01-tiny-remainders.md), spec/spec.md (v5, final, one file), spec/wireframes/, plan/plan.md, plan/setup.md.
 - Spec sections: find them by heading, for example "## 4. Business rules".
   Sections 2 (concerns, C-numbers), 3 (domain), 4 (rules), 6 (views), 7 (prices), 8 (backup file), 9 (security), 11 (criteria), 14 (components, K-numbers).
 - Each iteration file in plan/iterations/ lists its own spec sections, criteria and examples.
 
 ## 6. Known pitfalls
 - No floating point for money or quantity (4.10).
+- Quantity.shown is the only place a quantity is rounded for showing, picking or judging; a quantity above 0 never shows 0 (CR1, spec 4.10). Do not round a quantity with Fraction.rounded directly.
+- A buy's exact quantity is boughtQuantity (quantity × quantityRatio), not quantity: a buy re-entered with its quantity left as filled in stores the original's quantity and a ratio in the split columns (CR1). Use boughtQuantity wherever a buy's shares, cost or price are worked out or shown (14c, section 14, item 1).
 - Never log or send amounts, tickers, quantities, notes or portfolio names (spec section 9). Never log the price-source key either: no HTTP logging, not even in debug builds; the key goes in the X-Finnhub-Token header only, never in a URL (price-source note, decision 5).
 - No analytics or crash-reporting library.
 - Docs in this repo use CRLF. Keep line endings, do not retype files.
@@ -99,6 +102,7 @@ CI (.github/workflows/ci.yml) runs the style check and then the same three steps
 - Phone-check figures: a lot's history is every sell that ever took from it, reversed ones included, and the date each was reversed. Read the lots used on each sell's detail before working out a reversal's date rule (14a check 3).
 - Exact fractions at 8 places: test with remainders that round up as well as down, and with several lots (for example 2/3, 5/3, 3/7, 1/7), not only 10/3, which rounds down. A sum of shown figures can be above or below the total shown, and every rule that compares typed quantities must use the same figures the picker shows. Before proposing a fix, try each option on all the remaining checks and on such cases (12, phone check 6).
 - A stand-in value (the K1 pitfall above) is only for judging rules together. Whatever a review shows must come from the typed values, so stand in only for a field that is itself refused, and test that the review shows each typed field, an empty one included (14b, phone check 3: the review showed the stand-in note "check").
+- When a field's meaning changes or a second field takes over part of its job (as boughtQuantity did for a buy's quantity in 14c), search for every read of the old field, not for one call pattern, and check each screen that shows it on the phone by its text. No test draws a screen (14c Deploy findings 1 and 2).
 
 ## 7. Standing checks for every iteration's screens
 Criteria 9, 39 to 42, and the install-over-previous-build check (35).

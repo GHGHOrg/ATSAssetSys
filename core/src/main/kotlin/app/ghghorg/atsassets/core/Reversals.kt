@@ -212,7 +212,7 @@ object Reversals {
         fun since(from: Place) = Holdings.splitFactor(transactions, original.portfolioId, original.ticker, from, reversal.place)
         return when (original.type) {
             TransactionType.BUY ->
-                ReversalEffect.OfBuy(sharesRemoved = Fraction.of(original.quantity) * since(original.place), cashCents = original.totalCents)
+                ReversalEffect.OfBuy(sharesRemoved = original.boughtQuantity * since(original.place), cashCents = original.totalCents)
 
             TransactionType.SELL -> {
                 val buys = transactions.filter { it.type == TransactionType.BUY }.associateBy { it.id }

@@ -176,12 +176,12 @@ internal fun transactionTitle(
 /** Quantity as traded, total amount and price per share (frame G). */
 @Composable
 private fun TradeRows(transaction: Transaction) {
-    ReviewRow(stringResource(R.string.transaction_quantity_traded), Quantity.format(transaction.quantity))
+    ReviewRow(stringResource(R.string.transaction_quantity_traded), Quantity.format(transaction.boughtQuantity))
     val total = stringResource(R.string.buy_total_row)
     val totalShown = Money.format(transaction.totalCents)
     ReviewRow(total, totalShown, spoken = spokenLabel(total, totalShown))
     val price = stringResource(R.string.buy_price_per_share_label)
-    val priceShown = Money.formatPerShare(Transactions.pricePerShare(transaction.totalCents, transaction.quantity))
+    val priceShown = Money.formatPerShare(Transactions.pricePerShare(transaction))
     ReviewRow(price, priceShown, spoken = spokenLabel(price, priceShown))
 }
 
@@ -195,7 +195,7 @@ private fun LotRow(
     val lot = state.transactionLot
     when {
         lot == null -> {
-            val quantity = Quantity.format(buy.quantity)
+            val quantity = Quantity.format(buy.boughtQuantity)
             val date = buy.date.toString()
             ReviewRow(
                 label,

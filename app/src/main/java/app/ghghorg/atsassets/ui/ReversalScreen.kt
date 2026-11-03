@@ -144,7 +144,7 @@ private fun OriginalCard(
                 transactionTypeLower(original.type),
                 date,
                 portfolio,
-                sharesText(original.quantity),
+                sharesText(original.boughtQuantity),
                 Money.format(original.totalCents).substringAfter('$'),
             )
         }
@@ -157,7 +157,7 @@ private fun OriginalCard(
             if (ratio != null) {
                 ReviewRow(stringResource(R.string.split_button), ratioText(ratio))
             } else {
-                ReviewRow(stringResource(R.string.transaction_quantity_traded), Quantity.format(original.quantity))
+                ReviewRow(stringResource(R.string.transaction_quantity_traded), Quantity.format(original.boughtQuantity))
                 ReviewRow(stringResource(R.string.buy_total_row), Money.format(original.totalCents))
             }
         }

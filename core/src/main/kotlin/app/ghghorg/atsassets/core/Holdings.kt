@@ -19,9 +19,10 @@ data class Lot(
     val cost: Fraction,
     val originalCost: Fraction,
     val splitFactor: Fraction,
+    val boughtQuantity: Fraction = Fraction.of(originalQuantity),
 ) {
-    /** The buy's total over its quantity with the splits since, exact (spec 3, 4.10); a sell does not change it. */
-    val costPerShare: Fraction get() = originalCost / (Fraction.of(originalQuantity) * splitFactor)
+    /** The buy's total over its exact quantity with the splits since (spec 3, 4.10); a sell does not change it. */
+    val costPerShare: Fraction get() = originalCost / (boughtQuantity * splitFactor)
 }
 
 /** A holding: a ticker within a portfolio (spec section 3), with the shares and cost of its lots (4.8). */
@@ -82,9 +83,10 @@ object Holdings {
                     enteredSeq = buy.enteredSeq,
                     originalQuantity = buy.quantity,
                     remainingQuantity = remaining,
-                    cost = Fraction.ofCents(buy.totalCents) * remaining / (Fraction.of(buy.quantity) * factor),
+                    cost = Fraction.ofCents(buy.totalCents) * remaining / (buy.boughtQuantity * factor),
                     originalCost = Fraction.ofCents(buy.totalCents),
                     splitFactor = factor,
+                    boughtQuantity = buy.boughtQuantity,
                 )
             }
     }
@@ -138,7 +140,7 @@ object Holdings {
             val quantity = sell.allocations.filter { it.lotId == buy.id }.fold(Fraction.ZERO) { sum, it -> sum + it.quantity }
             return quantity * since(sell.place)
         }
-        val bought = Fraction.of(buy.quantity) * since(buy.place)
+        val bought = buy.boughtQuantity * since(buy.place)
         return transactions
             .filter { it.place <= at && (it.type == TransactionType.SELL || it.type == TransactionType.REVERSAL) }
             .fold(bought) { left, transaction ->

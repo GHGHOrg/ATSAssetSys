@@ -49,9 +49,20 @@ object Quantity {
     /** Commas between thousands, up to 8 decimals, trailing zeros dropped (10, 2.5). */
     fun format(quantity: BigDecimal): String = format(Fraction.of(quantity))
 
-    /** As [format], rounded half away from zero to 8 decimals (4.10). */
+    private val SMALLEST = BigDecimal("0.00000001")
+
+    /**
+     * A quantity as it is shown, picked and judged: rounded half away from zero to 8 decimals, except that a quantity
+     * above 0 that would round to 0 is 0.00000001, so a leftover never shows 0 (4.10, CR1).
+     */
+    fun shown(quantity: Fraction): BigDecimal {
+        val rounded = quantity.rounded(MAX_DECIMALS)
+        return if (quantity.signum() > 0 && rounded.signum() == 0) SMALLEST else rounded
+    }
+
+    /** As [format], rounded as [shown]. */
     fun format(quantity: Fraction): String {
-        val plain = quantity.rounded(MAX_DECIMALS).stripTrailingZeros().toPlainString()
+        val plain = shown(quantity).stripTrailingZeros().toPlainString()
         val whole = plain.substringBefore('.')
         val decimals = plain.substringAfter('.', "")
         val grouped = whole.reversed().chunked(3).joinToString(",").reversed()

@@ -722,4 +722,58 @@ class ReenterFlowTest {
         assertEquals(SaveRefusal.SAVE_FAILED, vm2.state.value.replaceRefusals.save)
         assertTrue(failing.savedPairs.isEmpty())
     }
+
+    // 14c (CR1, Example I): 1 share for $100.00, then a 1 for 3 split dated Jan 2 entered after it.
+    private val i1 = bought("i1", "2026-01-02", "1", 10_000L, 2L)
+
+    private fun oneFor(
+        id: String,
+        from: Int,
+        seq: Long,
+    ): Transaction = x1.copy(id = id, date = LocalDate.of(2026, 1, 2), enteredSeq = seq, split = SplitRatio(1, from))
+
+    @Test
+    fun exampleI_aBuyReenteredWithTheQuantityAsFilledIn_savesTheOriginalsExactShares() {
+        val store = store(listOf(i1, oneFor("xi", 3, 3L)))
+        val vm = onTransaction("i1", store)
+        vm.openReenter()
+        assertEquals("0.33333333", vm.state.value.buyForm.quantityText)
+        vm.reviewBuy()
+        val review = vm.state.value
+        assertEquals(Screen.REPLACE_REVIEW, review.screen)
+        assertEquals(BigDecimal("1"), review.replaceReview?.replacement?.quantity)
+        assertEquals(SplitRatio(1, 3), review.replaceReview?.replacement?.quantityRatio)
+        vm.confirmReplace()
+        assertEquals(1, store.savedPairs.size)
+        assertEquals(shares(1, 3), vm.state.value.shownHolding?.shares)
+    }
+
+    @Test
+    fun theSameDigitsTypedAgain_countAsLeftAsFilledIn_andAnyOtherTextMakesAnOrdinaryBuy() {
+        val vm = onTransaction("i1", store(listOf(i1, oneFor("xi", 3, 3L))))
+        vm.openReenter()
+        vm.onBuyQuantityChange("")
+        vm.onBuyQuantityChange("0.33333333")
+        vm.reviewBuy()
+        assertEquals(SplitRatio(1, 3), vm.state.value.replaceReview?.replacement?.quantityRatio)
+        vm.backToReplaceEntry()
+        // The same number in other text (decision 2: the text decides).
+        vm.onBuyQuantityChange("00.33333333")
+        vm.reviewBuy()
+        val replacement = vm.state.value.replaceReview?.replacement
+        assertEquals(null, replacement?.quantityRatio)
+        assertEquals(BigDecimal("0.33333333"), replacement?.quantity)
+    }
+
+    @Test
+    fun aRatioTooLargeForItsColumns_keepsTheBuyScreen_withTheRefusal() {
+        val store = store(listOf(i1, oneFor("xa", 100_000, 3L), oneFor("xb", 100_000, 4L)))
+        val vm = onTransaction("i1", store)
+        vm.openReenter()
+        vm.reviewBuy()
+        val state = vm.state.value
+        assertEquals(Screen.BUY, state.screen)
+        assertEquals(ReentryRefusal.QuantityRatioTooLarge, state.replaceRefusals.rule)
+        assertTrue(store.savedPairs.isEmpty())
+    }
 }

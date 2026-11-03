@@ -19,6 +19,8 @@ enum class TransactionType {
  * A sell carries its allocations, oldest lot first; they, not the typed quantity, drive shares, cost and proceeds (4.10).
  * A split carries its ratio, with quantity 0 and total 0: it has no cash line (4.5). A reversal carries only [reversesId]
  * and its original's portfolio and ticker, with quantity 0 and total 0; every figure comes from the original (4.6, 4.10).
+ * A buy re-entered with its quantity left as filled in may carry a [quantityRatio]: the splits its original had that it
+ * does not, so its exact quantity is the original's (4.6, CR1).
  */
 data class Transaction(
     val id: String,
@@ -32,7 +34,11 @@ data class Transaction(
     val reversesId: String? = null,
     val allocations: List<SellAllocation> = emptyList(),
     val split: SplitRatio? = null,
-)
+    val quantityRatio: SplitRatio? = null,
+) {
+    /** A buy's exact quantity: [quantity] times its [quantityRatio], if it has one (spec 3, 4.10). */
+    val boughtQuantity: Fraction get() = Fraction.of(quantity) * (quantityRatio?.factor ?: Fraction.ONE)
+}
 
 /** A sell allocation (spec section 3): the exact quantity a sell took from the lot of buy [lotId] (4.10, 11 decision 3). */
 data class SellAllocation(
@@ -95,6 +101,7 @@ object Transactions {
         date: LocalDate,
         quantity: BigDecimal,
         totalCents: Long,
+        quantityRatio: SplitRatio? = null,
     ): BuyResult {
         val refusal =
             when {
@@ -121,6 +128,7 @@ object Transactions {
                 enteredSeq = seq,
                 quantity = quantity,
                 totalCents = totalCents,
+                quantityRatio = quantityRatio,
             )
         val cashLine =
             CashEntry(
@@ -150,4 +158,7 @@ object Transactions {
         totalCents: Long,
         quantity: BigDecimal,
     ): Fraction = Fraction.ofCents(totalCents) / Fraction.of(quantity)
+
+    /** As above, for a buy or sell as saved: over its exact quantity, a buy's quantity ratio included (CR1). */
+    fun pricePerShare(transaction: Transaction): Fraction = Fraction.ofCents(transaction.totalCents) / transaction.boughtQuantity
 }
