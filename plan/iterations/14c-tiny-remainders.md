@@ -1,6 +1,6 @@
 # plan/iterations/14c-tiny-remainders.md
 
-Stage: Build. Status: approved 2026-11-03.
+Stage: Build. Status: approved, built and checked on the phone 2026-11-03 (section 12). Decisions 1 and 2 settled (section 10).
 Source: plan/plan.md section 4 (row 14c), intent/intent-cr-01-tiny-remainders.md (CR1), spec/spec.md v5 (final). "My reading" is an interpretation, not a test.
 
 ## 1. Outcome
@@ -66,4 +66,32 @@ By hand on the phone, with 14b's data. Each check names its start and the contro
 1. Decision 1's refusal, on the buy screen while replacing: "Not saved. Nothing was changed. The splits since the original are too large to keep its exact shares. To save, type a different quantity." (your A, 2026-11-03)
 
 ## 12. Status and notes
-- 2026-11-03: drafted and approved (your A).
+Built 2026-11-03 (steps 1 to 6); phone checks 2026-11-03, all yes. Not yet reviewed (Deploy) or merged.
+
+## 13. Build results
+### 13.1 Commits
+Newest first: de9bb63 step 6, 6d5c196 step 5, 83ba721 step 4, b70732b step 3, f38c709 step 2, 4aabba4 step 1 with this file, 762d9a5 Design (spec.md v5), 574c680 Plan (intent-cr-01-tiny-remainders.md). main was 071d490.
+
+### 13.2 Local run
+On de9bb63's code (2026-11-03, all with --rerun-tasks): spotlessCheck green; debug and release builds green ("Unable to strip" as always); 611 tests, 0 failures (Balance 11, CashAccount 20, CashEntriesReverse 12, CashEntries 27, Fraction 12, Holdings 15, MarketDate 10, Money 21, OpeningBalance 9, Portfolios 23, Quantity 12, ReentriesSplitCash 16, Reentries 27, Reversals 14, Sells 23, Splits 23, TickerCheck 16, Transactions 18, RowMapping 15, AppLock 12, FinnhubSource 18, TickerVerifier 6, AppViewModel 120, BuyFlow 29, DateDigits 7, HoldingDetailFlow 11, ReenterFlow 31, ReversalFlow 7, SellFlow 21, SplitFlow 17, TransactionDetailFlow 8); lint the 4 listed findings only (report 2026-11-03 13:52:33). No schema change: nothing under app/schemas changed; the database stays at version 5.
+
+### 13.3 Phone results (Android 17, debug build versionCode 17, your reports)
+Checks 1 to 5 all yes. All entries in Main, dated 2026-11-03.
+- 1: installed over the 14b build (lastUpdateTime 2026-11-03 13:54:04; firstInstallTime 2026-10-29 10:44:04 unchanged); the data kept: net worth $4,155.32, cash $3,105.32, AAPL 15 shares at $1,050.00 (criterion 35).
+- 2 (Example H, V): buy 1 for $10.00 (cash $3,095.32); sell 0.99999997 for $10.00 (V 0.00000003 shares, cash $3,105.32, realized $0.00); a 1 for 7 split: the review showed 0.00000003 to 0.00000001, the header and the lot 0.00000001 (0 before 14c); Sell all filled 0.00000001, total $0.00, the review cost $0.00 and realized $0.00; saved: V 0 shares, no lot, Sell offers no lot; cash $3,105.32, net worth $4,155.32 (criterion 59(e)). Confirmed by eye; no photos.
+- 3 (Example I, MA): buy 1 for $100.00 (cash $3,005.32); a 1 for 3 split the same date: 0.33333333 shares, the lot at $300.00 per share; Reverse and re-enter on the buy with nothing changed: the banner, the quantity 0.33333333 with "Original: 1"; the review: part 1 0.33333333 removed and $100.00 back, part 2 0.33333333 at $300.00, combined $0.00; saved, "Reversed on 2026-11-03"; a 3 for 1 split: the review 0.33333333 to 1, the header 1 share (0.99999999 before 14c), the lot 1 at $100.00; the new buy's detail 0.33333333, $100.00, $300.00; cash $3,005.32, net worth $4,155.32 (criterion 59(f)).
+- 4: AAPL 15 shares at $1,050.00, lots 12 at $75.00 and 3 at $50.00, unchanged.
+- 5: largest font and landscape, light and dark, on MA's Holding detail and the new buy's detail; TalkBack read 0.33333333 and $300.00 in full (criteria 9, 39 to 42).
+
+### 13.4 Not run or not checked
+CI and the pull request; TalkBack on the figure 0.00000001 itself (V was sold out before check 5; it is formatted by the same Quantity.format as 0.33333333); "offers Hide" in 59(e) (15); the backup-and-restore parts of 59(e) and 59(f) (31 to 34); the "ratio too large" refusal and its message on the phone (unit tested only; it needs same-date splits whose ratio passes 2,147,483,647); a Logcat check (not in section 8); the release APK on a device (unsigned, open item 4); open item 33 (34); the screens in a JVM test (none in the project).
+
+## 14. Departures from the plan
+1. Screens changed, against section 4's "none expected": a buy with a ratio stores the original's quantity, so TransactionDetailScreen.kt (quantity, price, lot "from" row), ReplaceReviewScreen.kt (the new buy's quantity and price, the banner, the "Original" hint) and ReversalScreen.kt now show a buy's exact shares, and core's Transactions.pricePerShare(transaction) divides by them. Found while building step 3; built in step 5; checked on the phone in check 3.
+2. RowMappingTest: the existing test of unreadable rows had a buy with a ratio as unreadable; CR1 makes it valid (spec v5, section 8 buy row), so that row was replaced by seven rows that stay unreadable (a buy with half a ratio, 0, a negative number or two equal numbers; a sell with any ratio). Not weakened; it passed before and after the code (step 4).
+3. Before each red run, the new names were added with no behaviour so the tests compiled: Quantity.shown with the old rounding (step 2); Transaction.quantityRatio, the asFilledIn parameter and ReentryRefusal.QuantityRatioTooLarge (step 3). Step 5 needed none.
+4. Tests that passed on their first run: in step 2 the round-up and round-down guards (2 tests); in step 3 the typed quantity, no ratio when none is needed, and a buy with a ratio as an original (3 tests; the last runs the new path only after the code). In step 4 the changed unreadable-rows test (item 2).
+5. One of my new ViewModel tests was wrong when first written: it typed 0.333333330, 9 decimals, which the field refuses. Changed to 00.33333333, the same number in other text, which decision 2 needs. No existing test changed (step 5).
+6. Lot gained a boughtQuantity field (with a default), not in section 4's list, so a lot's cost per share uses a buy's exact quantity (step 3).
+7. Steps 2 to 4 were built before their commits on your request ("continue first, commit later"); each step was committed on its own, in order, step 2 from the index.
+8. Wording 1 was asked in step 5, after the code, before its string was added.

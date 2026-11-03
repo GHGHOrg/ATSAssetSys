@@ -47,15 +47,18 @@ CI (.github/workflows/ci.yml) runs the style check and then the same three steps
 - core/ is pure Kotlin/JVM: no Android classes, no database, no network.
 - K3 and K9 only read data. K4 only writes prices and instrument data. These boundaries are kept by review and checked at Deploy.
 - Exact arithmetic only (spec 4.10).
+- A change request (Ruleset A rule 7) gets its own intent file, intent/intent-cr-NN-short-name.md, and plan.md's iteration row links to it. intent.md stays at v52. spec.md stays one file, and each change edits it (decided 2026-11-03, CR1).
 
 ## 5. Where things are
-- intent/intent.md (v52, final), spec/spec.md (v4, final, one file), spec/wireframes/, plan/plan.md, plan/setup.md.
+- intent/intent.md (v52, final) and one file per change request (intent/intent-cr-NN-short-name.md; CR1 is intent-cr-01-tiny-remainders.md), spec/spec.md (v5, final, one file), spec/wireframes/, plan/plan.md, plan/setup.md.
 - Spec sections: find them by heading, for example "## 4. Business rules".
   Sections 2 (concerns, C-numbers), 3 (domain), 4 (rules), 6 (views), 7 (prices), 8 (backup file), 9 (security), 11 (criteria), 14 (components, K-numbers).
 - Each iteration file in plan/iterations/ lists its own spec sections, criteria and examples.
 
 ## 6. Known pitfalls
 - No floating point for money or quantity (4.10).
+- Quantity.shown is the only place a quantity is rounded for showing, picking or judging; a quantity above 0 never shows 0 (CR1, spec 4.10). Do not round a quantity with Fraction.rounded directly.
+- A buy's exact quantity is boughtQuantity (quantity × quantityRatio), not quantity: a buy re-entered with its quantity left as filled in stores the original's quantity and a ratio in the split columns (CR1). Use boughtQuantity wherever a buy's shares, cost or price are worked out or shown (14c, section 14, item 1).
 - Never log or send amounts, tickers, quantities, notes or portfolio names (spec section 9). Never log the price-source key either: no HTTP logging, not even in debug builds; the key goes in the X-Finnhub-Token header only, never in a URL (price-source note, decision 5).
 - No analytics or crash-reporting library.
 - Docs in this repo use CRLF. Keep line endings, do not retype files.
