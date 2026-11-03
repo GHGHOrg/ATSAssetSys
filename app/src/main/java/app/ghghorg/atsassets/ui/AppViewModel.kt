@@ -649,6 +649,22 @@ data class AppState(
         get() = replaceReview?.let { it.reversalCashLine.amountCents + it.replacementCashLine.amountCents }
             ?: replaceCashReview?.let { it.reversal.amountCents + it.replacement.amountCents }
 
+    /** The combined review as the screen draws it (4.6, wireframe 10c; CR2, 15a decision 1); null with nothing replaced. */
+    val replaceReviewModel: ReplaceReviewModel?
+        get() = ReplaceReview.of(
+            original = replacedTransaction,
+            originalCash = replacedCashEntry,
+            reversalNote = replaceReversalNote,
+            reversalEffect = replaceReversalEffect,
+            trade = replaceReview,
+            pieces = replacePieces,
+            split = replaceSplitReview,
+            splitEffect = replaceSplitEffect,
+            cash = replaceCashReview,
+            combinedCents = replaceCombinedCents,
+            portfolios = portfolios,
+        )
+
     /** The pieces of the new sell on the combined review, oldest lot first (10c marker 10). */
     val replacePieces: List<SoldPiece>
         get() = replaceReview?.takeIf { it.replacement.type == TransactionType.SELL }?.let {

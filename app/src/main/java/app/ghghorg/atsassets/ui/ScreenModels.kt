@@ -1,12 +1,22 @@
 package app.ghghorg.atsassets.ui
 
+import app.ghghorg.atsassets.core.CashEntry
+import app.ghghorg.atsassets.core.CashPairResult
+import app.ghghorg.atsassets.core.CashType
 import app.ghghorg.atsassets.core.Holdings
 import app.ghghorg.atsassets.core.Money
+import app.ghghorg.atsassets.core.Portfolio
 import app.ghghorg.atsassets.core.Quantity
+import app.ghghorg.atsassets.core.ReentryResult
+import app.ghghorg.atsassets.core.ReversalEffect
 import app.ghghorg.atsassets.core.Reversals
+import app.ghghorg.atsassets.core.SoldPiece
+import app.ghghorg.atsassets.core.SplitEffect
+import app.ghghorg.atsassets.core.SplitPairResult
 import app.ghghorg.atsassets.core.SplitRatio
 import app.ghghorg.atsassets.core.Transaction
 import app.ghghorg.atsassets.core.TransactionType
+import app.ghghorg.atsassets.core.Transactions
 
 /*
  * Screen models (CR2; 15a decision 1): what a screen shows, worked out from the records and unit tested, so the screen
@@ -43,6 +53,185 @@ sealed interface HoldingRowModel {
         val originalType: TransactionType,
         val originalDate: String,
     ) : HoldingRowModel
+}
+
+/** Reverse and re-enter's combined review (4.6, wireframe 10c): what is reversed, part 1, part 2, the combined cash. */
+data class ReplaceReviewModel(
+    val reverses: ReversedEntry,
+    val partOne: ReversalPartModel?,
+    val partTwo: ReplacementPartModel?,
+    val combinedCents: Long?,
+)
+
+/** The entry being replaced: its kind and date. */
+sealed interface ReversedEntry {
+    data class Trade(
+        val type: TransactionType,
+        val date: String,
+    ) : ReversedEntry
+
+    data class Cash(
+        val type: CashType,
+        val date: String,
+    ) : ReversedEntry
+}
+
+/** Part 1: what the reversal does at its date (10c markers 4, 5; frame E). Cash amounts are signed cents. */
+sealed interface ReversalPartModel {
+    data class OfBuy(
+        val sharesRemoved: String,
+        val cashCents: Long,
+    ) : ReversalPartModel
+
+    data class OfSell(
+        val lotsPutBack: List<String>,
+        val realizedRemovedCents: Long,
+        val cashCents: Long,
+    ) : ReversalPartModel
+
+    data class OfSplit(
+        val inverse: SplitRatio,
+        val before: String,
+        val after: String,
+    ) : ReversalPartModel
+
+    /** A cash entry's reversal: an Adjustment of the opposite amount with its fixed note (14b decision 1). */
+    data class OfCash(
+        val note: String,
+        val cashCents: Long,
+    ) : ReversalPartModel
+}
+
+/** Part 2: the new entry as on its own review (10c markers 6, 10, 11; frame E). */
+sealed interface ReplacementPartModel {
+    data class Buy(
+        val ticker: String,
+        val portfolio: String,
+        val date: String,
+        val quantity: String,
+        val total: String,
+        val pricePerShare: String,
+        val cashCents: Long,
+    ) : ReplacementPartModel
+
+    data class Sell(
+        val ticker: String,
+        val portfolio: String,
+        val date: String,
+        val quantity: String,
+        val total: String,
+        val lotsUsed: List<String>,
+        val cost: String,
+        val realizedCents: Long,
+        val cashCents: Long,
+    ) : ReplacementPartModel
+
+    data class Split(
+        val ticker: String,
+        val portfolio: String,
+        val date: String,
+        val ratio: SplitRatio?,
+        val before: String?,
+        val after: String?,
+    ) : ReplacementPartModel
+
+    /** A cash entry: its type, date, signed amount and note as typed, an empty one included (14b phone check 3). */
+    data class Cash(
+        val type: CashType,
+        val date: String,
+        val amountCents: Long,
+        val note: String,
+    ) : ReplacementPartModel
+}
+
+object ReplaceReview {
+    fun of(
+        original: Transaction?,
+        originalCash: CashEntry?,
+        reversalNote: String,
+        reversalEffect: ReversalEffect?,
+        trade: ReentryResult.Created?,
+        pieces: List<SoldPiece>,
+        split: SplitPairResult.Created?,
+        splitEffect: SplitEffect?,
+        cash: CashPairResult.Created?,
+        combinedCents: Long?,
+        portfolios: List<Portfolio>,
+    ): ReplaceReviewModel? {
+        val reverses =
+            when {
+                originalCash != null -> ReversedEntry.Cash(originalCash.type, originalCash.date.toString())
+                original != null -> ReversedEntry.Trade(original.type, original.date.toString())
+                else -> return null
+            }
+        val partOne =
+            if (originalCash != null) {
+                ReversalPartModel.OfCash(reversalNote, -originalCash.amountCents)
+            } else {
+                reversalEffect?.let { partOne(it) }
+            }
+        val partTwo =
+            trade?.let { partTwo(it, pieces, portfolios) }
+                ?: split?.let { partTwo(it.replacement, splitEffect, portfolios) }
+                ?: cash?.replacement?.let { ReplacementPartModel.Cash(it.type, it.date.toString(), it.amountCents, it.note) }
+        return ReplaceReviewModel(reverses, partOne, partTwo, combinedCents)
+    }
+
+    private fun partOne(effect: ReversalEffect): ReversalPartModel = when (effect) {
+        is ReversalEffect.OfBuy -> ReversalPartModel.OfBuy(Quantity.format(effect.sharesRemoved), effect.cashCents)
+
+        is ReversalEffect.OfSell ->
+            ReversalPartModel.OfSell(effect.lots.map { Quantity.format(it.quantity) }, -centsOf(effect.realizedRemoved), effect.cashCents)
+
+        is ReversalEffect.OfSplit -> ReversalPartModel.OfSplit(effect.inverse, Quantity.format(effect.before), Quantity.format(effect.after))
+    }
+
+    private fun partTwo(
+        trade: ReentryResult.Created,
+        pieces: List<SoldPiece>,
+        portfolios: List<Portfolio>,
+    ): ReplacementPartModel {
+        val replacement = trade.replacement
+        val portfolio = portfolios.firstOrNull { it.id == replacement.portfolioId }?.name.orEmpty()
+        val date = replacement.date.toString()
+        val total = Money.format(replacement.totalCents)
+        val cashCents = trade.replacementCashLine.amountCents
+        if (replacement.type != TransactionType.SELL) {
+            return ReplacementPartModel.Buy(
+                ticker = replacement.ticker,
+                portfolio = portfolio,
+                date = date,
+                quantity = Quantity.format(replacement.boughtQuantity),
+                total = total,
+                pricePerShare = Money.formatPerShare(Transactions.pricePerShare(replacement)),
+                cashCents = cashCents,
+            )
+        }
+        return ReplacementPartModel.Sell(
+            ticker = replacement.ticker,
+            portfolio = portfolio,
+            date = date,
+            quantity = Quantity.format(replacement.quantity),
+            total = total,
+            lotsUsed = pieces.map { Quantity.format(it.quantity) },
+            cost = Money.format(Money.partsInCents(pieces.map { it.cost }).sum()),
+            realizedCents = Money.partsInCents(pieces.map { it.gain }).sum(),
+            cashCents = cashCents,
+        )
+    }
+
+    private fun partTwo(
+        replacement: Transaction,
+        effect: SplitEffect?,
+        portfolios: List<Portfolio>,
+    ): ReplacementPartModel = ReplacementPartModel.Split(
+        ticker = replacement.ticker,
+        portfolio = portfolios.firstOrNull { it.id == replacement.portfolioId }?.name.orEmpty(),
+        date = replacement.date.toString(),
+        ratio = replacement.split,
+        before = effect?.let { Quantity.format(it.before) },
+        after = effect?.let { Quantity.format(it.after) },
+    )
 }
 
 object HoldingRows {

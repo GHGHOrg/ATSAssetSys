@@ -70,29 +70,37 @@ fun ReplaceReviewScreen(
     modifier: Modifier = Modifier,
 ) {
     BackHandler(enabled = !state.saving, onBack = actions.onBack)
-    val trade = state.replacedTransaction
-    val cash = state.replacedCashEntry
+    // Drawn only from the review's model (CR2): the screen picks the approved string and puts the values in.
+    val model = state.replaceReviewModel
     Column(
         modifier = modifier.fillMaxSize().imePadding().verticalScroll(rememberScrollState()).padding(16.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
         TitleRow(stringResource(R.string.replace_review_title), actions.onBack, enabled = !state.saving)
-        PartCard {
-            when {
-                // A cash entry's reversal (14b; frame E): an Adjustment of the opposite amount with its fixed note.
-                cash != null ->
-                    ReversalPart(state, cashTypeLabel(cash.type), cashTypeLower(cash.type), cash.date, actions) { CashPartOne(state, cash) }
+        model?.let { review ->
+            PartCard {
+                when (val reverses = review.reverses) {
+                    // A cash entry's reversal (14b; frame E): an Adjustment of the opposite amount with its fixed note.
+                    is ReversedEntry.Cash ->
+                        ReversalPart(state, cashTypeLabel(reverses.type), cashTypeLower(reverses.type), reverses.date, actions) {
+                            review.partOne?.let { PartOneEffect(it) }
+                        }
 
-                trade != null ->
-                    ReversalPart(state, entryTypeLabel(trade.type), transactionTypeLower(trade.type), trade.date, actions) {
-                        state.replaceReversalEffect?.let { PartOneEffect(it) }
-                    }
+                    is ReversedEntry.Trade ->
+                        ReversalPart(state, entryTypeLabel(reverses.type), transactionTypeLower(reverses.type), reverses.date, actions) {
+                            review.partOne?.let { PartOneEffect(it) }
+                        }
+                }
+            }
+            when (val part = review.partTwo) {
+                is ReplacementPartModel.Buy -> PartCard { BuyReplacementPart(part) }
+                is ReplacementPartModel.Sell -> PartCard { SellReplacementPart(part) }
+                is ReplacementPartModel.Split -> PartCard { SplitReplacementPart(part) }
+                is ReplacementPartModel.Cash -> PartCard { CashReplacementPart(part) }
+                null -> Unit
             }
         }
-        state.replaceReview?.let { review -> PartCard { ReplacementPart(state, review.replacement, review.replacementCashLine.amountCents) } }
-        state.replaceSplitReview?.let { review -> PartCard { SplitReplacementPart(state, review.replacement) } }
-        state.replaceCashReview?.let { review -> PartCard { CashReplacementPart(review.replacement) } }
-        state.replaceCombinedCents?.let { cents ->
+        model?.combinedCents?.let { cents ->
             OutlinedCard(modifier = Modifier.fillMaxWidth()) {
                 Column(modifier = Modifier.padding(12.dp)) {
                     ReviewRow(
@@ -134,12 +142,11 @@ private fun ReversalPart(
     state: AppState,
     kind: String,
     kindLower: String,
-    originalDate: LocalDate,
+    date: String,
     actions: ReplaceReviewActions,
     effect: @Composable () -> Unit,
 ) {
     PartHeading(stringResource(R.string.replace_part_reversal))
-    val date = originalDate.toString()
     ReviewRow(
         stringResource(R.string.reversal_reverses_label),
         stringResource(R.string.transaction_link, kind, date),
@@ -177,56 +184,50 @@ private fun ReversalPart(
     if (beforeOriginal == null) replaceRuleMessage(state, refusals.rule)?.let { Message(it) }
 }
 
-/** A cash entry's reversal (frame E): type Adjustment, the fixed note (decision 1) and the opposite amount; any date. */
+/** The new entry's heading row: "Buy MA in Main" (or Sell, Split) with its date (10c marker 6). */
 @Composable
-private fun CashPartOne(
-    state: AppState,
-    original: CashEntry,
+private fun NewEntryRow(
+    type: TransactionType,
+    ticker: String,
+    portfolio: String,
+    date: String,
 ) {
-    ReviewRow(stringResource(R.string.type_label), cashTypeLabel(CashType.ADJUSTMENT))
-    ReviewRow(stringResource(R.string.note_row_label), state.replaceReversalNote, alignStart = true)
-    CashEffectRow(-original.amountCents)
+    val kind = entryTypeLabel(type)
+    ReviewRow(
+        stringResource(R.string.replace_new_entry, kind, ticker, portfolio),
+        stringResource(R.string.date_with_et, date),
+        spoken = stringResource(R.string.replace_new_entry_spoken, kind, ticker, portfolio, date),
+    )
 }
 
 /** Part 2 for a split (10c marker 11): the new split, its ratio, and the shares at its place before and after. */
 @Composable
-private fun SplitReplacementPart(
-    state: AppState,
-    replacement: Transaction,
-) {
+private fun SplitReplacementPart(part: ReplacementPartModel.Split) {
     PartHeading(stringResource(R.string.replace_part_replacement))
-    val portfolio = state.portfolios.firstOrNull { it.id == replacement.portfolioId }?.name.orEmpty()
-    val kind = entryTypeLabel(replacement.type)
-    val date = replacement.date.toString()
-    ReviewRow(
-        stringResource(R.string.replace_new_entry, kind, replacement.ticker, portfolio),
-        stringResource(R.string.date_with_et, date),
-        spoken = stringResource(R.string.replace_new_entry_spoken, kind, replacement.ticker, portfolio, date),
-    )
-    replacement.split?.let { ReviewRow(stringResource(R.string.split_button), ratioText(it)) }
-    state.replaceSplitEffect?.let { effect ->
-        ReviewRow(stringResource(R.string.split_shares_at_point), Quantity.format(effect.before))
-        ReviewRow(stringResource(R.string.split_shares_after), Quantity.format(effect.after), bold = true)
+    NewEntryRow(TransactionType.SPLIT, part.ticker, part.portfolio, part.date)
+    part.ratio?.let { ReviewRow(stringResource(R.string.split_button), ratioText(it)) }
+    if (part.before != null && part.after != null) {
+        ReviewRow(stringResource(R.string.split_shares_at_point), part.before)
+        ReviewRow(stringResource(R.string.split_shares_after), part.after, bold = true)
     }
 }
 
 /** Part 2 for a cash entry (frame E): its type, date and signed amount, its note, and its cash effect. */
 @Composable
-private fun CashReplacementPart(replacement: CashEntry) {
+private fun CashReplacementPart(part: ReplacementPartModel.Cash) {
     PartHeading(stringResource(R.string.replace_part_replacement))
-    val kind = cashTypeLabel(replacement.type)
-    val date = replacement.date.toString()
+    val kind = cashTypeLabel(part.type)
     ReviewRow(
-        stringResource(R.string.transaction_link, kind, date),
-        signedAmount(replacement.amountCents),
-        spoken = stringResource(R.string.replace_new_cash_spoken, kind, date, spokenSigned(replacement.amountCents)),
+        stringResource(R.string.transaction_link, kind, part.date),
+        signedAmount(part.amountCents),
+        spoken = stringResource(R.string.replace_new_cash_spoken, kind, part.date, spokenSigned(part.amountCents)),
     )
-    if (replacement.note.isEmpty()) {
+    if (part.note.isEmpty()) {
         ReviewRow(stringResource(R.string.note_row_label), stringResource(R.string.note_none), muted = true, alignStart = true)
     } else {
-        ReviewRow(stringResource(R.string.note_row_label), replacement.note, alignStart = true)
+        ReviewRow(stringResource(R.string.note_row_label), part.note, alignStart = true)
     }
-    CashEffectRow(replacement.amountCents)
+    CashEffectRow(part.amountCents)
 }
 
 /** "Reversal date 2026-01-02 ET" with Change beside it (10c marker 5). */
@@ -252,85 +253,89 @@ private fun ReversalDateRow(
     }
 }
 
-/** The shares removed and the cash for a buy; the lots put back, the gain removed and the cash for a sell (10c frames B, D). */
+/**
+ * Part 1's effect (10c frames B, D, E): the shares removed and the cash for a buy; the lots put back, the gain removed
+ * and the cash for a sell; the ratio applied and the shares for a split, with no cash; the Adjustment, its fixed note
+ * (14b decision 1) and the opposite amount for a cash entry.
+ */
 @Composable
-private fun PartOneEffect(effect: ReversalEffect) {
-    when (effect) {
-        is ReversalEffect.OfBuy -> {
-            val removed = Quantity.format(effect.sharesRemoved)
+private fun PartOneEffect(part: ReversalPartModel) {
+    when (part) {
+        is ReversalPartModel.OfBuy -> {
             ReviewRow(
                 stringResource(R.string.replace_shares_removed),
-                removed,
-                spoken = stringResource(R.string.reversal_shares_removed_spoken, removed),
+                part.sharesRemoved,
+                spoken = stringResource(R.string.reversal_shares_removed_spoken, part.sharesRemoved),
             )
-            CashEffectRow(effect.cashCents)
+            CashEffectRow(part.cashCents)
         }
 
-        is ReversalEffect.OfSell -> {
-            val quantities = effect.lots.map { it.quantity }
+        is ReversalPartModel.OfSell -> {
             ReviewRow(
                 stringResource(R.string.replace_lots_put_back),
-                joinedShares(quantities, " + "),
-                spoken = stringResource(R.string.replace_lots_put_back_spoken, joinedShares(quantities, " plus ")),
+                joinedShares(part.lotsPutBack, " + "),
+                spoken = stringResource(R.string.replace_lots_put_back_spoken, joinedShares(part.lotsPutBack, " plus ")),
             )
-            val removed = -centsOf(effect.realizedRemoved)
             ReviewRow(
                 stringResource(R.string.replace_realized_removed),
-                signedAmount(removed),
-                spoken = stringResource(R.string.replace_realized_removed_spoken, spokenSigned(removed)),
+                signedAmount(part.realizedRemovedCents),
+                spoken = stringResource(R.string.replace_realized_removed_spoken, spokenSigned(part.realizedRemovedCents)),
             )
-            CashEffectRow(effect.cashCents)
+            CashEffectRow(part.cashCents)
         }
 
-        is ReversalEffect.OfSplit -> EffectRows(effect)
+        is ReversalPartModel.OfSplit -> {
+            ReviewRow(stringResource(R.string.reversal_ratio_applied), ratioText(part.inverse))
+            ReviewRow(stringResource(R.string.split_shares_at_point), part.before)
+            ReviewRow(stringResource(R.string.reversal_shares_after), part.after, bold = true)
+            Text(
+                text = stringResource(R.string.split_no_cash),
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+        }
+
+        is ReversalPartModel.OfCash -> {
+            ReviewRow(stringResource(R.string.type_label), cashTypeLabel(CashType.ADJUSTMENT))
+            ReviewRow(stringResource(R.string.note_row_label), part.note, alignStart = true)
+            CashEffectRow(part.cashCents)
+        }
     }
 }
 
-/** Part 2 (10c markers 6 and 10): the new buy or sell as on its own review, with its cash effect. */
+/** Part 2 for a buy (10c marker 6): as on its own review, with its exact shares and price (CR1), and its cash effect. */
 @Composable
-private fun ReplacementPart(
-    state: AppState,
-    replacement: Transaction,
-    cashCents: Long,
-) {
+private fun BuyReplacementPart(part: ReplacementPartModel.Buy) {
     PartHeading(stringResource(R.string.replace_part_replacement))
-    val portfolio = state.portfolios.firstOrNull { it.id == replacement.portfolioId }?.name.orEmpty()
-    val kind = entryTypeLabel(replacement.type)
-    val date = replacement.date.toString()
+    NewEntryRow(TransactionType.BUY, part.ticker, part.portfolio, part.date)
+    ReviewRow(stringResource(R.string.buy_quantity_label), part.quantity)
+    val total = stringResource(R.string.buy_total_row)
+    ReviewRow(total, part.total, spoken = spokenLabel(total, part.total))
+    val price = stringResource(R.string.buy_price_per_share_label)
+    ReviewRow(price, part.pricePerShare, spoken = spokenLabel(price, part.pricePerShare))
+    CashEffectRow(part.cashCents)
+}
+
+/** Part 2 for a sell (10c marker 10): as on its own review, with the lots used, their cost and the realized gain. */
+@Composable
+private fun SellReplacementPart(part: ReplacementPartModel.Sell) {
+    PartHeading(stringResource(R.string.replace_part_replacement))
+    NewEntryRow(TransactionType.SELL, part.ticker, part.portfolio, part.date)
     ReviewRow(
-        stringResource(R.string.replace_new_entry, kind, replacement.ticker, portfolio),
-        stringResource(R.string.date_with_et, date),
-        spoken = stringResource(R.string.replace_new_entry_spoken, kind, replacement.ticker, portfolio, date),
+        stringResource(R.string.replace_quantity_total),
+        stringResource(R.string.replace_quantity_total_value, part.quantity, part.total),
+        spoken = stringResource(R.string.replace_quantity_total_spoken, part.quantity, part.total.substringAfter('$')),
     )
-    val totalShown = Money.format(replacement.totalCents)
-    if (replacement.type == TransactionType.SELL) {
-        ReviewRow(
-            stringResource(R.string.replace_quantity_total),
-            stringResource(R.string.replace_quantity_total_value, Quantity.format(replacement.quantity), totalShown),
-            spoken = stringResource(R.string.replace_quantity_total_spoken, Quantity.format(replacement.quantity), totalShown.substringAfter('$')),
-        )
-        val pieces = state.replacePieces
-        ReviewRow(stringResource(R.string.sell_lots_used), joinedShares(pieces.map { it.quantity }, " + "))
-        val costs = Money.partsInCents(pieces.map { it.cost })
-        val realized = Money.partsInCents(pieces.map { it.gain }).sum()
-        val costLabel = stringResource(R.string.sell_cost_of_lots)
-        val costShown = Money.format(costs.sum())
-        ReviewRow(costLabel, costShown, spoken = spokenLabel(costLabel, costShown))
-        ReviewRow(
-            stringResource(R.string.sell_realized_label),
-            signedAmount(realized),
-            spoken = stringResource(R.string.sell_realized_spoken, spokenSigned(realized)),
-            color = gainLossColor(realized.compareTo(0L)),
-        )
-    } else {
-        ReviewRow(stringResource(R.string.buy_quantity_label), Quantity.format(replacement.boughtQuantity))
-        val total = stringResource(R.string.buy_total_row)
-        ReviewRow(total, totalShown, spoken = spokenLabel(total, totalShown))
-        val price = stringResource(R.string.buy_price_per_share_label)
-        val priceShown = Money.formatPerShare(Transactions.pricePerShare(replacement))
-        ReviewRow(price, priceShown, spoken = spokenLabel(price, priceShown))
-    }
-    CashEffectRow(cashCents)
+    ReviewRow(stringResource(R.string.sell_lots_used), joinedShares(part.lotsUsed, " + "))
+    val costLabel = stringResource(R.string.sell_cost_of_lots)
+    ReviewRow(costLabel, part.cost, spoken = spokenLabel(costLabel, part.cost))
+    ReviewRow(
+        stringResource(R.string.sell_realized_label),
+        signedAmount(part.realizedCents),
+        spoken = stringResource(R.string.sell_realized_spoken, spokenSigned(part.realizedCents)),
+        color = gainLossColor(part.realizedCents.compareTo(0L)),
+    )
+    CashEffectRow(part.cashCents)
 }
 
 @Composable
@@ -371,15 +376,19 @@ private fun entryTypeLabel(type: TransactionType): String = stringResource(
     },
 )
 
-/** "10 + 2 shares" (10c): the quantities joined, with "share" or "shares" after the last as [sharesText] gives it. */
+/**
+ * "10 + 2 shares" (10c): the quantities, already formatted by the model, joined, with "share" or "shares" after the
+ * last as [sharesText] gives it.
+ */
 @Composable
 private fun joinedShares(
-    quantities: List<Fraction>,
+    quantities: List<String>,
     separator: String,
 ): String {
     val last = quantities.lastOrNull() ?: return sharesText(Fraction.ZERO)
-    val firsts = quantities.dropLast(1).joinToString(separator) { Quantity.format(it) }
-    val noun = if (quantities.size > 1) stringResource(R.string.holding_shares, Quantity.format(last)) else sharesText(last)
+    val firsts = quantities.dropLast(1).joinToString(separator)
+    val one = quantities.size == 1 && last == "1"
+    val noun = stringResource(if (one) R.string.holding_share_one else R.string.holding_shares, last)
     return if (firsts.isEmpty()) noun else firsts + separator + noun
 }
 
