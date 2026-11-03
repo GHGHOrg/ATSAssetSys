@@ -78,14 +78,14 @@ Approved in step 5 (your A, 2026-11-03); shown text, then TalkBack:
 7. A Hide or Unhide not saved: the existing "Not saved. Nothing was changed. Try again."
 
 ## 12. Status and notes
-Built 2026-11-03 (steps 1 to 6); phone checks 2026-11-03, all yes. Not yet reviewed (Deploy) or merged.
+Built 2026-11-03 (steps 1 to 6); phone checks 2026-11-03, all yes. Deploy review 2026-11-03: one Low finding (two promised tests missing), the tests added on the branch; no code changed (section 14, items 8 and 9). Not yet merged.
 
 ## 13. Build results
 ### 13.1 Commits
-Newest first: ec2adf1 step 6, fe39eee step 5, a373493 step 4, 92ebb7b step 3, b04dea0 step 2, 13f25a1 step 1 with this file. main was ae4ec04.
+Newest first: d1ce050 Deploy fix (tests), 401c67f step 8, ec2adf1 step 6, fe39eee step 5, a373493 step 4, 92ebb7b step 3, b04dea0 step 2, 13f25a1 step 1 with this file. main was ae4ec04.
 
 ### 13.2 Local run
-On ec2adf1's code (2026-11-03, all with --rerun-tasks): spotlessCheck green; debug and release builds green ("Unable to strip" as always); 628 tests, 0 failures (Balance 11, CashAccount 20, CashEntriesReverse 12, CashEntries 27, Fraction 12, Hiding 7, Holdings 15, MarketDate 10, Money 21, OpeningBalance 9, Portfolios 23, Quantity 12, ReentriesSplitCash 16, Reentries 27, Reversals 14, Sells 23, Splits 23, TickerCheck 16, Transactions 18, RowMapping 17, AppLock 12, FinnhubSource 18, TickerVerifier 6, AppViewModel 120, BuyFlow 29, DateDigits 7, HideFlow 8, HoldingDetailFlow 11, ReenterFlow 31, ReversalFlow 7, SellFlow 21, SplitFlow 17, TransactionDetailFlow 8); lint the 4 listed findings only (report 2026-11-03 16:01:57). Schema: 6.json has the five tables of 5.json with the same SQL, plus hidden_holdings (portfolioId and ticker, both the key).
+On ec2adf1's code (2026-11-03, all with --rerun-tasks): spotlessCheck green; debug and release builds green ("Unable to strip" as always); 628 tests, 0 failures (Balance 11, CashAccount 20, CashEntriesReverse 12, CashEntries 27, Fraction 12, Hiding 7, Holdings 15, MarketDate 10, Money 21, OpeningBalance 9, Portfolios 23, Quantity 12, ReentriesSplitCash 16, Reentries 27, Reversals 14, Sells 23, Splits 23, TickerCheck 16, Transactions 18, RowMapping 17, AppLock 12, FinnhubSource 18, TickerVerifier 6, AppViewModel 120, BuyFlow 29, DateDigits 7, HideFlow 8, HoldingDetailFlow 11, ReenterFlow 31, ReversalFlow 7, SellFlow 21, SplitFlow 17, TransactionDetailFlow 8); lint the 4 listed findings only (report 2026-11-03 16:01:57). Schema: 6.json has the five tables of 5.json with the same SQL, plus hidden_holdings (portfolioId and ticker, both the key). On d1ce050's code (the Deploy fix): the same run, 630 tests (HideFlow 10), 0 failures, lint the 4 listed findings only (report 2026-11-03 16:36:45).
 
 ### 13.3 Phone results (Android 17, debug build versionCode 19, your reports)
 Checks 1 to 8 all yes. Each check's figures were worked out from the phone's data first; 投資信託's SPY at 0 shares and no lots confirmed by you before the install.
@@ -110,3 +110,5 @@ CI and the pull request; TalkBack on the Hide button (no holding was at 0 and un
 5. Steps 2 to 4 were built before their commits on your request ("continue now"); each was committed on its own, in order, step 2 from the index.
 6. Hidden rows sit in the transactions DAO, not a DAO of their own, so a buy, a reversal or a pair and its unhiding run in one database transaction (decision 2).
 7. The store also refuses, by require, an unhide with a split's reversal (no cash line); not in section 4.
+8. Deploy finding 1 (Low), fixed before the pull request (your decision A): step 4 named tests for unhiding by a pair and for a failed Unhide that were not written. Added in d1ce050, after the code: Reverse and re-enter of the hidden AAPL's 10-share sell as 4 shares unhides it in the pair's save; a failed Unhide keeps the row and says "Not saved". Both passed on their first run; no code changed.
+9. To show the two tests check something, AppViewModel.kt was changed for one run only (the pair passed an empty unhide list; a failed save set no message): the pair test, the failed-Unhide test and the failed-Hide test failed; the file was then restored (git diff empty) and the full run was green. Not reviewed further: openHolding does not clear holdingFromHidden, but no path leaves Holding detail without closeHolding or a tab, both of which clear it; left as is.
