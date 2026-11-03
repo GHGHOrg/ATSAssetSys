@@ -306,7 +306,8 @@ when it adds a command, a convention or a pitfall.
 | Iteration 13b | done: built 2026-11-01 to 2026-11-02 (steps 1 to 6); phone checks 2026-11-02 all yes; 527 tests; pull request #110 merged as e5edb0e, CI green on the pull request and on main (2m 21s) (your reports) |
 | Iteration 14a | done: built 2026-11-02 (steps 1 to 6, one fix and one Deploy fix); phone checks 2026-11-02 all yes after the fix; 564 tests; pull request #112 merged as bcd5e3b, CI green on the pull request and on main (2m 59s) (your reports) |
 | Iteration 14b | done: built 2026-11-02 to 2026-11-03 (steps 1 to 6, one fix and one Deploy fix); phone checks 2026-11-02 to 2026-11-03 all yes after the fix; 594 tests; pull request #114 merged as 7229ef3, CI green on the pull request and on main (2m 26s) (your reports) |
-| Iteration 14c | built 2026-11-03 (steps 1 to 6, one Deploy fix); phone checks 2026-11-03 all yes, rechecked after the fix; 611 tests; pull request next |
+| Iteration 14c | done: built 2026-11-03 (steps 1 to 6, one Deploy fix); phone checks 2026-11-03 all yes, rechecked after the fix; 611 tests; pull request #116 merged as ae4ec04, CI green on the pull request and on main (3m 7s) (your reports) |
+| Iteration 15 | in progress: file approved 2026-11-03 |
 | Iterations 15 to 35 | not started, files not written |
 
 ## 12. Change log
@@ -402,6 +403,7 @@ Each departure from this plan is recorded here with its date and the reason.
 - 2026-11-03: pull request #115 (docs: the 14b merge record) was merged as 071d490, CI green on the pull request (3 checks) and on main (2m 1s) (your reports). Open items 44 and 46 were taken up before 15 as change request CR1 (intent/intent-cr-01-tiny-remainders.md; your decisions): from now on each change request has its own intent file, intent/intent-cr-NN-short-name.md, linked from plan.md, and intent.md stays at v52. spec.md v5: a leftover too small to show is shown and picked as 0.00000001 (4.4, 4.10), and an unchanged re-entered buy keeps the original's exact quantity through `quantity_ratio` (3, 4.6, section 8). Iteration 14c added; 15 now depends on it.
 - 2026-11-03: 14c built and checked on the phone, with no schema change: a buy's quantity ratio uses the existing split columns. Examples H and I hold on the phone (V sold out to exactly 0 after a 1 for 7; MA re-entered after a 1 for 3 gives exactly 1 share after a 3 for 1). Departure: three screens show a buy's exact shares, which section 4 of the 14c file did not expect (14c file, section 14). Open items 44 and 46 closed.
 - 2026-11-03: the 14c Deploy review found one Medium and one Low finding, both fixed on the branch and rechecked on the phone (your decision A): the Transactions row and the reversal card's TalkBack text showed a buy's stored quantity instead of its exact shares (14c file, section 14, items 9 and 10). No test draws a screen: a CLAUDE.md pitfall was added and open item 47 opened (your decision A).
+- 2026-11-03: pull request #116 (iteration 14c) was merged as ae4ec04. CI on the pull request (3 checks: build, Analyze (actions), CodeQL) and on main (the run for ae4ec04, 3m 7s) were reported successful by you. The branch was deleted locally; origin no longer has it, nor iter-14b or docs/plan-14b-merge (git branch -r after git fetch --prune, 2026-11-03). The 15 file was approved; it adds the first schema change since 09 (a hidden_holdings table, database version 6).
 
 ## 13. Out of scope for this plan
 Performance over time, per-holding dividends, ETF look-through, the next intent.md items,

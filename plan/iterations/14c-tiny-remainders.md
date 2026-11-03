@@ -1,6 +1,6 @@
 # plan/iterations/14c-tiny-remainders.md
 
-Stage: Build. Status: approved, built and checked on the phone 2026-11-03 (section 12). Decisions 1 and 2 settled (section 10).
+Stage: Build. Status: approved, built, checked and merged 2026-11-03 (section 12). Decisions 1 and 2 settled (section 10).
 Source: plan/plan.md section 4 (row 14c), intent/intent-cr-01-tiny-remainders.md (CR1), spec/spec.md v5 (final). "My reading" is an interpretation, not a test.
 
 ## 1. Outcome
@@ -66,7 +66,7 @@ By hand on the phone, with 14b's data. Each check names its start and the contro
 1. Decision 1's refusal, on the buy screen while replacing: "Not saved. Nothing was changed. The splits since the original are too large to keep its exact shares. To save, type a different quantity." (your A, 2026-11-03)
 
 ## 12. Status and notes
-Built 2026-11-03 (steps 1 to 6); phone checks 2026-11-03, all yes. Deploy review 2026-11-03: one Medium and one Low finding, fixed on the branch and rechecked on the phone (section 14, items 9 and 10). Not yet merged.
+Built 2026-11-03 (steps 1 to 6); phone checks 2026-11-03, all yes. Deploy review 2026-11-03: one Medium and one Low finding, fixed on the branch and rechecked on the phone (section 14, items 9 and 10). Pull request #116 merged as ae4ec04 (2026-11-03), CI green on the pull request (3 checks) and on main (3m 7s) (your reports).
 
 ## 13. Build results
 ### 13.1 Commits
