@@ -225,6 +225,41 @@ class HideFlowTest {
         assertEquals(listOf("AAPL", "KO", "MSFT"), vm.state.value.holdingsOf("p1").map { it.ticker })
     }
 
+    // Deploy review (written after the code): Reverse and re-enter of the sell with fewer shares leaves the hidden
+    // holding with 6, so the pair unhides it in the same save.
+    @Test
+    fun aSellReenteredWithFewerShares_unhidesTheHolding_inThePairsSave() {
+        val store = store(hidden = listOf(aapl))
+        val vm = onPortfolio(store)
+        vm.openHiddenHoldings()
+        vm.openHiddenHolding("AAPL")
+        vm.openTransaction("s1")
+        vm.openReenter()
+        vm.onSellQuantityChange("4")
+        vm.onPickChange("b1", "4")
+        vm.reviewSell()
+        assertEquals(Screen.REPLACE_REVIEW, vm.state.value.screen)
+        vm.confirmReplace()
+        assertEquals(1, store.savedPairs.size)
+        assertEquals(emptyList<HiddenHolding>(), store.storedHidden)
+        assertEquals(emptyList<HiddenHolding>(), vm.state.value.hidden)
+        assertEquals(listOf("AAPL", "KO", "MSFT"), vm.state.value.holdingsOf("p1").map { it.ticker })
+    }
+
+    // Deploy review (written after the code).
+    @Test
+    fun aFailedUnhide_keepsTheRow_andSaysSo() {
+        val store = store(hidden = listOf(aapl), saveError = IllegalStateException("disk"))
+        val vm = onPortfolio(store)
+        vm.openHiddenHoldings()
+        vm.unhide("AAPL")
+        val state = vm.state.value
+        assertEquals(Screen.HIDDEN_HOLDINGS, state.screen)
+        assertEquals(listOf(HiddenRow("AAPL", LocalDate.of(2026, 1, 3))), state.hiddenRows("p1"))
+        assertEquals(listOf(aapl), store.storedHidden)
+        assertEquals(SaveRefusal.SAVE_FAILED, state.hideRefusal)
+    }
+
     @Test
     fun aFailedHide_leavesTheHoldingAsItWas_andSaysSo() {
         val store = store(saveError = IllegalStateException("disk"))
