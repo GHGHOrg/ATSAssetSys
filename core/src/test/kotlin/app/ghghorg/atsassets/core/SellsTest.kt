@@ -348,4 +348,76 @@ class SellsTest {
         assertEquals(listOf(fraction(1_750), fraction(350)), pieces.map { it.proceeds })
         assertNull(Sells.lotChoices(exampleA + sell, "p1", "AAPL", LocalDate.of(2026, 3, 2), sellSeq = 5L)[0].unavailable)
     }
+
+    private fun splitOn(
+        id: String,
+        date: String,
+        to: Int,
+        from: Int,
+        seq: Long,
+    ): Transaction = Transaction(
+        id = id,
+        portfolioId = "p1",
+        ticker = "AAPL",
+        type = TransactionType.SPLIT,
+        date = LocalDate.parse(date),
+        enteredSeq = seq,
+        quantity = BigDecimal.ZERO,
+        totalCents = 0L,
+        split = SplitRatio(to, from),
+    )
+
+    /** Example H (CR1): 1 share for $10.00, a sell of 0.99999997, then a 1 for 7 split; the lot keeps 0.00000003 / 7. */
+    private val exampleH =
+        listOf(
+            bought("b1", "2026-01-02", "1", 1_000L, 2L),
+            sold("s1", "2026-01-03", "0.99999997", 1_000L, 3L, listOf(SellAllocation("b1", Fraction.of(BigDecimal("0.99999997"))))),
+            splitOn("x1", "2026-01-04", 1, 7, 4L),
+        )
+
+    @Test
+    fun exampleH_aLeftoverTooSmallToShow_isListedAndShownAsTheSmallestQuantity() {
+        val choices = Sells.lotChoices(exampleH, "p1", "AAPL", LocalDate.of(2026, 1, 5), sellSeq = 5L)
+        assertEquals(listOf("b1"), choices.map { it.buyId })
+        assertEquals(fraction(3, 700_000_000), choices[0].available)
+        assertEquals(BigDecimal("0.00000001"), Sells.shown(choices[0].available))
+        assertEquals(listOf(pick("b1", "0.00000001")), Sells.sellAll(choices))
+    }
+
+    @Test
+    fun exampleH_aSellOfTheSmallestQuantity_takesTheExactLeftover_andLeavesExactlyZero() {
+        val result = sell(exampleH, "2026-01-05", "0.00000001", 0L, listOf(pick("b1", "0.00000001")))
+        val sell = created(result).transaction
+        assertEquals(listOf(SellAllocation("b1", fraction(3, 700_000_000))), sell.allocations)
+        val after = exampleH + sell
+        val day = LocalDate.of(2026, 1, 5)
+        assertEquals(Fraction.ZERO, Holdings.holdings(after, day)[0].shares)
+        assertEquals(emptyList<Lot>(), Holdings.lotsOf(after, "p1", "AAPL", day))
+        assertEquals(fraction(-3, 10_000_000), Sells.realizedGain(Sells.pieces(after, sell)))
+    }
+
+    @Test
+    fun exampleH_aPickAboveTheSmallestQuantity_isRefused() {
+        val result = sell(exampleH, "2026-01-05", "0.00000002", 0L, listOf(pick("b1", "0.00000002")))
+        assertEquals(SellRefusal.MoreThanHeld(LocalDate.of(2026, 1, 5), fraction(1, 100_000_000), BigDecimal("0.00000002")), refusal(result))
+    }
+
+    @Test
+    fun sellAll_lotsThatRoundUpAndDown_emptyEveryLot() {
+        // 2/3 shows 0.66666667 (up), 1/3 shows 0.33333333 (down); 3/7 shows 0.42857143 (up), 1/7 shows 0.14285714 (down).
+        val cases = listOf(Triple("2", "1", 3), Triple("3", "1", 7))
+        for ((first, second, from) in cases) {
+            val transactions =
+                listOf(
+                    bought("b1", "2026-01-02", first, 1_000L, 2L),
+                    bought("b2", "2026-01-02", second, 1_000L, 3L),
+                    splitOn("x1", "2026-01-03", 1, from, 4L),
+                )
+            val picks = Sells.sellAll(Sells.lotChoices(transactions, "p1", "AAPL", LocalDate.of(2026, 1, 4), sellSeq = 5L))
+            val quantity = picks.fold(BigDecimal.ZERO) { sum, it -> sum + it.quantity }
+            val sell = created(sell(transactions, "2026-01-04", quantity.toPlainString(), 1_000L, picks)).transaction
+            val shares = Holdings.holdings(transactions + sell, LocalDate.of(2026, 1, 4))[0].shares
+            assertEquals("1 for $from", Fraction.ZERO, shares)
+        }
+    }
 }

@@ -162,9 +162,9 @@ object Sells {
         .map { Pick(it.buyId, shown(it.available)) }
         .filter { it.quantity.signum() > 0 }
 
-    /** A quantity as the lot picker shows it: rounded to 8 places, trailing zeros dropped (4.10). */
+    /** A quantity as the lot picker shows it: [Quantity.shown], trailing zeros dropped (4.10). */
     fun shown(quantity: Fraction): BigDecimal {
-        val stripped = quantity.rounded(Quantity.MAX_DECIMALS).stripTrailingZeros()
+        val stripped = Quantity.shown(quantity).stripTrailingZeros()
         return if (stripped.scale() < 0) stripped.setScale(0) else stripped
     }
 
@@ -209,7 +209,7 @@ object Sells {
         val held =
             choices
                 .filter { it.unavailable == null }
-                .fold(Fraction.ZERO) { sum, choice -> sum + Fraction.of(choice.available.rounded(Quantity.MAX_DECIMALS)) }
+                .fold(Fraction.ZERO) { sum, choice -> sum + Fraction.of(Quantity.shown(choice.available)) }
         if (Fraction.of(quantity) > held) {
             return SellResult.Refused(SellRefusal.MoreThanHeld(date, held, quantity))
         }
@@ -218,8 +218,8 @@ object Sells {
             val pickRefusal = pickRefusal(transactions, portfolioId, upperTicker, choices, taken.keys, pick)
             if (pickRefusal != null) return SellResult.Refused(pickRefusal)
             val choice = choices.first { it.buyId == pick.lotId }
-            val atEightPlaces = choice.available.rounded(Quantity.MAX_DECIMALS)
-            taken[pick.lotId] = if (pick.quantity.compareTo(atEightPlaces) == 0) choice.available else Fraction.of(pick.quantity)
+            val asShown = Quantity.shown(choice.available)
+            taken[pick.lotId] = if (pick.quantity.compareTo(asShown) == 0) choice.available else Fraction.of(pick.quantity)
         }
         val picked = picks.fold(BigDecimal.ZERO) { sum, pick -> sum + pick.quantity }
         if (picked.compareTo(quantity) != 0) {
@@ -273,7 +273,7 @@ object Sells {
             choice?.unavailable != null -> SellRefusal.PickNotAvailable(pick.lotId, choice.unavailable)
             pick.quantity.signum() <= 0 -> SellRefusal.PickNotPositive(pick.lotId)
             choice == null -> SellRefusal.PickOverRemainder(pick.lotId, Fraction.ZERO)
-            pick.quantity > choice.available.rounded(Quantity.MAX_DECIMALS) -> SellRefusal.PickOverRemainder(pick.lotId, choice.available)
+            pick.quantity > Quantity.shown(choice.available) -> SellRefusal.PickOverRemainder(pick.lotId, choice.available)
             else -> null
         }
     }

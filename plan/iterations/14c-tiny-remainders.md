@@ -58,9 +58,9 @@ By hand on the phone, with 14b's data. Each check names its start and the contro
 ## 9. Research
 - None needed: no new library or platform behaviour.
 
-## 10. Decisions needed from you (Build; asked one at a time)
-1. A ratio that does not fit the columns: refuse the pair (with a message to approve, D9), or save an ordinary rounded buy.
-2. "Left as filled in" means the quantity text equals the filled-in text, so typing the same digits again counts as unchanged.
+## 10. Decisions (Build, settled by you 2026-11-03)
+1. A ratio that does not fit the columns refuses the pair, with a message to approve (D9) (your A). To save anyway, type a different quantity: the same digits count as unchanged (decision 2).
+2. "Left as filled in" means the quantity text equals the filled-in text, so typing the same digits again counts as unchanged (your A).
 
 ## 11. Wording to approve (D9)
 - None expected; decision 1 may add one message.

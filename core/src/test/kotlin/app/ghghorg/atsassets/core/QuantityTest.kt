@@ -78,4 +78,21 @@ class QuantityTest {
         assertEquals("3.33333333", Quantity.format(fraction(10, 3)))
         assertEquals("6.66666667", Quantity.format(fraction(20, 3)))
     }
+
+    @Test
+    fun format_aQuantityAboveZeroThatRoundsToZero_showsTheSmallestQuantity() {
+        assertEquals("0.00000001", Quantity.format(fraction(3, 700_000_000)))
+        assertEquals("0.00000001", Quantity.format(fraction(1, 1_000_000_000)))
+        assertEquals("0", Quantity.format(Fraction.ZERO))
+        assertEquals(BigDecimal("0.00000001"), Quantity.shown(fraction(3, 700_000_000)))
+    }
+
+    @Test
+    fun format_roundsUpAndDownAsBefore() {
+        assertEquals("0.66666667", Quantity.format(fraction(2, 3)))
+        assertEquals("1.66666667", Quantity.format(fraction(5, 3)))
+        assertEquals("0.42857143", Quantity.format(fraction(3, 7)))
+        assertEquals("0.14285714", Quantity.format(fraction(1, 7)))
+        assertEquals("0.00000001", Quantity.format(fraction(1, 200_000_000)))
+    }
 }
