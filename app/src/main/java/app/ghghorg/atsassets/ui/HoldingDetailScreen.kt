@@ -307,7 +307,7 @@ private fun TransactionRow(
     onOpen: () -> Unit,
 ) {
     val date = transaction.date.toString()
-    val shares = sharesText(Fraction.of(transaction.quantity))
+    val shares = sharesText(transaction.boughtQuantity)
     val amount = Money.format(transaction.totalCents)
     val sell = transaction.type == TransactionType.SELL
     val spoken =

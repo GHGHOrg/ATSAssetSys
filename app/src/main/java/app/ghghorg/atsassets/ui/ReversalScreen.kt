@@ -144,7 +144,7 @@ private fun OriginalCard(
                 transactionTypeLower(original.type),
                 date,
                 portfolio,
-                sharesText(original.quantity),
+                sharesText(original.boughtQuantity),
                 Money.format(original.totalCents).substringAfter('$'),
             )
         }
