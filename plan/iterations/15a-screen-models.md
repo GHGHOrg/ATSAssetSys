@@ -1,6 +1,6 @@
 # plan/iterations/15a-screen-models.md
 
-Stage: Build. Status: approved 2026-11-03.
+Stage: Build. Status: approved, built and checked on the phone 2026-11-03 (section 12). Decision 1 settled (section 10).
 Source: plan/plan.md section 4 (row 15a), intent/intent-cr-02-screen-models.md (CR2), spec/spec.md v5 (final; no change, CR2 Design), plan/discussions/screen-tests.md. "My reading" is an interpretation, not a test.
 
 ## 1. Outcome
@@ -60,4 +60,33 @@ By hand on the phone, with 15's data (Main: AAPL 15, V 0.00000001, MA 1; 投資�
 - None: no text changes.
 
 ## 12. Status and notes
-- 2026-11-03: drafted and approved (your A).
+Built 2026-11-03 (steps 1 to 6); phone checks 2026-11-03, all yes. Not yet reviewed (Deploy) or merged.
+
+## 13. Build results
+### 13.1 Commits
+Newest first: 5119a9d step 6, 3040626 step 5, 1f52b06 step 4, f6a52ad step 3, 40f56d9 step 2, 15003bc step 1 with this file, 772533c Plan (CR2 and open item 48). main was 65250c7.
+
+### 13.2 Local run
+On 5119a9d's code (2026-11-03, all with --rerun-tasks): spotlessCheck green; debug and release builds green ("Unable to strip" as always); 647 tests, 0 failures (Balance 11, CashAccount 20, CashEntriesReverse 12, CashEntries 27, Fraction 12, Hiding 7, Holdings 15, MarketDate 10, Money 21, OpeningBalance 9, Portfolios 23, Quantity 12, ReentriesSplitCash 16, Reentries 27, Reversals 14, Sells 23, Splits 23, TickerCheck 16, Transactions 18, RowMapping 17, AppLock 12, FinnhubSource 18, TickerVerifier 6, AppViewModel 120, BuyFlow 29, CashFormMessages 5, DateDigits 7, HideFlow 10, HoldingDetailFlow 12, HoldingRowModel 5, ReenterFlow 32, ReplaceReviewModel 5, ReversalFlow 7, SellFlow 21, SplitFlow 17, TransactionDetailFlow 8); lint the 4 listed findings only (report 2026-11-03 19:47:19). APKs: debug 42,258,107 bytes; release (unsigned) 12,457,558 bytes, 32,784 bytes (about 0.26%) more than 15's 12,424,774. No schema change.
+
+### 13.3 Phone results (Android 17, your reports)
+No photos: you read the three screens on versionCode 19 against the expected text worked out from your data and the strings, then again on versionCode 20 after the install. Both readings matched.
+- Before, on versionCode 19: screens 1 to 3 all as expected (MA's 5 Transactions rows; the combined review of MA's newest buy; the cash entry form's two messages).
+- 1: installed over the 15 build (versionCode 20, lastUpdateTime 2026-11-03 20:21:12; firstInstallTime 2026-10-29 10:44:04 unchanged); net worth $4,155.32, cash $3,005.32, Main AAPL 15, V 0.00000001, MA 1, SPY still hidden in 投資信託 (criterion 35).
+- 2: MA's Transactions tab, newest first, all 2026-11-03 ET: Split 3 for 1; Buy 0.33333333 shares $100.00; Reversal of the buy of 2026-11-03 ET; Split 1 for 3; Buy 1 share $100.00; row 2 opened its detail.
+- 3: Reverse and re-enter on MA's newest buy, unchanged: the banner "Replacing the buy of 2026-11-03 ET: 0.33333333 MA, $100.00. Nothing changes until you confirm.", quantity 1 with "Original: 0.33333333"; Review both: part 1 Reverses Buy, 2026-11-03 ET, reversal date 2026-11-03 ET with Change, shares removed 1, cash effect +$100.00; part 2 Buy MA, Main, 2026-11-03 ET, quantity 1, total amount $100.00, price per share $100.00, cash effect −$100.00; combined cash effect $0.00; nothing saved.
+- 4: the cash entry form, an Adjustment Out of $5,000.00 dated 2026-11-03 with no note, at Review: "Note: required for an adjustment." and "Not saved. Cash would be negative on 2026-11-03 by $1,994.68." together; nothing saved.
+- 5: largest font, light and dark on those three screens (criteria 9, 39 to 42).
+
+### 13.4 Not run or not checked
+CI and the pull request; the combined review of a sell, split or cash pair on the phone (unit tested); a replacing cash entry's messages on the phone (unit tested); TalkBack on the three screens (the strings are unchanged; not read by TalkBack this time); the release APK on a device (unsigned, open item 4); open item 33 (34); drawing the screens in a test (open item 47's remainder).
+
+## 14. Departures from the plan
+1. Step 4's model is in its own file, CashFormMessages.kt, with its builder and an AppState extension property, not in ScreenModels.kt and AppViewModel.kt (section 4): steps 2 and 3 already shared those two files, and step 4 in them would have made steps 3 and 4 impossible to commit apart.
+2. Tests that passed against their stubs: the "nothing replaced" test (step 3) and the "no refusal" test (step 4); real guards once the code was in.
+3. The combined review's wiring test (ReenterFlowTest, step 3) was written after the wiring property; it was never red.
+4. The combined review's part 1 for a split now draws its four rows itself from the model, instead of calling the reversal screen's shared EffectRows; the same rows and strings.
+5. Section 8 asked for photos before the install; you could not take them, so the before and after readings of the expected text stand in for them (section 13.3).
+6. Steps 2 to 4 were built before their commits on your request ("continue"); each was committed on its own, in order, step 2 from the index.
+7. Step 2's first full run failed spotlessCheck on two blank lines between the branches of a when in ScreenModels.kt; added by hand, spotlessApply not run.
+8. Not covered, as section 3 says: the cash entry review screen's own save message (CashEntryScreen.kt) stays outside the model (open item 48).

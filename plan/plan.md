@@ -310,7 +310,7 @@ when it adds a command, a convention or a pitfall.
 | Iteration 14b | done: built 2026-11-02 to 2026-11-03 (steps 1 to 6, one fix and one Deploy fix); phone checks 2026-11-02 to 2026-11-03 all yes after the fix; 594 tests; pull request #114 merged as 7229ef3, CI green on the pull request and on main (2m 26s) (your reports) |
 | Iteration 14c | done: built 2026-11-03 (steps 1 to 6, one Deploy fix); phone checks 2026-11-03 all yes, rechecked after the fix; 611 tests; pull request #116 merged as ae4ec04, CI green on the pull request and on main (3m 7s) (your reports) |
 | Iteration 15 | done: built 2026-11-03 (steps 1 to 6, two tests added at Deploy); phone checks 2026-11-03 all yes; 630 tests; database version 6; pull request #117 merged as d7630a8, CI green on the pull request and on main (2m 56s) (your reports) |
-| Iteration 15a | in progress: file approved 2026-11-03 |
+| Iteration 15a | built 2026-11-03 (steps 1 to 6); phone checks 2026-11-03 all yes (the screens read the same before and after); 647 tests; Deploy review and pull request next |
 | Iterations 15 to 35 | not started, files not written |
 
 ## 12. Change log
@@ -413,6 +413,7 @@ Each departure from this plan is recorded here with its date and the reason.
 - 2026-11-03: pull request #118 (docs: the screen tests discussion) was merged as 1e2806f, CI green on the pull request (3 checks) and on main (2m 58s) (your reports); the branch is gone from origin. It records the discussion of open item 47 in plan/discussions/screen-tests.md, with nothing decided; item 47 stays open. Open item 45 gained your report of a slower Cash tab and cold start (your decision A).
 - 2026-11-03: pull request #119 (docs: the 15 merge record and open item 45) was merged as 65250c7, CI green on the pull request (3 checks) and on main (2m 28s) (your reports); the branch is gone from origin (git branch -r after git fetch --prune).
 - 2026-11-03: open item 47 taken up in part as change request CR2 (intent/intent-cr-02-screen-models.md; your decisions): screen models with no new library, covering new and changed screens from 16 on and three screens where defects were found; open item 48 records the existing screens not covered. CR2 Design: no spec change (section 14 is technology-neutral and K9's boundary is unchanged); criterion 42 keeps its phone check (your A). Iteration 15a added; the 15a file was approved.
+- 2026-11-03: 15a built and checked on the phone, with no schema change and no change to what is shown. Three screens now draw from tested models (Holding detail's Transactions rows, the combined review, the cash entry form's messages); the models are built in builders, not in AppViewModel (15a decision 1, after comparing maintainability, test run time and APK size; the three criteria now apply to every Build choice about code, CLAUDE.md section 8). The screen model convention is in section 3 and CLAUDE.md. Release APK +32,784 bytes.
 
 ## 13. Out of scope for this plan
 Performance over time, per-holding dividends, ETF look-through, the next intent.md items,
