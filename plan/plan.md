@@ -307,7 +307,7 @@ when it adds a command, a convention or a pitfall.
 | Iteration 14a | done: built 2026-11-02 (steps 1 to 6, one fix and one Deploy fix); phone checks 2026-11-02 all yes after the fix; 564 tests; pull request #112 merged as bcd5e3b, CI green on the pull request and on main (2m 59s) (your reports) |
 | Iteration 14b | done: built 2026-11-02 to 2026-11-03 (steps 1 to 6, one fix and one Deploy fix); phone checks 2026-11-02 to 2026-11-03 all yes after the fix; 594 tests; pull request #114 merged as 7229ef3, CI green on the pull request and on main (2m 26s) (your reports) |
 | Iteration 14c | done: built 2026-11-03 (steps 1 to 6, one Deploy fix); phone checks 2026-11-03 all yes, rechecked after the fix; 611 tests; pull request #116 merged as ae4ec04, CI green on the pull request and on main (3m 7s) (your reports) |
-| Iteration 15 | in progress: file approved 2026-11-03 |
+| Iteration 15 | built 2026-11-03 (steps 1 to 6); phone checks 2026-11-03 all yes; 628 tests; database version 6; Deploy review and pull request next |
 | Iterations 15 to 35 | not started, files not written |
 
 ## 12. Change log
@@ -404,6 +404,7 @@ Each departure from this plan is recorded here with its date and the reason.
 - 2026-11-03: 14c built and checked on the phone, with no schema change: a buy's quantity ratio uses the existing split columns. Examples H and I hold on the phone (V sold out to exactly 0 after a 1 for 7; MA re-entered after a 1 for 3 gives exactly 1 share after a 3 for 1). Departure: three screens show a buy's exact shares, which section 4 of the 14c file did not expect (14c file, section 14). Open items 44 and 46 closed.
 - 2026-11-03: the 14c Deploy review found one Medium and one Low finding, both fixed on the branch and rechecked on the phone (your decision A): the Transactions row and the reversal card's TalkBack text showed a buy's stored quantity instead of its exact shares (14c file, section 14, items 9 and 10). No test draws a screen: a CLAUDE.md pitfall was added and open item 47 opened (your decision A).
 - 2026-11-03: pull request #116 (iteration 14c) was merged as ae4ec04. CI on the pull request (3 checks: build, Analyze (actions), CodeQL) and on main (the run for ae4ec04, 3m 7s) were reported successful by you. The branch was deleted locally; origin no longer has it, nor iter-14b or docs/plan-14b-merge (git branch -r after git fetch --prune, 2026-11-03). The 15 file was approved; it adds the first schema change since 09 (a hidden_holdings table, database version 6).
+- 2026-11-03: 15 built and checked on the phone. The migration 5 to 6 ran on the phone's database with the data kept. Hide is offered only at exactly 0 shares counting every entry, and a buy, a sell's reversal or a trade pair that gives a hidden holding shares unhides it in the same database transaction (15 decisions 1 and 2). Correction: the last schema change before 15 was in 12, not 09 (15 file, section 14, item 2).
 
 ## 13. Out of scope for this plan
 Performance over time, per-holding dividends, ETF look-through, the next intent.md items,

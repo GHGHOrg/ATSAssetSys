@@ -1,6 +1,6 @@
 # plan/iterations/15-hide-holdings.md
 
-Stage: Build. Status: approved 2026-11-03.
+Stage: Build. Status: approved, built and checked on the phone 2026-11-03 (section 12). Decisions 1 to 3 settled (section 10).
 Source: plan/plan.md section 4 (row 15), intent/intent.md v52 (final), intent/intent-cr-01-tiny-remainders.md (CR1), spec/spec.md v5 (final). "My reading" is an interpretation, not a test.
 
 ## 1. Outcome
@@ -78,4 +78,35 @@ Approved in step 5 (your A, 2026-11-03); shown text, then TalkBack:
 7. A Hide or Unhide not saved: the existing "Not saved. Nothing was changed. Try again."
 
 ## 12. Status and notes
-- 2026-11-03: drafted and approved (your A).
+Built 2026-11-03 (steps 1 to 6); phone checks 2026-11-03, all yes. Not yet reviewed (Deploy) or merged.
+
+## 13. Build results
+### 13.1 Commits
+Newest first: ec2adf1 step 6, fe39eee step 5, a373493 step 4, 92ebb7b step 3, b04dea0 step 2, 13f25a1 step 1 with this file. main was ae4ec04.
+
+### 13.2 Local run
+On ec2adf1's code (2026-11-03, all with --rerun-tasks): spotlessCheck green; debug and release builds green ("Unable to strip" as always); 628 tests, 0 failures (Balance 11, CashAccount 20, CashEntriesReverse 12, CashEntries 27, Fraction 12, Hiding 7, Holdings 15, MarketDate 10, Money 21, OpeningBalance 9, Portfolios 23, Quantity 12, ReentriesSplitCash 16, Reentries 27, Reversals 14, Sells 23, Splits 23, TickerCheck 16, Transactions 18, RowMapping 17, AppLock 12, FinnhubSource 18, TickerVerifier 6, AppViewModel 120, BuyFlow 29, DateDigits 7, HideFlow 8, HoldingDetailFlow 11, ReenterFlow 31, ReversalFlow 7, SellFlow 21, SplitFlow 17, TransactionDetailFlow 8); lint the 4 listed findings only (report 2026-11-03 16:01:57). Schema: 6.json has the five tables of 5.json with the same SQL, plus hidden_holdings (portfolioId and ticker, both the key).
+
+### 13.3 Phone results (Android 17, debug build versionCode 19, your reports)
+Checks 1 to 8 all yes. Each check's figures were worked out from the phone's data first; 投資信託's SPY at 0 shares and no lots confirmed by you before the install.
+- 1: installed over the 14c build (lastUpdateTime 2026-11-03 16:05:02; firstInstallTime 2026-10-29 10:44:04 unchanged); the migration 5 to 6 ran with no unreadable-data screen; net worth $4,155.32, cash $3,005.32, Main AAPL 15, V 0, MA 1, the Hidden holdings link shown; Main 3 holdings (criterion 35).
+- 2: no Hide on AAPL or MA; Hide on V (0 shares); tapped with no confirmation, the button went; Main listed AAPL and MA, 2 holdings; cash $3,005.32 (59(e)'s "offers Hide").
+- 3: Main's Hidden holdings: the title, "Portfolio" over Main, one row V, "0 shares", "Last transaction 2026-11-03 ET", Unhide; the row opened V's detail with neither Hide nor Unhide; Back returned to Hidden holdings (criterion 51; decision 3).
+- 4: Unhide with no confirmation: the row went, "No hidden holdings"; V back in Main at 0 shares, 3 holdings.
+- 5: V hidden again, then its 2026-11-03 sell of 0.00000001 for $0.00 reversed from the hidden V's detail: "Reversed on 2026-11-03"; V back in Main at 0.00000001 shares, 3 holdings, Hidden holdings empty, no Hide on V, cash $3,005.32 (60(a)'s rule with your data).
+- 6: 投資信託's Hidden holdings showed "No hidden holdings"; SPY (0 shares) offered Hide; hidden, it left the list and 投資信託 showed 0 holdings.
+- 7: after closing the app from Recents and reopening it: SPY still hidden, one row "SPY, 0 shares, Last transaction 2026-10-31 ET, Unhide"; Main's Hidden holdings empty.
+- 8: largest font and landscape (Hidden holdings scrolls as one; V's Holding detail header gives way), light and dark (the link, Hidden holdings, the plain line), TalkBack read "Hidden holdings, opens a list", "Hidden holdings, portfolio 投資信託", "SPY, 0 shares, last transaction 2026-10-31 Eastern Time" and "Unhide SPY" (criteria 9, 39 to 42, 51).
+Afterwards: cash $3,005.32, net worth $4,155.32; Main AAPL 15, V 0.00000001, MA 1; 投資信託 SPY hidden.
+
+### 13.4 Not run or not checked
+CI and the pull request; TalkBack on the Hide button (no holding was at 0 and unhidden during check 8); unhiding by a new buy and by a buy pair on the phone (unit tested); a failed Hide or Unhide and a rollback of an unhiding save (unit tested for the state; Room's @Transaction needs a device test, none in the project; open item 14); the backup-and-restore parts of criteria 27 and 51 and the sample file's OLDCO (31 to 34); the release APK on a device (unsigned, open item 4); a Logcat check (not in section 8); open item 33 (34); the screens in a JVM test (open item 47).
+
+## 14. Departures from the plan
+1. The RecordStore interface additions (load, hide, unhide; the unhide list on saveBuy, saveReversal and savePair) were made in step 3 with the data layer, not in step 2, so the app compiled at every step.
+2. Section 4 and the change log of 2026-11-03 call the new table "the first schema change since 09"; the last one was in 12 (version 5, the split columns). Corrected here; the earlier text is left as written.
+3. Before each red run, the new names were added with no behaviour so the tests compiled: Hiding.kt returning false, empty or null (step 2); the entity, its mapping and checkHidden returning its input (step 3); the screen, the state fields and empty actions in AppViewModel (step 4).
+4. Tests that passed on their first run: step 2's later-dated buy and pair-at-zero tests (the stub's "no" matched them; real guards once the code was in); step 3's row mapping (written with the stub).
+5. Steps 2 to 4 were built before their commits on your request ("continue now"); each was committed on its own, in order, step 2 from the index.
+6. Hidden rows sit in the transactions DAO, not a DAO of their own, so a buy, a reversal or a pair and its unhiding run in one database transaction (decision 2).
+7. The store also refuses, by require, an unhide with a split's reversal (no cash line); not in section 4.
