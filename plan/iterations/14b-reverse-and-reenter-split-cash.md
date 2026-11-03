@@ -1,6 +1,6 @@
 # plan/iterations/14b-reverse-and-reenter-split-cash.md
 
-Stage: Build. Status: approved 2026-11-02, built 2026-11-02 and checked 2026-11-03 (section 12). Decision 1 settled (section 10).
+Stage: Build. Status: approved 2026-11-02, built 2026-11-02, checked and merged 2026-11-03 (section 12). Decision 1 settled (section 10).
 Source: plan/plan.md section 4 (row 14b), intent/intent.md v52 (final), spec/spec.md v4 (final). "My reading" is an interpretation, not a test.
 
 ## 1. Outcome
@@ -76,7 +76,7 @@ Settled by the spec or by 14a and 05, no question asked: the normal cash form or
   - Wording 2 (option A): the direction hint under a changed direction shows the chip's own label, "Original: Withdrawal (−)" or "Original: Deposit (+)", not "Original: Out".
 
 ## 12. Status and notes
-Built 2026-11-02 (steps 1 to 6) and one fix 2026-11-03 (section 14, item 6); phone checks 2026-11-02 to 2026-11-03, all yes after the fix. Deploy review 2026-11-03: one High finding fixed on the branch and rechecked on the phone (section 14, item 8). Not yet merged.
+Done. Built 2026-11-02 (steps 1 to 6) and one fix 2026-11-03 (section 14, item 6); phone checks 2026-11-02 to 2026-11-03, all yes after the fix. Deploy review 2026-11-03: one High finding fixed on the branch and rechecked on the phone (section 14, item 8). Pull request #114 merged as 7229ef3 (2026-11-03), CI green on the pull request (3 checks) and on main (2m 26s) (your reports).
 
 ## 13. Build results
 ### 13.1 Commits
