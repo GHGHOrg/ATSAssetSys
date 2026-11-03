@@ -60,7 +60,7 @@ By hand on the phone, with 15's data (Main: AAPL 15, V 0.00000001, MA 1; 投資�
 - None: no text changes.
 
 ## 12. Status and notes
-Built 2026-11-03 (steps 1 to 6); phone checks 2026-11-03, all yes. Deploy review 2026-11-03: three Low findings; 1 and 3 fixed on the branch and 1 rechecked on the phone (versionCode 21), 2 recorded under open item 48 (section 14, items 9 to 11). Not yet merged.
+Built 2026-11-03 (steps 1 to 6); phone checks 2026-11-03, all yes. Deploy review 2026-11-03: three Low findings; 1 and 3 fixed on the branch and 1 rechecked on the phone (versionCode 21), 2 recorded under open item 48 (section 14, items 9 to 11). Pull request #120 merged as 2411066 (2026-11-03), CI green on the pull request (3 checks) and on main (2m 9s) (your reports).
 
 ## 13. Build results
 ### 13.1 Commits
