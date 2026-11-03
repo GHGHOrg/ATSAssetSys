@@ -18,6 +18,8 @@ import app.ghghorg.atsassets.core.CashRow
 import app.ghghorg.atsassets.core.CashRules
 import app.ghghorg.atsassets.core.CashType
 import app.ghghorg.atsassets.core.Fraction
+import app.ghghorg.atsassets.core.HiddenHolding
+import app.ghghorg.atsassets.core.Hiding
 import app.ghghorg.atsassets.core.Holding
 import app.ghghorg.atsassets.core.Holdings
 import app.ghghorg.atsassets.core.Instrument
@@ -96,6 +98,9 @@ enum class Screen {
 
     // One holding (view 6, wireframe 06), opened from a portfolio's holdings (iteration 10).
     HOLDING,
+
+    // A portfolio's hidden holdings (view 9, wireframe 09), opened from the portfolio's screen (iteration 15).
+    HIDDEN_HOLDINGS,
 
     // Sell entry with the lot picker, and its review (wireframe 10a frames C to E, iteration 11).
     SELL,
@@ -212,6 +217,12 @@ data class ReplaceRefusals(
     val date: DateRefusal? = null,
     val rule: ReentryRefusal? = null,
     val save: SaveRefusal? = null,
+)
+
+/** One row of Hidden holdings (view 9): the ticker and the date of its last transaction, a reversal included. */
+data class HiddenRow(
+    val ticker: String,
+    val lastTransaction: LocalDate?,
 )
 
 /** Holding detail's tabs (view 6). Classification joins in 23 (10 decision 1). Never saved. */
@@ -439,6 +450,11 @@ data class AppState(
     // The holding on HOLDING: this ticker in the portfolio of portfolioId (iteration 10), and its tab.
     val holdingTicker: String? = null,
     val holdingTab: HoldingTab = HoldingTab.TRANSACTIONS,
+    // 15: the hidden holdings as stored; HOLDING was opened from Hidden holdings, so Back returns there (decision 3);
+    // why a Hide or Unhide was not saved.
+    val hidden: List<HiddenHolding> = emptyList(),
+    val holdingFromHidden: Boolean = false,
+    val hideRefusal: SaveRefusal? = null,
     // Buy was opened from the holding's header: Back and a save return to it (10 decision 2).
     val buyFromHolding: Boolean = false,
     val sellForm: SellForm = SellForm(),
@@ -503,7 +519,32 @@ data class AppState(
     /** Net worth rounded to cents, for Overall (4.10: rounded only when shown). */
     val netWorthCents: Long get() = netWorth.rounded(2).movePointRight(2).longValueExact()
 
-    fun holdingsOf(portfolioId: String): List<Holding> = holdings.filter { it.portfolioId == portfolioId }
+    /** A portfolio's holdings list (view 3): a hidden holding is left out of it and of its count (4.4). */
+    fun holdingsOf(portfolioId: String): List<Holding> = holdings.filter {
+        it.portfolioId == portfolioId && HiddenHolding(portfolioId, it.ticker) !in hidden
+    }
+
+    /** Hide on the shown holding: only at exactly 0 shares counting every entry, and not while hidden (15 decision 1). */
+    val hideOffered: Boolean
+        get() {
+            val id = portfolioId ?: return false
+            val ticker = holdingTicker ?: return false
+            return Hiding.offered(transactions, hidden.toSet(), id, ticker)
+        }
+
+    /** The shown holding is hidden: Holding detail then offers neither Hide nor Unhide (view 9, marker 2). */
+    val shownHoldingHidden: Boolean
+        get() {
+            val id = portfolioId ?: return false
+            val ticker = holdingTicker ?: return false
+            return HiddenHolding(id, ticker) in hidden
+        }
+
+    /** A portfolio's Hidden holdings rows, in ticker order (view 9, marker 2). */
+    fun hiddenRows(portfolioId: String): List<HiddenRow> = hidden
+        .filter { it.portfolioId == portfolioId }
+        .sortedBy { it.ticker }
+        .map { HiddenRow(it.ticker, Hiding.lastTransactionDate(transactions, portfolioId, it.ticker)) }
 
     /** The holding shown on HOLDING, as of today. */
     val shownHolding: Holding?
@@ -761,7 +802,13 @@ class AppViewModel(
             try {
                 val opened = storeProvider()
                 store = opened
-                showLoaded(opened.loadCashEntries(), opened.loadPortfolios(), opened.loadTransactions(), opened.loadInstruments())
+                showLoaded(
+                    opened.loadCashEntries(),
+                    opened.loadPortfolios(),
+                    opened.loadTransactions(),
+                    opened.loadInstruments(),
+                    opened.loadHidden(),
+                )
             } catch (e: UnreadableDataException) {
                 mutableState.update { it.copy(screen = Screen.UNREADABLE) }
             }
@@ -788,6 +835,8 @@ class AppViewModel(
                 buyNotice = null,
                 buyRefusals = BuyRefusals(),
                 holdingTicker = null,
+                holdingFromHidden = false,
+                hideRefusal = null,
                 buyFromHolding = false,
                 sellRefusals = SellRefusals(),
                 sellPicksDropped = false,
@@ -1287,16 +1336,19 @@ class AppViewModel(
                     return
                 }
             }
+        // A sell's reversal that gives a hidden holding shares unhides it in the same save (4.4; 15 decision 2).
+        val unhide = if (created.cashLine == null) emptyList() else Hiding.unhiddenBy(current.transactions + created.transaction, current.hidden)
         mutableState.update { it.copy(saving = true, transactionReversalRefusals = TransactionReversalRefusals()) }
         viewModelScope.launch {
             try {
-                target.saveReversal(created.transaction, created.cashLine)
+                target.saveReversal(created.transaction, created.cashLine, unhide)
                 mutableState.update {
                     valued(
                         it.copy(
                             screen = Screen.TRANSACTION,
                             transactions = it.transactions + created.transaction,
                             entries = it.entries + listOfNotNull(created.cashLine),
+                            hidden = it.hidden - unhide.toSet(),
                             transactionReversalDate = "",
                             saving = false,
                         ),
@@ -1501,12 +1553,17 @@ class AppViewModel(
             try {
                 // Each kind is saved as one action (K2): a trade pair with its cash lines, a split pair, or the two cash
                 // entries as one batch. The app returns to the original's detail (14a decision 2; 05).
+                // A trade pair that leaves a hidden holding with shares unhides it in the same save (4.4; 15 decision 2).
+                val unhide =
+                    (pair as? ReplacePair.Trade)?.created?.let {
+                        Hiding.unhiddenBy(current.transactions + it.reversal + it.replacement, current.hidden)
+                    } ?: emptyList()
                 when (pair) {
-                    is ReplacePair.Trade -> pair.created.let { target.savePair(it.reversal, it.reversalCashLine, it.replacement, it.replacementCashLine) }
+                    is ReplacePair.Trade -> pair.created.let { target.savePair(it.reversal, it.reversalCashLine, it.replacement, it.replacementCashLine, unhide) }
                     is ReplacePair.Split -> target.saveSplitPair(pair.created.reversal, pair.created.replacement)
                     is ReplacePair.Cash -> target.saveCashEntries(listOf(pair.created.reversal, pair.created.replacement))
                 }
-                mutableState.update { valued(saved(it, pair).copy(saving = false).leftReplace()) }
+                mutableState.update { valued(saved(it, pair).copy(hidden = it.hidden - unhide.toSet(), saving = false).leftReplace()) }
             } catch (e: CancellationException) {
                 throw e
             } catch (e: UnreadableDataException) {
@@ -1924,6 +1981,7 @@ class AppViewModel(
         portfolios: List<Portfolio>,
         transactions: List<Transaction>,
         instruments: List<Instrument>,
+        hidden: List<HiddenHolding>,
     ) {
         mutableState.update {
             valued(
@@ -1933,6 +1991,7 @@ class AppViewModel(
                     portfolios = Portfolios.inCreationOrder(portfolios),
                     transactions = transactions,
                     instruments = instruments,
+                    hidden = hidden,
                 ),
             )
         }
@@ -1958,10 +2017,83 @@ class AppViewModel(
         }
     }
 
-    /** "<" or Android Back: back to the portfolio. */
+    /** "<" or Android Back: back to the portfolio, or to Hidden holdings if it was opened there (15 decision 3). */
     fun closeHolding() {
         if (mutableState.value.screen != Screen.HOLDING) return
-        mutableState.update { it.copy(screen = Screen.PORTFOLIO, holdingTicker = null, buyNotice = null) }
+        mutableState.update {
+            it.copy(
+                screen = if (it.holdingFromHidden) Screen.HIDDEN_HOLDINGS else Screen.PORTFOLIO,
+                holdingTicker = null,
+                holdingFromHidden = false,
+                buyNotice = null,
+                hideRefusal = null,
+            )
+        }
+    }
+
+    /** Hide on Holding detail (4.4): no confirmation; the holding stays shown, now hidden. Not a transaction. */
+    fun hide() {
+        val current = mutableState.value
+        if (current.screen != Screen.HOLDING || current.saving || !current.hideOffered) return
+        val holding = HiddenHolding(current.portfolioId ?: return, current.holdingTicker ?: return)
+        saveHidden { target ->
+            target.hide(holding)
+            mutableState.update { it.copy(hidden = it.hidden + holding) }
+        }
+    }
+
+    /** Hidden holdings, from the portfolio's screen, where it is always listed (view 9, marker 1). */
+    fun openHiddenHoldings() {
+        val current = mutableState.value
+        if (current.screen != Screen.PORTFOLIO || current.saving) return
+        mutableState.update { it.copy(screen = Screen.HIDDEN_HOLDINGS, portfolioMenuOpen = false, hideRefusal = null) }
+    }
+
+    /** "<" or Android Back: back to the portfolio. */
+    fun closeHiddenHoldings() {
+        val current = mutableState.value
+        if (current.screen != Screen.HIDDEN_HOLDINGS || current.saving) return
+        mutableState.update { it.copy(screen = Screen.PORTFOLIO, hideRefusal = null) }
+    }
+
+    /** Unhide on a row (view 9, marker 3): no confirmation; the row goes and the holding is back in the list at 0 shares. */
+    fun unhide(ticker: String) {
+        val current = mutableState.value
+        if (current.screen != Screen.HIDDEN_HOLDINGS || current.saving) return
+        val holding = HiddenHolding(current.portfolioId ?: return, ticker)
+        if (holding !in current.hidden) return
+        saveHidden { target ->
+            target.unhide(holding)
+            mutableState.update { it.copy(hidden = it.hidden - holding) }
+        }
+    }
+
+    /** A row of Hidden holdings opens its Holding detail; Back returns to Hidden holdings (15 decision 3). */
+    fun openHiddenHolding(ticker: String) {
+        val current = mutableState.value
+        val id = current.portfolioId ?: return
+        if (current.screen != Screen.HIDDEN_HOLDINGS || HiddenHolding(id, ticker) !in current.hidden) return
+        mutableState.update {
+            it.copy(screen = Screen.HOLDING, holdingTicker = ticker, holdingTab = HoldingTab.TRANSACTIONS, holdingFromHidden = true, hideRefusal = null)
+        }
+    }
+
+    // A Hide or an Unhide: one write; a failure changes nothing and says so (D9 wording in the screens).
+    private fun saveHidden(write: suspend (RecordStore) -> Unit) {
+        val target = store ?: return
+        mutableState.update { it.copy(saving = true, hideRefusal = null) }
+        viewModelScope.launch {
+            try {
+                write(target)
+                mutableState.update { it.copy(saving = false) }
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: UnreadableDataException) {
+                mutableState.update { it.copy(screen = Screen.UNREADABLE, saving = false) }
+            } catch (e: Exception) {
+                mutableState.update { it.copy(saving = false, hideRefusal = SaveRefusal.SAVE_FAILED) }
+            }
+        }
     }
 
     /** Not saved: the next opening starts on Transactions (view 6). */
@@ -2777,16 +2909,19 @@ class AppViewModel(
                     return
                 }
             }
+        // A new buy of a hidden ticker unhides it in the same save (4.4; 15 decision 2).
+        val unhide = Hiding.unhiddenBy(current.transactions + created.transaction, current.hidden)
         mutableState.update { it.copy(saving = true, buyRefusals = BuyRefusals()) }
         viewModelScope.launch {
             try {
-                target.saveBuy(created.transaction, created.cashLine)
+                target.saveBuy(created.transaction, created.cashLine, unhide)
                 mutableState.update {
                     valued(
                         it.copy(
                             screen = afterBuy(it),
                             entries = it.entries + created.cashLine,
                             transactions = it.transactions + created.transaction,
+                            hidden = it.hidden - unhide.toSet(),
                             buyForm = BuyForm(),
                             buyRefusals = BuyRefusals(),
                             saving = false,
@@ -2856,6 +2991,7 @@ class AppViewModel(
                 Screen.BUY,
                 Screen.BUY_REVIEW,
                 Screen.HOLDING,
+                Screen.HIDDEN_HOLDINGS,
                 Screen.SELL,
                 Screen.SELL_REVIEW,
                 Screen.SPLIT,
