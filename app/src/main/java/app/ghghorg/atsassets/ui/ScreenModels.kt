@@ -3,6 +3,7 @@ package app.ghghorg.atsassets.ui
 import app.ghghorg.atsassets.core.CashEntry
 import app.ghghorg.atsassets.core.CashPairResult
 import app.ghghorg.atsassets.core.CashType
+import app.ghghorg.atsassets.core.Fraction
 import app.ghghorg.atsassets.core.Holdings
 import app.ghghorg.atsassets.core.Money
 import app.ghghorg.atsassets.core.Portfolio
@@ -76,6 +77,20 @@ sealed interface ReversedEntry {
     ) : ReversedEntry
 }
 
+/** Lot quantities shown as "10 + 2 shares": the quantities, formatted, and whether the noun is "share" (one lot of 1). */
+data class ShareList(
+    val quantities: List<String>,
+    val oneShare: Boolean,
+) {
+    companion object {
+        /** No lot shows as "0 shares", as the review did before (10c). */
+        fun of(quantities: List<Fraction>): ShareList {
+            val shown = quantities.map { Quantity.format(it) }.ifEmpty { listOf(Quantity.format(Fraction.ZERO)) }
+            return ShareList(shown, oneShare = shown == listOf("1"))
+        }
+    }
+}
+
 /** Part 1: what the reversal does at its date (10c markers 4, 5; frame E). Cash amounts are signed cents. */
 sealed interface ReversalPartModel {
     data class OfBuy(
@@ -84,7 +99,7 @@ sealed interface ReversalPartModel {
     ) : ReversalPartModel
 
     data class OfSell(
-        val lotsPutBack: List<String>,
+        val lotsPutBack: ShareList,
         val realizedRemovedCents: Long,
         val cashCents: Long,
     ) : ReversalPartModel
@@ -120,7 +135,7 @@ sealed interface ReplacementPartModel {
         val date: String,
         val quantity: String,
         val total: String,
-        val lotsUsed: List<String>,
+        val lotsUsed: ShareList,
         val cost: String,
         val realizedCents: Long,
         val cashCents: Long,
@@ -181,7 +196,7 @@ object ReplaceReview {
         is ReversalEffect.OfBuy -> ReversalPartModel.OfBuy(Quantity.format(effect.sharesRemoved), effect.cashCents)
 
         is ReversalEffect.OfSell ->
-            ReversalPartModel.OfSell(effect.lots.map { Quantity.format(it.quantity) }, -centsOf(effect.realizedRemoved), effect.cashCents)
+            ReversalPartModel.OfSell(ShareList.of(effect.lots.map { it.quantity }), -centsOf(effect.realizedRemoved), effect.cashCents)
 
         is ReversalEffect.OfSplit -> ReversalPartModel.OfSplit(effect.inverse, Quantity.format(effect.before), Quantity.format(effect.after))
     }
@@ -213,7 +228,7 @@ object ReplaceReview {
             date = date,
             quantity = Quantity.format(replacement.quantity),
             total = total,
-            lotsUsed = pieces.map { Quantity.format(it.quantity) },
+            lotsUsed = ShareList.of(pieces.map { it.quantity }),
             cost = Money.format(Money.partsInCents(pieces.map { it.cost }).sum()),
             realizedCents = Money.partsInCents(pieces.map { it.gain }).sum(),
             cashCents = cashCents,

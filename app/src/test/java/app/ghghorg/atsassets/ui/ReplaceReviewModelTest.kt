@@ -113,9 +113,19 @@ class ReplaceReviewModelTest {
                 SoldPiece("b2", LocalDate.of(2026, 2, 1), fraction(2), cost = fraction(300), proceeds = fraction(1_100, 3)),
             )
         val model = review(original = original, effect = effect, trade = trade, pieces = pieces, combinedCents = 10_000L)
-        assertEquals(ReversalPartModel.OfSell(lotsPutBack = listOf("10", "2"), realizedRemovedCents = -80_000L, cashCents = -210_000L), model?.partOne)
+        assertEquals(ReversalPartModel.OfSell(lotsPutBack = ShareList(listOf("10", "2"), oneShare = false), realizedRemovedCents = -80_000L, cashCents = -210_000L), model?.partOne)
         assertEquals(
-            ReplacementPartModel.Sell("MA", "Main", "2026-03-01", quantity = "12", total = "$2,200.00", lotsUsed = listOf("10", "2"), cost = "$1,300.00", realizedCents = 90_000L, cashCents = 220_000L),
+            ReplacementPartModel.Sell(
+                "MA",
+                "Main",
+                "2026-03-01",
+                quantity = "12",
+                total = "$2,200.00",
+                lotsUsed = ShareList(listOf("10", "2"), oneShare = false),
+                cost = "$1,300.00",
+                realizedCents = 90_000L,
+                cashCents = 220_000L,
+            ),
             model?.partTwo,
         )
         assertEquals(10_000L, model?.combinedCents)
@@ -152,6 +162,25 @@ class ReplaceReviewModelTest {
         assertEquals(ReversalPartModel.OfCash(note = reversalNote, cashCents = -50_000L), model?.partOne)
         assertEquals(ReplacementPartModel.Cash(CashType.DEPOSIT, "2026-04-20", amountCents = 5_000L, note = ""), model?.partTwo)
         assertEquals(-45_000L, model?.combinedCents)
+    }
+
+    // Deploy finding 1: "1 share" for one lot of 1, "shares" otherwise, and "0 shares" with no lot, decided in the model.
+    @Test
+    fun aShareList_decidesShareOrShares_andShowsZeroWithNoLot() {
+        assertEquals(ShareList(listOf("1"), oneShare = true), ShareList.of(listOf(fraction(1))))
+        assertEquals(ShareList(listOf("1", "1"), oneShare = false), ShareList.of(listOf(fraction(1), fraction(1))))
+        assertEquals(ShareList(listOf("2.5"), oneShare = false), ShareList.of(listOf(fraction(5, 2))))
+        assertEquals(ShareList(listOf("0"), oneShare = false), ShareList.of(emptyList()))
+    }
+
+    // Deploy finding 3: while the reversal date is not a whole date, a trade's part 1 has no effect yet.
+    @Test
+    fun aTradePair_withNoEffectYet_hasNoPartOne_butStillNamesWhatIsReversed() {
+        val original = transaction("b1", TransactionType.BUY, "2026-11-03", "1", 10_000L)
+        val model = review(original = original, effect = null)
+        assertEquals(ReversedEntry.Trade(TransactionType.BUY, "2026-11-03"), model?.reverses)
+        assertNull(model?.partOne)
+        assertNull(model?.partTwo)
     }
 
     @Test

@@ -377,19 +377,17 @@ private fun entryTypeLabel(type: TransactionType): String = stringResource(
 )
 
 /**
- * "10 + 2 shares" (10c): the quantities, already formatted by the model, joined, with "share" or "shares" after the
- * last as [sharesText] gives it.
+ * "10 + 2 shares" (10c): the model's quantities joined by [separator], the last with the noun the model chose (15a
+ * Deploy finding 1).
  */
 @Composable
 private fun joinedShares(
-    quantities: List<String>,
+    shares: ShareList,
     separator: String,
 ): String {
-    val last = quantities.lastOrNull() ?: return sharesText(Fraction.ZERO)
-    val firsts = quantities.dropLast(1).joinToString(separator)
-    val one = quantities.size == 1 && last == "1"
-    val noun = stringResource(if (one) R.string.holding_share_one else R.string.holding_shares, last)
-    return if (firsts.isEmpty()) noun else firsts + separator + noun
+    val firsts = shares.quantities.dropLast(1)
+    val noun = stringResource(if (shares.oneShare) R.string.holding_share_one else R.string.holding_shares, shares.quantities.last())
+    return (firsts + noun).joinToString(separator)
 }
 
 /**
