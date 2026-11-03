@@ -53,8 +53,8 @@ By hand on the phone, with 15's data (Main: AAPL 15, V 0.00000001, MA 1; 投資�
 ## 9. Research
 - None needed: no new library.
 
-## 10. Decisions needed from you (Build; asked one at a time)
-1. Where the models are built: as AppState properties, as hiddenRows (tested through the existing ViewModel tests); or in separate builder objects tested on their own.
+## 10. Decisions (Build, settled by you 2026-11-03)
+1. The models are built in separate builders in ScreenModels.kt, tested on their own, with one ViewModel wiring test per screen (your B, after comparing maintainability, test run time and APK size). hiddenRows from 15 stays where it is (open item 48). The three criteria now apply to every Build choice about code (CLAUDE.md section 8).
 
 ## 11. Wording to approve (D9)
 - None: no text changes.

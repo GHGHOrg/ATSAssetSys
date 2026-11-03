@@ -77,6 +77,16 @@ class HoldingDetailFlowTest {
         assertEquals(listOf("b1"), state.holdingLots.map { it.buyId })
     }
 
+    // 15a (CR2): the opened holding's rows reach the state as models (decision 1: one wiring test per screen).
+    @Test
+    fun theOpenedHoldingsRows_reachTheStateAsModels() {
+        val state = onAapl().state.value
+        assertEquals(
+            listOf(HoldingRowModel.Trade("b1", "2026-01-02", sell = false, shares = "10", oneShare = false, amount = "$1,500.00")),
+            state.holdingRows,
+        )
+    }
+
     @Test
     fun anUnknownTicker_orAnotherScreen_isIgnored() {
         val vm = started(store())

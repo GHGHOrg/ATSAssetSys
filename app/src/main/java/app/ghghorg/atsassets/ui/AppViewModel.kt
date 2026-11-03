@@ -558,6 +558,14 @@ data class AppState(
             return Holdings.transactionsOf(transactions, id, ticker)
         }
 
+    /** Its Transactions tab's rows, as the screen draws them (view 6; CR2, 15a decision 1). */
+    val holdingRows: List<HoldingRowModel>
+        get() {
+            val id = portfolioId ?: return emptyList()
+            val ticker = holdingTicker ?: return emptyList()
+            return HoldingRows.of(transactions, id, ticker)
+        }
+
     /** Its lots with shares as of today, oldest first (view 6, 4.4). */
     val holdingLots: List<Lot>
         get() {
