@@ -158,4 +158,7 @@ object Transactions {
         totalCents: Long,
         quantity: BigDecimal,
     ): Fraction = Fraction.ofCents(totalCents) / Fraction.of(quantity)
+
+    /** As above, for a buy or sell as saved: over its exact quantity, a buy's quantity ratio included (CR1). */
+    fun pricePerShare(transaction: Transaction): Fraction = Fraction.ofCents(transaction.totalCents) / transaction.boughtQuantity
 }

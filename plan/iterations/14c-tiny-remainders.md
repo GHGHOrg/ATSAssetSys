@@ -63,7 +63,7 @@ By hand on the phone, with 14b's data. Each check names its start and the contro
 2. "Left as filled in" means the quantity text equals the filled-in text, so typing the same digits again counts as unchanged (your A).
 
 ## 11. Wording to approve (D9)
-- None expected; decision 1 may add one message.
+1. Decision 1's refusal, on the buy screen while replacing: "Not saved. Nothing was changed. The splits since the original are too large to keep its exact shares. To save, type a different quantity." (your A, 2026-11-03)
 
 ## 12. Status and notes
 - 2026-11-03: drafted and approved (your A).

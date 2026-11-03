@@ -323,11 +323,11 @@ private fun ReplacementPart(
             color = gainLossColor(realized.compareTo(0L)),
         )
     } else {
-        ReviewRow(stringResource(R.string.buy_quantity_label), Quantity.format(replacement.quantity))
+        ReviewRow(stringResource(R.string.buy_quantity_label), Quantity.format(replacement.boughtQuantity))
         val total = stringResource(R.string.buy_total_row)
         ReviewRow(total, totalShown, spoken = spokenLabel(total, totalShown))
         val price = stringResource(R.string.buy_price_per_share_label)
-        val priceShown = Money.formatPerShare(Transactions.pricePerShare(replacement.totalCents, replacement.quantity))
+        val priceShown = Money.formatPerShare(Transactions.pricePerShare(replacement))
         ReviewRow(price, priceShown, spoken = spokenLabel(price, priceShown))
     }
     CashEffectRow(cashCents)
@@ -391,7 +391,7 @@ private fun joinedShares(
 internal fun ReplacingBanner(original: Transaction) {
     val type = transactionTypeLower(original.type)
     val date = original.date.toString()
-    val quantity = Quantity.format(original.quantity)
+    val quantity = Quantity.format(original.boughtQuantity)
     val total = Money.format(original.totalCents)
     val spoken = stringResource(R.string.replacing_banner_spoken, type, date, quantity, original.ticker, total.substringAfter('$'))
     BannerCard(stringResource(R.string.replacing_banner, type, date, quantity, original.ticker, total), spoken)
@@ -495,8 +495,8 @@ internal fun QuantityHint(
 ) {
     if (original == null) return
     val typed = (Quantity.parse(text) as? QuantityResult.Exact)?.value
-    if (typed != null && typed.compareTo(original.quantity) == 0) return
-    val shown = Quantity.format(original.quantity)
+    if (typed != null && typed.compareTo(Quantity.shown(original.boughtQuantity)) == 0) return
+    val shown = Quantity.format(original.boughtQuantity)
     OriginalHint(shown, stringResource(R.string.original_hint_spoken, shown))
 }
 
@@ -530,6 +530,7 @@ internal fun replaceRuleMessage(
     refusal: ReentryRefusal?,
 ): String? {
     if (refusal is ReentryRefusal.OfCashReversal) return cashReversalMessage(refusal.reason)
+    if (refusal == ReentryRefusal.QuantityRatioTooLarge) return stringResource(R.string.replace_ratio_too_large)
     val reason = (refusal as? ReentryRefusal.OfReversal)?.reason ?: return null
     val lotDate = state.replacedTransaction?.date?.toString().orEmpty()
     return when (reason) {

@@ -189,6 +189,7 @@ private fun AppState.leftReplace(): AppState {
         replaceDateEditing = false,
         replaceRefusals = ReplaceRefusals(),
         replaceStartingPicks = emptyMap(),
+        replaceFilledQuantity = "",
         buyForm = if (kind == TransactionType.BUY) BuyForm() else buyForm,
         sellForm = if (kind == TransactionType.SELL) SellForm() else sellForm,
         splitForm = if (kind == TransactionType.SPLIT) SplitForm() else splitForm,
@@ -476,6 +477,8 @@ data class AppState(
     val replaceReview: ReentryResult.Created? = null,
     // A replaced sell's first picks as typed, for "(the original's picks)" while they are unchanged (10c marker 9).
     val replaceStartingPicks: Map<String, String> = emptyMap(),
+    // 14c: a replaced buy's first quantity as filled in; the same text sends the original's exact shares (decision 2).
+    val replaceFilledQuantity: String = "",
     // 14b: the cash entry being replaced (FORM), the reversal's fixed note (decision 1), and the pair K1 made at Review
     // for a cash entry or a split.
     val replacingCashId: String? = null,
@@ -1357,6 +1360,7 @@ class AppViewModel(
                     replacing.copy(
                         screen = Screen.BUY,
                         buyForm = BuyForm(original.portfolioId, original.ticker, date, quantity.toPlainString(), total),
+                        replaceFilledQuantity = quantity.toPlainString(),
                         buyRefusals = BuyRefusals(),
                         buyFromHolding = false,
                     )
@@ -1658,6 +1662,7 @@ class AppViewModel(
                     date = date,
                     quantity = typed ?: if (standIns) BigDecimal.ONE else return null,
                     totalCents = total.value,
+                    asFilledIn = typed != null && form.quantityText == current.replaceFilledQuantity,
                 )
             }
 
@@ -2705,7 +2710,8 @@ class AppViewModel(
                 (buyOf(current, PROBE_ID, PROBE_ID, standIns = true) as? BuyResult.Refused)?.reason
             }
         val refusals = fieldRefusals.copy(rule = rule)
-        val reversalRule = entryRule as? ReentryRefusal.OfReversal
+        // The pair's own rules: the reversal's, or a ratio too large to keep the original's exact shares (14c decision 1).
+        val reversalRule = entryRule?.takeIf { it is ReentryRefusal.OfReversal || it is ReentryRefusal.QuantityRatioTooLarge }
         if (refusals != BuyRefusals() || pair is PairReview.OnEntry) {
             mutableState.update { it.copy(buyRefusals = refusals, replaceRefusals = ReplaceRefusals(rule = reversalRule)) }
             return

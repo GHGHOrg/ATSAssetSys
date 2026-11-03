@@ -338,6 +338,7 @@
     <string name="replace_too_early">Not saved. Nothing was changed. The reversal, dated %1$s, is applied before the sell of %2$s and would make the lot of %3$s ET hold %4$s. Use Change to pick a reversal date of %5$s or later (the date the sell was reversed).</string>
     <string name="replace_reversal_cash">Not saved. Nothing was changed. The reversal would make cash negative on %1$s by %2$s.</string>
     <string name="replace_not_reversible">Not saved. Nothing was changed. This entry cannot be reversed.</string>
+    <string name="replace_ratio_too_large">Not saved. Nothing was changed. The splits since the original are too large to keep its exact shares. To save, type a different quantity.</string>
     <!-- Iteration 14b: Reverse and re-enter a split or a cash entry (wording 1 approved 2026-11-02, 14b file section 11). -->
     <string name="cash_replacing_title">Cash entry (replacing)</string>
     <string name="split_replacing_title">Split (replacing)</string>
