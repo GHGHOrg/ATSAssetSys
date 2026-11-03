@@ -62,6 +62,7 @@ class HoldingActions(
     val onSell: () -> Unit,
     val onSplit: () -> Unit,
     val onOpenTransaction: (String) -> Unit,
+    val onHide: () -> Unit,
 )
 
 /**
@@ -133,6 +134,25 @@ private fun FixedPart(
                 OutlinedButton(onClick = actions.onSplit, modifier = Modifier.semantics { contentDescription = splitSpoken }) {
                     Text(text = stringResource(R.string.split_button))
                 }
+            }
+            // Hide, only at exactly 0 shares and not while hidden (wireframe 06 marker 9; 15 decision 1, wording 1).
+            if (state.hideOffered) {
+                val hideSpoken = stringResource(R.string.hide_spoken, holding.ticker, portfolio)
+                OutlinedButton(
+                    onClick = actions.onHide,
+                    enabled = !state.saving,
+                    modifier = Modifier.semantics { contentDescription = hideSpoken },
+                ) {
+                    Text(text = stringResource(R.string.hide_button))
+                }
+            }
+            if (state.hideRefusal == SaveRefusal.SAVE_FAILED) {
+                Text(
+                    text = stringResource(R.string.save_failed),
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.error,
+                    modifier = Modifier.semantics { liveRegion = LiveRegionMode.Polite },
+                )
             }
             // Sell at 0 shares (11 decision 2, wording 4): read once, gone when the holding is left.
             if (state.buyNotice == BuyNotice.NOTHING_TO_SELL_IN_HOLDING) {

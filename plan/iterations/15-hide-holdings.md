@@ -68,7 +68,14 @@ By hand on the phone, with 14c's data (Main: AAPL 15 shares, V 0 shares, MA 1 sh
 3. Back from a Holding detail opened from Hidden holdings returns to Hidden holdings (wireframe 06 lists it as a way in) (your A).
 
 ## 11. Wording to approve (D9)
-- Asked in step 5: Hide; Unhide; the "Hidden holdings" link and title; "No hidden holdings"; "0 shares"; "Last transaction %s ET"; the TalkBack sentences for a row and the buttons. The wireframes give placeholders only.
+Approved in step 5 (your A, 2026-11-03); shown text, then TalkBack:
+1. Holding detail's button: "Hide"; "Hide V in Main".
+2. The portfolio screen's link: "Hidden holdings" with ">"; "Hidden holdings, opens a list".
+3. Hidden holdings' title and portfolio box: "Hidden holdings", "Portfolio" over the name; "Hidden holdings, portfolio Main".
+4. With none hidden: "No hidden holdings".
+5. A row: the ticker, "0 shares" (existing text), "Last transaction 2026-11-03 ET"; "V, 0 shares, last transaction 2026-11-03 Eastern Time".
+6. The row's button: "Unhide"; "Unhide V".
+7. A Hide or Unhide not saved: the existing "Not saved. Nothing was changed. Try again."
 
 ## 12. Status and notes
 - 2026-11-03: drafted and approved (your A).

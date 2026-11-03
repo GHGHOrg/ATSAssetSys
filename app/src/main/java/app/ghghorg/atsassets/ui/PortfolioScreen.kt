@@ -100,8 +100,36 @@ fun PortfolioScreen(
                     }
                 }
             }
+            HiddenLink(actions.onOpenHidden)
         }
         if (state.portfolioMenuOpen) PortfolioMenu(actions)
+    }
+}
+
+/** "Hidden holdings >", always listed, even with none hidden (wireframe 03 marker 7, wireframe 09 marker 1; 15 wording 2). */
+@Composable
+private fun HiddenLink(onOpen: () -> Unit) {
+    val spoken = stringResource(R.string.hidden_link_spoken)
+    OutlinedCard(modifier = Modifier.fillMaxWidth()) {
+        Row(
+            modifier =
+            Modifier
+                .fillMaxWidth()
+                .clickable(role = Role.Button, onClick = onOpen)
+                .clearAndSetSemantics {
+                    contentDescription = spoken
+                    role = Role.Button
+                    onClick {
+                        onOpen()
+                        true
+                    }
+                }.padding(12.dp),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Text(text = stringResource(R.string.hidden_link), style = MaterialTheme.typography.bodyLarge)
+            Text(text = ">", style = MaterialTheme.typography.bodyLarge)
+        }
     }
 }
 
@@ -112,6 +140,7 @@ class PortfolioScreenActions(
     val onCloseMenu: () -> Unit,
     val onRename: () -> Unit,
     val onOpenHolding: (String) -> Unit,
+    val onOpenHidden: () -> Unit,
 )
 
 @Composable

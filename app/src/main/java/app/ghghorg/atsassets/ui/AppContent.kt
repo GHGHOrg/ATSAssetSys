@@ -136,6 +136,7 @@ private fun BarContent(
                 onCloseMenu = viewModel::closePortfolioMenu,
                 onRename = viewModel::openRename,
                 onOpenHolding = viewModel::openHolding,
+                onOpenHidden = viewModel::openHiddenHoldings,
             ),
         )
 
@@ -149,6 +150,17 @@ private fun BarContent(
                 onSell = viewModel::sellFromHolding,
                 onSplit = viewModel::splitFromHolding,
                 onOpenTransaction = viewModel::openTransaction,
+                onHide = viewModel::hide,
+            ),
+        )
+
+        Screen.HIDDEN_HOLDINGS -> HiddenHoldingsScreen(
+            state = state,
+            actions =
+            HiddenHoldingsActions(
+                onBack = viewModel::closeHiddenHoldings,
+                onOpenHolding = viewModel::openHiddenHolding,
+                onUnhide = viewModel::unhide,
             ),
         )
 
