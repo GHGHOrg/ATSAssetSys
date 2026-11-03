@@ -102,6 +102,7 @@ CI (.github/workflows/ci.yml) runs the style check and then the same three steps
 - Phone-check figures: a lot's history is every sell that ever took from it, reversed ones included, and the date each was reversed. Read the lots used on each sell's detail before working out a reversal's date rule (14a check 3).
 - Exact fractions at 8 places: test with remainders that round up as well as down, and with several lots (for example 2/3, 5/3, 3/7, 1/7), not only 10/3, which rounds down. A sum of shown figures can be above or below the total shown, and every rule that compares typed quantities must use the same figures the picker shows. Before proposing a fix, try each option on all the remaining checks and on such cases (12, phone check 6).
 - A stand-in value (the K1 pitfall above) is only for judging rules together. Whatever a review shows must come from the typed values, so stand in only for a field that is itself refused, and test that the review shows each typed field, an empty one included (14b, phone check 3: the review showed the stand-in note "check").
+- When a field's meaning changes or a second field takes over part of its job (as boughtQuantity did for a buy's quantity in 14c), search for every read of the old field, not for one call pattern, and check each screen that shows it on the phone by its text. No test draws a screen (14c Deploy findings 1 and 2).
 
 ## 7. Standing checks for every iteration's screens
 Criteria 9, 39 to 42, and the install-over-previous-build check (35).

@@ -66,14 +66,14 @@ By hand on the phone, with 14b's data. Each check names its start and the contro
 1. Decision 1's refusal, on the buy screen while replacing: "Not saved. Nothing was changed. The splits since the original are too large to keep its exact shares. To save, type a different quantity." (your A, 2026-11-03)
 
 ## 12. Status and notes
-Built 2026-11-03 (steps 1 to 6); phone checks 2026-11-03, all yes. Not yet reviewed (Deploy) or merged.
+Built 2026-11-03 (steps 1 to 6); phone checks 2026-11-03, all yes. Deploy review 2026-11-03: one Medium and one Low finding, fixed on the branch and rechecked on the phone (section 14, items 9 and 10). Not yet merged.
 
 ## 13. Build results
 ### 13.1 Commits
-Newest first: de9bb63 step 6, 6d5c196 step 5, 83ba721 step 4, b70732b step 3, f38c709 step 2, 4aabba4 step 1 with this file, 762d9a5 Design (spec.md v5), 574c680 Plan (intent-cr-01-tiny-remainders.md). main was 071d490.
+Newest first: 4d9a05a Deploy fix, 5baf5ad step 8, de9bb63 step 6, 6d5c196 step 5, 83ba721 step 4, b70732b step 3, f38c709 step 2, 4aabba4 step 1 with this file, 762d9a5 Design (spec.md v5), 574c680 Plan (intent-cr-01-tiny-remainders.md). main was 071d490.
 
 ### 13.2 Local run
-On de9bb63's code (2026-11-03, all with --rerun-tasks): spotlessCheck green; debug and release builds green ("Unable to strip" as always); 611 tests, 0 failures (Balance 11, CashAccount 20, CashEntriesReverse 12, CashEntries 27, Fraction 12, Holdings 15, MarketDate 10, Money 21, OpeningBalance 9, Portfolios 23, Quantity 12, ReentriesSplitCash 16, Reentries 27, Reversals 14, Sells 23, Splits 23, TickerCheck 16, Transactions 18, RowMapping 15, AppLock 12, FinnhubSource 18, TickerVerifier 6, AppViewModel 120, BuyFlow 29, DateDigits 7, HoldingDetailFlow 11, ReenterFlow 31, ReversalFlow 7, SellFlow 21, SplitFlow 17, TransactionDetailFlow 8); lint the 4 listed findings only (report 2026-11-03 13:52:33). No schema change: nothing under app/schemas changed; the database stays at version 5.
+On de9bb63's code (2026-11-03, all with --rerun-tasks): spotlessCheck green; debug and release builds green ("Unable to strip" as always); 611 tests, 0 failures (Balance 11, CashAccount 20, CashEntriesReverse 12, CashEntries 27, Fraction 12, Holdings 15, MarketDate 10, Money 21, OpeningBalance 9, Portfolios 23, Quantity 12, ReentriesSplitCash 16, Reentries 27, Reversals 14, Sells 23, Splits 23, TickerCheck 16, Transactions 18, RowMapping 15, AppLock 12, FinnhubSource 18, TickerVerifier 6, AppViewModel 120, BuyFlow 29, DateDigits 7, HoldingDetailFlow 11, ReenterFlow 31, ReversalFlow 7, SellFlow 21, SplitFlow 17, TransactionDetailFlow 8); lint the 4 listed findings only (report 2026-11-03 13:52:33). No schema change: nothing under app/schemas changed; the database stays at version 5. On 4d9a05a's code (the Deploy fix): the same run, debug and release builds green, 611 tests, 0 failures, lint the 4 listed findings only (report 2026-11-03 14:40:08).
 
 ### 13.3 Phone results (Android 17, debug build versionCode 17, your reports)
 Checks 1 to 5 all yes. All entries in Main, dated 2026-11-03.
@@ -82,6 +82,7 @@ Checks 1 to 5 all yes. All entries in Main, dated 2026-11-03.
 - 3 (Example I, MA): buy 1 for $100.00 (cash $3,005.32); a 1 for 3 split the same date: 0.33333333 shares, the lot at $300.00 per share; Reverse and re-enter on the buy with nothing changed: the banner, the quantity 0.33333333 with "Original: 1"; the review: part 1 0.33333333 removed and $100.00 back, part 2 0.33333333 at $300.00, combined $0.00; saved, "Reversed on 2026-11-03"; a 3 for 1 split: the review 0.33333333 to 1, the header 1 share (0.99999999 before 14c), the lot 1 at $100.00; the new buy's detail 0.33333333, $100.00, $300.00; cash $3,005.32, net worth $4,155.32 (criterion 59(f)).
 - 4: AAPL 15 shares at $1,050.00, lots 12 at $75.00 and 3 at $50.00, unchanged.
 - 5: largest font and landscape, light and dark, on MA's Holding detail and the new buy's detail; TalkBack read 0.33333333 and $300.00 in full (criteria 9, 39 to 42).
+- Recheck after the Deploy fix (versionCode 18, lastUpdateTime 2026-11-03 14:43:49): MA's Transactions tab shows the new buy's row as 0.33333333 shares and the reversed original as 1 share; TalkBack on Reverse of the new buy read 0.33333333 shares on its card.
 
 ### 13.4 Not run or not checked
 CI and the pull request; TalkBack on the figure 0.00000001 itself (V was sold out before check 5; it is formatted by the same Quantity.format as 0.33333333); "offers Hide" in 59(e) (15); the backup-and-restore parts of 59(e) and 59(f) (31 to 34); the "ratio too large" refusal and its message on the phone (unit tested only; it needs same-date splits whose ratio passes 2,147,483,647); a Logcat check (not in section 8); the release APK on a device (unsigned, open item 4); open item 33 (34); the screens in a JVM test (none in the project).
@@ -95,3 +96,6 @@ CI and the pull request; TalkBack on the figure 0.00000001 itself (V was sold ou
 6. Lot gained a boughtQuantity field (with a default), not in section 4's list, so a lot's cost per share uses a buy's exact quantity (step 3).
 7. Steps 2 to 4 were built before their commits on your request ("continue first, commit later"); each step was committed on its own, in order, step 2 from the index.
 8. Wording 1 was asked in step 5, after the code, before its string was added.
+9. Deploy finding 1 (Medium), fixed before the pull request (your decision A): Holding detail's Transactions row showed a buy's stored quantity, so MA's re-entered buy read "Buy 1 share" while its detail showed 0.33333333 (your report on the phone, versionCode 17). Step 5's search looked for one call pattern and missed this one (item 1). Fixed in 4d9a05a with boughtQuantity; versionCode 18; rechecked on the phone (section 13.3). No failing test first: no test draws a screen (open item 47).
+10. Deploy finding 2 (Low), fixed in the same commit: TalkBack on the plain reversal's card read a buy's stored quantity ("1 share") while the visible row showed 0.33333333. Rechecked with TalkBack on the phone.
+11. From the findings (your decision A): a CLAUDE.md pitfall on searching every read of a field whose meaning changes, and open item 47 on screen tests.
