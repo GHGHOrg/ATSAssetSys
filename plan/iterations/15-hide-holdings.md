@@ -1,6 +1,6 @@
 # plan/iterations/15-hide-holdings.md
 
-Stage: Build. Status: approved, built and checked on the phone 2026-11-03 (section 12). Decisions 1 to 3 settled (section 10).
+Stage: Build. Status: approved, built, checked and merged 2026-11-03 (section 12). Decisions 1 to 3 settled (section 10).
 Source: plan/plan.md section 4 (row 15), intent/intent.md v52 (final), intent/intent-cr-01-tiny-remainders.md (CR1), spec/spec.md v5 (final). "My reading" is an interpretation, not a test.
 
 ## 1. Outcome
@@ -78,7 +78,7 @@ Approved in step 5 (your A, 2026-11-03); shown text, then TalkBack:
 7. A Hide or Unhide not saved: the existing "Not saved. Nothing was changed. Try again."
 
 ## 12. Status and notes
-Built 2026-11-03 (steps 1 to 6); phone checks 2026-11-03, all yes. Deploy review 2026-11-03: one Low finding (two promised tests missing), the tests added on the branch; no code changed (section 14, items 8 and 9). Not yet merged.
+Built 2026-11-03 (steps 1 to 6); phone checks 2026-11-03, all yes. Deploy review 2026-11-03: one Low finding (two promised tests missing), the tests added on the branch; no code changed (section 14, items 8 and 9). Pull request #117 merged as d7630a8 (2026-11-03), CI green on the pull request (3 checks) and on main (2m 56s) (your reports).
 
 ## 13. Build results
 ### 13.1 Commits
