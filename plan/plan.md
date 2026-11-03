@@ -69,6 +69,7 @@ Rules for the list:
 | 14b | reverse-and-reenter-split-cash | Reverse and re-enter a split or cash entry | 14a, 05 | 4.6, 10c frame E, crit. 21 |
 | 14c | tiny-remainders | Sell out a leftover too small to show; re-enter a buy after a same-date split with its exact shares ([CR1](../intent/intent-cr-01-tiny-remainders.md)) | 14a, 12 | CR1, 3, 4.4, 4.6, 4.10, Examples H and I, crit. 59(e), 59(f) |
 | 15 | hide-holdings | Hide and unhide sold-out holdings | 13, 14c | 4.4, crit. 27, 51, 60(a) |
+| 15a | screen-models | What three screens show is built as a tested model; the convention for every screen from 16 on ([CR2](../intent/intent-cr-02-screen-models.md); open item 48) | 15 | CR2, views 6 and 7, 4.6, crit. 48, 53, 54 |
 | 16 | live-prices | See prices, their age, stale marker, unrealized gain/loss | 09, price spike | 7, 4.8, crit. 5, 41, 42 |
 | 17 | net-worth-screen | Net Worth (Total) with composition | 16 | 4.8, crit. 34, 44 |
 | 18 | allocation-net-worth | Allocation by asset type, portfolio, holding (Overall, Net Worth) | 17 | crit. 32, 43 |
@@ -308,6 +309,7 @@ when it adds a command, a convention or a pitfall.
 | Iteration 14b | done: built 2026-11-02 to 2026-11-03 (steps 1 to 6, one fix and one Deploy fix); phone checks 2026-11-02 to 2026-11-03 all yes after the fix; 594 tests; pull request #114 merged as 7229ef3, CI green on the pull request and on main (2m 26s) (your reports) |
 | Iteration 14c | done: built 2026-11-03 (steps 1 to 6, one Deploy fix); phone checks 2026-11-03 all yes, rechecked after the fix; 611 tests; pull request #116 merged as ae4ec04, CI green on the pull request and on main (3m 7s) (your reports) |
 | Iteration 15 | done: built 2026-11-03 (steps 1 to 6, two tests added at Deploy); phone checks 2026-11-03 all yes; 630 tests; database version 6; pull request #117 merged as d7630a8, CI green on the pull request and on main (2m 56s) (your reports) |
+| Iteration 15a | in progress: file approved 2026-11-03 |
 | Iterations 15 to 35 | not started, files not written |
 
 ## 12. Change log
@@ -408,6 +410,8 @@ Each departure from this plan is recorded here with its date and the reason.
 - 2026-11-03: the 15 Deploy review found one Low finding: two tests that step 4 named were missing (unhiding by a pair; a failed Unhide). Added on the branch after the code, both green on their first run, and shown to fail when the code they guard is broken (15 file, section 14, items 8 and 9; your decision A). No code changed.
 - 2026-11-03: pull request #117 (iteration 15) was merged as d7630a8. CI on the pull request (3 checks: build, Analyze (actions), CodeQL) and on main (the run for d7630a8, 2m 56s) were reported successful by you. The branch was deleted locally; origin no longer has it (git branch -r after git fetch --prune). The status lines above were updated. The 15 file's sections 13 and 14 are left as written at build time.
 - 2026-11-03: pull request #118 (docs: the screen tests discussion) was merged as 1e2806f, CI green on the pull request (3 checks) and on main (2m 58s) (your reports); the branch is gone from origin. It records the discussion of open item 47 in plan/discussions/screen-tests.md, with nothing decided; item 47 stays open. Open item 45 gained your report of a slower Cash tab and cold start (your decision A).
+- 2026-11-03: pull request #119 (docs: the 15 merge record and open item 45) was merged as 65250c7, CI green on the pull request (3 checks) and on main (2m 28s) (your reports); the branch is gone from origin (git branch -r after git fetch --prune).
+- 2026-11-03: open item 47 taken up in part as change request CR2 (intent/intent-cr-02-screen-models.md; your decisions): screen models with no new library, covering new and changed screens from 16 on and three screens where defects were found; open item 48 records the existing screens not covered. CR2 Design: no spec change (section 14 is technology-neutral and K9's boundary is unchanged); criterion 42 keeps its phone check (your A). Iteration 15a added; the 15a file was approved.
 
 ## 13. Out of scope for this plan
 Performance over time, per-holding dividends, ETF look-through, the next intent.md items,
