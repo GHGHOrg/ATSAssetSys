@@ -257,7 +257,10 @@ class RoomRecordStore(
     }
 }
 
-/** The quantity is stored as the exact text of the decimal as typed, so "2.50" stays "2.50" (4.10). */
+/**
+ * The quantity is stored as the exact text of the decimal as typed, so "2.50" stays "2.50" (4.10). A split's ratio and
+ * a buy's quantity ratio share the two ratio columns (spec section 8, buy row; CR1).
+ */
 internal fun Transaction.toRow() = TransactionRow(
     id = id,
     portfolioId = portfolioId,
@@ -268,14 +271,15 @@ internal fun Transaction.toRow() = TransactionRow(
     quantity = quantity.toPlainString(),
     totalCents = totalCents,
     reversesId = reversesId,
-    splitTo = split?.to,
-    splitFrom = split?.from,
+    splitTo = (split ?: quantityRatio)?.to,
+    splitFrom = (split ?: quantityRatio)?.from,
 )
 
 /**
  * Throws [UnreadableDataException] for a split without a ratio that 4.5 allows (whole numbers from 1 to
- * [Splits.MAX_RATIO], not equal), a buy or sell with a ratio, a reversal without its link, or a buy, sell or split
- * with one (13b decision 1). The messages name no value (spec section 9).
+ * [Splits.MAX_RATIO], not equal), a buy with half a ratio or one that is not two unequal whole numbers above 0 (CR1),
+ * a sell or reversal with a ratio, a reversal without its link, or a buy, sell or split with one (13b decision 1). The
+ * messages name no value (spec section 9).
  */
 internal fun TransactionRow.toTransaction(): Transaction {
     val transactionType = TransactionType.valueOf(type)
@@ -291,8 +295,18 @@ internal fun TransactionRow.toTransaction(): Transaction {
             }
             SplitRatio(to, from)
         } else {
-            if (splitTo != null || splitFrom != null) throw UnreadableDataException("A stored buy or sell has a split ratio.")
             null
+        }
+    val quantityRatio =
+        when {
+            transactionType == TransactionType.SPLIT || (splitTo == null && splitFrom == null) -> null
+
+            transactionType != TransactionType.BUY -> throw UnreadableDataException("A stored sell or reversal has a split ratio.")
+
+            splitTo == null || splitFrom == null || splitTo < 1 || splitFrom < 1 || splitTo == splitFrom ->
+                throw UnreadableDataException("A stored buy's quantity ratio could not be read.")
+
+            else -> SplitRatio(splitTo, splitFrom)
         }
     return Transaction(
         id = id,
@@ -305,6 +319,7 @@ internal fun TransactionRow.toTransaction(): Transaction {
         totalCents = totalCents,
         reversesId = reversesId,
         split = ratio,
+        quantityRatio = quantityRatio,
     )
 }
 

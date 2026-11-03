@@ -131,10 +131,28 @@ class RowMappingTest {
                 row.copy(splitFrom = -1),
                 row.copy(splitTo = 1_000_001),
                 row.copy(splitTo = 3),
-                buy.toRow().copy(splitTo = 2, splitFrom = 1),
+                buy.toRow().copy(splitTo = 2),
+                buy.toRow().copy(splitFrom = 3),
+                buy.toRow().copy(splitTo = 0, splitFrom = 3),
+                buy.toRow().copy(splitTo = 1, splitFrom = -3),
+                buy.toRow().copy(splitTo = 3, splitFrom = 3),
                 sell.toRow().copy(splitFrom = 1),
+                sell.toRow().copy(splitTo = 1, splitFrom = 3),
             )
         damaged.forEach { assertThrows(UnreadableDataException::class.java) { it.toTransaction() } }
+    }
+
+    // 14c (CR1): a buy re-entered with its quantity left as filled in keeps its quantity ratio in the split columns.
+    @Test
+    fun aBuyWithAQuantityRatio_keepsItInTheSplitColumns_andIsReadBackUnchanged() {
+        val kept = buy.copy(quantity = BigDecimal("1"), quantityRatio = SplitRatio(1, 3))
+        val row = kept.toRow()
+        assertEquals(1, row.splitTo)
+        assertEquals(3, row.splitFrom)
+        assertEquals(kept, row.toTransaction())
+        assertEquals(null, row.toTransaction().split)
+        val large = kept.copy(quantityRatio = SplitRatio(1, Int.MAX_VALUE))
+        assertEquals(large, large.toRow().toTransaction())
     }
 
     private val reversal =
