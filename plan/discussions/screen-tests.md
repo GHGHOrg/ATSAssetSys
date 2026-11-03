@@ -1,6 +1,6 @@
 # plan/discussions/screen-tests.md
 
-Status: discussion only, 2026-11-03. Nothing decided. Open item 47 stays open (decide before 16).
+Status: discussed 2026-11-03; decided 2026-11-04 (section 8). Open item 47 stays open until spike F's results are in.
 Source: the conversation after iteration 15's merge (pull request #117). "My reading" is an interpretation, not a test or a measurement.
 
 ## 1. Why this came up
@@ -75,5 +75,12 @@ My reading: built that way, reliability would be higher than today's phone check
 A spike, like the earlier ones (plan/spikes/): set up B (Robolectric, Compose's test library, screenshot tests at the largest font, in landscape and in dark) and a database migration test; then bring back each past phone-found defect in section 4 on a test branch and see which the automated tests catch. The share caught measures "no loss of reliability"; the misses show which phone checks must stay. Cost: new test libraries (versions looked up on the day, web search asked first), possibly a debug-only manifest entry [UNVERIFIED], about a day's work, no change to the app's behaviour.
 
 ## 8. Where it stands
-- Paused at your "C. Keep discussing first" (Plan question: A, write it as change request CR2 and run the spike; B, go straight to screen models; C, keep discussing).
-- When you want a decision, the Plan question is asked again.
+- 2026-11-03: option A was taken as change request CR2 and built as iteration 15a (intent/intent-cr-02-screen-models.md; merged in pull request #120). Existing screens without models are open item 48.
+- 2026-11-04, your decision F (Plan) for the rest: a spike for level C only (plan/spikes/screen-tests.md, to be written and approved before anything runs), then change request CR3 from its results. Level B is added only if level C cannot run on every change. The spike replays 10 (the header measured, not compared as a picture), 07, 08 and TalkBack labels on an emulator, and measures what each catches, the run time and flakiness.
+- Running level C on every change: first try a self-hosted GitHub Actions runner on your PC; fall back to an emulator on GitHub's runner. Conditions for the self-hosted runner:
+  - never triggered by pull_request (fork pull requests could run code on your PC); only by pushes to your branches or by hand;
+  - run under a separate Windows user that cannot read the keystore, signing files or ~/.claude;
+  - the emulator only, never the phone: the build tools uninstall the app after instrumented tests by default [UNVERIFIED], which would delete the app's data;
+  - the repo's visibility and fork settings checked first (not yet checked).
+- Options not taken: a spike for level B only; levels B and C together (two test setups, the most upkeep); level B for every screen without a spike; postponing past 16; closing the rest of item 47.
+- The spike changes no app behaviour, no spec and not the release APK. Dropping hand checks that criteria require (for example 20 and 51) is a spec change, made in CR3 after the results.
