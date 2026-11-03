@@ -48,6 +48,7 @@ CI (.github/workflows/ci.yml) runs the style check and then the same three steps
 - K3 and K9 only read data. K4 only writes prices and instrument data. These boundaries are kept by review and checked at Deploy.
 - Exact arithmetic only (spec 4.10).
 - A change request (Ruleset A rule 7) gets its own intent file, intent/intent-cr-NN-short-name.md, and plan.md's iteration row links to it. intent.md stays at v52. spec.md stays one file, and each change edits it (decided 2026-11-03, CR1).
+- A new or changed screen shows only what its screen model prepares (plan.md section 3; CR2). Build the model in a builder with unit tests, plus one ViewModel wiring test per screen; the screen only picks the approved string and puts the model's values in. Don't format or work out a shown figure, text or message inside a composable. Screens built before 15a are open item 48: give one a model when you change it.
 
 ## 5. Where things are
 - intent/intent.md (v52, final) and one file per change request (intent/intent-cr-NN-short-name.md; CR1 is intent-cr-01-tiny-remainders.md), spec/spec.md (v5, final, one file), spec/wireframes/, plan/plan.md, plan/setup.md.

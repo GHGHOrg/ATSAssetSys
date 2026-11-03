@@ -35,6 +35,7 @@ CLAUDE.md                      repo root, created by setup.md
 - Data layer: Room on SQLite with SQLCipher. K2 is an interface in `core/`. Records and
   prices are separate tables. Derived state is rebuilt by replay and cached in memory.
 - Exact arithmetic everywhere in K1 (4.10): arbitrary-precision integers, no floating point.
+- Screens draw from screen models (CR2, 15a): a screen shows only figures, texts and messages that a plain Kotlin model prepares (no Compose, no resources), and picks the approved string (strings.xml, D9) to put them in. Each model is built by a builder (ScreenModels.kt, or its own file) and unit tested; one ViewModel test per screen checks that the model reaches the state. Applies to new and changed screens from 15a on; the screens built before are listed in open item 48.
 - minSdk 33. Manifest baseline in setup (no automatic backup of app data).
 - Figma for design tokens only. The Compose theme file is the source of truth.
 - Tool and library versions are looked up and pinned when used, never taken from memory.
