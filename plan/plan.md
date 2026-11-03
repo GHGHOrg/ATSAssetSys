@@ -67,7 +67,8 @@ Rules for the list:
 | 13b | reverse-transaction | Reverse a buy, sell or split | 13a | 4.6, crit. 53 |
 | 14a | reverse-and-reenter-trades | Reverse and re-enter a buy or sell | 13b | 4.6, crit. 21, 54, 60(b) |
 | 14b | reverse-and-reenter-split-cash | Reverse and re-enter a split or cash entry | 14a, 05 | 4.6, 10c frame E, crit. 21 |
-| 15 | hide-holdings | Hide and unhide sold-out holdings | 13 | 4.4, crit. 27, 51, 60(a) |
+| 14c | tiny-remainders | Sell out a leftover too small to show; re-enter a buy after a same-date split with its exact shares ([CR1](../intent/intent-cr-01-tiny-remainders.md)) | 14a, 12 | CR1, 3, 4.4, 4.6, 4.10, Examples H and I, crit. 59(e), 59(f) |
+| 15 | hide-holdings | Hide and unhide sold-out holdings | 13, 14c | 4.4, crit. 27, 51, 60(a) |
 | 16 | live-prices | See prices, their age, stale marker, unrealized gain/loss | 09, price spike | 7, 4.8, crit. 5, 41, 42 |
 | 17 | net-worth-screen | Net Worth (Total) with composition | 16 | 4.8, crit. 34, 44 |
 | 18 | allocation-net-worth | Allocation by asset type, portfolio, holding (Overall, Net Worth) | 17 | crit. 32, 43 |
@@ -90,7 +91,7 @@ Rules for the list:
 | 35 | restore-over-data | Restore onto an app that holds data | 34 | 8, crit. 17, 56 |
 
 ### Examples as automated tests (K1, crit. 2; my reading)
-A in 11, B in 12, C in 09 (it needs a buy), D and F in 13, G in 14a, E in 29. Criteria 59
+A in 11, B in 12, C in 09 (it needs a buy), D and F in 13, G in 14a, H and I in 14c, E in 29. Criteria 59
 and 60 are tested in the iterations whose rules they cover (integer-cent arithmetic from 02a, exact fractions from 09 and 11,
 60(a) in 15, 60(b) in 14a, 60(c) in 17, 60(d) in 11).
 
@@ -305,6 +306,7 @@ when it adds a command, a convention or a pitfall.
 | Iteration 13b | done: built 2026-11-01 to 2026-11-02 (steps 1 to 6); phone checks 2026-11-02 all yes; 527 tests; pull request #110 merged as e5edb0e, CI green on the pull request and on main (2m 21s) (your reports) |
 | Iteration 14a | done: built 2026-11-02 (steps 1 to 6, one fix and one Deploy fix); phone checks 2026-11-02 all yes after the fix; 564 tests; pull request #112 merged as bcd5e3b, CI green on the pull request and on main (2m 59s) (your reports) |
 | Iteration 14b | done: built 2026-11-02 to 2026-11-03 (steps 1 to 6, one fix and one Deploy fix); phone checks 2026-11-02 to 2026-11-03 all yes after the fix; 594 tests; pull request #114 merged as 7229ef3, CI green on the pull request and on main (2m 26s) (your reports) |
+| Iteration 14c | in progress: file approved 2026-11-03 |
 | Iterations 15 to 35 | not started, files not written |
 
 ## 12. Change log
@@ -397,6 +399,7 @@ Each departure from this plan is recorded here with its date and the reason.
 - 2026-11-03: 14b built and checked on the phone, with no schema change. A split pair is two transactions saved in one database transaction, its lots checked once with both splits applied; a cash pair is two cash entries saved as one batch and judged in one replay, so CashEntries.kt was split into drafts and a replay. A defect found in phone check 3 was fixed with failing tests first: the combined review showed a stand-in note in place of the typed one (your decision A; 14b file, section 14, item 6). Criterion 35's install-over is checked again (versionCode 16).
 - 2026-11-03: the 14b Deploy review found one High bug, fixed on the branch with a failing test first and rechecked on the phone (your decision A): a split re-entered on another ticker or portfolio could be saved while its reversal left the original holding short (14b file, section 14, item 8). A stale comment (Low) was fixed with it.
 - 2026-11-03: pull request #114 (iteration 14b) was merged as 7229ef3. CI on the pull request (3 checks: build, Analyze (actions), CodeQL) and on main (the run for 7229ef3, 2m 26s) were reported successful by you. The status lines above were updated. The 14b file's sections 13 and 14 are left as written at build time.
+- 2026-11-03: pull request #115 (docs: the 14b merge record) was merged as 071d490, CI green on the pull request (3 checks) and on main (2m 1s) (your reports). Open items 44 and 46 were taken up before 15 as change request CR1 (intent/intent-cr-01-tiny-remainders.md; your decisions): from now on each change request has its own intent file, intent/intent-cr-NN-short-name.md, linked from plan.md, and intent.md stays at v52. spec.md v5: a leftover too small to show is shown and picked as 0.00000001 (4.4, 4.10), and an unchanged re-entered buy keeps the original's exact quantity through `quantity_ratio` (3, 4.6, section 8). Iteration 14c added; 15 now depends on it.
 
 ## 13. Out of scope for this plan
 Performance over time, per-holding dividends, ETF look-through, the next intent.md items,
