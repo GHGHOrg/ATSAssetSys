@@ -1,6 +1,6 @@
 # plan/spikes/screen-tests.md
 
-Stage: Plan (open item 47's remainder, before change request CR3). Status: written 2026-11-04 (pull request #126, merged as c489ec9); decisions S1 to S6 settled 2026-11-04 (section 6); the note is not approved. Nothing in section 7 runs until you approve it.
+Stage: Plan (open item 47's remainder, before change request CR3). Status: written 2026-11-04 (pull request #126, merged as c489ec9); decisions S1 to S6 settled 2026-11-04 (section 6); approved by you 2026-11-04. Section 7 may start; each "Ask" in it still stops for your yes.
 Source: plan/discussions/screen-tests.md (sections 4 to 8; your decision F, 2026-11-04), plan/open-items.md item 47, CLAUDE.md section 6 (the pitfalls from 07, 08, 10 and 14c), .github/workflows/ci.yml, app/build.gradle.kts, gradle/libs.versions.toml.
 Facts in this note are facts of the day they were looked up; each carries its date. Versions are looked up on the day the spike runs.
 
@@ -120,4 +120,4 @@ Anything not run is stated as not run in section 11.
 (Empty until the spike runs.)
 
 ## 12. Status and notes
-Written 2026-11-04 on branch docs/spike-screen-tests (pull request #126, merged as c489ec9). Decisions S1 to S6 settled 2026-11-04 on branch docs/spike-screen-tests-decisions. Not approved.
+Written 2026-11-04 on branch docs/spike-screen-tests (pull request #126, merged as c489ec9). Decisions S1 to S6 settled 2026-11-04 on branch docs/spike-screen-tests-decisions. Approved by you 2026-11-04 (as written, option A). Nothing run yet.
