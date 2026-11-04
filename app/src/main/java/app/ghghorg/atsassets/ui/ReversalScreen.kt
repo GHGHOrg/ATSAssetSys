@@ -144,7 +144,7 @@ private fun OriginalCard(
                 transactionTypeLower(original.type),
                 date,
                 portfolio,
-                sharesText(original.boughtQuantity),
+                sharesText(original.quantity), // Spike F (open item 47): defect TB brought back on purpose
                 Money.format(original.totalCents).substringAfter('$'),
             )
         }
