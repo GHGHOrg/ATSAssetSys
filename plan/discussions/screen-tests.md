@@ -82,5 +82,6 @@ A spike, like the earlier ones (plan/spikes/): set up B (Robolectric, Compose's 
   - run under a separate Windows user that cannot read the keystore, signing files or ~/.claude;
   - the emulator only, never the phone: the build tools uninstall the app after instrumented tests by default [UNVERIFIED], which would delete the app's data;
   - the repo's visibility and fork settings checked first (not yet checked).
+- 2026-11-04, changed during the spike (its S7 and amendment A2): the repo is public, and GitHub's own pages say self-hosted runners "should almost never be used for public repositories". Running level C on every change is now tried on GitHub's ubuntu-26.04 runner, with a fallback to runs by hand on your PC; no self-hosted runner and no separate Windows user (plan/spikes/screen-tests.md sections 6 and 11.2).
 - Options not taken: a spike for level B only; levels B and C together (two test setups, the most upkeep); level B for every screen without a spike; postponing past 16; closing the rest of item 47.
 - The spike changes no app behaviour, no spec and not the release APK. Dropping hand checks that criteria require (for example 20 and 51) is a spec change, made in CR3 after the results.
