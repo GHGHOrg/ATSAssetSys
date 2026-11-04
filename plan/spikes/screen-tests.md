@@ -1,6 +1,6 @@
 # plan/spikes/screen-tests.md
 
-Stage: Plan (open item 47's remainder, before change request CR3). Status: written 2026-11-04 (pull request #126, merged as c489ec9); decisions S1 to S6 settled 2026-11-04 (section 6); approved by you 2026-11-04. Step 1 run 2026-11-04: the repo is public; your decision S7 (section 6) keeps it public with the self-hosted runner, against step 1's stop rule. Amendment A1 (marked in sections 7 and 9) adds guards for that; it is not approved, and step 2 waits for it.
+Stage: Plan (open item 47's remainder, before change request CR3). Status: written 2026-11-04 (pull request #126, merged as c489ec9); decisions S1 to S6 settled 2026-11-04 (section 6); approved by you 2026-11-04. Step 1 run 2026-11-04: the repo is public; your decision S7 (section 6) keeps it public with the self-hosted runner, against step 1's stop rule. Amendment A1 (marked in sections 7 and 9) adds guards for that; approved by you 2026-11-04. Step 2 may start; each look-up still asks first.
 Source: plan/discussions/screen-tests.md (sections 4 to 8; your decision F, 2026-11-04), plan/open-items.md item 47, CLAUDE.md section 6 (the pitfalls from 07, 08, 10 and 14c), .github/workflows/ci.yml, app/build.gradle.kts, gradle/libs.versions.toml.
 Facts in this note are facts of the day they were looked up; each carries its date. Versions are looked up on the day the spike runs.
 
@@ -128,4 +128,4 @@ Anything not run is stated as not run in section 11.
 - Your decision S7 (C): public, with the self-hosted runner and amendment A1 (section 6).
 
 ## 12. Status and notes
-Written 2026-11-04 on branch docs/spike-screen-tests (pull request #126, merged as c489ec9). Decisions S1 to S6 settled 2026-11-04 on branch docs/spike-screen-tests-decisions. Approved by you 2026-11-04 (as written, option A). Step 1 run 2026-11-04 (section 11.1); S7 settled; amendment A1 written on branch docs/spike-screen-tests-step1, not approved.
+Written 2026-11-04 on branch docs/spike-screen-tests (pull request #126, merged as c489ec9). Decisions S1 to S6 settled 2026-11-04 on branch docs/spike-screen-tests-decisions. Approved by you 2026-11-04 (as written, option A). Step 1 run 2026-11-04 (section 11.1); S7 settled; amendment A1 written on branch docs/spike-screen-tests-step1 and approved by you 2026-11-04 (as written, option A).
