@@ -81,6 +81,7 @@ fun HoldingDetailScreen(
     BackHandler(onBack = actions.onBack)
     // The fixed part stays in place while it takes at most half the height (view 6); taller, as at the largest font,
     // the whole screen scrolls as one so the list is not hidden (criterion 39; defect found in 10 phone check 6a).
+    // Spike F (open item 47): defect 10 brought back on purpose; the scroll-as-one branch is never taken.
     BoxWithConstraints(modifier = modifier.fillMaxSize()) {
         val limit = constraints.maxHeight / 2
         var fixedHeight by remember { mutableIntStateOf(0) }
@@ -88,7 +89,7 @@ fun HoldingDetailScreen(
             FixedPart(state, holding, portfolio, actions, Modifier.onSizeChanged { fixedHeight = it.height })
         }
         val list: @Composable () -> Unit = { TabContent(state, actions.onOpenTransaction, Modifier.fillMaxWidth().padding(16.dp)) }
-        if (fixedHeight > limit) {
+        if (false && fixedHeight > limit) {
             Column(modifier = Modifier.fillMaxSize().verticalScroll(rememberScrollState())) {
                 fixedPart()
                 list()
