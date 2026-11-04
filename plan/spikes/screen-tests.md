@@ -1,6 +1,6 @@
 # plan/spikes/screen-tests.md
 
-Stage: Plan (open item 47's remainder, before change request CR3). Status: written 2026-11-04 (pull request #126, merged as c489ec9); decisions S1 to S6 settled 2026-11-04 (section 6); approved by you 2026-11-04. Section 7 may start; each "Ask" in it still stops for your yes.
+Stage: Plan (open item 47's remainder, before change request CR3). Status: written 2026-11-04 (pull request #126, merged as c489ec9); decisions S1 to S6 settled 2026-11-04 (section 6); approved by you 2026-11-04. Step 1 run 2026-11-04: the repo is public; your decision S7 (section 6) keeps it public with the self-hosted runner, against step 1's stop rule. Amendment A1 (marked in sections 7 and 9) adds guards for that; it is not approved, and step 2 waits for it.
 Source: plan/discussions/screen-tests.md (sections 4 to 8; your decision F, 2026-11-04), plan/open-items.md item 47, CLAUDE.md section 6 (the pitfalls from 07, 08, 10 and 14c), .github/workflows/ci.yml, app/build.gradle.kts, gradle/libs.versions.toml.
 Facts in this note are facts of the day they were looked up; each carries its date. Versions are looked up on the day the spike runs.
 
@@ -31,7 +31,7 @@ This is a decision note, not an iteration. Nothing in section 7 runs before you 
 | CI | ci.yml: triggers pull_request (any base) and push to main; no workflow_dispatch; ubuntu-26.04, contents: read; style, build, unit tests, lint |
 
 ### 3.2 Not checked yet
-- The repo's visibility, collaborators, fork setting, and the Actions setting for fork pull request workflows.
+- Collaborators, the fork setting, and the Actions setting for fork pull request workflows. (The visibility was checked in step 1: public, section 11.)
 - Whether this PC can run the Android Emulator with hardware acceleration (Windows Hypervisor Platform), and its free disk space.
 - Which emulator system images exist for API 37, and the current versions of the androidx.test libraries and of the GitHub Actions runner.
 - Whether the build tools uninstall the app after connectedDebugAndroidTest [UNVERIFIED].
@@ -66,6 +66,7 @@ Pass thresholds (my proposal; decision S3):
 
 ## 6. Decisions (all [Build]; settled by you on 2026-11-04)
 Settled: S1 (a) real MainActivity, unlocked on the emulator with a PIN and a simulated fingerprint. S2 API 37, Google APIs, x86_64, no Play Store (API 36 only if 37 has no such image on the day). S3 as written: 20 local runs, 10 runner runs, 3 per brought-back defect, 15 minutes. S4 as written: the run branch, not merged. S5 the new workflow file; ci.yml unchanged. S6 as written: the fallback only on failure.
+- S7 [Plan], settled by you 2026-11-04 after step 1 found the repo public: (C) keep the repo public and still use the self-hosted runner, with added guards (amendment A1). Not my leaning. The options put to you: (A) keep it public and use GitHub's runner only (my leaning; nothing runs on your PC); (B) make it private, then the plan as written; (C) public with the self-hosted runner. This departs from step 1's rule (stop; choose between private and the fallback).
 The options below are kept as they were put to you.
 - S1 [Build] How tests get past the lock for 07. Defects 10, 08 and TB are tested on the screens alone (createComposeRule, no MainActivity, no lock); 07 needs MainActivity's real cover. Options:
   - (a) Launch MainActivity and unlock on the emulator: a PIN and a fingerprint set up once on the AVD by hand, and the test touches the simulated fingerprint. Maintainability: tests the real cover code, one extra setup step per AVD. Test run time: a few seconds per unlock (expected). APK size: no difference.
@@ -79,15 +80,18 @@ The options below are kept as they were put to you.
 
 ## 7. Order of work (each "Ask" is an approval point; I stop at each)
 Before step 1, this note is approved (S1 to S6 are settled, section 6). Steps 1 to 5 need no runner; steps 6 to 9 set it up.
-1. Repo settings. Ask: an anonymous Invoke-WebRequest to https://api.github.com/repos/GHGHOrg/ATSAssetSys -MaximumRedirection 0 (200 = public; 404 = private or hidden). You check in GitHub: collaborators, Settings > General > Allow forking (private repos only), and Settings > Actions > the setting for fork pull request workflows. If the repo is public, I stop: GitHub advises against self-hosted runners on public repos (not checked, looked up in step 2), and you choose between making it private and going straight to the fallback.
-2. Look-ups. Ask, one at a time, each with the tool, query and reason: androidx.test runner and rules versions; the Android Emulator and the API 37 system images; the GitHub Actions runner's current release and its checksum; GitHub's guidance on self-hosted runners and public repos; whether connectedDebugAndroidTest uninstalls the app.
+1. Repo settings. Ask: an anonymous Invoke-WebRequest to https://api.github.com/repos/GHGHOrg/ATSAssetSys -MaximumRedirection 0 (200 = public; 404 = private or hidden). You check in GitHub: collaborators, Settings > General > Allow forking (private repos only), and Settings > Actions > the setting for fork pull request workflows. If the repo is public, I stop: GitHub advises against self-hosted runners on public repos (not checked, looked up in step 2), and you choose between making it private and going straight to the fallback. Run 2026-11-04: public (section 11); you chose S7 (C), so the spike goes on with amendment A1.
+2. Look-ups. Ask, one at a time, each with the tool, query and reason: androidx.test runner and rules versions; the Android Emulator and the API 37 system images; the GitHub Actions runner's current release and its checksum; GitHub's guidance on self-hosted runners and public repos; whether connectedDebugAndroidTest uninstalls the app. A1 adds: the setting that makes fork pull requests wait for your approval before any workflow runs, and its strictest value; whether a repo-level runner can be limited to selected workflows; whether a fork's pull request can reach a repo's self-hosted runner at all, and under which settings.
+   A1, after the look-ups and before step 6: you set the strictest fork-approval setting in GitHub and report it; you never approve a run from a fork's pull request without reading its workflow files first.
 3. This PC. Ask: one read-only command for the Windows Hypervisor Platform state and the free disk space. If acceleration is off, I stop: turning it on is your change, with a restart.
 4. Emulator. Ask: the system image download (expected 1 to 2 GB) with the SDK's sdkmanager, then one AVD created with avdmanager. You set the PIN and enroll the fingerprint on it by hand (S1 a). Boot time recorded.
 5. Tests, locally. Ask before creating spike-screen-tests-run from this branch. Write the four tests; build, unit tests, lint and spotlessCheck green; then connectedDebugAndroidTest on the emulator, 20 times (S3). Then, Ask before creating spike-screen-tests-defects from the run branch: one commit per brought-back defect (each edit shown to you first), 3 runs each. Results into section 11.
 6. The separate Windows user. You create it as administrator (a standard user, steps written for you). Ask: icacls on the keystore and signing files' folder and on ~/.claude, to show the new user has no read right. I never read those files.
 7. Runner. Ask: download the runner release from step 2 into an empty scratchpad folder and check its SHA-256 against GitHub's. You run its config step yourself under the new user (the registration token is a secret and stays out of the chat) and install it as a service under that user. Its labels: self-hosted, Windows, X64, emulator.
+   A1: the runner is registered to this repo only, not to the organisation; if step 2 shows a runner can be limited to selected workflows, it is limited to screen-tests.yml. The service is set to start by hand and stays stopped: it runs only while you run step 9's runs.
 8. Workflow file (S5). Ask: show the new .github/workflows/screen-tests.yml. Rules in it: on push to spike-screen-tests-run and spike-screen-tests-defects only; no pull_request; permissions contents: read; ANDROID_SERIAL set to the emulator; a first step that lists adb devices and fails if any device other than the emulator is attached (so the phone is never touched, even if plugged in).
 9. Runner runs. You push the run branch (I never push); 10 runs (S3), each started by your push or by re-running the job in GitHub. Then the defects branch, 3 runs each. Results into section 11.
+   A1: you start the runner's service before the runs and stop it right after; GitHub then shows it offline. After the spike, the runner is removed (section 8) unless CR3 keeps it.
 10. Fallback, only under S6. Ask: a workflow on GitHub's ubuntu-26.04 runner with an emulator, looked up on the day; the same measures.
 11. Results and cleanup (section 8), then section 11 and the status line; plan.md and open-items.md point to the results; CR3 starts from them.
 
@@ -100,6 +104,7 @@ Before step 1, this note is approved (S1 to S6 are settled, section 6). Steps 1 
 
 ## 9. Risks
 - A self-hosted runner runs workflow code on your PC. Guarded by: no pull_request trigger, pushes to two named branches only, a separate standard user, contents: read. Not guarded: a commit that you push yourself runs as written.
+- A1: the repo is public (step 1). A fork's pull request can bring its own workflow file, aimed at the runner's labels, so our file's triggers do not guard the runner (my reading, not checked; looked up in step 2). Guarded by: the strictest fork-approval setting and your reading of any fork's workflow files before approving; the runner offline except during step 9's runs; the runner registered to this repo only; the separate standard user. These lower the risk; they do not remove it. Accepted by your S7.
 - The phone attached by USB could be seen by the runner user's adb (my reading, not checked). Guarded by the device check of step 8 and ANDROID_SERIAL.
 - The emulator may not behave like the phone for 07 (window focus) [UNVERIFIED]. Then 07 stays a phone check.
 - Emulator runs can be flaky (boot, animations, timing). The repetitions measure it; animations are turned off on the AVD.
@@ -117,7 +122,10 @@ Commands (Windows PowerShell, repo root), real output shown after each step:
 Anything not run is stated as not run in section 11.
 
 ## 11. Results
-(Empty until the spike runs.)
+### 11.1 Step 1: repo settings (2026-11-04)
+- I ran, 2026-11-04 11:51:51 +08:00: an anonymous Invoke-WebRequest to https://api.github.com/repos/GHGHOrg/ATSAssetSys with -MaximumRedirection 0. Status 200; "private":false; "visibility":"public"; "full_name":"GHGHOrg/ATSAssetSys". Only those fields were read.
+- Collaborators, the fork setting and the Actions setting for fork pull request workflows: not seen yet (your check in GitHub).
+- Your decision S7 (C): public, with the self-hosted runner and amendment A1 (section 6).
 
 ## 12. Status and notes
-Written 2026-11-04 on branch docs/spike-screen-tests (pull request #126, merged as c489ec9). Decisions S1 to S6 settled 2026-11-04 on branch docs/spike-screen-tests-decisions. Approved by you 2026-11-04 (as written, option A). Nothing run yet.
+Written 2026-11-04 on branch docs/spike-screen-tests (pull request #126, merged as c489ec9). Decisions S1 to S6 settled 2026-11-04 on branch docs/spike-screen-tests-decisions. Approved by you 2026-11-04 (as written, option A). Step 1 run 2026-11-04 (section 11.1); S7 settled; amendment A1 written on branch docs/spike-screen-tests-step1, not approved.
