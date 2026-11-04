@@ -1,6 +1,6 @@
 # plan/spikes/screen-tests.md
 
-Stage: Plan (open item 47's remainder, before change request CR3). Status: written 2026-11-04, not approved. Nothing in section 7 runs until you approve this note and settle the decisions in section 6.
+Stage: Plan (open item 47's remainder, before change request CR3). Status: written 2026-11-04 (pull request #126, merged as c489ec9); decisions S1 to S6 settled 2026-11-04 (section 6); approved by you 2026-11-04. Section 7 may start; each "Ask" in it still stops for your yes.
 Source: plan/discussions/screen-tests.md (sections 4 to 8; your decision F, 2026-11-04), plan/open-items.md item 47, CLAUDE.md section 6 (the pitfalls from 07, 08, 10 and 14c), .github/workflows/ci.yml, app/build.gradle.kts, gradle/libs.versions.toml.
 Facts in this note are facts of the day they were looked up; each carries its date. Versions are looked up on the day the spike runs.
 
@@ -64,7 +64,9 @@ Pass thresholds (my proposal; decision S3):
 - Dropping hand checks that criteria require (for example 20 and 51) is a spec change, made in CR3, not here.
 - What the spike may add, on its run branch only (decision S4): test files under app/src/androidTest, androidTest-only catalog entries if a library is missing, and the workflow file. None of these reach the debug or release APK; the debug APK already carries ui-test-manifest (3.1).
 
-## 6. Decisions (to be settled one at a time before section 7 starts; leanings are mine)
+## 6. Decisions (all [Build]; settled by you on 2026-11-04)
+Settled: S1 (a) real MainActivity, unlocked on the emulator with a PIN and a simulated fingerprint. S2 API 37, Google APIs, x86_64, no Play Store (API 36 only if 37 has no such image on the day). S3 as written: 20 local runs, 10 runner runs, 3 per brought-back defect, 15 minutes. S4 as written: the run branch, not merged. S5 the new workflow file; ci.yml unchanged. S6 as written: the fallback only on failure.
+The options below are kept as they were put to you.
 - S1 [Build] How tests get past the lock for 07. Defects 10, 08 and TB are tested on the screens alone (createComposeRule, no MainActivity, no lock); 07 needs MainActivity's real cover. Options:
   - (a) Launch MainActivity and unlock on the emulator: a PIN and a fingerprint set up once on the AVD by hand, and the test touches the simulated fingerprint. Maintainability: tests the real cover code, one extra setup step per AVD. Test run time: a few seconds per unlock (expected). APK size: no difference.
   - (b) A test-only activity that copies MainActivity's cover rule. Maintainability: the copy can drift from MainActivity and then tests nothing real. Test run time and APK size: no real difference from (a).
@@ -76,7 +78,7 @@ Pass thresholds (my proposal; decision S3):
 - S6 [Build] When to fall back to GitHub's runner: only if the self-hosted runner cannot run the emulator headless, breaks the 15-minute limit, or is flaky. Leaning: as written; the fallback is a step of its own with its own approval.
 
 ## 7. Order of work (each "Ask" is an approval point; I stop at each)
-Before step 1, this note is approved and S1 to S6 are settled. Steps 1 to 5 need no runner; steps 6 to 9 set it up.
+Before step 1, this note is approved (S1 to S6 are settled, section 6). Steps 1 to 5 need no runner; steps 6 to 9 set it up.
 1. Repo settings. Ask: an anonymous Invoke-WebRequest to https://api.github.com/repos/GHGHOrg/ATSAssetSys -MaximumRedirection 0 (200 = public; 404 = private or hidden). You check in GitHub: collaborators, Settings > General > Allow forking (private repos only), and Settings > Actions > the setting for fork pull request workflows. If the repo is public, I stop: GitHub advises against self-hosted runners on public repos (not checked, looked up in step 2), and you choose between making it private and going straight to the fallback.
 2. Look-ups. Ask, one at a time, each with the tool, query and reason: androidx.test runner and rules versions; the Android Emulator and the API 37 system images; the GitHub Actions runner's current release and its checksum; GitHub's guidance on self-hosted runners and public repos; whether connectedDebugAndroidTest uninstalls the app.
 3. This PC. Ask: one read-only command for the Windows Hypervisor Platform state and the free disk space. If acceleration is off, I stop: turning it on is your change, with a restart.
@@ -118,4 +120,4 @@ Anything not run is stated as not run in section 11.
 (Empty until the spike runs.)
 
 ## 12. Status and notes
-Written 2026-11-04 on branch docs/spike-screen-tests. Not approved. Decisions S1 to S6 not settled.
+Written 2026-11-04 on branch docs/spike-screen-tests (pull request #126, merged as c489ec9). Decisions S1 to S6 settled 2026-11-04 on branch docs/spike-screen-tests-decisions. Approved by you 2026-11-04 (as written, option A). Nothing run yet.
