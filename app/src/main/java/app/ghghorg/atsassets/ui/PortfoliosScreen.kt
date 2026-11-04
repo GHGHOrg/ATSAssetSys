@@ -40,6 +40,8 @@ import androidx.compose.ui.semantics.paneTitle
 import androidx.compose.ui.semantics.role
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.window.Dialog
+import androidx.compose.ui.window.DialogProperties
 import app.ghghorg.atsassets.R
 import app.ghghorg.atsassets.core.Fraction
 import app.ghghorg.atsassets.core.Holding
@@ -196,58 +198,61 @@ internal fun PortfolioNameDialog(
     BackHandler(enabled = !saving, onBack = onCancel)
     val error = portfolioMessage(dialog)
     val title = wording.title
-    Box(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(MaterialTheme.colorScheme.scrim.copy(alpha = SCRIM_ALPHA))
-            .pointerInput(Unit) { detectTapGestures { } }
-            // The app draws edge to edge, so the window does not shrink for the keyboard: the card is centred in
-            // the space above it and scrolls there (defect found in 08 phone check 9a).
-            .imePadding(),
-        contentAlignment = Alignment.Center,
-    ) {
-        Surface(
-            modifier = Modifier.padding(24.dp).widthIn(max = 560.dp).semantics { paneTitle = title },
-            shape = MaterialTheme.shapes.extraLarge,
-            color = MaterialTheme.colorScheme.surfaceContainerHigh,
+    // Spike F (open item 47): defect 07 brought back on purpose; the layer is a separate dialog window again.
+    Dialog(onDismissRequest = onCancel, properties = DialogProperties(usePlatformDefaultWidth = false)) {
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(MaterialTheme.colorScheme.scrim.copy(alpha = SCRIM_ALPHA))
+                .pointerInput(Unit) { detectTapGestures { } }
+                // The app draws edge to edge, so the window does not shrink for the keyboard: the card is centred in
+                // the space above it and scrolls there (defect found in 08 phone check 9a).
+                .imePadding(),
+            contentAlignment = Alignment.Center,
         ) {
-            Column(
-                modifier = Modifier.verticalScroll(rememberScrollState()).padding(24.dp),
-                verticalArrangement = Arrangement.spacedBy(16.dp),
+            Surface(
+                modifier = Modifier.padding(24.dp).widthIn(max = 560.dp).semantics { paneTitle = title },
+                shape = MaterialTheme.shapes.extraLarge,
+                color = MaterialTheme.colorScheme.surfaceContainerHigh,
             ) {
-                Text(
-                    text = title,
-                    style = MaterialTheme.typography.headlineSmall,
-                    modifier = Modifier.semantics { heading() },
-                )
-                OutlinedTextField(
-                    value = dialog.nameText,
-                    onValueChange = onNameChange,
-                    modifier = Modifier.fillMaxWidth(),
-                    label = { Text(text = stringResource(R.string.portfolio_name_label)) },
-                    supportingText = {
-                        Column {
-                            if (error != null) {
-                                Text(
-                                    text = error,
-                                    modifier = Modifier.semantics { liveRegion = LiveRegionMode.Polite },
-                                )
-                            }
-                            Text(text = wording.helper)
-                        }
-                    },
-                    isError = error != null,
-                    singleLine = true,
-                )
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp, Alignment.End),
+                Column(
+                    modifier = Modifier.verticalScroll(rememberScrollState()).padding(24.dp),
+                    verticalArrangement = Arrangement.spacedBy(16.dp),
                 ) {
-                    TextButton(onClick = onCancel, enabled = !saving) {
-                        Text(text = stringResource(R.string.cancel_button))
-                    }
-                    TextButton(onClick = onConfirm, enabled = !saving) {
-                        Text(text = wording.confirm)
+                    Text(
+                        text = title,
+                        style = MaterialTheme.typography.headlineSmall,
+                        modifier = Modifier.semantics { heading() },
+                    )
+                    OutlinedTextField(
+                        value = dialog.nameText,
+                        onValueChange = onNameChange,
+                        modifier = Modifier.fillMaxWidth(),
+                        label = { Text(text = stringResource(R.string.portfolio_name_label)) },
+                        supportingText = {
+                            Column {
+                                if (error != null) {
+                                    Text(
+                                        text = error,
+                                        modifier = Modifier.semantics { liveRegion = LiveRegionMode.Polite },
+                                    )
+                                }
+                                Text(text = wording.helper)
+                            }
+                        },
+                        isError = error != null,
+                        singleLine = true,
+                    )
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp, Alignment.End),
+                    ) {
+                        TextButton(onClick = onCancel, enabled = !saving) {
+                            Text(text = stringResource(R.string.cancel_button))
+                        }
+                        TextButton(onClick = onConfirm, enabled = !saving) {
+                            Text(text = wording.confirm)
+                        }
                     }
                 }
             }
