@@ -432,6 +432,7 @@ Each departure from this plan is recorded here with its date and the reason.
 - 2026-11-04: amendment A2 approved as written, with caching (S8) and the S2 image (your approval). Step 3 may start; each approval point still asks first.
 - 2026-11-04: spike step 3 run: the emulator's hardware acceleration is usable (WHPX); C has 9.3 GB free, D 75.6 GB. Your S9 (Build): the spike's emulator in D:\AndroidAvd, set only inside the spike's commands.
 - 2026-11-04: spike step 4 run: the API 37 Google APIs image (2.0 GB download, 5.3 GB on D) and the emulator ats-spike-37 (pixel_9_pro_xl profile, your phone's model) in D:\AndroidAvd; cold boot 85 s, then 30 s; your throwaway PIN and a fingerprint survive a cold boot, but Android wants the PIN once after each boot before a fingerprint unlocks (plan/spikes/screen-tests.md 11.3).
+- 2026-11-04: your S10 (Build, your A): one fixed throwaway test PIN in the workflow and the test setup on the spike's run branch, used on GitHub's emulator and on yours; never your phone's PIN.
 
 ## 13. Out of scope for this plan
 Performance over time, per-holding dividends, ETF look-through, the next intent.md items,
