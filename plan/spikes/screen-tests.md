@@ -104,6 +104,7 @@ Before step 1, this note is approved (S1 to S6 are settled, section 6). Steps 1 
 - The AVD and the system image: Ask at the end whether to keep them (CR3 may need them) or delete them.
 - The workflow file stays on the run branch only; it goes with that branch unless CR3 keeps it. (A2: no runner or separate user to remove.)
 - The emulator's app data is test data only; nothing from the phone is copied to it.
+- Decided 2026-11-05 (your choices): the defects branch stays until CR3, which can reuse its defects, and is asked about again then (B); the run branch stays until CR3 as above; the AVD and the system image stay until CR3 (A).
 
 ## 9. Risks
 - (A1's runner risks withdrawn by A2: nothing on your PC listens to GitHub.)
