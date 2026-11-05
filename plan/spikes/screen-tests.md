@@ -1,6 +1,6 @@
 # plan/spikes/screen-tests.md
 
-Stage: Plan (open item 47's remainder, before change request CR3). Status: written 2026-11-04 (pull request #126, merged as c489ec9); decisions S1 to S6 settled 2026-11-04 (section 6); approved by you 2026-11-04. Step 1 run 2026-11-04: the repo is public. S7 first kept the self-hosted runner (amendment A1, approved); after step 2's look-ups (section 11.2) you changed S7 to GitHub's runner, falling back to runs by hand on your PC (amendment A2, marked in sections 1 and 6 to 10). A1 is withdrawn: no self-hosted runner, no separate Windows user. Step 2 was completed before A2's approval, at your request (look-ups only; sections 11.2 and 11.3). A2 approved by you 2026-11-04 (as written, with S8 and the S2 image). Step 3 may start; each "Ask" still stops for your yes.
+Stage: Plan (open item 47's remainder, before change request CR3). Status: written 2026-11-04 (pull request #126, merged as c489ec9); decisions S1 to S6 settled 2026-11-04 (section 6); approved by you 2026-11-04. Step 1 run 2026-11-04: the repo is public. S7 first kept the self-hosted runner (amendment A1, approved); after step 2's look-ups (section 11.2) you changed S7 to GitHub's runner, falling back to runs by hand on your PC (amendment A2, marked in sections 1 and 6 to 10). A1 is withdrawn: no self-hosted runner, no separate Windows user. Step 2 was completed before A2's approval, at your request (look-ups only; sections 11.2 and 11.3). A2 approved by you 2026-11-04 (as written, with S8 and the S2 image). Step 3 may start; each "Ask" still stops for your yes. Steps 5, 8 and 9 run 2026-11-04 to 2026-11-05 (sections 11.4 to 11.8); step 10 not needed; results in section 11.9. Cleanup (section 8) still asks first.
 Source: plan/discussions/screen-tests.md (sections 4 to 8; your decision F, 2026-11-04), plan/open-items.md item 47, CLAUDE.md section 6 (the pitfalls from 07, 08, 10 and 14c), .github/workflows/ci.yml, app/build.gradle.kts, gradle/libs.versions.toml.
 Facts in this note are facts of the day they were looked up; each carries its date. Versions are looked up on the day the spike runs.
 
@@ -44,7 +44,7 @@ Defects replayed (plan/discussions/screen-tests.md section 4):
 |---|---|---|---|
 | 10 | The header does not give way at the largest font and in landscape (10, phone check 6a) | At the largest font and in landscape, Holding detail's header is measured: it stays fixed only while it takes at most half the screen's height, otherwise it scrolls with the list. Heights are measured, not pictures compared | The header made fixed at every size |
 | 07 | A layer and the cover screen replace each other in a loop (07, phone check 2) | With MainActivity unlocked, opening New portfolio's name layer and a portfolio's ⋮ menu: the cover screen does not appear, and typing and tapping reach the layer | The layer drawn as a Compose Dialog, the menu as a DropdownMenu |
-| 08 | The keyboard covers a layer (08, phone check 9a) | With the keyboard open, the layer's text field and its buttons lie fully above the keyboard | imePadding() removed from the layer |
+| 08 | The keyboard covers a layer (08, phone check 9a) | At the largest font, with the keyboard open, the layer's text field and its buttons lie fully above the keyboard | imePadding() removed from the layer |
 | TB | TalkBack labels (14c, Deploy finding 2) | The merged semantics text of Holding detail's Transactions row and of the reversal card names the exact shares | The label built from the stored quantity instead of the model's text |
 
 Measures, per defect:
@@ -70,6 +70,7 @@ Settled: S1 (a) real MainActivity, unlocked on the emulator with a PIN and a sim
 - S7 changed by you 2026-11-04 after look-ups 1 to 4 (section 11.2): GitHub's own pages say self-hosted runners "should almost never be used for public repositories" and can be "persistently compromised", and that a manually started workflow still needs the runner online. You chose (A) GitHub's runner, with a fallback to (D) runs by hand on your PC only (amendment A2). My leaning was (A). The options put to you: (A) GitHub's runner for the automatic runs, plus the local runs; (D) by hand on the PC only, no runner anywhere; (B) make the repo private, then the self-hosted runner; (C) keep S7 as it was. A1 is withdrawn. This changes your decision F's order (self-hosted first): plan/discussions/screen-tests.md section 8 notes it.
 - S8 [Build], settled by you 2026-11-04 (A2): caching. (A) cache the downloads only: the emulator package and the API 37 system image, with GitHub's actions/cache; the emulator boots fresh each run; the 15-minute limit applies to runs with a warm cache, and the first run with an empty cache is recorded separately. My leaning. Not chosen: (B) also cache a booted emulator snapshot (faster boot, but state carries over between runs: a new source of flakiness, and the PIN and fingerprint or leftover app data could hide failures); (C) A for 10 runs, then B for 10, compared. Maintainability: one cache step, nothing stateful. Test run time: saves the download on warm runs (expected minutes, not measured). APK size: no difference.
 - A2 effect on S5 and S6: S5 stands (a new file, ci.yml unchanged), now running on GitHub's ubuntu-26.04 runner. S6 is replaced: the fallback is D, used if GitHub's runner cannot boot the API 37 emulator, breaks the 15-minute limit, or is flaky (S3).
+- A3 [Build], settled by you 2026-11-04 in step 5 (reconstructed 2026-11-05 from the step 5 commit, "S1 as A3", and the hand-off; its wording at the time was not recorded): S1 (a) without the fingerprint. The tests unlock MainActivity by typing the S10 test PIN into its lock prompt (the system's PIN pad), and enter the same PIN on the emulator's lock screen after each boot. No fingerprint is enrolled or touched, on your emulator or on GitHub's. Section 9's fingerprint risks fall away.
 The options below are kept as they were put to you.
 - S1 [Build] How tests get past the lock for 07. Defects 10, 08 and TB are tested on the screens alone (createComposeRule, no MainActivity, no lock); 07 needs MainActivity's real cover. Options:
   - (a) Launch MainActivity and unlock on the emulator: a PIN and a fingerprint set up once on the AVD by hand, and the test touches the simulated fingerprint. Maintainability: tests the real cover code, one extra setup step per AVD. Test run time: a few seconds per unlock (expected). APK size: no difference.
@@ -151,5 +152,84 @@ Anything not run is stated as not run in section 11.
 - S9 [Build], settled by you 2026-11-04 (your A): the spike's AVD lives in D:\AndroidAvd, set with ANDROID_AVD_HOME inside the spike's own commands only; no change to your Windows or Android Studio settings; emulators you already have are not touched. Not chosen: (B) the default place on C (C could run out of space); (C) you free C first.
 - S2 refinement, settled by you 2026-11-04 (Build, your A): the google_apis image as S2 says, not google_atd. Not chosen: (B) google_atd (likely faster and smaller, my knowledge; further from your phone; PIN and fingerprint for 07 unknown); (C) A, then B measured.
 
+### 11.4 Step 5: tests and local runs (2026-11-04 to 2026-11-05)
+- Branches: spike-screen-tests-run from main 8531e6d; spike-screen-tests-defects from 501c693. Neither is merged (S4). Five files under app/src/androidTest/java/app/ghghorg/atsassets/ (SpikeSupport.kt, HoldingHeaderTest.kt, LockAndLayerTest.kt, KeyboardLayerTest.kt, TalkBackLabelTest.kt), 6 tests: 10 twice (largest font in landscape; normal font in portrait as a control), 07, 08, TB twice (the reversal card; Holding detail's transaction row).
+- Look-up 7, I ran 2026-11-04: the app is uninstalled after connectedDebugAndroidTest.
+- I ran, 2026-11-04 (emulator 37.2.12), series on unchanged code, each fixed before the next: series 1, 18 green, run 19 red (08), run 20 without results (Gradle passed with no test run); series 2 after a cold boot, 0 of 20 (the header tests turned the emulator while it was locked; fix: unlock first, wait for the display's real rotation, keep the screen on); series 3, 0 of 5 (the launcher held the screen upright when it was turned before the test's activity was up; the first save after a cold boot took over 5 s; fix: turn after launch, 15 s for Create); check run 3, 6 of 6; series 4a, 5 green, then the emulator went down.
+- Faults, I ran (hand-off 2026-11-05): emulator WHPX "Unexpected VP exit code 5" at 21:06, 21:20 and 21:53 on 11-04 (once while idle); a Gradle worker JVM internal error (21:10) and a Gradle daemon JVM access violation (21:12, its hs_err file written to the repo root, moved to the scratchpad, never committed). You upgraded the emulator to 37.2.13 (build 16740729) on 11-05, reversing "no change to the PC".
+- Your decisions: 07 split into 07a (New portfolio's layer as a Compose Dialog) and 07b (the ⋮ menu as a DropdownMenu), 3 runs each, 07a taken back out before 07b (A); TB: only the reversal card brought back, since unit test HoldingRowModelTest:63 catches the row half (A); 08 committed although test 08 missed it, the test fixed later (A); a diagnostic run for 07b (A).
+- Defect runs with the first tests, I ran (3 valid runs each): 10 caught at its own check; 07a caught only indirectly (the 5 s wait for the layer; test 08 red too); 07b caught only indirectly (the Rename click): the 100 ms polling focus check missed a popup that lived about 150 ms (the popup and cover loop seen in logcat); 08 not caught (the test ran at the normal font; the defect was found at the largest font, plan.md 2026-10-30); TB card caught at its own check.
+- Test fixes (your A each; on the run branch, cherry-picked to the defects branch): the focus check is a listener added before the action that opens the layer or menu (c591a3c); it waits with waitForIdle every 100 ms, since a plain sleep let no popup appear (57c6150; my reading: the v2 Compose rules redraw only on waitForIdle or node access, not checked in the library source); test 08 at font scale 2.0 (c591a3c).
+- Defect runs with the fixed tests, I ran (runs-fix-defects2, 3 runs; 07a: 1 uncommitted run, then restored): each defect caught at its own check, with its own message: 10 "The fixed part stayed in place though it takes more than half the height"; 08 "Cancel ends at 2118.0 px, below the keyboard's top at 1984.0 px"; 07b "lost the focus 4 to 11 time(s) while the ⋮ menu was open"; 07a "lost the focus 18 time(s) while New portfolio's layer was open"; TB card "Spike, 0.33333333 shares" not found. Without defects: 3 of 3 green; 1 red (07, emulator slow after about 1 h of uptime) then 2 green; 3 of 3 after a cold boot (07 about 12 to 14 s, 08 9 to 10 s, 10 4 to 11 s, TB 1 to 3 s; 40 to 55 s per run).
+
+### 11.5 Step 8: the workflow file (2026-11-05)
+- Versions, I ran gh release list and gh release view after you signed gh in: actions/checkout v7.0.1, actions/setup-java v6.2.0, gradle/actions v6.4.1, actions/cache v6.1.0, actions/upload-artifact v7.0.2. Neither changelog (checkout v7.0.0, setup-java v6.0.0) touches this workflow. Your A: checkout v7 and setup-java v6 in screen-tests.yml; ci.yml unchanged (v6, v5).
+- .github/workflows/screen-tests.yml (fcecc2a, run branch): push to the two spike branches only; contents: read; ubuntu-26.04; /dev/kvm opened by a udev rule; the emulator and the API 37 image installed with sdkmanager and cached with actions/cache restore and save v6, keyed on their versions (saved right after the install, so a red run still fills the cache); the AVD made with avdmanager; a headless boot; animations off; the S10 PIN set with locksettings and checked; connectedDebugAndroidTest; the job fails unless 6 tests ran; results and the emulator log kept 7 days.
+
+### 11.6 Step 9: the run branch on GitHub's runner (2026-11-05)
+Each push with your "push once", each re-run with your yes; I read each run with gh (results, step times, artifacts). The runner: 4 CPUs, 15,983 MB (nproc, free -m). Emulator 37.2.13; the image listed as revision 8, Pkg.Revision=7 on disk (as locally, 11.3).
+
+| Run | Commit | Result | Cause | Change that followed |
+|---|---|---|---|---|
+| 1, cold cache | fcecc2a | red, 13m 7s | the emulator found no AVD: avdmanager wrote it elsewhere; the wait ran 10 min without printing the log | 76afd95: one ANDROID_AVD_HOME for both tools; the wait fails within 2 s if the emulator exits and prints its log; clock time for the boot |
+| 2, cache hit | 76afd95 | red, 6m 25s | 07 and 08 "did not unlock with the test PIN"; both TB tests found no screen after them | 69c7ea4: screenshot, focus and node tree after a failed unlock (diagnostic) |
+| 3 | 69c7ea4 | green, 4m 15s | but the first PIN attempt was lost in 07 and 08: typed while the system's PIN pad was not ready (node tree; the screenshot is black, a secure window) | 039611f: wait up to 15 s for the pad's Enter key, found by walking the nodes; 8 × Delete; then the PIN |
+| 1 on 039611f | 039611f | red, 4m 53s | System UI not responding (its dialog in the unlock screenshot) | 87d0a2f: 4 GB and 4 cores for the emulator; a settle step |
+| 1 to 8 on 87d0a2f | 87d0a2f | 7 green (4m 38s to 5m 56s), run 8 red (6m 28s) | run 8: system_server and the launcher not responding; settle failed after 120 s; 0 tests; build and boot shared the CPUs (boot 160 to 187 s) | 02031f0: build before the emulator starts; print CPUs and memory |
+| 1 on 02031f0 | 02031f0 | red, 5m 6s (boot 50 s) | 07: the 5 s wait after Rename's Save ran out | 2fed892: 15 s, with a message for each half |
+
+Counted series on 2fed892 (run 41973283679, attempts 1 to 10): 10 of 10 green, 6 of 6 tests each, no unlock retry, no Not Responding window.
+
+| Run | Total | Build | Boot | Settle | Tests | 10 L / P | 08 | 07 | TB card / row |
+|---|---|---|---|---|---|---|---|---|---|
+| 1 | 5m 19s | 1m 27s | 48 s | 11 s | 104 s | 14.4 / 6.6 s | 22.0 s | 21.9 s | 2.5 / 1.9 s |
+| 2 | 5m 25s | 1m 28s | 45 s | 10 s | 103 s | 13.1 / 11.9 s | 20.9 s | 22.0 s | 2.4 / 2.6 s |
+| 3 | 4m 49s | 1m 3s | 39 s | 10 s | 83 s | 13.5 / 5.4 s | 15.5 s | 16.3 s | 2.8 / 2.6 s |
+| 4 | 5m 41s | 1m 22s | 50 s | 11 s | 109 s | 14.0 / 11.3 s | 22.7 s | 22.5 s | 3.1 / 2.9 s |
+| 5 | 5m 45s | 1m 16s | 48 s | 11 s | 106 s | 14.5 / 8.3 s | 22.2 s | 18.9 s | 2.5 / 3.8 s |
+| 6 | 5m 42s | 1m 27s | 52 s | 10 s | 117 s | 17.7 / 8.7 s | 25.7 s | 19.7 s | 4.9 / 2.3 s |
+| 7 | 5m 15s | 1m 21s | 48 s | 11 s | 107 s | 15.7 / 8.0 s | 25.1 s | 20.6 s | 4.3 / 2.2 s |
+| 8 | 5m 29s | 1m 20s | 47 s | 10 s | 110 s | 16.7 / 8.8 s | 24.0 s | 21.7 s | 2.0 / 3.7 s |
+| 9 | 4m 19s | 58 s | 35 s | 11 s | 79 s | 11.6 / 7.0 s | 15.6 s | 16.6 s | 2.5 / 1.6 s |
+| 10 | 4m 16s | 56 s | 38 s | 12 s | 82 s | 11.6 / 5.1 s | 18.5 s | 17.8 s | 2.9 / 2.7 s |
+
+- Observation, not acted on: in run 1 on 02031f0 the app's logcat showed "database is locked; [PRAGMA journal_mode=delete]" and a database connection "acquired ... but never released" from RoomRecordStore.loadCashEntries (RoomRecordStore.kt:36). Not shown to cause anything; for you to decide whether it becomes an open item.
+
+### 11.7 Step 9: the defects branch on GitHub's runner (2026-11-05)
+- The 7 workflow and test commits cherry-picked onto spike-screen-tests-defects in order (db327d2 to 26275e4, your A); test code and workflow then equal the run branch's; the only differences are the four defects. Run 41987365823, attempts 1 to 3, red by design:
+
+| Test | Defect | Run 1 | Run 2 | Run 3 |
+|---|---|---|---|---|
+| 10, landscape | 10 | caught | caught | caught ("72.0 px, then 72.0 px") |
+| 10, portrait | control | green | green | green |
+| 08 | 08 | caught (Cancel at 2118.0 px, keyboard at 1984.0 px) | caught (same) | caught (the Name field at 1910.0 px, keyboard at 1723.0 px) |
+| 07 | 07b | caught (3 focus losses) | caught (2) | caught (2) |
+| TB card | TB | caught | caught | caught |
+| TB row | unit test | green | green | green |
+
+- Totals 4m 34s to 5m 19s; no unlock retry, no Not Responding window. 07a had no GitHub run (your A): the same focus check caught 07b 3 of 3 on the runner.
+
+### 11.8 Steps 9 and 10: local repeats on the final code, and the APK proof (2026-11-05)
+- Step 10 not needed: A2's conditions (no boot, over 15 minutes, flaky) are not met on GitHub's runner.
+- I ran six local series of up to 20 on 2fed892, each stopping at the first run not 6 of 6 green, each after a cold boot unless marked:
+
+| Series | GPU | Green | Stop | Cause |
+|---|---|---|---|---|
+| 1 (16:21) | hardware | 7 | run 8: no test ran | the PC's adb server did not answer |
+| 2 (16:29, same boot) | hardware | 11 | run 12: 08's teardown, MainActivity stayed paused 45 s | the emulator's virtual GPU froze about 40 s (graphics allocator call took 39,235 ms) |
+| 3 (16:53) | software | 1 | run 2 | the emulator stopped: WHPX "Unexpected VP exit code 5" |
+| 4 (16:59) | software | 0 | run 1 | the same |
+| 5 (17:02) | hardware | 0 | run 1 | the same |
+| 6 (17:14, after a Windows restart) | hardware | 1 | run 2 | the same |
+
+- 20 green runs and 6 stops; none from the tests or the app. The WHPX crash, cause not found: nothing at those times in Windows' System and Application logs (I ran, without administrator rights); your report: the Hyper-V-Hypervisor logs hold only informational events, and their few warnings are at other times and point to other programs. Not checked: the Claude desktop app's VM service, also on this PC, uses the same hypervisor.
+- APK proof, I ran: :app:assembleRelease and :app:dependencies --configuration releaseRuntimeClasspath on main (8531e6d) and on spike-screen-tests-run (2fed892): both unsigned APKs 12,473,942 bytes, 446 entries, no entry differing in size or CRC-32 (the files' hashes differ, my reading: zip metadata only); dependency lists equal (766 lines; also equal to 11-04's list before step 5).
+
+### 11.9 Against section 4
+- Caught at level C (green on the real code in every repeated run, red with its own message on the defects branch): 10, 08, 07b and TB's reversal card, locally (3 runs) and on GitHub's runner (3 runs); 07a locally only (1 run with the fixed tests). TB's row half is caught by a unit test.
+- Run time: GitHub's runner with a warm cache 4m 16s to 5m 45s from start to result, under the 15 minutes. The one cold-cache run (run 1) failed on the AVD before the tests; a green cold-cache run was not measured. Locally 40 to 65 s per run after a 29 to 35 s cold boot.
+- Flakiness: GitHub's runner 10 of 10 on 2fed892, after earlier workflow versions failed, each with its cause (11.6). Local: not steady on this PC because of the emulator stack (11.8, 11.4).
+- Can run on every change: yes on GitHub's runner by S3's thresholds, with 2fed892's workflow. CR3 starts from these results.
+
 ## 12. Status and notes
-Written 2026-11-04 on branch docs/spike-screen-tests (pull request #126, merged as c489ec9). Decisions S1 to S6 settled 2026-11-04 on branch docs/spike-screen-tests-decisions. Approved by you 2026-11-04 (as written, option A). Step 1 run 2026-11-04 (section 11.1); S7 settled; amendment A1 written on branch docs/spike-screen-tests-step1 and approved by you 2026-11-04 (as written, option A). Look-ups 1 to 4 run (section 11.2); S7 changed to GitHub's runner with fallback D; A1 withdrawn; amendment A2 written on the same branch, with caching (S8, your A), not approved. Look-ups 5 to 8b run (section 11.3); step 2 complete; S2's image settled (google_apis). A2 approved by you 2026-11-04. Step 3 run (acceleration usable; C 9.3 GB free); S9: the AVD on D. Step 4 run: the image installed, the AVD ats-spike-37 (pixel_9_pro_xl) created, booted, PIN and fingerprint set; the PIN is needed once after each boot.
+Written 2026-11-04 on branch docs/spike-screen-tests (pull request #126, merged as c489ec9). Decisions S1 to S6 settled 2026-11-04 on branch docs/spike-screen-tests-decisions. Approved by you 2026-11-04 (as written, option A). Step 1 run 2026-11-04 (section 11.1); S7 settled; amendment A1 written on branch docs/spike-screen-tests-step1 and approved by you 2026-11-04 (as written, option A). Look-ups 1 to 4 run (section 11.2); S7 changed to GitHub's runner with fallback D; A1 withdrawn; amendment A2 written on the same branch, with caching (S8, your A), not approved. Look-ups 5 to 8b run (section 11.3); step 2 complete; S2's image settled (google_apis). A2 approved by you 2026-11-04. Step 3 run (acceleration usable; C 9.3 GB free); S9: the AVD on D. Step 4 run: the image installed, the AVD ats-spike-37 (pixel_9_pro_xl) created, booted, PIN and fingerprint set; the PIN is needed once after each boot. Steps 5, 8 and 9 run 2026-11-04 to 2026-11-05 on branches spike-screen-tests-run (2fed892) and spike-screen-tests-defects (26275e4), both pushed, neither merged (S4); amendment A3 (no fingerprint); step 10 not needed; results in sections 11.4 to 11.9, written on branch docs/spike-screen-tests-results. Cleanup (section 8) not yet asked.
