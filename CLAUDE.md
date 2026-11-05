@@ -105,6 +105,21 @@ CI (.github/workflows/ci.yml) runs the style check and then the same three steps
 - A stand-in value (the K1 pitfall above) is only for judging rules together. Whatever a review shows must come from the typed values, so stand in only for a field that is itself refused, and test that the review shows each typed field, an empty one included (14b, phone check 3: the review showed the stand-in note "check").
 - When a field's meaning changes or a second field takes over part of its job (as boughtQuantity did for a buy's quantity in 14c), search for every read of the old field, not for one call pattern, and check each screen that shows it on the phone by its text. No test draws a screen (14c Deploy findings 1 and 2).
 - Room writes app/schemas/…/N.json with LF line endings, and git then warns "LF will be replaced by CRLF the next time Git touches it". That's expected: git stores every schema file as LF (`i/lf`). Don't convert the file. Before installing a build with a new schema version, compare N.json with the one before it (each table's SQL), and stop at the unreadable-data screen if it appears; there's no backup file until 31 (15, check 1).
+- Commit message files: write them with `[IO.File]::WriteAllText(path, text, (New-Object Text.UTF8Encoding $false))`. Windows PowerShell's `Out-File` and `Set-Content -Encoding utf8` add a BOM, which lands in the commit message.
+- `connectedDebugAndroidTest` can pass with no test run (spike F, series 1 run 20). Count the `<testcase>` entries in the result XML and treat fewer than expected as red. The screen-tests workflow does that.
+- Emulator tests: turn the screen only after the test's own activity is up. Before that, the launcher holds the screen upright (spike F, series 3).
+- The spike's emulator on this PC stops with `WHPX: Unexpected VP exit code 5`: 7 times on 2026-11-04 and 05, on emulator 37.2.12 and 37.2.13, with either GPU mode, and after a Windows restart. The cause wasn't found (spike note 11.8). The adb server and the emulator's virtual GPU also stalled once each. Unattended local series aren't steady here; GitHub's runner was 10 of 10.
+- In PowerShell, indexing a single line of adb output with `[0]` gives its first character. Wrap the command in `@()`.
+- Start the emulator detached with `cmd /c` (as in the spike's `emu-verbose.cmd`), with `ANDROID_AVD_HOME=D:\AndroidAvd` set for that process only (S9).
+- A crashed Gradle daemon writes `hs_err_pid*.log` (and `replay_pid*.log`) into the repo root. Never commit them; move them to the scratchpad.
+- The v2 Compose test rules redraw only on `waitForIdle` or a node access, so a check that only sleeps sees no popup. Wait with `waitForIdle` in a loop (spike F, 57c6150; my reading, not checked in the library source).
+- Cold-boot the emulator (`-no-snapshot-load`) before a local series. After about 1 h it ran about twice as slow.
+- Wait a few seconds after `adb emu kill` before starting the emulator again; a start right away failed (its log file is still held).
+- `gh run download` finds only the newest attempt's artifact. Download each attempt's results before the next re-run. Don't save a binary download with PowerShell's `>`, which rewrites it as text.
+- The system's BiometricPrompt PIN pad is a secure window. `screencap` shows it black, and `findAccessibilityNodeInfosByViewId` misses its Compose keys, so walk the node tree instead (spike F, 039611f).
+- In a GitHub Actions workflow, `$SECONDS` restarts in each step. Carry times between steps as clock time (`date +%s`) through `GITHUB_ENV`.
+- On GitHub's runner, avdmanager and the emulator need the same `ANDROID_AVD_HOME`, set explicitly (spike F, run 1: the emulator found no AVD).
+- Gradle's per-test logcat paths in the scratchpad can pass Windows' 260-character limit, and `Get-Content` then fails. Use the Grep tool, or the `\\?\` prefix with `[IO.File]::ReadAllLines`.
 
 ## 7. Standing checks for every iteration's screens
 Criteria 9, 39 to 42, and the install-over-previous-build check (35).
