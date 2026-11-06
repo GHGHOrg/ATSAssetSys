@@ -13,7 +13,7 @@ After unlocking, I see a bottom bar with four tabs (More, Cash, Portfolios, Over
 - spec 4.1: list order (newest first; entries on the same date in entry order).
 - spec 6, first launch: before the opening balance exists, the Cash entry button opens it and the list shows one plain line (wireframe 07, marker 1).
 - spec 6: number format (sign, no color for cash), the "ET" date suffix, accessibility, theme, and the empty state.
-- Criteria: 9, 13 (part: the four tabs can be reached), 35, 39 to 42, 49 (part, section 3), 60(c) (part: a future-dated opening balance only; the deposit arrives in 03).
+- Criteria: AC-09, AC-13 (part: the four tabs can be reached), AC-35, AC-39 to AC-42, AC-49 (part, section 3), AC-60(c) (part: a future-dated opening balance only; the deposit arrives in 03).
 - spec 14: K3 (read only: the balance and the rows), K9.
 
 ## 3. Out of scope
@@ -23,7 +23,7 @@ After unlocking, I see a bottom bar with four tabs (More, Cash, Portfolios, Over
 - More's four entries: Net Worth (Total) (17), Allocation (19), Realized gains (26), Backup and restore (31).
 - The "Restore is in More only" line on Overall (wireframe 01, marker 8). The 02a file put it in 02b; it moves to 34, because no restore exists before then (decision 6).
 - Icons in the bottom bar: a future idea (open item 30), not in this version.
-- Criterion 37: deferred to a later iteration, chosen when its file is written (decision 5).
+- AC-37: deferred to a later iteration, chosen when its file is written (decision 5).
 
 ## 4. Files
 New, core/ (app.ghghorg.atsassets.core):
@@ -33,7 +33,7 @@ New, app/ (ui/):
 - BottomBar.kt: the four tabs, built from an ordered list so iteration 22 can reorder them.
 - CashScreen.kt: the balance, the Cash entry button, the rows and the empty line.
 - PortfoliosScreen.kt and MoreScreen.kt: the stubs in section 6.
-Changed: ui/AppViewModel.kt (the selected tab, the tab the form was opened from, the reset to Overall on unlock), ui/AppContent.kt (the bar and the tab content), MainActivity.kt (only if the reset on unlock needs it), strings.xml, app/build.gradle.kts (versionCode raised by one for criterion 35), AppViewModelTest.kt, plan/plan.md, plan/open-items.md, and CLAUDE.md if a command or pitfall is added.
+Changed: ui/AppViewModel.kt (the selected tab, the tab the form was opened from, the reset to Overall on unlock), ui/AppContent.kt (the bar and the tab content), MainActivity.kt (only if the reset on unlock needs it), strings.xml, app/build.gradle.kts (versionCode raised by one for AC-35), AppViewModelTest.kt, plan/plan.md, plan/open-items.md, and CLAUDE.md if a command or pitfall is added.
 No new dependency (decision 7).
 
 ## 5. Order of work
@@ -54,7 +54,7 @@ Each step ends with build, tests and lint and the CLAUDE.md section 8 report, th
 - The rows cannot be tapped until 05 and 09.
 
 ## 7. Risks
-- Largest font: four labels in one bar ("Portfolios" is the longest) may wrap or be cut off (criterion 39). Checked on the phone.
+- Largest font: four labels in one bar ("Portfolios" is the longest) may wrap or be cut off (AC-39). Checked on the phone.
 - The form's scrolling over the keyboard (commit L, imePadding()) may change with a bar under it.
 - MainActivity already has a Scaffold; a second one for the bar may double the insets. Checked on the branch.
 - Text-only bar items (decision 7) may sit oddly in Material 3's layout. Checked on the branch; if it fails I stop and show you.
@@ -75,7 +75,7 @@ By hand on the phone, each result written as "checked on the phone" or "not chec
 8. Half-fill the form, switch tabs, return: the typed text is kept. Switch to dark mode while on Cash.
 9. Largest font: the bar labels and the Cash screen, nothing cut off.
 10. Light and dark on all four tabs.
-11. Install the newer build (higher versionCode) over the 02a build that holds data: the data is still there (criterion 35).
+11. Install the newer build (higher versionCode) over the 02a build that holds data: the data is still there (AC-35).
 12. Logcat while using Cash: no amount.
 13. Iteration 01 checks 1 to 14.
 14. TalkBack: each tab reads its name and whether it is selected; the Cash balance and each row read in full (section 11 wording); the form and review as in 02a. Check 8 (no screen lock) on this build.
@@ -88,11 +88,11 @@ None planned. No new library, so no version lookup. If a later change brings in 
 2. Saving returns to the tab the form was opened from.
 3. Back on More, Cash or Portfolios goes to Overall; Back on Overall leaves the app.
 4. The Cash list is built now: rows newest first, the balance after each, one plain line when there are none.
-5. TalkBack and check 8 in 02b; criterion 37 in a later iteration, chosen when its file is written.
+5. TalkBack and check 8 in 02b; AC-37 in a later iteration, chosen when its file is written.
 6. The "Restore is in More only" line moves to iteration 34.
 7. A text-only bar with no new library; icons are a future idea (open item 30).
 8. On a shared date the later entry comes first: the list is the exact reverse of the 4.1 order (settled 2026-10-28, step 2).
-9. Unlock keeps the form or review open; it resets to Overall only from a tab (settled 2026-10-28, step 3). This refines "unlock resets to Overall" in sections 5 and 8, so a theme change keeps the open form (criterion 40).
+9. Unlock keeps the form or review open; it resets to Overall only from a tab (settled 2026-10-28, step 3). This refines "unlock resets to Overall" in sections 5 and 8, so a theme change keeps the open form (AC-40).
 
 ## 11. Wording to approve (D9; * = given by the spec or the wireframes)
 - Tabs: More*, Cash*, Portfolios*, Overall*.
@@ -115,13 +115,13 @@ On 91fb492's code (2026-10-28, all with --rerun-tasks): spotlessCheck green; deb
 
 ### 13.3 Phone results (Android 17, debug build versionCode 2, your reports)
 Checks 1 to 14 all yes. Notes:
-- 11: installed over the 02a build (versionCode 1, adb install -r, firstInstallTime unchanged); the data was still there. Criterion 35 is now checked with a newer build.
+- 11: installed over the 02a build (versionCode 1, adb install -r, firstInstallTime unchanged); the data was still there. AC-35 is now checked with a newer build.
 - 12: log cleared at 20:37:36, read after use; only counts were shown. The app's process (53 lines) had 0 matches for 500, 500.00, $500, 50000, "Opening balance", "Cash balance" and "Balance $". The whole log had 0 for the formatted patterns and the labels; plain 500 and 50000 matched 106 and 96 lines from other processes (content not read). The amount was only 3 digits, so this is a weak test.
 - 14b (check 8): with no screen lock the app shows the message and cannot be unlocked; check 13 afterwards passed.
 - 3, 4 (second half), 5 and 8 were run on fresh installs (two adb uninstalls, 2026-10-29), so the data was deleted on purpose. The phone now holds only the future-dated test balance from check 5.
 
 ### 13.4 Not run or not checked
-CI and the pull request; the release APK on a device (unsigned); contrast measurement (by eye only); criterion 37 (deferred, decision 5); Compose UI tests (the project has none; the layout was checked by hand).
+CI and the pull request; the release APK on a device (unsigned); contrast measurement (by eye only); AC-37 (deferred, decision 5); Compose UI tests (the project has none; the layout was checked by hand).
 
 ## 14. Departures from the plan
 1. The bar is a row of selectable text items (Role.Tab, minimum height 56 dp, in a selectableGroup), not Material 3's NavigationBarItem, whose fixed icon slot could cut text off at the largest font. The selected tab is bold with a line under it.

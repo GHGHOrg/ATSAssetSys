@@ -11,13 +11,13 @@ From the Cash tab I add an interest/dividend entry, or an adjustment in either d
 - spec 4.1: the replay after every entry (03 decision 5) also covers an outgoing adjustment.
 - spec 6, Cash entry flow: wireframe 10b frame B and markers 1, 4, 5, 6 and 7 (four type chips; the direction toggle on Adjustment only; the note required on an adjustment, labelled "required"; frame J's message).
 - Interest/dividend is cash-only, not linked to a holding (wireframe 10b marker 1; intent v52).
-- Criteria: 53 (part: the types Interest/dividend and Adjustment; "an adjustment without a note is refused"), 42 (a blocked outgoing adjustment), 9, 35, 39 to 42.
+- Criteria: AC-53 (part: the types Interest/dividend and Adjustment; "an adjustment without a note is refused"), AC-42 (a blocked outgoing adjustment), AC-09, AC-35, AC-39 to AC-42.
 - spec 14: K1, K5, K9.
 
 ## 3. Out of scope
 - Reversals, the cash entry detail screen, and the cash reversal as an Adjustment (05).
 - Filters (06). Per-holding dividends: a later version (intent).
-- Example E (needs portfolios, 29). Criterion 37: still deferred.
+- Example E (needs portfolios, 29). AC-37: still deferred.
 
 ## 4. Files
 Changed, core/: CashEntries.kt (allows Interest/dividend, in, and Adjustment with a direction, in or out; a note-required rule for adjustments); CashEntriesTest.kt.
@@ -54,7 +54,7 @@ By hand on the phone:
 6. Adjustment with a note of only spaces: refused with "Note: required for an adjustment." (decision 1).
 7. An outgoing adjustment larger than the balance on a later date: refused with the date and the shortfall.
 8. Switching the type keeps the date, amount and note; back on Adjustment the direction is kept.
-9. Install over the 03 build with data: the data is still there (criterion 35).
+9. Install over the 03 build with data: the data is still there (AC-35).
 10. Largest font, light and dark, TalkBack on the four chips, the direction chips and the note label.
 11. Logcat while saving an adjustment: no amount or note text.
 
@@ -86,13 +86,13 @@ On cef9a8a's code (2026-10-29, all with --rerun-tasks): spotlessCheck green; deb
 
 ### 13.3 Phone results (Android 17, debug build versionCode 4, your reports)
 Checks 1 to 11 all yes. Notes:
-- 9: installed over the 03 build (versionCode 3, adb install -r, firstInstallTime unchanged); the 03 data was still there (criterion 35).
+- 9: installed over the 03 build (versionCode 3, adb install -r, firstInstallTime unchanged); the 03 data was still there (AC-35).
 - 7: an outgoing adjustment of $300.00 dated 2026-01-05 was refused with "Not saved. Cash would be negative on 2026-01-10 by $100.00." (the Example C arithmetic).
 - 11: log cleared at 13:42:46; an adjustment of $7,654.21 with the note "zqxlogcheck" saved. The app's process (82 lines) had 0 matches for the amount in four forms, the note and the screen labels. The whole log had 0 for the amount and the note; "Adjustment" matched 4 lines from other processes (content not read).
 - No uninstall in 04; the phone holds the 03 data plus the 04 entries.
 
 ### 13.4 Not run or not checked
-CI and the pull request; the release APK on a device (unsigned); contrast measurement (by eye only); criterion 37 (deferred); Compose UI tests (none in the project).
+CI and the pull request; the release APK on a device (unsigned); contrast measurement (by eye only); AC-37 (deferred); Compose UI tests (none in the project).
 
 ## 14. Departures from the plan
 1. 03's core test typesOtherThanDepositAndWithdrawal_areRefused was narrowed to theOpeningBalanceAndTradeTypes_areRefused (your decision, step 2): Interest/dividend and Adjustment are allowed from 04 and covered by the new tests.

@@ -10,7 +10,7 @@ After a reverse split leaves a lot a leftover too small to show, its lot and hol
 - CR1; spec 4.4 (the pick limit, Sell all, "0 only when exact"), 4.6 (Reverse and re-enter of a buy; the reversal using the ratio), 4.10 (stored ratio; the shown quantity), 4.5, 4.3.
 - Spec 3: Transaction (`quantity_ratio`).
 - Section 5: Examples H and I. Section 8: the `buy` row (spec only; built in 31 and 33).
-- Criteria: 59(e) and 59(f) (their backup-and-restore parts in 31 to 34), and the standing criteria 9, 35, 39 to 42.
+- Criteria: AC-59(e) and AC-59(f) (their backup-and-restore parts in 31 to 34), and the standing checks AC-09, AC-35, AC-39 to AC-42.
 - Spec 14: K1, K2, K5, K9.
 
 ## 3. Out of scope
@@ -49,11 +49,11 @@ Each step ends with build, tests and lint (all with --rerun-tasks) and the repor
 ## 8. Proof
 Commands: as in 14b, all with --rerun-tasks. CI green on the pull request.
 By hand on the phone, with 14b's data. Each check names its start and the control; the exact figures are worked out from the phone's data before each check. Two tickers not used before, picked at step 7.
-1. Install over 14b's build: the data is still there (criterion 35).
+1. Install over 14b's build: the data is still there (AC-35).
 2. Example H in Main: buy 1 share for $10.00, sell 0.99999997 for $10.00, a 1 for 7 split; the holding and the lot show 0.00000001; sell 0.00000001 for $0.00; the holding shows 0 shares and the lot is gone from the Sell list; cash unchanged overall.
 3. Example I in Main: buy 1 share for $100.00, a same-date 1 for 3 split, Reverse and re-enter the buy with the quantity unchanged, then a later-dated 3 for 1; the holding shows exactly 1 share; cash down $100.00 overall.
 4. AAPL's lots and the Cash tab as before.
-5. Largest font and landscape, light and dark, TalkBack on the 0.00000001 figure (criteria 9, 39 to 42).
+5. Largest font and landscape, light and dark, TalkBack on the 0.00000001 figure (AC-09, AC-39 to AC-42).
 
 ## 9. Research
 - None needed: no new library or platform behaviour.
@@ -77,11 +77,11 @@ On de9bb63's code (2026-11-03, all with --rerun-tasks): spotlessCheck green; deb
 
 ### 13.3 Phone results (Android 17, debug build versionCode 17, your reports)
 Checks 1 to 5 all yes. All entries in Main, dated 2026-11-03.
-- 1: installed over the 14b build (lastUpdateTime 2026-11-03 13:54:04; firstInstallTime 2026-10-29 10:44:04 unchanged); the data kept: net worth $4,155.32, cash $3,105.32, AAPL 15 shares at $1,050.00 (criterion 35).
-- 2 (Example H, V): buy 1 for $10.00 (cash $3,095.32); sell 0.99999997 for $10.00 (V 0.00000003 shares, cash $3,105.32, realized $0.00); a 1 for 7 split: the review showed 0.00000003 to 0.00000001, the header and the lot 0.00000001 (0 before 14c); Sell all filled 0.00000001, total $0.00, the review cost $0.00 and realized $0.00; saved: V 0 shares, no lot, Sell offers no lot; cash $3,105.32, net worth $4,155.32 (criterion 59(e)). Confirmed by eye; no photos.
-- 3 (Example I, MA): buy 1 for $100.00 (cash $3,005.32); a 1 for 3 split the same date: 0.33333333 shares, the lot at $300.00 per share; Reverse and re-enter on the buy with nothing changed: the banner, the quantity 0.33333333 with "Original: 1"; the review: part 1 0.33333333 removed and $100.00 back, part 2 0.33333333 at $300.00, combined $0.00; saved, "Reversed on 2026-11-03"; a 3 for 1 split: the review 0.33333333 to 1, the header 1 share (0.99999999 before 14c), the lot 1 at $100.00; the new buy's detail 0.33333333, $100.00, $300.00; cash $3,005.32, net worth $4,155.32 (criterion 59(f)).
+- 1: installed over the 14b build (lastUpdateTime 2026-11-03 13:54:04; firstInstallTime 2026-10-29 10:44:04 unchanged); the data kept: net worth $4,155.32, cash $3,105.32, AAPL 15 shares at $1,050.00 (AC-35).
+- 2 (Example H, V): buy 1 for $10.00 (cash $3,095.32); sell 0.99999997 for $10.00 (V 0.00000003 shares, cash $3,105.32, realized $0.00); a 1 for 7 split: the review showed 0.00000003 to 0.00000001, the header and the lot 0.00000001 (0 before 14c); Sell all filled 0.00000001, total $0.00, the review cost $0.00 and realized $0.00; saved: V 0 shares, no lot, Sell offers no lot; cash $3,105.32, net worth $4,155.32 (AC-59(e)). Confirmed by eye; no photos.
+- 3 (Example I, MA): buy 1 for $100.00 (cash $3,005.32); a 1 for 3 split the same date: 0.33333333 shares, the lot at $300.00 per share; Reverse and re-enter on the buy with nothing changed: the banner, the quantity 0.33333333 with "Original: 1"; the review: part 1 0.33333333 removed and $100.00 back, part 2 0.33333333 at $300.00, combined $0.00; saved, "Reversed on 2026-11-03"; a 3 for 1 split: the review 0.33333333 to 1, the header 1 share (0.99999999 before 14c), the lot 1 at $100.00; the new buy's detail 0.33333333, $100.00, $300.00; cash $3,005.32, net worth $4,155.32 (AC-59(f)).
 - 4: AAPL 15 shares at $1,050.00, lots 12 at $75.00 and 3 at $50.00, unchanged.
-- 5: largest font and landscape, light and dark, on MA's Holding detail and the new buy's detail; TalkBack read 0.33333333 and $300.00 in full (criteria 9, 39 to 42).
+- 5: largest font and landscape, light and dark, on MA's Holding detail and the new buy's detail; TalkBack read 0.33333333 and $300.00 in full (AC-09, AC-39 to AC-42).
 - Recheck after the Deploy fix (versionCode 18, lastUpdateTime 2026-11-03 14:43:49): MA's Transactions tab shows the new buy's row as 0.33333333 shares and the reversed original as 1 share; TalkBack on Reverse of the new buy read 0.33333333 shares on its card.
 
 ### 13.4 Not run or not checked

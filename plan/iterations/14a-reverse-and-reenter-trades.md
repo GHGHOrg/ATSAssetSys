@@ -12,13 +12,13 @@ On a buy's or sell's detail (13a) I tap Reverse and re-enter. The normal buy or 
 - Example G (the buy, both or neither, blocked by the original, the sell), as automated tests.
 - Section 6: "Reverse and re-enter entry", "Buy and sell entry", "Cash, split and reversal entry" (where it starts and where it is not offered), the date-field note, Number format and color, Accessibility rule 5, Error states.
 - Wireframe 10c: frames A to D and F (markers 1 to 10 and 12).
-- Criteria: 21 (the buy and sell parts), 54 (all of it), 60(b) in part (the sell pair is not blocked by a ticker check and the realized loss becomes −$150.00; tested on K1 and the ViewModel), and 9, 35, 39 (TalkBack included), 40, 41, 42, 38 (the log during a pair).
+- Criteria: AC-21 (the buy and sell parts), AC-54 (all of it), AC-60(b) in part (the sell pair is not blocked by a ticker check and the realized loss becomes −$150.00; tested on K1 and the ViewModel), and AC-09, AC-35, AC-39 (TalkBack included), AC-40, AC-41, AC-42, AC-38 (the log during a pair).
 - spec 14: K1 (the pair check), K2 (the pair written as one action), K3, K5, K9.
 
 ## 3. Out of scope
 - Reverse and re-enter on a split or a cash entry (14b; 10c frame E, marker 11).
 - 60(b)'s other parts: the restore of the sample file (34), OLDCO staying hidden (15), the Realized gains total (26).
-- Hide and unhide (15, criterion 60(a)); open item 44 (before 15).
+- Hide and unhide (15, AC-60(a)); open item 44 (before 15).
 - Realized gains (26); Transaction history (27).
 - The phone check of open item 33 (34, 09 decision 9).
 
@@ -47,21 +47,21 @@ Each step ends with build, tests and lint and the report; then I stop.
 - The pair check (4.1, 4.6): one replay with the reversal at its date and order and the new entry after it; lots are checked one by one, so the new buy's shares never cover the original lot (Example G, blocked by the original).
 - Decision 3: telling a reversal-date refusal apart from the others must not hide a second rule; K1 stops at the first rule that fails (CLAUDE.md pitfall from 05), so the review is opened only when the pair passes with the earliest date that works.
 - The sell's lot list after the reversal: the original's picks put back with the splits since, and a pick's remainder still the least the lot holds at the new sell's place or later (13b departure 2), with the original's sell left out.
-- Dates: the new entry keeps its own date when Change moves the reversal date, so the new entry may be dated before its reversal (criterion 54); my reading is that 4.6 allows it, as only the reversal has the date rule.
+- Dates: the new entry keeps its own date when Change moves the reversal date, so the new entry may be dated before its reversal (AC-54); my reading is that 4.6 allows it, as only the reversal has the date rule.
 - Atomic save (K2): two transactions and two cash lines in one database transaction; a damaged pair must never be half-written.
 - Rounding: a changed sell quantity with fractional lots (8 places), tested with 2/3, 5/3, 3/7, 1/7.
 
 ## 8. Proof
 Commands: as in 13b, all with --rerun-tasks. CI green on the pull request.
 By hand on the phone, with 13b's data (AAPL in Main at 9.33333333 shares, cost $1,050.00, lots of 2026-10-31 at 8 and 1.33333333 left, both $112.50 per share; net worth $4,031.87; opening balance 2026-01-01; the five reversals of 13b). Each check names its start and the control (CLAUDE.md pitfall from 11). The exact figures are worked out before each check from the data then on the phone.
-1. Install over 13b's build: the data is still there (criterion 35).
+1. Install over 13b's build: the data is still there (AC-35).
 2. Reverse and re-enter is on a buy's and a sell's detail and not on a reversal, a reversed entry, a split, a cash entry or a trade line's detail; it opens the buy screen prefilled, the banner, "Original: …" under a changed field; Back leaves nothing saved.
 3. Example G on the phone: a buy re-entered with a changed quantity; the combined review (parts 1 and 2, the combined cash effect); Confirm and save both returns to the original, "Reversed on …"; the reversal and the new buy in Holding detail and on the Cash tab.
 4. Both or neither: a buy re-entered with a total above the cash: refused on the buy screen, "Nothing was changed", the date and the shortfall; nothing saved.
 5. A sell re-entered with a changed total: the picks from the original, the lots as after the reversal, the realized gain and the combined cash effect on the review; saved.
 6. Blocked by the original (set up on the phone with a new buy and a sell of all of it): refused, "Reverse the sell … first"; after the sell's reversal at a later date, the review opens with the reversal-date message; Change to that date, the new buy keeps its date; saved.
 7. The ticker check: the new buy runs it online; the new sell offline is not blocked by it (60(b) in part).
-8. Largest font and landscape, light and dark, TalkBack through a whole pair (criteria 39 to 41).
+8. Largest font and landscape, light and dark, TalkBack through a whole pair (AC-39 to AC-41).
 9. Close and reopen: the originals, reversals, new entries and their cash lines are kept.
 10. Logcat during a pair (log cleared first): no ticker, amount or quantity in the app's lines (counts only).
 
@@ -69,7 +69,7 @@ By hand on the phone, with 13b's data (AAPL in Main at 9.33333333 shares, cost $
 None planned; no new library and no network.
 
 ## 10. Decisions (all Build, settled by you 2026-11-02)
-1. Iteration 14 is split before it starts: 14a for a buy and a sell (criteria 21, 54 and 60(b) in part), 14b for a split and a cash entry (option B).
+1. Iteration 14 is split before it starts: 14a for a buy and a sell (AC-21, AC-54 and AC-60(b) in part), 14b for a split and a cash entry (option B).
 2. After Confirm and save both the app returns to the original's detail, as 13b does (option A).
 3. Only a refusal about the reversal date opens the combined review, with the message under part 1 next to Change; every other refusal keeps the entry screen with what was typed (option A).
 4. Change turns the reversal date row into the inline digits-only date field of 13b's reversal screen, with its note, the effect updating as typed (option A).
@@ -94,13 +94,13 @@ On 422b17e's code (2026-11-02, all with --rerun-tasks): spotlessCheck green; deb
 
 ### 13.3 Phone results (Android 17, debug build versionCode 15, your reports)
 Checks 1 to 10 all yes. Each check's figures were worked out from the data on the phone (your photo of AAPL's Transactions tab) before it was given; where my figures were wrong, the note says so.
-- 1: installed over the 13b build (lastUpdateTime 2026-11-02 12:17:52, after the fix 13:20:28; firstInstallTime 2026-10-29 10:44:04 unchanged); net worth $4,031.87, cash $2,981.87, AAPL 9.33333333 shares at $1,050.00, lots 8 and 1.33333333 at $112.50 (criterion 35).
+- 1: installed over the 13b build (lastUpdateTime 2026-11-02 12:17:52, after the fix 13:20:28; firstInstallTime 2026-10-29 10:44:04 unchanged); net worth $4,031.87, cash $2,981.87, AAPL 9.33333333 shares at $1,050.00, lots 8 and 1.33333333 at $112.50 (AC-35).
 - 2: Reverse and re-enter on a buy and a sell, not on a split, a reversal or a reversed entry; the 2026-10-31 buy of 1 share for $150.00 opened "< Buy (replacing)" with the banner, quantity 2 (the 2 for 1 entered after it that day applied; section 14, item 11) with "Original: 1", price $75.00; a changed quantity kept the hint; "<" saved nothing.
-- 3: that buy re-entered as 3 for $150.00: the review opened with the reversal-date refusal (frame F, the third message: −0.66666667 shares at the 2026-11-01 sell, a date of 2026-11-01 or later), as decision 3 has it. My figures had missed that the 2026-11-01 sell, since reversed, took this lot's 0.66666667. Confirm refused; Change to 2026-11-01 removed the message (1.33333333 shares removed, +$150.00, combined $0.00); saved with the new buy dated 2026-10-31, before its reversal (criterion 54's case); "Reversed on 2026-11-01 ET >"; AAPL 10 shares at $1,050.00, lots 8 at $112.50 and 2 at $75.00; cash and net worth unchanged.
+- 3: that buy re-entered as 3 for $150.00: the review opened with the reversal-date refusal (frame F, the third message: −0.66666667 shares at the 2026-11-01 sell, a date of 2026-11-01 or later), as decision 3 has it. My figures had missed that the 2026-11-01 sell, since reversed, took this lot's 0.66666667. Confirm refused; Change to 2026-11-01 removed the message (1.33333333 shares removed, +$150.00, combined $0.00); saved with the new buy dated 2026-10-31, before its reversal (AC-54's case); "Reversed on 2026-11-01 ET >"; AAPL 10 shares at $1,050.00, lots 8 at $112.50 and 2 at $75.00; cash and net worth unchanged.
 - 4: both or neither: the new 3-share buy re-entered with a total of $4,000.00: "Not saved. Nothing was changed. With the replacement, cash would be negative on 2026-10-31 by $1,168.13."; nothing saved.
 - 5: the 2026-10-31 sell of 3 for $480.00 re-entered at $540.00: quantity 6 with "Original: 3", the lots as after the reversal (8 left at $75.00 picked 6; 3 left at $50.00), "(the original's picks)"; review: 6 shares put back, −$30.00 removed, −$480.00; new sell +$90.00 realized, cost $450.00, +$540.00; combined +$60.00; saved; cash $3,041.87, net worth $4,091.87.
 - 6: the 2026-10-31 buy of 10 refused on the entry screen: "… hold −8 shares on 2026-10-31. Reverse the sell of 2026-10-31 first, …"; nothing saved.
-- 7: online, the new buy with JNJ ran the ticker check and opened the review; offline, the new buy with COST was refused with the offline message and no look-up; offline, the new sell opened its review with no check (criterion 60(b) in part).
+- 7: online, the new buy with JNJ ran the ticker check and opened the review; offline, the new buy with COST was refused with the offline message and no look-up; offline, the new sell opened its review with no check (AC-60(b) in part).
 - 8: largest font, portrait and landscape, light and dark: the entry screens, the review and the inline date field with the keyboard readable, the gain green, the message red; TalkBack through a whole pair (the new 3-share buy re-entered unchanged and saved; nothing moved), read as wording 3.
 - 9: closed and reopened: the pairs, their links and cash lines kept. My check said "<" on the cash line's detail, which has 05's "Back" (13a); the app was right.
 - 10: Logcat cleared at 15:00:33, then a pair (the 3-share buy re-entered unchanged); the app's uid 10454 had 24 lines, 1 the log header and 23 D/WindowOnBackDispatcher; no ticker, portfolio name, amount, quantity, date, ratio, reversal or replacing word, or key; 13 "$ and digit" matches were all inner-class names (after a letter or digit). Counts only. Afterwards: AAPL 10 shares at $1,050.00, cash $3,041.87, net worth $4,091.87.
