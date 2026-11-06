@@ -49,6 +49,9 @@ CI (.github/workflows/ci.yml) runs the style check and then the same three steps
 - Exact arithmetic only (spec 4.10).
 - A change request (Ruleset A rule 7) gets its own intent file, intent/intent-cr-NN-short-name.md, and plan.md's iteration row links to it. intent.md stays at v52. spec.md stays one file, and each change edits it (decided 2026-11-03, CR1).
 - A new or changed screen shows only what its screen model prepares (plan.md section 3; CR2). Build the model in a builder with unit tests, plus one ViewModel wiring test per screen; the screen only picks the approved string and puts the model's values in. Don't format or work out a shown figure, text or message inside a composable. Screens built before 15a are open item 48: give one a model when you change it.
+- A new or changed screen gets the screen tests that apply to it (spec AC-61; plan.md section 3): a fixed part is measured at the largest font in landscape, a layer or menu must keep MainActivity's window focus, a text field's layer must stay above the keyboard at the largest font, and a row or card whose TalkBack text carries a figure is checked for that text. Build on the helpers in app/src/androidTest/…/ScreenTestSupport.kt.
+- A red screen-tests run is not merged. Read its cause before a re-run: the run's artifact holds the results, the emulator log and any unlock screenshots, and logcat holds the ScreenTestUnlock lines. Each re-run needs your yes.
+- A branch that is never merged (defects brought back, experiments) is named throw-away-NN-what, and its pull request is a draft that is closed unmerged (15b step 4).
 - Refer to a record by its file and section, not by a shorthand name: "plan/spikes/screen-tests.md 11.4, series 3", not "spike F, series 3", and the same for decisions and runs. A shorthand like "spike F" or "your B" means nothing to a later reader (15b step 3).
 
 ## 5. Where things are
