@@ -2,6 +2,7 @@ package app.ghghorg.atsassets.ui
 
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -13,16 +14,16 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.DropdownMenu
-import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedCard
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.clearAndSetSemantics
@@ -315,8 +316,20 @@ internal fun allAtCost(holdings: List<Holding>): Boolean = holdings.any { it.sha
 @Composable
 private fun PortfolioMenu(actions: PortfolioScreenActions) {
     val title = stringResource(R.string.portfolio_menu)
-    // Spike F (open item 47): defect 07 brought back on purpose; the ⋮ menu is a DropdownMenu window again.
-    DropdownMenu(expanded = true, onDismissRequest = actions.onCloseMenu, modifier = Modifier.semantics { paneTitle = title }) {
-        DropdownMenuItem(text = { Text(text = stringResource(R.string.rename_button)) }, onClick = actions.onRename)
+    Box(
+        modifier = Modifier.fillMaxSize().pointerInput(Unit) { detectTapGestures { actions.onCloseMenu() } },
+        contentAlignment = Alignment.TopEnd,
+    ) {
+        Surface(
+            modifier = Modifier.padding(top = 56.dp, end = 16.dp).semantics { paneTitle = title },
+            shape = MaterialTheme.shapes.medium,
+            color = MaterialTheme.colorScheme.surfaceContainer,
+            tonalElevation = 3.dp,
+            shadowElevation = 3.dp,
+        ) {
+            TextButton(onClick = actions.onRename, modifier = Modifier.padding(horizontal = 8.dp)) {
+                Text(text = stringResource(R.string.rename_button), style = MaterialTheme.typography.bodyLarge)
+            }
+        }
     }
 }
