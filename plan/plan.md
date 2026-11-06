@@ -95,21 +95,25 @@ Rules for the list:
 | 15 | hide-holdings | Hide and unhide sold-out holdings | 13, 14c | 4.4, AC-27, AC-51, AC-60(a) |
 | 15a | screen-models | What three screens show is built as a tested model; the convention for every screen from 16 on ([CR2](../intent/intent-cr-02-screen-models.md); open item 48) | 15 | CR2, views 6 and 7, 4.6, AC-48, AC-53, AC-54 |
 | 15b | screen-tests | The four spike checks run as screen tests on an emulator on every pull request and on main; a red run is not merged ([CR3](../intent/intent-cr-03-screen-tests.md); open item 47) | 15a, spike F | CR3, C19, C20, 9, AC-61, AC-62 |
-| 16 | live-prices | See prices, their age, stale marker, unrealized gain/loss | 09, price spike | 7, 4.8, AC-05, AC-41, AC-42 |
-| 17 | net-worth-screen | Net Worth (Total) with composition | 16 | 4.8, AC-34, AC-44 |
+| 15c | performance | Saves, the lot picker and Holding detail stay quick as records grow; every figure stays the same (open item 45) | 15b | 4.1, 4.4 to 4.6, 4.8, 4.10, 6 (state 3), C19 |
+| 15d | cash-list | The Cash tab opens and filters quickly with many entries: a screen model, one sort, a lazy list (open items 45 and 48) | 15c | view 7, AC-49, AC-61 |
+| 16a | live-prices-holding | See a holding's latest price, its age, the stale or "no price" flag and its unrealized gain/loss on Holding detail; prices refresh automatically and by pull-to-refresh | 15d, 09, price spike | 7, 4.8, view 6, AC-05, AC-41, AC-42, AC-62 |
+| 16b | live-prices-portfolio | The same on a portfolio's screen, its holding rows and the Portfolios list | 16a | 4.8, view 3, AC-41, AC-42 |
+| 16c | live-prices-overall | Net worth at market with its age line and the portfolio rows on Overall; the sell lot picker's gain/loss | 16b | 4.8, view 1, wireframe 10a, AC-41, AC-42 |
+| 17 | net-worth-screen | Net Worth (Total) with composition | 16c | 4.8, AC-34, AC-44 |
 | 18 | allocation-net-worth | Allocation by asset type, portfolio, holding (Overall, Net Worth) | 17 | AC-32, AC-43 |
 | 19 | allocation-portfolio | Per-portfolio Allocation screen | 18 | AC-33, AC-46 |
 | 20 | settings-autolock | Settings screen with the four auto-lock choices | 01 | 9, AC-06, AC-58 |
 | 21 | screenshot-window | Temporary 3-minute screenshot window | 20 | 9, AC-20, AC-58 |
 | 22 | tab-order | Reorder the bottom tabs | 20 | AC-13, AC-58 |
-| 23 | sector-geography-source | Sector and geography from the source, "Unclassified", breakdowns | 16, 18 | 4.9, C14, AC-12 |
+| 23 | sector-geography-source | Sector and geography from the source, "Unclassified", breakdowns | 16a, 18 | 4.9, C14, AC-12 |
 | 24 | sector-geography-override | Override a holding's sector and geography | 23 | 4.9, AC-22 |
 | 25 | manage-lists | Add, rename, delete list values; remembered source texts | 24 | 4.9, AC-22, AC-58 |
 | 26 | realized-gains | Realized gains with date filter | 11, 13 | view 5, AC-11, AC-23, AC-47 |
 | 27 | transaction-history | Per-portfolio history with filters | 13 | view 8, AC-10, AC-50 |
 | 28 | cash-ticker-filter | Cash ticker filter, Buy/Sell chips, reversal labels | 06, 13 | view 7, AC-49 |
 | 29 | delete-portfolio | Delete a portfolio with summary, typed confirmation, blocked message | 04, 07, 13 | 4.7, AC-28, AC-55 |
-| 30 | price-source-setting | Change the price source (sweep, offline warning) | 16, 20 | 7, AC-07, AC-58 |
+| 30 | price-source-setting | Change the price source (sweep, offline warning) | 16a, 20 | 7, AC-07, AC-58 |
 | 31 | backup-export | Back up now; "Last backup" line | 02 to 30 (every record type) | 8, 9, AC-18 |
 | 32 | backup-reminder | Overall banner when a backup is due | 31 | 9, AC-18 |
 | 33 | restore-check-report | Check a hand-made file, get the error report and Copy report | 31, 09 | 8, AC-16 |
@@ -126,8 +130,8 @@ AC-60(a) in 15, AC-60(b) in 14a, AC-60(c) in 17, AC-60(d) in 11).
 |---|---|---|
 | K1 rules engine | 02a | 03 to 05, 09, 11 to 15, 29, 33 to 35 |
 | K2 storage | 02a | every iteration that adds a record type |
-| K3 valuation | 02a (cash only) | 09, 16 to 19, 23, 26 |
-| K4 price service | 09 (verify only) | 16, 23, 30, 33 to 35 |
+| K3 valuation | 02a (cash only) | 09, 15c, 16a to 19, 23, 26 |
+| K4 price service | 09 (verify only) | 16a, 23, 30, 33 to 35 |
 | K5 entry flows | 03 | 04 to 05, 07 to 09, 11 to 15, 29 |
 | K6 backup and restore | 31 | 32 to 35 |
 | K8 app lock | 01 | 20, 21, 34 (file screens, AC-57) |
@@ -165,7 +169,7 @@ starts, not after.
 - Cash comes first: nothing else can be entered before the opening balance (4.2), and it
   works offline with no prices.
 - A buy needs only ticker verification (4.3), not live prices, because a holding with no
-  price is valued at cost (4.8). So buying (09) comes before prices (16).
+  price is valued at cost (4.8). So buying (09) comes before prices (16a to 16c).
 - Sell, split and reversals follow the buy. Hide needs a sold-out holding and the
   unhide-by-reversal rule (4.4), so it follows reversals.
 - Value screens follow prices. Sector and geography follow allocation.
@@ -269,7 +273,7 @@ Merged as 0c2b49e (pull request #81); CI on main reported green by you.
 - Real data is unprotected until iteration 31: you can enter real data from 09, but there is
   no backup until 31 and no way to load a prepared file until 34. This is a risk, not a spec change.
 - Iterations 02, 09, 16 and 33 to 35 are the heaviest. Each is split before starting if
-  its file shows more than one capability.
+  its file shows more than one capability. 02 was split into 02a and 02b, and 16 into 16a, 16b and 16c (2026-11-07).
 - Install route (C17): the route is chosen later. Re-check Google's pages then.
   The release signing key stays outside the repo and is backed up (setup.md section 6).
 - Keystore (C18): key survival across updates, reinstall and Android upgrades, and the
@@ -337,7 +341,8 @@ when it adds a command, a convention or a pitfall.
 | Iteration 15 | done: built 2026-11-03 (steps 1 to 6, two tests added at Deploy); phone checks 2026-11-03 all yes; 630 tests; database version 6; pull request #117 merged as d7630a8, CI green on the pull request and on main (2m 56s) (your reports) |
 | Iteration 15a | done: built 2026-11-03 (steps 1 to 6, one Deploy fix); phone checks 2026-11-03 all yes (the screens read the same before and after), rechecked after the fix; 649 tests; pull request #120 merged as 2411066, CI green on the pull request and on main (2m 9s) (your reports) |
 | Iteration 15b | done: built 2026-11-06 (steps 1 to 6); no phone check (nothing under app/src/main changed; the release APK's entries the same); 649 tests; the screen tests 6 of 6 on the pull request and on main; pull request #132 merged as 57891e7, CI and the screen tests green on the pull request and on main (6m 12s) (gh, read only) |
-| Iterations 16 to 35 | not started, files not written |
+| Iteration 15c | approved 2026-11-07, not built ([its file](iterations/15c-performance.md)) |
+| Iterations 15d, 16a to 16c and 17 to 35 | not started, files not written |
 
 ## 12. Change log
 Each departure from this plan is recorded here with its date and the reason.
@@ -476,6 +481,8 @@ Each departure from this plan is recorded here with its date and the reason.
 - 2026-11-06: spec.md C19's status text updated (your B): 07a is now caught on GitHub's runner too (15b, #133 run 2), cited by file and section in place of "spike F". No rule, criterion or handling changed, so spec.md stays v6.
 - 2026-11-06: pull request #135 (status fixes after 15b; spec C19 status) was merged as 82527e2; main's CI and screen tests green (6 of 6). Open items checked (your A): 27 closed (core.autocrlf = true in Git's system config); 22 and 20 updated (the warning explained; the Dependabot pull requests listed). The rest stay as they are.
 - 2026-11-06: a table of contents at the top of plan.md and CLAUDE.md, in spec.md's form (your request); CLAUDE.md section 4 reminds to keep each table up to date when a document is edited.
+- 2026-11-06: pull request #136 (open items checked; the tables of contents) was merged as 7329561; main's CI and screen tests green (6 of 6).
+- 2026-11-07: iteration 16 split before starting (section 8; your A): 16a (Holding detail, with the refresh; AC-62's side-by-side iteration), 16b (a portfolio's screen and the Portfolios list) and 16c (Overall and the sell lot picker). Open item 45 fixed first in its own iteration, 15c-performance (your A); its file (plan/iterations/15c-performance.md) analysed, written and approved by you (A), amended with an app-start timing test on the emulator (your A), decisions 1 to 5 settled (your A each). The Cash tab rework follows as 15d (15c decision 4). Rows 17, 23 and 30 and the components table now name 16a or 16c; "16" in earlier notes and in intent/intent-cr-02-screen-models.md ("from iteration 16 on") now means 16a.
 
 ## 13. Out of scope for this plan
 Performance over time, per-holding dividends, ETF look-through, the next intent.md items,

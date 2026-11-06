@@ -1,0 +1,267 @@
+# plan/iterations/15c-performance.md
+
+Stage: Build. Status: approved 2026-11-07 (your A), amended the same day (the app-start timing test, your A). Decisions 1 to 5 settled 2026-11-07 (section 11). Not built.
+Source: plan.md section 4 (row 15c), open item 45, spec 4.1, 4.4 to 4.6, 4.8, 4.10 and section 6 (views 6 and 7, Error, empty and loading states (3)), C19. "My reading" is an interpretation, not a test.
+
+## 1. Outcome
+Saves, the lot picker, Holding detail and the detail screens stay quick as records grow, and every figure, refusal and message stays exactly the same.
+
+## 2. Spec refs
+- 4.1 (the replay order), 4.4, 4.5, 4.6, 4.8 and 4.10. No new rule and no new criterion.
+- The examples, AC-59 and AC-60 are covered by the existing tests, which must pass unchanged.
+- Section 6, state (3): "the app never waits": every figure from stored data shows at once.
+- Section 9: the timing test uses test data and the throwaway test PIN only.
+- C19: the emulator is not the phone.
+- Standing checks: AC-09, AC-35, AC-39 to AC-42.
+
+## 3. Out of scope
+- The Cash tab rework: its own iteration, 15d (decision 4).
+- Moving work off the main thread (decision 5).
+- Prices (16a).
+- Any wording, database or schema change.
+- The other screens of open item 48.
+
+## 4. Analysis (2026-11-06, by reading; step 2 measures it)
+Notation:
+- n: all transactions.
+- S: the sells and reversals among them.
+- B: all buys.
+- h and b: one holding's transactions and its buys.
+- A: the sell allocations.
+- H: the hidden holdings.
+- m: the cash entries.
+
+### 4.1 core/ (the calculation layer)
+- `splitFactor` scans all n transactions: O(n). `quantityAt` calls it for the buy and for each of the S sells and reversals of every holding: O(S·n) ≈ O(n²).
+- `lots` and `holdings`: B × O(n²) = O(n³). `lotsOf` works out every lot in the app and then filters: O(n³).
+- `firstNegative` (each split, reversal and re-entry save): O(h·b·n²), up to O(n⁴).
+- `Sells.lotChoices`: O(b·h·n²), up to O(n⁴). `Sells.sell` calls it on Review and on save.
+- `Hiding.offered` and `Hiding.unhiddenBy`: one `holdings(LocalDate.MAX)` call per hidden holding, O(H·n³).
+- Smaller costs:
+  - `Sells.pieces`: O(A·n).
+  - `Splits.effect` and the split part of `Reversals.effect`: O(b·n²).
+  - `originalOf` and `reversalOf`: O(n) each.
+
+### 4.2 The data layer (RoomRecordStore.kt)
+- `loadHidden` reads every transaction a second time at start.
+- `checkHidden` adds a third O(n³) holdings call.
+- The rest is lean: plain `SELECT … ORDER BY` loads, linear checks, and saves that update the state in memory with no reload.
+
+### 4.3 The app's screen state (AppViewModel.kt)
+- No `Dispatchers` at all: everything runs on the main thread. `valued()` makes two O(n³) calls on every load and save.
+- Computed properties of AppState run again on every read, and every keystroke makes a new AppState:
+  - Sell: `sellLotChoices` runs on each keystroke, and inside `toggleLot`, `onSellDateChange` and `sellAll`.
+  - Holding detail: `hideOffered` once, plus `holdingLots` read twice.
+  - Transaction detail: `transactionLot`.
+  - Reversal and Reverse and re-enter: the effect and the pieces.
+
+### 4.4 The screens
+- The Cash tab (CashScreen.kt, lines 72 to 91):
+  - three sorts per redraw
+  - a search of every transaction per row, twice
+  - every row drawn at once in a non-lazy `Column`
+
+  My reading is that this, not the core, is what makes the Cash tab feel slow. It is left to 15d (decision 4); AppStartTimingTest's Cash figure shows how much remains after 15c.
+- No problem found: the cash replay, Fraction's greatest-common-divisor per operation, the portfolio rules, the database loads, and the holdings lists on Portfolios and a portfolio's screen.
+
+### 4.5 Example sizes
+| Size | Call | Steps now |
+|---|---|---|
+| ~300 transactions (10 holdings × 30) | one `holdings` call | ≈ 5.4 million |
+| ~300 transactions | `valued()` (two `holdings` calls) | ≈ 11 million |
+| ~300 transactions | the sell lot list of one holding | ≈ 16 million per keystroke |
+| 1,000 transactions | one `holdings` call | ≈ 200 million |
+
+After the fix, each of these is a few thousand steps or fewer.
+
+### 4.6 Target classes after the rewrite
+| Function | Now | After |
+|---|---|---|
+| `holdings`, `lots`, `netWorth` | O(n³) | O(n log n + A) |
+| `lotsOf`, `pieces` | O(n³), O(A·n) | O(h log h + A) |
+| `firstNegative` | O(h·b·n²) | O(h + A) |
+| `lotChoices`, `Splits.effect`, `Reversals.effect` | O(b·h·n²), O(b·n²) | O(b·h) |
+| `Hiding.offered`, `unhiddenBy` | O(H·n³) | O(H·h) |
+
+## 5. Files
+- core/, Holdings.kt:
+  - a per-holding ledger, built once for a transaction list: the transactions grouped by holding in the 4.1 order, an id map, the running split factor at each place, and each lot's quantity through one replay
+  - `splitFactor`, `quantityAt`, `firstNegative`, `lots`, `holdings` and `lotsOf` use the ledger
+  - the public functions keep their signatures; the internal ones may change, and no test calls them (checked 2026-11-06)
+- core/, the callers: Sells.kt (`lotChoices`, `pieces`), Splits.kt (`effect`), Reversals.kt (`effect`, `sharesRefusal`), Reentries.kt, Hiding.kt (`offered` and `unhiddenBy` read one holding's shares) and Valuation.kt.
+- The data layer:
+  - RoomRecordStore.kt: `loadHidden` takes the transactions already read, and `checkHidden` makes one pass.
+  - RecordStore.kt: `loadHidden`'s signature changes to match.
+- The screen state, AppViewModel.kt:
+  - the derived values become fields of AppState, set when their inputs change: `holdings`, `netWorth`, the shown holding's lots, Hide offered, the sell lot list and the transaction's lot
+  - the actions read these fields
+  - no composable changes
+- Build:
+  - core/build.gradle.kts adds the `java-test-fixtures` plugin, a Gradle built-in, not a new library
+  - app/build.gradle.kts adds `androidTestImplementation(testFixtures(project(":core")))`
+  - the exact form is checked on the day, and a departure is recorded in section 14
+- Tests (section 9):
+  - core/src/testFixtures/…/ScaleHistories.kt (the fixed recipe, shared by both timing tests)
+  - core/src/test/…/HoldingsReference.kt (decision 1)
+  - core/src/test/…/HistoryGenerator.kt (random histories for the comparison)
+  - core/src/test/…/HoldingsComparisonTest.kt
+  - core/src/test/…/HoldingsScaleTest.kt
+  - app/src/androidTest/…/AppStartTimingTest.kt
+  - in app/src/test, the kept-field tests and the "same object" tests
+- Documents:
+  - plan.md: the 15c and 15d rows, and the 16 row split into 16a, 16b and 16c
+  - plan.md section 11 and the change log
+  - open-items.md: items 40, 45 and 47
+  - this file
+
+## 6. Order of work
+Each step ends with spotlessCheck, build, tests and lint, all with --rerun-tasks, plus `:app:compileDebugAndroidTestKotlin`, and the report. Then I stop. Steps 2 to 8 run on branch iter-15c-performance from main, once this file is merged.
+1. This file and the plan.md and open-items.md lines, on docs/iter-15c-plan, merged first.
+2. The test tools and the "before" figures, on today's code:
+   - ScaleHistories (test fixtures), HistoryGenerator and HoldingsReference
+   - HoldingsComparisonTest: reference against today's code, which must be equal from the start; this proves the comparison itself
+   - HoldingsScaleTest's "before" run, once, with `ATS_SCALE_OLD=1`: the table at 100, 300 and 1,000 transactions, capped by estimate at 60 s
+   - the new-code part is not asserted yet, since today's code would fail its bounds; it is switched on in step 7
+   - AppStartTimingTest: you push once, and its run on the pull request gives the "before" app-start figures, from logcat in the artifact (gh, read only)
+3. The core ledger in Holdings.kt: the existing tests unchanged and green, and the comparison test equal.
+4. The core callers, with the same proof.
+5. The data layer: `loadHidden` and `checkHidden`.
+6. The screen state: the kept fields, each with its kept-field test and its "same object" test.
+7. The "after" figures:
+   - HoldingsScaleTest's new-code part switched on: its table at 100, 300, 1,000 and 3,000 transactions, the ratio bounds asserted, and the time limit set from the measured figures (decision 2)
+   - the unit suite's run time, before and after
+   - AppStartTimingTest's run on the pull request gives the "after" figures
+8. Documents: results, the phone check, open item 45 and the pull request draft.
+
+## 7. Stubs
+None.
+
+## 8. Risks
+- The replay is rewritten, and every save rule uses it. A wrong result could let a bad save through or refuse a good one. The guards are section 9, part 1, layers 1 and 2.
+- Kept fields can go stale. A field not refreshed when one of its inputs changes would show an old figure. The guards: each field is set in one place, from one function, plus section 9, part 1, layer 3.
+- The comparison is only as good as the generator. A case the generator never makes is compared only through the existing tests. The guard: the mix is listed in section 9, and its counts per kind are printed with each run.
+- Timing noise. CI machines are shared, and their timing varies more than this PC's. The ratio bounds have wide margins for that reason. A failing ratio is re-run once before it is treated as real, and that re-run needs your yes, as with screen tests. Absolute times on one machine are a guide, not a fact.
+- One call stays O(n²). The sell lot list on one big holding stays O(n²) after the rewrite: each lot's "least it holds from the sell date on" needs a look at every later place. That is far below today's O(n⁴), and section 9 bounds it separately.
+- AppStartTimingTest is not a true cold start. The test process cannot kill the app's process without killing itself, so each run is a new screen in an already running process, with Java's compiler warm. It does include what 15c changes: the database read, `loadHidden`, `valued()` and building Overall and Cash.
+- The unlock is left out of the timing. The PIN entry through the system's PIN pad takes several seconds and varies, so timing starts when the unlock is accepted.
+- The emulator is not the phone (C19). AppStartTimingTest's figures compare before and after on one kind of machine; they do not say how fast your phone is. The phone check by feel stays.
+- AppStartTimingTest's data could leak into other tests. It writes about 300 transactions into the emulator's app database. It clears the database before and after, so the other screen tests see the same app as now. If clearing fails, the test fails, and the cause is in the artifact.
+- The screen-tests run gets longer: about 30 to 60 s after 15c; the "before" run longer, perhaps minutes.
+- The Cash tab keeps its own cause until 15d.
+- The main thread stays (decision 5): with the fix, a save costs about n log n, which my reading says is not noticeable.
+- The unit test run gets longer: the comparison runs today's slow code on small histories, and the scale test's new-code part aims at about 5 s at most. Step 7 reports the real figures.
+
+## 9. Tests and proof
+
+### Part 1: Correctness, "every figure stays exactly the same"
+1. The existing 649 tests, unchanged.
+   - They cover the worked examples A to I, splits and reverse splits, reversals, tiny remainders (CR1), Hide, and the ViewModel flows (120 tests).
+   - At the end, `git diff main -- core/src/test app/src/test app/src/androidTest` shows only new files and added lines, with no existing line changed or deleted.
+2. Old against new on generated histories (HoldingsComparisonTest; decision 1).
+   - The reference: HoldingsReference.kt keeps today's versions of every function the rewrite touches: `lots`, `holdings`, `lotsOf`, `firstNegative`, `lotChoices`, `pieces`, the two `effect` functions, `Hiding.offered` and `unhiddenBy`.
+   - The histories: HistoryGenerator, with a fixed seed so every run is the same and a failure can be replayed. It builds a few hundred histories of 20 to 60 transactions through the real K1 functions (buy, sell with picks, split, reversal), so each is a history you could have entered. The mix:
+     - several portfolios and tickers
+     - splits and reverse splits (for example 1 for 3 and 3 for 7)
+     - reversals of buys, sells and splits
+     - quantities whose remainders round up as well as down (2/3, 5/3, 3/7, 1/7)
+     - several lots per holding
+   - Histories that should be refused: some are broken on purpose, such as a split that leaves a later sell short, or a buy reversed before its sell is reversed, so the refusals get compared too.
+   - The check: for every history, at every date in it, old and new must be exactly equal (`Fraction` equality, never approximate). That covers each lot's remaining quantity and cost, each holding's shares and cost, `firstNegative`'s place, lot and amount, every lot choice with its reason, every piece, every effect, and Hide offered and unhidden-by.
+3. Kept fields follow their inputs (app/src/test). For each kept field, a test changes every input in turn and checks the field equals a fresh calculation afterwards:
+   - each kind of save
+   - a new date typed
+   - another portfolio or ticker
+   - hide and unhide
+   - a new day
+4. The screens: the screen tests, 6 of 6, then 7 of 7 with AppStartTimingTest. On the phone, after installing over the previous build (AC-35), Overall, a portfolio, Holding detail (header, Transactions, Lots), the Sell lot picker with one lot picked, and a transaction detail read the same as the screenshots you take before the install.
+
+### Part 2: Performance, "it's faster"
+1. HoldingsScaleTest: what it times. Only core/'s calculation functions, called the way the app calls them. No screen and no database.
+
+   | # | Call | Like the app's… |
+   |---|---|---|
+   | 1 | `Holdings.holdings(transactions, lastDate)` | `valued()` on every load and save |
+   | 2 | `Valuation.netWorth(entries, transactions, lastDate)` | `valued()`, its second O(n³) call |
+   | 3 | `Holdings.lots(transactions, lastDate)` | the transaction detail's lot |
+   | 4 | `Holdings.lotsOf(…, the largest holding, lastDate)` | Holding detail's Lots tab |
+   | 5 | `Holdings.firstNegative(…, the largest holding)` | each split, reversal and re-entry save |
+   | 6 | `Sells.lotChoices(…, the largest holding, lastDate, next seq)` | the sell lot list |
+   | 7 | `Hiding.offered` (one holding) and `Hiding.unhiddenBy` (5 hidden holdings) | Holding detail's Hide and a buy's save |
+   | 8 | `Splits.effect` and `Reversals.effect` on the largest holding's last split | the split and reversal reviews |
+   | 9 | `Sells.pieces` on the last sell | the sell review and the transaction detail |
+
+2. HoldingsScaleTest: the steps.
+   1. Build the histories (not timed). ScaleHistories uses a fixed recipe, not random, and does not go through K1's save functions (on today's code, building 1,000 transactions that way would itself take O(n⁴)).
+      - Valid by construction: the recipe keeps its own count of each lot's remaining shares, so a sell never takes more than a lot holds.
+      - The cycle of 10, per holding:
+        - 5 buys, with quantities like 3, 2.5 and 0.33333333
+        - 3 sells, each taking part of the oldest one or two lots
+        - 1 split, alternating 3 for 2 and 1 for 3
+        - 1 reversal, in turn of a sell, a split, or a buy with no sells from it
+      - One opening balance large enough for every buy.
+      - Two shapes at each size n:
+        - Spread: n / 30 holdings of about 30 transactions each, the usual case.
+        - One big holding: all n transactions in one holding, the worst case for calls 4, 5, 6, 8 and 9.
+   2. Warm up (not timed). Each call runs 3 times first, so Java's just-in-time compiler has done its work.
+   3. Time each call.
+      - Each timed block repeats the call until at least 50 ms have passed, then divides by the number of calls.
+      - The block runs 5 times, and the median is kept.
+      - Every result is kept in a variable the test reads, so no call is skipped as unused.
+   4. Sizes: 100, 300 and 1,000 transactions, plus 3,000 for the new code only.
+   5. Write the table: for each call, shape and size, the median time and the growth ratio to the next size. It goes to the test's standard output (in the result XML) and to `core/build/scale/holdings-scale.txt`, and from there into section 13.
+   6. Assert (new code only, every normal run, CI included). The growth ratio (the time at 3,000 ÷ the time at 1,000) stays under its bound:
+
+      | Call | Target after the rewrite | Ratio for 3× the transactions | Bound |
+      |---|---|---|---|
+      | 1, 2, 3, 7 (both shapes) | O(n log n) | ≈ 3.5 | under 8 |
+      | 4, 5, 9 (spread) | O(h + A), not growing with n | ≈ 1 | under 8 |
+      | 4, 5, 9 (one big holding) | O(n) | ≈ 3 | under 8 |
+      | 6, 8 (one big holding) | O(b·h) = O(n²) | ≈ 9 | under 20 |
+      | today's code, for comparison | O(n³) / O(n⁴) | ≈ 27 / ≈ 81 | would fail |
+
+      Under decision 2, each call at 3,000 also stays under a fixed time, about 10 times what step 7 measures, written into the test in step 7.
+3. The "before" run (step 2, once).
+   - It is switched on by the environment variable `ATS_SCALE_OLD=1`, which Gradle passes to the test; without it, this part is skipped.
+   - It times today's code (HoldingsReference) at 100, 300 and 1,000 transactions.
+   - The cap: before each size, the time is estimated from the size before times the expected growth. If the estimate is over 60 s, the size is skipped and recorded as "skipped, estimated ≈ X s".
+   - The table goes into section 13, next to the "after" table.
+4. App start on the emulator (AppStartTimingTest, app/src/androidTest; decision 3). It runs on GitHub's emulator in the screen-tests workflow, never on the phone.
+   1. Clear the app's database and key files.
+   2. Seed about 300 transactions with their cash lines (ScaleHistories' spread shape) through the app's RoomRecordStore. Test data only (spec section 9).
+   3. Open the app: launch MainActivity and unlock it with the test PIN (ScreenTestSupport's `unlockApp`).
+   4. Time "load and Overall": from the unlock being accepted until Overall shows its net worth.
+   5. Tap Cash right away: time from the tap until the Cash list shows its first row.
+   6. Repeat steps 3 to 5 three times, closing the screen between runs, and keep the median of each.
+   7. Log the two medians and the three runs under the tag ScreenTestTiming (times only: no amounts, tickers or names). The workflow already keeps each test's logcat in its artifact.
+   8. Clear the database again.
+
+   It asserts only that each screen appears within 120 s; a slower screen is recorded as "over 120 s". The "before" figures come from step 2's pull request run and the "after" ones from step 7's. Both go into section 13.
+5. "Computed once, not per keystroke" (app/src/test):
+   - typing in Sell's quantity, total and a pick leaves the sell lot list in the state as the same object (`assertSame`)
+   - a change of date, portfolio or ticker gives a new one
+   - the same is tested for Holding detail's lots and Hide offered
+6. On the phone, by feel (decision 3): opening the app, the first Overall, the Cash tab and typing in Sell feel the same or quicker than before the install.
+7. Commands:
+   - spotlessCheck, build, the unit tests, lint and `:app:compileDebugAndroidTestKotlin`, all with --rerun-tasks
+   - the screen tests on the pull request, with their count
+   - the unit suite's run time before (1.2 s on 2026-11-06) and after
+   - the standing checks AC-09 and AC-39 to AC-42
+   - no benchmarking library (JMH) is added: the timing is hand-written in JUnit
+
+## 10. Research
+None, since no library is added. The `java-test-fixtures` form for an Android module's androidTest is checked on the day (section 5, Build).
+
+## 11. Decisions
+1. Settled 2026-11-07 (your A): the reference is today's code kept as a test-only copy (HoldingsReference.kt), compared on generated histories. Not chosen: (B) the existing tests only; (C) a saved snapshot.
+2. Settled 2026-11-07 (your A): the time limit: each call at 3,000 transactions also stays under about 10 times the "after" time, as well as its ratio bound. Not chosen: (B) the ratio bounds only.
+3. Settled 2026-11-07 (your A, the amendment): the app start is timed by AppStartTimingTest on GitHub's emulator, before and after, plus a check by feel on the phone. Not chosen: hand-timing with a stopwatch on the phone.
+4. Settled 2026-11-07 (your A): the Cash tab rework (a screen model, one sort, a lazy list; CR2 and AC-61 apply) is its own iteration, 15d, after 15c's measurements. Not chosen: (B) inside 15c.
+5. Settled 2026-11-07 (your A): the main thread stays; with the rewrite, a load or save costs about n log n. Not chosen: (B) valuation on a background thread.
+
+## 12. Wording to approve (D9)
+None, since no text the app shows changes. The ScreenTestTiming log lines are for the test artifact only.
+
+## 13. Status and notes
+- Draft 2026-11-06, revised 2026-11-07 (the analysis; the tests and proof; the HoldingsScaleTest design), approved 2026-11-07 (your A), amended 2026-11-07 (AppStartTimingTest; your A).
+- 16 is split into 16a, 16b and 16c (your A), and 15c runs before 16a (your A); 15d follows 15c (decision 4).
+- The before and after tables are added in steps 2 and 7.
