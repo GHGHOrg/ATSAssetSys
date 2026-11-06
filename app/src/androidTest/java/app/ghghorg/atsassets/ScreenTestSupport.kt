@@ -277,3 +277,23 @@ internal fun MainRule.keyboardTop(): Float {
     val windowHeight = runOnUiThread { activity.window.decorView.height }
     return (windowHeight - previous).toFloat()
 }
+
+/**
+ * As [unlockApp], for AppStartTimingTest (iteration 15c): types the test PIN and returns the uptime at which the lock
+ * prompt closed. MainActivity starts loading its data then, so the time to the first screen is measured from here.
+ * [unlockApp] returns only once the bottom bar shows, after the data has loaded.
+ */
+internal fun MainRule.unlockAppTimed(): Long {
+    repeat(3) { attempt ->
+        waitFor("the lock prompt's PIN pad ($PIN_PAD_ENTER)", 15_000) { pinPadUp() }
+        shell("input keyevent " + List(8) { "KEYCODE_DEL" }.joinToString(" "))
+        typePin()
+        val end = SystemClock.uptimeMillis() + 5_000
+        while (SystemClock.uptimeMillis() < end) {
+            if (!pinPadUp()) return SystemClock.uptimeMillis()
+            SystemClock.sleep(20)
+        }
+        saveScreen("unlock-timed-${SystemClock.uptimeMillis()}-$attempt")
+    }
+    throw AssertionError("MainActivity's lock prompt did not take the test PIN")
+}

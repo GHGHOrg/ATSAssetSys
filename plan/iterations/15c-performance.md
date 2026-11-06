@@ -1,6 +1,6 @@
 # plan/iterations/15c-performance.md
 
-Stage: Build. Status: approved 2026-11-07 (your A), amended the same day (the app-start timing test, your A). Decisions 1 to 5 settled 2026-11-07 (section 11). Not built.
+Stage: Build. Status: approved 2026-11-07 (your A), amended the same day (the app-start timing test, your A). Decisions 1 to 5 settled 2026-11-07 (section 11). In build: step 1 merged (#137), step 2 done (section 13).
 Source: plan.md section 4 (row 15c), open item 45, spec 4.1, 4.4 to 4.6, 4.8, 4.10 and section 6 (views 6 and 7, Error, empty and loading states (3)), C19. "My reading" is an interpretation, not a test.
 
 ## 1. Outcome
@@ -265,3 +265,35 @@ None, since no text the app shows changes. The ScreenTestTiming log lines are fo
 - Draft 2026-11-06, revised 2026-11-07 (the analysis; the tests and proof; the HoldingsScaleTest design), approved 2026-11-07 (your A), amended 2026-11-07 (AppStartTimingTest; your A).
 - 16 is split into 16a, 16b and 16c (your A), and 15c runs before 16a (your A); 15d follows 15c (decision 4).
 - The before and after tables are added in steps 2 and 7.
+- Step 1 merged in pull request #137 (02b24d5, 2026-11-07). Steps 2 to 8 on iter-15c-performance.
+
+### 13.1 Step 2: the code before 15c, timed (2026-11-07, this PC, JVM)
+HoldingsScaleTest with ATS_SCALE_OLD=1, on HoldingsReference (main at 02b24d5). Median ms per call; the growth is over the size before.
+
+| Call | Spread 100 | Spread 300 | Spread 1,000 | One holding 100 | One holding 300 | One holding 1,000 |
+|---|---|---|---|---|---|---|
+| 1 holdings | 3.7 | 54.7 (×15.0) | 1,822 (×33.3) | 8.0 | 280.6 (×35.1) | 26,886 (×95.8), timed once |
+| 2 netWorth | 3.4 | 53.8 (×15.8) | 1,824 (×33.9) | 8.0 | 283.3 (×35.4) | 26,813 (×94.6), timed once |
+| 3 lots | 3.3 | 53.3 (×16.1) | 1,823 (×34.2) | 8.0 | 281.2 (×35.4) | 26,851 (×95.5), timed once |
+| 4 lotsOf | 3.4 | 54.2 (×16.1) | 1,820 (×33.6) | 8.0 | 279.4 (×35.1) | 26,875 (×96.2), timed once |
+| 5 firstNegative | 13.8 | 50.4 (×3.6) | 531.3 (×10.5) | 223.9 | skipped, estimated about 18 s per call | skipped |
+| 6 lotChoices | 1.3 | 5.7 (×4.3) | 61.7 (×10.9) | 8.0 | 282.6 (×35.2) | skipped, estimated about 35 s per call |
+| 7 Hide (one holding, 5 hidden) | 14.2 | 335.0 (×23.6) | 11,340 (×33.8) | 15.9 | 560.4 (×35.3) | skipped, estimated about 21 s per call |
+| 8 effects | 1.7 | 8.6 (×4.9) | 87.7 (×10.2) | 14.0 | 538.0 (×38.3) | skipped, estimated about 20 s per call |
+| 9 pieces | 0.010 | 0.014 (×1.5) | 0.041 (×2.9) | 0.013 | 0.042 (×3.3) | 0.342 (×8.2) |
+
+Reading: from 300 to 1,000 transactions (3.3 times as many), calls 1 to 4 and 7 grow about 34 times on the spread shape (cubic) and about 96 times on one holding; section 4's analysis holds. One load or save of the app calls 1 and 2: about 110 ms together at 300 spread transactions on this PC, before the phone's slower processor, and loadHidden adds a third call at start. "Timed once": three runs would pass the 60 s cap, so the warm-up's time stands alone.
+
+Repeat run (2026-11-07, same code, data and seed; your request): every timed row within −7.5% to +0.5% of the first, 40 of 47 within 4%, the same 7 rows skipped; the growth ratios agree to within 4%. The first run's figures stand above.
+
+### 13.2 Step 2: the tests added
+- HoldingsComparisonTest: 200 histories, 6,985 transactions (3,577 buys; 1,359 sells, 967 with a partial pick; 331 splits and 321 reverse splits; 959 reversals of buys, 280 of sells, 158 of splits; 330 refused reversals and 3 refused splits as candidates). Equal throughout: today both sides are the same code, which proves the comparison. It takes 13.9 s, because both sides run the code before 15c.
+- HoldingsScaleTest: the recipe check (both shapes valid at 100 transactions) runs every time, in 0.4 s; the "before" timing runs only with ATS_SCALE_OLD=1.
+- AppStartTimingTest: compiled; it runs on the pull request's screen-tests run, not on this PC (section 3).
+- Unit tests: 652 (649 unchanged, plus 3), 0 failures, 1 skipped (the "before" timing without its switch); the suite's time 22 s, from 1.2 s, almost all of it the comparison on the code before 15c.
+
+## 14. Departures from the plan
+1. ScaleHistories (step 2): the splits alternate 3 for 2 and 2 for 3, not 3 for 2 and 1 for 3, and each sell takes all of the oldest lot with shares and half of the next, not part of the oldest one or two. With the plan's recipe a 1,000-transaction holding carries fractions of hundreds of digits (2 to the power 150 and beyond), so the timing would measure long-number arithmetic, not the calculations. The comparison's random histories keep 1 for 3, 3 for 7 and partial picks.
+2. AppStartTimingTest (step 2): three test methods (run1 to run3) sharing one seeded database, not one test that opens MainActivity three times: the v2 compose test API in use has no empty rule to launch the activity by hand. The screen-tests count becomes 9 with it, not 7. ScreenTestSupport.kt gains unlockAppTimed() as added lines only: unlockApp() returns only after the data has loaded.
+3. HoldingsScaleTest's cap (step 2): it counts a call's whole measurement (warm-up and runs) against 60 s, not one call, and a call that would pass it with three runs is timed once. The first "before" run, with the cap on one call only, was stopped after about 13 minutes (your A) and run again; it then took about 5 minutes. A progress line per call and size goes to core/build/scale/progress.txt.
+4. HoldingsComparisonTest's time (step 2): 13.9 s with both sides on the code before 15c, against the 1 to 3 s estimated in section 8. Step 7 measures it with the new code on one side.
