@@ -475,7 +475,7 @@ Each departure from this plan is recorded here with its date and the reason.
 - 2026-11-06: status fixes after 15b (your A): the 15b status line, section 11 (15a "done", a 15b row, 16 to 35 not started), the status line at the top, the screen-tests spike's cleanup (plan.md, the note's line 3 and section 8, open item 47), the vscode-claude-code note's merge, AGP 9.5.1 in open item 31 and CLAUDE.md, the deleted AVD in CLAUDE.md. Spec C19 is asked separately.
 - 2026-11-06: spec.md C19's status text updated (your B): 07a is now caught on GitHub's runner too (15b, #133 run 2), cited by file and section in place of "spike F". No rule, criterion or handling changed, so spec.md stays v6.
 - 2026-11-06: pull request #135 (status fixes after 15b; spec C19 status) was merged as 82527e2; main's CI and screen tests green (6 of 6). Open items checked (your A): 27 closed (core.autocrlf = true in Git's system config); 22 and 20 updated (the warning explained; the Dependabot pull requests listed). The rest stay as they are.
-- 2026-11-06: a table of contents at the top of plan.md and CLAUDE.md, in spec.md's form (your request).
+- 2026-11-06: a table of contents at the top of plan.md and CLAUDE.md, in spec.md's form (your request); CLAUDE.md section 4 reminds to keep each table up to date when a document is edited.
 
 ## 13. Out of scope for this plan
 Performance over time, per-holding dividends, ETF look-through, the next intent.md items,

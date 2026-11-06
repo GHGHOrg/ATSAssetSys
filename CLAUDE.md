@@ -64,6 +64,7 @@ CI (.github/workflows/ci.yml) runs the style check and then the same three steps
 - A red screen-tests run is not merged. Read its cause before a re-run: the run's artifact holds the results, the emulator log and any unlock screenshots, and logcat holds the ScreenTestUnlock lines. Each re-run needs your yes.
 - A branch that is never merged (defects brought back, experiments) is named throw-away-NN-what, and its pull request is a draft that is closed unmerged (15b step 4).
 - Refer to a record by its file and section, not by a shorthand name: "plan/spikes/screen-tests.md 11.4, series 3", not "spike F, series 3", and the same for decisions and runs. A shorthand like "spike F" or "your B" means nothing to a later reader (15b step 3).
+- When you edit a document that has a table of contents at the top (spec.md, plan.md, CLAUDE.md), update the table too: add, rename or remove the entry for each heading you add, rename or remove, and check each link against its heading's anchor.
 
 ## 5. Where things are
 - intent/intent.md (v52, final) and one file per change request (intent/intent-cr-NN-short-name.md; CR1 is intent-cr-01-tiny-remainders.md, CR2 intent-cr-02-screen-models.md, CR3 intent-cr-03-screen-tests.md), spec/spec.md (v6, final, one file; acceptance criteria tagged AC-NN, code comments may still say "criterion NN"), spec/wireframes/, plan/plan.md, plan/setup.md.
