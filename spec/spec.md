@@ -25,7 +25,7 @@
 - [13. Open design points](#13-open-design-points)
 - [14. Components and responsibilities (technology-neutral)](#14-components-and-responsibilities-technology-neutral)
 
-# spec.md (v6, draft)
+# spec.md (v6, final)
 
 Source: intent/intent.md v52 (final) and intent/intent-cr-01-tiny-remainders.md (CR1) and intent/intent-cr-03-screen-tests.md (CR3). Stage: Design.
 Nothing in this file has been built, run or verified against real data. Items marked **[UNVERIFIED]** rest on my memory or assumptions, not on checks done in this session.
