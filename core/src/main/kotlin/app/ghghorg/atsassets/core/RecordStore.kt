@@ -82,6 +82,12 @@ interface RecordStore {
     /** The hidden holdings, each at 0 shares. Throws [UnreadableDataException] if stored data cannot be read or checked. */
     suspend fun loadHidden(): List<HiddenHolding>
 
+    /**
+     * As [loadHidden], checked against [transactions] the caller has just loaded, so a store need not read them again
+     * (iteration 15c). By default it is [loadHidden].
+     */
+    suspend fun loadHidden(transactions: List<Transaction>): List<HiddenHolding> = loadHidden()
+
     /** Hides [holding] (4.4). Not a transaction; no cash effect. Throws if it is already hidden. */
     suspend fun hide(holding: HiddenHolding)
 

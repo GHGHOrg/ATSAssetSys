@@ -38,6 +38,18 @@ object Hiding {
         return hidden.filter { (sharesAfterEveryEntry(ledger, it.portfolioId, it.ticker)?.signum() ?: 0) > 0 }
     }
 
+    /**
+     * Each of [holdings]' shares counting every entry, a later-dated one included; null for a holding with no buy. One
+     * pass over [transactions] for all of them (iteration 15c: the check of the stored hidden holdings at start).
+     */
+    fun sharesAfterEveryEntry(
+        transactions: List<Transaction>,
+        holdings: Collection<HiddenHolding>,
+    ): Map<HiddenHolding, Fraction?> {
+        val ledger = Ledger(transactions)
+        return holdings.associateWith { sharesAfterEveryEntry(ledger, it.portfolioId, it.ticker) }
+    }
+
     /** The date of the holding's last transaction, a reversal included (view 9, marker 2); null with none. */
     fun lastTransactionDate(
         transactions: List<Transaction>,

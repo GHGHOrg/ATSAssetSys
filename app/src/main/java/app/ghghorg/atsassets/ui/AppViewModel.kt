@@ -826,13 +826,12 @@ class AppViewModel(
             try {
                 val opened = storeProvider()
                 store = opened
-                showLoaded(
-                    opened.loadCashEntries(),
-                    opened.loadPortfolios(),
-                    opened.loadTransactions(),
-                    opened.loadInstruments(),
-                    opened.loadHidden(),
-                )
+                val entries = opened.loadCashEntries()
+                val portfolios = opened.loadPortfolios()
+                val transactions = opened.loadTransactions()
+                val instruments = opened.loadInstruments()
+                // The hidden holdings are checked against the transactions just read, not a second read (15c).
+                showLoaded(entries, portfolios, transactions, instruments, opened.loadHidden(transactions))
             } catch (e: UnreadableDataException) {
                 mutableState.update { it.copy(screen = Screen.UNREADABLE) }
             }
