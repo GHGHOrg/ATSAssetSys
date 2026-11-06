@@ -9,7 +9,7 @@ On a holding's detail at 0 shares I tap Hide. The holding leaves the portfolio's
 ## 2. Spec refs
 - Spec 4.4 (Hide and Unhide, "0 only when exact", a save that leaves a hidden holding with shares unhides it), 4.6 (reversing a sell unhides), 4.8 (counts and values), view 3 (the holdings list, the count, the link), view 6 (the Hide button), view 9 (Hidden holdings), section 8's `hidden` row (spec only; built in 31).
 - Wireframes: 09 frames A and B, markers 1 to 4; 06 marker 9; 03 markers 1, 5 and 7.
-- Criteria: 27 (its backup-and-restore part in 31 to 34), 51 (with the sample file in 34; here with your data), 60(a) on K1, 59(e)'s "offers Hide", and the standing criteria 9, 35, 39 to 42.
+- Criteria: AC-27 (its backup-and-restore part in 31 to 34), AC-51 (with the sample file in 34; here with your data), AC-60(a) on K1, AC-59(e)'s "offers Hide", and the standing checks AC-09, AC-35, AC-39 to AC-42.
 - Spec 14: K1, K2 (a new stored record), K5, K9.
 
 ## 3. Out of scope
@@ -50,14 +50,14 @@ Each step ends with build, tests and lint (all with --rerun-tasks) and the repor
 ## 8. Proof
 Commands: as in 14c, all with --rerun-tasks. CI green on the pull request.
 By hand on the phone, with 14c's data (Main: AAPL 15 shares, V 0 shares, MA 1 share; 投資信託: SPY at 0 shares, to be confirmed by your photo; cash $3,005.32; net worth $4,155.32). Each check names its start and the control; the figures are worked out from the phone's data first.
-1. Install over 14c's build: the migration ran and the data is still there (criterion 35).
+1. Install over 14c's build: the migration ran and the data is still there (AC-35).
 2. Main, V: Hide shown; AAPL and MA show no Hide. Tap Hide: V leaves Main's list and Main's count on the Portfolios tab drops by 1 (59(e)'s "offers Hide").
 3. Main, Hidden holdings: one row, V, "0 shares", "Last transaction 2026-11-03 ET", Unhide; tapping the row opens Holding detail with neither Hide nor Unhide; Back returns to Hidden holdings.
 4. Unhide: the row goes, the plain line shows, V is back in Main's list at 0 shares and in the count.
 5. Unhidden by a save: hide V again, then reverse V's last sell (0.00000001 for $0.00, no cash change): V has 0.00000001 shares, is back in the list, and Hidden holdings shows the plain line (60(a)'s rule, with your data).
 6. 投資信託, Hidden holdings with none hidden: the plain line.
 7. Close and reopen the app: a hidden holding stays hidden.
-8. Largest font and landscape, light and dark, TalkBack on a Hidden holdings row (ticker, shares, date and Unhide in full; criterion 51) (criteria 9, 39 to 42).
+8. Largest font and landscape, light and dark, TalkBack on a Hidden holdings row (ticker, shares, date and Unhide in full; AC-51) (AC-09, AC-39 to AC-42).
 
 ## 9. Research
 - None expected: Room's AutoMigration for a new table is used as in 1 to 5; the exported schema shows the SQL.
@@ -89,18 +89,18 @@ On ec2adf1's code (2026-11-03, all with --rerun-tasks): spotlessCheck green; deb
 
 ### 13.3 Phone results (Android 17, debug build versionCode 19, your reports)
 Checks 1 to 8 all yes. Each check's figures were worked out from the phone's data first; 投資信託's SPY at 0 shares and no lots confirmed by you before the install.
-- 1: installed over the 14c build (lastUpdateTime 2026-11-03 16:05:02; firstInstallTime 2026-10-29 10:44:04 unchanged); the migration 5 to 6 ran with no unreadable-data screen; net worth $4,155.32, cash $3,005.32, Main AAPL 15, V 0, MA 1, the Hidden holdings link shown; Main 3 holdings (criterion 35).
+- 1: installed over the 14c build (lastUpdateTime 2026-11-03 16:05:02; firstInstallTime 2026-10-29 10:44:04 unchanged); the migration 5 to 6 ran with no unreadable-data screen; net worth $4,155.32, cash $3,005.32, Main AAPL 15, V 0, MA 1, the Hidden holdings link shown; Main 3 holdings (AC-35).
 - 2: no Hide on AAPL or MA; Hide on V (0 shares); tapped with no confirmation, the button went; Main listed AAPL and MA, 2 holdings; cash $3,005.32 (59(e)'s "offers Hide").
-- 3: Main's Hidden holdings: the title, "Portfolio" over Main, one row V, "0 shares", "Last transaction 2026-11-03 ET", Unhide; the row opened V's detail with neither Hide nor Unhide; Back returned to Hidden holdings (criterion 51; decision 3).
+- 3: Main's Hidden holdings: the title, "Portfolio" over Main, one row V, "0 shares", "Last transaction 2026-11-03 ET", Unhide; the row opened V's detail with neither Hide nor Unhide; Back returned to Hidden holdings (AC-51; decision 3).
 - 4: Unhide with no confirmation: the row went, "No hidden holdings"; V back in Main at 0 shares, 3 holdings.
 - 5: V hidden again, then its 2026-11-03 sell of 0.00000001 for $0.00 reversed from the hidden V's detail: "Reversed on 2026-11-03"; V back in Main at 0.00000001 shares, 3 holdings, Hidden holdings empty, no Hide on V, cash $3,005.32 (60(a)'s rule with your data).
 - 6: 投資信託's Hidden holdings showed "No hidden holdings"; SPY (0 shares) offered Hide; hidden, it left the list and 投資信託 showed 0 holdings.
 - 7: after closing the app from Recents and reopening it: SPY still hidden, one row "SPY, 0 shares, Last transaction 2026-10-31 ET, Unhide"; Main's Hidden holdings empty.
-- 8: largest font and landscape (Hidden holdings scrolls as one; V's Holding detail header gives way), light and dark (the link, Hidden holdings, the plain line), TalkBack read "Hidden holdings, opens a list", "Hidden holdings, portfolio 投資信託", "SPY, 0 shares, last transaction 2026-10-31 Eastern Time" and "Unhide SPY" (criteria 9, 39 to 42, 51).
+- 8: largest font and landscape (Hidden holdings scrolls as one; V's Holding detail header gives way), light and dark (the link, Hidden holdings, the plain line), TalkBack read "Hidden holdings, opens a list", "Hidden holdings, portfolio 投資信託", "SPY, 0 shares, last transaction 2026-10-31 Eastern Time" and "Unhide SPY" (AC-09, AC-39 to AC-42, AC-51).
 Afterwards: cash $3,005.32, net worth $4,155.32; Main AAPL 15, V 0.00000001, MA 1; 投資信託 SPY hidden.
 
 ### 13.4 Not run or not checked
-CI and the pull request; TalkBack on the Hide button (no holding was at 0 and unhidden during check 8); unhiding by a new buy and by a buy pair on the phone (unit tested); a failed Hide or Unhide and a rollback of an unhiding save (unit tested for the state; Room's @Transaction needs a device test, none in the project; open item 14); the backup-and-restore parts of criteria 27 and 51 and the sample file's OLDCO (31 to 34); the release APK on a device (unsigned, open item 4); a Logcat check (not in section 8); open item 33 (34); the screens in a JVM test (open item 47).
+CI and the pull request; TalkBack on the Hide button (no holding was at 0 and unhidden during check 8); unhiding by a new buy and by a buy pair on the phone (unit tested); a failed Hide or Unhide and a rollback of an unhiding save (unit tested for the state; Room's @Transaction needs a device test, none in the project; open item 14); the backup-and-restore parts of AC-27 and AC-51 and the sample file's OLDCO (31 to 34); the release APK on a device (unsigned, open item 4); a Logcat check (not in section 8); open item 33 (34); the screens in a JVM test (open item 47).
 
 ## 14. Departures from the plan
 1. The RecordStore interface additions (load, hide, unhide; the unhide list on saveBuy, saveReversal and savePair) were made in step 3 with the data layer, not in step 2, so the app compiled at every step.

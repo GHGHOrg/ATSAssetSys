@@ -9,18 +9,18 @@ were added, and the CSV online-only rule (C8; sections 2, 6, 8, 11, 14) was appl
 the date-field note and time zone suffix rule (sections 6, 11, 14) was added, and
 the cross-file double-counting known limit (C6, section 8) was added, and
 the transaction history cash filter rule (finding 11; sections 6, 11) was added, and
-findings 6 and 8 (buy total rule in 4.3; acceptance criteria 11 and 12) were applied, and
-finding 5 (navigation outline, section 6; criterion 13) was applied, and
+findings 6 and 8 (buy total rule in 4.3; acceptance AC-11 and AC-12) were applied, and
+finding 5 (navigation outline, section 6; AC-13) was applied, and
 views 1 and 2 were renamed (Overall; Net Worth (Total)) with a naming note in section 6, and
-finding 7 (lot picker fields and order, 4.4; criterion 14) was applied, and
-finding 9 (ticker check owned by K5 and K6; 4.3, section 14, criterion 15) was applied, and
+finding 7 (lot picker fields and order, 4.4; AC-14) was applied, and
+finding 9 (ticker check owned by K5 and K6; 4.3, section 14, AC-15) was applied, and
 group 1 of the intent v52 rework was applied (restore-only model: section 8 rewritten as
 Backup file and restore, section 9 rewritten, K6 and K7 merged, slices 5 and 6 merged, C6
 withdrawn, D1 and D3 superseded, D5 and D6 opened; this supersedes the earlier CSV items
 in this list; spec.md is still draft v2 and still cites intent v51 until group 3), and
 group 2 of the rework was applied (G2, G4, G5, G6, G7, G9: new C15, 4.9, Reverse and re-enter
 in 4.6, first-launch and empty state in section 6, privacy, last backup and reminder in
-section 9, criteria 18 to 23, K10, D7 and D8), and
+section 9, AC-18 to AC-23, K10, D7 and D8), and
 items 1 to 5 of group 3 were applied (title raised to draft v3, source set to intent v52,
 naming note removed from section 6, Holding wording fixed in section 3 for finding 10), and
 items 6 to 9 of group 3 were applied (C3, C7, C8 and C15 approved, C15 changed to the
@@ -34,112 +34,112 @@ version 1, rejection reasons, error report; new C16 for the Copy report button; 
 in 4.2, 4.6, 4.7, 4.9, 6, 9, 11, 13, 14), and
 the sample files were made (spec/example-backup.csv, spec/example-backup-expected.md,
 spec/template-backup.csv) and view 9 was renamed Hidden holdings, with the restore summary
-counts defined (sections 6 and 8, criterion 25), and
+counts defined (sections 6 and 8, AC-25), and
 Example G (Reverse and re-enter) was added to section 5 and "Examples A to F" became
-"Examples A to G" in criterion 2, slice 1 and dependency rule 3, and
-the Hide and Unhide rule was added (views 6 and 9, 4.4, criterion 27), and
-the ticker type check was added (mutual fund, exchange, currency; 4.3, 7, 8, criterion 15), and
-the opening balance rule was made strict (4.2, sections 3, 6 and 8, criteria 16 and 19), and
+"Examples A to G" in AC-02, slice 1 and dependency rule 3, and
+the Hide and Unhide rule was added (views 6 and 9, 4.4, AC-27), and
+the ticker type check was added (mutual fund, exchange, currency; 4.3, 7, 8, AC-15), and
+the opening balance rule was made strict (4.2, sections 3, 6 and 8, AC-16 and AC-19), and
 the slice columns of K1, K2, K9 and K10 were corrected (section 14), and
 the wording of the banner and the empty-state steps was deferred to Build (D9, section 13), and
-criteria 28 to 31 were added (portfolio deletion, cash date filter, review screen, 8 decimals; section 11), and
-the exchange check was changed to a US national securities exchange list kept in plan.md (4.3, 7, 8, criterion 15), and
-allocation was split into two levels (net worth level on Net Worth (Total), one portfolio on Allocation; C12, 4.8, section 6, criteria 32 to 34), and
+AC-28 to AC-31 were added (portfolio deletion, cash date filter, review screen, 8 decimals; section 11), and
+the exchange check was changed to a US national securities exchange list kept in plan.md (4.3, 7, 8, AC-15), and
+allocation was split into two levels (net worth level on Net Worth (Total), one portfolio on Allocation; C12, 4.8, section 6, AC-32 to AC-34), and
 the wording of four repeated rules was aligned (8 decimals in 4.3 and 4.4, Reverse and re-enter exclusions in 4.6, the net worth formula in 4.8, the Buy messages in section 6), and
 the guided-empty-state sentence was added (the guide ends after step 1; section 6), and
 the spec version was raised from v1 to v2, then to v3, and then to v4 after the findings batch, and
 the minimum Android version (Android 13, API 33) was written into section 9 and C16 (H90, H91;
 the spec stays draft v4), and
-concern C17 (sideloading and developer verification, section 2) and criterion 35 (section 11)
+concern C17 (sideloading and developer verification, section 2) and AC-35 (section 11)
 were added (H92, H93; the spec stays draft v4), and
 concern C18 (encryption at rest, section 2), the encryption bullet (section 9),
-criterion 36 (section 11) and the K2 wording (section 14) were added (H94 to H97; the
+AC-36 (section 11) and the K2 wording (section 14) were added (H94 to H97; the
 spec stays draft v4), and
-the no-automatic-copies bullet (section 9), criterion 37 (section 11) and the K2 wording
+the no-automatic-copies bullet (section 9), AC-37 (section 11) and the K2 wording
 (section 14) were added (H98 to H100; the spec stays draft v4), and
-the network and logging bullet (section 9), criterion 38 (section 11), the K4 wording and
+the network and logging bullet (section 9), AC-38 (section 11), the K4 wording and
 dependency rule 5 (section 14) were added (H101 to H104; the spec stays draft v4), and
-the accessibility paragraph (section 6), criterion 39 (section 11) and the K9 wording
+the accessibility paragraph (section 6), AC-39 (section 11) and the K9 wording
 (section 14) were added (H105 to H107; the spec stays draft v4), and
-the theme paragraph (section 6), criterion 40 (section 11) and the K9 wording
+the theme paragraph (section 6), AC-40 (section 11) and the K9 wording
 (section 14) were added (H108 to H110; the spec stays draft v4), and
-the number format and color paragraph (section 6), criterion 41 (section 11), the K9 wording
+the number format and color paragraph (section 6), AC-41 (section 11), the K9 wording
 (section 14) and design point D10 (section 13) were added (H111 to H114; the spec stays draft v4), and
-the error, empty and loading states paragraph (section 6), criterion 42 (section 11) and the
+the error, empty and loading states paragraph (section 6), AC-42 (section 11) and the
 K9 wording (section 14) were added (H115 to H117; the spec stays draft v4), and
 the Overall allocation dropdown and donut (view 1, section 6), the wireframes pointer, accessibility rule (6)
-and navigation wording, criterion 43 (section 11) and the K9 wording (section 14) were added with the first
+and navigation wording, AC-43 (section 11) and the K9 wording (section 14) were added with the first
 approved wireframe (H118 to H123; the spec stays draft v4; new folder spec/wireframes/ with
 01-overall.html and README.md), and
 the Net Worth (Total) screen rules (view 2, section 6), the age of the oldest price (4.8), a pointer
-wording that no longer states progress, and criterion 44 (section 11) were added with the second
+wording that no longer states progress, and AC-44 (section 11) were added with the second
 approved wireframe (H124 to H127; the spec stays draft v4; new file spec/wireframes/02-net-worth.html), and
 the Portfolios and holdings rules (view 3, section 6), the meaning of gain/loss figures as unrealized and
-since purchase (4.8), the navigation wording and criterion 45 (section 11) were added with the third
+since purchase (4.8), the navigation wording and AC-45 (section 11) were added with the third
 approved wireframe (H128 to H131; the spec stays draft v4; new file spec/wireframes/03-portfolios.html), and
-the Allocation (one portfolio) screen rules (view 4, section 6), the no-holdings rule and criterion 46
+the Allocation (one portfolio) screen rules (view 4, section 6), the no-holdings rule and AC-46
 (section 11) were added with the fourth approved wireframe (H132, H133; the spec stays draft v4; new file
 spec/wireframes/04-allocation.html), and
-the Realized gains screen rules (view 5, section 6) and criterion 47 (section 11) were added with the
+the Realized gains screen rules (view 5, section 6) and AC-47 (section 11) were added with the
 fifth approved wireframe (H134, H135; the spec stays draft v4; new file
 spec/wireframes/05-realized-gains.html), and
-the Holding detail screen rules (view 6, section 6) and criterion 48 (section 11) were added with the
+the Holding detail screen rules (view 6, section 6) and AC-48 (section 11) were added with the
 sixth approved wireframe (H136, H137; the spec stays draft v4; new file
 spec/wireframes/06-holding-detail.html), and
-the Cash account screen rules (view 7, section 6), the navigation wording and criterion 49 (section 11)
+the Cash account screen rules (view 7, section 6), the navigation wording and AC-49 (section 11)
 were added with the seventh approved wireframe (H138 to H140; the spec stays draft v4; new file
 spec/wireframes/07-cash.html), and
-the Transaction history screen rules (view 8, section 6) and criterion 50 (section 11) were added with the
+the Transaction history screen rules (view 8, section 6) and AC-50 (section 11) were added with the
 eighth approved wireframe (H141, H142; the spec stays draft v4; new file
 spec/wireframes/08-transaction-history.html), and
-the Hidden holdings screen rules (view 9, section 6) and criterion 51 (section 11) were added with the
+the Hidden holdings screen rules (view 9, section 6) and AC-51 (section 11) were added with the
 ninth approved wireframe (H143, H144; the spec stays draft v4; new file
 spec/wireframes/09-hidden-holdings.html), and
-the Buy and sell entry paragraph (section 6) and criterion 52 (section 11) were added with the
+the Buy and sell entry paragraph (section 6) and AC-52 (section 11) were added with the
 tenth wireframe, 10a (H145, H146; the spec stays draft v4; new file
 spec/wireframes/10a-buy-sell.html), and
-the Cash, split and reversal entry paragraph (section 6) and criterion 53 (section 11) were added
+the Cash, split and reversal entry paragraph (section 6) and AC-53 (section 11) were added
 with the eleventh wireframe, 10b (H147, H149; H148 was dropped because the wording it would have
 changed is in the wireframe 07 and 08 files, not in spec.md; the spec stays draft v4; new file
 spec/wireframes/10b-split-cash-reversal.html), and
-the Reverse and re-enter entry paragraph (section 6) and criterion 54 (section 11) were added with
+the Reverse and re-enter entry paragraph (section 6) and AC-54 (section 11) were added with
 the twelfth wireframe, 10c (H150, H151; the spec stays draft v4; new file
 spec/wireframes/10c-reverse-reenter.html), and
 the Portfolio create, rename and delete paragraph (section 6), rule 4.7 (with its section 3
-pointer), the restore-file portfolio rules (section 8) and criteria 26 and 55 (section 11) were
+pointer), the restore-file portfolio rules (section 8) and AC-26 and AC-55 (section 11) were
 added with the thirteenth wireframe, 10d (H152 to H156; the spec stays draft v4; new file
 spec/wireframes/10d-portfolio-dialogs.html), and
-the Backup export and restore entry paragraph (section 6) and criterion 56 (section 11) were
+the Backup export and restore entry paragraph (section 6) and AC-56 (section 11) were
 added with the fourteenth wireframe, 10e (H157, H158; the spec stays draft v4; new file
 spec/wireframes/10e-backup-restore.html), and
-the rule that Android's file screens do not lock the app (section 9) and criterion 57 (section 11)
+the rule that Android's file screens do not lock the app (section 9) and AC-57 (section 11)
 were added (H159, H160; the spec stays draft v4), and
-the More and Settings entry paragraph (section 6), criterion 58 (section 11) and the More line of
+the More and Settings entry paragraph (section 6), AC-58 (section 11) and the More line of
 the navigation outline (gear icon for Settings) were added with the fifteenth wireframe, 10f
 (H161 to H163; the spec stays draft v4; new file spec/wireframes/10f-more-settings.html), and
 the D9 and historical prices notes in section 13 were recorded as deliberate decisions (D9 reworded,
 new D11; H164; the spec stays draft v4), and
 D10 was resolved (new rule 4.10, Exact arithmetic and rounding: integer cents, exact decimals and
 exact fractions, rounding only for display, the full-lot rule for sells, with the matching edits in
-sections 3, 4.4, 4.6, 6, 8, 13 and 14 and new criterion 59; H165 to H174; the spec stays draft v4), and
+sections 3, 4.4, 4.6, 6, 8, 13 and 14 and new AC-59; H165 to H174; the spec stays draft v4), and
 the restore summary wording for a fresh install (section 8 step 5 and the section 6 backup paragraph)
 and the cash reversal note naming the original by type and date (4.6 and the section 6 cash paragraph)
 were aligned (H175, H176; the spec stays draft v4), and
 the business-rules review was applied: a save that leaves a hidden holding with shares unhides it
 (4.4, 4.6), the ticker check is for buys only (4.6, section 6), the as-of date of figures is stated
 (4.8), and lots are checked per lot and by their least remaining quantity (4.1, 4.4), with new
-criterion 60 (H177 to H181; the spec stays draft v4), and
+AC-60 (H177 to H181; the spec stays draft v4), and
 the portfolio deletion fix was applied (a fixing deposit adjustment must be dated before the first
 negative date, and a shortfall on the opening balance date cannot be fixed; 4.7, Example E, the
-section 6 paragraph on portfolio dialogs, criteria 28 and 55; wireframe 10d was reopened and
+section 6 paragraph on portfolio dialogs, AC-28 and AC-55; wireframe 10d was reopened and
 re-approved) (H182 to H186; the spec stays draft v4), and
 the reversal date rule was added (a reversal takes effect on its own date, so a buy reversal must
 be dated on or after the date the sell was reversed; 4.6 Date and Reversing a buy, Example D, the
-section 6 paragraph on cash, split and reversal entry, criterion 53; wireframe 10b was reopened
+section 6 paragraph on cash, split and reversal entry, AC-53; wireframe 10b was reopened
 and re-approved with a second blocked message in frame J) (H188 to H192; the spec stays draft v4), and
 the reversal date rule was carried to Reverse and re-enter (the pair is checked per lot, so a new
 buy does not cover the original lot; Example G, the section 6 paragraph on Reverse and re-enter,
-criteria 21 and 54; wireframe 10c was reopened and re-approved with a second blocked message in
+AC-21 and AC-54; wireframe 10c was reopened and re-approved with a second blocked message in
 frame F) (H193 to H196; the spec stays draft v4), and
 the wording of Reversing a sell was aligned with the split rule (the lots are put back with the lot cost
 they had when sold; quantity and cost per share follow the splits since the sell date; 4.6) (H197; the spec
@@ -149,7 +149,7 @@ text in its list, and "Tech" is refused after the rename to Technology; 4.9, sec
 State rows) (H198 to H201; the spec stays draft v4), and
 the same-date rule for a buy and a split was added (the order of 4.1 decides which comes first; 4.3, 4.5
 and 4.6) and the split review wording was aligned (section 6) (H202 to H205; the spec stays draft v4), and
-criterion 58 was extended (a Geographies case on the sample file, and the refusal of "Tech" after the
+AC-58 was extended (a Geographies case on the sample file, and the refusal of "Tech" after the
 rename; section 11) (H206, H207; the spec stays draft v4), and
 the Keystore line in section 9 was marked partly checked (Android's Keystore page and the owner's own
 checks; the rest stays unverified; H208; the spec stays draft v4), and
@@ -160,15 +160,15 @@ stays unverified) (H209; the spec stays draft v4), and
 the secure-window bullet in section 9 was marked partly checked against Android's pages (FLAG_SECURE
 and the API 33 preview switch confirmed; screen recording, the recents preview and the 3-minute window
 stay unverified) (H210; the spec stays draft v4), and
-the quiet refresh-failed line was added to wireframes 03 and 06 and tested in criteria 45 and 48
+the quiet refresh-failed line was added to wireframes 03 and 06 and tested in AC-45 and AC-48
 (section 11; H211, H212; the spec stays draft v4; wireframe 05 also lost its "Informational only."
 text to match C10, with no spec hunk; wireframes 03, 04 and 05 got pointer fixes, and 06 got
 pointer and wording fixes, all in the wireframe files only), and
 the Cash account screen rules were extended (a reversal's cash line and its chip, the Clear filters
-button and the entries-shown line; view 7, section 6, criterion 49; H213, H214; the spec stays draft v4;
+button and the entries-shown line; view 7, section 6, AC-49; H213, H214; the spec stays draft v4;
 wireframe 07 got a frame D for the reversal line and pointer and wording fixes in the wireframe file), and
 the Transaction history cash label was aligned with the Cash account (a reversal's cash line reads
-"Reversal of buy" or "Reversal of sell"; view 8, section 6, criterion 50; H215, H216; the spec stays
+"Reversal of buy" or "Reversal of sell"; view 8, section 6, AC-50; H215, H216; the spec stays
 draft v4; wireframe 08 got a frame E for the Cash chip with a reversal, and pointer fixes in markers 3, 5
 and 7), and
 the unhide-by-save rule was added to Hidden holdings (a save that leaves a hidden holding with shares
@@ -178,11 +178,11 @@ the quantity rule was added to 4.2 (a quantity is above 0 and has up to 8 decima
 says for files; H218; the spec stays draft v4; wireframe 10a got the Sell all wording aligned with 4.4 and
 4.10, "buys only" in marker 6, the greyed-out lot wording in marker 10, a corrected lot in frame D, and a
 quantity message in frame F, in the wireframe file only), and
-criterion 31 was extended (a quantity of 0 or less is refused, like a ninth decimal; section 11; H219; the
+AC-31 was extended (a quantity of 0 or less is refused, like a ninth decimal; section 11; H219; the
 spec stays draft v4), and
 the shared $0.00 and holding-count rule was added (a breakdown whose base is $0.00 shows one plain line, on
 Net Worth (Total), Allocation and Overall; a portfolio's number of holdings is the rows in its holdings list;
-4.8, views 2, 3 and 4, criteria 44, 45 and 46; H220 to H226; the spec stays draft v4), and
+4.8, views 2, 3 and 4, AC-44, AC-45 and AC-46; H220 to H226; the spec stays draft v4), and
 the view 5 sentence "Informational only." was reworded so it reads as a rule about the figures and not as a
 label (C10; view 5, section 6; H227; the spec stays draft v4), and
 section 12 and the section 14 slice column were marked as a layered proposal superseded by plan.md, and the
@@ -191,7 +191,7 @@ and note, section 14 intro and column header "Layered slices"; H228 to H230; the
 the no-automatic-copies bullet in section 9 was marked partly checked against Android's Auto Backup page and its
 Android 12 behavior-changes page (allowBackup false does not stop device-to-device transfers on some devices, so
 dataExtractionRules with exclusions in both sections is needed; the release build must not be debuggable), and
-criterion 37 was extended with the manifest and debuggable checks (section 9, section 11; H231, H232; the spec
+AC-37 was extended with the manifest and debuggable checks (section 9, section 11; H231, H232; the spec
 stays draft v4), and
 spec.md was marked final by the user (title changed from "DRAFT v4, awaiting approval" to "v4, final";
 H233; 472 lines, 131,997 bytes).
@@ -296,19 +296,19 @@ KNOWN LIMITS
   backup-security (9) 18. Each count runs from a section's heading to the line before the
   next heading, so it includes the blank line. These are line counts, not context tokens.
 - The sizes above were recomputed after the findings batch, after the Android minimum
-  version (H90, H91; section 9 went from 13 to 14) and after C17 and criterion 35 (H92,
+  version (H90, H91; section 9 went from 13 to 14) and after C17 and AC-35 (H92,
   H93; section 2 went from 21 to 22 and section 11 from 36 to 37) and after C18, the
-  encryption bullet and criterion 36 (H94 to H96; section 2 went from 22 to 23, section 9
+  encryption bullet and AC-36 (H94 to H96; section 2 went from 22 to 23, section 9
   from 14 to 15 and section 11 from 37 to 38) and after the no-automatic-copies bullet and
-  criterion 37 (H98, H99; section 9 went from 15 to 16 and section 11 from 38 to 39)
-  and after the network and logging bullet, criterion 38 and dependency rule 5 (H101,
+  AC-37 (H98, H99; section 9 went from 15 to 16 and section 11 from 38 to 39)
+  and after the network and logging bullet, AC-38 and dependency rule 5 (H101,
   H102, H104; section 9 went from 16 to 17, section 11 from 39 to 40 and section 14 from
-  21 to 22) and after the accessibility paragraph and criterion 39 (H105, H106; section 6
+  21 to 22) and after the accessibility paragraph and AC-39 (H105, H106; section 6
   went from 32 to 34 and section 11 from 40 to 41) and after the theme paragraph and
-  criterion 40 (H108, H109; section 6 went from 34 to 36 and section 11 from 41 to 42) and after the
-  number format paragraph, criterion 41 and D10 (H111 to H114; section 6 went from 36 to 38,
+  AC-40 (H108, H109; section 6 went from 34 to 36 and section 11 from 41 to 42) and after the
+  number format paragraph, AC-41 and D10 (H111 to H114; section 6 went from 36 to 38,
   section 11 from 42 to 43 and section 13 from 13 to 14) and after the
-  error, empty and loading states paragraph and criterion 42 (H115 to H117; section 6 went
+  error, empty and loading states paragraph and AC-42 (H115 to H117; section 6 went
   from 38 to 40 and section 11 from 43 to 44) and after the
   Overall dropdown and wireframes pointer (H118 to H123; section 11 went from 44 to 45, and
   section 6 stays at 40 because H118 to H121 are edited in place) and after the
@@ -322,28 +322,28 @@ KNOWN LIMITS
   Cash account rules (H138 to H140; section 11 went from 50 to 51, and view 7 and the navigation outline are edited in place) and after the
   Transaction history rules (H141, H142; section 11 went from 51 to 52, and view 8 is edited in place) and after the
   Hidden holdings rules (H143, H144; section 11 went from 52 to 53, and view 9 is edited in place) and after the
-  Buy and sell entry paragraph and criterion 52 (H145, H146; section 6 went from 40 to 42 and section 11 from 53 to 54) and after the
-  Cash, split and reversal entry paragraph and criterion 53 (H147, H149; section 6 went from 42 to 44 and section 11 from 54 to 55) and after the
-  Reverse and re-enter entry paragraph and criterion 54 (H150, H151; section 6 went from 44 to 46 and section 11 from 55 to 56) and after the
-  Portfolio create, rename and delete paragraph, rule 4.7, the section 8 portfolio rules and criteria 26 and 55 (H152 to H156; section 4 went from 86 to 87, section 6 from 46 to 48 and section 11 from 56 to 57) and after the
-  Backup export and restore entry paragraph and criterion 56 (H157, H158; section 6 went from 48 to 50 and section 11 from 57 to 58) and after the
-  file-screen lock bullet and criterion 57 (H159, H160; section 9 went from 17 to 18 and section 11 from 58 to 59) and after the
-  More and Settings entry paragraph, criterion 58 and the navigation outline line (H161 to H163; section 6 went from 50 to 52 and section 11 from 59 to 60) and after the
+  Buy and sell entry paragraph and AC-52 (H145, H146; section 6 went from 40 to 42 and section 11 from 53 to 54) and after the
+  Cash, split and reversal entry paragraph and AC-53 (H147, H149; section 6 went from 42 to 44 and section 11 from 54 to 55) and after the
+  Reverse and re-enter entry paragraph and AC-54 (H150, H151; section 6 went from 44 to 46 and section 11 from 55 to 56) and after the
+  Portfolio create, rename and delete paragraph, rule 4.7, the section 8 portfolio rules and AC-26 and AC-55 (H152 to H156; section 4 went from 86 to 87, section 6 from 46 to 48 and section 11 from 56 to 57) and after the
+  Backup export and restore entry paragraph and AC-56 (H157, H158; section 6 went from 48 to 50 and section 11 from 57 to 58) and after the
+  file-screen lock bullet and AC-57 (H159, H160; section 9 went from 17 to 18 and section 11 from 58 to 59) and after the
+  More and Settings entry paragraph, AC-58 and the navigation outline line (H161 to H163; section 6 went from 50 to 52 and section 11 from 59 to 60) and after the
   D9 and D11 wording (H164; section 13 stays at 14 lines, edited in place) and after the
-  D10 rule 4.10 and criterion 59 (H165 to H174; section 4 went from 87 to 99 and section 11 from 60 to 61,
+  D10 rule 4.10 and AC-59 (H165 to H174; section 4 went from 87 to 99 and section 11 from 60 to 61,
   and sections 3, 6, 8, 13 and 14 are edited in place) and after the
   restore summary wording and the cash reversal note (H175, H176; all four edits are in place, so no
   section changed size) and after the
   business-rules review (H177 to H181; section 4 went from 99 to 100 and section 11
   from 61 to 62, and sections 6 and 8 are edited in place) and after the
   portfolio deletion fix (H182 to H186; section 4 went from 100 to 101, and Example E, the
-  section 6 paragraph on portfolio dialogs and criteria 28 and 55 are edited in place) and after the
+  section 6 paragraph on portfolio dialogs and AC-28 and AC-55 are edited in place) and after the
   reversal date rule (H188 to H192; all five edits are in place, so no section changed size) and after
   its extension to Reverse and re-enter (H193 to H196; all four edits are in place, so no section
   changed size) and after the Reversing a sell wording (H197; edited in place, so no section changed
   size) and after the list-name rule (H198 to H201; all four edits are in place, so no section changed
   size) and after the same-date rule (H202 to H205; all four edits are in place, so no section changed
-  size) and after the criterion 58 extension (H206, H207; edited in place, so no section changed size)
+  size) and after the AC-58 extension (H206, H207; edited in place, so no section changed size)
   and after the Keystore wording (H208; edited in place, so no section changed size) and after the
   C17 wording (H209; edited in place, so no section changed size) and after the secure-window wording
   (H210; edited in place, so no section changed size) and after the quiet refresh-failed line
@@ -352,11 +352,11 @@ KNOWN LIMITS
   history cash label (H215, H216; both edited in place, so no section changed size) and after the
   Hidden holdings unhide wording (H217; edited in place, so no section changed size) and after the
   quantity rule (H218; edited in place, so no section changed size) and after the
-  criterion 31 extension (H219; edited in place, so no section changed size) and after the $0.00 and
+  AC-31 extension (H219; edited in place, so no section changed size) and after the $0.00 and
   holding-count rule (H220 to H226; all seven edits are in place, so no section changed size) and after the
   view 5 rewording (H227; edited in place, so no section changed size) and after the section 12 layering
   wording (H228 to H230; H228 and H230 are edited in place, H229 adds 2 lines, so section 12 went from 8 to 10 lines) and after the
-  no-automatic-copies wording and criterion 37 (H231, H232; both edited in place, so no section changed size) and after the
+  no-automatic-copies wording and AC-37 (H231, H232; both edited in place, so no section changed size) and after the
   final marking (H233; line 1 edited in place, so no section changed size).
 - Section 9 grew from 7 to 18 lines (lock, file screens and lock, privacy, screenshot window, minimum Android
   version, encryption at rest, no automatic copies, network and logging, last backup, reminder), so it holds more than backup and security now. Its file

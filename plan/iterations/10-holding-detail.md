@@ -10,7 +10,7 @@ On a portfolio's screen I tap a holding and its detail opens. A header stays in 
 - spec section 6, view 6 (the header, the tabs, Transactions, Lots, the flags as in view 3); 4.8 (valued at cost, "no price"); 4.4 (the lots listed: those with shares, oldest first, same-date lots in entry order); 4.10 (cost per share exact, rounded only when shown, 2 decimals or 4 under $1).
 - Wireframe 06: frames A and B, markers 1 to 5; frame D and markers 9 and 10 are format only (no holding reaches 0 shares before 11).
 - Navigation outline: Holding detail offers Buy with the ticker filled in; it is reached from a portfolio's holdings list.
-- Criteria: 48 (the parts without prices, sells, splits and classification), 9, 35, 39 to 42.
+- Criteria: AC-48 (the parts without prices, sells, splits and classification), AC-09, AC-35, AC-39 to AC-42.
 - spec 14: K3 (lots, holdings), K5 (Buy from the holding), K9.
 
 ## 3. Out of scope
@@ -40,14 +40,14 @@ Each step ends with build, tests and lint and the report; then I stop.
 
 ## 7. Risks
 - Holdings rows become tap targets: TalkBack reads each as one button, as the Portfolios rows since 08.
-- The header stays in place while the tab content scrolls: at the largest font it could take most of the screen (criterion 39; checked on the phone).
+- The header stays in place while the tab content scrolls: at the largest font it could take most of the screen (AC-39; checked on the phone).
 - Cost per share is an exact fraction (for example $1,000.00 for 3 shares) and is rounded only when shown (4.10).
 - The Buy screen must return to where it was opened from: a tab (09) or the holding (decision 2).
 
 ## 8. Proof
 Commands: as in 09, all with --rerun-tasks. CI green on the pull request.
 By hand on the phone, with 09's data (AAPL in Main, SPY):
-1. Install over 09's build (versionCode 9): the data, the buys and both portfolios are still there (criterion 35).
+1. Install over 09's build (versionCode 9): the data, the buys and both portfolios are still there (AC-35).
 2. Tap AAPL in Main: the header shows Main, $1,500.00, 10 shares, cost $1,500.00 and "no price, at cost"; it opens on Transactions with the buy of 2026-10-31.
 3. Lots: one lot, 2026-10-31 ET, 10 left, $150.00 per share, $1,500.00, "no price".
 4. Buy in the header: AAPL and Main are filled in; Back returns to the holding; a small buy saved returns to the holding with two transactions (newest first) and two lots (oldest first). Optional, as it adds data.
@@ -85,7 +85,7 @@ On fb2d270's code (2026-10-31, all with --rerun-tasks): spotlessCheck green; deb
 
 ### 13.3 Phone results (Android 17, debug build versionCode 10, your reports)
 Checks 1 to 6 all yes; 6a after the fix. Notes:
-- 1: installed over the 09 build (adb install -r, lastUpdateTime 16:01:30, firstInstallTime 2026-10-29 10:44:04 unchanged); net worth, cash entries, the AAPL and SPY buys, both portfolios and Main's holdings as before (criterion 35).
+- 1: installed over the 09 build (adb install -r, lastUpdateTime 16:01:30, firstInstallTime 2026-10-29 10:44:04 unchanged); net worth, cash entries, the AAPL and SPY buys, both portfolios and Main's holdings as before (AC-35).
 - 2: the AAPL row opened Holding detail: "< AAPL", the header Main, $1,500.00, Shares 10, Cost $1,500.00, "no price, at cost", Buy, the Transactions and Lots tabs on Transactions, and one line "2026-10-31 ET   Buy   10 shares   $1,500.00" that opens nothing.
 - 3: Lots showed one lot, "2026-10-31 ET", "10 left, $150.00 per share", $1,500.00, "no price"; the header stayed in place.
 - 4: Buy from the header filled in AAPL and Main; "<" returned to the holding; a buy of 1 share saved from there returned to the holding with 11 shares and $1,650.00, the new transaction first and the original lot first.
@@ -98,7 +98,7 @@ Checks 1 to 6 all yes; 6a after the fix. Notes:
 CI and the pull request; open item 33 (34); the release APK on a device (unsigned, open item 4); a release build of the fix; a list long enough to scroll under the fixed header in portrait (too few rows); contrast measurement (by eye only); Compose UI tests (none in the project).
 
 ## 14. Departures from the plan
-1. Defect found in phone check 6a (the risk of section 7): at the largest font the fixed part filled the screen and hid the list. View 6 and wireframe 06 keep the header in place, while criterion 39 asks that nothing be hidden and screens scroll instead; both cannot hold there. Fixed on your decision (A): the fixed part stays in place while it takes at most half the screen's height, and when it is taller the whole screen scrolls as one (fb2d270). In landscape it is taller too, so the screen scrolls as one there as well, which you accepted (A). No failing test was written first: the defect lives in on-device layout, which a JVM test cannot reproduce, and the project has no device UI tests (as in 08); the recheck on the phone is the proof.
+1. Defect found in phone check 6a (the risk of section 7): at the largest font the fixed part filled the screen and hid the list. View 6 and wireframe 06 keep the header in place, while AC-39 asks that nothing be hidden and screens scroll instead; both cannot hold there. Fixed on your decision (A): the fixed part stays in place while it takes at most half the screen's height, and when it is taller the whole screen scrolls as one (fb2d270). In landscape it is taller too, so the screen scrolls as one there as well, which you accepted (A). No failing test was written first: the defect lives in on-device layout, which a JVM test cannot reproduce, and the project has no device UI tests (as in 08); the recheck on the phone is the proof.
 2. core/ gained Holdings.transactionsOf and lotsOf and Lot.costPerShare (step 2); AppState keeps today, so lots are counted as of the same date as the holdings.
 3. AppContent's bar-screen branch became else (step 3), so the list of screens no longer passes 140 characters.
 4. The transaction row is one line, date first, separated by spaces only (your change in step 4, wording 2); the plan had the wireframe's two lines.

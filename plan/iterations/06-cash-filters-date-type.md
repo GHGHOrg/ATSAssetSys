@@ -10,12 +10,12 @@ On the Cash tab I narrow the list by a From and To date and by one type chip (Al
 - spec 6, view 7: the filters are optional, combine (an entry must match all of them) and are not saved; From and To are inclusive with the date note; the type chips are one at a time; Clear filters; one line saying how many entries are shown; the real balance on every row; one plain line when nothing matches.
 - Wireframe 07: markers 2, 3, 5, 6 and 7; frames B and C. The opening balance shows only under All (marker 3).
 - spec 6: the date note (C13), the error and empty states, accessibility, theme.
-- Criteria: 29 (the date range filter with the date note), 49 (part: the chips without Buy and Sell, Clear filters, the count line, the real balance, the no-match line), 9, 35, 39 to 42.
+- Criteria: AC-29 (the date range filter with the date note), AC-49 (part: the chips without Buy and Sell, Clear filters, the count line, the real balance, the no-match line), AC-09, AC-35, AC-39 to AC-42.
 - spec 14: K3 (read only), K9.
 
 ## 3. Out of scope
 - The ticker picker, the Buy and Sell chips, the disabled-chip rule and reversal trade lines (28).
-- Transaction history filters (27). Criterion 37: still deferred.
+- Transaction history filters (27). AC-37: still deferred.
 
 ## 4. Files
 Changed, core/: CashAccount.kt (K3: a new CashFilter(from, to, type) and rows(entries, filter); it filters after the balances are worked out, so every row keeps its real balance); CashAccountTest.kt.
@@ -37,7 +37,7 @@ Each step ends with build, tests and lint and the report; then I stop.
 
 ## 7. Risks
 - The balances must be computed on the whole list before filtering; filtering first would show wrong balances. A test covers it.
-- The filter card adds height above the list; at the largest font the list starts far down (criterion 39), but the screen scrolls.
+- The filter card adds height above the list; at the largest font the list starts far down (AC-39), but the screen scrolls.
 - A typed date is incomplete while typing; its message must not flicker on every key (decision 1).
 - The count line needs a plural ("1 entry shown", "2 entries shown").
 
@@ -54,7 +54,7 @@ By hand on the phone, with 05's data:
 8. A From date of "2026-13-01": the date message under From; the list is not filtered by it (decision 1).
 9. From after To: the no-match line (decision 2).
 10. Switch to Overall and back: the filters are still set (decision 4).
-11. Install over the 05 build with data: the data is still there (criterion 35).
+11. Install over the 05 build with data: the data is still there (AC-35).
 12. Largest font, light and dark, TalkBack: each chip reads its name and whether it is selected; the count line and the no-match line are read.
 13. Open an entry's detail with filters set, then go back: the filters are still set (decision 4).
 
@@ -88,14 +88,14 @@ On 42121aa's code (2026-10-29, all with --rerun-tasks): spotlessCheck green; deb
 
 ### 13.3 Phone results (Android 17, debug build versionCode 6, your reports)
 Checks 1 to 13 all yes, and D1 to D6 after the change. Notes:
-- 11: installed over the 05 build (versionCode 5, adb install -r, firstInstallTime unchanged); the data was still there (criterion 35). The changed build was installed over it again at 21:10:44.
+- 11: installed over the 05 build (versionCode 5, adb install -r, firstInstallTime unchanged); the data was still there (AC-35). The changed build was installed over it again at 21:10:44.
 - 2 and 3: 2026-01-05 to 2026-01-10 showed 4 rows with "4 entries shown"; the Jan 10 deposit kept Balance $250.00; with Deposit, 2 rows.
 - 4: Adjustment showed the 04 adjustments and the 05 reversals (6 rows).
 - D1 to D6: number keyboard; 20260105 shown as 2026-01-05; no 9th digit; a non-digit gives the digits message at once; 20261301 gives the date message; the filter works with digits; readable at the largest font.
 - No uninstall in 06; the phone holds the 03 to 05 data.
 
 ### 13.4 Not run or not checked
-CI and the pull request; the release APK on a device (unsigned); a release build of the change commit; contrast measurement (by eye only); criterion 37 (deferred); Compose UI tests (none in the project); the cursor mapping on the phone beyond D2 (the mapping is unit tested).
+CI and the pull request; the release APK on a device (unsigned); a release build of the change commit; contrast measurement (by eye only); AC-37 (deferred); Compose UI tests (none in the project); the cursor mapping on the phone beyond D2 (the mapping is unit tested).
 
 ## 14. Departures from the plan
 1. Decision 1 changed after phone check 12, on your request: digits only on a number keyboard, the dashes shown by the field (a VisualTransformation; the rules in a new plain-Kotlin DateDigits with its own 7 tests), a ninth digit not accepted, any other character refused at once with a new message (DateRefusal.NOT_DIGITS), a pasted date with dashes refused too. Tests first (they failed to compile), then the code; commit 42121aa. Five 06 ViewModel tests from step 3 had their typed dates changed from "2026-01-05" to "20260105" (no assertion changed); four new ViewModel tests. Only the two filter fields changed (your decision A); the cash entry form's date and the reversal date are open item 32.

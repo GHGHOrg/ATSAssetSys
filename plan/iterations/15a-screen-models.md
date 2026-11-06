@@ -8,7 +8,7 @@ What three screens show is built as a model and checked by tests on every build:
 
 ## 2. Spec refs
 - Spec: view 6 (Holding detail's Transactions tab), 4.6 (Reverse and re-enter's combined review), 4.2 and section 6 (the cash entry form's messages; Error states). Section 14, K9 (screens only read through K3), unchanged.
-- Criteria: 48 (Holding detail), 54 (Reverse and re-enter), 42 (keeps its phone check; CR2 Design, your A), 53 (cash entry), and the standing criteria 9, 35, 39 to 42.
+- Criteria: AC-48 (Holding detail), AC-54 (Reverse and re-enter), AC-42 (keeps its phone check; CR2 Design, your A), AC-53 (cash entry), and the standing checks AC-09, AC-35, AC-39 to AC-42.
 - The three past defects, now covered by tests: 14c section 14 item 9, 14b section 14 item 6, and the 05 phone check 5 pitfall in CLAUDE.md.
 
 ## 3. Out of scope
@@ -24,7 +24,7 @@ No new library, no schema change, no new wording, no change to what is shown.
 
 ## 5. Order of work
 Each step ends with build, tests and lint (all with --rerun-tasks) and the report; then I stop.
-1. This file and the plan.md lines (the 15a row linking CR2 and item 48; the #119 merge record; the change log with CR2's Design result: no spec change, criterion 42 keeps its phone check). Baseline run (630 tests).
+1. This file and the plan.md lines (the 15a row linking CR2 and item 48; the #119 merge record; the change log with CR2's Design result: no spec change, AC-42 keeps its phone check). Baseline run (630 tests).
 2. Holding detail's Transactions rows: tests first, shown red (a buy with a quantity ratio shows 0.33333333 shares, the 14c case; a sell; a split's ratio; a reversal's original kind and date; "1 share" vs "2 shares"; the amount as $100.00; newest first, a shared date's later entry first, as now), then the code; the screen draws only from the model.
 3. The combined review: tests first (part 1 and part 2 for a buy pair, a sell pair, a split pair and a cash pair; the typed note shown, an empty one included, never the stand-in "check", the 14b case; the combined cash; the new buy's exact shares and price, CR1), then the code.
 4. The cash entry form's messages at Review: tests first (an adjustment with no note and a date that makes cash negative shows both messages, the 05 case; each field message alone; a save failure), then the code.
@@ -44,11 +44,11 @@ Each step ends with build, tests and lint (all with --rerun-tasks) and the repor
 ## 8. Proof
 Commands: as in 15, all with --rerun-tasks. CI green on the pull request.
 By hand on the phone, with 15's data (Main: AAPL 15, V 0.00000001, MA 1; 投資信託: SPY hidden; cash $3,005.32). Before the install you photograph the three screens; after it each must look the same.
-1. Install over 15's build: the data is still there (criterion 35).
+1. Install over 15's build: the data is still there (AC-35).
 2. MA's Transactions tab: every row (buys, the reversal, the splits) matches the photo; the newest buy reads 0.33333333 shares, $100.00.
 3. The combined review: Reverse and re-enter on MA's newest buy, unchanged, Review: parts 1 and 2 and the combined cash match the photo; back out without saving.
 4. The cash entry form: an Adjustment of −$5,000.00 with no note, dated today, Review: both messages show together and match the photo; back out without saving.
-5. Largest font, light and dark, on those three screens (criteria 9, 39 to 42).
+5. Largest font, light and dark, on those three screens (AC-09, AC-39 to AC-42).
 
 ## 9. Research
 - None needed: no new library.
@@ -72,11 +72,11 @@ On 5119a9d's code (2026-11-03, all with --rerun-tasks): spotlessCheck green; deb
 ### 13.3 Phone results (Android 17, your reports)
 No photos: you read the three screens on versionCode 19 against the expected text worked out from your data and the strings, then again on versionCode 20 after the install. Both readings matched.
 - Before, on versionCode 19: screens 1 to 3 all as expected (MA's 5 Transactions rows; the combined review of MA's newest buy; the cash entry form's two messages).
-- 1: installed over the 15 build (versionCode 20, lastUpdateTime 2026-11-03 20:21:12; firstInstallTime 2026-10-29 10:44:04 unchanged); net worth $4,155.32, cash $3,005.32, Main AAPL 15, V 0.00000001, MA 1, SPY still hidden in 投資信託 (criterion 35).
+- 1: installed over the 15 build (versionCode 20, lastUpdateTime 2026-11-03 20:21:12; firstInstallTime 2026-10-29 10:44:04 unchanged); net worth $4,155.32, cash $3,005.32, Main AAPL 15, V 0.00000001, MA 1, SPY still hidden in 投資信託 (AC-35).
 - 2: MA's Transactions tab, newest first, all 2026-11-03 ET: Split 3 for 1; Buy 0.33333333 shares $100.00; Reversal of the buy of 2026-11-03 ET; Split 1 for 3; Buy 1 share $100.00; row 2 opened its detail.
 - 3: Reverse and re-enter on MA's newest buy, unchanged: the banner "Replacing the buy of 2026-11-03 ET: 0.33333333 MA, $100.00. Nothing changes until you confirm.", quantity 1 with "Original: 0.33333333"; Review both: part 1 Reverses Buy, 2026-11-03 ET, reversal date 2026-11-03 ET with Change, shares removed 1, cash effect +$100.00; part 2 Buy MA, Main, 2026-11-03 ET, quantity 1, total amount $100.00, price per share $100.00, cash effect −$100.00; combined cash effect $0.00; nothing saved.
 - 4: the cash entry form, an Adjustment Out of $5,000.00 dated 2026-11-03 with no note, at Review: "Note: required for an adjustment." and "Not saved. Cash would be negative on 2026-11-03 by $1,994.68." together; nothing saved.
-- 5: largest font, light and dark on those three screens (criteria 9, 39 to 42).
+- 5: largest font, light and dark on those three screens (AC-09, AC-39 to AC-42).
 - Recheck after the Deploy fix (versionCode 21, lastUpdateTime 2026-11-03 21:36:49): Reverse and re-enter on V's 2026-11-03 sell of 0.99999997, unchanged, Review: part 1 "Lots put back" 0.14285714 shares, part 2 "Lots used" 0.14285714 shares; nothing saved. My first expected value, 0.99999997, was wrong: the reversal goes after every entry of the original's date, so the 1 for 7 entered later that day applies (0.99999997 / 7 shown 0.14285714), and the new sell's pick takes the lot's exact 1/7 (CLAUDE.md pitfall from 14a). The app was right.
 
 ### 13.4 Not run or not checked

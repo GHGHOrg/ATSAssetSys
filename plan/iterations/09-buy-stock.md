@@ -12,7 +12,7 @@ I tap Buy/Sell and then Buy, pick the portfolio, type ticker, date, quantity and
 - spec 7 and 9: the source behind K4; only tickers and the source's request details leave the phone.
 - Example C, as an automated test with a real buy (03 used a withdrawal as a stand-in).
 - Wireframe 10a: frames A, B, F and G, markers 1 to 7 and 16 to 18. View 3: the portfolio screen's summary and holdings rows, the Portfolios tab row. View 7: the trade line. Navigation outline: the Buy/Sell button on Overall, Portfolios and Cash.
-- Criteria: 15, 19 (the buy part), 24 (the buy and sell parts), 30, 31, 42 (Example C), 52 (the buy part), and 9, 35, 39 to 42.
+- Criteria: AC-15, AC-19 (the buy part), AC-24 (the buy and sell parts), AC-30, AC-31, AC-42 (Example C), AC-52 (the buy part), and AC-09, AC-35, AC-39 to AC-42.
 - Spike price-source: decisions 3 to 6; open items 14 (the first multi-row save), 33 (deferred, decision 9), 37 (settled, decision 6).
 - spec 14: K1 (rules), K2 (store), K3 (valuation at cost), K4 (verify only), K5 (the flow), K9.
 
@@ -62,13 +62,13 @@ Each step ends with build, tests and lint and the report; then I stop.
 ## 8. Proof
 Commands: as in 08, all with --rerun-tasks. CI green on the pull request.
 By hand on the phone, with 08's data (the 03 to 06 cash entries, Main and 投資信託):
-1. Install over 08's build (versionCode 8): the data and both portfolios are still there (criterion 35).
+1. Install over 08's build (versionCode 8): the data and both portfolios are still there (AC-35).
 2. The Buy/Sell button on Overall, Portfolios and Cash opens the menu inside the window; Sell says "Nothing to sell yet".
 3. Buy AAPL in Main: the price per share shows as the fields change; Review shows the review screen; Back to edit keeps the values; Confirm saves. The Cash tab shows the trade line and the balance after it; Main shows the holding at cost with "no price, at cost"; the Portfolios row and Overall's net worth count it at cost.
-4. Buy SPY (NYSE Arca, ETP): accepted (criterion 15). Sell now says "Selling arrives in a later build".
-5. Refusals, each with the text kept: AABB (OTC), VFIAX and a typo (not found), a quantity with a ninth decimal, a quantity of 0, a total of 0, a total above the cash, a backdated buy that makes a later date negative (Example C style, criterion 42).
-6. With the device offline: a new ticker is refused with the offline message; AAPL (verified) is bought (criterion 15).
-7. Largest font, light and dark, TalkBack: the menu, the form, the review and the refusals (criteria 39 to 41).
+4. Buy SPY (NYSE Arca, ETP): accepted (AC-15). Sell now says "Selling arrives in a later build".
+5. Refusals, each with the text kept: AABB (OTC), VFIAX and a typo (not found), a quantity with a ninth decimal, a quantity of 0, a total of 0, a total above the cash, a backdated buy that makes a later date negative (Example C style, AC-42).
+6. With the device offline: a new ticker is refused with the offline message; AAPL (verified) is bought (AC-15).
+7. Largest font, light and dark, TalkBack: the menu, the form, the review and the refusals (AC-39 to AC-41).
 8. Close and reopen the app: the buys, the holdings and the cash lines are kept.
 9. Logcat (log cleared first): no ticker, amount or key in the app's lines (counts only).
 
@@ -133,7 +133,7 @@ The key reached BuildConfig with length 40 (only the length printed); BuildConfi
 
 ### 13.4 Phone results (Android 17, debug build versionCode 9, your reports)
 Checks 1 to 9 all yes; check 3 after fix 1, check 7's finding after fix 2. Notes:
-- 1: installed over the 08 build (adb install -r, lastUpdateTime 13:25:29, firstInstallTime 2026-10-29 10:44:04 unchanged); the cash data, Main and 投資信託 were there, Buy/Sell showed (criterion 35, database version 3).
+- 1: installed over the 08 build (adb install -r, lastUpdateTime 13:25:29, firstInstallTime 2026-10-29 10:44:04 unchanged); the cash data, Main and 投資信託 were there, Buy/Sell showed (AC-35, database version 3).
 - 2: Buy/Sell on Overall, Portfolios and Cash, not on More; the menu inside the window with no cover loop; a tap outside and Back close it; Sell said "Nothing to sell yet"; Buy opened on Main.
 - 3: failed on the first build: every new ticker got "did not answer (302)" (section 14, item 1). After the fix (installed 14:03:35) APPL, a typo, gave "Not saved. APPL was not found. Mutual funds are not accepted.", other tickers passed, and AAPL 10 for $1,500.00 in Main went through check, review, a second review with no look-up, and save; Cash, Portfolios, Main and Overall showed it as described. "Checking…" showed for about 3 to 4 seconds.
 - 4: SPY (ETP, NYSE Arca) accepted and shown as "1 share"; Sell then said "Selling arrives in a later build".
@@ -145,7 +145,7 @@ Checks 1 to 9 all yes; check 3 after fix 1, check 7's finding after fix 2. Notes
 - The phone now holds the AAPL buy in Main and the SPY buy from check 4, besides the 03 to 06 cash data.
 
 ### 13.5 Not run or not checked
-CI and the pull request; open item 33 (34); the release APK on a device (unsigned, open item 4); a release build of the two fixes; that a refused buy write saves nothing in Room (shown by the generated code only, open item 14); the app's network traffic (criterion 38, traffic part); contrast measurement (by eye only); criterion 37 (deferred); Compose UI tests (none in the project); whether Finnhub counts the file download against the 60 calls a minute.
+CI and the pull request; open item 33 (34); the release APK on a device (unsigned, open item 4); a release build of the two fixes; that a refused buy write saves nothing in Room (shown by the generated code only, open item 14); the app's network traffic (AC-38, traffic part); contrast measurement (by eye only); AC-37 (deferred); Compose UI tests (none in the project); whether Finnhub counts the file download against the 60 calls a minute.
 
 ## 14. Departures from the plan
 1. Defect found in phone check 3: Finnhub answers /stock/symbol?exchange=US with a 302 to a signed link on static2.finnhub.io, and the source followed no redirect, so every new ticker got "did not answer (302)". Step 2's PC measurement had followed the redirect silently (13.1). Fixed with failing tests first (5 of 7 new tests failed before): one redirect (301, 302, 303, 307, 308) is followed by hand, only over https to finnhub.io or a subdomain, without the key; anything else stays "did not answer" with the first status (fea01af, your decision A). Rechecked on the phone.

@@ -10,12 +10,12 @@ On the Cash tab I tap an entry to see its details. On a deposit, withdrawal, int
 - spec 4.6: no edit or delete; a reversal is all-or-nothing and linked; follows 4.1; cannot be reversed itself; at most once per entry; the amount is fixed from the stored value; the date defaults to the original's, later allowed, earlier refused; a cash reversal is an Adjustment with the opposite amount and a pre-filled note; never the opening balance or a trade line.
 - spec 4.1: the replay after every entry (03 decision 5).
 - spec 6, view 7: a direct entry opens its detail, where a reversal starts. Wireframe 10b: frame H (the detail), frame I marker 19 (the cash reversal), markers 15 to 20, and frame J's "Reversal date: not earlier than the original (<date>)."
-- Criteria: 53 (part: "Reverse is not offered on the opening balance, a reversal, an already reversed entry or a trade line"; a reversal dated before the original is refused), 9, 35, 39 to 42.
+- Criteria: AC-53 (part: "Reverse is not offered on the opening balance, a reversal, an already reversed entry or a trade line"; a reversal dated before the original is refused), AC-09, AC-35, AC-39 to AC-42.
 - spec 14: K1, K5, K9.
 
 ## 3. Out of scope
 - Reverse and re-enter (14). Reversing buys, sells and splits (13). Trade lines and their detail (09).
-- Filters (06). Criterion 37: still deferred.
+- Filters (06). AC-37: still deferred.
 
 ## 4. Files
 Changed, core/: CashEntries.kt (a new reverse(existing, id, originalId, date, note): the original exists; it is not the opening balance, a trade line or a reversal; it is not already reversed; the date is not before the original's; the note is not blank and has no line break; then the replay. The new entry is an Adjustment with reversesId set to the original); CashEntriesTest.kt.
@@ -53,7 +53,7 @@ By hand on the phone, with 04's data:
 6. A reversal dated later than the original is saved; the Cash rows and balance are right.
 7. Reverse the Jan 5 deposit of $500.00 dated 2026-01-05: refused with "Not saved. Cash would be negative on 2026-01-10 by $300.00." (my arithmetic: 1,000 to 500 on Jan 6, to −300 after the Jan 10 withdrawal).
 8. Clearing the reversal note gives "Note: required for an adjustment."
-9. Install over the 04 build with data: the data is still there (criterion 35).
+9. Install over the 04 build with data: the data is still there (AC-35).
 10. Largest font, light and dark, TalkBack on the tappable rows, the detail, the links and the reversal screen.
 11. Logcat while saving a reversal: no amount or note text.
 
@@ -87,7 +87,7 @@ On ce1c6fd's code (2026-10-29, all with --rerun-tasks): spotlessCheck green; deb
 
 ### 13.3 Phone results (Android 17, debug build versionCode 5, your reports)
 Checks 1 to 11 all yes, and 5b and 7b after the fix. Notes:
-- 9: installed over the 04 build (versionCode 4, adb install -r, firstInstallTime unchanged); the data was still there (criterion 35). The fixed build was installed over it again at 17:27:42.
+- 9: installed over the 04 build (versionCode 4, adb install -r, firstInstallTime unchanged); the data was still there (AC-35). The fixed build was installed over it again at 17:27:42.
 - 3 and 4: Interest/dividend +$12.34 reversed (−$12.34); the original shows "Reversed on <date> ET", the reversal shows "Reverses: Interest/dividend, <date> ET"; the links work both ways.
 - 5 and 6: the Fee adjustment: dated yesterday refused; dated tomorrow saved (+$5.00).
 - 7: the Jan 5 deposit dated 2026-01-05 refused with "Not saved. Cash would be negative on 2026-01-10 by $300.00."; Cancel saved nothing.
@@ -96,7 +96,7 @@ Checks 1 to 11 all yes, and 5b and 7b after the fix. Notes:
 - No uninstall in 05; the phone holds the 03 and 04 data plus the 05 reversals.
 
 ### 13.4 Not run or not checked
-CI and the pull request; the release APK on a device (unsigned); a release build of the fix commit; contrast measurement (by eye only); criterion 37 (deferred); Compose UI tests (none in the project).
+CI and the pull request; the release APK on a device (unsigned); a release build of the fix commit; contrast measurement (by eye only); AC-37 (deferred); Compose UI tests (none in the project).
 
 ## 14. Departures from the plan
 1. Defect found in phone check 5: with a date before the original (or a short balance) and a blank note, only the note error showed, because K1 stops at the first failing rule and checks the note first. Two failing tests were written first (both failed: 89 tests, 2 failed), then confirmReversal was changed to two K1 passes as in the form's review (the note with the original's date as a stand-in; the date and balance rules with a stand-in note), plus a third pass with the real id and note as the guard before saving. Commit ce1c6fd, your decision to fix it in 05. Rechecked on the phone (5b, 7b).

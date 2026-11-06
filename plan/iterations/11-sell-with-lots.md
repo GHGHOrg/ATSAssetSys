@@ -12,16 +12,16 @@ I tap Buy/Sell and then Sell, pick the portfolio and a ticker it holds, type dat
 - Example A, as an automated test.
 - Section 6: view 3 (a sold-out holding stays and counts); view 6 (Sell in the header, sells in Transactions, "No lots with shares"); view 7 (the sell's trade line); Buy and sell entry; the date-field note; the Targets line; Number format and color; Accessibility rule 5; Error, empty and loading states 1 and 4; the navigation outline (the Buy/Sell button, Holding detail).
 - Wireframe 10a: frames C to G, markers 8 to 17.
-- Criteria: 3, 13, 14, 24 (the Sell part), 29 (the trade line's text), 30, 31, 41 (the realized part), 45 (the 0-share part), 48 (the Sell parts), 52, 59(b), 59(d) without the split, 60(d) (the K1 part), 38 (the log during a sell), and 9, 35, 39 (TalkBack through a sell included), 40, 42.
+- Criteria: AC-03, AC-13, AC-14, AC-24 (the Sell part), AC-29 (the trade line's text), AC-30, AC-31, AC-41 (the realized part), AC-45 (the 0-share part), AC-48 (the Sell parts), AC-52, AC-59(b), AC-59(d) without the split, AC-60(d) (the K1 part), AC-38 (the log during a sell), and AC-09, AC-35, AC-39 (TalkBack through a sell included), AC-40, AC-42.
 - spec 14: K1 (rules), K2 (store), K3 (lots, holdings, realized gain of a sell), K5 (the flow), K9.
 
 ## 3. Out of scope
 - Prices and unrealized gain/loss (16): every lot shows "no price"; the stale format is not reachable.
-- Splits (12): criteria 59(a) and (c), and the split part of 59(d). The exact-remainder rule is built and tested in core/ with a hand-made fraction; the phone first sees it in 12.
-- Reversal of a sell (13), Reverse and re-enter (14), Hide and criterion 60(a) (15).
-- The Realized gains screen (26) and criteria 11 and 23; in 11 the realized gain shows on the sell review only.
+- Splits (12): AC-59(a) and (c), and the split part of 59(d). The exact-remainder rule is built and tested in core/ with a hand-made fraction; the phone first sees it in 12.
+- Reversal of a sell (13), Reverse and re-enter (14), Hide and AC-60(a) (15).
+- The Realized gains screen (26) and AC-11 and AC-23; in 11 the realized gain shows on the sell review only.
 - Opening a transaction from a Transactions row or a trade line (13).
-- The `sell` row of the backup file (section 8), criterion 25 and the restore half of 60(d) (31, 33, 34).
+- The `sell` row of the backup file (section 8), AC-25 and the restore half of 60(d) (31, 33, 34).
 - The phone check of open item 33 (34, 09 decision 9).
 
 ## 4. Files
@@ -53,22 +53,22 @@ Each step ends with build, tests and lint and the report; then I stop.
 - A lot's remainder for a pick is the least it holds on the sell date or any later date (4.4, 60(d)); a backdated sell is the hard case.
 - The pick limit compares at 8 places, while the lot gives up its exact remainder (4.10). Before 12 every remainder has at most 8 places, so that path is tested in core/ only.
 - Largest remainder for the lots used on the review (4.10): the first place where shown parts must add up to a shown total.
-- The first gain colors (green with a plus, red with a minus): each needs a light and a dark value that meets contrast (criteria 40, 41); color is never the only signal.
-- The Sell screen is long (fields, lots, Review): at the largest font and in landscape it must scroll as one (criterion 39; CLAUDE.md pitfall from 10).
-- Schema version 4 adds one table and touches no existing one; install over 10 (criterion 35).
+- The first gain colors (green with a plus, red with a minus): each needs a light and a dark value that meets contrast (AC-40, AC-41); color is never the only signal.
+- The Sell screen is long (fields, lots, Review): at the largest font and in landscape it must scroll as one (AC-39; CLAUDE.md pitfall from 10).
+- Schema version 4 adds one table and touches no existing one; install over 10 (AC-35).
 
 ## 8. Proof
 Commands: as in 10, all with --rerun-tasks. CI green on the pull request.
 By hand on the phone, with 10's data (AAPL in Main: lots of 10 and 1 share, both bought 2026-10-31; SPY):
-1. Install over 10's build (versionCode 10): the data, the buys and both portfolios are still there (criterion 35).
-2. The Buy/Sell menu's Sell opens the Sell screen; the stub line is gone (criterion 13: two taps from Overall).
-3. Sell 3 AAPL in Main for $480.00, today: the lot list shows two lots, oldest first, same date in entry order, each with "no price"; tap lot 1 and edit it to 3, "Picked 3 of 3 shares"; Review shows lots used 2026-10-31 ET, 3 shares, cost $450.00, realized +$30.00 in green, cash +$480.00; Confirm. Cash shows "Sell AAPL" with the balance after it; the holding shows 8 shares and cost $1,200.00; Transactions lists the sell first; Lots shows lot 1 with 7 left. Roughly timed: under 30 seconds (criterion 3).
+1. Install over 10's build (versionCode 10): the data, the buys and both portfolios are still there (AC-35).
+2. The Buy/Sell menu's Sell opens the Sell screen; the stub line is gone (AC-13: two taps from Overall).
+3. Sell 3 AAPL in Main for $480.00, today: the lot list shows two lots, oldest first, same date in entry order, each with "no price"; tap lot 1 and edit it to 3, "Picked 3 of 3 shares"; Review shows lots used 2026-10-31 ET, 3 shares, cost $450.00, realized +$30.00 in green, cash +$480.00; Confirm. Cash shows "Sell AAPL" with the balance after it; the holding shows 8 shares and cost $1,200.00; Transactions lists the sell first; Lots shows lot 1 with 7 left. Roughly timed: under 30 seconds (AC-03).
 4. Date 2026-10-30: both lots greyed out with "bought after the sell date"; picks dropped with a line.
 5. Mismatch: picks of 2 for a sell of 3 give a message naming both numbers; nothing is saved.
 6. Refusals, text kept: more than held, a pick over a lot's remainder, a ninth decimal, quantity 0, a date before the opening balance.
 7. Sell all of SPY with total $0.00: the realized loss shows in red with its sign; SPY stays on its portfolio's screen at 0 shares; its Lots tab says "No lots with shares"; the Portfolios row still counts it, at $0.00 if it is the only holding; Sell in its header says "Nothing to sell".
 8. Sell from AAPL's header: Main and AAPL are chosen; Back and a saved sell return to the holding.
-9. Largest font and landscape, light and dark, TalkBack through a whole sell with the lot picker (criteria 39 to 41).
+9. Largest font and landscape, light and dark, TalkBack through a whole sell with the lot picker (AC-39 to AC-41).
 10. Close and reopen the app: the sells, the lots and the cash lines are kept.
 11. Logcat during a sell (log cleared first): no ticker, amount or quantity in the app's lines (counts only).
 
@@ -79,7 +79,7 @@ None planned; no new library and no network.
 1. The ticker on Sell is one chip per ticker held in the chosen portfolio, in ticker order; the first is chosen when Sell opens from the menu, and a single ticker shows already chosen. Not the wireframe's dropdown, which opens a separate window (CLAUDE.md pitfall from 07; as 09 decision 11) (option A).
 2. Sell sits beside Buy in Holding detail's header. It opens the Sell screen with the holding's portfolio and ticker chosen; "<", Back and a saved sell return to the holding; at 0 shares it stays and says "Nothing to sell" when tapped (option A).
 3. A sell allocation's exact quantity is stored as a reduced fraction in one text column ("numerator/denominator", the denominator above 0, the numerator above 0, such as 10/1, 5/2 or 10/3), written by one function in core/ and read by one strict parser that refuses any other form; table sell_allocations, key (sell_id, lot_id), schema version 4. Splits (12) then need no change to stored data (option A).
-Settled by the spec, no question asked: the portfolio opens on the one you came from, otherwise the first; a sold-out holding stays in the list and counts (view 3, criterion 45). Following 09: the sell date is digits only like Buy's (09 decision 10); the pick fields use the decimal keyboard.
+Settled by the spec, no question asked: the portfolio opens on the one you came from, otherwise the first; a sold-out holding stays in the list and counts (view 3, AC-45). Following 09: the sell date is digits only like Buy's (09 decision 10); the pick fields use the decimal keyboard.
 
 ## 11. Wording to approve (D9; * = given by the wireframes or earlier iterations)
 - "Sell"*, "Ticker (held)"*, "Date"*, "Enter date in US market time (New York)"*, "Quantity"*, "Total amount, zero allowed"*, "Price per share: $175.00"*, "Sell all"*, "Review"*.
@@ -100,9 +100,9 @@ On e83a22b's code (2026-11-01, all with --rerun-tasks): spotlessCheck green; deb
 
 ### 13.3 Phone results (Android 17, debug build versionCode 11, your reports)
 Checks 1 to 11 all yes. Notes:
-- 1: installed over the 10 build (adb install -r, lastUpdateTime 2026-10-31 23:34:46, firstInstallTime 2026-10-29 10:44:04 unchanged); the data, the buys and both portfolios as before, so the migration to version 4 ran (criterion 35).
+- 1: installed over the 10 build (adb install -r, lastUpdateTime 2026-10-31 23:34:46, firstInstallTime 2026-10-29 10:44:04 unchanged); the data, the buys and both portfolios as before, so the migration to version 4 ran (AC-35).
 - 2: two taps from Overall opened Sell, the stub line gone; Main and 投資信託 as chips, AAPL chosen, the two AAPL lots oldest first in entry order with "no price", "Picked 0 shares"; 投資信託 showed its "holds no shares to sell" line; "<" returned to Overall and Sell reopened with the text kept.
-- 3: a sell of 3 AAPL for $480.00 dated 2026-10-31, lot 1 edited to 3: the review showed the lot used (2026-10-31 ET, 3 shares, cost $450.00, proceeds $480.00, gain +$30.00 in green), realized +$30.00 in green and cash +$480.00. It was started from AAPL's header (section 14, item 6), so the save returned to the holding, as decision 2 says. Cash "Sell AAPL" +$480.00 with the balance; AAPL 8 shares, cost $1,200.00, the sell first; lot 1 at 7 left, lot 2 at 1; under 30 seconds (criterion 3).
+- 3: a sell of 3 AAPL for $480.00 dated 2026-10-31, lot 1 edited to 3: the review showed the lot used (2026-10-31 ET, 3 shares, cost $450.00, proceeds $480.00, gain +$30.00 in green), realized +$30.00 in green and cash +$480.00. It was started from AAPL's header (section 14, item 6), so the save returned to the holding, as decision 2 says. Cash "Sell AAPL" +$480.00 with the balance; AAPL 8 shares, cost $1,200.00, the sell first; lot 1 at 7 left, lot 2 at 1; under 30 seconds (AC-03).
 - 4: dated 2026-10-30, both lots greyed with "Not available: bought after the sell date"; the pick was dropped with its line and the count went to "Picked 0 shares".
 - 5: a pick of 2 for a sell of 3: "Not saved. The picked lots add up to 2 shares, but the sell is for 3."; the text kept.
 - 6: each refusal on its own, the text kept, nothing saved: more than held (9 of 8), a pick of 2 on the 1-share lot (it reads "1 shares left": section 14, item 7), a ninth decimal, quantity 0, a date before the opening balance.

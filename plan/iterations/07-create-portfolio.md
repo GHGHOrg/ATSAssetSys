@@ -8,10 +8,10 @@ On the Portfolios tab I tap New portfolio, type a name and tap Create; the portf
 
 ## 2. Spec refs
 - spec 4.7 (create only): a name has at least 3 Unicode characters (code points) after leading and trailing spaces are removed, and at least one character of the Unicode category Letter; a name that matches another portfolio's name, ignoring case and spaces as in 4.9 (D7), is refused. spec 3: portfolios are listed in the order they were created.
-- spec 4.2 and criterion 19 (part: unit tested; phone check in 09, open item 33): before the opening balance exists, New portfolio shows "Set the opening balance first".
+- spec 4.2 and AC-19 (part: unit tested; phone check in 09, open item 33): before the opening balance exists, New portfolio shows "Set the opening balance first".
 - Wireframe 10d: frames A and C, markers 1, 2 and 5. The checks run in the order length, letter, duplicate, and the first failure is shown. Leading and trailing spaces are removed on saving; the typed casing is kept.
 - Wireframe 03: frame A, marker 1 (the row: name, "no holdings", $0.00 with no color) and marker 2; "No portfolios yet" with a Create a portfolio button.
-- Criteria: 26 (create part; its amount part is met since 03), 55 (create part: "投資信託" accepted; "投資", "123" and "---" refused), 24 (part: with cash and no portfolio, Overall shows a Create a portfolio button), 9, 35, 39 to 42.
+- Criteria: AC-26 (create part; its amount part is met since 03), AC-55 (create part: "投資信託" accepted; "投資", "123" and "---" refused), AC-24 (part: with cash and no portfolio, Overall shows a Create a portfolio button), AC-09, AC-35, AC-39 to AC-42.
 - spec 14: K5 (the flow), K2 (the store), K9.
 
 ## 3. Out of scope
@@ -40,15 +40,15 @@ Each step ends with build, tests and lint and the report; then I stop.
 - A row's "no holdings" and $0.00 are fixed until 09.
 
 ## 7. Risks
-- The first schema change: version 1 to 2 adds the portfolios table. If the upgrade fails on the phone, the app shows the unreadable screen; the file is not deleted (no destructive fallback). There is no backup until 31, and no device test runner for a Room migration test, so the install over 06's build with data (criterion 35) is the only real proof. The migration API is checked with javap, not written from memory.
+- The first schema change: version 1 to 2 adds the portfolios table. If the upgrade fails on the phone, the app shows the unreadable screen; the file is not deleted (no destructive fallback). There is no backup until 31, and no device test runner for a Room migration test, so the install over 06's build with data (AC-35) is the only real proof. The migration API is checked with javap, not written from memory.
 - "Spaces" and "case" (my reading): trimming and collapsing use Unicode whitespace; case is ignored by a lowercase(uppercase(...)) fold in Locale.ROOT, so "ß" and "SS" match. Spec 4.9 does not say how far case folding goes.
-- The dialog at the largest font must scroll (criterion 39).
+- The dialog at the largest font must scroll (AC-39).
 - A portfolio name is never logged (section 9). Room and the SQLCipher Java client are already silent; the JNI layer is as before.
 
 ## 8. Proof
 Commands: as in 06. CI green on the pull request.
 By hand on the phone, with 06's data:
-1. Install over 06's build (versionCode 6): the data is still there; Portfolios shows "No portfolios yet" and a Create a portfolio button (criterion 35 and the migration).
+1. Install over 06's build (versionCode 6): the data is still there; Portfolios shows "No portfolios yet" and a Create a portfolio button (AC-35 and the migration).
 2. Overall shows the Create a portfolio button; it opens the dialog.
 3. "Main" is created: listed with "no holdings" and $0.00; Overall still shows the net worth.
 4. "投資" and "  ab  ": the length message; "123" and "---": the letter message; the typed text stays each time.
@@ -65,7 +65,7 @@ javap only (step 1). No web search planned.
 
 ## 10. Decisions (all Build, settled by you 2026-10-29 to 2026-10-30)
 1. The rows are display-only in 07; the portfolio screen (frame B) and its menu arrive with 08. TalkBack reads a row as text, not a button.
-2. Overall gets a Create a portfolio button in 07 (criterion 24, part). It opens the same dialog over Overall; after Create you stay on Overall.
+2. Overall gets a Create a portfolio button in 07 (AC-24, part). It opens the same dialog over Overall; after Create you stay on Overall.
 3. "Set the opening balance first" is unit tested in 07. The phone check moves to 09 with the buy refusal, on one uninstall you approve; 34 at the latest. Open item 33; a CLAUDE.md line reminds you of it at the end of every iteration until it is closed.
 4. A line break typed or pasted into a name becomes a space as you type. No new rule and no new message (design reading).
 
@@ -92,7 +92,7 @@ Step 1, javap on room3-common 3.0.3 and room3-runtime 3.0.3: @Database has autoM
 
 ### 13.3 Phone results (Android 17, debug build versionCode 7, your reports)
 Checks 1 to 9 and 11 all yes; check 10 not run. Notes:
-- 1: installed over the 06 build (versionCode 6, adb install -r at 01:24:22, firstInstallTime 2026-10-29 10:44:04 unchanged). The migration ran when the app opened: the 03 to 06 data was still there and Portfolios showed "No portfolios yet" with Create a portfolio (criterion 35).
+- 1: installed over the 06 build (versionCode 6, adb install -r at 01:24:22, firstInstallTime 2026-10-29 10:44:04 unchanged). The migration ran when the app opened: the 03 to 06 data was still there and Portfolios showed "No portfolios yet" with Create a portfolio (AC-35).
 - 2: failed on the first build: the dialog and the cover screen alternated and no input was possible; the app had to be force-stopped. Fixed (section 14, item 1); the fixed build was installed at 01:37:08 (firstInstallTime unchanged) and check 2 passed: the dialog opens steadily over Overall, takes typing, and a tap outside does nothing.
 - 3 to 7: "Main" created and listed with "no holdings" and $0.00, the row does nothing when tapped; "投資", "  ab  ", "123" and "---" refused with their messages, the text kept and the message gone on typing; "投資信託" accepted and listed second; " main " and "MAIN" refused naming "Main"; Cancel and Back save nothing and the dialog reopens empty.
 - 8: after a force stop both portfolios and the cash data were there, in creation order.
@@ -102,7 +102,7 @@ Checks 1 to 9 and 11 all yes; check 10 not run. Notes:
 - No uninstall in 07; the phone holds the 03 to 06 data plus the portfolios Main and 投資信託.
 
 ### 13.4 Not run or not checked
-CI and the pull request; check 10 (open item 33, due in 09); the release APK on a device (unsigned, open item 4), so R8's effect on the generated migration is not shown; a release build of the fix commit; a failed migration on the phone (only the successful one was seen); the save path in the Logcat re-check; contrast measurement (by eye only); criterion 37 (deferred); Compose UI tests (none in the project).
+CI and the pull request; check 10 (open item 33, due in 09); the release APK on a device (unsigned, open item 4), so R8's effect on the generated migration is not shown; a release build of the fix commit; a failed migration on the phone (only the successful one was seen); the save path in the Logcat re-check; contrast measurement (by eye only); AC-37 (deferred); Compose UI tests (none in the project).
 
 ## 14. Departures from the plan
 1. Defect found in phone check 2: Material3's AlertDialog opens a separate window, which takes the focus; MainActivity shows the cover screen whenever its window loses focus (the experiment after 02a phone check 7), the cover removed the dialog, the focus came back and the dialog opened again, in a loop. Fixed on your decision (A) by drawing the dialog inside the activity window over a dimmed layer that covers the tab and the bottom bar, takes every tap, and hides the screen under it from TalkBack (commit dd85e96). MainActivity is unchanged. No failing test was written first: the defect lives in Android's windows and focus and cannot be reproduced in a JVM test, and the project has no device UI tests; check 2 on the phone is the proof. A CLAUDE.md pitfall records the rule for later dialogs (08, 29).
