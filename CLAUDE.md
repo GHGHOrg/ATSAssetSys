@@ -1,3 +1,14 @@
+# Table of contents
+
+- [1. Stage rules (Ruleset A)](#1-stage-rules-ruleset-a)
+- [2. Question rules (Ruleset B)](#2-question-rules-ruleset-b)
+- [3. Commands (Windows PowerShell, repo root)](#3-commands-windows-powershell-repo-root)
+- [4. Conventions](#4-conventions)
+- [5. Where things are](#5-where-things-are)
+- [6. Known pitfalls](#6-known-pitfalls)
+- [7. Standing checks for every iteration's screens](#7-standing-checks-for-every-iterations-screens)
+- [8. Working model in Claude Code](#8-working-model-in-claude-code-decided-2026-10-28-planspikesvscode-claude-codemd-section-5)
+
 # CLAUDE.md
 
 Rules, commands and pitfalls for working in this repo. Read this first.
