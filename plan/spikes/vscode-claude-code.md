@@ -1,6 +1,6 @@
 # plan/spikes/vscode-claude-code.md
 
-Stage: Build. Status: run done 2026-10-28, all 20 checks recorded (section 9); pull request #81 awaits your merge. 02b waits for the merge.
+Stage: Build. Status: run done 2026-10-28, all 20 checks recorded (section 9); pull request #81 merged as 0c2b49e, CI green on main (your report).
 Source: plan/plan.md section 7 (the spike's question list, added with this note), handoff-12.md (written 2026-10-28), the Project instructions (Ruleset A and B, read in the Project on 2026-10-28).
 The look-ups were done on 2026-10-28. Versions and behaviour here are facts of that day.
 
