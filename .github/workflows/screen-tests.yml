@@ -1,0 +1,178 @@
+name: Screen tests
+
+# AC-61 (CR3, iteration 15b; measured in plan/spikes/screen-tests.md, section 11): the screen tests on an Android 17 emulator,
+# on every pull request and on main after each merge. A red run is not merged.
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+env:
+  IMAGE: system-images;android-37.0;google_apis;x86_64
+  AVD: ats-screen-tests-37
+  # The fixed throwaway test PIN (spec section 9; plan/spikes/screen-tests.md 11.3, S10), the same as TEST_PIN in ScreenTestSupport.kt.
+  # It unlocks only this emulator, never a phone.
+  TEST_PIN: "135790"
+
+jobs:
+  screen-tests:
+    runs-on: ubuntu-26.04
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-java@v6
+        with:
+          distribution: temurin
+          java-version: 25
+      - uses: gradle/actions/setup-gradle@v6
+
+      - name: Give the job access to /dev/kvm
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
+          ls -l /dev/kvm
+
+      - name: Look up the emulator and image versions
+        id: versions
+        run: |
+          list=$("$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" --list 2>/dev/null)
+          emulator=$(echo "$list" | awk -F'|' '{n=$1; gsub(/ /,"",n)} n=="emulator" {gsub(/ /,"",$2); print $2}' | sort -V | tail -1)
+          image=$(echo "$list" | awk -F'|' -v p="$IMAGE" '{n=$1; gsub(/ /,"",n)} n==p {gsub(/ /,"",$2); print $2}' | sort -V | tail -1)
+          if [ -z "$emulator" ] || [ -z "$image" ]; then echo "::error::emulator '$emulator' or image '$image' not found"; exit 1; fi
+          echo "Emulator $emulator, image revision $image"
+          echo "sdk=$ANDROID_HOME" >> "$GITHUB_OUTPUT"
+          echo "key=emulator-$emulator-android-37.0-google_apis-x86_64-$image" >> "$GITHUB_OUTPUT"
+
+      - name: Restore the emulator and image
+        id: cache
+        uses: actions/cache/restore@v6
+        with:
+          path: |
+            ${{ steps.versions.outputs.sdk }}/emulator
+            ${{ steps.versions.outputs.sdk }}/system-images/android-37.0/google_apis/x86_64
+          key: ${{ steps.versions.outputs.key }}
+
+      - name: Install the emulator and image
+        if: steps.cache.outputs.cache-hit != 'true'
+        run: |
+          start=$SECONDS
+          yes | "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" --licenses > /dev/null
+          "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" --install emulator "$IMAGE"
+          echo "Install took $((SECONDS - start)) s"
+
+      - name: Check the emulator and image are in place
+        run: |
+          test -x "$ANDROID_HOME/emulator/emulator"
+          test -f "$ANDROID_HOME/system-images/android-37.0/google_apis/x86_64/system.img"
+          grep Pkg.Revision "$ANDROID_HOME/emulator/source.properties" "$ANDROID_HOME/system-images/android-37.0/google_apis/x86_64/source.properties"
+          du -sh "$ANDROID_HOME/emulator" "$ANDROID_HOME/system-images/android-37.0/google_apis/x86_64"
+          df -h "$HOME"
+          echo "CPUs: $(nproc)"; free -m
+
+      - name: Save the emulator and image
+        if: steps.cache.outputs.cache-hit != 'true'
+        uses: actions/cache/save@v6
+        with:
+          path: |
+            ${{ steps.versions.outputs.sdk }}/emulator
+            ${{ steps.versions.outputs.sdk }}/system-images/android-37.0/google_apis/x86_64
+          key: ${{ steps.versions.outputs.key }}
+
+      # Before the emulator starts, not beside it: sharing the runner's CPUs, the boot and the build both slowed down and
+      # Android's own system process stopped responding (plan/spikes/screen-tests.md 11.6, run 8 on 87d0a2f).
+      - name: Build the app and the tests
+        run: ./gradlew :app:assembleDebug :app:assembleDebugAndroidTest
+
+      - name: Create the AVD and start it headless
+        run: |
+          # The same folder for avdmanager and the emulator (plan/spikes/screen-tests.md 11.6, run 1: the emulator found no AVD in $HOME/.android/avd).
+          export ANDROID_AVD_HOME="$HOME/.android/avd"
+          mkdir -p "$ANDROID_AVD_HOME"
+          echo "ANDROID_AVD_HOME=$ANDROID_AVD_HOME" >> "$GITHUB_ENV"
+          echo no | "$ANDROID_HOME/cmdline-tools/latest/bin/avdmanager" create avd -n "$AVD" -k "$IMAGE" -d pixel_9_pro_xl
+          if [ ! -f "$ANDROID_AVD_HOME/$AVD.ini" ]; then
+            echo "::error::avdmanager made no $AVD.ini in $ANDROID_AVD_HOME"; find "$HOME" -name "$AVD.ini" 2>/dev/null; exit 1
+          fi
+          # 4 GB and 4 cores: with the profile's 2 GB, System UI stopped responding during the tests (plan/spikes/screen-tests.md 11.6, run 1 on 039611f).
+          nohup "$ANDROID_HOME/emulator/emulator" -avd "$AVD" -no-window -no-audio -no-boot-anim -no-snapshot \
+            -gpu swiftshader_indirect -accel on -memory 4096 -cores 4 > emulator.log 2>&1 &
+          echo "EMULATOR_PID=$!" >> "$GITHUB_ENV"
+          echo "BOOT_START=$(date +%s)" >> "$GITHUB_ENV"
+
+      - name: Wait for the boot
+        run: |
+          adb="$ANDROID_HOME/platform-tools/adb"
+          until [ "$("$adb" shell getprop sys.boot_completed 2>/dev/null | tr -d '\r')" = "1" ]; do
+            if ! kill -0 "$EMULATOR_PID" 2>/dev/null; then echo "::error::the emulator exited"; cat emulator.log; exit 1; fi
+            if [ $(($(date +%s) - BOOT_START)) -gt 600 ]; then echo "::error::no boot in 600 s"; tail -50 emulator.log; exit 1; fi
+            sleep 2
+          done
+          echo "Boot took $(($(date +%s) - BOOT_START)) s from the emulator's start"
+
+      - name: Let the system settle
+        run: |
+          # Waits until no "Not Responding" window has been seen for 10 s (up to 120 s). Back closes such a dialog
+          # as Wait would (my reading).
+          adb="$ANDROID_HOME/platform-tools/adb"
+          start=$(date +%s); quiet_since=$start
+          while [ $(($(date +%s) - quiet_since)) -lt 10 ]; do
+            if [ $(($(date +%s) - start)) -gt 120 ]; then
+              echo "::error::the system did not settle in 120 s"; "$adb" shell dumpsys window | grep -E 'mCurrentFocus|Not Responding'; exit 1
+            fi
+            if "$adb" shell dumpsys window | grep -q 'Not Responding'; then
+              echo "Not Responding window at $(($(date +%s) - start)) s"; "$adb" shell input keyevent KEYCODE_BACK; quiet_since=$(date +%s)
+            fi
+            sleep 2
+          done
+          echo "Settled after $(($(date +%s) - start)) s"
+
+      - name: Animations off and the test PIN set
+        run: |
+          adb="$ANDROID_HOME/platform-tools/adb"
+          "$adb" shell settings put global window_animation_scale 0
+          "$adb" shell settings put global transition_animation_scale 0
+          "$adb" shell settings put global animator_duration_scale 0
+          "$adb" shell locksettings set-pin "$TEST_PIN"
+          "$adb" shell locksettings verify --old "$TEST_PIN"
+
+      - name: Screen tests
+        run: |
+          start=$SECONDS
+          ./gradlew :app:connectedDebugAndroidTest
+          echo "Tests took $((SECONDS - start)) s"
+
+      # Gradle once passed with no test run (plan/spikes/screen-tests.md 11.4, series 1, run 20). The expected count is the number of @Test lines in
+      # the screen tests' sources, so it needs no update when tests are added; a stray @Test makes the run red, never green.
+      - name: Check the test count
+        if: always()
+        run: |
+          expected=$(grep -rhE '^[[:space:]]*@Test\b' app/src/androidTest | wc -l)
+          dir=app/build/outputs/androidTest-results/connected/debug
+          count=$(find "$dir" -name 'TEST-*.xml' -exec grep -ho '<testcase ' {} + 2>/dev/null | wc -l)
+          echo "Tests run: $count of $expected"
+          if [ "$expected" -eq 0 ]; then echo "::error::no @Test found in app/src/androidTest"; exit 1; fi
+          if [ "$count" -lt "$expected" ]; then echo "::error::$count tests ran, expected $expected"; exit 1; fi
+
+      - name: Pull the screenshots of failed unlocks
+        if: always()
+        run: |
+          adb="$ANDROID_HOME/platform-tools/adb"
+          mkdir -p unlock-screens
+          for f in $("$adb" shell 'ls /data/local/tmp/screen-test-*.png 2>/dev/null' | tr -d '\r'); do "$adb" pull "$f" unlock-screens/; done
+          ls -l unlock-screens
+
+      - name: Keep the results and the emulator log
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: screen-tests-attempt-${{ github.run_attempt }}
+          path: |
+            app/build/outputs/androidTest-results/connected/debug/
+            app/build/reports/androidTests/connected/debug/
+            emulator.log
+            unlock-screens/
+          retention-days: 7
