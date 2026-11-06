@@ -286,6 +286,17 @@ Reading: from 300 to 1,000 transactions (3.3 times as many), calls 1 to 4 and 7 
 
 Repeat run (2026-11-07, same code, data and seed; your request): every timed row within −7.5% to +0.5% of the first, 40 of 47 within 4%, the same 7 rows skipped; the growth ratios agree to within 4%. The first run's figures stand above.
 
+App start before 15c (AppStartTimingTest on GitHub's emulator, pull request #138, screen-tests run 42267711272 on 64416aa, 2026-11-06 UTC; "Tests run: 9 of 9", 4m 33s; 300 transactions, spread):
+
+| Run | Unlock to Overall's net worth | Tap on Cash to its rows | The test's own time |
+|---|---|---|---|
+| 1 | 6,202 ms | 2,975 ms | 19.3 s |
+| 2 | 5,379 ms | 1,385 ms | 12.3 s |
+| 3 | 2,431 ms | 627 ms | 6.9 s |
+| median | 5,379 ms | 1,385 ms | |
+
+Reading: each run is faster than the one before, not scattered. My reading: the warm-up of Android's runtime, which compiles the app's code as it runs and keeps its caches between runs in the same process. The median is therefore mostly run 2, so step 7 compares each run with its counterpart (run 1 is the nearest to a first open) as well as the medians. The medians are worked out from the three run lines: the test's own median line is written after the class, outside the logcat Gradle keeps (section 14, item 5).
+
 ### 13.2 Step 2: the tests added
 - HoldingsComparisonTest: 200 histories, 6,985 transactions (3,577 buys; 1,359 sells, 967 with a partial pick; 331 splits and 321 reverse splits; 959 reversals of buys, 280 of sells, 158 of splits; 330 refused reversals and 3 refused splits as candidates). Equal throughout: today both sides are the same code, which proves the comparison. It takes 13.9 s, because both sides run the code before 15c.
 - HoldingsScaleTest: the recipe check (both shapes valid at 100 transactions) runs every time, in 0.4 s; the "before" timing runs only with ATS_SCALE_OLD=1.
@@ -297,3 +308,4 @@ Repeat run (2026-11-07, same code, data and seed; your request): every timed row
 2. AppStartTimingTest (step 2): three test methods (run1 to run3) sharing one seeded database, not one test that opens MainActivity three times: the v2 compose test API in use has no empty rule to launch the activity by hand. The screen-tests count becomes 9 with it, not 7. ScreenTestSupport.kt gains unlockAppTimed() as added lines only: unlockApp() returns only after the data has loaded.
 3. HoldingsScaleTest's cap (step 2): it counts a call's whole measurement (warm-up and runs) against 60 s, not one call, and a call that would pass it with three runs is timed once. The first "before" run, with the cap on one call only, was stopped after about 13 minutes (your A) and run again; it then took about 5 minutes. A progress line per call and size goes to core/build/scale/progress.txt.
 4. HoldingsComparisonTest's time (step 2): 13.9 s with both sides on the code before 15c, against the 1 to 3 s estimated in section 8. Step 7 measures it with the new code on one side.
+5. AppStartTimingTest's median line (step 2): it is logged after the class, and Gradle keeps logcat only while each test runs, so the line is in no saved file; the step 2 medians are worked out from the three run lines. Step 7 logs the medians at the end of run 3 instead (a change to this iteration's own new test). Section 9's comparison is also read run by run, since the runs warm up (section 13.1).
