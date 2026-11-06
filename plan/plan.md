@@ -1,3 +1,25 @@
+# Table of contents
+
+- [1. Purpose and gate](#1-purpose-and-gate)
+- [2. Files](#2-files)
+- [3. Technical decisions (from setup.md, approved)](#3-technical-decisions-from-setupmd-approved)
+- [4. Iterations](#4-iterations)
+  - [Examples as automated tests (K1, AC-02; my reading)](#examples-as-automated-tests-k1-ac-02-my-reading)
+  - [Where components first appear (my reading)](#where-components-first-appear-my-reading)
+- [5. How an iteration runs](#5-how-an-iteration-runs)
+  - [Iteration file template](#iteration-file-template)
+- [6. Why this order (my reading of spec.md)](#6-why-this-order-my-reading-of-specmd)
+- [7. Spike: price source (plan/spikes/price-source.md)](#7-spike-price-source-planspikesprice-sourcemd)
+  - [Exchange table (spec 4.3; price-source spike decision 4)](#exchange-table-spec-43-price-source-spike-decision-4)
+  - [Spike: dependency upgrade (plan/spikes/dependency-upgrade.md)](#spike-dependency-upgrade-planspikesdependency-upgrademd)
+  - [Spike: Claude Code in VS Code (plan/spikes/vscode-claude-code.md)](#spike-claude-code-in-vs-code-planspikesvscode-claude-codemd)
+- [8. Cross-cutting risks](#8-cross-cutting-risks)
+- [9. Definition of done (one for every iteration)](#9-definition-of-done-one-for-every-iteration)
+- [10. CLAUDE.md](#10-claudemd)
+- [11. Status](#11-status)
+- [12. Change log](#12-change-log)
+- [13. Out of scope for this plan](#13-out-of-scope-for-this-plan)
+
 # plan/plan.md
 
 Stage: Build. Status: approved, together with plan/setup.md. Setup run 2026-10-18 (setup.md section 13). Iteration 01 is done. The dependency-upgrade spike has run and is merged (pull request 73, merge commit 7df2049). Iteration 02 is split into 02a and 02b (section 12). Iteration 02a is done: built and checked on the phone; pull request #79 merged as 68c9015, CI green on the pull request and on main (your reports); see its file. A spike to set up Claude Code in VS Code ran between 02a and 02b (section 7); pull request #81 merged as 0c2b49e, CI green on main (your report). 02b is done: built, checked on the phone, pull request #83 merged as 0a20873. Iterations 03 to 15b are done; each one's status is in section 11.
@@ -452,6 +474,8 @@ Each departure from this plan is recorded here with its date and the reason.
 - 2026-11-06: pull request #132 (iteration 15b) was merged as 57891e7, 5 commits; the branch is gone from origin and locally. On the merged branch (e6211ab) screen-tests green, 6 of 6, 4m 58s; on main after the merge (proof 3) screen-tests green, 6 of 6, 6m 12s, which saved main's first emulator cache; CI on main green (2m 57s) (gh, read only). Open item 47 stays open for 16's side-by-side check (AC-62).
 - 2026-11-06: status fixes after 15b (your A): the 15b status line, section 11 (15a "done", a 15b row, 16 to 35 not started), the status line at the top, the screen-tests spike's cleanup (plan.md, the note's line 3 and section 8, open item 47), the vscode-claude-code note's merge, AGP 9.5.1 in open item 31 and CLAUDE.md, the deleted AVD in CLAUDE.md. Spec C19 is asked separately.
 - 2026-11-06: spec.md C19's status text updated (your B): 07a is now caught on GitHub's runner too (15b, #133 run 2), cited by file and section in place of "spike F". No rule, criterion or handling changed, so spec.md stays v6.
+- 2026-11-06: pull request #135 (status fixes after 15b; spec C19 status) was merged as 82527e2; main's CI and screen tests green (6 of 6). Open items checked (your A): 27 closed (core.autocrlf = true in Git's system config); 22 and 20 updated (the warning explained; the Dependabot pull requests listed). The rest stay as they are.
+- 2026-11-06: a table of contents at the top of plan.md and CLAUDE.md, in spec.md's form (your request); CLAUDE.md section 4 reminds to keep each table up to date when a document is edited.
 
 ## 13. Out of scope for this plan
 Performance over time, per-holding dividends, ETF look-through, the next intent.md items,
