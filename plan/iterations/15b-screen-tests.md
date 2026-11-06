@@ -1,6 +1,6 @@
 # plan/iterations/15b-screen-tests.md
 
-Stage: Build. Status: approved 2026-11-06 (your A); built and checked 2026-11-06 (section 13), pull request #132 open. Decisions 1 to 4 settled 2026-11-06 (section 10).
+Stage: Build. Status: approved 2026-11-06 (your A); built and checked 2026-11-06 (section 13); pull request #132 merged as 57891e7 (2026-11-06). Decisions 1 to 4 settled 2026-11-06 (section 10).
 Source: plan/plan.md section 4 (row 15b), intent/intent-cr-03-screen-tests.md (CR3), spec/spec.md v6 (final; C19, C20, AC-61, AC-62, section 9), plan/spikes/screen-tests.md (section 11), branch spike-screen-tests-run (2fed892). "My reading" is an interpretation, not a test.
 
 ## 1. Outcome
