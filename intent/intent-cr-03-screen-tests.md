@@ -18,7 +18,7 @@ Base: intent.md v52 and CR2. Discussion: plan/discussions/screen-tests.md. Measu
 - Covered: the four spike checks (10, 07, 08, TalkBack labels), kept as tests of the app; and from the next iteration on, every new or changed screen with a layer, a menu, a fixed part or a text field.
 - When: on every pull request into main, next to the existing checks, and again on main after the merge. A red run means "don't merge" until it's fixed.
 - Which phone checks end: for covered screens, the hand checks of the layout at the largest font and in landscape, of layers, menus and the keyboard, and of TalkBack labels. They end only after one iteration in which the tests and the phone check both run and the tests catch everything the phone check finds.
-- My goal stays: no manual phone checks, with no loss of reliability. These stay phone checks after CR3: TalkBack speech, the themes (criterion 40), the network (42), installing over my data (35), the lock and Keystore, blocked screenshots and Recents, and Android 17 on the phone.
+- My goal stays: no manual phone checks, with no loss of reliability. These stay phone checks after CR3: TalkBack speech, the themes (AC-40), the network (AC-42), installing over my data (AC-35), the lock and Keystore, blocked screenshots and Recents, and Android 17 on the phone.
 
 ## Users
 - Me.

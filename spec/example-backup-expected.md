@@ -1,7 +1,7 @@
 # example-backup-expected.md
 
 Results that `spec/example-backup.csv` (format version 1) should give after a restore.
-Companion to the sample file (a CSV cannot hold notes). Used as the fixture for criteria 4 and 25.
+Companion to the sample file (a CSV cannot hold notes). Used as the fixture for AC-04 and AC-25.
 
 How these figures were made: a throwaway script read the file the way spec.md section 8 describes
 and replayed it, and the same figures were checked by hand. The app has not been built, so none of

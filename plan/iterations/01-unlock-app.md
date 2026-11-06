@@ -12,15 +12,15 @@ I open the app, confirm my fingerprint or phone PIN, and only then see anything.
 - spec section 6: First launch and empty state (only the lock-first step; the guided steps are iteration 02 and later).
 - spec section 14: K8 app lock, K9 screens.
 - C17 (install route, unchanged here) and C18 (key handling, not touched here).
-- Criteria: 6 (lock per the chosen setting, here only "every time I leave the app"), 20 (default part only: blocked screenshots, recording and recents preview; the 3-minute window is iteration 21), 35 (a new build installs over the previous one).
-- Standing checks: criteria 9, 39 to 42 on the lock screen, and 35.
+- Criteria: AC-06 (lock per the chosen setting, here only "every time I leave the app"), AC-20 (default part only: blocked screenshots, recording and recents preview; the 3-minute window is iteration 21), AC-35 (a new build installs over the previous one).
+- Standing checks: AC-09, AC-39 to AC-42 on the lock screen, and 35.
 
 ## 3. Out of scope
 - The other three auto-lock choices and the Settings screen (iteration 20).
 - The 3-minute screenshot window (iteration 21).
 - The first Figma token handoff (deferred out of this iteration; the template theme is used).
 - Anything with data: no storage, no records, no network, no encryption.
-- Android's file screens and the lock (criterion 57; iterations 31 and 34).
+- Android's file screens and the lock (AC-57; iterations 31 and 34).
 
 ## 4. Files
 New:
@@ -56,7 +56,7 @@ Changed:
 - Phone check 7 (2026-10-19): the stored recents preview was blank, but opening recents straight from the unlocked app showed the live content. My reading (not confirmed): the launcher shows the live window at that moment. Step 4c tries a cover shown while the window is not focused. It may flicker when the notification shade is pulled down, and it may not help if the window keeps focus when recents opens. Result (2026-10-19): it helped, see section 10.
 - Lint after step 4b shows the same 8 library-version notices as before; androidx.biometric 1.1.0 adds none (seen 2026-10-19). They are left for the dependency-upgrade spike, not silenced.
 - The dependency-upgrade spike runs right after this iteration and may break this code. Its proof re-runs the phone checks in section 8.
-- A recreation (rotation, theme or font-size change) builds a new AppLock, so the app re-locks and prompts again. Accepted for now (fail closed); keeping the unlock across a recreation needs a ViewModel and belongs to a later iteration, when forms must keep typed values (criterion 40).
+- A recreation (rotation, theme or font-size change) builds a new AppLock, so the app re-locks and prompts again. Accepted for now (fail closed); keeping the unlock across a recreation needs a ViewModel and belongs to a later iteration, when forms must keep typed values (AC-40).
 - AppLock ignores a success that arrives after the app was left. If the system prompt ever stops the Activity while it is open, a correct PIN could be ignored and the prompt would reappear (a loop). Phone checks 1 and 4 would show it.
 - Opening the recents screen and returning to the same app may not call onStop, so the app might stay unlocked. Decided by phone check 13.
 - cancelAuthentication() may deliver its error callback after the next prompt was shown, which could clear that prompt's "showing" state and allow a duplicate. Not checked.
@@ -80,8 +80,8 @@ By hand on the phone (Android 17), each result written back into this file as "c
 6. Screen recording shows no app content.
 7. The recents preview is hidden.
 8. With no PIN or biometric set up on the phone, the plain message shows and nothing unlocks. (Whether this can be tested on your phone without changing its settings is not known; if not, it is stated as not run.)
-9. A new build installs over the old one (criterion 35).
-10. The locked screen is readable at the largest font size and in light and dark themes (criteria 39 to 42).
+9. A new build installs over the old one (AC-35).
+10. The locked screen is readable at the largest font size and in light and dark themes (AC-39 to AC-42).
 11. Rotate the phone while the prompt shows: no second prompt opens on top.
 12. Switch dark mode on or off while unlocked: record what happens (expected: the app locks and prompts again, see Risks).
 13. Open the recents screen and return to the app: record whether it is locked (the spec says every time the app is left).
@@ -129,8 +129,8 @@ Check 8:
 - 8 no screen lock set up: checked on the phone on 2026-10-20 (your report), on the debug build of commit 658a387, installed at 2026-10-20 15:24:09 phone time (Gradle reused the earlier APK, all 37 tasks up to date). After you removed the screen lock and fingerprints, the plain "set up a screen lock" message showed, with no Unlock button and no content. Home and return kept the message and nothing unlocked. After you set the lock again, the app prompted normally. An earlier run on an older build (which one is not known) is not counted.
 
 ### 10.3 Review against the spec refs
-- Done: the lock of section 9, the lock-first step of first launch, and the default privacy part of criterion 20, with criterion 6 for the fixed "every time I leave the app" policy.
-- Not done, with reasons: the other three auto-lock choices (iteration 20), the 3-minute screenshot window (iteration 21), and criterion 35's data survival (the app stores nothing yet; checked in iteration 02).
+- Done: the lock of section 9, the lock-first step of first launch, and the default privacy part of AC-20, with AC-06 for the fixed "every time I leave the app" policy.
+- Not done, with reasons: the other three auto-lock choices (iteration 20), the 3-minute screenshot window (iteration 21), and AC-35's data survival (the app stores nothing yet; checked in iteration 02).
 - Several Android behaviours that spec section 9 marks as unverified were seen on one phone (Android 17) with both window protections set: one prompt for biometric or PIN, blocked screenshots and recording, and a blank stored recents card.
 - The live recents card needed the cover screen of step 4c, which is not written in spec.md.
 - Not seen: other phones or Android versions.

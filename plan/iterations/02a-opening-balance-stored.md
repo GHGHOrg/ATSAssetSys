@@ -1,6 +1,6 @@
 # plan/iterations/02a-opening-balance-stored.md
 
-Stage: Build. Status: done: built on branch iter-02a-opening-balance-stored (commits A to M and three document commits); pull request #79 merged as 68c9015 on 2026-10-28, CI green on the pull request and on main (your reports). Base approved by you 2026-10-23, decisions 1 to 3 settled the same day (section 10), wireframe reading approved 2026-10-24 (section 12). Local checks and the phone checks done are in section 13. Not done, deferred by you on 2026-10-28: criterion 37, TalkBack (the rest of check 11 and the TalkBack part of criterion 39) and check 8 on this build. Sections 13 to 15 were written before the push; the pull request and CI results are in section 11. Sections 1 to 12 were written before the build; where the build differs, section 14 says so.
+Stage: Build. Status: done: built on branch iter-02a-opening-balance-stored (commits A to M and three document commits); pull request #79 merged as 68c9015 on 2026-10-28, CI green on the pull request and on main (your reports). Base approved by you 2026-10-23, decisions 1 to 3 settled the same day (section 10), wireframe reading approved 2026-10-24 (section 12). Local checks and the phone checks done are in section 13. Not done, deferred by you on 2026-10-28: AC-37, TalkBack (the rest of check 11 and the TalkBack part of AC-39) and check 8 on this build. Sections 13 to 15 were written before the push; the pull request and CI results are in section 11. Sections 1 to 12 were written before the build; where the build differs, section 14 says so.
 Source: plan/plan.md section 4 (row 02, split into 02a and 02b on 2026-10-23), intent/intent.md v52 (final), spec/spec.md v4 (final).
 Section 9 is "you read": pages you pasted on 2026-10-23. I did not see the pages. "My reading" is an interpretation, not a test. Versions are re-checked on the day the branch is made.
 
@@ -12,7 +12,7 @@ I unlock the app, set the opening balance (date, amount and an optional note, wi
 - spec 6: first launch and empty state; Overall (view 1, cash only); cash entry with a review screen (wireframe 10b); date note and "ET" (C13); number format; error, empty and loading states; accessibility; theme. Wireframes 01-overall and 10b: read 2026-10-24; differences in section 12.
 - spec 9: encryption at rest, no automatic copies, nothing logged; the lock of iteration 01 stays.
 - spec 14: K1, K2, K3 (cash only), K9; C13, C17, C18.
-- Criteria: 19, 26 (amount part), 35 (data survival), 36, 37 (partly, section 8), 38 (first look only), 9, 39 to 42.
+- Criteria: AC-19, AC-26 (amount part), AC-35 (data survival), AC-36, AC-37 (partly, section 8), AC-38 (first look only), AC-09, AC-39 to AC-42.
 - plan.md: K1, K2 and K3 first appear here.
 
 ## 3. Out of scope
@@ -61,7 +61,7 @@ Unchanged on purpose: AndroidManifest.xml (no INTERNET permission yet) and data_
 - Room 3.0.3 and SQLCipher 4.19.1 may not build or run together here. Neither source states a tested pairing. Kotlin 2.4 turned annotations in metadata on by default (spike note); effect on Room 3 unknown.
 - KSP: no source says 2.3.12 works with Kotlin 2.4.21 or with AGP 9.4.1's built-in Kotlin. Try 2.3.12, fall back to 2.3.10 (the quickstart's pairing for 2.4.21).
 - Room 3 may need a higher Java target than 11. If so, that is the trigger to revisit the Java level of core/ and app/ together (CLAUDE.md).
-- The README says SQLCipher logs to Logcat by default. I cannot tell if it ever prints row data. Logging is switched off and Logcat is read during entry (criteria 38, 36).
+- The README says SQLCipher logs to Logcat by default. I cannot tell if it ever prints row data. Logging is switched off and Logcat is read during entry (AC-38, AC-36).
 - R8 is on for release. SQLCipher and Room may need keep rules. A release build can be built, but it cannot be installed (no signing key until Deploy), so R8's effect on the data layer stays unseen.
 - 16 KB pages: SQLCipher ships native libraries. Alignment of 4.19.1 is unknown. The phone's page size is not recorded.
 - Keystore: key survival across update, uninstall and Android upgrade is unverified (C18); the AES and GCM code is written from memory, not from a page.
@@ -86,16 +86,16 @@ By hand on the phone (Android 17), each result written back as "checked on the p
 2. Opening balance form: date prefilled in New York time with the note; 0, a third decimal, text, a "$", a comma and a minus are refused and the typed text stays. The Note field takes one line only.
 3. A valid amount, review, confirm: Overall shows net worth, the steps are gone.
 4. Force stop, restart, unlock: the balance is still there.
-5. adb install -r of a newer build: the balance is still there (criterion 35).
-6. Stored file copied from the debug build (run-as, from memory, unchecked): no readable amount, no "SQLite format 3" header (criterion 36).
+5. adb install -r of a newer build: the balance is still there (AC-35).
+6. Stored file copied from the debug build (run-as, from memory, unchecked): no readable amount, no "SQLite format 3" header (AC-36).
 7. Delete the wrapped-passphrase file, restart: error screen, no new empty database.
 8. Uninstall and reinstall: the app opens empty.
 9. Half-fill the form, switch dark mode: typed values are kept (decision 3).
 10. Logcat read while entering the balance: no amount.
-11. Largest font, TalkBack, light and dark theme on Overall and the form (criteria 39 to 42), by eye only: the colors follow the wallpaper.
+11. Largest font, TalkBack, light and dark theme on Overall and the form (AC-39 to AC-42), by eye only: the colors follow the wallpaper.
 12. Iteration 01 checks 1 to 14 on the final build, as the spike did.
 13. Opening balance dated in the future: Overall shows net worth $0.00 and the normal screens (the guide has ended).
-Criterion 37's phone test (no transfer, no cloud backup): method not decided. Android's backup testing page is not read; you paste it before this check.
+AC-37's phone test (no transfer, no cloud backup): method not decided. Android's backup testing page is not read; you paste it before this check.
 
 ## 9. Research (you read, 2026-10-23)
 - Room 3: stable 3.0.3 (2026-10-21); 3.0.0 was 2026-07-01; alpha 3.1.0-alpha03. Artifacts androidx.room3:room3-runtime and room3-compiler (ksp). Plugin id androidx.room3 with room3 { schemaDirectory(...) }, schemas checked in. KSP only, Kotlin only, coroutine APIs, no SupportSQLite: a SQLiteDriver is required. Room 2: 2.8.5 (2026-09-09).
@@ -113,7 +113,7 @@ Settled by you on 2026-10-23:
 Leanings, not yet confirmed by you (I apply them unless you object): no StrongBox request; AES-256 GCM key without user authentication (C18); database opens after unlock; text date field "YYYY-MM-DD" instead of a date picker (a picker may shift dates by time zone; not checked); no navigation library yet; data_extraction_rules.xml unchanged; entity has all spec 3 cash fields; PlaceholderTest replaced. New message wording that the wireframes do not cover is written by me and shown to you before use (D9).
 
 ## 11. Status and notes
-Done: built (commits A to M), checked locally and on the phone as stated in section 13. Pull request #79 merged as 68c9015 on 2026-10-28. CI on the pull request: 3 checks passed. CI on main for 68c9015: success, 2m21s (spotlessCheck, build, tests and lint). Both by your report. Left for later by you on 2026-10-28: criterion 37, TalkBack, and check 8 on this build.
+Done: built (commits A to M), checked locally and on the phone as stated in section 13. Pull request #79 merged as 68c9015 on 2026-10-28. CI on the pull request: 3 checks passed. CI on main for 68c9015: success, 2m21s (spotlessCheck, build, tests and lint). Both by your report. Left for later by you on 2026-10-28: AC-37, TalkBack, and check 8 on this build.
 
 ## 12. Wireframe and theme reading (approved by you 2026-10-24)
 Files read, from your uploads of 2026-10-24. The hashes are from tool output. No earlier hash existed for them, so they identify what I read; they do not prove it equals the repo copy.
@@ -127,7 +127,7 @@ Files read, from your uploads of 2026-10-24. The hashes are from tool output. No
 | Type.kt | ui/theme | 36 | 1038 | 9fa4fb82a688583b190798cd7004fed6f5c4d84b87fab67efca388e2cb6fed21 |
 
 Left out of 02a, because a later iteration builds it:
-1. Allocation donut and "Allocation by" dropdown (wireframe 01, marker 3): iteration 18. 02a shows net worth only, so criterion 24 (100% cash) is not in 02a.
+1. Allocation donut and "Allocation by" dropdown (wireframe 01, marker 3): iteration 18. 02a shows net worth only, so AC-24 (100% cash) is not in 02a.
 2. "Prices updated" and "refresh failed" lines (markers 2 and 5): there are no prices yet.
 3. Backup banner (marker 1, iteration 32), tap net worth for Net Worth (Total) (marker 2, 17), Buy/Sell button (marker 6, 09), "Restore is in More only" line (marker 8, More arrives in 02b).
 4. Bottom bar: 02b (stub, section 6).
@@ -140,7 +140,7 @@ What you see or type:
 9. Wording: messages the wireframes do not cover (a non-number amount, an empty or impossible date, "$" or a comma) are written by me and shown to you before use (D9). Frame J gives "Amount: cannot be 0. Up to 2 decimals." and "Not saved. The opening balance already exists."
 
 Limits:
-10. Theme: Theme.kt sets dynamicColor to true by default and minSdk is 33, so the colors come from the wallpaper. The purple palette in Color.kt is never used. Contrast (criteria 39 to 42) cannot be shown by one phone. 02a keeps the theme unchanged. Gain green and loss red are decided with the Figma token handoff, not here.
+10. Theme: Theme.kt sets dynamicColor to true by default and minSdk is 33, so the colors come from the wallpaper. The purple palette in Color.kt is never used. Contrast (AC-39 to AC-42) cannot be shown by one phone. 02a keeps the theme unchanged. Gain green and loss red are decided with the Figma token handoff, not here.
 11. Frame C of wireframe 10b draws no bottom bar, although the wireframe says the bar is always visible. This is raised again when 02b is written; nothing changes here.
 
 ## 13. Build results (2026-10-28)
@@ -160,8 +160,8 @@ Branch iter-02a-opening-balance-stored, all local at the time of writing (pull r
 - 2 Form: date prefilled in New York time with its note; 0, 1.234, abc, $100, 1,000 and -5 refused, typed text kept. The amount keyboard shows a comma key, and a comma is refused by rule. An empty message line leaves a gap under a field (cosmetic). The date note takes the error color when an error shows.
 - 3 Review and confirm: the review shows type, date with ET, amount, note, cash effect, Back to edit and "Nothing is saved until you confirm"; Back keeps the text. After 12345.67, Overall shows $12,345.67, no steps, "No portfolios yet".
 - 4 Force stop and restart: the balance is still there.
-- 5 adb install -r of the same APK over itself: the balance is still there. This is weaker than a newer build with a higher version code, so criterion 35 is not fully checked.
-- 6 Stored file (run-as): ats.db 16,384 bytes, ats.db-shm 32,768, ats.db-wal 0, ats.db.lck 0, db_passphrase.bin 93 bytes (my arithmetic: 1 + 12 + 64 + 16, not checked in the file). The first 16 bytes look random, not "SQLite format 3". grep counts were 0 for zzznote, cash_entries (in ats.db and ats.db-shm) and OPENING_BALANCE. The "SQLite format" search was split by my shell and searched "SQLite" alone (0). The 12345 count is weak: the amount is stored as integer cents. Criterion 36 is partly checked: not every page, and not the update, reinstall and key-loss cases. A later inspection must also search ats.db-wal (a fresh database had 16,512 bytes there).
+- 5 adb install -r of the same APK over itself: the balance is still there. This is weaker than a newer build with a higher version code, so AC-35 is not fully checked.
+- 6 Stored file (run-as): ats.db 16,384 bytes, ats.db-shm 32,768, ats.db-wal 0, ats.db.lck 0, db_passphrase.bin 93 bytes (my arithmetic: 1 + 12 + 64 + 16, not checked in the file). The first 16 bytes look random, not "SQLite format 3". grep counts were 0 for zzznote, cash_entries (in ats.db and ats.db-shm) and OPENING_BALANCE. The "SQLite format" search was split by my shell and searched "SQLite" alone (0). The 12345 count is weak: the amount is stored as integer cents. AC-36 is partly checked: not every page, and not the update, reinstall and key-loss cases. A later inspection must also search ats.db-wal (a fresh database had 16,512 bytes there).
 - 7 Lost blob (db_passphrase.bin renamed): the screen reads "Your data cannot be read. The stored data could not be opened. Nothing was changed or deleted. Close the app and open it again. If this stays, the only way back is a restore from a backup file, which this version does not have yet." No way to create a balance, and no new blob appeared. Two later hidden-blob starts (16:27 and the repeat) kept the database hash, size and times unchanged. Renaming the blob back returned the balance, twice. Open: before the first hidden-blob start the ats.db hash changed (b01e0538... to e3988592...) and all four database files were stamped 16:14. I could not explain it and did not reproduce it. Also seen: a normal start changes the hash and the time of all four files at open (e3988592... to cc77983a... at 16:32, 74c6522e... at 16:40), then nothing changes through a wait and a force stop; cause not shown. Wording point: "Close the app and open it again" may not help when the blob is lost.
 - 8 Uninstall and reinstall: the app opens empty with the three steps. The folder has a new owner id, a new ats.db (4,096 bytes, hash adc99292...) and a new blob.
 - 9 Dark mode while the form is open: the form reopens with the typed values (after the re-lock).
@@ -172,7 +172,7 @@ Branch iter-02a-opening-balance-stored, all local at the time of writing (pull r
 
 Largest font, defects you found and the fixes:
 - "(locked)" on the Overall steps: at the largest font the screen read "Enter a buy locked". Commit K sets each locked step as a wrapping two-part row, with "(locked)" in the secondary color, right-aligned. You confirmed three steps, with step 1 active and steps 2 and 3 marked "(locked)".
-- Keyboard covering fields: the keyboard covered the selected field and the page would not scroll (criterion 39). Commit L makes the form scroll and adds imePadding(). You reported all four checks yes; the gap under a field is normal, not a defect.
+- Keyboard covering fields: the keyboard covered the selected field and the page would not scroll (AC-39). Commit L makes the form scroll and adds imePadding(). You reported all four checks yes; the gap under a field is normal, not a defect.
 - Long note and review screen: you asked for the note to wrap inside its field, and for the review rows and the two buttons to flow as responsive two-column rows. Commit M does this, with a Done key instead of a line-break key. After M you reported: keyboard shows the check mark, no line-break key; all fine except the note text, which you wanted left-aligned. I changed that in M's final form, and you then confirmed all yes, the "none" row looks okay, and the net worth card looks okay.
 
 Iteration 01 checks on the final build (your report): checks 1-7 all yes; check 9 (same APK installed over itself) the $500.00 was still there; checks 10-14 all yes. Check 8 (no screen lock) was not re-run.
@@ -180,15 +180,15 @@ Iteration 01 checks on the final build (your report): checks 1-7 all yes; check 
 ### 13.5 Not run, not checked, or deferred
 
 Deferred by you on 2026-10-28:
-- criterion 37 (backup and device-transfer test)
-- the TalkBack check, which includes the TalkBack part of criterion 39
+- AC-37 (backup and device-transfer test)
+- the TalkBack check, which includes the TalkBack part of AC-39
 - check 8 (no screen lock) on this build
 
 Not run:
 - CI, and any pull request
 - the release APK on a device
 - the merged-manifest read-back
-- installing a newer build over this one (criterion 35 is only partly checked)
+- installing a newer build over this one (AC-35 is only partly checked)
 - the key-survival and lock-removal check
 - the Keystore KeyInfo security level
 - the -journal file check
@@ -223,7 +223,7 @@ Items 1 to 9 come from the build and your phone reports. They are not in section
 ### 15.2 Research notes
 - Room 3.1.0-alpha03 (2026-10-21) adds allowDataLossOnRecovery and setPreparedStatementCacheSize(Int). Room 3.0.3 has neither. A later version should consider allowDataLossOnRecovery() once 3.1 is stable.
 - SQLCipher logging has three areas: the Java client, the JNI layer and the SQLCipher core pragmas. Logger.setTarget(NoopTarget()) covers only the first.
-- The backup-testing page you gave was fetched, along with the cloud and device-to-device scripts. The phone state is Backup Manager disabled, the Google transport selected, and the local transport parameters null. Both scripts run bmgr enable true and do not undo it, so criterion 37 must run that cleanup afterwards.
+- The backup-testing page you gave was fetched, along with the cloud and device-to-device scripts. The phone state is Backup Manager disabled, the Google transport selected, and the local transport parameters null. Both scripts run bmgr enable true and do not undo it, so AC-37 must run that cleanup afterwards.
 - data_extraction_rules.xml is still the generic baseline (752 bytes). It needs tightening in a later iteration.
 
 ### 15.3 Known limits

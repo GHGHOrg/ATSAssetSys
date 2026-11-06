@@ -31,7 +31,7 @@ Known mismatches to settle during setup:
     (section 14, dependency rule 3). Exact arithmetic with arbitrary-precision integers (4.10).
   - `app/`: the Android application (K2 implementation, price service, lock, screens, wiring).
 - Tests: JUnit for `core/` and `app/`. Device checks are by hand on your phone
-  (criteria 18, 20, 35 to 58 are "checked by hand").
+  (AC-18, AC-20, AC-35 to AC-58 are "checked by hand").
 - Lint and format: Android lint plus one Kotlin style checker, chosen when setup runs
   after checking what is current.
 - minSdk 33 (Android 13, spec section 9). Tested on your phone, Android 17.
@@ -49,10 +49,10 @@ Known mismatches to settle during setup:
     data is refetched; holdings show "no price" meanwhile (4.8).
   - Derived state (lots, holdings, balances) is not stored. It is rebuilt by replay (4.1),
     cached in memory and recalculated only when a record changes.
-  - Migrations: Room schema versions, exported schemas committed (criterion 35).
+  - Migrations: Room schema versions, exported schemas committed (AC-35).
   - The database file lives where Android's automatic backup does not reach
-    (`getNoBackupFilesDir()`, in addition to the manifest rules; criterion 37).
-  - Checks on the phone: criterion 36 and the update, reinstall and key-loss cases.
+    (`getNoBackupFilesDir()`, in addition to the manifest rules; AC-37).
+  - Checks on the phone: AC-36 and the update, reinstall and key-loss cases.
   - Costs accepted: a native third-party library and a dependency to keep updated.
   - Unchecked, to confirm in iteration 02: SQLCipher for Android's maintenance, licence
     and Room integration; Room's current version; native-library page-size alignment
@@ -70,7 +70,7 @@ Known mismatches to settle during setup:
   - No real amounts, tickers, notes or portfolio names in Figma files (section 9). No
     Figma token or file link in CI or the repository.
   - Contrast (4.5 to 1 text, 3 to 1 large text and outlines) is checked in both themes on
-    the phone (criteria 40 and 41), whatever Figma shows.
+    the phone (AC-40 and AC-41), whatever Figma shows.
 - Not decided here, on purpose: the price source and HTTP client
   (plan/spikes/price-source.md, then iteration 09).
 
@@ -100,7 +100,7 @@ Known mismatches to settle during setup:
    `dataExtractionRules` pointing at a rules file that excludes all data in both
    `<cloud-backup>` and `<device-transfer>`; no analytics or crash-reporting library;
    release build not debuggable. The rules file is generic now. Iteration 02 verifies and
-   tightens it against the real database location (criterion 37). Exact attributes are
+   tightens it against the real database location (AC-37). Exact attributes are
    checked against Android's current pages when written.
 6. One placeholder test in `core/` (S3, approved), named and commented as a placeholder,
    only to show that a test is found, run and reported. Iteration 02 replaces it with
@@ -117,7 +117,7 @@ Known mismatches to settle during setup:
   `*.properties` holding signing passwords.
 - Debug builds use the default debug key on your machine.
 - The release signing key is created by you, kept OUTSIDE the repo and backed up in at
-  least two places. A lost key blocks updates over an installed build (C17, criterion 35).
+  least two places. A lost key blocks updates over an installed build (C17, AC-35).
 - CI never receives the release key. Release builds belong to Deploy.
 - The install route (limited-distribution account, ADB, advanced flow) is chosen later.
   Setup only proves ADB install works on your phone.
@@ -153,13 +153,13 @@ Known mismatches to settle during setup:
    - message wording is D9: decided on the phone, not on paper;
    - the theme file in `app/` is the source of truth for colors and type; Figma is only
      the starting point and never overrides the spec.
-6. Standing checks on every iteration's screens: criteria 9, 39 to 42, and the
-   install-over-previous-build check (35).
+6. Standing checks on every iteration's screens: AC-09, AC-39 to AC-42, and the
+   install-over-previous-build check (AC-35).
 
 ## 9. Risks
 - Tool versions and the Android SDK setup are unchecked until setup runs.
 - Manifest backup attributes behave differently across devices and Android versions
-  (section 9, partly checked). Only a phone test shows the truth (criterion 37).
+  (section 9, partly checked). Only a phone test shows the truth (AC-37).
 - ADB install may need developer options on your phone. Not tested.
 - SQLCipher is a native third-party dependency: maintenance, licence, build size and
   alignment rules are unchecked. If unsuitable, the K2 interface allows another
@@ -167,7 +167,7 @@ Known mismatches to settle during setup:
 - A lost passphrase or key makes the data unreadable. Mitigated by the backup file as
   the only recovery (section 8, C18) and the reminder banner (section 9).
 - Figma and the theme file can drift apart. Accepted: the code is the source of truth,
-  and criteria 40 and 41 are checked on the phone.
+  and AC-40 and AC-41 are checked on the phone.
 - A module layout decided now may need changing when K2 to K6 arrive. Kept to two
   modules to keep that cheap.
 - The HTTP client is not chosen until the price-source spike. Low risk: the price
@@ -224,4 +224,4 @@ decided in the conversation:
    and `backup_rules.xml` were removed (minSdk 33).
 
 Proof items 1 to 6 were shown with real output on 2026-10-18. Not run: a release build and its
-install, the install-over-previous-build check (criterion 35), and any test in `app/` (it has none).
+install, the install-over-previous-build check (AC-35), and any test in `app/` (it has none).

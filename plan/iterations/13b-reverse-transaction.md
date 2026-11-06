@@ -12,12 +12,12 @@ On a buy, sell or split's detail (13a) I tap Reverse. One screen shows what is r
 - Examples D (a buried mistake: the two messages) and F (a buy's reversal after a split removes 20 shares and returns $1,000.00), as automated tests.
 - Section 6: view 6 (a reversal shown as such and linked to its original), view 7 (a reversal's trade line reads "Reversal of buy" or "Reversal of sell" with the ticker and portfolio), "Cash, split and reversal entry" (the detail screens, the reversal screen with one Confirm and save and no review), the date-field note, Number format and color, Accessibility rule 5, Error states.
 - Wireframe 10b: frame G marker 14 (the reversed and reversal states), frame I (markers 16 to 18 and 24 to 26), frame J (marker 28: the blocked-save messages).
-- Criteria: 53 (the reversal parts: Example F shows 20 shares removed and $1,000.00 returned, a reversal dated before the original is refused, Example D's two blocks and the save dated Jan 3, Reverse not offered on a reversal or an already reversed entry), 59(a)'s reversal part (reversing the 1 for 3 split gives exactly 10 shares and $100.00 per share), and 9, 35, 39 (TalkBack included), 40, 41, 42, 38 (the log during a reversal).
+- Criteria: AC-53 (the reversal parts: Example F shows 20 shares removed and $1,000.00 returned, a reversal dated before the original is refused, Example D's two blocks and the save dated Jan 3, Reverse not offered on a reversal or an already reversed entry), AC-59(a)'s reversal part (reversing the 1 for 3 split gives exactly 10 shares and $100.00 per share), and AC-09, AC-35, AC-39 (TalkBack included), AC-40, AC-41, AC-42, AC-38 (the log during a reversal).
 - spec 14: K1 (the reversal rules and the replay), K2 (store), K3, K5, K9.
 
 ## 3. Out of scope
-- Reverse and re-enter (14), and criterion 21, 54, 60(b).
-- Hide, and unhiding a holding that a sell's reversal gives shares again (15, criterion 60(a)); open item 44 (before 15).
+- Reverse and re-enter (14), and AC-21, AC-54, AC-60(b).
+- Hide, and unhiding a holding that a sell's reversal gives shares again (15, AC-60(a)); open item 44 (before 15).
 - Realized gains, which leave out a reversed sale (26); Transaction history (27).
 - The `reversal` row of the backup file (31, 33, 34).
 - The phone check of open item 33 (34, 09 decision 9).
@@ -54,14 +54,14 @@ Each step ends with build, tests and lint and the report; then I stop.
 ## 8. Proof
 Commands: as in 13a, all with --rerun-tasks. CI green on the pull request.
 By hand on the phone, with 13a's data (AAPL in Main at 1 share, from the buy of 2026-11-01; the sold-out buys of 2026-10-30 and 2026-10-31; the sell of 4.66666667 for $1,200.00 that took from them; the splits; net worth $4,191.87; opening balance 2026-01-01). Each check names its start (CLAUDE.md pitfall from 11). The exact figures are worked out before each check from the data then on the phone.
-1. Install over 13a's build: the data is still there (criterion 35).
+1. Install over 13a's build: the data is still there (AC-35).
 2. Reverse is on a buy's, a sell's and a split's detail; the reversal screen shows the original fixed, the date and its note; "<" or Cancel leaves without saving.
 3. A reversal dated before its original is refused, the text kept.
 4. Example D on the phone: reversing the 2026-10-30 buy is refused while the sell of 4.66666667 stands, naming the date and that sell.
 5. Reverse that sell: its three lots are back (with the splits since), cash −$1,200.00 on a "Reversal of sell AAPL" line, the sell shows "Reversed on …" with no Reverse, the reversal shows its original and has no Reverse.
 6. Example D continued: reversing the 2026-10-30 buy dated 2026-10-30 is refused, naming the date that works; dated that date it is saved, its lot gone and cash +$150.00 on a "Reversal of buy AAPL" line.
 7. Reverse a split: the inverse ratio, the shares before and after, no cash line; the lots change back.
-8. Largest font and landscape, light and dark, TalkBack through a whole reversal (criteria 39 to 41).
+8. Largest font and landscape, light and dark, TalkBack through a whole reversal (AC-39 to AC-41).
 9. Close and reopen: the reversals, their links and their cash lines are kept.
 10. Logcat during a reversal (log cleared first): no ticker, amount or quantity in the app's lines (counts only).
 
@@ -92,7 +92,7 @@ On e9da4fa's code (2026-11-02, all with --rerun-tasks): spotlessCheck green; deb
 
 ### 13.3 Phone results (Android 17, debug build versionCode 14, your reports)
 Checks 1 to 10 all yes. The figures of each check were worked out from the data on the phone before it was given. Notes:
-- 1: installed over the 13a build (lastUpdateTime 2026-11-02 00:11:04, firstInstallTime 2026-10-29 10:44:04 unchanged); net worth $4,191.87, AAPL at 1 share; Reverse under "Not reversed." on a buy (criterion 35).
+- 1: installed over the 13a build (lastUpdateTime 2026-11-02 00:11:04, firstInstallTime 2026-10-29 10:44:04 unchanged); net worth $4,191.87, AAPL at 1 share; Reverse under "Not reversed." on a buy (AC-35).
 - 2: "< Reverse buy AAPL" for the 2026-11-01 buy: the original fixed, the date and its note, the effect (1 share removed, the 2 for 1 and 1 for 2 since cancelling, +$150.00, $0.00); Cancel left nothing saved; Reverse on a sell and a split.
 - 3: a reversal dated 2026-10-31 refused with "Reversal date: not earlier than the original (2026-11-01).", the date kept; "2026-" refused at once and the effect hidden.
 - 4: Example D on the phone: the reversal of the 2026-10-30 buy refused with "Shares would be −0.66666667 on 2026-11-01. Reverse the sell of 2026-11-01 first, …".

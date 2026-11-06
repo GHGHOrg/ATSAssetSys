@@ -10,7 +10,7 @@ In Holding detail I tap a row on the Transactions tab, or on the Cash tab I tap 
 - Section 6: view 6 (a Transactions row opens the transaction), view 7 (tapping a trade line opens the linked transaction, with its lots), "Cash, split and reversal entry" (the detail screens of a transaction and of a cash entry), Number format and color, Accessibility rule 5, the navigation outline.
 - Wireframe 10b: frame G (transaction detail, markers 12 to 14 and marker 20) and frame H (a trade line's detail: "Open the buy or sell to reverse it." with a link to it, marker 23).
 - spec 3: Transaction (quantity as originally traded), Lot, Sell allocation, the `trade` cash line; 4.4 (lots used, realized gain per piece), 4.5 and 4.10 (split-adjusted figures, exact and rounded only when shown, largest remainder for the lots used).
-- Criteria: 29 (a trade line opens the linked transaction), 53 (the detail screens follow wireframe 10b; the reversal parts are 13b), and 9, 35, 39 (TalkBack included), 40, 41, 42.
+- Criteria: AC-29 (a trade line opens the linked transaction), AC-53 (the detail screens follow wireframe 10b; the reversal parts are 13b), and AC-09, AC-35, AC-39 (TalkBack included), AC-40, AC-41, AC-42.
 - spec 14: K3 (lots, pieces, split effect: read only), K5 (the flow), K9.
 
 ## 3. Out of scope
@@ -43,18 +43,18 @@ Each step ends with build, tests and lint and the report; then I stop.
 - Navigation: three ways in (Holding detail, the Cash tab, a cash line's link) and Back must return to the right place each time without a loop (decision 3).
 - A buy's lot line as of today: a lot sold out shows 0, a split since changes it, and a buy dated after today has no lot yet (decision 2).
 - A sell's lots used come from its stored allocations, priced on its date with the splits before it (12); they must match what the sell review showed when it was saved (59(b) style largest remainder).
-- Rows that open: the touch target and the TalkBack role (button) on Holding detail's rows and the Cash tab's trade lines, at the largest font and in landscape (criterion 39; the CLAUDE.md pitfall from 10 on the fixed header).
+- Rows that open: the touch target and the TalkBack role (button) on Holding detail's rows and the Cash tab's trade lines, at the largest font and in landscape (AC-39; the CLAUDE.md pitfall from 10 on the fixed header).
 
 ## 8. Proof
 Commands: as in 12, all with --rerun-tasks. CI green on the pull request.
 By hand on the phone, with 12's data (AAPL in Main: the buys of 2026-10-30, 2026-10-31 and 2026-11-01, the sells of 2026-10-31 and the sell of 4.66666667 for $1,200.00 on 2026-11-01, the splits 2 for 1 of 2026-10-31 and 1 for 3, 2 for 1 and 1 for 2 of 2026-11-01; SPY sold out). Each check names its start (CLAUDE.md pitfall from 11).
-1. Install over 12's build (versionCode 12): the data is still there (criterion 35).
+1. Install over 12's build (versionCode 12): the data is still there (AC-35).
 2. From AAPL's Transactions, the buy of 10 for $1,500.00 on 2026-10-31 opens "< Buy AAPL": Main, 2026-10-31 ET, quantity as traded 10, $1,500.00, $150.00 per share, its lot (decision 2), "Cash −$1,500.00" with a link, "Not reversed."; "<" and Back return to AAPL.
 3. The sell of 4.66666667 for $1,200.00 opens "< Sell AAPL" with its three lots used (proceeds $171.43, $857.14 and $171.43; gains +$21.43, +$107.14 and +$21.43 in green), realized +$150.00 and "Cash +$1,200.00" (decision 1).
 4. The 1 for 3 split opens "< Split AAPL": 1 for 3, the shares at that point 14 and after 4.66666667, no cash link.
 5. From a buy's detail, the cash link opens the trade line's detail with its link back; the link returns to the buy (decision 3).
-6. On the Cash tab, a "Sell AAPL" line opens its sell; Back returns to the Cash tab (criterion 29).
-7. Largest font and landscape, light and dark, TalkBack: the rows and trade lines are read as buttons, each detail is read in full (criteria 39 to 41).
+6. On the Cash tab, a "Sell AAPL" line opens its sell; Back returns to the Cash tab (AC-29).
+7. Largest font and landscape, light and dark, TalkBack: the rows and trade lines are read as buttons, each detail is read in full (AC-39 to AC-41).
 8. Logcat while opening details (log cleared first): no ticker, amount or quantity in the app's lines (counts only).
 
 ## 9. Research
@@ -64,7 +64,7 @@ None planned; no new library and no network.
 1. A sell's detail shows the lots used as on the sell review (date, shares, cost, then proceeds and gain in color), the cost of lots used, the realized gain/loss in color and the cash link (11 wording 3), so the record matches what was confirmed (option A).
 2. A buy's detail shows what is left of its lot as of today, split-adjusted, with its cost per share ("10 left, $75.00 per share", "0 left" once sold out); a buy dated after today shows its quantity as traded with "from" its date (my reading of "Lot: 10 left" in frame G; option A).
 3. Back goes one step back: from a detail to where it was opened (Holding detail or the Cash tab); a buy's or sell's cash link opens the trade line's detail, whose link returns to the transaction rather than opening it again, so there is no loop (option A).
-Settled by the spec, no question asked: a trade line opens the transaction, not the cash entry detail (view 7, criterion 29); a split has no cash line and so no link (4.5); the quantity shown is as originally traded (frame G, view 8); amounts carry a sign and no color, gains are colored (section 6).
+Settled by the spec, no question asked: a trade line opens the transaction, not the cash entry detail (view 7, AC-29); a split has no cash line and so no link (4.5); the quantity shown is as originally traded (frame G, view 8); amounts carry a sign and no color, gains are colored (section 6).
 
 ## 11. Wording to approve (D9; * = given by the wireframes or earlier iterations)
 - "< Buy AAPL"*, "Portfolio"*, "Date"*, "Quantity, as traded"*, "Total amount"*, "Price per share"*, "Lot"* "10 left"*, "Cash −$1,500.00 >"*, "Not reversed."*.
@@ -85,12 +85,12 @@ On 06fbf79's code (2026-11-01, all with --rerun-tasks): spotlessCheck green; deb
 
 ### 13.3 Phone results (Android 17, debug build versionCode 13, your reports)
 Checks 1 to 8 all yes. Notes:
-- 1: installed over the 12 build (lastUpdateTime 20:12:36, firstInstallTime 2026-10-29 10:44:04 unchanged); net worth $4,191.87, AAPL at 1 share and $150.00, its Transactions as before (criterion 35).
+- 1: installed over the 12 build (lastUpdateTime 20:12:36, firstInstallTime 2026-10-29 10:44:04 unchanged); net worth $4,191.87, AAPL at 1 share and $150.00, its Transactions as before (AC-35).
 - 2: the 2026-10-31 buy of 10 opened "< Buy AAPL" with Main, the date, 10, $1,500.00, $150.00 per share, "Lot 0 left", "Cash −$1,500.00 >" and "Not reversed.", no Reverse; the 2026-11-01 buy of 1 showed "Lot 1 left, $150.00 per share"; "<" and Back returned to AAPL.
 - 3: the sell of 4.66666667 showed $257.14 per share, its three lots used (proceeds $171.43, $857.14 and $171.43; gains +$21.43, +$107.14 and +$21.43 in green), cost $1,050.00, realized +$150.00 in green and "Cash +$1,200.00 >".
 - 4: the 1 for 3 split showed 14 and 4.66666667 with no cash row; the 2 for 1 of 2026-10-31 showed 6 and 12.
 - 5: the buy's cash link opened the trade line's detail ("Back", "Buy AAPL", "For portfolio Main", the card, "Open the buy or sell to reverse it." and the link); the link, the Back button and Android Back each went one step back, with no loop (decision 3).
-- 6: on the Cash tab, "Sell AAPL" +$1,200.00 and "Buy AAPL" −$150.00 opened their transactions and "<" and Back returned to the Cash tab (criterion 29); the opening balance still opened its 05 detail.
+- 6: on the Cash tab, "Sell AAPL" +$1,200.00 and "Buy AAPL" −$150.00 opened their transactions and "<" and Back returned to the Cash tab (AC-29); the opening balance still opened its 05 detail.
 - 7: largest font, portrait and landscape, light and dark: the details and the trade line's detail scroll and wrap, the gains readable on dark; TalkBack read the rows and trade lines as their sentences with "Button", the lot as "Lot, 0 left", the cash link and the trade line's link as section 11.
 - 8: Logcat cleared at 20:49:51 while details were opened; the app's uid 10454 had 59 lines, all from system tags (WindowOnBackDispatcher, Surface and single lines). No ticker, portfolio name, amount, quantity, detail word, key or token. Counts only.
 - No data was changed.

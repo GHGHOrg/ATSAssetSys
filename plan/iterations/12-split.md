@@ -12,14 +12,14 @@ In Holding detail I tap Split, beside Buy and Sell. The Split screen has the por
 - Example B (split and a forgotten earlier buy), as an automated test.
 - Section 6: view 3 (shares with splits; the "share" lines of decision 4); view 6 (Split in the header; splits in Transactions, newest first; quantities and cost per share with splits); "Cash, split and reversal entry" (split entry and its review, Design additions); the date-field note; Number format; Accessibility rule 5; Error states 1 and 4; the navigation outline (Holding detail starts a split).
 - Wireframe 10b: frames E and F (markers 10 and 11), and the split message of the error frame.
-- Criteria: 53 (the split part: 2 for 1 on Example B's holding shows 10 to 20 on its review and changes no cash), 59(a) without the reversal, 59(c) without the backup, 59(d) with the split, 48 (the Split button), and 9, 35, 39 (TalkBack through a split included), 40, 42, 38 (the log during a split).
+- Criteria: AC-53 (the split part: 2 for 1 on Example B's holding shows 10 to 20 on its review and changes no cash), AC-59(a) without the reversal, AC-59(c) without the backup, AC-59(d) with the split, AC-48 (the Split button), and AC-09, AC-35, AC-39 (TalkBack through a split included), AC-40, AC-42, AC-38 (the log during a split).
 - spec 14: K1 (split rules and the replay), K2 (store), K3 (split-adjusted lots and holdings), K5 (the flow), K9.
 - Open item 41: singular and plural "share" in every quantity line and its TalkBack sentence.
 
 ## 3. Out of scope
-- Reversing a split, and Example F (13); criterion 59(a)'s reversal part (13).
-- The split history on the Classification tab (23, as 10 decision 1), and criterion 48's split-history part with the sample file (23, 34); until then the holding's Transactions tab lists its splits.
-- Transaction history with its Split chip and split rows (view 8, criterion 50; 27).
+- Reversing a split, and Example F (13); AC-59(a)'s reversal part (13).
+- The split history on the Classification tab (23, as 10 decision 1), and AC-48's split-history part with the sample file (23, 34); until then the holding's Transactions tab lists its splits.
+- Transaction history with its Split chip and split rows (view 8, AC-50; 27).
 - The `split` row of the backup file, its ids and its checks (section 8), and 59(c)'s backup part (31, 33, 34).
 - Opening a split from a Transactions row (13).
 - Prices (16): lots still show "no price".
@@ -51,21 +51,21 @@ Each step ends with build, tests and lint and the report; then I stop.
 - The replay with splits (4.1): a split dated before existing sells changes what each later sell's stored quantity means (quantities are as traded on their date, spec 3). A reverse split can make a saved sell take more than its lot holds; the split must then be refused. This is the hardest rule in 12.
 - Units: a lot's remainder for a pick is in the units of the sell date (4.4), while allocations of later-dated sells are in their own dates' units. The figure is the least the lot holds on the sell date or any later date, converted through the splits between.
 - Exact fractions after splits (4.10): quantities with more than 8 places, shown rounded to 8 and never used rounded; the pick limit and the exact remainder (built in 11, first seen on the phone here).
-- Schema version 5 adds two columns to an existing table (the first change to a table that holds data); install over 11 (criterion 35).
-- Holding detail's header gets a third button; at the largest font and in landscape it must wrap, not cut (criterion 39; the CLAUDE.md pitfall from 10).
+- Schema version 5 adds two columns to an existing table (the first change to a table that holds data); install over 11 (AC-35).
+- Holding detail's header gets a third button; at the largest font and in landscape it must wrap, not cut (AC-39; the CLAUDE.md pitfall from 10).
 - The "share" and "shares" rule touches strings approved in 09 to 11; each changed line is shown again (D9).
 
 ## 8. Proof
 Commands: as in 11, all with --rerun-tasks. CI green on the pull request.
 By hand on the phone, with 11's data (AAPL in Main: 6 shares, lot 1 with 5 left and lot 2 with 1, both bought 2026-10-31, $150.00 per share, cost $900.00; SPY at 0 shares). Each check names its start (CLAUDE.md pitfall from 11).
-1. Install over 11's build (versionCode 11): the data, the sells, the lots and both portfolios are still there (criterion 35).
+1. Install over 11's build (versionCode 11): the data, the sells, the lots and both portfolios are still there (AC-35).
 2. Portfolios → Main → AAPL: the header shows Buy, Sell and Split; Split opens the Split screen with Main and AAPL chosen and today's date; "<" and Back return to AAPL.
 3. Refusals on the Split screen, text kept: 1 for 1, 0 for 1, an empty number, 1.5, a date before the opening balance.
-4. A 2 for 1 split of AAPL dated 2026-10-31 (it comes after the sells of that date in entry order, so it applies to the lots' remainders): the review shows "6 → 12" and no cash effect; Confirm returns to AAPL with 12 shares and cost $900.00; Transactions lists the split first; Lots shows lot 1 with 10 left at $75.00 per share and lot 2 with 2 left; the Cash tab has no new line (criterion 53).
+4. A 2 for 1 split of AAPL dated 2026-10-31 (it comes after the sells of that date in entry order, so it applies to the lots' remainders): the review shows "6 → 12" and no cash effect; Confirm returns to AAPL with 12 shares and cost $900.00; Transactions lists the split first; Lots shows lot 1 with 10 left at $75.00 per share and lot 2 with 2 left; the Cash tab has no new line (AC-53).
 5. A forgotten buy (Example B): from AAPL's header, Buy 1 AAPL dated 2026-10-30 for $150.00 (the date is checked against the opening balance's date before the check is given): AAPL shows 14 shares; the new lot is listed first with 2 left at $75.00 per share.
 6. A 1 for 3 split of AAPL dated today: the lots show 0.66666667, 3.33333333 and 0.66666667, oldest first; cost unchanged; Sell all from AAPL's header picks all three, the quantity reads 4.66666667, and after Confirm AAPL has exactly 0 shares and Lots says "No lots with shares" (59(c), 59(d)).
 7. "1 share" and "2 shares" on the lot lines, the picked line and the refusals (open item 41).
-8. Largest font and landscape, light and dark, TalkBack through a whole split (criteria 39 to 41).
+8. Largest font and landscape, light and dark, TalkBack through a whole split (AC-39 to AC-41).
 9. Close and reopen the app: the splits, the lots and the holdings are kept.
 10. Logcat during a split (log cleared first): no ticker, amount or quantity in the app's lines (counts only).
 
@@ -77,7 +77,7 @@ None planned; no new library and no network.
 2. A split when the holding has 0 shares at that point (all sold, or dated before the first buy) is allowed, as 4.5 sets no such rule; the review shows "0 → 0" (option A).
 3. Each ratio number is a whole number from 1 to 1,000,000; a longer number is refused with a message (option A).
 4. "share" only when the quantity as shown is exactly "1", otherwise "shares" ("0.5 shares", "1.5 shares"), in every quantity line and TalkBack sentence of Buy, Sell, Holding detail, the portfolio screen and Split; Android's plural strings take whole numbers only, so one function decides from the shown text (open item 41; option A).
-Also settled: Split stays a header button as view 6 and criterion 48 say; moving it into a ⋮ menu is open item 42 (your decision A).
+Also settled: Split stays a header button as view 6 and AC-48 say; moving it into a ⋮ menu is open item 42 (your decision A).
 Settled by the spec, no question asked: a split has no cash line and never triggers the ticker check (4.6); the ratio is "to for from" as wireframe 10b and the file columns; the date is digits only like Buy's and Sell's (09 decision 10); splits show in the holding's Transactions tab, newest first, and the split history on Classification waits for 23.
 
 ## 11. Wording to approve (D9; * = given by the wireframes or earlier iterations)
@@ -98,7 +98,7 @@ On 7929ba9's code (2026-11-01, all with --rerun-tasks): spotlessCheck green; deb
 
 ### 13.3 Phone results (Android 17, debug build versionCode 12, your reports)
 Checks 1 to 10 all yes; 6 after the fix. Notes:
-- 1: installed over the 11 build (lastUpdateTime 15:07:33, firstInstallTime 2026-10-29 10:44:04 unchanged); the cash lines, the sells, both portfolios, AAPL at 6 shares and $900.00 with its two lots as before, so the migration to version 5 ran (criterion 35); Buy, Sell and Split in AAPL's header. The opening balance is dated 2026-01-01.
+- 1: installed over the 11 build (lastUpdateTime 15:07:33, firstInstallTime 2026-10-29 10:44:04 unchanged); the cash lines, the sells, both portfolios, AAPL at 6 shares and $900.00 with its two lots as before, so the migration to version 5 ran (AC-35); Buy, Sell and Split in AAPL's header. The opening balance is dated 2026-01-01.
 - 2: Split from AAPL's header chose Main and AAPL, dated today, with the two fields, "for" and the hint; 投資信託 showed its line or chips; "<" and Back returned to AAPL.
 - 3: refusals with the text kept and nothing saved: empty, 1 for 1, 0 for 1, 1.5 for 1 (the wireframe's line), 2000000 for 1 (the limit line), a date before the opening balance, and a bad number beside that date (both lines together).
 - 4: 2 for 1 dated 2026-10-31: the review showed 6 and 12 with no cash effect; AAPL 12 shares, cost $900.00 unchanged, the split row first, lots of 10 and 2 at $75.00 per share; no cash line; net worth $4,041.87 unchanged.
@@ -118,7 +118,7 @@ CI and the pull request; open item 33 (34); the release APK on a device (unsigne
 2. The split review shows "Shares at this point" and "Shares after split" on two lines, not the wireframe's "6 → 12" (your wording 2, option A).
 3. The "more than held" message names what the picks can take; after a split with remainders of more than 8 places it can differ from the holding shown in the header by a few hundred-millionths (for example "holds 2.00000001 shares" beside a header of 2). The approved wording is kept (your decision A in step 8).
 4. A lot left with less than 0.000000005 share after a reverse split shows "0 left" and cannot be picked, so its holding cannot reach exactly 0 (needed for Hide, 15). A spec gap in 4.4; logged as open item 44 with options S0, S3, S4 and S5, to be settled before 15 (your decision A in step 8). Not reachable in 12's checks.
-5. Section 2 gained 4.4's lot-picker line (with my reading of "so far": the splits up to the sell's place in the 4.1 order), 4.8, C13 and view 3, and section 3 gained view 8, criterion 50 and criterion 48's split-history part, before step 4 (your decision A).
+5. Section 2 gained 4.4's lot-picker line (with my reading of "so far": the splits up to the sell's place in the 4.1 order), 4.8, C13 and view 3, and section 3 gained view 8, AC-50 and AC-48's split-history part, before step 4 (your decision A).
 6. core/ gained an internal place in the 4.1 order and Lot gained its split factor (step 2); the lot functions work out the split factors on each call, which grows with the square of the number of transactions: a known limit for one person's records, not optimised.
 7. Sell's Message composable and the "share" function are shared with Split (step 5); sharesText gained a form for a quantity as typed.
 8. SplitFlowTest's store gives a split no cash line, as K1 does (fix step).

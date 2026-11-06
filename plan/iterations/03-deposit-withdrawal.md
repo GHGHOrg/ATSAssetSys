@@ -12,14 +12,14 @@ From the Cash tab I add a deposit or a withdrawal (date, amount, optional note, 
 - spec 4.10 (integer cents) and 4.8 (net worth as of today; the Cash tab balance on the latest entry date).
 - spec 6: Cash entry flow (wireframe 10b, frames A, D and J, markers 1 to 5 and 9, 10, 13); view 7 (the Cash entry button); the date note (C13); number format; error states (a blocked save keeps what you typed); accessibility; theme.
 - Example C, cash only (section 3).
-- Criteria: 9, 35, 39 to 42, 42 (the blocked withdrawal), 53 (part: deposit and withdrawal, the 0 and third-decimal refusals, Example C), 60(c) (a deposit dated tomorrow: Cash $1,500.00, net worth $1,000.00).
+- Criteria: AC-09, AC-35, AC-39 to AC-42, AC-42 (the blocked withdrawal), AC-53 (part: deposit and withdrawal, the 0 and third-decimal refusals, Example C), AC-60(c) (a deposit dated tomorrow: Cash $1,500.00, net worth $1,000.00).
 - spec 14: K1 (the rule), K2 (one-row save), K3 and K5 (the entry flow), K9.
 
 ## 3. Out of scope
 - Interest/dividend and Adjustment (04); reversals and the cash entry detail screen (05); filters (06); trade lines (09).
 - Example C with a buy: no buy exists before 09. 03 tests the same numbers with a withdrawal in place of the buy: opening $1,000 on Jan 1, withdrawal $800 on Jan 10, then a withdrawal of $300 on Jan 5 is blocked: negative on Jan 10 by $100.
 - The multi-row "refused batch saves nothing" check (open item 14): moves to 09.
-- Criterion 37: still deferred.
+- AC-37: still deferred.
 
 ## 4. Files
 New, core/:
@@ -62,7 +62,7 @@ By hand on the phone:
 6. 0, 1.234, abc, $5 and 1,000 are refused; the typed text stays.
 7. A deposit dated tomorrow: Cash shows it in the balance, net worth does not (60(c)).
 8. Two entries on the same date: the later one is on top and the balances chain (02b decision 8).
-9. Install over the 02b build with data: the data is still there (criterion 35).
+9. Install over the 02b build with data: the data is still there (AC-35).
 10. Largest font, light and dark, TalkBack on the chips, the form, the review and the message.
 11. Logcat while saving: no amount.
 12. The opening balance flow on a fresh install, unchanged.
@@ -97,14 +97,14 @@ On 2654b9c's code (2026-10-29, all with --rerun-tasks): spotlessCheck green; deb
 
 ### 13.3 Phone results (Android 17, debug build versionCode 3, your reports)
 Checks 1 to 12 all yes. Notes:
-- 9: installed over the 02b build (versionCode 2, adb install -r, firstInstallTime unchanged); the future-dated test balance was still there (criterion 35).
-- 4: Example C cash-only refused with "Not saved. Cash would be negative on 2026-01-10 by $100.00."; text kept; nothing saved (criteria 42, 53).
+- 9: installed over the 02b build (versionCode 2, adb install -r, firstInstallTime unchanged); the future-dated test balance was still there (AC-35).
+- 4: Example C cash-only refused with "Not saved. Cash would be negative on 2026-01-10 by $100.00."; text kept; nothing saved (AC-42, AC-53).
 - 7: a deposit dated tomorrow: Cash $350.00, net worth $250.00 (60(c)).
 - 11: log cleared at 11:01:34; a deposit of $4,321.87 saved. The app's process (89 lines) had 0 matches for 4321, 4,321, 432187, 4321.87 and the screen labels. The whole log had 0 for every pattern except plain 4321 (2 lines from other processes, content not read).
 - Part B ran on a fresh install (adb uninstall, 2026-10-29); the 02b test data was deleted on purpose. The phone now holds the Example C test data and two later deposits.
 
 ### 13.4 Not run or not checked
-CI and the pull request; the release APK on a device (unsigned); contrast measurement (by eye only); criterion 37 (deferred); a refused multi-row save (open item 14, moved to 09); Compose UI tests (none in the project).
+CI and the pull request; the release APK on a device (unsigned); contrast measurement (by eye only); AC-37 (deferred); a refused multi-row save (open item 14, moved to 09); Compose UI tests (none in the project).
 
 ## 14. Departures from the plan
 1. 02a's test reviewIsRefusedWhenAnOpeningBalanceAlreadyExists was replaced by withAnOpeningBalanceASecondOneCannotBeStarted (your decision, step 4): the form opens as a deposit once the opening balance exists (wireframe 10b marker 16), so a second one cannot be started. K1 still refuses one (OpeningBalanceTest, unchanged).

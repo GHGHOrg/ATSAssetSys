@@ -11,11 +11,11 @@ On a split's detail (13a) or a direct cash entry's detail (05) I tap Reverse and
 - spec 3: CashEntry (reverses_id), Transaction; C5.
 - Section 6: "Reverse and re-enter entry", "Cash, split and reversal entry" (where it starts and where it is not offered), the date-field note, Number format and color, Accessibility rule 5, Error states.
 - Wireframe 10c: frame E and marker 11 (a cash entry; a split works the same way), with frames B, D and F as built in 14a; wireframe 10b marker 19 (the reversal note).
-- Criteria: 21 (the split and cash parts: not offered on the opening balance, a reversal, a trade line or an entry already reversed; both or neither), and 9, 35, 39 (TalkBack included), 40, 41, 42, 38 (the log during a pair).
+- Criteria: AC-21 (the split and cash parts: not offered on the opening balance, a reversal, a trade line or an entry already reversed; both or neither), and AC-09, AC-35, AC-39 (TalkBack included), AC-40, AC-41, AC-42, AC-38 (the log during a pair).
 - spec 14: K1 (the pair check), K2 (the pair written as one action), K3, K5, K9.
 
 ## 3. Out of scope
-- Hide and unhide (15, criterion 60(a)); open items 44 and 46 (before 15).
+- Hide and unhide (15, AC-60(a)); open items 44 and 46 (before 15).
 - Realized gains (26); Transaction history (27).
 - The `reversal` row of the backup file (31, 33, 34).
 - The digits-only date for the cash entry form (open item 32): the form keeps its YYYY-MM-DD field; the reversal date on the review is digits only, as in 14a.
@@ -51,13 +51,13 @@ Each step ends with build, tests and lint and the report; then I stop.
 ## 8. Proof
 Commands: as in 14a, all with --rerun-tasks. CI green on the pull request.
 By hand on the phone, with 14a's data (AAPL in Main at 10 shares, $1,050.00; the splits of 2026-10-31 and 2026-11-01; net worth $4,091.87; cash $3,041.87; opening balance 2026-01-01). Each check names its start and the control (CLAUDE.md pitfall from 11). The exact figures are worked out before each check from the data then on the phone, every sell that ever took from a lot included (CLAUDE.md pitfall from 14a).
-1. Install over 14a's build: the data is still there (criterion 35).
+1. Install over 14a's build: the data is still there (AC-35).
 2. Reverse and re-enter is on a split's and a direct cash entry's detail, and not on the opening balance, a trade line, a reversal or an entry already reversed; the screens open prefilled with the banner; Back saves nothing.
 3. A cash entry re-entered with a changed amount: the combined review (part 1 the Adjustment with its fixed note, part 2, the combined cash effect); saved; back on the original, "Reversed on …"; the Cash tab and net worth.
 4. Both or neither: a cash entry re-entered so cash goes negative: refused, "Nothing was changed", the date and shortfall.
 5. A split re-entered with a changed ratio: the review (the inverse ratio and the shares before and after; the new split with its shares before and after; no cash); saved; the lots.
 6. A split pair refused for a later sell left short, if the phone's data has one; otherwise unit tested only.
-7. Largest font and landscape, light and dark, TalkBack through a whole pair (criteria 39 to 41).
+7. Largest font and landscape, light and dark, TalkBack through a whole pair (AC-39 to AC-41).
 8. Close and reopen: the pairs and their links kept.
 9. Logcat during a pair (log cleared first): no amount, note, ticker or quantity in the app's lines (counts only).
 
@@ -87,8 +87,8 @@ On c7e67eb's code (2026-11-03, all with --rerun-tasks): spotlessCheck green; deb
 
 ### 13.3 Phone results (Android 17, debug build versionCode 16, your reports)
 Checks 1 to 9 all yes. Each check's figures were worked out from the data on the phone (your photos of the Cash tab and of AAPL's Transactions and Lots tabs) before it was given.
-- 1: installed over the 14a build (lastUpdateTime 2026-11-02 20:59:33, after the fix 2026-11-03 01:11:58; firstInstallTime 2026-10-29 10:44:04 unchanged); net worth $4,091.87, cash $3,041.87, AAPL 10 shares at $1,050.00, lots 8 at $112.50 and 2 at $75.00 (criterion 35).
-- 2: Reverse and re-enter not on the opening balance, a reversal (the 2026-10-30 adjustment and zqxrevcheck), or an entry already reversed (the Fee, the interest/dividend); on the 2026-10-29 deposit of $100.00 it opened "Cash entry (replacing)" with the banner and the original's values; a changed amount showed "Original: $100.00"; Back saved nothing; on a split it opened "Split (replacing)" with its banner; Back saved nothing. A trade line on the Cash tab opens its trade (criterion 29), so "not on a trade line" is unit tested only.
+- 1: installed over the 14a build (lastUpdateTime 2026-11-02 20:59:33, after the fix 2026-11-03 01:11:58; firstInstallTime 2026-10-29 10:44:04 unchanged); net worth $4,091.87, cash $3,041.87, AAPL 10 shares at $1,050.00, lots 8 at $112.50 and 2 at $75.00 (AC-35).
+- 2: Reverse and re-enter not on the opening balance, a reversal (the 2026-10-30 adjustment and zqxrevcheck), or an entry already reversed (the Fee, the interest/dividend); on the 2026-10-29 deposit of $100.00 it opened "Cash entry (replacing)" with the banner and the original's values; a changed amount showed "Original: $100.00"; Back saved nothing; on a split it opened "Split (replacing)" with its banner; Back saved nothing. A trade line on the Cash tab opens its trade (AC-29), so "not on a trade line" is unit tested only.
 - 3: that deposit re-entered as $150.00: part 2 showed the note "check" where none was typed; fixed (section 14, item 6) and checked again: part 1 an Adjustment of −$100.00 with the fixed note "Reversal of the deposit of 2026-10-29 ET", part 2 +$150.00 with no note, combined +$50.00; saved; "Reversed on 2026-10-29 ET"; cash $3,091.87, net worth $4,141.87, the balances after it $50.00 higher.
 - 4: both or neither: the 2026-01-06 withdrawal of $500.00 re-entered as $801.00: "Not saved. Nothing was changed. With the replacement, cash would be negative on 2026-01-10 by $101.00."; the 2026-01-05 deposit re-entered on 2026-01-11: "Not saved. Nothing was changed. The reversal would make cash negative on 2026-01-10 by $300.00."; nothing saved.
 - 5: the 2026-11-01 split 2 for 1 (every entry after it reversed) re-entered as 3 for 1: part 1 ratio applied 1 for 2, 10 to 5 shares; part 2 5 to 15 shares; no cash; saved; "Reversed on 2026-11-01 ET"; AAPL 15 shares at $1,050.00, lots 12 at $75.00 and 3 at $50.00.

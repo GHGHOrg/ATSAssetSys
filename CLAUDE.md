@@ -122,7 +122,7 @@ CI (.github/workflows/ci.yml) runs the style check and then the same three steps
 - Gradle's per-test logcat paths in the scratchpad can pass Windows' 260-character limit, and `Get-Content` then fails. Use the Grep tool, or the `\\?\` prefix with `[IO.File]::ReadAllLines`.
 
 ## 7. Standing checks for every iteration's screens
-Criteria 9, 39 to 42, and the install-over-previous-build check (35).
+AC-09, AC-39 to AC-42, and the install-over-previous-build check (AC-35).
 
 ## 8. Working model in Claude Code (decided 2026-10-28; plan/spikes/vscode-claude-code.md section 5)
 These are instructions, not enforced rules. The only technical guards are the permission rules in .claude/settings.json and my user settings. Do not change either without asking.

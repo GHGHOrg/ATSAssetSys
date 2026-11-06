@@ -76,7 +76,7 @@ Status values: OPEN, ACCEPTED, REJECTED, DEFERRED.
 
 ## G5. Sector/geography: override flow and ETFs
 - Status: ACCEPTED. The override flow, the two lists and the source-value rules are accepted, and ETF look-through is deferred to a later version (option a). Written into intent.md v52 (final).
-- Gap: criterion 12 mentions a hand override, but section 6 has no screen or flow for it. A global ETF counts as one sector or geography, with no look-through.
+- Gap: AC-12 mentions a hand override, but section 6 has no screen or flow for it. A global ETF counts as one sector or geography, with no look-through.
 - DECIDED: the override is edited on Holding detail, with two fields, sector and geography. A manual value wins over the source's value until you clear it. Clearing it returns to the source's value, or "Unclassified" if there is none.
 - DECIDED: the value is picked from a list, not typed freely. The list is maintained in the app settings.
 - DECIDED: there are two separate lists, one for sectors and one for geographies.
@@ -90,7 +90,7 @@ Status values: OPEN, ACCEPTED, REJECTED, DEFERRED.
   - Details for Design: where the remembered texts are kept and whether they are in the backup file (they should be, as part of the settings, so a restored install does not re-add them); what happens to a remembered text when its list value is deleted (a delete is only possible when no holding uses the value, so the remembered text would be removed with it).
 - DECIDED (option a): no ETF look-through in the first version. Each holding has one sector and one geography, from the source or your override. A broad ETF can be given a value from your own lists (for example "Diversified" or "Global"). Look-through (manual weights, or from a data source, which is unverified) is listed under "Planned for later versions" in intent.md v52.
 - For the later version: a holding would carry several weighted values that add up to 100%, which changes the allocation calculation and the backup file, so the backup file needs a format version (already in the deferred-to-Design list).
-- Touches: section 6 (Holding detail, settings), C14, criterion 12, section 9 (backup contents), intent.md scope.
+- Touches: section 6 (Holding detail, settings), C14, AC-12, section 9 (backup contents), intent.md scope.
 
 ## G6. Privacy in the recent-apps preview and screenshots
 - Status: ACCEPTED. To be written into intent.md v52. Decision: the app's content is hidden by default, with a temporary screenshot window.
@@ -138,4 +138,4 @@ Status values: OPEN, ACCEPTED, REJECTED, DEFERRED.
 - Notes for later:
   - Per-holding dividend tracking stays out of scope in v52 for the first version and is listed as a planned future item.
   - Open for that future version: how a dividend with a ticker fits the rule that imported or direct cash rows carry no link to a portfolio (C6), and whether the backup/restore file needs a format version so a new optional field can be added without breaking old files.
-- Touches: intent.md scope (planned future item), section 6 (view 5, Realized gains), criterion 11.
+- Touches: intent.md scope (planned future item), section 6 (view 5, Realized gains), AC-11.
