@@ -51,7 +51,7 @@ CI (.github/workflows/ci.yml) runs the style check and then the same three steps
 - A new or changed screen shows only what its screen model prepares (plan.md section 3; CR2). Build the model in a builder with unit tests, plus one ViewModel wiring test per screen; the screen only picks the approved string and puts the model's values in. Don't format or work out a shown figure, text or message inside a composable. Screens built before 15a are open item 48: give one a model when you change it.
 
 ## 5. Where things are
-- intent/intent.md (v52, final) and one file per change request (intent/intent-cr-NN-short-name.md; CR1 is intent-cr-01-tiny-remainders.md), spec/spec.md (v5, final, one file), spec/wireframes/, plan/plan.md, plan/setup.md.
+- intent/intent.md (v52, final) and one file per change request (intent/intent-cr-NN-short-name.md; CR1 is intent-cr-01-tiny-remainders.md, CR2 intent-cr-02-screen-models.md, CR3 intent-cr-03-screen-tests.md), spec/spec.md (v6, final, one file; acceptance criteria tagged AC-NN, code comments may still say "criterion NN"), spec/wireframes/, plan/plan.md, plan/setup.md.
 - Spec sections: find them by heading, for example "## 4. Business rules".
   Sections 2 (concerns, C-numbers), 3 (domain), 4 (rules), 6 (views), 7 (prices), 8 (backup file), 9 (security), 11 (criteria), 14 (components, K-numbers).
 - Each iteration file in plan/iterations/ lists its own spec sections, criteria and examples.
