@@ -22,7 +22,7 @@ object Hiding {
         ticker: String,
     ): Boolean {
         if (HiddenHolding(portfolioId, ticker) in hidden) return false
-        val shares = sharesAfterEveryEntry(transactions, portfolioId, ticker) ?: return false
+        val shares = sharesAfterEveryEntry(Ledger(transactions), portfolioId, ticker) ?: return false
         return shares.signum() == 0
     }
 
@@ -33,7 +33,10 @@ object Hiding {
     fun unhiddenBy(
         transactions: List<Transaction>,
         hidden: Collection<HiddenHolding>,
-    ): List<HiddenHolding> = hidden.filter { (sharesAfterEveryEntry(transactions, it.portfolioId, it.ticker)?.signum() ?: 0) > 0 }
+    ): List<HiddenHolding> {
+        val ledger = Ledger(transactions)
+        return hidden.filter { (sharesAfterEveryEntry(ledger, it.portfolioId, it.ticker)?.signum() ?: 0) > 0 }
+    }
 
     /** The date of the holding's last transaction, a reversal included (view 9, marker 2); null with none. */
     fun lastTransactionDate(
@@ -42,9 +45,14 @@ object Hiding {
         ticker: String,
     ): LocalDate? = transactions.filter { it.portfolioId == portfolioId && it.ticker == ticker }.maxOfOrNull { it.date }
 
+    // The holding's shares counting every entry; null when it has no buy, as a holding with no lot is not one (4.4). Only
+    // the holding's own lots are worked out (15c).
     private fun sharesAfterEveryEntry(
-        transactions: List<Transaction>,
+        ledger: Ledger,
         portfolioId: String,
         ticker: String,
-    ): Fraction? = Holdings.holdings(transactions, LocalDate.MAX).firstOrNull { it.portfolioId == portfolioId && it.ticker == ticker }?.shares
+    ): Fraction? = ledger
+        .lots(LocalDate.MAX, portfolioId to ticker)
+        .takeIf { it.isNotEmpty() }
+        ?.fold(Fraction.ZERO) { sum, lot -> sum + lot.remainingQuantity }
 }

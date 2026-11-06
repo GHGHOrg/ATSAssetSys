@@ -197,9 +197,14 @@ object Reversals {
             transactions
                 .filter { sell -> sell.type == TransactionType.SELL && sell.allocations.any { it.lotId == original.id } }
                 .sortedWith(compareBy<Transaction>({ it.date }, { it.enteredSeq }))
-        val notReversed = sells.firstOrNull { reversalOf(transactions, it.id) == null }
+        // Each sell's reversal, the first in the list as reversalOf finds it, found in one pass (15c).
+        val reversals = HashMap<String, Transaction>()
+        for (transaction in transactions) {
+            if (transaction.type == TransactionType.REVERSAL) transaction.reversesId?.let { reversals.putIfAbsent(it, transaction) }
+        }
+        val notReversed = sells.firstOrNull { reversals[it.id] == null }
         if (notReversed != null) return ReversalRefusal.SellNotReversed(short.place.date, short.held, notReversed.date)
-        val earliest = sells.mapNotNull { reversalOf(transactions, it.id)?.date }.maxOrNull() ?: short.place.date
+        val earliest = sells.mapNotNull { reversals[it.id]?.date }.maxOrNull() ?: short.place.date
         return ReversalRefusal.TooEarly(short.place.date, short.held, reversal.date, earliest)
     }
 
@@ -209,7 +214,8 @@ object Reversals {
         reversal: Transaction,
     ): ReversalEffect? {
         val original = originalOf(transactions, reversal) ?: return null
-        fun since(from: Place) = Holdings.splitFactor(transactions, original.portfolioId, original.ticker, from, reversal.place)
+        val ledger = Ledger(transactions)
+        fun since(from: Place) = ledger.splitFactor(original.portfolioId, original.ticker, from, reversal.place)
         return when (original.type) {
             TransactionType.BUY ->
                 ReversalEffect.OfBuy(sharesRemoved = original.boughtQuantity * since(original.place), cashCents = original.totalCents)
@@ -233,7 +239,7 @@ object Reversals {
                     transactions
                         .filter { it.type == TransactionType.BUY && it.portfolioId == original.portfolioId && it.ticker == original.ticker }
                         .filter { it.place <= justBefore }
-                        .fold(Fraction.ZERO) { sum, buy -> sum + Holdings.quantityAt(transactions, buy, justBefore) }
+                        .fold(Fraction.ZERO) { sum, buy -> sum + ledger.quantityAt(buy, justBefore) }
                 val inverse = SplitRatio(ratio.from, ratio.to)
                 ReversalEffect.OfSplit(inverse = inverse, before = before, after = before * inverse.factor)
             }

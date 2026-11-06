@@ -149,9 +149,8 @@ internal class Ledger(
         portfolioId: String,
         ticker: String,
     ): Shortfall? {
-        val entries = ofHolding[portfolioId to ticker].orEmpty()
-        val buys = entries.filter { it.type == TransactionType.BUY }
-        val places = entries.map { it.place }.sorted()
+        val buys = ofHolding[portfolioId to ticker].orEmpty().filter { it.type == TransactionType.BUY }
+        val places = placesOf(portfolioId, ticker)
         if (!stepsOf(portfolioId, ticker).positive) return everyPlace(buys, places)
         var found: Shortfall? = null
         for (buy in buys) {
@@ -222,23 +221,61 @@ internal class Ledger(
         return places.getOrNull(low)
     }
 
+    /**
+     * As the least in Sells.lotChoices: the least the lot of [buy] holds at [from] or at any later place of its holding,
+     * each taken back to the units of [from] (4.4). In those units a lot changes only at its marks, as its sign does
+     * ([firstNegative]), so [from] and the first place of the holding from each later mark on decide it. With a factor
+     * that is not above 0, every later place is checked, as before 15c.
+     */
+    fun leastHeld(
+        buy: Transaction,
+        from: Place,
+    ): Fraction {
+        val places = placesOf(buy.portfolioId, buy.ticker)
+        fun inFromUnits(place: Place) = quantityAt(buy, place) / splitFactor(buy.portfolioId, buy.ticker, from, place)
+        if (!stepsOf(buy.portfolioId, buy.ticker).positive) {
+            return (listOf(from) + places.filter { it > from }).minOf { inFromUnits(it) }
+        }
+        val deciding =
+            buildList {
+                add(from)
+                for (mark in marksOf(buy)) {
+                    if (mark > from) firstAtOrAfter(places, mark)?.let { if (it > from) add(it) }
+                }
+            }
+        return deciding.minOf { inFromUnits(it) }
+    }
+
+    // One holding's places, sorted, kept for the questions that walk them.
+    private val sortedPlaces = HashMap<Pair<String, String>, List<Place>>()
+
+    private fun placesOf(
+        portfolioId: String,
+        ticker: String,
+    ): List<Place> = sortedPlaces.getOrPut(portfolioId to ticker) { ofHolding[portfolioId to ticker].orEmpty().map { it.place }.sorted() }
+
+    // Where a lot's quantity can change other than by a split: its buy, each sell from it, each reversal of such a sell
+    // and that sell's place (where the splits it counts start), and each reversal of the buy. Sorted, each once.
+    private fun marksOf(buy: Transaction): List<Place> {
+        val touched = touches[buy.id]
+        return buildList {
+            add(buy.place)
+            touched?.sells?.forEach { add(it.place) }
+            touched?.sellReversals?.forEach {
+                add(it.place)
+                add(it.anchor)
+            }
+            touched?.reversals?.let { addAll(it) }
+        }.distinct().sorted()
+    }
+
     // The sign of a lot stays the same from one of its marks to the next, so the first place of the holding in each
     // stretch decides it.
     private fun firstNegativePlace(
         buy: Transaction,
         places: List<Place>,
     ): Place? {
-        val touched = touches[buy.id]
-        val marks =
-            buildList {
-                add(buy.place)
-                touched?.sells?.forEach { add(it.place) }
-                touched?.sellReversals?.forEach {
-                    add(it.place)
-                    add(it.anchor)
-                }
-                touched?.reversals?.let { addAll(it) }
-            }.distinct().sorted()
+        val marks = marksOf(buy)
         for ((index, mark) in marks.withIndex()) {
             val place = firstAtOrAfter(places, maxOf(mark, buy.place)) ?: return null
             val next = marks.getOrNull(index + 1)

@@ -129,17 +129,14 @@ object Sells {
         sellSeq: Long,
     ): List<LotChoice> {
         val sellPlace = Place(sellDate, sellSeq)
-        val places = transactions.filter { it.portfolioId == portfolioId && it.ticker == ticker }.map { it.place }
+        val ledger = Ledger(transactions)
         return transactions
             .filter { it.type == TransactionType.BUY && it.portfolioId == portfolioId && it.ticker == ticker }
             .sortedWith(compareBy<Transaction>({ it.date }, { it.enteredSeq }))
             .map { buy ->
                 val from = maxOf(buy.place, sellPlace)
-                val before = Holdings.splitFactor(transactions, portfolioId, ticker, buy.place, from)
-                val least =
-                    (listOf(from) + places.filter { it > from }).minOf { place ->
-                        Holdings.quantityAt(transactions, buy, place) / Holdings.splitFactor(transactions, portfolioId, ticker, from, place)
-                    }
+                val before = ledger.splitFactor(portfolioId, ticker, buy.place, from)
+                val least = ledger.leastHeld(buy, from)
                 LotChoice(
                     buyId = buy.id,
                     buyDate = buy.date,
@@ -289,9 +286,10 @@ object Sells {
     ): List<SoldPiece> {
         val buys = transactions.filter { it.type == TransactionType.BUY }.associateBy { it.id }
         val sumTaken = sell.allocations.fold(Fraction.ZERO) { sum, allocation -> sum + allocation.quantity }
+        val ledger = Ledger(transactions)
         return sell.allocations.map { allocation ->
             val buy = buys.getValue(allocation.lotId)
-            val factor = Holdings.splitFactor(transactions, buy.portfolioId, buy.ticker, buy.place, sell.place)
+            val factor = ledger.splitFactor(buy.portfolioId, buy.ticker, buy.place, sell.place)
             SoldPiece(
                 lotId = allocation.lotId,
                 buyDate = buy.date,
