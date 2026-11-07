@@ -91,4 +91,4 @@ Proposed, to be shown to you on the phone in step 8 and approved before the comm
 - Draft 2026-11-08; decisions 1 to 4 settled; approved the same day.
 
 ## 14. Departures from the plan
-None yet.
+1. After step 2 (2026-11-08, your A): the Finnhub adapter (FinnhubSource, FinnhubList, FinnhubQuote) and its test moved into their own package, prices/finnhub/, so adapter code can be found by folder; CLAUDE.md's "Where things are" names the adapter folders. Its own commit, not in the plan. Not chosen: (B) an "Adapter" suffix on every adapter class; (C) only the CLAUDE.md note.

@@ -1,4 +1,4 @@
-package app.ghghorg.atsassets.prices
+package app.ghghorg.atsassets.prices.finnhub
 
 import app.ghghorg.atsassets.core.Listing
 import app.ghghorg.atsassets.core.Lookup
