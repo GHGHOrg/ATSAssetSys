@@ -2,6 +2,7 @@ package app.ghghorg.atsassets.prices
 
 import app.ghghorg.atsassets.core.Listing
 import app.ghghorg.atsassets.core.Lookup
+import app.ghghorg.atsassets.core.Quote
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -10,8 +11,10 @@ import org.junit.Test
 import java.io.ByteArrayInputStream
 import java.io.IOException
 import java.io.InputStream
+import java.math.BigDecimal
 import java.net.HttpURLConnection
 import java.net.URL
+import java.time.Instant
 
 /**
  * Rows shaped like Finnhub's /stock/symbol?exchange=US answer of 2026-10-30 (price-source note 10.2), with the
@@ -217,7 +220,109 @@ class FinnhubSourceTest {
             assertTrue(connection.disconnected)
         }
     }
+
+    private fun quoting(
+        code: Int,
+        body: String,
+        failure: IOException? = null,
+    ): Pair<FinnhubSource, FakeConnection> = source(connection = FakeConnection(code, body, failure))
+
+    @Test
+    fun quote_priced_readsThePriceAndItsTime_andSendsTheKeyInTheHeaderOnly() = runTest {
+        val (source, connection) = quoting(200, AAPL_QUOTE)
+        assertEquals(Quote.Priced(BigDecimal("348.91"), Instant.ofEpochSecond(1_793_304_000)), source.quote("AAPL"))
+        assertEquals("https://finnhub.io/api/v1/quote?symbol=AAPL", connection.opened.toString())
+        assertEquals("test-key", connection.getRequestProperty("X-Finnhub-Token"))
+        assertFalse(connection.opened.toString().contains("test-key"))
+        assertEquals("GET", connection.requestMethod)
+        assertFalse(connection.instanceFollowRedirects)
+        assertTrue(connection.connectTimeout > 0)
+        assertTrue(connection.readTimeout > 0)
+        assertTrue(connection.disconnected)
+    }
+
+    @Test
+    fun quote_keepsThePriceExactlyAsSent() = runTest {
+        // 0.1 has no exact double; 0.0089 is AABB's price of 2026-10-29 (price-source note 10.2).
+        for (price in listOf("0.1", "0.0089", "541.9612", "12345.67")) {
+            val body = """{"c":$price,"d":0,"dp":0,"h":0,"l":0,"o":0,"pc":0,"t":1793304000}"""
+            assertEquals(price, Quote.Priced(BigDecimal(price), Instant.ofEpochSecond(1_793_304_000)), quoting(200, body).first.quote("X"))
+        }
+    }
+
+    @Test
+    fun quote_aTickerWithADot_isAskedForAsItIs() = runTest {
+        val (source, connection) = quoting(200, AAPL_QUOTE)
+        source.quote("BRK.B")
+        assertEquals("https://finnhub.io/api/v1/quote?symbol=BRK.B", connection.opened.toString())
+    }
+
+    @Test
+    fun quote_aTickerTheSourceDoesNotPrice_isNoQuote() = runTest {
+        // Finnhub's answer for AAPPL, 2026-11-08 (16a step 2).
+        val unpriced = """{"c":0,"d":null,"dp":null,"h":0,"l":0,"o":0,"pc":0,"t":0}"""
+        assertEquals(Quote.NoQuote, quoting(200, unpriced).first.quote("AAPPL"))
+        assertEquals(Quote.NoQuote, quoting(200, """{"c":5.25,"t":0}""").first.quote("X"))
+        assertEquals(Quote.NoQuote, quoting(200, """{"c":0,"t":1793304000}""").first.quote("X"))
+    }
+
+    @Test
+    fun quote_withAnEmptyKey_isNoKey_andConnectsNowhere() = runTest {
+        var connected = false
+        val source = FinnhubSource("") {
+            connected = true
+            FakeConnection(200, AAPL_QUOTE)
+        }
+        assertEquals(Quote.NoKey, source.quote("AAPL"))
+        assertFalse(connected)
+    }
+
+    @Test
+    fun quote_eachStatus_givesItsKind_andFollowsNoRedirect() = runTest {
+        assertEquals(Quote.KeyRefused(401), quoting(401, "").first.quote("AAPL"))
+        assertEquals(Quote.KeyRefused(403), quoting(403, "").first.quote("AAPL"))
+        assertEquals(Quote.TooManyCalls, quoting(429, "").first.quote("AAPL"))
+        for (code in listOf(302, 404, 500, 503)) {
+            val opened = mutableListOf<URL>()
+            val connection = FakeConnection(code, "", location = "https://static2.finnhub.io/q.json")
+            val source = FinnhubSource("test-key") { url -> connection.also { opened.add(url) } }
+            assertEquals(code.toString(), Quote.NoAnswer(code), source.quote("AAPL"))
+            assertEquals(code.toString(), 1, opened.size)
+            assertTrue(connection.disconnected)
+        }
+    }
+
+    @Test
+    fun quote_aFailedConnection_isNoAnswer_withoutAStatus() = runTest {
+        val (source, connection) = quoting(200, AAPL_QUOTE, failure = IOException("no route"))
+        assertEquals(Quote.NoAnswer(status = null), source.quote("AAPL"))
+        assertTrue(connection.disconnected)
+    }
+
+    @Test
+    fun quote_status200WithABodyThatIsNotAQuote_isUnreadable() = runTest {
+        val bodies =
+            listOf(
+                """{"error":"Invalid API key"}""",
+                "<html>",
+                "[]",
+                """{"c":"348.91","t":1793304000}""",
+                """{"c":null,"t":1793304000}""",
+                """{"c":348.91}""",
+                """{"t":1793304000}""",
+                """{"c":348.91,"t":1.5}""",
+                """{"c":-1,"t":1793304000}""",
+            )
+        for (body in bodies) {
+            val (source, connection) = quoting(200, body)
+            assertEquals(body, Quote.Unreadable, source.quote("AAPL"))
+            assertTrue(connection.disconnected)
+        }
+    }
 }
+
+/** Finnhub's /quote answer for AAPL of 2026-10-30 (price-source note 10.2). */
+private const val AAPL_QUOTE = """{"c":348.91,"d":5.08,"dp":1.4775,"h":351.43,"l":347.3,"o":348,"pc":343.83,"t":1793304000}"""
 
 /** An HttpURLConnection that answers from memory. [failure] is thrown when the status is asked for. */
 private class FakeConnection(

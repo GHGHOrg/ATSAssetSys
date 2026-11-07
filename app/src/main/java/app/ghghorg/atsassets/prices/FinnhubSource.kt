@@ -3,6 +3,7 @@ package app.ghghorg.atsassets.prices
 import app.ghghorg.atsassets.core.Listing
 import app.ghghorg.atsassets.core.Lookup
 import app.ghghorg.atsassets.core.PriceSource
+import app.ghghorg.atsassets.core.Quote
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.ExperimentalSerializationApi
@@ -14,9 +15,12 @@ import kotlinx.serialization.json.contentOrNull
 import kotlinx.serialization.json.decodeToSequence
 import java.io.IOException
 import java.io.InputStream
+import java.math.BigDecimal
 import java.net.HttpURLConnection
 import java.net.MalformedURLException
 import java.net.URL
+import java.net.URLEncoder
+import java.time.Instant
 import java.util.Locale
 
 /** Reads Finnhub's US symbol list one row at a time, so the whole list (7.4 MB on 2026-10-31) is never held at once. */
@@ -42,8 +46,43 @@ object FinnhubList {
     private fun JsonObject.text(name: String): String? = (this[name] as? JsonPrimitive)?.contentOrNull
 }
 
+/** Reads Finnhub's /quote answer (price-source note 10.2): the price c and its time t in Unix seconds (16a). */
+object FinnhubQuote {
+    /**
+     * Priced when c and t are above 0; NoQuote when either is 0, as Finnhub answers a ticker it does not price
+     * (2026-11-08). The price is kept exactly as sent, never as a double (4.10). Anything else is Unreadable: not a
+     * JSON object, c or t missing, null, text or below 0, or t not whole seconds.
+     */
+    fun read(body: String): Quote {
+        val fields =
+            try {
+                Json.parseToJsonElement(body) as? JsonObject
+            } catch (e: IllegalArgumentException) {
+                null
+            } ?: return Quote.Unreadable
+        val price = fields.number("c") ?: return Quote.Unreadable
+        val seconds =
+            try {
+                fields.number("t")?.longValueExact()
+            } catch (e: ArithmeticException) {
+                null
+            } ?: return Quote.Unreadable
+        return when {
+            price.signum() < 0 || seconds < 0 -> Quote.Unreadable
+            price.signum() == 0 || seconds == 0L -> Quote.NoQuote
+            else -> Quote.Priced(price, Instant.ofEpochSecond(seconds))
+        }
+    }
+
+    /** The field as an exact decimal, or null when it is missing, JSON null, text or not a number. */
+    private fun JsonObject.number(name: String): BigDecimal? {
+        val field = this[name] as? JsonPrimitive ?: return null
+        return if (field.isString) null else field.content.toBigDecimalOrNull()
+    }
+}
+
 /**
- * K4 on Finnhub, verify only (spec 7; spike decisions 3 and 5; 09 decisions 4, 5 and 8). The key goes in the
+ * K4 on Finnhub: verify (09) and quote (16a) (spec 7; spike decisions 3 and 5; 09 decisions 4, 5 and 8). The key goes in the
  * X-Finnhub-Token header only, never in the URL. Nothing is logged: no ticker, no key, no response, no link (spec
  * section 9). Finnhub answers the list with a redirect to a signed link on its file host (static2.finnhub.io; defect
  * found in 09 phone check 3). That one redirect is followed by hand, only over https to finnhub.io or a subdomain,
@@ -56,6 +95,30 @@ class FinnhubSource(
     override suspend fun lookUp(ticker: String): Lookup {
         if (key.isEmpty()) return Lookup.NoKey
         return withContext(Dispatchers.IO) { fetch(ticker) }
+    }
+
+    override suspend fun quote(ticker: String): Quote {
+        if (key.isEmpty()) return Quote.NoKey
+        return withContext(Dispatchers.IO) { fetchQuote(ticker) }
+    }
+
+    /** /quote does not redirect (open item 40, checked 2026-11-08), so a redirect is NoAnswer and is not followed. */
+    private fun fetchQuote(ticker: String): Quote {
+        var api: HttpURLConnection? = null
+        return try {
+            api = prepared(URL(QUOTE + URLEncoder.encode(ticker, Charsets.UTF_8)))
+            api.setRequestProperty("X-Finnhub-Token", key)
+            when (val status = api.responseCode) {
+                HttpURLConnection.HTTP_OK -> api.inputStream.use { FinnhubQuote.read(it.readBytes().decodeToString()) }
+                HttpURLConnection.HTTP_UNAUTHORIZED, HttpURLConnection.HTTP_FORBIDDEN -> Quote.KeyRefused(status)
+                TOO_MANY_REQUESTS -> Quote.TooManyCalls
+                else -> Quote.NoAnswer(status)
+            }
+        } catch (e: IOException) {
+            Quote.NoAnswer(status = null)
+        } finally {
+            api?.disconnect()
+        }
     }
 
     private fun fetch(ticker: String): Lookup {
@@ -129,6 +192,7 @@ class FinnhubSource(
 
     private companion object {
         val US_LIST = URL("https://finnhub.io/api/v1/stock/symbol?exchange=US")
+        const val QUOTE = "https://finnhub.io/api/v1/quote?symbol="
         const val CONNECT_TIMEOUT_MS = 15_000
         const val READ_TIMEOUT_MS = 30_000
         const val TOO_MANY_REQUESTS = 429

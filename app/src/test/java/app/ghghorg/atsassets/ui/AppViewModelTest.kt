@@ -11,6 +11,7 @@ import app.ghghorg.atsassets.core.Lookup
 import app.ghghorg.atsassets.core.Portfolio
 import app.ghghorg.atsassets.core.PortfolioRefusal
 import app.ghghorg.atsassets.core.PriceSource
+import app.ghghorg.atsassets.core.Quote
 import app.ghghorg.atsassets.core.RecordStore
 import app.ghghorg.atsassets.core.Transaction
 import app.ghghorg.atsassets.core.UnreadableDataException
@@ -1582,6 +1583,8 @@ internal class FakeSource(
         gate?.await()
         return answer
     }
+
+    override suspend fun quote(ticker: String): Quote = error("not used before 16a step 5")
 }
 
 private fun AppViewModel.fill(

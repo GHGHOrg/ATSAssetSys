@@ -8,6 +8,7 @@ import app.ghghorg.atsassets.core.Listing
 import app.ghghorg.atsassets.core.Lookup
 import app.ghghorg.atsassets.core.Portfolio
 import app.ghghorg.atsassets.core.PriceSource
+import app.ghghorg.atsassets.core.Quote
 import app.ghghorg.atsassets.core.RecordStore
 import app.ghghorg.atsassets.core.TickerRefusal
 import app.ghghorg.atsassets.core.Transaction
@@ -25,6 +26,8 @@ class TickerVerifierTest {
             asked.add(ticker)
             return answer
         }
+
+        override suspend fun quote(ticker: String): Quote = error("not used")
     }
 
     /** Only instruments are used here; the other calls are not expected. */
