@@ -1,6 +1,10 @@
 package app.ghghorg.atsassets
 
+import android.os.Debug
+import android.os.Process
 import android.os.SystemClock
+import android.system.Os
+import android.system.OsConstants
 import android.util.Log
 import androidx.compose.ui.test.hasContentDescription
 import androidx.compose.ui.test.hasText
@@ -26,6 +30,7 @@ import org.junit.Rule
 import org.junit.Test
 import org.junit.rules.RuleChain
 import org.junit.runner.RunWith
+import java.io.File
 
 /**
  * Iteration 15c (section 9, part 2, item 4; decision 3): how long the app takes, on the emulator, from the lock prompt
@@ -52,21 +57,28 @@ class AppStartTimingTest {
 
     private fun timeOneStart(run: Int) {
         val unlocked = composeRule.unlockAppTimed()
+        val atUnlock = Usage.now()
         val overall =
             stamp("Overall's net worth") {
                 composeRule.onAllNodes(hasContentDescription(string(R.string.net_worth_label), substring = true)).fetchSemanticsNodes()
                     .isNotEmpty()
             }
+        val atOverall = Usage.now()
         val tapped = SystemClock.uptimeMillis()
+        val atTap = Usage.now()
         composeRule.onNode(isSelectable() and hasText(string(R.string.tab_cash))).performClick()
         // Every trade row's spoken label names its ticker, and the recipe's tickers start with S0.
         val cash =
             stamp("the Cash list's rows") {
                 composeRule.onAllNodes(hasContentDescription(TICKER_START, substring = true)).fetchSemanticsNodes().isNotEmpty()
             }
+        val atCash = Usage.now()
         val result = (overall - unlocked) to (cash - tapped)
         results += result
         Log.i(TAG, "run $run of 3, $SIZE transactions: load and Overall ${result.first} ms, Cash ${result.second} ms")
+        // 15c step 7 (your B): where each phase's time goes. Times only.
+        Log.i(TAG, "run $run of 3, CPU in load and Overall: ${atOverall - atUnlock}")
+        Log.i(TAG, "run $run of 3, CPU in Cash: ${atCash - atTap}")
         // 15c step 7: logged by the third run to finish, while Gradle still keeps its logcat, not after the class (section
         // 14, item 5). JUnit does not promise the methods' order.
         if (results.size == 3) {
@@ -88,6 +100,38 @@ class AppStartTimingTest {
         }
         fail("$what did not show within $TIMEOUT_MS ms (over 120 s)")
         return end
+    }
+
+    /**
+     * 15c step 7: the CPU time this process (all its threads, this test's own included) and its main thread have used,
+     * and the time spent collecting garbage, at one moment, in ms. A phase's main-thread CPU near its wall time means the
+     * app's own work; process CPU well above main-thread CPU means other threads compete; both low means it waits.
+     */
+    private class Usage(
+        val processCpu: Long,
+        val mainCpu: Long,
+        val gc: Long,
+    ) {
+        operator fun minus(start: Usage): String {
+            val process = processCpu - start.processCpu
+            val main = mainCpu - start.mainCpu
+            return "process $process ms, main thread $main ms, garbage collection ${gc - start.gc} ms"
+        }
+
+        companion object {
+            fun now(): Usage {
+                val gc = Debug.getRuntimeStat("art.gc.gc-time")?.toLongOrNull() ?: -1L
+                return Usage(Process.getElapsedCpuTime(), mainThreadCpu(), gc)
+            }
+
+            // The main thread's id is the process id; its user and system times are fields 14 and 15 of its stat line,
+            // in clock ticks. The name in brackets can hold spaces, so the fields are counted after its closing bracket.
+            private fun mainThreadCpu(): Long {
+                val fields = File("/proc/self/task/${Process.myPid()}/stat").readText().substringAfterLast(") ").split(" ")
+                val ticks = fields[11].toLong() + fields[12].toLong()
+                return ticks * 1_000L / Os.sysconf(OsConstants._SC_CLK_TCK)
+            }
+        }
     }
 
     companion object {
