@@ -532,6 +532,8 @@ data class AppState(
         ),
     // What is left of the shown buy's lot as of today (13a decision 2).
     val transactionLot: Lot? = KeptFields.transactionLot(transactions, transactionId, today),
+    // The Cash list as the screen draws it (view 7; 15d).
+    val cashList: CashListModel = KeptFields.cashList(entries, transactions, portfolios, cashFilterForm),
     // The inputs the kept fields above were worked out from.
     val keptFrom: KeptInputs =
         KeptInputs(
@@ -547,6 +549,8 @@ data class AppState(
             sellDateText = sellForm.dateText,
             replacingId = replacingId,
             replaceReversalDate = replaceReversalDate,
+            portfolios = portfolios,
+            cashFilterForm = cashFilterForm,
         ),
 ) {
     val shownPortfolio: Portfolio? get() = portfolioId?.let { id -> portfolios.firstOrNull { it.id == id } }

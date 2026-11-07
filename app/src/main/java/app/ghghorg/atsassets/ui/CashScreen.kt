@@ -1,19 +1,22 @@
 package app.ghghorg.atsassets.ui
 
-import androidx.compose.foundation.clickable
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
+import androidx.compose.foundation.layout.FlowRowScope
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.selection.selectableGroup
 import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
@@ -24,13 +27,18 @@ import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.drawBehind
+import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Shape
+import androidx.compose.ui.graphics.drawOutline
+import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.graphics.drawscope.clipRect
+import androidx.compose.ui.graphics.drawscope.translate
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.contentDescription
-import androidx.compose.ui.semantics.onClick
-import androidx.compose.ui.semantics.role
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
@@ -40,7 +48,6 @@ import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import app.ghghorg.atsassets.R
-import app.ghghorg.atsassets.core.CashRow
 import app.ghghorg.atsassets.core.CashType
 import app.ghghorg.atsassets.core.Money
 import app.ghghorg.atsassets.core.TransactionType
@@ -50,6 +57,9 @@ import app.ghghorg.atsassets.core.TransactionType
  * it exists, then a deposit or withdrawal, iteration 03), and the rows. A row opens its detail and shows its note
  * (05 decision 3). The date range and type filters (06) sit between the balance and the list; the ticker and the
  * Buy and Sell chips arrive in 28, trade lines in 09. Cash is not colored.
+ *
+ * 15d: drawn only from the screen's model (state.cashList; CR2), in one lazy list, so only the rows on the screen are
+ * laid out (decision 2). The rows' card is drawn in slices, one per row, so it still looks like one card.
  */
 @Composable
 fun CashScreen(
@@ -60,61 +70,115 @@ fun CashScreen(
     filterActions: CashFilterActions,
     modifier: Modifier = Modifier,
 ) {
-    Column(
-        modifier = modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(16.dp),
-        verticalArrangement = Arrangement.spacedBy(12.dp),
+    val model = state.cashList
+    val shape = CardDefaults.outlinedShape
+    val border = CardDefaults.outlinedCardBorder()
+    val container = CardDefaults.outlinedCardColors().containerColor
+    LazyColumn(
+        modifier = modifier.fillMaxSize(),
+        contentPadding = PaddingValues(16.dp),
     ) {
-        Text(
-            text = stringResource(R.string.tab_cash),
-            style = MaterialTheme.typography.titleLarge,
-        )
-        BalanceCard(state.cashBalanceCents, onCashEntry)
-        if (state.cashRows.isEmpty()) {
+        item(key = "title") {
             Text(
-                text = stringResource(R.string.cash_no_entries),
-                style = MaterialTheme.typography.bodyLarge,
+                text = stringResource(R.string.tab_cash),
+                style = MaterialTheme.typography.titleLarge,
+                modifier = Modifier.padding(bottom = 12.dp),
             )
-            return@Column
         }
-        FilterCard(state, filterActions)
-        val rows = state.cashFilteredRows
-        if (rows.isEmpty()) {
-            Text(
-                text = stringResource(R.string.cash_no_match),
-                style = MaterialTheme.typography.bodyLarge,
-            )
-        } else {
-            OutlinedCard(modifier = Modifier.fillMaxWidth()) {
-                Column(modifier = Modifier.padding(12.dp)) {
-                    rows.forEachIndexed { index, row ->
-                        if (index > 0) HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
-                        val trade = state.transactions.firstOrNull { it.id == row.entry.transactionId }
-                        if (trade != null) {
-                            val portfolio = state.portfolios.firstOrNull { it.id == trade.portfolioId }?.name.orEmpty()
-                            val title = transactionTitle(trade, state.transactions)
-                            val reversal = trade.type == TransactionType.REVERSAL
-                            TradeRow(
-                                row = row,
-                                title = title,
-                                portfolio = portfolio,
-                                spokenFormat =
-                                when (trade.type) {
-                                    TransactionType.SELL -> R.string.trade_sell_spoken
-                                    TransactionType.BUY -> R.string.trade_buy_spoken
-                                    else -> R.string.trade_reversal_spoken
-                                },
-                                spokenFirst = if (reversal) title else trade.ticker,
-                                onOpen = { onOpenTransaction(trade.id) },
-                            )
-                        } else {
-                            EntryRow(row, onOpen = { onOpenEntry(row.entry.id) })
-                        }
-                    }
+        item(key = "balance") {
+            BalanceCard(model.balance, spoken(model.spokenBalance), onCashEntry, Modifier.padding(bottom = 12.dp))
+        }
+        if (!model.hasEntries) {
+            item(key = "no entries") {
+                Text(
+                    text = stringResource(R.string.cash_no_entries),
+                    style = MaterialTheme.typography.bodyLarge,
+                )
+            }
+            return@LazyColumn
+        }
+        item(key = "filters") {
+            FilterCard(state.cashFilterForm, model, filterActions, Modifier.padding(bottom = 12.dp))
+        }
+        if (model.rows.isEmpty()) {
+            item(key = "no match") {
+                Text(
+                    text = stringResource(R.string.cash_no_match),
+                    style = MaterialTheme.typography.bodyLarge,
+                )
+            }
+            return@LazyColumn
+        }
+        val last = model.rows.lastIndex
+        itemsIndexed(model.rows, key = { _, row -> row.key }) { index, row ->
+            Column(
+                modifier =
+                Modifier
+                    .fillMaxWidth()
+                    .cardSlice(top = index == 0, bottom = index == last, shape, border, container)
+                    .padding(
+                        start = 12.dp,
+                        end = 12.dp,
+                        top = if (index == 0) 12.dp else 0.dp,
+                        bottom = if (index == last) 12.dp else 0.dp,
+                    ),
+            ) {
+                if (index > 0) HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
+                when (row) {
+                    is CashRowModel.Trade -> TradeRow(row, onOpen = { onOpenTransaction(row.transactionId) })
+                    is CashRowModel.Entry -> EntryRow(row, onOpen = { onOpenEntry(row.key) })
                 }
             }
         }
     }
 }
+
+/**
+ * One row's slice of an outlined card (15d): the card's fill and outline, with the top edge and its rounded corners
+ * only on the first row and the bottom edge only on the last; the shape, outline and fill are the card's own.
+ */
+private fun Modifier.cardSlice(
+    top: Boolean,
+    bottom: Boolean,
+    shape: Shape,
+    border: BorderStroke,
+    container: Color,
+): Modifier = drawBehind {
+    val stroke = border.width.toPx()
+    // A missing edge is drawn beyond the row, where the clip below cuts it off with its corners.
+    val beyond = stroke + size.height
+    val from = if (top) 0f else -beyond
+    val to = if (bottom) size.height else size.height + beyond
+    val outline = shape.createOutline(Size(size.width - stroke, to - from - stroke), layoutDirection, this)
+    clipRect {
+        translate(stroke / 2, from + stroke / 2) {
+            drawOutline(outline, container)
+            drawOutline(outline, border.brush, style = Stroke(stroke))
+        }
+    }
+}
+
+/** A figure for TalkBack: its digits, after "plus" or "minus" when its sign says so. */
+@Composable
+private fun spoken(figure: SpokenFigure): String = when (figure.sign) {
+    FigureSign.PLUS -> stringResource(R.string.spoken_plus, figure.digits)
+    FigureSign.MINUS -> stringResource(R.string.spoken_minus, figure.digits)
+    FigureSign.NONE -> figure.digits
+}
+
+/** A trade line's title (09 wording 3, 11 wording 4, 13b wording 5), the same strings as transaction detail's. */
+@Composable
+private fun tradeTitle(row: CashRowModel.Trade): String = stringResource(
+    when (row.title) {
+        TradeTitle.BUY -> R.string.trade_buy_title
+        TradeTitle.SELL -> R.string.trade_sell_title
+        TradeTitle.SPLIT -> R.string.transaction_split_title
+        TradeTitle.REVERSAL_OF_BUY -> R.string.reversal_of_buy_title
+        TradeTitle.REVERSAL_OF_SELL -> R.string.reversal_of_sell_title
+        TradeTitle.REVERSAL_OF_SPLIT -> R.string.reversal_of_split_title
+    },
+    row.ticker,
+)
 
 /** The filter actions of the Cash list (iteration 06), passed together to keep the screen's parameters short. */
 data class CashFilterActions(
@@ -131,11 +195,12 @@ data class CashFilterActions(
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
 private fun FilterCard(
-    state: AppState,
+    form: CashFilterForm,
+    model: CashListModel,
     actions: CashFilterActions,
+    modifier: Modifier = Modifier,
 ) {
-    val form = state.cashFilterForm
-    OutlinedCard(modifier = Modifier.fillMaxWidth()) {
+    OutlinedCard(modifier = modifier.fillMaxWidth()) {
         Column(
             modifier = Modifier.padding(12.dp),
             verticalArrangement = Arrangement.spacedBy(8.dp),
@@ -144,14 +209,14 @@ private fun FilterCard(
                 FilterDateField(
                     label = stringResource(R.string.filter_from),
                     text = form.fromText,
-                    error = dateMessage(state.filterFromRefusal),
+                    error = dateMessage(model.fromRefusal),
                     onChange = actions.onFromChange,
                     modifier = Modifier.weight(1f),
                 )
                 FilterDateField(
                     label = stringResource(R.string.filter_to),
                     text = form.toText,
-                    error = dateMessage(state.filterToRefusal),
+                    error = dateMessage(model.toRefusal),
                     onChange = actions.onToChange,
                     modifier = Modifier.weight(1f),
                 )
@@ -178,8 +243,8 @@ private fun FilterCard(
                     )
                 }
             }
-            if (state.filterActive) {
-                val count = state.cashFilteredRows.size
+            if (model.filterActive) {
+                val count = model.rows.size
                 Text(
                     text = pluralStringResource(R.plurals.cash_entries_shown, count, count),
                     style = MaterialTheme.typography.bodyMedium,
@@ -234,11 +299,13 @@ private val FILTER_TYPES = listOf(CashType.DEPOSIT, CashType.WITHDRAWAL, CashTyp
 
 @Composable
 private fun BalanceCard(
-    cents: Long,
+    balance: String,
+    spokenBalance: String,
     onCashEntry: () -> Unit,
+    modifier: Modifier = Modifier,
 ) {
-    val spoken = stringResource(R.string.cash_balance_spoken, spokenDollars(cents))
-    OutlinedCard(modifier = Modifier.fillMaxWidth()) {
+    val spoken = stringResource(R.string.cash_balance_spoken, spokenBalance)
+    OutlinedCard(modifier = modifier.fillMaxWidth()) {
         Column(
             modifier = Modifier.padding(12.dp),
             verticalArrangement = Arrangement.spacedBy(8.dp),
@@ -249,7 +316,7 @@ private fun BalanceCard(
                     style = MaterialTheme.typography.bodyMedium,
                 )
                 Text(
-                    text = Money.format(cents),
+                    text = balance,
                     style = MaterialTheme.typography.headlineSmall,
                 )
             }
@@ -263,36 +330,23 @@ private fun BalanceCard(
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
 private fun EntryRow(
-    row: CashRow,
+    row: CashRowModel.Entry,
     onOpen: () -> Unit,
 ) {
-    val entry = row.entry
-    val type = cashTypeLabel(entry.type)
-    val date = entry.date.toString()
+    val type = cashTypeLabel(row.type)
     val base =
         stringResource(
             R.string.cash_row_spoken,
             type,
-            date,
-            spokenSigned(entry.amountCents),
-            spokenDollars(row.balanceAfterCents),
+            row.date,
+            spoken(row.spokenAmount),
+            spoken(row.spokenBalanceAfter),
         )
     // The note is read last, after the figures (05 decision 3).
-    val spoken = if (entry.note.isEmpty()) base else "$base, ${entry.note}"
+    val spoken = if (row.note.isEmpty()) base else "$base, ${row.note}"
     // A wrapping two-part row, so nothing is cut off at the largest font (criterion 39). Tapping opens the detail.
     FlowRow(
-        modifier =
-        Modifier
-            .fillMaxWidth()
-            .clickable(role = Role.Button, onClick = onOpen)
-            .clearAndSetSemantics {
-                contentDescription = spoken
-                role = Role.Button
-                onClick {
-                    onOpen()
-                    true
-                }
-            },
+        modifier = Modifier.fillMaxWidth().opensWith(spoken, onOpen),
         horizontalArrangement = Arrangement.spacedBy(12.dp),
         verticalArrangement = Arrangement.spacedBy(2.dp),
     ) {
@@ -303,63 +357,47 @@ private fun EntryRow(
                 fontWeight = FontWeight.Medium,
             )
             Text(
-                text = stringResource(R.string.date_with_et, date),
+                text = stringResource(R.string.date_with_et, row.date),
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
-            if (entry.note.isNotEmpty()) {
+            if (row.note.isNotEmpty()) {
                 Text(
-                    text = entry.note,
+                    text = row.note,
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
             }
         }
-        Column(
-            modifier = Modifier.weight(1f),
-            horizontalAlignment = Alignment.End,
-        ) {
-            Text(
-                text = signedAmount(entry.amountCents),
-                style = MaterialTheme.typography.bodyLarge,
-                textAlign = TextAlign.End,
-            )
-            Text(
-                text = stringResource(R.string.cash_balance_after, Money.format(row.balanceAfterCents)),
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                textAlign = TextAlign.End,
-            )
-        }
+        Amounts(row)
     }
 }
 
 /**
- * A trade line (view 7; 09 wording 3, 11 wording 4, 13b wording 5): "Buy AAPL", "Sell AAPL" or "Reversal of buy AAPL"
- * as [title], the date with "ET" and the balance after it, and "For portfolio Main" where a direct entry shows its
- * note. Read by TalkBack with [spokenFormat], whose first value is [spokenFirst]. Tapping opens its transaction
- * (criterion 29; 13a wording 4).
+ * A trade line (view 7; 09 wording 3, 11 wording 4, 13b wording 5): "Buy AAPL", "Sell AAPL" or "Reversal of buy AAPL",
+ * the date with "ET" and the balance after it, and "For portfolio Main" where a direct entry shows its note. Read by
+ * TalkBack with the buy, sell or reversal sentence; a reversal's starts with its title, the others with the ticker.
+ * Tapping opens its transaction (criterion 29; 13a wording 4).
  */
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
 private fun TradeRow(
-    row: CashRow,
-    title: String,
-    portfolio: String,
-    spokenFormat: Int,
-    spokenFirst: String,
+    row: CashRowModel.Trade,
     onOpen: () -> Unit,
 ) {
-    val entry = row.entry
-    val date = entry.date.toString()
+    val title = tradeTitle(row)
     val spoken =
         stringResource(
-            spokenFormat,
-            spokenFirst,
-            portfolio,
-            date,
-            spokenSigned(entry.amountCents),
-            spokenDollars(row.balanceAfterCents),
+            when (row.kind) {
+                TransactionType.SELL -> R.string.trade_sell_spoken
+                TransactionType.BUY -> R.string.trade_buy_spoken
+                else -> R.string.trade_reversal_spoken
+            },
+            if (row.kind == TransactionType.REVERSAL) title else row.ticker,
+            row.portfolio,
+            row.date,
+            spoken(row.spokenAmount),
+            spoken(row.spokenBalanceAfter),
         )
     FlowRow(
         modifier = Modifier.fillMaxWidth().opensWith(spoken, onOpen),
@@ -373,32 +411,39 @@ private fun TradeRow(
                 fontWeight = FontWeight.Medium,
             )
             Text(
-                text = stringResource(R.string.date_with_et, date),
+                text = stringResource(R.string.date_with_et, row.date),
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
             Text(
-                text = stringResource(R.string.trade_for_portfolio, portfolio),
+                text = stringResource(R.string.trade_for_portfolio, row.portfolio),
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
         }
-        Column(
-            modifier = Modifier.weight(1f),
-            horizontalAlignment = Alignment.End,
-        ) {
-            Text(
-                text = signedAmount(entry.amountCents),
-                style = MaterialTheme.typography.bodyLarge,
-                textAlign = TextAlign.End,
-            )
-            Text(
-                text = stringResource(R.string.cash_balance_after, Money.format(row.balanceAfterCents)),
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                textAlign = TextAlign.End,
-            )
-        }
+        Amounts(row)
+    }
+}
+
+/** A row's right-hand part: the signed amount, then the balance after it; it takes the rest of the row, or wraps below. */
+@OptIn(ExperimentalLayoutApi::class)
+@Composable
+private fun FlowRowScope.Amounts(row: CashRowModel) {
+    Column(
+        modifier = Modifier.weight(1f),
+        horizontalAlignment = Alignment.End,
+    ) {
+        Text(
+            text = row.amount,
+            style = MaterialTheme.typography.bodyLarge,
+            textAlign = TextAlign.End,
+        )
+        Text(
+            text = stringResource(R.string.cash_balance_after, row.balanceAfter),
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            textAlign = TextAlign.End,
+        )
     }
 }
 

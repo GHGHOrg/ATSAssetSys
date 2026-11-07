@@ -8,6 +8,7 @@ import app.ghghorg.atsassets.core.Holding
 import app.ghghorg.atsassets.core.Holdings
 import app.ghghorg.atsassets.core.Lot
 import app.ghghorg.atsassets.core.LotChoice
+import app.ghghorg.atsassets.core.Portfolio
 import app.ghghorg.atsassets.core.Reversals
 import app.ghghorg.atsassets.core.Sells
 import app.ghghorg.atsassets.core.Transaction
@@ -37,6 +38,9 @@ data class KeptInputs(
     val sellDateText: String,
     val replacingId: String?,
     val replaceReversalDate: String,
+    // 15d: the Cash list's other inputs.
+    val portfolios: List<Portfolio>,
+    val cashFilterForm: CashFilterForm,
 )
 
 /** The kept fields of [AppState] (15c), each worked out here by one function, from its inputs only. */
@@ -136,6 +140,14 @@ internal object KeptFields {
         return Holdings.lots(transactions, today).firstOrNull { it.buyId == buy.id }
     }
 
+    /** The Cash list as the screen draws it (view 7; 15d). */
+    fun cashList(
+        entries: List<CashEntry>,
+        transactions: List<Transaction>,
+        portfolios: List<Portfolio>,
+        form: CashFilterForm,
+    ): CashListModel = CashList.of(entries, transactions, portfolios, form)
+
     // The transactions a sell is entered against: with the replaced sell's reversal drafted at its date (14a).
     private fun sellTransactions(
         entries: List<CashEntry>,
@@ -163,6 +175,8 @@ internal fun AppState.keptInputs(): KeptInputs = KeptInputs(
     sellDateText = sellForm.dateText,
     replacingId = replacingId,
     replaceReversalDate = replaceReversalDate,
+    portfolios = portfolios,
+    cashFilterForm = cashFilterForm,
 )
 
 /**
@@ -239,6 +253,12 @@ internal fun AppState.refreshed(): AppState {
             KeptFields.transactionLot(transactions, transactionId, today)
         } else {
             transactionLot
+        },
+        cashList =
+        if (changed({ it.entries }, { it.transactions }, { it.portfolios }, { it.cashFilterForm })) {
+            KeptFields.cashList(entries, transactions, portfolios, cashFilterForm)
+        } else {
+            cashList
         },
         keptFrom = now,
     )

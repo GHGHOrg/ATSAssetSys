@@ -57,6 +57,7 @@ internal fun assertKeptFieldsFresh(
         sellLotChoices,
     )
     assertEquals("$case: transaction lot", KeptFields.transactionLot(transactions, transactionId, today), transactionLot)
+    assertEquals("$case: cash list", CashList.of(entries, transactions, portfolios, cashFilterForm), cashList)
 }
 
 // 15c: the kept fields of AppState follow their inputs, and a field whose inputs did not change stays the same object.
@@ -180,6 +181,14 @@ class KeptFieldsTest {
                 { it.copy(replaceReversalDate = "20261027") },
                 { it.sellLotChoices },
             ),
+            // 15d: the Cash list's own inputs.
+            Case(
+                "portfolios",
+                base,
+                { it.copy(portfolios = listOf(Portfolio("p1", "Renamed", 1L), Portfolio("p2", "Second", 2L))) },
+                { it.cashList },
+            ),
+            Case("cash filter", base, { it.copy(cashFilterForm = CashFilterForm(type = CashType.DEPOSIT)) }, { it.cashList }),
         )
 
     private fun deposit(): CashEntry = CashEntry("d1", LocalDate.of(2026, 3, 1), 50_000L, CashType.DEPOSIT, "", 10L)
@@ -217,6 +226,7 @@ class KeptFieldsTest {
         assertSame(base.sellTickers, typed.sellTickers)
         assertSame(base.holdingLots, typed.holdingLots)
         assertSame(base.holdings, typed.holdings)
+        assertSame(base.cashList, typed.cashList)
     }
 
     @Test
@@ -228,6 +238,7 @@ class KeptFieldsTest {
         assertSame(base.holdings, next.holdings)
         assertSame(base.netWorth, next.netWorth)
         assertSame(base.transactionLot, next.transactionLot)
+        assertSame(base.cashList, next.cashList)
     }
 
     @Test
