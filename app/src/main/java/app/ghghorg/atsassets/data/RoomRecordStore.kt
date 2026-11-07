@@ -5,7 +5,7 @@ import app.ghghorg.atsassets.core.CashEntry
 import app.ghghorg.atsassets.core.CashType
 import app.ghghorg.atsassets.core.Fraction
 import app.ghghorg.atsassets.core.HiddenHolding
-import app.ghghorg.atsassets.core.Holdings
+import app.ghghorg.atsassets.core.Hiding
 import app.ghghorg.atsassets.core.Instrument
 import app.ghghorg.atsassets.core.Portfolio
 import app.ghghorg.atsassets.core.RecordStore
@@ -268,18 +268,18 @@ class RoomRecordStore(
         dao.upsert(instrument.toRow())
     }
 
-    override suspend fun loadHidden(): List<HiddenHolding> {
-        val transactions = loadTransactions()
-        return withContext(Dispatchers.IO) {
-            try {
-                checkHidden(transactions, database.transactionDao().loadHidden().map { it.toHidden() })
-            } catch (e: CancellationException) {
-                throw e
-            } catch (e: UnreadableDataException) {
-                throw e
-            } catch (e: Exception) {
-                throw UnreadableDataException("The stored data could not be read.", e)
-            }
+    override suspend fun loadHidden(): List<HiddenHolding> = loadHidden(loadTransactions())
+
+    /** Checked against the transactions the caller has just loaded: they are not read a second time (iteration 15c). */
+    override suspend fun loadHidden(transactions: List<Transaction>): List<HiddenHolding> = withContext(Dispatchers.IO) {
+        try {
+            checkHidden(transactions, database.transactionDao().loadHidden().map { it.toHidden() })
+        } catch (e: CancellationException) {
+            throw e
+        } catch (e: UnreadableDataException) {
+            throw e
+        } catch (e: Exception) {
+            throw UnreadableDataException("The stored data could not be read.", e)
         }
     }
 
@@ -468,11 +468,10 @@ internal fun checkHidden(
     transactions: List<Transaction>,
     hidden: List<HiddenHolding>,
 ): List<HiddenHolding> {
-    val held = Holdings.holdings(transactions, LocalDate.MAX)
+    // Only the hidden holdings' own lots are worked out (iteration 15c).
+    val held = Hiding.sharesAfterEveryEntry(transactions, hidden)
     for (holding in hidden) {
-        val shares =
-            held.firstOrNull { it.portfolioId == holding.portfolioId && it.ticker == holding.ticker }?.shares
-                ?: throw UnreadableDataException("A stored hidden holding has no transactions.")
+        val shares = held[holding] ?: throw UnreadableDataException("A stored hidden holding has no transactions.")
         if (shares.signum() != 0) throw UnreadableDataException("A stored hidden holding has shares.")
     }
     return hidden

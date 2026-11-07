@@ -64,15 +64,11 @@ import app.ghghorg.atsassets.core.Transaction
 import app.ghghorg.atsassets.core.TransactionType
 import app.ghghorg.atsassets.core.Transactions
 import app.ghghorg.atsassets.core.UnreadableDataException
-import app.ghghorg.atsassets.core.Valuation
 import app.ghghorg.atsassets.prices.CheckRefusal
 import app.ghghorg.atsassets.prices.TickerVerifier
 import app.ghghorg.atsassets.prices.Verification
 import kotlinx.coroutines.CancellationException
-import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import java.math.BigDecimal
 import java.time.Clock
@@ -121,7 +117,7 @@ enum class Screen {
 }
 
 // The id of the unsaved draft the reversal screen shows the effect of; never saved.
-private const val PREVIEW_ID = "preview"
+internal const val PREVIEW_ID = "preview"
 
 // The ids of a pair K1 checks at Review or while the reversal date is typed; never saved. Distinct, because the cash
 // replay leaves the reversal's line unjudged by its id on a shared date (14a decision 5).
@@ -433,12 +429,8 @@ data class AppState(
     val form: FormState = FormState(),
     val refusals: Refusals = Refusals(),
     val saving: Boolean = false,
-    // Cash as of today plus every holding at cost, as of today (4.8; no prices before iteration 16).
-    val netWorth: Fraction = Fraction.ZERO,
     val transactions: List<Transaction> = emptyList(),
     val instruments: List<Instrument> = emptyList(),
-    // As of today (4.8), by portfolio, then ticker.
-    val holdings: List<Holding> = emptyList(),
     val buySellMenuOpen: Boolean = false,
     val buyNotice: BuyNotice? = null,
     val buyForm: BuyForm = BuyForm(),
@@ -513,6 +505,49 @@ data class AppState(
     val portfolioId: String? = null,
     val portfolioMenuOpen: Boolean = false,
     val renameDialog: PortfolioDialog? = null,
+    // 15c: the kept fields, worked out in KeptFields.kt from the fields above, so reading one costs nothing. Every write
+    // through the view model refreshes them; a state built directly gets them from these defaults.
+    // As of today (4.8), by portfolio, then ticker.
+    val holdings: List<Holding> = KeptFields.holdings(transactions, today),
+    // Cash as of today plus every holding at cost, as of today (4.8; no prices before iteration 16).
+    val netWorth: Fraction = KeptFields.netWorth(entries, holdings, today),
+    // The shown holding's lots with shares as of today, oldest first (view 6, 4.4).
+    val holdingLots: List<Lot> = KeptFields.holdingLots(transactions, portfolioId, holdingTicker, today),
+    // Hide on the shown holding (15 decision 1).
+    val hideOffered: Boolean = KeptFields.hideOffered(transactions, hidden, portfolioId, holdingTicker),
+    // The tickers the sell's portfolio holds (11 decision 1; 14a while a sell is replaced).
+    val sellTickers: List<String> =
+        KeptFields.sellTickers(entries, transactions, holdings, hidden, sellForm.portfolioId, replacingId, replaceReversalDate, today),
+    // The sell's lot list (4.4) for its date, or for today while the date is not a whole date (10c marker 9).
+    val sellLotChoices: List<LotChoice> =
+        KeptFields.sellLotChoices(
+            entries,
+            transactions,
+            sellForm.portfolioId,
+            sellForm.ticker,
+            sellForm.dateText,
+            replacingId,
+            replaceReversalDate,
+            today,
+        ),
+    // What is left of the shown buy's lot as of today (13a decision 2).
+    val transactionLot: Lot? = KeptFields.transactionLot(transactions, transactionId, today),
+    // The inputs the kept fields above were worked out from.
+    val keptFrom: KeptInputs =
+        KeptInputs(
+            entries = entries,
+            transactions = transactions,
+            hidden = hidden,
+            today = today,
+            portfolioId = portfolioId,
+            holdingTicker = holdingTicker,
+            transactionId = transactionId,
+            sellPortfolioId = sellForm.portfolioId,
+            sellTicker = sellForm.ticker,
+            sellDateText = sellForm.dateText,
+            replacingId = replacingId,
+            replaceReversalDate = replaceReversalDate,
+        ),
 ) {
     val shownPortfolio: Portfolio? get() = portfolioId?.let { id -> portfolios.firstOrNull { it.id == id } }
 
@@ -523,14 +558,6 @@ data class AppState(
     fun holdingsOf(portfolioId: String): List<Holding> = holdings.filter {
         it.portfolioId == portfolioId && HiddenHolding(portfolioId, it.ticker) !in hidden
     }
-
-    /** Hide on the shown holding: only at exactly 0 shares counting every entry, and not while hidden (15 decision 1). */
-    val hideOffered: Boolean
-        get() {
-            val id = portfolioId ?: return false
-            val ticker = holdingTicker ?: return false
-            return Hiding.offered(transactions, hidden.toSet(), id, ticker)
-        }
 
     /** The shown holding is hidden: Holding detail then offers neither Hide nor Unhide (view 9, marker 2). */
     val shownHoldingHidden: Boolean
@@ -566,14 +593,6 @@ data class AppState(
             return HoldingRows.of(transactions, id, ticker)
         }
 
-    /** Its lots with shares as of today, oldest first (view 6, 4.4). */
-    val holdingLots: List<Lot>
-        get() {
-            val id = portfolioId ?: return emptyList()
-            val ticker = holdingTicker ?: return emptyList()
-            return Holdings.lotsOf(transactions, id, ticker, today)
-        }
-
     /** Each holding at cost while there are no prices (4.8). */
     fun portfolioValue(portfolioId: String): Fraction = holdingsOf(portfolioId).fold(Fraction.ZERO) { sum, holding -> sum + holding.cost }
 
@@ -586,38 +605,7 @@ data class AppState(
         }
 
     /** The tickers [portfolioId] holds with shares as of today, in ticker order. */
-    fun heldTickers(portfolioId: String): List<String> = holdingsOf(portfolioId).filter { it.shares.signum() > 0 }.map { it.ticker }
-
-    /**
-     * The tickers the sell's portfolio holds, with shares as of today, in ticker order (11 decision 1). While a sell is
-     * replaced, with its reversal applied, so a sold-out holding is offered again (14a).
-     */
-    val sellTickers: List<String>
-        get() {
-            val id = sellForm.portfolioId ?: return emptyList()
-            if (replacingId == null) return heldTickers(id)
-            return Holdings.holdings(sellTransactions, today).filter { it.portfolioId == id && it.shares.signum() > 0 }.map { it.ticker }
-        }
-
-    /**
-     * The sell's lot list (4.4) for its date, or for today while the date is not a whole date. While a sell is
-     * replaced, the lots are as they will be after the reversal (10c marker 9).
-     */
-    val sellLotChoices: List<LotChoice>
-        get() {
-            val id = sellForm.portfolioId ?: return emptyList()
-            val ticker = sellForm.ticker ?: return emptyList()
-            val date = DateDigits.toDate(sellForm.dateText) ?: today
-            return Sells.lotChoices(sellTransactions, id, ticker, date, Transactions.nextSeq(entries, sellTransactions))
-        }
-
-    // The transactions a sell is entered against: with the replaced sell's reversal drafted at its date (14a).
-    private val sellTransactions: List<Transaction>
-        get() {
-            val original = replacedTransaction ?: return transactions
-            val date = DateDigits.toDate(replaceReversalDate) ?: original.date
-            return transactions + Reversals.draft(entries, transactions, original, PREVIEW_ID, date)
-        }
+    fun heldTickers(portfolioId: String): List<String> = KeptFields.heldTickers(holdings, hidden, portfolioId)
 
     /** The cash entry Reverse and re-enter replaces (14b), for the banner and the "Original: …" hints. */
     val replacedCashEntry: CashEntry? get() = replacingCashId?.let { id -> entries.firstOrNull { it.id == id } }
@@ -738,12 +726,6 @@ data class AppState(
     val transactionCashLine: CashEntry?
         get() = transactionId?.let { id -> entries.firstOrNull { it.type == CashType.TRADE && it.transactionId == id } }
 
-    /** What is left of the shown buy's lot as of today, split-adjusted; null for a buy dated after today (13a decision 2). */
-    val transactionLot: Lot?
-        get() = shownTransaction?.takeIf { it.type == TransactionType.BUY }?.let { buy ->
-            Holdings.lots(transactions, today).firstOrNull { it.buyId == buy.id }
-        }
-
     /** The lots the shown sell used, oldest first, priced on its date (13a decision 1). */
     val transactionPieces: List<SoldPiece>
         get() = shownTransaction?.takeIf { it.type == TransactionType.SELL }?.let { Sells.pieces(transactions, it) }.orEmpty()
@@ -813,8 +795,8 @@ class AppViewModel(
     private val isOnline: () -> Boolean,
 ) : ViewModel() {
     private val marketDate = MarketDate(clock)
-    private val mutableState = MutableStateFlow(AppState())
-    val state: StateFlow<AppState> = mutableState.asStateFlow()
+    private val mutableState = KeptStateFlow(AppState())
+    val state: StateFlow<AppState> = mutableState.readOnly
     private var store: RecordStore? = null
     private var started = false
 
@@ -826,13 +808,12 @@ class AppViewModel(
             try {
                 val opened = storeProvider()
                 store = opened
-                showLoaded(
-                    opened.loadCashEntries(),
-                    opened.loadPortfolios(),
-                    opened.loadTransactions(),
-                    opened.loadInstruments(),
-                    opened.loadHidden(),
-                )
+                val entries = opened.loadCashEntries()
+                val portfolios = opened.loadPortfolios()
+                val transactions = opened.loadTransactions()
+                val instruments = opened.loadInstruments()
+                // The hidden holdings are checked against the transactions just read, not a second read (15c).
+                showLoaded(entries, portfolios, transactions, instruments, opened.loadHidden(transactions))
             } catch (e: UnreadableDataException) {
                 mutableState.update { it.copy(screen = Screen.UNREADABLE) }
             }
@@ -2021,15 +2002,8 @@ class AppViewModel(
         }
     }
 
-    /** The holdings and net worth for [state]'s records, as of today in New York (4.8). */
-    private fun valued(state: AppState): AppState {
-        val today = marketDate.today()
-        return state.copy(
-            holdings = Holdings.holdings(state.transactions, today),
-            netWorth = Valuation.netWorth(state.entries, state.transactions, today),
-            today = today,
-        )
-    }
+    /** [state] as of today in New York, with its holdings and net worth for its records (4.8). */
+    private fun valued(state: AppState): AppState = state.copy(today = marketDate.today()).refreshed()
 
     /** Opens a holding from its row on the portfolio's screen (view 6). Unknown tickers are ignored. */
     fun openHolding(ticker: String) {
@@ -2258,11 +2232,13 @@ class AppViewModel(
         if (tooManyDigits(text)) return
         val refusal = if (DateDigits.isDigits(text)) null else DateRefusal.NOT_DIGITS
         mutableState.update { state ->
+            // Refreshed here, so the lot list read below is the new date's.
             val dated =
-                state.copy(
-                    sellForm = state.sellForm.copy(dateText = text),
-                    sellRefusals = state.sellRefusals.copy(date = refusal, rule = null),
-                )
+                state
+                    .copy(
+                        sellForm = state.sellForm.copy(dateText = text),
+                        sellRefusals = state.sellRefusals.copy(date = refusal, rule = null),
+                    ).refreshed()
             if (DateDigits.toDate(text) == null) return@update dated
             val passing = dated.sellLotChoices.filter { it.unavailable == null }.map { it.buyId }.toSet()
             val kept = dated.sellForm.picks.filterKeys { it in passing }

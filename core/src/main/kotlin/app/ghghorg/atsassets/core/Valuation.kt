@@ -15,9 +15,16 @@ object Valuation {
         entries: List<CashEntry>,
         transactions: List<Transaction>,
         today: LocalDate,
+    ): Fraction = netWorthOf(entries, Holdings.holdings(transactions, today), today)
+
+    /** [netWorth] from [holdings] already worked out as of [today], so the app builds them only once (15c). */
+    fun netWorthOf(
+        entries: List<CashEntry>,
+        holdings: List<Holding>,
+        today: LocalDate,
     ): Fraction {
         val cash = Fraction.ofCents(CashRules.balanceOn(entries, today))
-        return Holdings.holdings(transactions, today).fold(cash) { sum, holding -> sum + holding.cost }
+        return holdings.fold(cash) { sum, holding -> sum + holding.cost }
     }
 
     /** The value of one portfolio's holdings as of today, each at cost while it has no price (4.8). */

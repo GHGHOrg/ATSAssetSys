@@ -123,11 +123,12 @@ object Splits {
         split: Transaction,
     ): SplitEffect {
         val justBefore = Place(split.date, split.enteredSeq - 1)
+        val ledger = Ledger(transactions)
         val before =
             transactions
                 .filter { it.type == TransactionType.BUY && it.portfolioId == split.portfolioId && it.ticker == split.ticker }
                 .filter { it.place <= justBefore }
-                .fold(Fraction.ZERO) { sum, buy -> sum + Holdings.quantityAt(transactions, buy, justBefore) }
+                .fold(Fraction.ZERO) { sum, buy -> sum + ledger.quantityAt(buy, justBefore) }
         return SplitEffect(before, before * (split.split?.factor ?: Fraction.ONE))
     }
 }

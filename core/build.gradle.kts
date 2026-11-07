@@ -2,6 +2,8 @@ import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 
 plugins {
     alias(libs.plugins.kotlin.jvm)
+    // Shared test data (ScaleHistories) for core's tests and the app's screen tests (15c, section 5).
+    `java-test-fixtures`
 }
 
 java {
