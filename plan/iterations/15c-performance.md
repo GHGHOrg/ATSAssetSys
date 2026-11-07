@@ -1,6 +1,6 @@
 # plan/iterations/15c-performance.md
 
-Stage: Build. Status: approved 2026-11-07 (your A), amended the same day (the app-start timing test, your A). Decisions 1 to 5 settled 2026-11-07 (section 11). In build: step 1 merged (#137), steps 2 to 7 done, step 8's documents written and the phone check done, all yes (section 13); the pull request is next.
+Stage: Build. Status: approved 2026-11-07 (your A), amended the same day (the app-start timing test, your A). Decisions 1 to 5 settled 2026-11-07 (section 11). Done: step 1 merged (#137); steps 2 to 8 built, the phone check all yes (section 13); pull request #138 merged as 04a859a on 2026-11-07, main green (CI, the screen tests 9 of 9, CodeQL).
 Source: plan.md section 4 (row 15c), open item 45, spec 4.1, 4.4 to 4.6, 4.8, 4.10 and section 6 (views 6 and 7, Error, empty and loading states (3)), C19. "My reading" is an interpretation, not a test.
 
 ## 1. Outcome
