@@ -151,6 +151,7 @@ private fun BarContent(
                 onSplit = viewModel::splitFromHolding,
                 onOpenTransaction = viewModel::openTransaction,
                 onHide = viewModel::hide,
+                onRefresh = viewModel::onPullToRefresh,
             ),
         )
 

@@ -160,7 +160,7 @@ private fun Modifier.cardSlice(
 
 /** A figure for TalkBack: its digits, after "plus" or "minus" when its sign says so. */
 @Composable
-private fun spoken(figure: SpokenFigure): String = when (figure.sign) {
+internal fun spoken(figure: SpokenFigure): String = when (figure.sign) {
     FigureSign.PLUS -> stringResource(R.string.spoken_plus, figure.digits)
     FigureSign.MINUS -> stringResource(R.string.spoken_minus, figure.digits)
     FigureSign.NONE -> figure.digits

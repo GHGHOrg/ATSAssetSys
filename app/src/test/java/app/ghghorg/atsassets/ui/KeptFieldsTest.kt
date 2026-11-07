@@ -1,11 +1,14 @@
 package app.ghghorg.atsassets.ui
 
+import app.ghghorg.atsassets.core.AssetType
 import app.ghghorg.atsassets.core.CashEntry
 import app.ghghorg.atsassets.core.CashType
 import app.ghghorg.atsassets.core.Fraction
 import app.ghghorg.atsassets.core.HiddenHolding
 import app.ghghorg.atsassets.core.Holdings
+import app.ghghorg.atsassets.core.Instrument
 import app.ghghorg.atsassets.core.Portfolio
+import app.ghghorg.atsassets.core.Price
 import app.ghghorg.atsassets.core.SellAllocation
 import app.ghghorg.atsassets.core.SplitRatio
 import app.ghghorg.atsassets.core.Transaction
@@ -17,6 +20,7 @@ import org.junit.Assert.assertNotSame
 import org.junit.Assert.assertSame
 import org.junit.Test
 import java.math.BigDecimal
+import java.time.Instant
 import java.time.LocalDate
 
 /** Each kept field equals a fresh calculation from the state's own inputs (15c, section 9 part 1 layer 3). */
@@ -25,7 +29,9 @@ internal fun assertKeptFieldsFresh(
     case: String = "",
 ) = with(state) {
     assertEquals("$case: holdings", Holdings.holdings(transactions, today), holdings)
-    assertEquals("$case: net worth", Valuation.netWorth(entries, transactions, today), netWorth)
+    // 16a: at each instrument's latest price, or at cost without one.
+    val prices = instruments.mapNotNull { instrument -> instrument.price?.let { instrument.ticker to it } }.toMap()
+    assertEquals("$case: net worth", Valuation.netWorthOf(entries, Holdings.holdings(transactions, today), prices, today), netWorth)
     assertEquals("$case: holding lots", KeptFields.holdingLots(transactions, portfolioId, holdingTicker, today), holdingLots)
     assertEquals("$case: hide offered", KeptFields.hideOffered(transactions, hidden, portfolioId, holdingTicker), hideOffered)
     assertEquals(
@@ -189,6 +195,13 @@ class KeptFieldsTest {
                 { it.cashList },
             ),
             Case("cash filter", base, { it.copy(cashFilterForm = CashFilterForm(type = CashType.DEPOSIT)) }, { it.cashList }),
+            // 16a: a refresh changes the instruments' prices.
+            Case(
+                "instruments",
+                base,
+                { it.copy(instruments = listOf(Instrument("MSFT", AssetType.STOCK, true, Price(BigDecimal("400"), Instant.ofEpochSecond(1L))))) },
+                { it.netWorth },
+            ),
         )
 
     private fun deposit(): CashEntry = CashEntry("d1", LocalDate.of(2026, 3, 1), 50_000L, CashType.DEPOSIT, "", 10L)

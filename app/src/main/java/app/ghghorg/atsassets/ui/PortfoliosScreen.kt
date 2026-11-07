@@ -41,11 +41,10 @@ import androidx.compose.ui.semantics.role
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import app.ghghorg.atsassets.R
-import app.ghghorg.atsassets.core.Fraction
 import app.ghghorg.atsassets.core.Holding
-import app.ghghorg.atsassets.core.Money
 import app.ghghorg.atsassets.core.Portfolio
 import app.ghghorg.atsassets.core.PortfolioRefusal
+import app.ghghorg.atsassets.ui.theme.gainLossColor
 
 /**
  * Portfolios (view 3, wireframe 3 frame A): the rows in the order they were created, each opening its portfolio
@@ -72,7 +71,7 @@ fun PortfoliosScreen(
             NoPortfoliosYet(onNewPortfolio)
         } else {
             state.portfolios.forEach { portfolio ->
-                PortfolioRow(portfolio, state.holdingsOf(portfolio.id)) { onOpenPortfolio(portfolio.id) }
+                PortfolioRow(portfolio, state.holdingsOf(portfolio.id), state.portfolioFigures(portfolio.id)) { onOpenPortfolio(portfolio.id) }
             }
             OutlinedButton(onClick = onNewPortfolio) {
                 Text(text = stringResource(R.string.new_portfolio))
@@ -103,13 +102,15 @@ internal fun NoPortfoliosYet(onCreate: () -> Unit) {
     }
 }
 
-// Wireframe 3 marker 1: name, number of holdings, value and gain/loss. Every holding is at cost until 16, so the
-// gain/loss is $0.00 without color, with "(all holdings at cost)" while there are holdings (wording 4). The whole
-// row is one tap target without ">", read by TalkBack as one button with the figures (08 decision 3, wording 5).
+// Wireframe 3 marker 1, drawn from its model (CR2, 16a decision 1): name, number of holdings, the value with each
+// holding at its latest price or at cost (4.8), and the gain/loss in green or red with its sign, with "(all holdings at
+// cost)" while no holding with shares has a price (wording 4). Its age line follows in 16b. The whole row is one tap
+// target without ">", read by TalkBack as one button with the figures (08 decision 3, wording 5).
 @Composable
 private fun PortfolioRow(
     portfolio: Portfolio,
     holdings: List<Holding>,
+    figures: PortfolioFiguresModel,
     onOpen: () -> Unit,
 ) {
     val count =
@@ -118,16 +119,16 @@ private fun PortfolioRow(
         } else {
             pluralStringResource(R.plurals.portfolio_holding_count, holdings.size, holdings.size)
         }
-    val value = Money.format(holdings.fold(Fraction.ZERO) { sum, holding -> sum + holding.cost })
-    val gain = Money.format(Fraction.ZERO)
-    val atCost = allAtCost(holdings)
-    val dollars = value.substringAfter('$')
+    val value = figures.value
+    val gain = figures.gain.text
+    val atCost = figures.allAtCost
+    val dollars = figures.spokenValue
     // Wireframe 3 shows no gain/loss line on a portfolio with no holdings ("Retirement").
     val spoken =
         if (holdings.isEmpty()) {
             stringResource(R.string.portfolio_row_empty_spoken, portfolio.name, count, dollars)
         } else {
-            val base = stringResource(R.string.portfolio_row_spoken, portfolio.name, count, dollars, gain.substringAfter('$'))
+            val base = stringResource(R.string.portfolio_row_spoken, portfolio.name, count, dollars, spoken(figures.gain.spoken))
             if (atCost) stringResource(R.string.portfolio_row_at_cost_spoken, base) else base
         }
     OutlinedCard(modifier = Modifier.fillMaxWidth()) {
@@ -163,6 +164,7 @@ private fun PortfolioRow(
                 Text(
                     text = if (atCost) "$gain ${stringResource(R.string.holdings_at_cost)}" else gain,
                     style = MaterialTheme.typography.bodyMedium,
+                    color = gainLossColor(sign(figures.gain)),
                 )
             }
         }
