@@ -1,6 +1,6 @@
 # plan/iterations/15c-performance.md
 
-Stage: Build. Status: approved 2026-11-07 (your A), amended the same day (the app-start timing test, your A). Decisions 1 to 5 settled 2026-11-07 (section 11). In build: step 1 merged (#137), step 2 done (section 13).
+Stage: Build. Status: approved 2026-11-07 (your A), amended the same day (the app-start timing test, your A). Decisions 1 to 5 settled 2026-11-07 (section 11). In build: step 1 merged (#137), steps 2 to 7 done, step 8's documents written and the phone check done, all yes (section 13); the pull request is next.
 Source: plan.md section 4 (row 15c), open item 45, spec 4.1, 4.4 to 4.6, 4.8, 4.10 and section 6 (views 6 and 7, Error, empty and loading states (3)), C19. "My reading" is an interpretation, not a test.
 
 ## 1. Outcome
@@ -303,6 +303,74 @@ Reading: each run is faster than the one before, not scattered. My reading: the 
 - AppStartTimingTest: compiled; it runs on the pull request's screen-tests run, not on this PC (section 3).
 - Unit tests: 652 (649 unchanged, plus 3), 0 failures, 1 skipped (the "before" timing without its switch); the suite's time 22 s, from 1.2 s, almost all of it the comparison on the code before 15c.
 
+### 13.3 Steps 3 to 6: the rewrite (2026-11-07)
+Each step passed spotlessCheck, the build, the unit tests (0 failures, 1 skipped), lint (the 5 listed findings, report time checked) and the androidTest compile, all with --rerun-tasks. HoldingsComparisonTest was equal on all 200 histories at every step. No existing line of the test folders changed (`git diff main` on them removes no line).
+- Step 3 (2c119ac), the core ledger: Holdings.kt gains the internal class Ledger, built once per transaction list. Its indexes: an id map that keeps the first transaction with each id; each holding's transactions; each holding's splits with a running product, looked up by binary search; and what touches each lot, from every holding. `quantityAt`, `splitFactor`, `firstNegative`, `lots`, `holdings` and `lotsOf` use it, with unchanged signatures. `firstNegative` checks each lot only at the first place of its holding after each of the lot's own entries. A split factor not above 0 falls back to the old checks. 652 tests; the comparison 9.3 s, the suite 14.9 s.
+- Step 4 (8a9376e), the callers share one ledger: `Sells.lotChoices` (through `Ledger.leastHeld`), `Sells.pieces`, `Splits.effect` and `Reversals.effect` build one ledger each; `Reversals.sharesRefusal` finds each sell's reversal in one pass; `Hiding.offered` and `unhiddenBy` read a holding's shares from its own lots. Section 14, item 6. 652 tests; the suite 10.9 s.
+- Step 5 (fa3b4b6), the data layer reads the transactions once: RecordStore gains `loadHidden(transactions)`, by default `loadHidden()`, so the test stores are unchanged; RoomRecordStore overrides it, and `checkHidden` uses the new `Hiding.sharesAfterEveryEntry(transactions, holdings)`, one ledger. AppViewModel's start loads in the same order and passes the transactions it read. Not reached by any unit test: RoomRecordStore's `loadHidden(transactions)` on the real database. AppStartTimingTest runs it with no hidden holding (green on #138, 13.4); the phone check runs it with your hidden holdings. 652 tests; the suite 13.6 s.
+- Step 6 (ac8a0a2), the kept fields: `holdings`, `netWorth`, `holdingLots`, `hideOffered`, `sellTickers`, `sellLotChoices` and `transactionLot` are fields of AppState, each worked out by one function in KeptFields.kt. Every write to the screen state goes through KeptStateFlow, which calls `refreshed()`: a field is worked out again only when one of its own inputs changed, and otherwise stays the same object; a second call changes nothing. A state built directly (the screen tests) gets the same values from the fields' defaults. `valued()` sets today only, and net worth comes from the holdings already worked out (`Valuation.netWorthOf`), one ledger instead of two. `onSellDateChange` refreshes before it reads the new date's lot list. No composable changed. New tests: KeptFieldsTest (6: each of the 12 inputs changed in turn moves its field and gives a fresh calculation; typing leaves every field the same object) and KeptFieldsFlowTest (12: each kind of save, a new sell date, ticker and portfolio, Hide and Unhide, a new day, typing). Two deliberate faults (Hide offered not following the hidden list; the date change not refreshing) each failed the new tests and an existing one, and were taken out. 670 tests; the suite 9.9 s. Section 14, item 7.
+
+### 13.4 Step 7: the code after 15c, timed (2026-11-07)
+HoldingsScaleTest's new-code part (d844201), this PC, JVM. Median ms per call; the growth is from 1,000 to 3,000 transactions.
+
+| Call | Spread 100 | Spread 300 | Spread 1,000 | Spread 3,000 | One holding 100 | One holding 300 | One holding 1,000 | One holding 3,000 |
+|---|---|---|---|---|---|---|---|---|
+| 1 holdings | 0.259 | 0.564 | 2.012 | 6.207 (×3.1) | 0.188 | 0.601 | 2.210 | 7.117 (×3.2) |
+| 2 netWorth | 0.179 | 0.538 | 1.929 | 5.853 (×3.0) | 0.188 | 0.608 | 2.200 | 7.261 (×3.3) |
+| 3 lots | 0.157 | 0.478 | 1.692 | 5.090 (×3.0) | 0.172 | 0.551 | 1.973 | 6.348 (×3.2) |
+| 4 lotsOf | 0.068 | 0.096 | 0.238 | 0.632 (×2.7) | 0.172 | 0.557 | 1.987 | 6.447 (×3.2) |
+| 5 firstNegative | 0.075 | 0.103 | 0.240 | 0.641 (×2.7) | 0.201 | 0.637 | 2.285 | 7.035 (×3.1) |
+| 6 lotChoices | 0.071 | 0.107 | 0.247 | 0.670 (×2.7) | 0.174 | 0.582 | 1.990 | 6.267 (×3.1) |
+| 7 Hide (one holding, 5 hidden) | 0.247 | 0.378 | 0.686 | 1.480 (×2.2) | 0.359 | 1.149 | 4.130 | 13.177 (×3.2) |
+| 8 effects | 0.095 | 0.169 | 0.478 | 1.306 (×2.7) | 0.214 | 0.710 | 2.636 | 8.334 (×3.2) |
+| 9 pieces | 0.011 | 0.016 | 0.048 | 0.155 (×3.2) | 0.012 | 0.031 | 0.101 | 0.337 (×3.3) |
+
+Reading: every growth from 1,000 to 3,000 lies between 2.2 and 3.3, under the bounds of 8 and 20; calls 6 and 8 on one holding grow like the others, below the O(n²) section 8 expected. Against 13.1 at 1,000 transactions: `holdings` 1,822 ms to 2.0 ms on the spread shape and 26,886 ms to 2.2 ms on one holding; Hide 11,340 ms to 0.69 ms. The test now asserts the growth bounds and, for each call and shape, a fixed time at 3,000 of about 10 times these figures, rounded up (decision 2; HoldingsScaleTest's LIMITS_AT_3000).
+
+Suite times (summed from the per-class result files): 1.2 s before 15c (2026-11-06), 22 s after step 2, 32.1 s now, of which HoldingsComparisonTest 11.2 s (its reference side still runs the code before 15c) and HoldingsScaleTest 19.4 s (section 14, item 8). 671 tests, 0 failures, 1 skipped.
+
+App start after 15c (AppStartTimingTest on GitHub's emulator, 300 transactions, spread), two runs on pull request #138, both "Tests run: 9 of 9":
+- run A: screen-tests run 42329781018 on d844201 (5m 41s)
+- run B: screen-tests run 42331382465 on 49e0a68 (5m 39s), with the CPU lines (section 14, item 10)
+
+| Run | Unlock to Overall: before / A / B | Tap on Cash to its rows: before / A / B | The test's own time: before / A / B |
+|---|---|---|---|
+| 1 | 6,202 / 3,078 / 4,820 ms | 2,975 / 6,046 / 6,751 ms | 19.3 / 21.5 / 24.3 s |
+| 2 | 5,379 / 3,341 / 2,823 ms | 1,385 / 3,353 / 4,077 ms | 12.3 / 14.6 / 13.9 s |
+| 3 | 2,431 / 1,598 / 2,028 ms | 627 / 1,302 / 2,384 ms | 6.9 / 8.4 / 10.9 s |
+| median | 5,379 / 3,078 / 2,823 ms | 1,385 / 3,353 / 4,077 ms | |
+
+The six other screen tests, which time nothing, took 32.4 s together before, and 41.6 s (A) and 41.7 s (B): both runners were about 29% slower than the "before" one.
+
+Run B, CPU time in each phase (ms):
+
+| Run | Phase | Wall time | App process CPU | Main thread CPU | Garbage collection |
+|---|---|---|---|---|---|
+| 1 | Load and Overall | 4,820 | 2,804 | 900 | 326 |
+| 1 | Cash | 6,751 | 5,169 | 4,500 | 727 |
+| 2 | Load and Overall | 2,823 | 2,155 | 480 | 0 |
+| 2 | Cash | 4,077 | 3,111 | 2,770 | 519 |
+| 3 | Load and Overall | 2,028 | 2,086 | 380 | 136 |
+| 3 | Cash | 2,384 | 2,396 | 2,190 | 100 |
+
+Reading:
+- Load and Overall is quicker in every run, on slower runners: run 1 by 22 to 50%, the median by 43 to 48%. Its main thread now uses 380 to 900 ms; the rest of the process's CPU is the database read and decryption on other threads.
+- Cash is about twice as slow in every run. It is the app's own work on the main thread (67 to 92% of its wall time): the Cash screen's drawing, which 15c did not change and which reads no kept field. Its per-row search of every transaction (CashScreen.kt, lines 91 to 94) is section 4.4's cause, left to 15d (decision 4).
+- In run A, unlock to Cash rows stayed about the same as before (9,124 against 9,177 ms in run 1): the time saved before Overall was spent after the tap.
+- My reading, not proven: Android's runtime compiles code as it runs; the slow valuation before 15c ran the same list searches millions of times during the load, so they were compiled before Cash was tapped, and now the Cash screen runs them first. Proving it would need a profiler trace or the CPU lines on the code before 15c; not done (your A, 2026-11-07), since 15d removes the per-row search either way.
+- On the phone: Overall should come sooner; Cash may feel the same or slower until 15d. The phone check decides.
+
+### 13.5 Step 8: the phone check (2026-11-07, your results)
+The debug APK built at 10:46 from the app code of ac8a0a2 (nothing under app/src/main changed after it), installed with `adb install -r` over the build already on the phone: "Success". No schema change. Before the install, after a force stop, you took screenshots of Overall, a portfolio's screen, Holding detail (header and Transactions, then Lots), the Sell lot picker with one lot picked, a buy's transaction detail and Hidden holdings, and noted how Overall, Cash and typing in Sell felt.
+- 10. The app opened after the install with your data and the same net worth (AC-35): yes.
+- 11. Overall after a second force stop, by feel: the same as before.
+- 12. Cash, by feel: a tiny bit slower than before, as section 13.4 leads to expect; left to 15d.
+- 13. A portfolio, Holding detail (header, Transactions, Lots), the Sell lot picker and the transaction detail read the same as the screenshots; typing in Sell felt the same: yes.
+- 14. Hidden holdings lists each hidden holding (step 5's loadHidden on your real data): yes.
+- 15 to 18. AC-39 (the largest font), AC-40 (dark), AC-09 (the date note on Sell) and AC-42 (network off): yes.
+
+My reading of 11: with your data, the calculation was a small part of the start; most of it is the database read and decryption (13.4, the CPU table).
+
 ## 14. Departures from the plan
 1. ScaleHistories (step 2): the splits alternate 3 for 2 and 2 for 3, not 3 for 2 and 1 for 3, and each sell takes all of the oldest lot with shares and half of the next, not part of the oldest one or two. With the plan's recipe a 1,000-transaction holding carries fractions of hundreds of digits (2 to the power 150 and beyond), so the timing would measure long-number arithmetic, not the calculations. The comparison's random histories keep 1 for 3, 3 for 7 and partial picks.
 2. AppStartTimingTest (step 2): three test methods (run1 to run3) sharing one seeded database, not one test that opens MainActivity three times: the v2 compose test API in use has no empty rule to launch the activity by hand. The screen-tests count becomes 9 with it, not 7. ScreenTestSupport.kt gains unlockAppTimed() as added lines only: unlockApp() returns only after the data has loaded.
@@ -310,3 +378,7 @@ Reading: each run is faster than the one before, not scattered. My reading: the 
 4. HoldingsComparisonTest's time (step 2): 13.9 s with both sides on the code before 15c, against the 1 to 3 s estimated in section 8. Step 7 measures it with the new code on one side.
 5. AppStartTimingTest's median line (step 2): it is logged after the class, and Gradle keeps logcat only while each test runs, so the line is in no saved file; the step 2 medians are worked out from the three run lines. Step 7 logs the medians at the end of run 3 instead (a change to this iteration's own new test). Section 9's comparison is also read run by run, since the runs warm up (section 13.1).
 6. The core callers (step 4): Reentries (startingPicks, startingQuantity, keptRatio) and Valuation.netWorth are unchanged, against section 5's list. Each makes a single call to Holdings, which since step 3 builds one ledger per call, so a shared ledger would save nothing. Sells.lotChoices goes further than section 4.6: the least a lot holds from the sell on is decided at the sell's place and at the first place of the holding from each of the lot's later entries on, not at every later place (Ledger.leastHeld), so it is O(b × the lot's entries), not O(b·h).
+7. The screen state (step 6): one refresh on every write (KeptStateFlow and `refreshed()`), not a call per action, since about 40 actions change an input; each field records the inputs it was worked out from (AppState.keptFrom). `sellTickers` is kept too, beyond section 5's list. `Valuation.netWorth` is no longer unchanged (against item 6): it calls the new `Valuation.netWorthOf(entries, holdings, today)`, with the same result, so `valued()` builds one ledger. PREVIEW_ID became internal, for KeptFields.kt.
+8. HoldingsScaleTest's time (step 7): the new-code part takes about 19 s on every run, CI included, not the "about 5 s at most" of section 8. The method of section 9 (five blocks of at least 50 ms for each of 72 calls, shapes and sizes) cannot go below about 18 s. Kept as planned (your A, 2026-11-07).
+9. AppStartTimingTest's medians (step 7): logged by whichever run finishes third, not by run3 itself, since JUnit 4 does not promise the methods' order.
+10. AppStartTimingTest's CPU lines and a second push (step 7): Cash took about twice as long in run A, so the test logs each phase's process, main-thread and garbage-collection time (49e0a68; your B, 2026-11-07), and you pushed a second time, against section 6's "you push once". Results in 13.4; the Cash tab stays with 15d (your A).
