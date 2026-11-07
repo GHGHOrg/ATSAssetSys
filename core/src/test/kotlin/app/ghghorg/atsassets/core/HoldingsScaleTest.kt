@@ -2,6 +2,7 @@ package app.ghghorg.atsassets.core
 
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
+import org.junit.Assert.assertTrue
 import org.junit.Assume.assumeTrue
 import org.junit.Test
 import java.io.File
@@ -42,7 +43,94 @@ class HoldingsScaleTest {
         ScaleTiming.write("holdings-scale-before.txt", "The code before 15c (HoldingsReference)", table)
     }
 
+    /**
+     * Step 7, every run: the code after 15c at four sizes. The growth from 1,000 to 3,000 transactions stays under its
+     * bound (15c section 9, part 2, item 2, step 6), and each call at 3,000 under its fixed time (decision 2).
+     */
+    @Test
+    fun theCodeAfter15c_growsWithinItsBounds() {
+        val table = ScaleTiming.run(NEW_CALLS, listOf(100, 300, 1_000, 3_000), capSeconds = 60.0)
+        ScaleTiming.write("holdings-scale-after.txt", "The code after 15c", table)
+        val problems = mutableListOf<String>()
+        for (call in NEW_CALLS) {
+            for (shape in ScaleShape.entries) {
+                val at1000 = table.single { it.call == call.name && it.shape == shape && it.size == 1_000 }.millis
+                val at3000 = table.single { it.call == call.name && it.shape == shape && it.size == 3_000 }.millis
+                if (at1000 == null || at3000 == null) {
+                    problems += "${call.name} | $shape: not timed"
+                    continue
+                }
+                val ratio = at3000 / at1000
+                val bound = ratioBound(call.name, shape)
+                if (bound != null && ratio >= bound) {
+                    problems += String.format(Locale.ROOT, "%s | %s: grew %.1f times, bound %.0f", call.name, shape, ratio, bound)
+                }
+                val limit = LIMITS_AT_3000.getValue(call.name to shape)
+                if (at3000 >= limit) {
+                    problems += String.format(Locale.ROOT, "%s | %s: %.3f ms at 3,000, limit %.1f ms", call.name, shape, at3000, limit)
+                }
+            }
+        }
+        assertTrue(problems.joinToString("\n"), problems.isEmpty())
+    }
+
+    // Calls 6 and 8 are O(n²) on one holding; every other bounded growth is about n log n or less. On the spread
+    // shape, calls 6 and 8 have no ratio bound in section 9, only the fixed time.
+    private fun ratioBound(
+        call: String,
+        shape: ScaleShape,
+    ): Double? = when {
+        call.startsWith("6 ") || call.startsWith("8 ") -> if (shape == ScaleShape.ONE_HOLDING) 20.0 else null
+        else -> 8.0
+    }
+
     private companion object {
+        // Decision 2: ms per call at 3,000 transactions, about 10 times step 7's measurement on this PC (2026-11-07), rounded up.
+        val LIMITS_AT_3000 =
+            mapOf(
+                ("1 holdings" to ScaleShape.SPREAD) to 65.0,
+                ("2 netWorth" to ScaleShape.SPREAD) to 60.0,
+                ("3 lots" to ScaleShape.SPREAD) to 55.0,
+                ("4 lotsOf" to ScaleShape.SPREAD) to 7.0,
+                ("5 firstNegative" to ScaleShape.SPREAD) to 7.0,
+                ("6 lotChoices" to ScaleShape.SPREAD) to 7.0,
+                ("7 Hide" to ScaleShape.SPREAD) to 15.0,
+                ("8 effects" to ScaleShape.SPREAD) to 14.0,
+                ("9 pieces" to ScaleShape.SPREAD) to 1.6,
+                ("1 holdings" to ScaleShape.ONE_HOLDING) to 75.0,
+                ("2 netWorth" to ScaleShape.ONE_HOLDING) to 75.0,
+                ("3 lots" to ScaleShape.ONE_HOLDING) to 65.0,
+                ("4 lotsOf" to ScaleShape.ONE_HOLDING) to 65.0,
+                ("5 firstNegative" to ScaleShape.ONE_HOLDING) to 75.0,
+                ("6 lotChoices" to ScaleShape.ONE_HOLDING) to 65.0,
+                ("7 Hide" to ScaleShape.ONE_HOLDING) to 135.0,
+                ("8 effects" to ScaleShape.ONE_HOLDING) to 85.0,
+                ("9 pieces" to ScaleShape.ONE_HOLDING) to 3.5,
+            )
+
+        // The same calls on the code after 15c; the exponent is the expected growth, for the cap.
+        val NEW_CALLS =
+            listOf(
+                ScaleCall("1 holdings", 1) { Holdings.holdings(it.transactions, it.lastDate) },
+                ScaleCall("2 netWorth", 1) { Valuation.netWorth(it.cashEntries, it.transactions, it.lastDate) },
+                ScaleCall("3 lots", 1) { Holdings.lots(it.transactions, it.lastDate) },
+                ScaleCall("4 lotsOf", 1) { Holdings.lotsOf(it.transactions, it.largestPortfolioId, it.largestTicker, it.lastDate) },
+                ScaleCall("5 firstNegative", 1) { Holdings.firstNegative(it.transactions, it.largestPortfolioId, it.largestTicker) },
+                ScaleCall("6 lotChoices", 2) {
+                    Sells.lotChoices(it.transactions, it.largestPortfolioId, it.largestTicker, it.lastDate, it.nextSeq)
+                },
+                ScaleCall("7 Hide", 1) {
+                    Hiding.offered(it.transactions, emptySet(), it.largestPortfolioId, it.largestTicker) to
+                        Hiding.unhiddenBy(it.transactions, it.fiveHidden)
+                },
+                ScaleCall("8 effects", 2) {
+                    val split = it.lastSplit
+                    val reversal = it.draftReversalOfLastSplit
+                    Splits.effect(it.transactions, split) to Reversals.effect(it.transactions + reversal, reversal)
+                },
+                ScaleCall("9 pieces", 1) { Sells.pieces(it.transactions, it.lastSell) },
+            )
+
         // The calls of 15c section 9, part 2, item 1, on the code before 15c; the exponent is today's growth, for the cap.
         val REFERENCE_CALLS =
             listOf(

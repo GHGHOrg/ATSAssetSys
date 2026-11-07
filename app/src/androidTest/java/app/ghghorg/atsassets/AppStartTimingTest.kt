@@ -67,6 +67,13 @@ class AppStartTimingTest {
         val result = (overall - unlocked) to (cash - tapped)
         results += result
         Log.i(TAG, "run $run of 3, $SIZE transactions: load and Overall ${result.first} ms, Cash ${result.second} ms")
+        // 15c step 7: logged by the third run to finish, while Gradle still keeps its logcat, not after the class (section
+        // 14, item 5). JUnit does not promise the methods' order.
+        if (results.size == 3) {
+            val load = results.map { it.first }.sorted()[1]
+            val cash = results.map { it.second }.sorted()[1]
+            Log.i(TAG, "median of 3, $SIZE transactions: load and Overall $load ms, Cash $cash ms")
+        }
     }
 
     // The uptime at which [condition] first holds; fails after 120 s. Each check waits for the app to be idle.
@@ -127,15 +134,10 @@ class AppStartTimingTest {
             }
         }
 
-        /** Logs the medians of the three runs, then clears the database, so the other screen tests see the app as before. */
+        /** Clears the database, so the other screen tests see the app as before. */
         @AfterClass
         @JvmStatic
         fun clearAfter() {
-            if (results.size == 3) {
-                val load = results.map { it.first }.sorted()[1]
-                val cash = results.map { it.second }.sorted()[1]
-                Log.i(TAG, "median of 3, $SIZE transactions: load and Overall $load ms, Cash $cash ms")
-            }
             clear()
         }
 
