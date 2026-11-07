@@ -1,6 +1,6 @@
 # plan/iterations/15d-cash-list.md
 
-Stage: Build. Status: approved 2026-11-07 (your "let's continue"); decisions 1 to 3 settled the same day (section 11). Built 2026-11-07, steps 1 to 7 on iter-15d-cash-list (pull request #140); phone check all yes (section 13.3). Waiting for your merge.
+Stage: Build. Status: approved 2026-11-07 (your "let's continue"); decisions 1 to 3 settled the same day (section 11). Built 2026-11-07, steps 1 to 7 on iter-15d-cash-list (pull request #140); phone check all yes (section 13.3). Done: pull request #140 merged as e4c9179 on 2026-11-07; main green (section 13.4).
 Source: plan.md section 4 (row 15d), open items 45 (the Cash tab part) and 48 (the Cash screen), the 15c file section 13.4, spec view 7, AC-49, AC-61, CR2. "My reading" is an interpretation, not a test.
 
 ## 1. Outcome
@@ -108,6 +108,9 @@ Part A, before the install, after a force stop: your screenshots of the Cash tab
 - 10: the same From date gives the same count line; the same type chip, the same rows: yes.
 - 11: a trade line and a direct entry each open as before: yes.
 - 12 to 16: AC-39 (largest font, landscape: the From field above the keyboard), AC-40 (dark), AC-09 (the date note), AC-42 (airplane mode) and TalkBack (a row reads its kind, date, signed amount and balance): all yes.
+
+### 13.4 The merge (2026-11-07)
+Pull request #140 merged as e4c9179, 6 commits; the branch is gone from origin and locally. On the pull request's last commit (c8355dc) CI (3m 32s) and the screen tests (11 of 11, 4m 22s) green; on main after the merge CI (3m 1s), the screen tests (11 of 11, 6m 9s) and CodeQL green (gh, read only).
 
 ## 14. Departures from the plan
 1. Step 4: the card around the rows is drawn in slices (decision 3), since one Card cannot wrap the items of a lazy list.
