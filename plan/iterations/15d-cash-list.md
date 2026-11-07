@@ -1,6 +1,6 @@
 # plan/iterations/15d-cash-list.md
 
-Stage: Build. Status: approved 2026-11-07 (your "let's continue"); decisions 1 and 2 settled the same day (section 11). In build: step 1.
+Stage: Build. Status: approved 2026-11-07 (your "let's continue"); decisions 1 to 3 settled the same day (section 11). Built 2026-11-07, steps 1 to 7 on iter-15d-cash-list (pull request #140); phone check all yes (section 13.3). Waiting for your merge.
 Source: plan.md section 4 (row 15d), open items 45 (the Cash tab part) and 48 (the Cash screen), the 15c file section 13.4, spec view 7, AC-49, AC-61, CR2. "My reading" is an interpretation, not a test.
 
 ## 1. Outcome
@@ -71,6 +71,7 @@ None, since no library is added.
 ## 11. Decisions (Build, settled by you 2026-11-07)
 1. The Cash screen's model is a kept field in AppState, worked out in KeptFields.kt only when the entries, the transactions, the portfolios or the filter change (your A). Not chosen: (B) an AppState getter that builds it on every read.
 2. One lazy list for the whole screen: the title, the balance card and the filter card are its first items, then the rows; everything scrolls together, as now (your A). Not chosen: (B) the balance and filters fixed above a lazy list of rows, which would change how the screen behaves and add an AC-61(a) check.
+3. Step 4: the card around the rows is drawn in slices, one per row, from Material's own outlined-card shape, border and color (`CardDefaults`): the first row draws the top edge and corners, the last the bottom, the rest only the sides, so the list still looks like one card (your A). Not chosen: (B) no card around the rows; (C) each row in its own small card. Both would change how the screen looks.
 
 ## 12. Wording to approve (D9)
 None, since no text changes.
@@ -78,5 +79,37 @@ None, since no text changes.
 ## 13. Status and notes
 - Draft 2026-11-07; decisions 1 and 2 settled; approved the same day.
 
+### 13.1 Steps 2 to 5 (2026-11-07)
+- Step 2 (5f6d331): CashListModel.kt, the model and its builder (`CashList.of`): one `CashAccount.rows` sort, the trades and portfolios found through id maps, and each row's texts, signed amounts and TalkBack figures prepared. CashListModelTest, 12 tests, shown red against a stub first. Tests 683.
+- Step 3 (13406fb): the model is a kept field of AppState (`cashList`), worked out in KeptFields.kt only when the entries, the transactions, the portfolios or the filter form change. KeptFieldsTest checks each new input and "same object"; CashListFlowTest, 3 tests (the model in the state, kept on a tab change, refreshed by a filter and by a saved deposit). Tests 686. A mutation check (the portfolios input left out) failed the tests, and was undone.
+- Step 4 (be81fa5): CashScreen.kt draws only from the model, in one LazyColumn (decision 2), the rows keyed by the model's key, the card in slices (decision 3). No text changed.
+- Step 5 (f58e894): CashScreenTest.kt, 2 screen tests: `CashFilterKeyboardTest` (AC-61 (c), font 2.0: the From field ends at or above the keyboard's top) and `CashTalkBackTest` (AC-61 (d): a sell, a buy and the opening balance each read their amount with plus or minus and the balance after them in full).
+- Every step: spotlessCheck, build, tests (0 failures, 1 skipped, as before) and lint (the 5 listed findings), all with --rerun-tasks, plus `:app:compileDebugAndroidTestKotlin`.
+- Step 7's first full run (21:06) failed once in 15c's HoldingsScaleTest: `firstNegative` on spread holdings took 9.9 ms at 3,000 transactions (limit 7.0 ms, growth 10.4, bound 8), with only documents changed since the last green run. Three runs of that test alone passed (the last 0.644 ms, growth 2.6), and the next full run (21:10) was green. My reading: a slow moment on the PC, not the code; not proven.
+
+### 13.2 Step 6: the "after" figures (pull request #140, run 42360547829)
+The screen tests 11 of 11 (9 plus 2); CI green (run 42360547804). `CashFilterKeyboardTest` passed, so the Cash screen needs no `imePadding()` (section 8, first risk). AppStartTimingTest on GitHub's emulator, against 15c's run B (15c file, section 13.4):
+
+| Run | Cash, 15c run B | Cash, 15d | Main-thread CPU in Cash, 15c run B | 15d | Overall, 15d |
+|---|---|---|---|---|---|
+| 1 | 6,751 ms | 623 ms | 4,500 ms | 300 ms | 1,584 ms |
+| 2 | 4,077 ms | 453 ms | 2,770 ms | 200 ms | 1,672 ms |
+| 3 | 2,384 ms | 349 ms | 2,190 ms | 190 ms | 1,769 ms |
+
+- The Cash phase is 85 to 91% quicker run by run; its median 453 ms, against 1,385 ms before 15c and 4,077 ms in 15c's run B. Garbage collection in the Cash phase: 0 ms.
+- This runner was quicker than 15c's: the six other screen tests took 29.5 s, against 41.7 s in 15c's run B and 32.4 s before 15c. Part of the gain may be the machine; the main-thread CPU, which depends less on it, fell by 89 to 93%.
+- Recorded, not asserted (section 9). The emulator is not the phone (C19).
+
+### 13.3 Step 7: the phone check (2026-11-07, all yes)
+Part A, before the install, after a force stop: your screenshots of the Cash tab (the top and bottom of the list, a From date with its count line, a type chip). Part B: versionCode 22 installed over 15c's build (`adb install -r`, Success).
+- 7 (AC-35): the data kept, with the same Net worth, holdings and Cash balance: yes.
+- 8: the Cash tab after a force stop and unlock, by feel: noticeably faster.
+- 9: the same rows as the screenshots, top to bottom, still one card with dividers: yes.
+- 10: the same From date gives the same count line; the same type chip, the same rows: yes.
+- 11: a trade line and a direct entry each open as before: yes.
+- 12 to 16: AC-39 (largest font, landscape: the From field above the keyboard), AC-40 (dark), AC-09 (the date note), AC-42 (airplane mode) and TalkBack (a row reads its kind, date, signed amount and balance): all yes.
+
 ## 14. Departures from the plan
-None yet.
+1. Step 4: the card around the rows is drawn in slices (decision 3), since one Card cannot wrap the items of a lazy list.
+2. Step 6 changed no file and has no commit; its figures are recorded here in step 7.
+3. versionCode 22 (section 5) was set in step 7, before the phone check, not in step 4.
