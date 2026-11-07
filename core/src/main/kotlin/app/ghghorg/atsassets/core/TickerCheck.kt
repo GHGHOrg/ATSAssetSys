@@ -1,5 +1,7 @@
 package app.ghghorg.atsassets.core
 
+import java.math.BigDecimal
+import java.time.Instant
 import java.util.Locale
 
 /** The asset types of spec section 3. */
@@ -9,13 +11,24 @@ enum class AssetType {
 }
 
 /**
- * An instrument (spec section 3) as far as iteration 09 needs it: a ticker that passed the check of 4.3 and its asset
- * type. Prices (16) and source sector and geography (23) join later. Written only by K4.
+ * An instrument (spec section 3): a ticker that passed the check of 4.3, its asset type and, from 16a, its latest
+ * [price] (null when none was ever fetched, 4.8). Source sector and geography (23) join later. Written only by K4.
  */
 data class Instrument(
     val ticker: String,
     val assetType: AssetType,
     val verified: Boolean,
+    val price: Price? = null,
+)
+
+/**
+ * The latest price of an instrument (spec 3, 4.8): [perShare] exact as the source sent it (4.10), its own [time] at the
+ * source (16a decision 4), and [stale] when the last refresh did not give a fresh quote for it.
+ */
+data class Price(
+    val perShare: BigDecimal,
+    val time: Instant,
+    val stale: Boolean = false,
 )
 
 /** What the price source says about a ticker. Null means the source does not state it (4.3: then accepted). */

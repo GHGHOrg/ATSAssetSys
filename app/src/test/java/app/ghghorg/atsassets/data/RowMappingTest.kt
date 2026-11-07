@@ -4,16 +4,19 @@ import app.ghghorg.atsassets.core.AssetType
 import app.ghghorg.atsassets.core.Fraction
 import app.ghghorg.atsassets.core.HiddenHolding
 import app.ghghorg.atsassets.core.Instrument
+import app.ghghorg.atsassets.core.Price
 import app.ghghorg.atsassets.core.SellAllocation
 import app.ghghorg.atsassets.core.SplitRatio
 import app.ghghorg.atsassets.core.Transaction
 import app.ghghorg.atsassets.core.TransactionType
 import app.ghghorg.atsassets.core.UnreadableDataException
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertThrows
 import org.junit.Test
 import java.math.BigDecimal
 import java.math.BigInteger
+import java.time.Instant
 import java.time.LocalDate
 
 class RowMappingTest {
@@ -51,6 +54,57 @@ class RowMappingTest {
         val instrument = Instrument(ticker = "SPY", assetType = AssetType.ETF, verified = true)
         assertEquals("ETF", instrument.toRow().assetType)
         assertEquals(instrument, instrument.toRow().toInstrument())
+    }
+
+    private val spy = Instrument(ticker = "SPY", assetType = AssetType.ETF, verified = true)
+    private val stalePrice = Price(BigDecimal("348.9100"), Instant.ofEpochSecond(1_793_304_000), stale = true)
+
+    @Test
+    fun instrument_withAPrice_storesItAsExactText_andReadsItBackUnchanged() {
+        val row = spy.copy(price = stalePrice).toRow()
+        assertEquals("348.9100", row.price)
+        assertEquals(1_793_304_000L, row.priceTime)
+        assertEquals(true, row.priceStale)
+        assertEquals(spy.copy(price = stalePrice), row.toInstrument())
+        assertEquals(4, row.toInstrument().price!!.perShare.scale())
+        val fresh = Price(BigDecimal("0.0089"), Instant.ofEpochSecond(1_793_232_000))
+        assertEquals(spy.copy(price = fresh), spy.copy(price = fresh).toRow().toInstrument())
+    }
+
+    @Test
+    fun instrument_withoutAPrice_leavesThePriceColumnsEmpty() {
+        val row = spy.toRow()
+        assertEquals(null, row.price)
+        assertEquals(null, row.priceTime)
+        assertEquals(false, row.priceStale)
+        assertEquals(spy, row.toInstrument())
+    }
+
+    @Test
+    fun aDamagedStoredPrice_isUnreadable_withNoValueInTheMessage() {
+        val damaged =
+            listOf(
+                spy.toRow().copy(price = "abc", priceTime = 1L),
+                spy.toRow().copy(price = "0", priceTime = 1L),
+                spy.toRow().copy(price = "-1.5", priceTime = 1L),
+                spy.toRow().copy(price = "348.91", priceTime = 0L),
+                spy.toRow().copy(price = "348.91", priceTime = null),
+                spy.toRow().copy(price = null, priceTime = 1L),
+                spy.toRow().copy(priceStale = true),
+            )
+        for (row in damaged) {
+            val error = assertThrows(row.toString(), UnreadableDataException::class.java) { row.toInstrument() }
+            assertFalse(row.toString(), error.message!!.contains("SPY") || error.message!!.contains("348"))
+        }
+    }
+
+    @Test
+    fun savingAnInstrumentAgain_keepsItsStoredPrice() {
+        val stored = spy.copy(price = stalePrice).toRow()
+        val again = spy.copy(assetType = AssetType.STOCK).toRow()
+        assertEquals(again.copy(price = "348.9100", priceTime = 1_793_304_000L, priceStale = true), again.withPriceOf(stored))
+        assertEquals(again, again.withPriceOf(null))
+        assertEquals(again, again.withPriceOf(spy.toRow()))
     }
 
     private val laterBuy = buy.copy(id = "t2", date = LocalDate.of(2026, 2, 3), enteredSeq = 5L, quantity = BigDecimal("10"))

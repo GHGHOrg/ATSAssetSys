@@ -10,6 +10,7 @@ import app.ghghorg.atsassets.core.Instrument
 import app.ghghorg.atsassets.core.Lookup
 import app.ghghorg.atsassets.core.Portfolio
 import app.ghghorg.atsassets.core.PortfolioRefusal
+import app.ghghorg.atsassets.core.Price
 import app.ghghorg.atsassets.core.PriceSource
 import app.ghghorg.atsassets.core.Quote
 import app.ghghorg.atsassets.core.RecordStore
@@ -1584,7 +1585,16 @@ internal class FakeSource(
         return answer
     }
 
-    override suspend fun quote(ticker: String): Quote = error("not used before 16a step 5")
+    // 16a: each ticker's quote (NoQuote when not set), the tickers asked in order, and [quoteGate] makes it wait.
+    var quotes: Map<String, Quote> = emptyMap()
+    val quoted = mutableListOf<String>()
+    var quoteGate: CompletableDeferred<Unit>? = null
+
+    override suspend fun quote(ticker: String): Quote {
+        quoted.add(ticker)
+        quoteGate?.await()
+        return quotes[ticker] ?: Quote.NoQuote
+    }
 }
 
 private fun AppViewModel.fill(
@@ -1786,6 +1796,25 @@ internal class FakeStore(
         saveError?.let { throw it }
         savedInstruments.add(instrument)
         storedInstruments = storedInstruments.filter { it.ticker != instrument.ticker } + instrument
+    }
+
+    // 16a: each refresh's prices as saved, applied to the stored instruments as RoomRecordStore does.
+    val savedPrices = mutableListOf<Pair<Map<String, Price>, Collection<String>>>()
+
+    override suspend fun savePrices(
+        fresh: Map<String, Price>,
+        failed: Collection<String>,
+    ) {
+        saveError?.let { throw it }
+        savedPrices.add(fresh to failed)
+        storedInstruments =
+            storedInstruments.map { instrument ->
+                when (instrument.ticker) {
+                    in fresh -> instrument.copy(price = fresh.getValue(instrument.ticker).copy(stale = false))
+                    in failed -> instrument.copy(price = instrument.price?.copy(stale = true))
+                    else -> instrument
+                }
+            }
     }
 
     var storedHidden: List<HiddenHolding> = emptyList()

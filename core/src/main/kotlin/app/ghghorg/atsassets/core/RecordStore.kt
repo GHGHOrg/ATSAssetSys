@@ -76,8 +76,18 @@ interface RecordStore {
     /** Throws [UnreadableDataException] if stored data exists but cannot be read. */
     suspend fun loadInstruments(): List<Instrument>
 
-    /** Saves an instrument, replacing the one with the same ticker (K4 only). */
+    /** Saves an instrument, replacing the one with the same ticker but keeping its stored price (K4 only). */
     suspend fun saveInstrument(instrument: Instrument)
+
+    /**
+     * After a price refresh (K4 only, 16a), as one all-or-nothing batch: each of [fresh] becomes its ticker's latest
+     * price, not stale; the stored price of each of [failed] is kept and marked stale (4.8). A ticker that never had a
+     * price keeps none, and a ticker with no stored instrument is skipped.
+     */
+    suspend fun savePrices(
+        fresh: Map<String, Price>,
+        failed: Collection<String>,
+    )
 
     /** The hidden holdings, each at 0 shares. Throws [UnreadableDataException] if stored data cannot be read or checked. */
     suspend fun loadHidden(): List<HiddenHolding>

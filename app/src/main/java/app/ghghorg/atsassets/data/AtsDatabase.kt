@@ -1,6 +1,7 @@
 package app.ghghorg.atsassets.data
 
 import androidx.room3.AutoMigration
+import androidx.room3.ColumnInfo
 import androidx.room3.Dao
 import androidx.room3.Database
 import androidx.room3.Entity
@@ -73,12 +74,19 @@ data class HiddenHoldingRow(
     val ticker: String,
 )
 
-/** One instrument row (spec 3): a verified ticker and its asset type. Prices and classification join later (16, 23). */
+/**
+ * One instrument row (spec 3): a verified ticker, its asset type and, from 16a, its latest price: the exact decimal as
+ * text (4.10), its time at the source in Unix seconds and the stale flag; empty and false when none was ever fetched.
+ * Classification joins later (23).
+ */
 @Entity(tableName = "instruments")
 data class InstrumentRow(
     @PrimaryKey val ticker: String,
     val assetType: String,
     val verified: Boolean,
+    val price: String? = null,
+    val priceTime: Long? = null,
+    @ColumnInfo(defaultValue = "0") val priceStale: Boolean = false,
 )
 
 @Dao
@@ -237,6 +245,36 @@ interface InstrumentDao {
     @Upsert
     suspend fun upsert(row: InstrumentRow)
 
+    @Query("SELECT * FROM instruments WHERE ticker = :ticker")
+    suspend fun find(ticker: String): InstrumentRow?
+
+    /** As [upsert], keeping the stored price of the row it replaces (16a): only a refresh sets a price. */
+    @Transaction
+    suspend fun upsertKeepingPrice(row: InstrumentRow) {
+        upsert(row.withPriceOf(find(row.ticker)))
+    }
+
+    @Query("UPDATE instruments SET price = :price, priceTime = :time, priceStale = 0 WHERE ticker = :ticker")
+    suspend fun setPrice(
+        ticker: String,
+        price: String,
+        time: Long,
+    )
+
+    /** A ticker without a stored price keeps none: there is nothing to mark stale (4.8). */
+    @Query("UPDATE instruments SET priceStale = 1 WHERE ticker = :ticker AND price IS NOT NULL")
+    suspend fun markStale(ticker: String)
+
+    /** One refresh's prices in one database transaction (K4 only, 16a): each fresh price as text and Unix seconds. */
+    @Transaction
+    suspend fun savePrices(
+        fresh: Map<String, Pair<String, Long>>,
+        failed: Collection<String>,
+    ) {
+        for ((ticker, price) in fresh) setPrice(ticker, price.first, price.second)
+        for (ticker in failed) markStale(ticker)
+    }
+
     @Query("SELECT * FROM instruments ORDER BY ticker")
     suspend fun loadAll(): List<InstrumentRow>
 }
@@ -244,7 +282,8 @@ interface InstrumentDao {
 /**
  * Version 2 (iteration 07) adds the portfolios table, version 3 (09) the transactions and instruments tables, version 4
  * (11) the sell_allocations table, version 5 (12) the two split columns of transactions, version 6 (15) the
- * hidden_holdings table; Room generates each step out of the schemas in app/schemas.
+ * hidden_holdings table, version 7 (16a) the three price columns of instruments; Room generates each step out of the
+ * schemas in app/schemas.
  */
 @Database(
     entities = [
@@ -255,13 +294,14 @@ interface InstrumentDao {
         SellAllocationRow::class,
         HiddenHoldingRow::class,
     ],
-    version = 6,
+    version = 7,
     autoMigrations = [
         AutoMigration(from = 1, to = 2),
         AutoMigration(from = 2, to = 3),
         AutoMigration(from = 3, to = 4),
         AutoMigration(from = 4, to = 5),
         AutoMigration(from = 5, to = 6),
+        AutoMigration(from = 6, to = 7),
     ],
 )
 abstract class AtsDatabase : RoomDatabase() {
