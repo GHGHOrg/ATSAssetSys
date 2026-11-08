@@ -628,6 +628,10 @@ data class AppState(
     /** A portfolio's value, cost and gain/loss as the Portfolios list and its screen draw them (view 3; CR2, 16a). */
     fun portfolioFigures(portfolioId: String): PortfolioFiguresModel = PortfolioFigures.of(holdingsOf(portfolioId), KeptFields.prices(instruments))
 
+    /** The price refresh as the Portfolios list and a portfolio's screen draw it (16b). */
+    val priceRefresh: PriceRefreshModel
+        get() = PriceRefreshModel(refreshing, refreshFailed)
+
     /** A portfolio's holding rows as its screen draws them (view 3; CR2, 16a). */
     fun portfolioHoldingRows(portfolioId: String): List<PortfolioHoldingRowModel> = PortfolioFigures.rows(holdingsOf(portfolioId), KeptFields.prices(instruments))
 

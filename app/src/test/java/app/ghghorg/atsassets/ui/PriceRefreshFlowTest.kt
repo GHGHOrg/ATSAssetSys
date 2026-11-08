@@ -170,6 +170,23 @@ class PriceRefreshFlowTest {
         assertEquals(state.netWorth, dollars(9_600) + state.portfolioValue("p1"))
     }
 
+    // 16b: the portfolio screens' age line, stale flag and refresh state follow the refresh (AC-42).
+    @Test
+    fun thePortfolioScreens_showTheRefreshState_andTheStalePrice() {
+        val store = store().apply { storedPortfolios = listOf(Portfolio("p1", "Portfolio P", 1L)) }
+        val source = FakeSource().apply { quoteGate = CompletableDeferred() }
+        val vm = started(store, source = source)
+        assertEquals(PriceRefreshModel(refreshing = true, failed = false), vm.state.value.priceRefresh)
+        source.quoteGate!!.complete(Unit)
+        // The source has no quote for AAPL: its last price stays, marked stale, and the refresh did not fail.
+        val state = vm.state.value
+        assertEquals(PriceRefreshModel(refreshing = false, failed = false), state.priceRefresh)
+        assertEquals(PricesAsOfModel(HoldingDetail.asOf(old.time), someStale = true), state.portfolioFigures("p1").prices)
+        assertEquals(HoldingDetail.asOf(old.time), state.portfolioHoldingRows("p1").single().staleAsOf)
+        val offline = started(store(), source = FakeSource(), online = { false }).state.value
+        assertEquals(PriceRefreshModel(refreshing = false, failed = true), offline.priceRefresh)
+    }
+
     @Test
     fun nothingRefreshes_beforeTheRecordsAreLoaded() {
         val source = FakeSource()
