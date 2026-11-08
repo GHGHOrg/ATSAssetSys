@@ -9,6 +9,7 @@ import app.ghghorg.atsassets.core.PriceSource
 import app.ghghorg.atsassets.core.Quote
 import app.ghghorg.atsassets.core.Transaction
 import app.ghghorg.atsassets.core.TransactionType
+import app.ghghorg.atsassets.ui.FakeStore
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
 import org.junit.Test
@@ -114,6 +115,23 @@ class PriceRefreshTest {
             assertEquals(other.toString(), listOf("KO"), outcome.failed)
             assertEquals(other.toString(), true, outcome.refreshFailed)
         }
+    }
+
+    // Deploy finding L1: K4 writes the prices itself (section 14), as TickerVerifier writes instruments.
+    @Test
+    fun refresh_savesItsOwnOutcome_once() = runTest {
+        val store = FakeStore()
+        val source = Source(mapOf("AAPL" to priced("160")))
+        val outcome = PriceRefresh.refresh(listOf("AAPL", "DEAD"), online = true, source = source, store = store)
+        assertEquals(listOf(mapOf("AAPL" to Price(BigDecimal("160"), at)) to listOf("DEAD")), store.savedPrices)
+        assertEquals(PriceRefresh.Outcome(mapOf("AAPL" to Price(BigDecimal("160"), at)), listOf("DEAD"), refreshFailed = false), outcome)
+    }
+
+    @Test
+    fun refresh_offline_savesEveryTickerAsFailed() = runTest {
+        val store = FakeStore()
+        PriceRefresh.refresh(listOf("AAPL", "MSFT"), online = false, source = Source(emptyMap()), store = store)
+        assertEquals(listOf(emptyMap<String, Price>() to listOf("AAPL", "MSFT")), store.savedPrices)
     }
 
     @Test

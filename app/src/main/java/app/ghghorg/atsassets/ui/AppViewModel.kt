@@ -916,8 +916,7 @@ class AppViewModel(
         mutableState.update { it.copy(refreshing = true) }
         viewModelScope.launch {
             try {
-                val outcome = PriceRefresh.run(tickers, isOnline(), priceSource)
-                opened.savePrices(outcome.fresh, outcome.failed)
+                val outcome = PriceRefresh.refresh(tickers, isOnline(), priceSource, opened)
                 mutableState.update {
                     it.copy(
                         instruments = PriceRefresh.applied(it.instruments, outcome),

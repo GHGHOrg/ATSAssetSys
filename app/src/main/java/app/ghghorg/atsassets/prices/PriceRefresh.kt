@@ -5,6 +5,7 @@ import app.ghghorg.atsassets.core.Instrument
 import app.ghghorg.atsassets.core.Price
 import app.ghghorg.atsassets.core.PriceSource
 import app.ghghorg.atsassets.core.Quote
+import app.ghghorg.atsassets.core.RecordStore
 import app.ghghorg.atsassets.core.Transaction
 
 /**
@@ -68,6 +69,17 @@ object PriceRefresh {
         }
         return Outcome(fresh, tickers.filter { it !in fresh }, failedAnswer)
     }
+
+    /**
+     * A whole refresh: [run], then the outcome saved to [store] in one batch (K4 writes the prices itself, section 14;
+     * Deploy finding L1). Store failures propagate; the prices then stay as stored.
+     */
+    suspend fun refresh(
+        tickers: List<String>,
+        online: Boolean,
+        source: PriceSource,
+        store: RecordStore,
+    ): Outcome = run(tickers, online, source).also { store.savePrices(it.fresh, it.failed) }
 
     /** [instruments] after [outcome], as the store saves it: fresh prices set, the failed tickers' prices marked stale. */
     fun applied(
