@@ -46,8 +46,9 @@ import java.math.BigDecimal
 
 /**
  * One portfolio (view 3, wireframe 3 frame B): "<", the name and the ⋮ menu with Rename (08 decision 1), the summary
- * and the holdings at cost (09 decision 3, wording 4). The price line and links arrive with 15 to 18 and 27, and a
- * holding opens Holding detail from 10. Back closes the menu first, then returns to the list.
+ * with its price age line and refresh lines (16b), and the holdings with their flags. The links arrive with 18 and 27,
+ * and a holding opens Holding detail from 10. Pulling down refreshes the prices (16b decision 2). Back closes the menu
+ * first, then returns to the list.
  */
 @Composable
 fun PortfolioScreen(
@@ -60,49 +61,62 @@ fun PortfolioScreen(
     Box(modifier = modifier.fillMaxSize()) {
         // While the menu is open, TalkBack reads only the menu.
         val under = if (state.portfolioMenuOpen) Modifier.clearAndSetSemantics { } else Modifier
-        Column(
-            modifier = Modifier.fillMaxSize().then(under).verticalScroll(rememberScrollState()).padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(12.dp),
+        PricePullToRefresh(state.refreshing, actions.onRefresh, Modifier.fillMaxSize()) {
+            PortfolioContent(state, portfolio.id, portfolio.name, actions, Modifier.fillMaxSize().then(under))
+        }
+        if (state.portfolioMenuOpen) PortfolioMenu(actions)
+    }
+}
+
+@Composable
+private fun PortfolioContent(
+    state: AppState,
+    portfolioId: String,
+    name: String,
+    actions: PortfolioScreenActions,
+    modifier: Modifier = Modifier,
+) {
+    Column(
+        modifier = modifier.verticalScroll(rememberScrollState()).padding(16.dp),
+        verticalArrangement = Arrangement.spacedBy(12.dp),
+    ) {
+        TopBar(name, actions)
+        val holdings = state.portfolioHoldingRows(portfolioId)
+        SummaryCard(state.portfolioFigures(portfolioId), state.priceRefresh)
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.Bottom,
         ) {
-            TopBar(portfolio.name, actions)
-            val holdings = state.portfolioHoldingRows(portfolio.id)
-            SummaryCard(state.portfolioFigures(portfolio.id))
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.Bottom,
-            ) {
+            Text(
+                text = stringResource(R.string.portfolio_holdings),
+                style = MaterialTheme.typography.titleMedium,
+                modifier = Modifier.semantics { heading() },
+            )
+            if (holdings.isNotEmpty()) {
                 Text(
-                    text = stringResource(R.string.portfolio_holdings),
-                    style = MaterialTheme.typography.titleMedium,
-                    modifier = Modifier.semantics { heading() },
+                    text = stringResource(R.string.portfolio_unrealized_label),
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
-                if (holdings.isNotEmpty()) {
-                    Text(
-                        text = stringResource(R.string.portfolio_unrealized_label),
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    )
-                }
             }
-            if (holdings.isEmpty()) {
-                Text(
-                    text = stringResource(R.string.portfolio_no_holdings_yet),
-                    style = MaterialTheme.typography.bodyLarge,
-                )
-            } else {
-                OutlinedCard(modifier = Modifier.fillMaxWidth()) {
-                    Column(modifier = Modifier.padding(12.dp)) {
-                        holdings.forEachIndexed { index, holding ->
-                            if (index > 0) HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
-                            HoldingRow(holding) { actions.onOpenHolding(holding.ticker) }
-                        }
+        }
+        if (holdings.isEmpty()) {
+            Text(
+                text = stringResource(R.string.portfolio_no_holdings_yet),
+                style = MaterialTheme.typography.bodyLarge,
+            )
+        } else {
+            OutlinedCard(modifier = Modifier.fillMaxWidth()) {
+                Column(modifier = Modifier.padding(12.dp)) {
+                    holdings.forEachIndexed { index, holding ->
+                        if (index > 0) HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
+                        HoldingRow(holding) { actions.onOpenHolding(holding.ticker) }
                     }
                 }
             }
-            HiddenLink(actions.onOpenHidden)
         }
-        if (state.portfolioMenuOpen) PortfolioMenu(actions)
+        HiddenLink(actions.onOpenHidden)
     }
 }
 
@@ -141,6 +155,8 @@ class PortfolioScreenActions(
     val onRename: () -> Unit,
     val onOpenHolding: (String) -> Unit,
     val onOpenHidden: () -> Unit,
+    // 16b: pull-to-refresh (decision 2).
+    val onRefresh: () -> Unit = {},
 )
 
 @Composable
@@ -171,10 +187,14 @@ private fun TopBar(
 /**
  * Wireframe 3 marker 4, drawn from its model (CR2, 16a decision 1): the value with each holding at its latest price or
  * at cost (4.8), the cost, and the gain/loss in green or red with its sign, with "(all holdings at cost)" while no
- * holding with shares has a price (09 wording 4). The price line follows in 16b.
+ * holding with shares has a price (09 wording 4). Then the price age line, the oldest price used with ", some stale"
+ * when any is (16b decision 1), and under it "Updating prices" and the refresh-failed line (section 6; AC-42).
  */
 @Composable
-private fun SummaryCard(figures: PortfolioFiguresModel) {
+private fun SummaryCard(
+    figures: PortfolioFiguresModel,
+    refresh: PriceRefreshModel,
+) {
     OutlinedCard(modifier = Modifier.fillMaxWidth()) {
         Column(
             modifier = Modifier.fillMaxWidth().padding(12.dp),
@@ -190,8 +210,27 @@ private fun SummaryCard(figures: PortfolioFiguresModel) {
                 atCost = figures.allAtCost,
                 amountColor = gainLossColor(sign(figures.gain)),
             )
+            figures.prices?.let { PricesAsOfLine(it) }
+            PriceRefreshLines(refresh.refreshing, refresh.failed)
         }
     }
+}
+
+/** "Prices as of 2026-11-06 16:00 ET", with ", some stale" when any price used is stale (16b decision 1). */
+@Composable
+private fun PricesAsOfLine(prices: PricesAsOfModel) {
+    val text = stringResource(if (prices.someStale) R.string.portfolio_prices_as_of_some_stale else R.string.portfolio_prices_as_of, prices.asOf)
+    val spoken =
+        stringResource(
+            if (prices.someStale) R.string.portfolio_prices_as_of_some_stale_spoken else R.string.portfolio_prices_as_of_spoken,
+            prices.asOf,
+        )
+    Text(
+        text = text,
+        style = MaterialTheme.typography.bodyMedium,
+        color = MaterialTheme.colorScheme.onSurfaceVariant,
+        modifier = Modifier.clearAndSetSemantics { contentDescription = spoken },
+    )
 }
 
 @Composable
@@ -225,8 +264,9 @@ private fun SummaryLine(
 /**
  * A holding (wireframe 3 marker 5, format of marker 6), drawn from its model (CR2, 16a decision 1): ticker and shares,
  * the value and the gain/loss in green or red with its sign at its latest price, or "no price, at cost" (4.8); a
- * sold-out holding shows 0 shares and $0.00 with no flag (11 wording 4). Its stale flag follows in 16b. One tap target
- * opening Holding detail (iteration 10), read by TalkBack as one button.
+ * sold-out holding shows 0 shares and $0.00 with no flag (11 wording 4). A stale price shows "stale" with its own time
+ * under the gain (wireframe 3 marker 6; 16b). One tap target opening Holding detail (iteration 10), read by TalkBack
+ * as one button.
  */
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
@@ -238,10 +278,16 @@ private fun HoldingRow(
     val value = holding.value
     val soldOut = holding.soldOut
     val gain = holding.gain
+    val staleAsOf = holding.staleAsOf
     val spoken =
         when {
             soldOut -> stringResource(R.string.holding_row_sold_out_spoken, holding.ticker, shares, holding.spokenValue)
+
+            gain is GainModel.Figure && staleAsOf != null ->
+                stringResource(R.string.holding_row_gain_stale_spoken, holding.ticker, shares, holding.spokenValue, spoken(gain.spoken), staleAsOf)
+
             gain is GainModel.Figure -> stringResource(R.string.holding_row_gain_spoken, holding.ticker, shares, holding.spokenValue, spoken(gain.spoken))
+
             else -> stringResource(R.string.holding_row_spoken, holding.ticker, shares, holding.spokenValue)
         }
     FlowRow(
@@ -299,6 +345,14 @@ private fun HoldingRow(
                             textAlign = TextAlign.End,
                         )
                 }
+            }
+            if (staleAsOf != null) {
+                Text(
+                    text = stringResource(R.string.holding_row_stale, staleAsOf),
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    textAlign = TextAlign.End,
+                )
             }
         }
     }

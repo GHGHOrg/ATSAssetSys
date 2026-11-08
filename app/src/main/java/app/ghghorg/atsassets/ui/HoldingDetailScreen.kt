@@ -12,11 +12,8 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
@@ -25,12 +22,9 @@ import androidx.compose.material3.PrimaryTabRow
 import androidx.compose.material3.Tab
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
-import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -78,7 +72,6 @@ class HoldingActions(
  * the prices (16a decision 2); the pull's own indicator shows only for a pull, the header's "updating" line for any
  * refresh (section 6: only the price part shows it).
  */
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun HoldingDetailScreen(
     state: AppState,
@@ -88,16 +81,7 @@ fun HoldingDetailScreen(
     val holding = state.shownHolding ?: return
     val header = state.holdingHeader ?: return
     BackHandler(onBack = actions.onBack)
-    var pulled by remember { mutableStateOf(false) }
-    LaunchedEffect(state.refreshing) { if (!state.refreshing) pulled = false }
-    PullToRefreshBox(
-        isRefreshing = pulled && state.refreshing,
-        onRefresh = {
-            pulled = true
-            actions.onRefresh()
-        },
-        modifier = modifier.fillMaxSize(),
-    ) {
+    PricePullToRefresh(state.refreshing, actions.onRefresh, modifier.fillMaxSize()) {
         Content(state, holding, header, actions)
     }
 }
@@ -151,7 +135,7 @@ private fun FixedPart(
         ) {
             TitleRow(holding.ticker, actions.onBack)
             Header(header)
-            RefreshState(header)
+            PriceRefreshLines(header.refreshing, header.refreshFailed)
             val buySpoken = stringResource(R.string.holding_buy_spoken, holding.ticker, portfolio)
             val sellSpoken = stringResource(R.string.holding_sell_spoken, holding.ticker, portfolio)
             val splitSpoken = stringResource(R.string.holding_split_spoken, holding.ticker, portfolio)
@@ -347,36 +331,6 @@ internal fun sign(gain: GainModel.Figure): Int = when (gain.spoken.sign) {
     FigureSign.PLUS -> 1
     FigureSign.MINUS -> -1
     FigureSign.NONE -> 0
-}
-
-/**
- * Under the header (section 6, error and loading states; AC-42): "Updating prices" while a refresh runs, and one quiet
- * line when the last refresh failed, with no pop-up. TalkBack reads each as it appears.
- */
-@Composable
-private fun RefreshState(header: HoldingHeaderModel) {
-    if (header.refreshing) {
-        Row(
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(8.dp),
-            modifier = Modifier.semantics(mergeDescendants = true) { liveRegion = LiveRegionMode.Polite },
-        ) {
-            CircularProgressIndicator(modifier = Modifier.size(16.dp), strokeWidth = 2.dp)
-            Text(
-                text = stringResource(R.string.prices_updating),
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
-        }
-    }
-    if (header.refreshFailed) {
-        Text(
-            text = stringResource(R.string.price_refresh_failed),
-            style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-            modifier = Modifier.semantics { liveRegion = LiveRegionMode.Polite },
-        )
-    }
 }
 
 @OptIn(ExperimentalLayoutApi::class)

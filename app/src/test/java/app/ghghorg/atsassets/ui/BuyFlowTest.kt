@@ -424,7 +424,7 @@ class BuyFlowTest {
         assertEquals(1, state.holdings.size)
         assertEquals(dollars(1_500), state.holdings.single().cost)
         assertEquals(1_000_000L, state.netWorthCents)
-        assertEquals(dollars(1_500), state.portfolioValue("p1"))
+        assertEquals("$1,500.00", state.portfolioFigures("p1").value)
     }
 
     @Test
@@ -456,7 +456,7 @@ class BuyFlowTest {
         val state = started(store).state.value
         assertEquals(1_000_000L, state.netWorthCents)
         assertEquals(listOf(transaction), state.transactions)
-        assertEquals(dollars(1_000), state.portfolioValue("p1"))
+        assertEquals("$1,000.00", state.portfolioFigures("p1").value)
         assertEquals(1, state.holdingsOf("p1").size)
     }
 

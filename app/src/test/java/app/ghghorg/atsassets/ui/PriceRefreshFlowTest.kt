@@ -10,6 +10,7 @@ import app.ghghorg.atsassets.core.Price
 import app.ghghorg.atsassets.core.Quote
 import app.ghghorg.atsassets.core.Transaction
 import app.ghghorg.atsassets.core.TransactionType
+import app.ghghorg.atsassets.core.Valuation
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -166,8 +167,27 @@ class PriceRefreshFlowTest {
         assertEquals(PortfolioFigures.of(state.holdingsOf("p1"), prices), state.portfolioFigures("p1"))
         assertEquals(PortfolioFigures.rows(state.holdingsOf("p1"), prices), state.portfolioHoldingRows("p1"))
         assertEquals("$1,280.00", state.portfolioFigures("p1").value)
-        assertEquals(dollars(1_280), state.portfolioValue("p1"))
-        assertEquals(state.netWorth, dollars(9_600) + state.portfolioValue("p1"))
+        // Net worth is the cash plus the portfolio's holding at that price, exactly (4.8).
+        val value = Valuation.valued(state.holdingsOf("p1").single(), prices["AAPL"]).value
+        assertEquals(dollars(1_280), value)
+        assertEquals(state.netWorth, dollars(9_600) + value)
+    }
+
+    // 16b: the portfolio screens' age line, stale flag and refresh state follow the refresh (AC-42).
+    @Test
+    fun thePortfolioScreens_showTheRefreshState_andTheStalePrice() {
+        val store = store().apply { storedPortfolios = listOf(Portfolio("p1", "Portfolio P", 1L)) }
+        val source = FakeSource().apply { quoteGate = CompletableDeferred() }
+        val vm = started(store, source = source)
+        assertEquals(PriceRefreshModel(refreshing = true, failed = false), vm.state.value.priceRefresh)
+        source.quoteGate!!.complete(Unit)
+        // The source has no quote for AAPL: its last price stays, marked stale, and the refresh did not fail.
+        val state = vm.state.value
+        assertEquals(PriceRefreshModel(refreshing = false, failed = false), state.priceRefresh)
+        assertEquals(PricesAsOfModel(HoldingDetail.asOf(old.time), someStale = true), state.portfolioFigures("p1").prices)
+        assertEquals(HoldingDetail.asOf(old.time), state.portfolioHoldingRows("p1").single().staleAsOf)
+        val offline = started(store(), source = FakeSource(), online = { false }).state.value
+        assertEquals(PriceRefreshModel(refreshing = false, failed = true), offline.priceRefresh)
     }
 
     @Test
