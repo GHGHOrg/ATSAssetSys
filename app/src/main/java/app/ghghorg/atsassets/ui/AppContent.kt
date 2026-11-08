@@ -137,6 +137,7 @@ private fun BarContent(
                 onRename = viewModel::openRename,
                 onOpenHolding = viewModel::openHolding,
                 onOpenHidden = viewModel::openHiddenHoldings,
+                onRefresh = viewModel::onPullToRefresh,
             ),
         )
 
@@ -318,7 +319,14 @@ private fun TabScreen(
             ),
         )
 
-        Tab.PORTFOLIOS -> PortfoliosScreen(state, viewModel::openPortfolio, viewModel::openPortfolioDialog, viewModel::openForm)
+        Tab.PORTFOLIOS ->
+            PortfoliosScreen(
+                state,
+                viewModel::openPortfolio,
+                viewModel::openPortfolioDialog,
+                viewModel::openForm,
+                onRefresh = viewModel::onPullToRefresh,
+            )
 
         Tab.MORE -> MoreScreen()
     }

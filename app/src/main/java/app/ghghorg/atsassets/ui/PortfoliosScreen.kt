@@ -49,7 +49,8 @@ import app.ghghorg.atsassets.ui.theme.gainLossColor
 /**
  * Portfolios (view 3, wireframe 3 frame A): the rows in the order they were created, each opening its portfolio
  * (08 decision 3), and New portfolio. Before the opening balance exists, New portfolio asks for it instead of
- * opening the dialog (4.2).
+ * opening the dialog (4.2). Under the list, "Updating prices" and the refresh-failed line (marker 1; 16b); pulling
+ * down refreshes the prices (16b decision 2).
  */
 @Composable
 fun PortfoliosScreen(
@@ -58,33 +59,37 @@ fun PortfoliosScreen(
     onNewPortfolio: () -> Unit,
     onSetOpeningBalance: () -> Unit,
     modifier: Modifier = Modifier,
+    onRefresh: () -> Unit = {},
 ) {
-    Column(
-        modifier = modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(16.dp),
-        verticalArrangement = Arrangement.spacedBy(12.dp),
-    ) {
-        Text(
-            text = stringResource(R.string.tab_portfolios),
-            style = MaterialTheme.typography.titleLarge,
-        )
-        if (state.portfolios.isEmpty()) {
-            NoPortfoliosYet(onNewPortfolio)
-        } else {
-            state.portfolios.forEach { portfolio ->
-                PortfolioRow(portfolio, state.holdingsOf(portfolio.id), state.portfolioFigures(portfolio.id)) { onOpenPortfolio(portfolio.id) }
-            }
-            OutlinedButton(onClick = onNewPortfolio) {
-                Text(text = stringResource(R.string.new_portfolio))
-            }
-        }
-        if (state.portfolioNeedsOpeningBalance) {
+    PricePullToRefresh(state.refreshing, onRefresh, modifier.fillMaxSize()) {
+        Column(
+            modifier = Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp),
+        ) {
             Text(
-                text = stringResource(R.string.opening_balance_first),
-                style = MaterialTheme.typography.bodyLarge,
-                modifier = Modifier.semantics { liveRegion = LiveRegionMode.Polite },
+                text = stringResource(R.string.tab_portfolios),
+                style = MaterialTheme.typography.titleLarge,
             )
-            Button(onClick = onSetOpeningBalance) {
-                Text(text = stringResource(R.string.guided_set_opening_balance))
+            if (state.portfolios.isEmpty()) {
+                NoPortfoliosYet(onNewPortfolio)
+            } else {
+                state.portfolios.forEach { portfolio ->
+                    PortfolioRow(portfolio, state.holdingsOf(portfolio.id), state.portfolioFigures(portfolio.id)) { onOpenPortfolio(portfolio.id) }
+                }
+                OutlinedButton(onClick = onNewPortfolio) {
+                    Text(text = stringResource(R.string.new_portfolio))
+                }
+            }
+            PriceRefreshLines(state.priceRefresh.refreshing, state.priceRefresh.failed)
+            if (state.portfolioNeedsOpeningBalance) {
+                Text(
+                    text = stringResource(R.string.opening_balance_first),
+                    style = MaterialTheme.typography.bodyLarge,
+                    modifier = Modifier.semantics { liveRegion = LiveRegionMode.Polite },
+                )
+                Button(onClick = onSetOpeningBalance) {
+                    Text(text = stringResource(R.string.guided_set_opening_balance))
+                }
             }
         }
     }
@@ -104,8 +109,9 @@ internal fun NoPortfoliosYet(onCreate: () -> Unit) {
 
 // Wireframe 3 marker 1, drawn from its model (CR2, 16a decision 1): name, number of holdings, the value with each
 // holding at its latest price or at cost (4.8), and the gain/loss in green or red with its sign, with "(all holdings at
-// cost)" while no holding with shares has a price (wording 4). Its age line follows in 16b. The whole row is one tap
-// target without ">", read by TalkBack as one button with the figures (08 decision 3, wording 5).
+// cost)" while no holding with shares has a price (wording 4). No age line on a row (view 3); a portfolio's screen has
+// it. The whole row is one tap target without ">", read by TalkBack as one button with the figures (08 decision 3,
+// wording 5).
 @Composable
 private fun PortfolioRow(
     portfolio: Portfolio,
