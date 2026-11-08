@@ -344,7 +344,8 @@ when it adds a command, a convention or a pitfall.
 | Iteration 15c | done ([its file](iterations/15c-performance.md)): built 2026-11-07 (step 1 merged as #137; steps 2 to 8 on iter-15c-performance); 671 tests; HoldingsComparisonTest equal on all 200 histories; phone checks 2026-11-07 all yes (Overall the same by feel, Cash a tiny bit slower, left to 15d); pull request #138 merged as 04a859a, CI and the screen tests (9 of 9) green on the pull request and on main (5m 45s) (gh, read only) |
 | Iteration 15d | done ([its file](iterations/15d-cash-list.md)): built 2026-11-07 (steps 1 to 7 on iter-15d-cash-list); 686 tests; the Cash phase on the emulator 85 to 91% quicker than 15c's run B; phone checks 2026-11-07 all yes (Cash noticeably faster by feel); pull request #140 merged as e4c9179, CI and the screen tests (11 of 11) green on the pull request and on main (6m 9s) (gh, read only) |
 | Iteration 16a | done ([its file](iterations/16a-live-prices-holding.md)): built 2026-11-08 (steps 1 to 8 on iter-16a-live-prices-holding); 742 tests; database version 7; phone checks 2026-11-08 all yes; wording approved; pull request #142: CI and the screen tests (13 of 13, after one test fix) green; AC-62 met, open item 47 closed; Deploy review: no high or medium finding, L1 fixed (742 tests), L2 to L4 as open items 50 to 52; pull request #142 merged as 1d40a53, CI and the screen tests (13 of 13) green on main (5m 47s) (gh, read only) |
-| Iterations 16b, 16c and 17 to 35 | not started, files not written |
+| Iteration 16b | approved 2026-11-08, in build ([its file](iterations/16b-live-prices-portfolio.md)) |
+| Iterations 16c and 17 to 35 | not started, files not written |
 
 ## 12. Change log
 Each departure from this plan is recorded here with its date and the reason.
@@ -495,6 +496,7 @@ Each departure from this plan is recorded here with its date and the reason.
 - 2026-11-08: pull request #142 (iteration 16a): the first screen-test run (42442053835) 12 of 13, HoldingHeaderLargestFontLandscapeTest red by a fault in the test (the tab row below the screen measured clipped); the test fixed (departure 5, your approval) and the next run (42445930002) 13 of 13, CI and CodeQL green. AC-62 met: from 16b, the layout, layer, keyboard and TalkBack-label checks of covered screens are no longer done by hand. Open item 47 closed.
 - 2026-11-08: iteration 16a's Deploy review (the 16a file, 13.5): no high or medium finding. L1 fixed (your A): K4's `PriceRefresh.refresh` saves the prices itself, not the view model (section 14). L2 to L4 recorded as open items 50 to 52.
 - 2026-11-08: pull request #142 (iteration 16a) was merged as 1d40a53, 11 commits; the branch is gone from origin and locally. On the pull request's last commit (b1bcfbb) CI and the screen tests green (13 of 13); on main after the merge CI (3m 14s), the screen tests (13 of 13, 5m 47s) and CodeQL green (gh, read only). Next: 16b.
+- 2026-11-08: pull request #143 (the 16a merge record; a CLAUDE.md pitfall: never print the price-source key or anything derived from it) was merged as b47f06f; main's CI, screen tests (13 of 13) and CodeQL green. Iteration 16b's file (plan/iterations/16b-live-prices-portfolio.md) written and approved by you; decisions 1 to 3 settled (", some stale" on a portfolio's age line; pull-to-refresh on the Portfolios list and a portfolio's screen; open items 50 and 52 in 16b). Built on iter-16b-live-prices-portfolio.
 
 ## 13. Out of scope for this plan
 Performance over time, per-holding dividends, ETF look-through, the next intent.md items,
