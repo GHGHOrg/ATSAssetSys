@@ -1,6 +1,6 @@
 # plan/iterations/16b-live-prices-portfolio.md
 
-Stage: Build. Status: approved 2026-11-08 (your "yes approve"); decisions 1 to 3 settled the same day (section 11). Built 2026-11-08 (steps 1 to 6); phone check 2026-11-08 all yes; the screen tests run on the pull request (section 13.4).
+Stage: Build. Status: approved 2026-11-08 (your "yes approve"); decisions 1 to 3 settled the same day (section 11). Built 2026-11-08 (steps 1 to 6); phone check 2026-11-08 all yes; the screen tests 16 of 16 on pull request #144 (section 13.4); reviewed against the spec refs (section 13.5).
 Source: plan.md section 4 (row 16b), spec 4.8, section 6 (view 3, error and loading states, number format and color, accessibility), section 7, AC-41, AC-42, AC-61, AC-62; wireframe 03 (frames A and B, markers 1, 4, 5 and 6); 16a (its decisions 1 to 4, wording, departures 2 and 4); open items 48 and 50 to 52. "My reading" is an interpretation, not a test.
 
 ## 1. Outcome
@@ -103,6 +103,10 @@ Check 1, before the install on 16a's build (versionCode 23), online: your screen
 
 ### 13.4 AC-62 and the screen tests
 From 16b, for these screens the TalkBack labels are checked by PortfolioTalkBackTest, not by hand. No screen test covers their layout at the largest font, so check 5 stayed a hand check. The screen tests (16) run on the pull request; their result is added there.
+- Pull request #144 at f2b646c: the screen tests (run 42494633276) 16 of 16 (tests 127 s, run 5m 16s), CI (run 42494633306, 3m 11s) and CodeQL green (gh, read only). PortfolioTalkBackTest's 3 tests passed on the first run.
+
+### 13.5 Review against the spec refs (2026-11-08, by reading main..HEAD; plan.md section 5, item 7)
+No finding that needs a change. In order: the age line is the oldest price used and leaves out holdings at cost and sold out (4.8); ", some stale" counts only prices used (decision 1); a row's stale flag only with shares and a stale price, as text, never color alone (section 6, accessibility (5)); the failed line on both screens and no pop-up, "Updating prices" only in the price part (section 6, states (2) and (3)); pull-to-refresh on both (decision 2), and not under the ⋮ menu's layer, which takes the touches; a 5xx answer stops the refresh (decision 3); no logging and no floating point in the changed files (spec 9, 4.10); K4 alone writes prices, the screens only read (section 14). Noted, not a finding: a portfolio row on the Portfolios list carries no stale mark (view 3 gives it none), so a price that is stale only because the source no longer prices it (16a departure 4) shows on a portfolio's screen, not on the list.
 
 ## 14. Departures from the plan
 1. Step 3: the pull-to-refresh wrapper and the two refresh lines moved out of HoldingDetailScreen into ui/PriceRefreshParts.kt, shared by the three screens; Holding detail draws the same. Not in section 5's file list.
