@@ -190,6 +190,19 @@ class PriceRefreshFlowTest {
         assertEquals(PriceRefreshModel(refreshing = false, failed = true), offline.priceRefresh)
     }
 
+    // 16c: Overall draws net worth, its age line and the portfolio rows from the refreshed prices (view 1, AC-41).
+    @Test
+    fun overall_showsNetWorthAtTheRefreshedPrice_withItsAgeLine_andThePortfolioRow() {
+        val store = store().apply { storedPortfolios = listOf(Portfolio("p1", "Portfolio P", 1L)) }
+        val source = FakeSource().apply { quotes = mapOf("AAPL" to Quote.Priced(BigDecimal("160"), at)) }
+        val state = started(store, source = source).state.value
+        val overall = state.overall
+        assertEquals("$10,880.00", overall.netWorth)
+        assertEquals(PricesAsOfModel(HoldingDetail.asOf(at), someStale = false), overall.prices)
+        assertEquals(listOf(OverallPortfolioRowModel("p1", "Portfolio P", state.portfolioFigures("p1"))), overall.portfolios)
+        assertEquals(PriceRefreshModel(refreshing = false, failed = false), overall.refresh)
+    }
+
     @Test
     fun nothingRefreshes_beforeTheRecordsAreLoaded() {
         val source = FakeSource()

@@ -153,6 +153,38 @@ object Sells {
             }.filter { it.available.signum() > 0 }
     }
 
+    /**
+     * What a quantity in the units of a sell dated [sellDate] with entry order [sellSeq] (as [lotChoices] gives it) is
+     * multiplied by to be in today's shares (16c decision 4): the splits after the sell and up to the end of [today], or,
+     * for a sell dated after today, the inverse of those after today and up to the sell. 1 with no split between.
+     */
+    fun unitsToToday(
+        transactions: List<Transaction>,
+        portfolioId: String,
+        ticker: String,
+        sellDate: LocalDate,
+        sellSeq: Long,
+        today: LocalDate,
+    ): Fraction {
+        val sell = Place(sellDate, sellSeq)
+        val now = Place.endOf(today)
+        return if (sell <= now) {
+            Holdings.splitFactor(transactions, portfolioId, ticker, sell, now)
+        } else {
+            Fraction.ONE / Holdings.splitFactor(transactions, portfolioId, ticker, now, sell)
+        }
+    }
+
+    /**
+     * A lot choice's unrealized gain at [price] (4.4, 4.8; 16c decision 4): its available quantity in today's shares
+     * ([toToday] from [unitsToToday]) × the price, less what that quantity cost; exact (4.10). Null with no price.
+     */
+    fun choiceGain(
+        choice: LotChoice,
+        toToday: Fraction,
+        price: Price?,
+    ): Fraction? = price?.let { choice.available * toToday * Fraction.of(it.perShare) - choice.available * choice.costPerShare }
+
     /** Sell all (4.4): every lot that passes the lot rules, each at its available quantity rounded to 8 places. */
     fun sellAll(choices: List<LotChoice>): List<Pick> = choices
         .filter { it.unavailable == null }

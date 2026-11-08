@@ -143,6 +143,27 @@ internal object KeptFields {
         return Sells.lotChoices(after, id, ticker, date, Transactions.nextSeq(entries, after))
     }
 
+    /**
+     * What the sell's lot quantities are multiplied by to be in today's shares (16c decision 4): from the same place and
+     * the same transactions as [sellLotChoices], a replaced sell's reversal included. 1 without a portfolio or ticker.
+     */
+    fun sellUnitsToToday(
+        entries: List<CashEntry>,
+        transactions: List<Transaction>,
+        sellPortfolioId: String?,
+        sellTicker: String?,
+        sellDateText: String,
+        replacingId: String?,
+        replaceReversalDate: String,
+        today: LocalDate,
+    ): Fraction {
+        val id = sellPortfolioId ?: return Fraction.ONE
+        val ticker = sellTicker ?: return Fraction.ONE
+        val date = DateDigits.toDate(sellDateText) ?: today
+        val after = sellTransactions(entries, transactions, replacingId, replaceReversalDate)
+        return Sells.unitsToToday(after, id, ticker, date, Transactions.nextSeq(entries, after), today)
+    }
+
     /** What is left of the shown buy's lot as of today, split-adjusted; null for a buy dated after today (13a decision 2). */
     fun transactionLot(
         transactions: List<Transaction>,

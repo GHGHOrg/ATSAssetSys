@@ -622,9 +622,30 @@ data class AppState(
     /** A portfolio's value, cost and gain/loss as the Portfolios list and its screen draw them (view 3; CR2, 16a). */
     fun portfolioFigures(portfolioId: String): PortfolioFiguresModel = PortfolioFigures.of(holdingsOf(portfolioId), KeptFields.prices(instruments))
 
-    /** The price refresh as the Portfolios list and a portfolio's screen draw it (16b). */
+    /** The price refresh as the Portfolios list and a portfolio's screen draw it (16b), Overall and the sell screen (16c). */
     val priceRefresh: PriceRefreshModel
         get() = PriceRefreshModel(refreshing, refreshFailed)
+
+    /** Overall as the screen draws it (view 1; CR2, 16c). */
+    val overall: OverallModel
+        get() = Overall.of(netWorth, holdings, portfolios, ::holdingsOf, KeptFields.prices(instruments), priceRefresh)
+
+    /** The sell screen's lot rows, each lot's gain at the latest price in today's shares (16c decisions 3 and 4). */
+    val sellLotRows: List<SellLotRowModel>
+        get() {
+            val toToday =
+                KeptFields.sellUnitsToToday(
+                    entries,
+                    transactions,
+                    sellForm.portfolioId,
+                    sellForm.ticker,
+                    sellForm.dateText,
+                    replacingId,
+                    replaceReversalDate,
+                    today,
+                )
+            return SellLots.rows(sellLotChoices, toToday, instruments.firstOrNull { it.ticker == sellForm.ticker }?.price)
+        }
 
     /** A portfolio's holding rows as its screen draws them (view 3; CR2, 16a). */
     fun portfolioHoldingRows(portfolioId: String): List<PortfolioHoldingRowModel> = PortfolioFigures.rows(holdingsOf(portfolioId), KeptFields.prices(instruments))

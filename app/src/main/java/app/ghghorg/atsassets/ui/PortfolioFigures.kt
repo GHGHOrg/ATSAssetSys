@@ -101,8 +101,11 @@ object PortfolioFigures {
         )
     }
 
-    /** The oldest price used (4.8: holdings with shares and a price only) and whether any price used is stale (16b). */
-    private fun pricesAsOf(
+    /**
+     * The oldest price used (4.8: holdings with shares and a price only) and whether any price used is stale (16b); for a
+     * portfolio and, over every holding, for net worth on Overall (16c).
+     */
+    fun pricesAsOf(
         holdings: List<Holding>,
         prices: Map<String, Price>,
     ): PricesAsOfModel? {
