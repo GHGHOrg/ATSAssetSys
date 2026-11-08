@@ -1,6 +1,6 @@
 # plan/iterations/16a-live-prices-holding.md
 
-Stage: Build. Status: approved 2026-11-08 (your "yes"); decisions 1 to 4 settled the same day (section 11). Built 2026-11-08 (steps 1 to 8); phone check 2026-11-08 all yes; the screen tests 13 of 13 on pull request #142 after one test fix (section 13.4).
+Stage: Build. Status: approved 2026-11-08 (your "yes"); decisions 1 to 4 settled the same day (section 11). Done: built 2026-11-08 (steps 1 to 8); phone check 2026-11-08 all yes; the screen tests 13 of 13 on pull request #142 after one test fix (section 13.4); merged as 1d40a53, main green (section 13.6).
 Source: plan.md section 4 (row 16a), spec 4.8, section 6 (view 6, error and loading states, number format and color), section 7, section 9, AC-05, AC-41, AC-42, AC-48, AC-61, AC-62; plan/spikes/price-source.md (decisions 2, 5 and 6, section 10.2); open items 40 (closed 2026-11-08) and 48. "My reading" is an interpretation, not a test.
 
 ## 1. Outcome
@@ -135,6 +135,9 @@ No high or medium finding. In order: the key only in the X-Finnhub-Token header 
 - L3 (low, 15c): the Holding detail and portfolio models are worked out again on each read, each building the price map again; not kept fields. Open item 51.
 - L4 (low): `AppState.portfolioValue` and `Valuation.portfolioValue` have no caller in app/src/main, only tests. Open item 52.
 - Not verified by a test, only on the phone: the refresh when the phone comes back online (`NetworkStatus.watch`, checks 3 and 5) and the pull gesture (check 4). Finnhub's per-minute limit is still not checked (risk 5).
+
+### 13.6 The merge (2026-11-08)
+Pull request #142 merged as 1d40a53, 11 commits; the branch is gone from origin and locally. On the pull request's last commit (b1bcfbb) CI (3m 55s) and the screen tests (13 of 13, 5m 18s) green; on main after the merge CI (3m 14s), the screen tests (13 of 13, 5m 47s) and CodeQL green (gh, read only). The phone runs the step 8 build, from before the L1 fix (13.5), which changes nothing shown; not checked on the phone.
 
 ## 14. Departures from the plan
 1. After step 2 (2026-11-08, your A): the Finnhub adapter (FinnhubSource, FinnhubList, FinnhubQuote) and its test moved into their own package, prices/finnhub/, so adapter code can be found by folder; CLAUDE.md's "Where things are" names the adapter folders. Its own commit, not in the plan. Not chosen: (B) an "Adapter" suffix on every adapter class; (C) only the CLAUDE.md note.
