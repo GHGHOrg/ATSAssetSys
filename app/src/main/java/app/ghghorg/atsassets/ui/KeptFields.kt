@@ -6,9 +6,11 @@ import app.ghghorg.atsassets.core.HiddenHolding
 import app.ghghorg.atsassets.core.Hiding
 import app.ghghorg.atsassets.core.Holding
 import app.ghghorg.atsassets.core.Holdings
+import app.ghghorg.atsassets.core.Instrument
 import app.ghghorg.atsassets.core.Lot
 import app.ghghorg.atsassets.core.LotChoice
 import app.ghghorg.atsassets.core.Portfolio
+import app.ghghorg.atsassets.core.Price
 import app.ghghorg.atsassets.core.Reversals
 import app.ghghorg.atsassets.core.Sells
 import app.ghghorg.atsassets.core.Transaction
@@ -41,6 +43,8 @@ data class KeptInputs(
     // 15d: the Cash list's other inputs.
     val portfolios: List<Portfolio>,
     val cashFilterForm: CashFilterForm,
+    // 16a: the instruments with their latest prices.
+    val instruments: List<Instrument>,
 )
 
 /** The kept fields of [AppState] (15c), each worked out here by one function, from its inputs only. */
@@ -51,12 +55,21 @@ internal object KeptFields {
         today: LocalDate,
     ): List<Holding> = Holdings.holdings(transactions, today)
 
-    /** Cash as of today plus every holding at cost (4.8), from [holdings] already worked out: one ledger, not two. */
+    /**
+     * Cash as of today plus every holding at its instrument's latest price, or at cost without one (4.8; 16a), from
+     * [holdings] already worked out: one ledger, not two.
+     */
     fun netWorth(
         entries: List<CashEntry>,
         holdings: List<Holding>,
+        instruments: List<Instrument>,
         today: LocalDate,
-    ): Fraction = Valuation.netWorthOf(entries, holdings, today)
+    ): Fraction = Valuation.netWorthOf(entries, holdings, prices(instruments), today)
+
+    /** The latest price of each instrument that has one, by ticker (16a). */
+    fun prices(instruments: List<Instrument>): Map<String, Price> = instruments
+        .mapNotNull { instrument -> instrument.price?.let { instrument.ticker to it } }
+        .toMap()
 
     /** The tickers [portfolioId] holds with shares as of today, a hidden holding left out (4.4), in ticker order. */
     fun heldTickers(
@@ -177,6 +190,7 @@ internal fun AppState.keptInputs(): KeptInputs = KeptInputs(
     replaceReversalDate = replaceReversalDate,
     portfolios = portfolios,
     cashFilterForm = cashFilterForm,
+    instruments = instruments,
 )
 
 /**
@@ -193,7 +207,12 @@ internal fun AppState.refreshed(): AppState {
     val holdings = if (holdingsChanged) KeptFields.holdings(transactions, today) else holdings
     return copy(
         holdings = holdings,
-        netWorth = if (holdingsChanged || changed({ it.entries })) KeptFields.netWorth(entries, holdings, today) else netWorth,
+        netWorth =
+        if (holdingsChanged || changed({ it.entries }, { it.instruments })) {
+            KeptFields.netWorth(entries, holdings, instruments, today)
+        } else {
+            netWorth
+        },
         holdingLots =
         if (changed({ it.transactions }, { it.portfolioId }, { it.holdingTicker }, { it.today })) {
             KeptFields.holdingLots(transactions, portfolioId, holdingTicker, today)

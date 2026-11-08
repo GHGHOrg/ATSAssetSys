@@ -8,6 +8,7 @@ import app.ghghorg.atsassets.core.HiddenHolding
 import app.ghghorg.atsassets.core.Hiding
 import app.ghghorg.atsassets.core.Instrument
 import app.ghghorg.atsassets.core.Portfolio
+import app.ghghorg.atsassets.core.Price
 import app.ghghorg.atsassets.core.RecordStore
 import app.ghghorg.atsassets.core.SellAllocation
 import app.ghghorg.atsassets.core.SplitRatio
@@ -19,6 +20,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.io.File
 import java.math.BigDecimal
+import java.time.Instant
 import java.time.LocalDate
 import kotlin.coroutines.cancellation.CancellationException
 
@@ -265,7 +267,25 @@ class RoomRecordStore(
                 throw UnreadableDataException("The stored data could not be opened.", e)
             }
         }
-        dao.upsert(instrument.toRow())
+        dao.upsertKeepingPrice(instrument.toRow())
+    }
+
+    override suspend fun savePrices(
+        fresh: Map<String, Price>,
+        failed: Collection<String>,
+    ) {
+        val dao = withContext(Dispatchers.IO) {
+            try {
+                database.instrumentDao()
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: UnreadableDataException) {
+                throw e
+            } catch (e: Exception) {
+                throw UnreadableDataException("The stored data could not be opened.", e)
+            }
+        }
+        dao.savePrices(fresh.mapValues { (_, price) -> price.perShare.toPlainString() to price.time.epochSecond }, failed)
     }
 
     override suspend fun loadHidden(): List<HiddenHolding> = loadHidden(loadTransactions())
@@ -425,9 +445,42 @@ internal fun withAllocations(
     }
 }
 
-internal fun Instrument.toRow() = InstrumentRow(ticker = ticker, assetType = assetType.name, verified = verified)
+internal fun Instrument.toRow() = InstrumentRow(
+    ticker = ticker,
+    assetType = assetType.name,
+    verified = verified,
+    price = price?.perShare?.toPlainString(),
+    priceTime = price?.time?.epochSecond,
+    priceStale = price?.stale ?: false,
+)
 
-internal fun InstrumentRow.toInstrument() = Instrument(ticker = ticker, assetType = AssetType.valueOf(assetType), verified = verified)
+/**
+ * Throws [UnreadableDataException] for a stored price that is not a decimal above 0, a price without its time or the
+ * other way round, a time not above 0, or a stale flag without a price (16a). The messages name no value (spec 9).
+ */
+internal fun InstrumentRow.toInstrument(): Instrument {
+    val stored =
+        when {
+            price == null && priceTime == null -> {
+                if (priceStale) throw UnreadableDataException("A stored instrument is stale without a price.")
+                null
+            }
+
+            price == null || priceTime == null -> throw UnreadableDataException("A stored price has no time, or a time no price.")
+
+            else -> {
+                val perShare = price.toBigDecimalOrNull()
+                if (perShare == null || perShare.signum() <= 0 || priceTime <= 0) {
+                    throw UnreadableDataException("A stored price is damaged.")
+                }
+                Price(perShare, Instant.ofEpochSecond(priceTime), priceStale)
+            }
+        }
+    return Instrument(ticker = ticker, assetType = AssetType.valueOf(assetType), verified = verified, price = stored)
+}
+
+/** This row with the price columns of [stored]: saving an instrument again keeps its price (only a refresh sets one). */
+internal fun InstrumentRow.withPriceOf(stored: InstrumentRow?): InstrumentRow = copy(price = stored?.price, priceTime = stored?.priceTime, priceStale = stored?.priceStale ?: false)
 
 private fun Portfolio.toRow() = PortfolioRow(id = id, name = name, createdSeq = createdSeq)
 

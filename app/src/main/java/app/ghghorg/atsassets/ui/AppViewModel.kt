@@ -36,6 +36,7 @@ import app.ghghorg.atsassets.core.PortfolioRefusal
 import app.ghghorg.atsassets.core.PortfolioRenameResult
 import app.ghghorg.atsassets.core.PortfolioResult
 import app.ghghorg.atsassets.core.Portfolios
+import app.ghghorg.atsassets.core.Price
 import app.ghghorg.atsassets.core.PriceSource
 import app.ghghorg.atsassets.core.Quantity
 import app.ghghorg.atsassets.core.QuantityError
@@ -64,7 +65,9 @@ import app.ghghorg.atsassets.core.Transaction
 import app.ghghorg.atsassets.core.TransactionType
 import app.ghghorg.atsassets.core.Transactions
 import app.ghghorg.atsassets.core.UnreadableDataException
+import app.ghghorg.atsassets.core.Valuation
 import app.ghghorg.atsassets.prices.CheckRefusal
+import app.ghghorg.atsassets.prices.PriceRefresh
 import app.ghghorg.atsassets.prices.TickerVerifier
 import app.ghghorg.atsassets.prices.Verification
 import kotlinx.coroutines.CancellationException
@@ -505,12 +508,15 @@ data class AppState(
     val portfolioId: String? = null,
     val portfolioMenuOpen: Boolean = false,
     val renameDialog: PortfolioDialog? = null,
+    // 16a: a price refresh runs (the "updating" indicator), and the last one failed (the quiet refresh-failed line).
+    val refreshing: Boolean = false,
+    val refreshFailed: Boolean = false,
     // 15c: the kept fields, worked out in KeptFields.kt from the fields above, so reading one costs nothing. Every write
     // through the view model refreshes them; a state built directly gets them from these defaults.
     // As of today (4.8), by portfolio, then ticker.
     val holdings: List<Holding> = KeptFields.holdings(transactions, today),
-    // Cash as of today plus every holding at cost, as of today (4.8; no prices before iteration 16).
-    val netWorth: Fraction = KeptFields.netWorth(entries, holdings, today),
+    // Cash as of today plus every holding at its latest price, or at cost without one, as of today (4.8; 16a).
+    val netWorth: Fraction = KeptFields.netWorth(entries, holdings, instruments, today),
     // The shown holding's lots with shares as of today, oldest first (view 6, 4.4).
     val holdingLots: List<Lot> = KeptFields.holdingLots(transactions, portfolioId, holdingTicker, today),
     // Hide on the shown holding (15 decision 1).
@@ -551,6 +557,7 @@ data class AppState(
             replaceReversalDate = replaceReversalDate,
             portfolios = portfolios,
             cashFilterForm = cashFilterForm,
+            instruments = instruments,
         ),
 ) {
     val shownPortfolio: Portfolio? get() = portfolioId?.let { id -> portfolios.firstOrNull { it.id == id } }
@@ -597,8 +604,32 @@ data class AppState(
             return HoldingRows.of(transactions, id, ticker)
         }
 
-    /** Each holding at cost while there are no prices (4.8). */
-    fun portfolioValue(portfolioId: String): Fraction = holdingsOf(portfolioId).fold(Fraction.ZERO) { sum, holding -> sum + holding.cost }
+    /** The shown holding's latest price, or null when it never had one (4.8; 16a). */
+    val shownPrice: Price?
+        get() = instruments.firstOrNull { it.ticker == holdingTicker }?.price
+
+    /** Holding detail's header as the screen draws it (view 6; CR2, 16a step 6); null when no holding is shown. */
+    val holdingHeader: HoldingHeaderModel?
+        get() {
+            val holding = shownHolding ?: return null
+            return HoldingDetail.header(holding, shownPortfolio?.name.orEmpty(), shownPrice, refreshing, refreshFailed)
+        }
+
+    /** Its Lots tab's rows, with each lot's gain at the latest price (view 6; CR2, 16a step 6). */
+    val holdingLotRows: List<LotRowModel>
+        get() = HoldingDetail.lots(holdingLots, shownPrice)
+
+    /** Each holding at its latest price, or at cost without one (4.8; 16a decision 1). */
+    fun portfolioValue(portfolioId: String): Fraction {
+        val prices = KeptFields.prices(instruments)
+        return holdingsOf(portfolioId).fold(Fraction.ZERO) { sum, holding -> sum + Valuation.valued(holding, prices[holding.ticker]).value }
+    }
+
+    /** A portfolio's value, cost and gain/loss as the Portfolios list and its screen draw them (view 3; CR2, 16a). */
+    fun portfolioFigures(portfolioId: String): PortfolioFiguresModel = PortfolioFigures.of(holdingsOf(portfolioId), KeptFields.prices(instruments))
+
+    /** A portfolio's holding rows as its screen draws them (view 3; CR2, 16a). */
+    fun portfolioHoldingRows(portfolioId: String): List<PortfolioHoldingRowModel> = PortfolioFigures.rows(holdingsOf(portfolioId), KeptFields.prices(instruments))
 
     /** The derived price per share (4.3), shown as the fields change; null until quantity and total are both valid. */
     val buyPricePerShare: Fraction?
@@ -818,6 +849,8 @@ class AppViewModel(
                 val instruments = opened.loadInstruments()
                 // The hidden holdings are checked against the transactions just read, not a second read (15c).
                 showLoaded(entries, portfolios, transactions, instruments, opened.loadHidden(transactions))
+                // The first unlock's refresh: onUnlocked came while the records were still loading (16a decision 2).
+                refreshPrices()
             } catch (e: UnreadableDataException) {
                 mutableState.update { it.copy(screen = Screen.UNREADABLE) }
             }
@@ -862,11 +895,52 @@ class AppViewModel(
         }
     }
 
+    /** Pull-to-refresh (spec 7; 16a decision 2). */
+    fun onPullToRefresh() = refreshPrices()
+
+    /** The phone has a network again: a refresh that failed is run again (16a decision 2); otherwise nothing happens. */
+    fun onOnline() {
+        if (mutableState.value.refreshFailed) refreshPrices()
+    }
+
+    /**
+     * Refreshes the prices (K4; spec 7, 4.8): asks for every ticker held except hidden ones (16a decision 3), saves the
+     * fresh prices and marks the rest stale, and every figure follows through the kept fields. Nothing happens before
+     * the records are loaded, on the unreadable-data screen, or while a refresh runs.
+     */
+    private fun refreshPrices() {
+        val current = mutableState.value
+        val opened = store ?: return
+        if (current.screen == Screen.LOADING || current.screen == Screen.UNREADABLE || current.refreshing) return
+        val tickers = PriceRefresh.tickers(current.transactions, current.hidden)
+        mutableState.update { it.copy(refreshing = true) }
+        viewModelScope.launch {
+            try {
+                val outcome = PriceRefresh.refresh(tickers, isOnline(), priceSource, opened)
+                mutableState.update {
+                    it.copy(
+                        instruments = PriceRefresh.applied(it.instruments, outcome),
+                        refreshing = false,
+                        refreshFailed = outcome.refreshFailed,
+                    )
+                }
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: UnreadableDataException) {
+                mutableState.update { it.copy(screen = Screen.UNREADABLE, refreshing = false) }
+            } catch (e: Exception) {
+                // The prices could not be saved: they stay as they were, and the refresh counts as failed.
+                mutableState.update { it.copy(refreshing = false, refreshFailed = true) }
+            }
+        }
+    }
+
     /**
      * After unlock the app shows Overall, unless an entry screen or the New portfolio dialog is open, which stays
-     * (02b decision 9). The Buy/Sell menu and its notice close.
+     * (02b decision 9). The Buy/Sell menu and its notice close. Prices refresh on every unlock (16a decision 2).
      */
     fun onUnlocked() {
+        refreshPrices()
         val current = mutableState.value
         if (current.screen != Screen.TABS || current.portfolioDialog != null) return
         mutableState.update { it.copy(tab = Tab.OVERALL, buySellMenuOpen = false, buyNotice = null) }

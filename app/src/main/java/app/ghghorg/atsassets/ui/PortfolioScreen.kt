@@ -23,6 +23,7 @@ import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
@@ -39,9 +40,8 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import app.ghghorg.atsassets.R
 import app.ghghorg.atsassets.core.Fraction
-import app.ghghorg.atsassets.core.Holding
-import app.ghghorg.atsassets.core.Money
 import app.ghghorg.atsassets.core.Quantity
+import app.ghghorg.atsassets.ui.theme.gainLossColor
 import java.math.BigDecimal
 
 /**
@@ -65,8 +65,8 @@ fun PortfolioScreen(
             verticalArrangement = Arrangement.spacedBy(12.dp),
         ) {
             TopBar(portfolio.name, actions)
-            val holdings = state.holdingsOf(portfolio.id)
-            SummaryCard(holdings)
+            val holdings = state.portfolioHoldingRows(portfolio.id)
+            SummaryCard(state.portfolioFigures(portfolio.id))
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
@@ -169,25 +169,26 @@ private fun TopBar(
 }
 
 /**
- * Wireframe 3 marker 4. No holding has a price before 16, so each is valued at cost (4.8): the value equals the cost
- * and the gain/loss is $0.00 without color, with "(all holdings at cost)" while there are holdings (wording 4).
+ * Wireframe 3 marker 4, drawn from its model (CR2, 16a decision 1): the value with each holding at its latest price or
+ * at cost (4.8), the cost, and the gain/loss in green or red with its sign, with "(all holdings at cost)" while no
+ * holding with shares has a price (09 wording 4). The price line follows in 16b.
  */
 @Composable
-private fun SummaryCard(holdings: List<Holding>) {
-    val cost = holdings.fold(Fraction.ZERO) { sum, holding -> sum + holding.cost }
-    val shown = Money.format(cost)
+private fun SummaryCard(figures: PortfolioFiguresModel) {
     OutlinedCard(modifier = Modifier.fillMaxWidth()) {
         Column(
             modifier = Modifier.fillMaxWidth().padding(12.dp),
             verticalArrangement = Arrangement.spacedBy(8.dp),
         ) {
-            SummaryLine(stringResource(R.string.portfolio_value_label), shown, MaterialTheme.typography.headlineSmall)
-            SummaryLine(stringResource(R.string.portfolio_cost_label), shown, MaterialTheme.typography.bodyLarge)
+            SummaryLine(stringResource(R.string.portfolio_value_label), figures.value, figures.spokenValue, MaterialTheme.typography.headlineSmall)
+            SummaryLine(stringResource(R.string.portfolio_cost_label), figures.cost, figures.spokenCost, MaterialTheme.typography.bodyLarge)
             SummaryLine(
                 label = stringResource(R.string.portfolio_unrealized_label),
-                amount = Money.format(Fraction.ZERO),
+                amount = figures.gain.text,
+                spokenAmount = spoken(figures.gain.spoken),
                 amountStyle = MaterialTheme.typography.bodyLarge,
-                atCost = allAtCost(holdings),
+                atCost = figures.allAtCost,
+                amountColor = gainLossColor(sign(figures.gain)),
             )
         }
     }
@@ -197,10 +198,12 @@ private fun SummaryCard(holdings: List<Holding>) {
 private fun SummaryLine(
     label: String,
     amount: String,
+    spokenAmount: String,
     amountStyle: TextStyle,
     atCost: Boolean = false,
+    amountColor: Color = Color.Unspecified,
 ) {
-    val base = stringResource(R.string.spoken_label_dollars, label, amount.substringAfter('$'))
+    val base = stringResource(R.string.spoken_label_dollars, label, spokenAmount)
     val spoken = if (atCost) stringResource(R.string.portfolio_row_at_cost_spoken, base) else base
     Column(modifier = Modifier.clearAndSetSemantics { contentDescription = spoken }) {
         Text(
@@ -208,7 +211,7 @@ private fun SummaryLine(
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
-        Text(text = amount, style = amountStyle)
+        Text(text = amount, style = amountStyle, color = amountColor)
         if (atCost) {
             Text(
                 text = stringResource(R.string.holdings_at_cost),
@@ -220,26 +223,27 @@ private fun SummaryLine(
 }
 
 /**
- * A holding (wireframe 3 marker 5, format of marker 6): ticker and shares, the value at cost and "no price, at cost"
- * in place of a gain/loss (4.8); a sold-out holding shows 0 shares and $0.00 with no flag (11 wording 4). One tap
- * target opening Holding detail (iteration 10), read by TalkBack as one button.
+ * A holding (wireframe 3 marker 5, format of marker 6), drawn from its model (CR2, 16a decision 1): ticker and shares,
+ * the value and the gain/loss in green or red with its sign at its latest price, or "no price, at cost" (4.8); a
+ * sold-out holding shows 0 shares and $0.00 with no flag (11 wording 4). Its stale flag follows in 16b. One tap target
+ * opening Holding detail (iteration 10), read by TalkBack as one button.
  */
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
 private fun HoldingRow(
-    holding: Holding,
+    holding: PortfolioHoldingRowModel,
     onOpen: () -> Unit,
 ) {
-    val shares = sharesText(holding.shares)
-    val value = Money.format(holding.cost)
-    val soldOut = holding.shares.signum() == 0
+    val shares = stringResource(if (holding.oneShare) R.string.holding_share_one else R.string.holding_shares, holding.shares)
+    val value = holding.value
+    val soldOut = holding.soldOut
+    val gain = holding.gain
     val spoken =
-        stringResource(
-            if (soldOut) R.string.holding_row_sold_out_spoken else R.string.holding_row_spoken,
-            holding.ticker,
-            shares,
-            value.substringAfter('$'),
-        )
+        when {
+            soldOut -> stringResource(R.string.holding_row_sold_out_spoken, holding.ticker, shares, holding.spokenValue)
+            gain is GainModel.Figure -> stringResource(R.string.holding_row_gain_spoken, holding.ticker, shares, holding.spokenValue, spoken(gain.spoken))
+            else -> stringResource(R.string.holding_row_spoken, holding.ticker, shares, holding.spokenValue)
+        }
     FlowRow(
         modifier =
         Modifier
@@ -278,12 +282,23 @@ private fun HoldingRow(
                 textAlign = TextAlign.End,
             )
             if (!soldOut) {
-                Text(
-                    text = stringResource(R.string.holding_no_price),
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    textAlign = TextAlign.End,
-                )
+                when (gain) {
+                    is GainModel.Figure ->
+                        Text(
+                            text = gain.text,
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = gainLossColor(sign(gain)),
+                            textAlign = TextAlign.End,
+                        )
+
+                    GainModel.NoPrice ->
+                        Text(
+                            text = stringResource(R.string.holding_no_price),
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            textAlign = TextAlign.End,
+                        )
+                }
             }
         }
     }
@@ -302,12 +317,6 @@ internal fun sharesText(shares: Fraction): String {
 /** As [sharesText], for a quantity as typed. */
 @Composable
 internal fun sharesText(shares: BigDecimal): String = sharesText(Fraction.of(shares))
-
-/**
- * No holding has a price before iteration 16, so every portfolio with shares is all at cost (09 wording 4). A sold-out
- * holding is valued at nothing, not at cost (11 wording 4).
- */
-internal fun allAtCost(holdings: List<Holding>): Boolean = holdings.any { it.shares.signum() > 0 }
 
 /**
  * The ⋮ menu (08 decision 1), drawn inside the activity window: a clear layer that closes the menu on a tap outside,

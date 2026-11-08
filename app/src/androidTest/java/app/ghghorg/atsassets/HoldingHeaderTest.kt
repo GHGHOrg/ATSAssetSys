@@ -10,8 +10,11 @@ import androidx.compose.ui.test.onRoot
 import androidx.compose.ui.test.performTouchInput
 import androidx.compose.ui.test.swipeUp
 import androidx.test.ext.junit.runners.AndroidJUnit4
+import app.ghghorg.atsassets.core.AssetType
 import app.ghghorg.atsassets.core.Holdings
+import app.ghghorg.atsassets.core.Instrument
 import app.ghghorg.atsassets.core.Portfolio
+import app.ghghorg.atsassets.core.Price
 import app.ghghorg.atsassets.core.Transaction
 import app.ghghorg.atsassets.core.TransactionType
 import app.ghghorg.atsassets.ui.AppState
@@ -27,11 +30,13 @@ import org.junit.Test
 import org.junit.rules.RuleChain
 import org.junit.runner.RunWith
 import java.math.BigDecimal
+import java.time.Instant
 import java.time.LocalDate
 
 /**
  * Defect 10 (10 phone check 6a): Holding detail's fixed part stays in place only while it takes at most half the
- * screen's height; taller, it scrolls up with the list. Measured on the emulator, turned and at a set font scale.
+ * screen's height; taller, it scrolls up with the list. Measured on the emulator, turned and at a set font scale, with
+ * the header at its tallest from 16a (AC-61 (a)): a stale price line, "Updating prices" and the refresh-failed line.
  */
 @RunWith(AndroidJUnit4::class)
 class HoldingHeaderLargestFontLandscapeTest {
@@ -71,9 +76,11 @@ class HoldingHeaderNormalFontPortraitTest {
 
 private const val TICKER = "SPKE"
 
-// Thirty buys, so the Transactions list is longer than the screen.
+// Thirty buys, so the Transactions list is longer than the screen. A stale price, and a refresh running after one that
+// failed, so every line the header can have shows (16a).
 private fun holdingState(): AppState {
     val today = LocalDate.of(2026, 11, 4)
+    val stalePrice = Price(BigDecimal("98.76"), Instant.parse("2026-11-03T21:00:00Z"), stale = true)
     val transactions =
         (1..30).map { day ->
             Transaction(
@@ -96,6 +103,9 @@ private fun holdingState(): AppState {
         portfolios = listOf(Portfolio(id = "p1", name = "Tests", createdSeq = 1)),
         portfolioId = "p1",
         holdingTicker = TICKER,
+        instruments = listOf(Instrument(TICKER, AssetType.STOCK, verified = true, price = stalePrice)),
+        refreshing = true,
+        refreshFailed = true,
     )
 }
 
@@ -106,8 +116,10 @@ private fun ComposeContentTestRule.checkHeader(expectFixed: Boolean) {
         }
     }
     val rootHeight = onRoot().fetchSemanticsNode().size.height
-    // The tab row is the fixed part's last line.
-    val fixedBottom = onNode(isSelectable() and hasText(string(R.string.holding_tab_transactions))).fetchSemanticsNode().boundsInRoot.bottom
+    // The tab row is the fixed part's last line. Unclipped: with 16a's header at the largest font it lies below the screen,
+    // where its clipped bounds are empty (pull request #142, run 42442053835).
+    val tabRow = onNode(isSelectable() and hasText(string(R.string.holding_tab_transactions))).fetchSemanticsNode()
+    val fixedBottom = tabRow.positionInRoot.y + tabRow.size.height
     assertEquals(
         "Setup: the fixed part ends at $fixedBottom px of $rootHeight px, so this case does not occur here",
         !expectFixed,

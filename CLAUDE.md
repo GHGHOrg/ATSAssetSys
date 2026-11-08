@@ -71,6 +71,7 @@ CI (.github/workflows/ci.yml) runs the style check and then the same three steps
 - Spec sections: find them by heading, for example "## 4. Business rules".
   Sections 2 (concerns, C-numbers), 3 (domain), 4 (rules), 6 (views), 7 (prices), 8 (backup file), 9 (security), 11 (criteria), 14 (components, K-numbers).
 - Each iteration file in plan/iterations/ lists its own spec sections, criteria and examples.
+- Adapter code, the only code that knows an outside service or library's own API, sits in its own folder under app/src/main/java/app/ghghorg/atsassets/: prices/finnhub/ for Finnhub (K4: its URLs, the X-Finnhub-Token header, its fields) and data/ for Room and SQLCipher (K2). Outside prices/finnhub/, only MainActivity names Finnhub, where it builds the source with the key (and app/build.gradle.kts, which reads FINNHUB_API_KEY); the rest of the app uses core's PriceSource and RecordStore (16a, step 2).
 
 ## 6. Known pitfalls
 - No floating point for money or quantity (4.10).

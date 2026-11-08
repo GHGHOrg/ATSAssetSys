@@ -1,6 +1,8 @@
 package app.ghghorg.atsassets
 
 import android.os.Bundle
+import android.os.Handler
+import android.os.Looper
 import android.view.WindowManager
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
@@ -34,8 +36,8 @@ import app.ghghorg.atsassets.data.RoomRecordStore
 import app.ghghorg.atsassets.data.SqlCipherOpener
 import app.ghghorg.atsassets.lock.AppLock
 import app.ghghorg.atsassets.lock.LockState
-import app.ghghorg.atsassets.prices.FinnhubSource
 import app.ghghorg.atsassets.prices.NetworkStatus
+import app.ghghorg.atsassets.prices.finnhub.FinnhubSource
 import app.ghghorg.atsassets.ui.AppContent
 import app.ghghorg.atsassets.ui.AppViewModel
 import app.ghghorg.atsassets.ui.theme.ATSAssetSystemTheme
@@ -49,6 +51,9 @@ class MainActivity : FragmentActivity() {
     private lateinit var prompt: BiometricPrompt
     private lateinit var promptInfo: BiometricPrompt.PromptInfo
     private lateinit var viewModel: AppViewModel
+
+    // Stops watching the network; set while the app is in view (16a decision 2).
+    private var stopWatchingNetwork: () -> Unit = {}
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -130,9 +135,13 @@ class MainActivity : FragmentActivity() {
         lock.updateScreenLockAvailable(canAuthenticate)
         lockState = lock.state
         showPromptIfNeeded()
+        // When the phone comes back online, a refresh that failed runs again (16a decision 2).
+        stopWatchingNetwork = NetworkStatus(applicationContext).watch(Handler(Looper.getMainLooper())) { viewModel.onOnline() }
     }
 
     override fun onStop() {
+        stopWatchingNetwork()
+        stopWatchingNetwork = {}
         prompt.cancelAuthentication()
         lock.onAppLeft()
         lockState = lock.state
