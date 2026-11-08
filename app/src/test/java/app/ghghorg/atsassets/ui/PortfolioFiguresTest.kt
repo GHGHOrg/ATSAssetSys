@@ -3,11 +3,14 @@ package app.ghghorg.atsassets.ui
 import app.ghghorg.atsassets.core.Fraction
 import app.ghghorg.atsassets.core.Holding
 import app.ghghorg.atsassets.core.Price
+import app.ghghorg.atsassets.core.Transaction
+import app.ghghorg.atsassets.core.TransactionType
 import org.junit.Assert.assertEquals
 import org.junit.Test
 import java.math.BigDecimal
 import java.math.BigInteger
 import java.time.Instant
+import java.time.LocalDate
 
 // 16a decision 1 (your A after step 6): a portfolio's figures at the latest prices, and "at cost" only where it is true.
 class PortfolioFiguresTest {
@@ -92,6 +95,39 @@ class PortfolioFiguresTest {
             ),
             PortfolioFigures.rows(listOf(aapl, msft, oldco), mapOf("AAPL" to price("160"), "OLDCO" to price("5"))),
         )
+    }
+
+    // Moved from core's HoldingsTest with Valuation.portfolioValue (16b decision 3, open item 52): each portfolio is worth
+    // its own holdings only, at cost while there is no price (4.8).
+    @Test
+    fun eachPortfolio_isWorthItsOwnHoldingsOnly() {
+        fun bought(
+            id: String,
+            portfolioId: String,
+            ticker: String,
+            quantity: String,
+            totalCents: Long,
+        ) = Transaction(
+            id = id,
+            portfolioId = portfolioId,
+            ticker = ticker,
+            type = TransactionType.BUY,
+            date = LocalDate.of(2026, 1, 2),
+            enteredSeq = id.drop(1).toLong(),
+            quantity = BigDecimal(quantity),
+            totalCents = totalCents,
+        )
+        val state =
+            AppState(
+                transactions =
+                listOf(
+                    bought("b1", "p1", "AAPL", "10", 100_000L),
+                    bought("b2", "p1", "SPY", "1", 50_000L),
+                    bought("b3", "p2", "AAPL", "1", 70_000L),
+                ),
+                today = LocalDate.of(2026, 6, 1),
+            )
+        assertEquals(listOf("$1,500.00", "$700.00", "$0.00"), listOf("p1", "p2", "p3").map { state.portfolioFigures(it).value })
     }
 
     // 16b: the age line is the oldest price used (4.8), in New York to the minute.

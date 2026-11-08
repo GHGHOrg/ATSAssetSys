@@ -130,13 +130,6 @@ class ValuationPricesTest {
     }
 
     @Test
-    fun portfolioValue_usesThePrices() {
-        assertEquals(dollars(1_280), Valuation.portfolioValue(exampleA, "p1", today, mapOf("AAPL" to price("160"))))
-        assertEquals(dollars(1_200), Valuation.portfolioValue(exampleA, "p1", today))
-        assertEquals(Fraction.ZERO, Valuation.portfolioValue(exampleA, "p2", today, mapOf("AAPL" to price("160"))))
-    }
-
-    @Test
     fun thePriceAge_isTheOldestPriceUsed_leavingOutHoldingsAtCostAndSoldOut() {
         val holdings =
             listOf(

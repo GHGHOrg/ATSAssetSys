@@ -40,9 +40,13 @@ object PriceRefresh {
             .sorted()
     }
 
+    // A status from 500 up: the source itself failed, so the next ticker would fail the same way (16b decision 3).
+    private const val SERVER_ERROR = 500
+
     /**
      * Asks [source] for each of [tickers] in turn. Offline it asks nothing. It stops at an answer that would be the
-     * same for the next ticker (no key, the key refused, too many calls, no connection); every ticker not asked fails.
+     * same for the next ticker (no key, the key refused, too many calls, no connection, a 5xx answer); every ticker not
+     * asked fails.
      */
     suspend fun run(
         tickers: List<String>,
@@ -64,7 +68,7 @@ object PriceRefresh {
                 quote == Quote.NoKey ||
                     quote is Quote.KeyRefused ||
                     quote == Quote.TooManyCalls ||
-                    (quote is Quote.NoAnswer && quote.status == null)
+                    (quote is Quote.NoAnswer && (quote.status ?: SERVER_ERROR) >= SERVER_ERROR)
             if (stop) break
         }
         return Outcome(fresh, tickers.filter { it !in fresh }, failedAnswer)

@@ -25,17 +25,6 @@ object Valuation {
         today: LocalDate,
     ): Fraction = netWorthOf(entries, holdings, emptyMap(), today)
 
-    /** The value of one portfolio's holdings as of today, each at its price in [prices] (by ticker) or at cost (4.8). */
-    fun portfolioValue(
-        transactions: List<Transaction>,
-        portfolioId: String,
-        today: LocalDate,
-        prices: Map<String, Price> = emptyMap(),
-    ): Fraction = Holdings
-        .holdings(transactions, today)
-        .filter { it.portfolioId == portfolioId }
-        .fold(Fraction.ZERO) { sum, holding -> sum + valued(holding, prices[holding.ticker]).value }
-
     /**
      * [holding] at [price] (4.8): shares × price, with the unrealized gain market value − cost; a stale price keeps its
      * figures. With no price the holding is valued at cost and has no gain ("no price").

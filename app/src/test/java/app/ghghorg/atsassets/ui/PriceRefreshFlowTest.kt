@@ -10,6 +10,7 @@ import app.ghghorg.atsassets.core.Price
 import app.ghghorg.atsassets.core.Quote
 import app.ghghorg.atsassets.core.Transaction
 import app.ghghorg.atsassets.core.TransactionType
+import app.ghghorg.atsassets.core.Valuation
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -166,8 +167,10 @@ class PriceRefreshFlowTest {
         assertEquals(PortfolioFigures.of(state.holdingsOf("p1"), prices), state.portfolioFigures("p1"))
         assertEquals(PortfolioFigures.rows(state.holdingsOf("p1"), prices), state.portfolioHoldingRows("p1"))
         assertEquals("$1,280.00", state.portfolioFigures("p1").value)
-        assertEquals(dollars(1_280), state.portfolioValue("p1"))
-        assertEquals(state.netWorth, dollars(9_600) + state.portfolioValue("p1"))
+        // Net worth is the cash plus the portfolio's holding at that price, exactly (4.8).
+        val value = Valuation.valued(state.holdingsOf("p1").single(), prices["AAPL"]).value
+        assertEquals(dollars(1_280), value)
+        assertEquals(state.netWorth, dollars(9_600) + value)
     }
 
     // 16b: the portfolio screens' age line, stale flag and refresh state follow the refresh (AC-42).

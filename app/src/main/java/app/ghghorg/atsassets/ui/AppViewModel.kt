@@ -619,12 +619,6 @@ data class AppState(
     val holdingLotRows: List<LotRowModel>
         get() = HoldingDetail.lots(holdingLots, shownPrice)
 
-    /** Each holding at its latest price, or at cost without one (4.8; 16a decision 1). */
-    fun portfolioValue(portfolioId: String): Fraction {
-        val prices = KeptFields.prices(instruments)
-        return holdingsOf(portfolioId).fold(Fraction.ZERO) { sum, holding -> sum + Valuation.valued(holding, prices[holding.ticker]).value }
-    }
-
     /** A portfolio's value, cost and gain/loss as the Portfolios list and its screen draw them (view 3; CR2, 16a). */
     fun portfolioFigures(portfolioId: String): PortfolioFiguresModel = PortfolioFigures.of(holdingsOf(portfolioId), KeptFields.prices(instruments))
 

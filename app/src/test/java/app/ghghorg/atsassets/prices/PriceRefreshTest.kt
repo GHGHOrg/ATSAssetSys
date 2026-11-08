@@ -93,9 +93,11 @@ class PriceRefreshTest {
         assertEquals(PriceRefresh.Outcome(emptyMap(), emptyList(), refreshFailed = false), PriceRefresh.run(emptyList(), false, Source(emptyMap())))
     }
 
+    // 16b decision 3 (open item 50): a 5xx answer stops the refresh too, as a 429 does.
     @Test
     fun run_stopsAtAnAnswerThatWillNotChangeForTheNextTicker_andFails() = runTest {
-        for (stop in listOf(Quote.NoKey, Quote.KeyRefused(401), Quote.TooManyCalls, Quote.NoAnswer(status = null))) {
+        val stops = listOf(Quote.NoKey, Quote.KeyRefused(401), Quote.TooManyCalls, Quote.NoAnswer(status = null), Quote.NoAnswer(500), Quote.NoAnswer(503))
+        for (stop in stops) {
             val source = Source(mapOf("AAPL" to priced("160"), "KO" to stop, "MSFT" to priced("400")))
             val outcome = PriceRefresh.run(listOf("AAPL", "KO", "MSFT"), online = true, source = source)
             assertEquals(stop.toString(), listOf("AAPL", "KO"), source.asked)
@@ -107,7 +109,7 @@ class PriceRefreshTest {
 
     @Test
     fun run_goesOnAfterAnAnswerForOneTickerOnly_andFails() = runTest {
-        for (other in listOf(Quote.Unreadable, Quote.NoAnswer(status = 500))) {
+        for (other in listOf(Quote.Unreadable, Quote.NoAnswer(status = 404))) {
             val source = Source(mapOf("AAPL" to priced("160"), "KO" to other, "MSFT" to priced("400")))
             val outcome = PriceRefresh.run(listOf("AAPL", "KO", "MSFT"), online = true, source = source)
             assertEquals(other.toString(), listOf("AAPL", "KO", "MSFT"), source.asked)

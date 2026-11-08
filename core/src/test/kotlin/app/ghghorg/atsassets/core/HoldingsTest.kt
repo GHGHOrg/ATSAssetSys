@@ -215,7 +215,7 @@ class HoldingsTest {
         assertEquals(Fraction.ZERO, holdings[0].shares)
         assertEquals(Fraction.ZERO, holdings[0].cost)
         assertEquals(emptyList<Lot>(), Holdings.lotsOf(transactions, "p1", "AAPL", today))
-        assertEquals(Fraction.ZERO, Valuation.portfolioValue(transactions, "p1", today))
+        assertEquals(Fraction.ZERO, Valuation.valued(holdings[0], null).value)
         val cashEntries = listOf(CashEntry("e1", LocalDate.of(2026, 1, 1), 1_000_000L, CashType.OPENING_BALANCE, "", 1L))
         assertEquals(dollars(10_000), Valuation.netWorth(cashEntries, transactions, today))
     }
@@ -228,18 +228,5 @@ class HoldingsTest {
                 sold("s1", "2026-03-01", 3L, "b1" to 4L),
             )
         assertEquals(listOf("s1", "b1"), Holdings.transactionsOf(transactions, "p1", "AAPL").map { it.id })
-    }
-
-    @Test
-    fun portfolioValue_isTheCostOfItsHoldings_whileThereIsNoPrice() {
-        val transactions =
-            listOf(
-                bought("b1", "2026-01-02", "10", 100_000L, 2L),
-                bought("b2", "2026-01-03", "1", 50_000L, 3L, ticker = "SPY"),
-                bought("b3", "2026-01-03", "1", 70_000L, 4L, portfolioId = "p2"),
-            )
-        assertEquals(dollars(1_500), Valuation.portfolioValue(transactions, "p1", today))
-        assertEquals(dollars(700), Valuation.portfolioValue(transactions, "p2", today))
-        assertEquals(Fraction.ZERO, Valuation.portfolioValue(transactions, "p3", today))
     }
 }
