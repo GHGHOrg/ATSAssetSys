@@ -1,6 +1,6 @@
 # plan/iterations/16a-live-prices-holding.md
 
-Stage: Build. Status: approved 2026-11-08 (your "yes"); decisions 1 to 4 settled the same day (section 11). Built 2026-11-08 (steps 1 to 8); phone check 2026-11-08 all yes; the screen tests run on the pull request (section 13.4).
+Stage: Build. Status: approved 2026-11-08 (your "yes"); decisions 1 to 4 settled the same day (section 11). Built 2026-11-08 (steps 1 to 8); phone check 2026-11-08 all yes; the screen tests 13 of 13 on pull request #142 after one test fix (section 13.4).
 Source: plan.md section 4 (row 16a), spec 4.8, section 6 (view 6, error and loading states, number format and color), section 7, section 9, AC-05, AC-41, AC-42, AC-48, AC-61, AC-62; plan/spikes/price-source.md (decisions 2, 5 and 6, section 10.2); open items 40 (closed 2026-11-08) and 48. "My reading" is an interpretation, not a test.
 
 ## 1. Outcome
@@ -119,15 +119,18 @@ Check 1, before the install on 15d's build (versionCode 22): your screenshots of
 ### 13.4 AC-62: the screen tests next to the hand check
 | Screen-test check | Matching hand check | Hand check | Screen test |
 |---|---|---|---|
-| HoldingHeaderLargestFontLandscapeTest: the tallest header scrolls with the list | 6, largest font, landscape | yes | on the pull request |
-| HoldingHeaderNormalFontPortraitTest: the tallest header stays in place | 6, normal font, upright | yes | on the pull request |
-| HoldingTalkBackTest, fresh price: header and lot text with "plus" and the price's time | 7, TalkBack | yes | on the pull request |
-| HoldingTalkBackTest, stale price: header and lot text with "minus" and "stale" | 7, TalkBack offline | yes | on the pull request |
+| HoldingHeaderLargestFontLandscapeTest: the tallest header scrolls with the list | 6, largest font, landscape | yes | passed after the test fix (run 42445930002); red in run 42442053835 by a fault in the test |
+| HoldingHeaderNormalFontPortraitTest: the tallest header stays in place | 6, normal font, upright | yes | passed in both runs |
+| HoldingTalkBackTest, fresh price: header and lot text with "plus" and the price's time | 7, TalkBack | yes | passed in both runs |
+| HoldingTalkBackTest, stale price: header and lot text with "minus" and "stale" | 7, TalkBack offline | yes | passed in both runs |
 
-The hand check found no defect. Not covered by a screen test, and stays a hand check (AC-62): TalkBack speech itself, the themes (check 8), the network (checks 2 to 5), installing over data (checks 1 and 2), and the portfolio's TalkBack text (16b). Whether the tests caught everything the hand check found is decided once they have run on the pull request; open item 47 closes then.
+- Run 42442053835 (pull request #142 at 2f55c8f): CI and CodeQL green; the screen tests 12 of 13. HoldingHeaderLargestFontLandscapeTest stopped at its setup check: "the fixed part ends at 0.0 px of 1344 px". My reading: at the largest font in landscape 16a's header puts the tab row below the screen, and `boundsInRoot` is clipped to the screen, so it was empty; the phone (check 6) showed the header scrolling as it should. Fixed in the test (3f13bd5, departure 5), not re-run; the run's results are kept in the session's scratchpad.
+- Run 42445930002 (at 3f13bd5): the screen tests 13 of 13 (tests 177 s); CI (run 42445930031) and CodeQL green.
+- Result (AC-62): the hand check found no defect, and every matching screen test passed, so the tests caught everything the hand check found. From 16b on, for a screen AC-61 covers, the layout at the largest font and in landscape, layers, menus and the keyboard, and TalkBack labels are no longer checked by hand. Not covered by a screen test, and stays a hand check: TalkBack speech itself, the themes (check 8), the network (checks 2 to 5), installing over data (checks 1 and 2), and the portfolio's TalkBack text (16b). Open item 47 closed.
 
 ## 14. Departures from the plan
 1. After step 2 (2026-11-08, your A): the Finnhub adapter (FinnhubSource, FinnhubList, FinnhubQuote) and its test moved into their own package, prices/finnhub/, so adapter code can be found by folder; CLAUDE.md's "Where things are" names the adapter folders. Its own commit, not in the plan. Not chosen: (B) an "Adapter" suffix on every adapter class; (C) only the CLAUDE.md note.
 2. Step 6 (2026-11-08, your A): to keep decision 1 true, a portfolio's value also uses the latest prices (AppState.portfolioValue), and the Portfolios list and a portfolio's screen draw their value, cost, gain/loss and holding rows from a new model (PortfolioFigures.kt, CR2); "at cost" shows only for holdings with no price. Their age line, stale flags and refresh-failed line stay in 16b. Not chosen: (B) the portfolio screens at cost until 16b, so Overall's net worth would not equal cash plus the portfolios.
 3. Step 6: Material 3's PullToRefreshBox was checked by compiling against it, not with javap (section 10), so no file outside the repo was read.
 4. Step 5: a ticker the source does not price (NoQuote) is marked stale on its own and does not make the refresh "failed"; only offline or a failed answer shows the refresh-failed line, so a delisted sold-out ticker (decision 3) cannot keep it on screen.
+5. After step 8 (2026-11-08, your approval): HoldingHeaderTest measures the tab row's bottom unclipped (`positionInRoot.y + size.height`) instead of `boundsInRoot.bottom`, which is empty for a row below the screen (run 42442053835; section 13.4). The assertions, the swipe and the setup are unchanged. Its own commit, 3f13bd5.
