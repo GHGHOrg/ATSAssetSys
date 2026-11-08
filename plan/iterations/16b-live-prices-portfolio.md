@@ -1,6 +1,6 @@
 # plan/iterations/16b-live-prices-portfolio.md
 
-Stage: Build. Status: approved 2026-11-08 (your "yes approve"); decisions 1 to 3 settled the same day (section 11). Built 2026-11-08 (steps 1 to 6); phone check 2026-11-08 all yes; the screen tests 16 of 16 on pull request #144 (section 13.4); reviewed against the spec refs (section 13.5).
+Stage: Build. Status: approved 2026-11-08 (your "yes approve"); decisions 1 to 3 settled the same day (section 11). Done: built 2026-11-08 (steps 1 to 6); phone check 2026-11-08 all yes; the screen tests 16 of 16 on pull request #144 (section 13.4); reviewed against the spec refs (section 13.5); merged as e5d594f, main green after one re-run (section 13.6).
 Source: plan.md section 4 (row 16b), spec 4.8, section 6 (view 3, error and loading states, number format and color, accessibility), section 7, AC-41, AC-42, AC-61, AC-62; wireframe 03 (frames A and B, markers 1, 4, 5 and 6); 16a (its decisions 1 to 4, wording, departures 2 and 4); open items 48 and 50 to 52. "My reading" is an interpretation, not a test.
 
 ## 1. Outcome
@@ -107,6 +107,9 @@ From 16b, for these screens the TalkBack labels are checked by PortfolioTalkBack
 
 ### 13.5 Review against the spec refs (2026-11-08, by reading main..HEAD; plan.md section 5, item 7)
 No finding that needs a change. In order: the age line is the oldest price used and leaves out holdings at cost and sold out (4.8); ", some stale" counts only prices used (decision 1); a row's stale flag only with shares and a stale price, as text, never color alone (section 6, accessibility (5)); the failed line on both screens and no pop-up, "Updating prices" only in the price part (section 6, states (2) and (3)); pull-to-refresh on both (decision 2), and not under the ⋮ menu's layer, which takes the touches; a 5xx answer stops the refresh (decision 3); no logging and no floating point in the changed files (spec 9, 4.10); K4 alone writes prices, the screens only read (section 14). Noted, not a finding: a portfolio row on the Portfolios list carries no stale mark (view 3 gives it none), so a price that is stale only because the source no longer prices it (16a departure 4) shows on a portfolio's screen, not on the list.
+
+### 13.6 The merge (2026-11-08)
+Pull request #144 merged as e5d594f (15:49:25Z), 7 commits; the branch is gone from origin and locally. On the pull request's last commit (22c8b59) CI (run 42495826313, 3m 31s) and the screen tests (run 42495826227, 16 of 16, 5m 51s) green. On main after the merge: CI (run 42496747325) and CodeQL green; the screen tests (run 42496747376) red at the first attempt, 15 of 16: LockAndLayerTest stopped at line 58, "The Rename layer was still open 15 s after Save; window focused: true" (the test took 30.3 s); the emulator log shows no ANR, crash or error. The same test passed in both runs on the pull request with the same code, and the 16a hand-off notes the same test timing out on #141 and on main before. My reading: a slow save on the emulator, not 16b; not proven. Attempt 1's results kept in the session's scratchpad. Re-run with your yes (A): attempt 2, 16 of 16 (tests 141 s, 15:57:39Z to 16:03:29Z), green (gh, read only).
 
 ## 14. Departures from the plan
 1. Step 3: the pull-to-refresh wrapper and the two refresh lines moved out of HoldingDetailScreen into ui/PriceRefreshParts.kt, shared by the three screens; Holding detail draws the same. Not in section 5's file list.
