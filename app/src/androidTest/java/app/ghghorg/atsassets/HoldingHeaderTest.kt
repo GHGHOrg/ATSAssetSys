@@ -116,8 +116,10 @@ private fun ComposeContentTestRule.checkHeader(expectFixed: Boolean) {
         }
     }
     val rootHeight = onRoot().fetchSemanticsNode().size.height
-    // The tab row is the fixed part's last line.
-    val fixedBottom = onNode(isSelectable() and hasText(string(R.string.holding_tab_transactions))).fetchSemanticsNode().boundsInRoot.bottom
+    // The tab row is the fixed part's last line. Unclipped: with 16a's header at the largest font it lies below the screen,
+    // where its clipped bounds are empty (pull request #142, run 42442053835).
+    val tabRow = onNode(isSelectable() and hasText(string(R.string.holding_tab_transactions))).fetchSemanticsNode()
+    val fixedBottom = tabRow.positionInRoot.y + tabRow.size.height
     assertEquals(
         "Setup: the fixed part ends at $fixedBottom px of $rootHeight px, so this case does not occur here",
         !expectFixed,
