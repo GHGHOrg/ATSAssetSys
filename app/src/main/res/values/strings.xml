@@ -373,7 +373,7 @@
     <string name="holding_row_gain_spoken">%1$s, %2$s, %3$s dollars, unrealized gain/loss %4$s dollars</string>
     <string name="holding_lot_gain_spoken">Lot of %1$s Eastern Time, %2$s left, %3$s dollars per share, cost %4$s dollars, unrealized gain/loss %5$s dollars</string>
     <string name="holding_lot_gain_stale_spoken">Lot of %1$s Eastern Time, %2$s left, %3$s dollars per share, cost %4$s dollars, unrealized gain/loss %5$s dollars, stale price</string>
-    <!-- Iteration 16b: prices on the portfolio screens (proposed 2026-11-08, to be approved on the phone, 16b file section 12). -->
+    <!-- Iteration 16b: prices on the portfolio screens (approved on the phone 2026-11-08, 16b file section 12). -->
     <string name="portfolio_prices_as_of">Prices as of %1$s ET</string>
     <string name="portfolio_prices_as_of_some_stale">Prices as of %1$s ET, some stale</string>
     <string name="portfolio_prices_as_of_spoken">Prices as of %1$s Eastern Time</string>
