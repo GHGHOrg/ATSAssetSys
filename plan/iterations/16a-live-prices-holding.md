@@ -1,6 +1,6 @@
 # plan/iterations/16a-live-prices-holding.md
 
-Stage: Build. Status: approved 2026-11-08 (your "yes"); decisions 1 to 4 settled the same day (section 11). In build: step 1.
+Stage: Build. Status: approved 2026-11-08 (your "yes"); decisions 1 to 4 settled the same day (section 11). Built 2026-11-08 (steps 1 to 8); phone check 2026-11-08 all yes; the screen tests run on the pull request (section 13.4).
 Source: plan.md section 4 (row 16a), spec 4.8, section 6 (view 6, error and loading states, number format and color), section 7, section 9, AC-05, AC-41, AC-42, AC-48, AC-61, AC-62; plan/spikes/price-source.md (decisions 2, 5 and 6, section 10.2); open items 40 (closed 2026-11-08) and 48. "My reading" is an interpretation, not a test.
 
 ## 1. Outcome
@@ -26,7 +26,7 @@ On Holding detail you see the holding valued at its latest price: the value, the
 ## 4. Analysis (2026-11-08, by reading the code and the spec)
 - Prices do not exist yet: `Valuation` values every holding at cost (Valuation.kt line 5), `InstrumentRow` has no price columns (AtsDatabase.kt line 76, schema version 6), and `PriceSource` has only `lookUp` (PriceSource.kt).
 - Finnhub's /quote (spike 10.2; open item 40): GET /api/v1/quote?symbol=X with the key in the X-Finnhub-Token header; 200 with c (price), pc, t (Unix seconds) and more; no redirect (checked 2026-11-08). During the session t is about half a minute behind; outside it, t is the last close. Prices have up to 4 decimals and are read as exact decimals, never as floating point (4.10).
-- [To check in step 2, not from memory] What /quote answers for a ticker it does not price (my reading: 200 with c = 0 and t = 0). Such an answer is treated as "no quote", so the price stays as it was and is marked stale.
+- Checked in step 2 (one call, your yes, 2026-11-08 01:53:51 +08:00, AAPPL): /quote answers a ticker it does not price with 200 and {"c":0,"d":null,"dp":null,"h":0,"l":0,"o":0,"pc":0,"t":0}. Such an answer (c or t 0) is treated as "no quote", so the price stays as it was and is marked stale.
 - The kept fields (15c): `holdings`, `netWorth` and `holdingLots` are worked out only when their inputs change. Prices become a new input; a missed input would leave stale figures on the screen (risk 1).
 - Holding detail's header and Lots tab have no screen model (open item 48); the Transactions rows do (15a). CR2 asks for a model when a screen changes.
 
@@ -80,7 +80,8 @@ None.
 4. The age shown: the price's own time from the source (t); after the close it says the price is from the last close, hours ago (your A, 2026-11-08). Not chosen: (B) the time of the last successful refresh.
 
 ## 12. Wording to approve (D9)
-Proposed, to be shown to you on the phone in step 8 and approved before the commit:
+Approved on the phone 2026-11-08 (your A, check 10), as in strings.xml's "Iteration 16a" block: "Price $342.57, as of 2026-11-06 16:00 ET" and its ", stale" form; "Updating prices"; "Price refresh failed. Showing last prices."; "stale" beside a lot's gain; the TalkBack sentences of the header, the lots, the holding rows and the portfolio summary ("plus" or "minus" on a gain, "Eastern Time", ", stale" and ", stale price"). Not chosen for now: (B) an age such as "Price 9 h old", recorded as an idea (open item 49).
+Proposed in step 1:
 - The age line, from the price's own time (decision 4): "Price as of 2026-11-07 16:00 ET", or an age such as "Price 9 h old".
 - The stale flag: "stale" next to the age line, with its age.
 - The no-price flag: "no price, at cost" (already in the app) and "no price" on a lot (already in the app).
@@ -89,6 +90,41 @@ Proposed, to be shown to you on the phone in step 8 and approved before the comm
 
 ## 13. Status and notes
 - Draft 2026-11-08; decisions 1 to 4 settled; approved the same day.
+
+### 13.1 Steps 2 to 6 (2026-11-08)
+- Step 2 (c3d1a1d): core's `Quote` and `PriceSource.quote`; `FinnhubQuote.read` reads c and t as exact decimals, c or t 0 as `NoQuote`, a malformed body as `Unreadable`; the /quote call sends the key in the X-Finnhub-Token header only and follows no redirect. FinnhubSourceTest 8 new, shown red first. The live call for an unpriced ticker: section 4. Tests 694.
+- Departure 1 (dc51485): the Finnhub adapter moved to prices/finnhub/.
+- Step 3 (72ac60e): core's `Price` on `Instrument`; `RecordStore.savePrices`; `saveInstrument` keeps a stored price (DAO `upsertKeepingPrice`); `InstrumentRow` gains `price` (TEXT), `priceTime` (INTEGER, Unix seconds) and `priceStale` (INTEGER NOT NULL DEFAULT 0); AutoMigration 6 to 7. Schema compare: only the instruments table changed, 6.json unchanged, 7.json LF (8,145 bytes), as expected. RowMappingTest 4 new (3 red first). Tests 698.
+- Step 4 (15892af): `Valuation.valued`, `lotGain`, `netWorthOf(prices)`, `portfolioValue(prices)`, `oldestPriceTime`; `HoldingValue`. ValuationPricesTest 10 new (9 red first). Example A at $160: value $1,280.00, +$80.00, net worth $10,880.00. Tests 708.
+- Step 5 (653beb6): prices/PriceRefresh.kt (the tickers, the run, the prices applied); `AppViewModel.refreshPrices` after the load, on unlock, on pull-to-refresh, and when the phone comes back online only after a failed refresh; `AppState.refreshing` and `refreshFailed`; the kept fields take the instruments as an input, and net worth uses prices; `NetworkStatus.watch` from MainActivity's onStart and onStop. PriceRefreshTest 7 and PriceRefreshFlowTest 7 (12 red first). A mutation check (the instruments input left out) failed 3 tests, and was undone. Tests 722 and 734 with step 6.
+- Step 6 (653beb6): ui/HoldingDetailModel.kt (header, lots, `GainModel`, `PriceLineModel`, the time in New York); `AppState.shownPrice`, `holdingHeader`, `holdingLotRows`; HoldingDetailScreen draws from them (the gain colored with its sign, the price line, "Updating prices", the refresh-failed line, PullToRefreshBox, whose own spinner shows only for a pull). Departure 2: ui/PortfolioFigures.kt, so the Portfolios list and a portfolio's screen draw their figures at prices. HoldingDetailModelTest 11, written after the model, so not shown red; a mutation check (the plus sign) failed 3 and was undone. PortfolioFiguresTest 5 (red first); PriceRefreshFlowTest 9 (two wiring tests). Tests 740.
+- Each step's run: spotlessCheck, build, tests and lint with --rerun-tasks, plus `:app:compileDebugAndroidTestKotlin`, green; lint the 5 listed findings. Only the final tree of steps 5 and 6 was built, not each commit alone.
+
+### 13.2 Steps 7 and 8 (2026-11-08)
+- Step 7 (3a4c754): HoldingHeaderTest (both cases) now measures the header at its tallest: a stale price line, "Updating prices" and the refresh-failed line together (AC-61 (a)). HoldingTalkBackTest, new, 2 tests (AC-61 (d)): Example A on the Lots tab at a fresh $160 and a stale $140, the header's and the lot's TalkBack text exact. No network: the screen is drawn from a built state. `@Test` lines in app/src/androidTest: 13 (11 before). Unit tests 740 (no change). The optional check of a portfolio holding row's TalkBack text was not written (its age line and flags come in 16b).
+- Step 8: versionCode 23. Its first full run (10:07:48) failed once in 15c's HoldingsScaleTest: `lotsOf` on spread holdings took 6.554 ms at 3,000 transactions after 0.659 ms at 1,000 (growth 9.9, bound 8), with only versionCode changed since the last green run (02:56). The next full run (10:09:48 to 10:10:48), unchanged, was green: 740 tests, 0 failures, 1 skipped; `lotsOf` spread grew 1.4, 2.4 and 3.2 times; lint the 5 listed findings (report 10:10:47). My reading: a slow moment on the PC, as in 15d (its file, section 13.1); not proven.
+
+### 13.3 Step 8: the phone check (2026-11-08, all yes)
+Check 1, before the install on 15d's build (versionCode 22): your screenshots of Overall, a portfolio's screen, and Holding detail with both tabs; then airplane mode on and a force stop. versionCode 23 installed over it (`adb install -r`, Success, 10:45:43), still offline.
+- 2 (AC-35, AC-42, 4.8), offline, no price yet: no unreadable-data screen (schema 7's migration ran); the figures as in the screenshots, all at cost; Holding detail "no price, at cost", no price line, one refresh-failed line, no pop-up; each lot "no price": yes.
+- 3, airplane mode off on Holding detail: "Updating prices" briefly, then the failed line gone; AAPL $342.57, as of 2026-11-06 16:00 ET (Friday's close), the same price and time as another app; the gain/loss figures and colors right: yes.
+- 4, pull to refresh: the spinner and "Updating prices", then both gone: yes.
+- 5 (AC-42), airplane mode on, lock and unlock: the last price kept, ", stale" on the price line and "stale" beside each lot's gain, one refresh-failed line, no pop-up; airplane mode off with the screen open: refreshed by itself, the marks and the line gone: yes.
+- 6 (AC-39): at the largest font in landscape the header scrolls with the list, nothing cut off, the Lots tab too; upright at the normal font it stays in place: yes.
+- 7 (AC-39): TalkBack reads the header, a lot, the portfolio's summary and a holding row in full, with "plus" or "minus", the price "as of … Eastern Time", and "stale" offline; the refresh-failed line is read: yes.
+- 8 (AC-40, AC-09): Holding detail and the portfolio's screen in light and in dark, readable, the stale marks and the failed line too; each shown date with "ET": yes.
+- 9 (spec 9): `adb logcat -d --uid=10454`, 54 lines from 10:43:23 to 10:58:02 (the install and checks 2 to 5): the key not in it (a True/False test), and no "finnhub", "token", AAPL, "quote", "symbol=", dollar amount or 342.57; the 4 "APPL" matches are the system's PHASE_CLIENT_APPLY_ANIMATION. Every line is the system's (ImeTracker 29, InsetsController 22, DisplayManager 1, ActivityThread 1): yes.
+- 10 (D9): the wording approved (section 12).
+
+### 13.4 AC-62: the screen tests next to the hand check
+| Screen-test check | Matching hand check | Hand check | Screen test |
+|---|---|---|---|
+| HoldingHeaderLargestFontLandscapeTest: the tallest header scrolls with the list | 6, largest font, landscape | yes | on the pull request |
+| HoldingHeaderNormalFontPortraitTest: the tallest header stays in place | 6, normal font, upright | yes | on the pull request |
+| HoldingTalkBackTest, fresh price: header and lot text with "plus" and the price's time | 7, TalkBack | yes | on the pull request |
+| HoldingTalkBackTest, stale price: header and lot text with "minus" and "stale" | 7, TalkBack offline | yes | on the pull request |
+
+The hand check found no defect. Not covered by a screen test, and stays a hand check (AC-62): TalkBack speech itself, the themes (check 8), the network (checks 2 to 5), installing over data (checks 1 and 2), and the portfolio's TalkBack text (16b). Whether the tests caught everything the hand check found is decided once they have run on the pull request; open item 47 closes then.
 
 ## 14. Departures from the plan
 1. After step 2 (2026-11-08, your A): the Finnhub adapter (FinnhubSource, FinnhubList, FinnhubQuote) and its test moved into their own package, prices/finnhub/, so adapter code can be found by folder; CLAUDE.md's "Where things are" names the adapter folders. Its own commit, not in the plan. Not chosen: (B) an "Adapter" suffix on every adapter class; (C) only the CLAUDE.md note.
