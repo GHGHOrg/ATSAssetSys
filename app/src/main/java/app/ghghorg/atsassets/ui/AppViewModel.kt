@@ -630,6 +630,15 @@ data class AppState(
     val overall: OverallModel
         get() = Overall.of(netWorth, holdings, portfolios, ::holdingsOf, KeptFields.prices(instruments), priceRefresh)
 
+    /** Net Worth (Total) as the screen draws it (view 2; CR2, 17): cash as of today and each portfolio's value (4.8). */
+    val netWorthTotal: NetWorthModel
+        get() =
+            NetWorthTotal.of(CashRules.balanceOn(entries, today), holdings, portfolios, ::holdingsOf, KeptFields.prices(instruments), priceRefresh)
+
+    /** More as the screen draws it (section 6; CR2, 17). */
+    val more: MoreModel
+        get() = More.of()
+
     /** The sell screen's lot rows, each lot's gain at the latest price in today's shares (16c decisions 3 and 4). */
     val sellLotRows: List<SellLotRowModel>
         get() {
