@@ -36,7 +36,8 @@ class NetWorthActions(
  * Net Worth (Total) (view 2, wireframe 02; iteration 17), drawn from its model (CR2): "<" and the title, net worth with
  * its age line, "Updating prices" and the failed line (marker 1), then the composition (marker 2), or with net worth of
  * $0.00 one plain line (marker 6; decision 4). One scrolling screen; pulling down refreshes the prices (decision 2).
- * Back returns to Overall or More. The breakdowns follow in 18 and 23.
+ * Back returns to Overall or More. Under the composition the breakdowns by asset type, portfolio and holding (18); sector
+ * and geography follow in 23.
  */
 @Composable
 fun NetWorthScreen(
@@ -64,6 +65,7 @@ fun NetWorthScreen(
                 Text(text = stringResource(R.string.net_worth_zero), style = MaterialTheme.typography.bodyLarge)
             } else {
                 Composition(composition, model)
+                AllocationBy.entries.forEach { by -> state.allocation(by)?.let { Breakdown(it) } }
             }
         }
     }
@@ -90,6 +92,19 @@ private fun Composition(
             HorizontalDivider()
             CompositionRow(stringResource(R.string.net_worth_label), model.netWorth, model.spokenNetWorth, total = true)
         }
+    }
+}
+
+/** Wireframe 02 markers 3 and 4 (18): a breakdown's heading, its donut and its rows, in the order asset type, portfolio, holding. */
+@Composable
+private fun Breakdown(model: AllocationModel) {
+    Text(
+        text = allocationHeading(model.by),
+        style = MaterialTheme.typography.titleMedium,
+        modifier = Modifier.semantics { heading() },
+    )
+    OutlinedCard(modifier = Modifier.fillMaxWidth()) {
+        AllocationBreakdown(model, modifier = Modifier.padding(12.dp))
     }
 }
 

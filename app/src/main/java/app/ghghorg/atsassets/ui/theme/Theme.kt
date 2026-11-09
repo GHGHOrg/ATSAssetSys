@@ -48,6 +48,26 @@ fun gainLossColor(signum: Int): Color {
     }
 }
 
+/**
+ * The color of an allocation slice (18): cash's own, otherwise the [index]th of the others in turn, counted without cash,
+ * so a portfolio or ticker keeps its color whether cash is listed or not. Every row names its slice, so meaning never
+ * rests on the color (section 6, accessibility (5)).
+ */
+@Composable
+fun sliceColor(
+    cash: Boolean,
+    index: Int,
+): Color {
+    val dark = isSystemInDarkTheme()
+    if (cash) return if (dark) SliceCashDark else SliceCashLight
+    val slices = if (dark) SlicesDark else SlicesLight
+    return slices[index % slices.size]
+}
+
+/** The percentage drawn on a slice: white on the light theme's dark slices, black on the dark theme's light ones. */
+@Composable
+fun sliceLabelColor(): Color = if (isSystemInDarkTheme()) Color.Black else Color.White
+
 @Composable
 fun ATSAssetSystemTheme(
     darkTheme: Boolean = isSystemInDarkTheme(),
