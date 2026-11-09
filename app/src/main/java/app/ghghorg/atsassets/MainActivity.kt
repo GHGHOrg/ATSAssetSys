@@ -3,6 +3,7 @@ package app.ghghorg.atsassets
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
+import android.os.SystemClock
 import android.view.WindowManager
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
@@ -71,7 +72,7 @@ class MainActivity : FragmentActivity() {
             ContextCompat.getMainExecutor(this),
             object : BiometricPrompt.AuthenticationCallback() {
                 override fun onAuthenticationSucceeded(result: BiometricPrompt.AuthenticationResult) {
-                    lock.onAuthSucceeded()
+                    lock.onAuthSucceeded(SystemClock.elapsedRealtime())
                     lockState = lock.state
                 }
 
@@ -143,7 +144,8 @@ class MainActivity : FragmentActivity() {
         stopWatchingNetwork()
         stopWatchingNetwork = {}
         prompt.cancelAuthentication()
-        lock.onAppLeft()
+        // The choice and the screen-off check are wired in 20 step 5; until then the default rule holds.
+        lock.onAppLeft(SystemClock.elapsedRealtime(), screenOff = false)
         lockState = lock.state
         super.onStop()
     }

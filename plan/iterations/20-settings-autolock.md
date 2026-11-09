@@ -1,6 +1,6 @@
 # plan/iterations/20-settings-autolock.md
 
-Stage: Build. Status: approved 2026-11-10 (your "Approved"); decisions 1 to 3 settled the same day (section 11). In build: step 2 done (section 10.1).
+Stage: Build. Status: approved 2026-11-10 (your "Approved"); decisions 1 to 3 settled the same day (section 11). In build: step 2 done (section 10.1); step 3 done (decision 4).
 Source: plan.md section 4 (row 20), spec section 3 (Settings), section 6 (More, Settings entry, navigation outline, accessibility), section 8 (settings are in the backup file; 31), section 9 (the lock, the auto-lock choices), section 14 (K8), AC-06, AC-58 (the auto-lock part), AC-61, AC-62; wireframe 10f (frames A to C, markers 2, 3 and 7); iteration 01 (the lock), 17 and 19 (More), 18 and 19 (the choice layer); CLAUDE.md (security code not from memory; Room schema files; layers in the window). "My reading" is an interpretation, not a test.
 
 ## 1. Outcome
@@ -71,10 +71,11 @@ None.
 - What follows for the design (my reading): the receiver is registered with the application context and `RECEIVER_EXPORTED`; a fake screen-off from another app could only lock the app, the safe side. When the phone locks while the app is in view, `onStop` comes with the screen off, so the lock also checks there whether the screen is off, without the broadcast. When the app is already in the background, the broadcast may be deferred until the app is active again, and whether it then arrives before the screen shows is not known: risk 7. The phone check tests this case directly; if it does not lock, the design changes before the merge.
 - R2: javap was not needed. Room's testing artifact (`androidx.room3:room3-testing`, which holds `MigrationTestHelper`) is neither in the project nor in Gradle's cache; using it would be a new library. The migration 7 to 8 is checked as in 16a: 8.json against 7.json, then the install over 19 on the phone (AC-35).
 
-## 11. Decisions (Build, settled by you 2026-11-10)
+## 11. Decisions (Build, settled by you 2026-11-10; 4 in step 3)
 1. "Idle" for the 1- and 5-minute choices is no touch in the app for that long, the time away counting as idle: the app also locks while it is in view and untouched (your A). Not chosen: (B) only the time away, checked on return.
 2. When the idle time runs out while the app is in view, the lock screen shows with the biometric prompt at once, as when you return (your A). Not chosen: (B) the lock screen with its Unlock button only.
 3. Settings are stored as one row with a column per setting; each later setting adds a column and a schema version (your A). Not chosen: (B) name and value rows.
+4. Under the two idle choices, the phone locking does not lock the app by itself; only the idle time counts, so a phone unlocked again within the limit shows the app (your A, step 3). Not chosen: (B) the phone lock also locks the app under the idle choices.
 
 ## 12. Wording to approve (D9)
 To be shown on the phone in step 8:
