@@ -1,6 +1,6 @@
 # plan/iterations/19-allocation-portfolio.md
 
-Stage: Build. Status: approved 2026-11-09 (your "Approved"); decisions 1 to 3 settled the same day (section 11). Built 2026-11-09 and 10 (steps 1 to 6); phone check 2026-11-10 all yes (section 13.3); the pull request's screen tests and the review to follow (sections 13.4 and 13.5).
+Stage: Build. Status: approved 2026-11-09 (your "Approved"); decisions 1 to 3 settled the same day (section 11). Built 2026-11-09 and 10 (steps 1 to 6); phone check 2026-11-10 all yes (section 13.3); the screen tests 37 of 37 on pull request #153 (section 13.4); reviewed against the spec refs (section 13.5).
 Source: plan.md section 4 (row 19), spec 4.2, 4.7, 4.8, 4.10, C12, section 6 (view 3, view 4, the navigation outline, More, number format and color, accessibility, error and loading states, portfolio create (10d)), AC-33, AC-46, AC-61, AC-62; wireframe 04 (frames A to D, markers 1 to 5), wireframe 03 (the links on a portfolio's screen), wireframe 10d and 10f; 18 (its core allocation, model, donut and rows, choice layer, defect 18-6); open items 48 and 51; CLAUDE.md's pitfall on layers and menus. "My reading" is an interpretation, not a test.
 
 ## 1. Outcome
@@ -106,10 +106,11 @@ Check 1, before the install on 18's build (versionCode 27), online: your screens
 - 10 (D9): the wording approved (section 12).
 
 ### 13.4 AC-62 and the screen tests
-From 19, the chooser's window focus, the chooser at the largest font in landscape and Allocation's TalkBack text are checked by PortfolioAllocationScreenTest.kt (androidTest); the donuts' labels at the largest font stay a hand check. The screen tests (37) run on the pull request; their result is added there.
+From 19, the chooser's window focus, the chooser at the largest font in landscape and Allocation's TalkBack text are checked by PortfolioAllocationScreenTest.kt (androidTest); the donuts' labels at the largest font stay a hand check.
+- Pull request #153 at 76012a8: the screen tests (run 42655091904) 37 of 37 at the first attempt (tests 225 s, run 16:28:14Z to 16:35:40Z), PortfolioChoiceFocusTest 1, PortfolioChoiceLargestFontLandscapeTest 1 and PortfolioAllocationTalkBackTest 4 among them, all passing at their first run; CI (run 42655091911, 3m 39s) and CodeQL green (gh, read only). AppStartTimingTest's "load and Overall" median 3,043 ms (18's #151: 1,997 ms); 19 does not touch the start path (risk 4), so this is the emulator's spread.
 
-### 13.5 Review against the spec refs
-Added on the pull request.
+### 13.5 Review against the spec refs (2026-11-10, by reading main..HEAD; plan.md section 5, item 7)
+No finding that needs a change. In order: one portfolio's slices are its holdings at their price or at cost, a sold-out holding without a slice, no cash (4.8 portfolio level, view 4); asset type always lists stocks and ETFs, holding only what has value, one slice per holding (C12); the shares and amounts by largest remainder, as in 18 (4.10); the value and its age line from `PortfolioFigures`, the oldest price used in this portfolio, "some stale" (4.8, marker 2); "Updating prices" and the failed line in the value card, no pop-up (section 6, states (2) and (3)); the chooser drawn in the window, on the portfolio you came from or the first from More, not saved, Back to where you came from (marker 1; PortfolioChoiceFocusTest); the $0.00 line (marker 5) and "No portfolios yet" with Create a portfolio, the dialog over this screen and back to it (marker 4, 10d), "Set the opening balance first" before it exists (4.2); no logging (spec 9), no floating point and no new store write in the added code (Create uses the existing `createPortfolio`; section 14).
 
 ## 14. Departures from the plan
 1. Step 4: the choice layer and its button became generic and shared with 18's "Allocation by" (`ChoiceLayer`, `ChoiceButton`), and "Hidden holdings >" a shared link row with "Allocation >"; section 5 named only AllocationParts.kt and PortfolioScreen.kt.
