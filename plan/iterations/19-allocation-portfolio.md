@@ -1,6 +1,6 @@
 # plan/iterations/19-allocation-portfolio.md
 
-Stage: Build. Status: approved 2026-11-09 (your "Approved"); decisions 1 to 3 settled the same day (section 11). In build: step 1.
+Stage: Build. Status: approved 2026-11-09 (your "Approved"); decisions 1 to 3 settled the same day (section 11). Built 2026-11-09 and 10 (steps 1 to 6); phone check 2026-11-10 all yes (section 13.3); the pull request's screen tests and the review to follow (sections 13.4 and 13.5).
 Source: plan.md section 4 (row 19), spec 4.2, 4.7, 4.8, 4.10, C12, section 6 (view 3, view 4, the navigation outline, More, number format and color, accessibility, error and loading states, portfolio create (10d)), AC-33, AC-46, AC-61, AC-62; wireframe 04 (frames A to D, markers 1 to 5), wireframe 03 (the links on a portfolio's screen), wireframe 10d and 10f; 18 (its core allocation, model, donut and rows, choice layer, defect 18-6); open items 48 and 51; CLAUDE.md's pitfall on layers and menus. "My reading" is an interpretation, not a test.
 
 ## 1. Outcome
@@ -70,7 +70,8 @@ None.
 3. Pulling down on this screen refreshes the prices, as on the other price screens (your A). Not chosen: (B) none.
 
 ## 12. Wording to approve (D9)
-To be shown on the phone in step 6:
+Approved on the phone 2026-11-10 (your A, check 10), as in strings.xml's "Iteration 19" block: the title "Allocation" (also More's entry and the link "Allocation >", read as "Allocation, opens a screen"); the chooser's label and card title "Portfolio" and its TalkBack "Portfolio, <name>"; "Portfolio value" and its TalkBack "Portfolio value, <amount> dollars" with the approved age line; the $0.00 line "No value to show in this portfolio" (on the phone only if a portfolio was worth $0.00; the screen tests show it). Reused: "No portfolios yet", "Create a portfolio", "Set the opening balance first", "By asset type", "By holding", 18's rows and colors.
+Proposed in step 1, to be shown on the phone in step 6:
 - The title "Allocation"; the chooser's label "Portfolio" and its TalkBack "Portfolio, <name>"; the card's title.
 - "Portfolio value" with the age line (16b's approved form); "By asset type" and "By holding" (18's).
 - The $0.00 line: "No value to show in this portfolio" (wireframe 04 frame D's placeholder).
@@ -80,5 +81,37 @@ To be shown on the phone in step 6:
 ## 13. Status and notes
 - Draft 2026-11-09; approved the same day; decisions 1 to 3 settled.
 
+### 13.1 Steps 1 to 5 (2026-11-09)
+- Step 1 (6e8539e): this file and the plan.md lines (with pull request #152's merge line). Full run green, 797 tests.
+- Step 2 (f865efe): core's `Allocation.portfolioByAssetType` (stocks and ETFs, always both, no cash) and `portfolioByHolding` (one slice per holding, by ticker, only what has value, no cash), built on 18's net worth slices with cash at $0.00. PortfolioAllocationTest 3 (core): Example A, Stocks 100.0% and ETFs 0.0%, AAPL 100.0%; an ETF at its price, a stock at cost, a sold-out holding without a slice; a portfolio with only a sold-out holding. Red against a stub first: 3 tests, 3 failed. Green 23:03 to 23:05. Tests 797 to 800.
+- Step 3 (94da9f8): ui/PortfolioAllocationModel.kt (`PortfolioAllocation.of`: the chooser's portfolios, the shown one or the first, its value with the age line, the refresh state, the breakdowns or none at $0.00, nothing with no portfolio); `Allocations.ofPortfolio`, sharing 18's row builder; `Screen.ALLOCATION` with the bottom bar; `openAllocation` (from a portfolio's screen on it, from More on the first), `closeAllocation` (back to that portfolio or to More), `openPortfolioChoice`, `closePortfolioChoice`, `choosePortfolio`; Create a portfolio and "Set the opening balance first" from this screen, the new portfolio shown after Create; an unlock or a tab change closes the chooser. PortfolioAllocationModelTest 5, PortfolioAllocationFlowTest 5. Red against stubs first: 10 tests, 9 failed (no portfolio passed on the stub's empty model). Two style fixes (one test helper's line). Green 23:14 to 23:16. Tests 810.
+- Step 4 (04091cd): ui/PortfolioAllocationScreen.kt; the choice layer and its button made generic (`ChoiceLayer`, `ChoiceButton`) and shared with Overall's "Allocation by", whose `AllocationChoiceLayer` stays as a wrapper (18's tests unchanged); "Allocation >" above "Hidden holdings >" on a portfolio's screen, both one shared link row; More's entry (decision 1), MoreModelTest now expecting both entries; strings.xml's "Iteration 19" block. With no portfolio before the opening balance, the screen shows "Set the opening balance first" with its button, which opens the cash form as on the Portfolios tab. One style fix (a blank line between `when` branches). Green 23:23 to 23:25.
+- Step 5 (0930ee5): PortfolioAllocationScreenTest.kt (androidTest): PortfolioChoiceFocusTest (AC-61 (b); creates a portfolio from the screen when there is none), PortfolioChoiceLargestFontLandscapeTest (AC-61 (a); six portfolios at font scale 2.0 in landscape, each reached and tapped, upright again at the end), PortfolioAllocationTalkBackTest 4 (AC-61 (d)). `@Test` lines 37 (were 31). Green 23:27 to 23:29.
+- Steps 1 to 5 were committed together after step 5 (your "continue, commit later", then "commit"), each from its own green run.
+- Each step's run: spotlessCheck, build, tests and lint with --rerun-tasks, plus `:app:compileDebugAndroidTestKotlin`; lint the 5 listed findings at the end of each step.
+
+### 13.2 Step 6 (2026-11-09 and 10)
+- versionCode 28; full run 23:31 to 23:33 green, 810 tests, 0 failures, 1 skipped; lint the 5 listed findings. APK 42,752,267 bytes, built with the price-source key set (checked True/False only).
+
+### 13.3 Step 6: the phone check (2026-11-10, all yes)
+Check 1, before the install on 18's build (versionCode 27), online: your screenshots of a portfolio's screen and of More; a force stop. versionCode 28 installed over it (`adb install -r`, Success; lastUpdateTime 2026-11-10 00:03:23, first install 2026-10-29 kept).
+- 2 (AC-35, AC-46): "Allocation >" above "Hidden holdings >"; the screen on that portfolio, its value and age line as on its screen; By asset type with stocks and ETFs, By holding by ticker adding up to the value, no cash; Back to the portfolio: yes.
+- 3 (decisions 1 and 2; AC-33): More's entry on the first portfolio; the chooser card with the portfolios as created, closed by a tap outside and by Back; another portfolio redraws the screen; "<" to More; opened again, the first portfolio again: yes.
+- 4 (decision 3): pull-to-refresh; a tab tap leaves the screen: yes.
+- 5 (AC-46, AC-42): offline, "some stale", the failed line in the value card, the breakdowns kept, no pop-up; refreshed back online: yes.
+- 6 (AC-39, risk 1): largest font and landscape: the chooser and the value card wrap, both donuts readable, the screen scrolls; every portfolio in the chooser reached, read and tapped; More's entries and the links: yes.
+- 7 (AC-39): TalkBack: the link as a button; Back, the title, the chooser, the value with its age, the headings, each row in full and not a button; the chooser's options as radio buttons; More's entry: yes.
+- 8 (AC-40, AC-09): light and dark; the time with "ET": yes.
+- 9 (spec 9): `adb logcat -d -v time --uid=10454`. The first read (31 lines, 00:06:19 to 00:10:22) no longer held the start after the install. Re-check: a force stop, an unlock, Allocation from a portfolio with the chooser and a pull; then a read (93 lines, 00:07:41 to 00:12:43, the new process from 00:12:16): the key not in it (a True/False test); no "finnhub", "token", AAPL, "quote", "symbol=", amount or percentage; the two amount-like matches are the system's window insets (`VRI[MainActivity]`, read with the digits masked); one `E/BiometricPromptCompat` line from the old process at the force stop (as in 16b); the "$digit" matches are the class name `OnBackInvokedInput$createOnBackAnimationCallback$1`: yes.
+- 10 (D9): the wording approved (section 12).
+
+### 13.4 AC-62 and the screen tests
+From 19, the chooser's window focus, the chooser at the largest font in landscape and Allocation's TalkBack text are checked by PortfolioAllocationScreenTest.kt (androidTest); the donuts' labels at the largest font stay a hand check. The screen tests (37) run on the pull request; their result is added there.
+
+### 13.5 Review against the spec refs
+Added on the pull request.
+
 ## 14. Departures from the plan
-None yet.
+1. Step 4: the choice layer and its button became generic and shared with 18's "Allocation by" (`ChoiceLayer`, `ChoiceButton`), and "Hidden holdings >" a shared link row with "Allocation >"; section 5 named only AllocationParts.kt and PortfolioScreen.kt.
+2. Steps 1 to 5 were committed together after step 5 (13.1), not one commit after each step.
+3. Step 6: the logcat read was done twice (13.3, check 9), the second after a short re-check, because the first no longer held the start.
