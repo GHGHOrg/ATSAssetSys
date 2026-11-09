@@ -203,6 +203,23 @@ class PriceRefreshFlowTest {
         assertEquals(PriceRefreshModel(refreshing = false, failed = false), overall.refresh)
     }
 
+    // 17: Net Worth (Total) shows the same net worth as Overall, its age line, and the composition adding up to it (AC-34, AC-44).
+    @Test
+    fun netWorthTotal_showsOverallsNetWorth_andTheCompositionAtTheRefreshedPrice() {
+        val store = store().apply { storedPortfolios = listOf(Portfolio("p1", "Portfolio P", 1L)) }
+        val source = FakeSource().apply { quotes = mapOf("AAPL" to Quote.Priced(BigDecimal("160"), at)) }
+        val state = started(store, source = source).state.value
+        val total = state.netWorthTotal
+        assertEquals(state.overall.netWorth, total.netWorth)
+        assertEquals(state.overall.prices, total.prices)
+        assertEquals(
+            CompositionModel("$9,600.00", "9,600.00", listOf(CompositionRowModel("p1", "Portfolio P", "$1,280.00", "1,280.00"))),
+            total.composition,
+        )
+        assertEquals(state.priceRefresh, total.refresh)
+        assertEquals(More.of(), state.more)
+    }
+
     @Test
     fun nothingRefreshes_beforeTheRecordsAreLoaded() {
         val source = FakeSource()

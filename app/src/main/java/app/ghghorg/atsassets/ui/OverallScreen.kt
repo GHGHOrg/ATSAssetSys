@@ -37,7 +37,8 @@ import app.ghghorg.atsassets.ui.theme.gainLossColor
  * Overall (view 1, wireframe 01 state A), drawn from its model (CR2, 16c): net worth with its price age line and the
  * "updating" line (marker 2; decision 1), each portfolio with its value and gain/loss (marker 4), and the refresh-failed
  * line under them (marker 5); or the guided steps when the app holds no data. With cash and no portfolio it offers
- * Create a portfolio (criterion 24, part; 07 decision 2). Pulling down refreshes the prices (decision 2).
+ * Create a portfolio (criterion 24, part; 07 decision 2). Pulling down refreshes the prices (decision 2). Tapping net
+ * worth opens Net Worth (Total) (navigation outline; 17).
  */
 @Composable
 fun OverallScreen(
@@ -47,6 +48,7 @@ fun OverallScreen(
     modifier: Modifier = Modifier,
     onOpenPortfolio: (String) -> Unit = {},
     onRefresh: () -> Unit = {},
+    onOpenNetWorth: () -> Unit = {},
 ) {
     PricePullToRefresh(state.refreshing, onRefresh, modifier.fillMaxSize()) {
         Column(
@@ -59,7 +61,14 @@ fun OverallScreen(
             )
             if (state.holdsData) {
                 val overall = state.overall
-                NetWorthCard(overall)
+                NetWorthCard(
+                    netWorth = overall.netWorth,
+                    spokenNetWorth = overall.spokenNetWorth,
+                    prices = overall.prices,
+                    refresh = overall.refresh,
+                    failedLineHere = false,
+                    onOpen = onOpenNetWorth,
+                )
                 if (state.portfolios.isEmpty()) {
                     NoPortfoliosYet(onCreatePortfolio)
                 } else {
@@ -74,14 +83,23 @@ fun OverallScreen(
 }
 
 /**
- * Marker 2: net worth and, from the oldest price used, "Prices as of … ET" with ", some stale" when any is (16b decision
- * 1), then "Updating prices" while a refresh runs (16c decision 1). TalkBack reads net worth and the age line as one
- * sentence that starts "Net worth" (AppStartTimingTest finds Overall by it).
+ * Net worth on Overall (wireframe 01 marker 2) and on Net Worth (Total) (wireframe 02 marker 1): net worth and, from the
+ * oldest price used, "Prices as of … ET" with ", some stale" when any is (16b decision 1), then "Updating prices" while
+ * a refresh runs (16c decision 1) and, with [failedLineHere], the failed line (Overall has it under its rows, marker 5;
+ * Net Worth (Total) here, marker 1). TalkBack reads net worth and the age line
+ * as one sentence that starts "Net worth" (AppStartTimingTest finds Overall by it). With [onOpen] the figure is a button
+ * that opens Net Worth (Total) (navigation outline; 17).
  */
 @Composable
-private fun NetWorthCard(overall: OverallModel) {
-    val prices = overall.prices
-    val base = stringResource(R.string.net_worth_spoken, overall.spokenNetWorth)
+internal fun NetWorthCard(
+    netWorth: String,
+    spokenNetWorth: String,
+    prices: PricesAsOfModel?,
+    refresh: PriceRefreshModel,
+    failedLineHere: Boolean,
+    onOpen: (() -> Unit)? = null,
+) {
+    val base = stringResource(R.string.net_worth_spoken, spokenNetWorth)
     val spoken =
         if (prices == null) {
             base
@@ -98,13 +116,29 @@ private fun NetWorthCard(overall: OverallModel) {
             modifier = Modifier.padding(12.dp),
             verticalArrangement = Arrangement.spacedBy(4.dp),
         ) {
-            Column(modifier = Modifier.clearAndSetSemantics { contentDescription = spoken }) {
+            val figure =
+                if (onOpen == null) {
+                    Modifier.clearAndSetSemantics { contentDescription = spoken }
+                } else {
+                    Modifier
+                        .fillMaxWidth()
+                        .clickable(role = Role.Button, onClick = onOpen)
+                        .clearAndSetSemantics {
+                            contentDescription = spoken
+                            role = Role.Button
+                            onClick {
+                                onOpen()
+                                true
+                            }
+                        }
+                }
+            Column(modifier = figure) {
                 Text(
                     text = stringResource(R.string.net_worth_label),
                     style = MaterialTheme.typography.bodyMedium,
                 )
                 Text(
-                    text = overall.netWorth,
+                    text = netWorth,
                     style = MaterialTheme.typography.headlineSmall,
                 )
                 if (prices != null) {
@@ -119,7 +153,7 @@ private fun NetWorthCard(overall: OverallModel) {
                     )
                 }
             }
-            PriceRefreshLines(refreshing = overall.refresh.refreshing, failed = false)
+            PriceRefreshLines(refreshing = refresh.refreshing, failed = failedLineHere && refresh.failed)
         }
     }
 }

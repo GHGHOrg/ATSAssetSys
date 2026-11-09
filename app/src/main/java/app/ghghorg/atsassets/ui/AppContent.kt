@@ -250,6 +250,11 @@ private fun BarContent(
 
         Screen.SPLIT_REVIEW -> SplitReviewScreen(state, viewModel::confirmSplit, viewModel::backToSplit)
 
+        Screen.NET_WORTH -> NetWorthScreen(
+            state = state,
+            actions = NetWorthActions(onBack = viewModel::closeNetWorth, onRefresh = viewModel::onPullToRefresh),
+        )
+
         else -> TabContent(state, viewModel)
     }
 }
@@ -310,6 +315,7 @@ private fun TabScreen(
                 viewModel::openPortfolioDialog,
                 onOpenPortfolio = viewModel::openPortfolio,
                 onRefresh = viewModel::onPullToRefresh,
+                onOpenNetWorth = viewModel::openNetWorth,
             )
 
         Tab.CASH -> CashScreen(
@@ -335,7 +341,7 @@ private fun TabScreen(
                 onRefresh = viewModel::onPullToRefresh,
             )
 
-        Tab.MORE -> MoreScreen()
+        Tab.MORE -> MoreScreen(state.more, viewModel::openNetWorth)
     }
 }
 
