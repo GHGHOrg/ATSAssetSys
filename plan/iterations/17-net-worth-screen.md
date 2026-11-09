@@ -1,6 +1,6 @@
 # plan/iterations/17-net-worth-screen.md
 
-Stage: Build. Status: approved 2026-11-09 (your "Yes"); decisions 1 to 4 settled the same day (section 11). Built 2026-11-09 (steps 1 to 5); phone check 2026-11-09 all yes (section 13.3); the pull request's screen tests and the review to follow (sections 13.4 and 13.5).
+Stage: Build. Status: approved 2026-11-09 (your "Yes"); decisions 1 to 4 settled the same day (section 11). Built 2026-11-09 (steps 1 to 5); phone check 2026-11-09 all yes (section 13.3); the screen tests 25 of 25 on pull request #148 (section 13.4); the app start timing compared with 16c and reviewed against the spec refs (section 13.5).
 Source: plan.md section 4 (row 17), spec 4.8, 4.10, section 6 (view 2, the navigation outline, More, error and loading states, number format and color, accessibility), AC-34, AC-44, AC-61, AC-62; wireframe 02 (frames A and C, markers 1, 2 and 6) and wireframe 10f (More); 16a to 16c (their decisions and wording); open items 48 and 51. "My reading" is an interpretation, not a test.
 
 ## 1. Outcome
@@ -109,10 +109,11 @@ Check 1, before the install on 16c's build (versionCode 25), online: your screen
 - Decision 3's cent did not show with your data.
 
 ### 13.4 AC-62 and the screen tests
-From 17, the TalkBack labels of Net Worth (Total) and the buttons on Overall and More are checked by NetWorthTalkBackTest; the layout at the largest font stayed a hand check (check 6). The screen tests (25) run on the pull request; their result is added there.
+From 17, the TalkBack labels of Net Worth (Total) and the buttons on Overall and More are checked by NetWorthTalkBackTest; the layout at the largest font stayed a hand check (check 6). - Pull request #148 at 452c64c: the screen tests (run 42585761040) 25 of 25 at the first attempt (tests 162 s, run 08:24:51Z to 08:30:57Z), NetWorthTalkBackTest's 5 among them; CI (run 42585760994, 2m 46s) and CodeQL green (gh, read only).
 
-### 13.5 Review against the spec refs
-Added on the pull request.
+### 13.5 App start timing and the review against the spec refs (2026-11-09, by reading main..HEAD; plan.md section 5, item 7)
+- AppStartTimingTest, 300 transactions, from the ScreenTestTiming lines in the run's artifact (one run each, emulator): "load and Overall" 4,380, 3,194 and 3,320 ms, median 3,320 ms, against 3,188 ms on 16c's pull request #146 (run 42558487448; the 16c file, 13.5), +132 ms (+4%); main-thread CPU in that phase 1,090, 790 and 720 ms, median 790 against 720. My reading: within the emulator's spread (16c's own runs spread from 2,598 to 5,016 ms); Overall's card only gained a click. Not proven.
+- No finding that needs a change. In order: net worth is cash as of today plus each portfolio's value, a holding at its price or at cost (4.8), and equals Overall's (PriceRefreshFlowTest); the age line is the oldest price used over every holding, a holding at cost not counted, with ", some stale" (4.8, AC-44); the composition is shown by largest remainder and adds up to the net worth shown, ties to the earlier row (4.10); the $0.00 case on the shown figure (decision 4); "Updating prices" and the failed line under the age line, no pop-up (section 6, states (2) and (3); wireframe 02 marker 1); pull-to-refresh (decision 2); Back to Overall or More (marker 1); Overall's net worth sentence unchanged, now a button (risk 2); exact arithmetic (4.10); no logging (spec 9), no floating point, no store write in the added code (the screens only read; section 14). Noted, not a finding: a hidden holding is left out of a portfolio's composition row but in net worth; it has 0 shares and no value, so the two still agree.
 
 ## 14. Departures from the plan
 1. Step 3: Overall's net worth card became `NetWorthCard` (internal, in OverallScreen.kt), drawn by both screens, with a parameter for where the failed line goes. Not in section 5's file list.
