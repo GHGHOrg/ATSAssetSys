@@ -1,6 +1,6 @@
 # plan/iterations/18-allocation-net-worth.md
 
-Stage: Build. Status: approved 2026-11-09 (your "approve"); decisions 1 to 4 settled the same day (section 11). In build: step 1.
+Stage: Build. Status: approved 2026-11-09 (your "approve"); decisions 1 to 4 settled the same day (section 11). Built 2026-11-09 (steps 1 to 7), with defect 18-6 found and fixed in step 7; phone check 2026-11-09 all yes after the fix (section 13.3); the pull request's screen tests and the review to follow (sections 13.4 and 13.5).
 Source: plan.md section 4 (row 18), spec 4.8, 4.10, C12, section 6 (view 1, view 2, the navigation outline, number format and color, accessibility (2), (5) and (6), error and loading states), AC-32, AC-43, AC-61, AC-62; wireframe 01 (state A, marker 3) and wireframe 02 (markers 3 and 4); 17 (its model, screen and decisions); open items 48 and 51; CLAUDE.md's pitfall on layers and menus. "My reading" is an interpretation, not a test.
 
 ## 1. Outcome
@@ -28,6 +28,7 @@ Overall shows the allocation of net worth under net worth: an "Allocation by" ch
 - A dropdown or menu in its own window takes MainActivity's focus and loops with the cover screen (CLAUDE.md pitfall, 07): the "Allocation by" choice is drawn inside the activity window, as the ⋮ menu on a portfolio's screen is, and a screen test checks that it keeps the window's focus (AC-61 (b)).
 - The choice is not saved (view 1): a field of the screen state, set to Asset type when the records load and on each unlock.
 - The donut is drawn from the shown percentages (tenths), so its arcs match the figures; angles are worked out only for drawing, never for a figure (4.10).
+- My reading (step 2): view 1's "the other options list only what has value" covers cash too: By portfolio and By holding list Cash only while it has value; "Cash is its own slice" means it is never merged or "Unclassified". Asset type always lists all three.
 - My reading: a slice whose share shows as 0.0% has no arc but keeps its row while it has value (or always, for Asset type's three rows).
 - My reading: on Overall each row is a button that opens Net Worth (Total), so TalkBack reads its figures and the action; the donut itself is left to the rows for TalkBack (accessibility (6)).
 - Slice colors are new in the theme, one set for light and one for dark, each with the 3 to 1 contrast of a control outline against the background (accessibility (4)); they repeat after the last color, and every row names its slice, so meaning never rests on color (accessibility (5)).
@@ -75,7 +76,8 @@ None.
 4. A slice's percentage of 5% or more is drawn on the ring, in the slice (your A). Not chosen: (B) beside the donut.
 
 ## 12. Wording and colors to approve (D9)
-To be shown on the phone in step 7:
+Approved on the phone 2026-11-09 (your A, check 10), as in strings.xml's "Iteration 18" block and theme/Color.kt: the label "Allocation by" and its TalkBack "Allocation by, <option>"; the options "Asset type", "Portfolio", "Holding"; the headings "By asset type", "By portfolio", "By holding"; "Cash", "Stocks", "ETFs"; a percentage "88.2%"; a row's TalkBack "<name>, <amount> dollars, <percent> percent"; 17's "No net worth to show yet" on Overall at $0.00 (seen only in the screen tests); the slice colors, cash teal, then indigo, orange, purple, blue, brown and olive, one set per theme.
+Proposed in step 1, to be shown on the phone in step 7:
 - The choice's label "Allocation by" and its options "Asset type", "Portfolio", "Holding"; its TalkBack text, for example "Allocation by, Asset type, button".
 - The breakdown headings on Net Worth (Total): "By asset type", "By portfolio", "By holding".
 - The slice names "Cash", "Stocks", "ETFs"; a portfolio's name; a ticker.
@@ -86,5 +88,43 @@ To be shown on the phone in step 7:
 ## 13. Status and notes
 - Draft 2026-11-09; approved the same day; decisions 1 to 4 settled.
 
+### 13.1 Steps 1 to 6 (2026-11-09)
+- Step 1 (435775d): this file and the plan.md lines (with pull request #149's merge line). Full run green, 778 tests.
+- Step 2 (f5c089f): core's `Allocation`: `byAssetType` (cash, stocks, ETFs, always all three; a ticker without an instrument counts as a stock), `byPortfolio` (in the order given), `byHolding` (one slice per ticker over every portfolio, C12, by ticker), a sold-out holding without a slice, a holding with no price at cost; `tenths`, the shares in tenths of a percent by largest remainder, ties to the earlier row, all 0 for a base of $0.00. AllocationTest 9 (Example A 88.2, 11.8 and 0.0; a leftover tenth to the larger remainder, 33.3 and 66.7; a tie to the earlier row, 33.4, 33.3, 33.3; a base of $0.00; a ticker in two portfolios; the given order and an empty portfolio; at cost and sold out; an ETF and a ticker without a type; no cash). Red against a stub first: 9 tests, 8 failed (the $0.00 base passed on the stub's zeros). Green 17:58 to 18:00. Tests 778 to 787.
+- Step 3 (69ce803): ui/AllocationModel.kt (`Allocations.of`: rows with name, amount by largest remainder (decision 3), percentage, in the row only under 5%, the drawn share; null while net worth shows as $0.00); `AppState.allocationBy`, `allocationMenuOpen` and `allocation(by)`; `openAllocationMenu` (Overall only, not over another layer), `closeAllocationMenu`, `chooseAllocation`; Asset type and the layer closed at each unlock; a tab change closes the layer; net worth does not open while it is open. AllocationModelTest 5, AllocationFlowTest 5. Red against stubs first: 10 tests, 7 failed; the other 3 passed only because the stubs did nothing (said before the code). Green 18:05 to 18:08. Tests 797.
+- Steps 4 and 5 (aff42a9, one commit; section 14): ui/AllocationParts.kt (the donut: arcs from the shown percentages, clockwise from the top, a 2° gap, a slice of 5% or more labelled on the ring (decision 4), 200 dp growing with the font up to the width; the rows: swatch, name, the percentage under 5%, amount, TalkBack "<name>, <amount> dollars, <percent> percent", a button on Overall); the slice colors (Color.kt, Theme.kt; WCAG worked out on Material's baseline tones, not measured); Net Worth (Total)'s three breakdowns; Overall's card with "Allocation by", the breakdown or the $0.00 line, a tap to Net Worth (Total); the choice layer drawn in the window, in TabContent beside the Buy/Sell layer; strings.xml's "Iteration 18" block. Step 4's first run listed 2 new lint findings, `UnusedResources` for "Allocation by" and its TalkBack text, used only from step 5: the two strings moved to step 5, not silenced. Green 18:17 to 18:19 (step 4) and 18:22 to 18:24 (step 5).
+- Step 6 (497749a): AllocationTest.kt (androidTest): AllocationChoiceFocusTest (the choice keeps MainActivity's window focus and takes a tap; AC-61 (b)) and AllocationTalkBackTest 4 (AC-61 (d)). `@Test` lines 30. One style fix (a line ktlint wrapped). Gradle's Java crashed in this step's runs (4 crashes from 18:55 to 19:08, as in 17's 13.2); after a Windows restart the run was green (19:17 to 19:20).
+- Steps 2 to 6 were committed together after step 6 (your "continue", then "commit"), each from its own green run.
+- Each step's run: spotlessCheck, build, tests and lint with --rerun-tasks, plus `:app:compileDebugAndroidTestKotlin`; lint the 5 listed findings at the end of each step.
+
+### 13.2 Step 7 and defect 18-6 (2026-11-09)
+- versionCode 27; full run 19:22 to 19:24 green, 797 tests; APK built with the price-source key set (checked True/False only). Installed over 17's build (versionCode 26) at 20:05:05.
+- Phone check 6, item 3: at the largest font in landscape the "Allocation by" card showed only its first option; the other two could not be read or tapped (defect 18-6). Cause: the card's options did not scroll and were taller than the space.
+- Failing test first (your A): AllocationChoiceLargestFontLandscapeTest (the card above the bottom bar at font scale 2.0 in landscape; each option scrolled to, shown and tapped), committed alone (fa123cb) and pushed on throw-away-18-choice-largest-font; draft pull request #150. Its screen tests (run 42618482123), 31 of 31 run, 3 failed: the new test ("no parent layout with a Scroll SemanticsAction": the card could not scroll); AllocationTalkBackTest's Net Worth test ("No compose hierarchies found": the new test left the emulator in landscape and the rotation's return re-created the next test's activity); AllocationTalkBackTest's Asset type test (the "0.0%" in a row cannot be seen by a test, since the row replaces its texts with its TalkBack sentence: a fault of step 6's test). CI and CodeQL green. #150 closed unmerged.
+- The fix (4427100): the card's options scroll and its outer padding is 16 dp; the new test turns back upright at its end; the two asserts no test could see removed (your A; section 14). Full run 20:46 to 20:48 green. The fixed build installed at 20:50:40.
+
+### 13.3 Step 7: the phone check (2026-11-09, all yes after the fix)
+Check 1, before the install on 17's build: your screenshots of Overall and of Net Worth (Total)'s composition; a force stop.
+- 2 (AC-35, AC-43): the first unlock; the allocation on Asset type, the donut with gaps and its percentages, the rows with swatches, ETFs 0.0% in its row, the percentages adding up to 100.0% and the amounts to net worth: yes.
+- 3 (view 1; decisions 1 and 2): the choice card, closed by a tap outside and by Back; Portfolio (as created, the composition's amounts) and Holding (by ticker, one row per ticker); kept across tabs; Asset type again after a lock and unlock: yes.
+- 4 (view 1, view 2; AC-32): the donut and a row open Net Worth (Total); its three breakdowns, By portfolio as the composition, rows not buttons: yes.
+- 5 (AC-42): offline, "some stale", the failed line, the allocation at the last prices, no pop-up; refreshed back online: yes.
+- 6 (AC-39, risk 1): largest font and landscape: the donut, its labels and the rows yes; the choice card no (defect 18-6, 13.2); after the fix, check 6b: all three options reached, read and tapped: yes.
+- 7 (AC-39, AC-43): TalkBack: the choice, the card's options as radio buttons, the rows with their percentages, the headings; after the fix, check 7b on the card: yes.
+- 8 (AC-40, AC-09, risk 5): light and dark, the slice colors and the labels on the ring: yes.
+- 9 (spec 9): `adb logcat -d -v time --uid=10454`, read twice. First, after checks 2 to 4 (85 lines, 20:08:15 to 20:14:39): the first start after the install had rolled out of the buffer; a second full start from 20:11:11 (`ActivityThread`) with its refresh and the checks after it is in it. Second, after checks 6b and 7b on the fixed build (27 lines, 20:50:24 to 20:52:58, its start at 20:50:40). Both: the key not in it (a True/False test); no "finnhub", "token", AAPL, "quote", "symbol=", amount or percentage; the two amount-like matches of the second read are the system's window insets (`VRI[MainActivity]`, read with the digits masked); the "$digit" matches are the class name `OnBackInvokedInput$createOnBackAnimationCallback$1`: yes.
+- 10 (D9): wording and colors approved (section 12).
+
+### 13.4 AC-62 and the screen tests
+From 18, the choice's window focus, the choice card at the largest font in landscape and the rows' TalkBack text are checked by AllocationTest.kt (androidTest); the donut's labels at the largest font stay a hand check. The screen tests (31) run on the pull request; their result is added there.
+
+### 13.5 App start timing and the review against the spec refs
+Added on the pull request.
+
 ## 14. Departures from the plan
-None yet.
+1. Steps 4 and 5 are one commit (aff42a9): both change strings.xml and ui/AllocationParts.kt, and a file is not staged in parts.
+2. Step 4: two strings ("Allocation by" and its TalkBack text) moved to step 5 after lint listed them as unused; not silenced.
+3. Steps 2 to 6 were committed together after step 6 (13.1), not one commit after each step.
+4. Step 7: defect 18-6 (13.2): a new screen test (AllocationChoiceLargestFontLandscapeTest), shown red first on a throw-away draft pull request (#150, closed unmerged), then the fix; not in section 5's list.
+5. Step 7: two asserts of AllocationTalkBackTest removed (your A): they checked a row's percentage text, which no test can see under the row's TalkBack sentence; where a percentage shows stays covered by AllocationModelTest and the phone check.
+6. Step 7: the logcat read was done twice (13.3, check 9), once per build.

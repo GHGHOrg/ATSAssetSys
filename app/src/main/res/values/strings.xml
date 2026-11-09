@@ -392,7 +392,7 @@
     <string name="net_worth_composition_cash">Cash</string>
     <string name="net_worth_composition_row_spoken">%1$s, %2$s dollars</string>
     <string name="net_worth_zero">No net worth to show yet</string>
-    <!-- Iteration 18: the allocation of net worth (proposed 2026-11-09, to be approved on the phone, 18 file section 12). -->
+    <!-- Iteration 18: the allocation of net worth (approved on the phone 2026-11-09, 18 file section 12). -->
     <string name="allocation_by_label">Allocation by</string>
     <string name="allocation_by_spoken">Allocation by, %1$s</string>
     <string name="allocation_asset_type">Asset type</string>
