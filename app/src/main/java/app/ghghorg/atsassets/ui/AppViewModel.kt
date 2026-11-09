@@ -4,6 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import app.ghghorg.atsassets.core.AmountError
 import app.ghghorg.atsassets.core.AmountResult
+import app.ghghorg.atsassets.core.AutoLock
 import app.ghghorg.atsassets.core.BuyRefusal
 import app.ghghorg.atsassets.core.BuyResult
 import app.ghghorg.atsassets.core.CashAccount
@@ -523,6 +524,10 @@ data class AppState(
     // 16a: a price refresh runs (the "updating" indicator), and the last one failed (the quiet refresh-failed line).
     val refreshing: Boolean = false,
     val refreshFailed: Boolean = false,
+    // 20: the auto-lock choice as stored, null until it is loaded (the lock then keeps "every time you leave"); why a
+    // choice was not saved.
+    val autoLock: AutoLock? = null,
+    val autoLockRefusal: SaveRefusal? = null,
     // 15c: the kept fields, worked out in KeptFields.kt from the fields above, so reading one costs nothing. Every write
     // through the view model refreshes them; a state built directly gets them from these defaults.
     // As of today (4.8), by portfolio, then ticker.
@@ -913,7 +918,10 @@ class AppViewModel(
                 val transactions = opened.loadTransactions()
                 val instruments = opened.loadInstruments()
                 // The hidden holdings are checked against the transactions just read, not a second read (15c).
-                showLoaded(entries, portfolios, transactions, instruments, opened.loadHidden(transactions))
+                val hidden = opened.loadHidden(transactions)
+                // 20: the auto-lock choice comes with the records; until then the lock keeps its strictest rule.
+                val autoLock = opened.loadAutoLock()
+                showLoaded(entries, portfolios, transactions, instruments, hidden, autoLock)
                 // The first unlock's refresh: onUnlocked came while the records were still loading (16a decision 2).
                 refreshPrices()
             } catch (e: UnreadableDataException) {
@@ -2219,6 +2227,7 @@ class AppViewModel(
         transactions: List<Transaction>,
         instruments: List<Instrument>,
         hidden: List<HiddenHolding>,
+        autoLock: AutoLock,
     ) {
         mutableState.update {
             valued(
@@ -2229,6 +2238,7 @@ class AppViewModel(
                     transactions = transactions,
                     instruments = instruments,
                     hidden = hidden,
+                    autoLock = autoLock,
                 ),
             )
         }
@@ -2322,6 +2332,30 @@ class AppViewModel(
                 mutableState.update { it.copy(screen = Screen.UNREADABLE, saving = false) }
             } catch (e: Exception) {
                 mutableState.update { it.copy(saving = false, hideRefusal = SaveRefusal.SAVE_FAILED) }
+            }
+        }
+    }
+
+    /**
+     * Saves [choice] and then applies it (20): the lock follows [AppState.autoLock], so a choice that could not be saved
+     * never applies, and a failure says so (D9 wording in the screens). Ignored before the records are loaded, on the
+     * unreadable screen, while a save is running, and for the choice already made.
+     */
+    fun chooseAutoLock(choice: AutoLock) {
+        val current = mutableState.value
+        val target = store ?: return
+        if (current.autoLock == null || current.screen == Screen.UNREADABLE || current.saving || choice == current.autoLock) return
+        mutableState.update { it.copy(saving = true, autoLockRefusal = null) }
+        viewModelScope.launch {
+            try {
+                target.saveAutoLock(choice)
+                mutableState.update { it.copy(saving = false, autoLock = choice) }
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: UnreadableDataException) {
+                mutableState.update { it.copy(screen = Screen.UNREADABLE, saving = false) }
+            } catch (e: Exception) {
+                mutableState.update { it.copy(saving = false, autoLockRefusal = SaveRefusal.SAVE_FAILED) }
             }
         }
     }

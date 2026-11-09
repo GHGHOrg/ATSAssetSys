@@ -1,6 +1,6 @@
 # plan/iterations/20-settings-autolock.md
 
-Stage: Build. Status: approved 2026-11-10 (your "Approved"); decisions 1 to 3 settled the same day (section 11). In build: step 2 done (section 10.1); step 3 done (decision 4).
+Stage: Build. Status: approved 2026-11-10 (your "Approved"); decisions 1 to 3 settled the same day (section 11). In build: step 2 done (section 10.1); step 3 done (decision 4); step 5 done (decision 5; section 14).
 Source: plan.md section 4 (row 20), spec section 3 (Settings), section 6 (More, Settings entry, navigation outline, accessibility), section 8 (settings are in the backup file; 31), section 9 (the lock, the auto-lock choices), section 14 (K8), AC-06, AC-58 (the auto-lock part), AC-61, AC-62; wireframe 10f (frames A to C, markers 2, 3 and 7); iteration 01 (the lock), 17 and 19 (More), 18 and 19 (the choice layer); CLAUDE.md (security code not from memory; Room schema files; layers in the window). "My reading" is an interpretation, not a test.
 
 ## 1. Outcome
@@ -71,11 +71,12 @@ None.
 - What follows for the design (my reading): the receiver is registered with the application context and `RECEIVER_EXPORTED`; a fake screen-off from another app could only lock the app, the safe side. When the phone locks while the app is in view, `onStop` comes with the screen off, so the lock also checks there whether the screen is off, without the broadcast. When the app is already in the background, the broadcast may be deferred until the app is active again, and whether it then arrives before the screen shows is not known: risk 7. The phone check tests this case directly; if it does not lock, the design changes before the merge.
 - R2: javap was not needed. Room's testing artifact (`androidx.room3:room3-testing`, which holds `MigrationTestHelper`) is neither in the project nor in Gradle's cache; using it would be a new library. The migration 7 to 8 is checked as in 16a: 8.json against 7.json, then the install over 19 on the phone (AC-35).
 
-## 11. Decisions (Build, settled by you 2026-11-10; 4 in step 3)
+## 11. Decisions (Build, settled by you 2026-11-10; 4 in step 3, 5 in step 5)
 1. "Idle" for the 1- and 5-minute choices is no touch in the app for that long, the time away counting as idle: the app also locks while it is in view and untouched (your A). Not chosen: (B) only the time away, checked on return.
 2. When the idle time runs out while the app is in view, the lock screen shows with the biometric prompt at once, as when you return (your A). Not chosen: (B) the lock screen with its Unlock button only.
 3. Settings are stored as one row with a column per setting; each later setting adds a column and a schema version (your A). Not chosen: (B) name and value rows.
 4. Under the two idle choices, the phone locking does not lock the app by itself; only the idle time counts, so a phone unlocked again within the limit shows the app (your A, step 3). Not chosen: (B) the phone lock also locks the app under the idle choices.
+5. Only touches on the app's own window count as activity for the idle choices; typing on the on-screen keyboard (Android's own window) does not, so typing alone for longer than the limit locks the app, and the typed text is kept (02b decision 9) (your A, step 5). Not chosen: (B) every change to a typed field also counts. The phone check types a note for over a minute.
 
 ## 12. Wording to approve (D9)
 To be shown on the phone in step 8:
@@ -86,4 +87,7 @@ To be shown on the phone in step 8:
 - Draft 2026-11-10; approved the same day; decisions 1 to 3 settled.
 
 ## 14. Departures from the plan
-None yet.
+- Step 3 changed MainActivity's two calls to AppLock (the time passed in) so the app still built; the wiring stayed in step 5. `onAuthSucceeded` takes the time too: an unlock restarts the idle time.
+- Step 5: MainActivity is re-created when the phone is turned (no `configChanges` in the manifest), and a new `AppLock` starts locked, so a turn would have locked the app under every choice. The lock is kept in `lock/LockHolder.kt`, a view model that lives as long as the activity's screen state and not past the process (a restart still locks); it also holds the screen-off receiver. Under "every time you leave" a turn still locks, as since 01 (`onStop` runs).
+- Step 5: the store opens and Overall shows on the prompt's success, no longer on every composition that finds the app unlocked; a turn that keeps the app unlocked is no unlock (02b decision 9, 16a decision 2).
+- Step 5: a choice is saved first and applied once saved, so a choice that could not be saved never applies (my reading of "Takes effect at once. Saved.").
