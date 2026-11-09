@@ -1,6 +1,13 @@
 package app.ghghorg.atsassets
 
+import androidx.activity.ComponentActivity
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.material3.Surface
+import androidx.compose.ui.Modifier
 import androidx.compose.ui.test.SemanticsMatcher
+import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.hasClickAction
 import androidx.compose.ui.test.hasContentDescription
 import androidx.compose.ui.test.hasSetTextAction
@@ -25,7 +32,10 @@ import app.ghghorg.atsassets.core.SellAllocation
 import app.ghghorg.atsassets.core.Transaction
 import app.ghghorg.atsassets.core.TransactionType
 import app.ghghorg.atsassets.ui.AllocationBy
+import app.ghghorg.atsassets.ui.AllocationChoiceLayer
 import app.ghghorg.atsassets.ui.AppState
+import app.ghghorg.atsassets.ui.BottomBar
+import app.ghghorg.atsassets.ui.DEFAULT_TAB_ORDER
 import app.ghghorg.atsassets.ui.NetWorthActions
 import app.ghghorg.atsassets.ui.NetWorthScreen
 import app.ghghorg.atsassets.ui.OverallScreen
@@ -80,6 +90,51 @@ class AllocationChoiceFocusTest {
         composeRule.onNode(holding).performClick()
         composeRule.waitUntil(5_000) { composeRule.onAllNodes(choiceButton(R.string.allocation_holding)).fetchSemanticsNodes().isNotEmpty() }
         assertEquals("The layer closed after the choice", true, composeRule.onAllNodes(holding).fetchSemanticsNodes().isEmpty())
+    }
+}
+
+/**
+ * Defect 18-6 (18 phone check 6, item 3): at the largest font in landscape the "Allocation by" card showed only its first
+ * option; the other two could not be read or tapped. Drawn as on Overall, above the bottom bar, turned and at font scale
+ * 2.0 (AC-61 (a)): each option can be scrolled to, is shown and takes a tap.
+ */
+@RunWith(AndroidJUnit4::class)
+class AllocationChoiceLargestFontLandscapeTest {
+    private val composeRule = createAndroidComposeRule<ComponentActivity>()
+
+    @get:Rule
+    val rules: RuleChain =
+        RuleChain
+            .outerRule(DeviceUnlockedRule())
+            .around(DeviceSettingsRule(fontScale = 2.0f))
+            .around(composeRule)
+
+    @Test
+    fun everyOption_canBeReachedAndTapped() {
+        composeRule.turn(landscape = true)
+        var chosen: AllocationBy? = null
+        composeRule.setContent {
+            ATSAssetSystemTheme {
+                Surface {
+                    Column(modifier = Modifier.fillMaxSize()) {
+                        Box(modifier = Modifier.weight(1f)) {
+                            AllocationChoiceLayer(AllocationBy.ASSET_TYPE, onChoose = { chosen = it }, onClose = {})
+                        }
+                        BottomBar(DEFAULT_TAB_ORDER, Tab.OVERALL, {})
+                    }
+                }
+            }
+        }
+        listOf(
+            AllocationBy.ASSET_TYPE to R.string.allocation_asset_type,
+            AllocationBy.PORTFOLIO to R.string.allocation_portfolio,
+            AllocationBy.HOLDING to R.string.allocation_holding,
+        ).forEach { (by, id) ->
+            val option = composeRule.onNode(hasText(string(id)) and isSelectable())
+            option.performScrollTo().assertIsDisplayed().performClick()
+            composeRule.waitForIdle()
+            assertEquals("The tap on ${string(id)} reached its option", by, chosen)
+        }
     }
 }
 
