@@ -1,6 +1,6 @@
 # plan/iterations/16c-live-prices-overall.md
 
-Stage: Build. Status: approved 2026-11-09 (your "yes", after a check of the code that changed the draft); decisions 1 to 4 settled the same day (section 11). Built 2026-11-09 (steps 1 to 6); phone check 2026-11-09 all yes (section 13.3); the screen tests 20 of 20 on pull request #146 (section 13.4); the app start timing compared with 16b (section 13.5); reviewed against the spec refs (section 13.6).
+Stage: Build. Status: approved 2026-11-09 (your "yes", after a check of the code that changed the draft); decisions 1 to 4 settled the same day (section 11). Built 2026-11-09 (steps 1 to 6); phone check 2026-11-09 all yes (section 13.3); the screen tests 20 of 20 on pull request #146 (section 13.4); the app start timing compared with 16b (section 13.5); reviewed against the spec refs (section 13.6); merged as 2af640a, main green (section 13.7).
 Source: plan.md section 4 (row 16c), spec 4.4, 4.8, section 6 (view 1, the buy and sell entry, error and loading states, number format and color, accessibility), section 7, AC-41, AC-42, AC-61, AC-62; wireframe 01 (state A, markers 2, 4 and 5), wireframe 10a (the lot list, markers 12 and 14) and wireframe 10c (Reverse and re-enter of a sell); 16a and 16b (their decisions and wording); open items 48 and 51. "My reading" is an interpretation, not a test.
 
 ## 1. Outcome
@@ -119,6 +119,9 @@ AppStartTimingTest, 300 transactions, from the ScreenTestTiming lines in each ru
 
 ### 13.6 Review against the spec refs (2026-11-09, by reading main..HEAD; plan.md section 5, item 7)
 No finding that needs a change. In order: net worth's age line is the oldest price used over every holding, by the same `PortfolioFigures.pricesAsOf` as a portfolio's, with ", some stale" (4.8; 16b decision 1); "Updating prices" in the net worth card and the failed line once, under the rows, no pop-up (section 6, states (2) and (3); decision 1); each row its value and gain with sign and color, never color alone, or "(all holdings at cost)", and a tap opens the portfolio (view 1, marker 4); pull-to-refresh on Overall (decision 2); net worth's TalkBack sentence starts "Net worth" (risk 4; AppStartTimingTest passed); a lot's gain only for a lot that can be picked, at the latest price in today's shares through `Sells.unitsToToday`, both ways round, and in Reverse and re-enter from the transactions as after the reversal (4.4, 4.8, decision 4); the stale flag only with a stale price, "no price" without one (wireframe 10a marker 14); exact arithmetic in core (4.10); no logging (spec 9); the screens only read, K1 and K4 unchanged (section 14). Noted, not findings: (a) the row's "(all holdings at cost)" is joined to the gain inside the composable, as on the Portfolios list since 16b (open item 48's form); (b) `AppState.overall` and `sellLotRows` are worked out on each read, the split factor included (open item 51).
+
+### 13.7 The merge (2026-11-09)
+Pull request #146 merged as 2af640a (05:35:01Z), 6 commits; the branch is gone from origin and locally. On the pull request's last commit (0fc39ab) CI (run 42565246860, 2m 58s) and the screen tests (run 42565246814, 20 of 20, tests 113 s) green. On main after the merge: CI (run 42568143450, 2m 36s), CodeQL (run 42568143327) and the screen tests (run 42568143214, 20 of 20 at the first attempt, tests 138 s, 6m 9s) green (gh, read only).
 
 ## 14. Departures from the plan
 1. Steps 3 and 4 are one commit (0f017fc): both change strings.xml's "Iteration 16c" block, and a file is not staged in parts.
