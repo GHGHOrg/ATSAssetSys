@@ -272,7 +272,7 @@ private fun TabContent(
         TabScreen(state, viewModel)
         return
     }
-    val layerOpen = state.buySellMenuOpen || state.buyNotice != null
+    val layerOpen = state.buySellMenuOpen || state.buyNotice != null || state.allocationMenuOpen
     Box(modifier = Modifier.fillMaxSize()) {
         val under = if (layerOpen) Modifier.clearAndSetSemantics { } else Modifier
         Column(modifier = Modifier.fillMaxSize().then(under)) {
@@ -284,7 +284,9 @@ private fun TabContent(
                 modifier = Modifier.align(Alignment.End).padding(horizontal = 16.dp, vertical = 8.dp),
             )
         }
-        if (layerOpen) {
+        if (state.allocationMenuOpen) {
+            AllocationChoiceLayer(state.allocationBy, viewModel::chooseAllocation, viewModel::closeAllocationMenu)
+        } else if (layerOpen) {
             BuySellLayer(
                 state = state,
                 actions =
@@ -316,6 +318,7 @@ private fun TabScreen(
                 onOpenPortfolio = viewModel::openPortfolio,
                 onRefresh = viewModel::onPullToRefresh,
                 onOpenNetWorth = viewModel::openNetWorth,
+                onOpenAllocationChoice = viewModel::openAllocationMenu,
             )
 
         Tab.CASH -> CashScreen(

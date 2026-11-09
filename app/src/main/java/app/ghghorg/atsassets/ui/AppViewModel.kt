@@ -438,6 +438,9 @@ data class AppState(
     val transactions: List<Transaction> = emptyList(),
     val instruments: List<Instrument> = emptyList(),
     val buySellMenuOpen: Boolean = false,
+    // Overall's "Allocation by" (view 1): not saved, Asset type at each load and unlock (18); its choice layer.
+    val allocationBy: AllocationBy = AllocationBy.ASSET_TYPE,
+    val allocationMenuOpen: Boolean = false,
     val buyNotice: BuyNotice? = null,
     val buyForm: BuyForm = BuyForm(),
     val buyRefusals: BuyRefusals = BuyRefusals(),
@@ -637,6 +640,19 @@ data class AppState(
     val netWorthTotal: NetWorthModel
         get() =
             NetWorthTotal.of(CashRules.balanceOn(entries, today), holdings, portfolios, ::holdingsOf, KeptFields.prices(instruments), priceRefresh)
+
+    /**
+     * A breakdown of net worth (view 1, view 2; CR2, 18): cash as of today and each holding at its price or at cost, null
+     * while net worth shows as $0.00 (4.8; 17 decision 4). A ticker's asset type is its instrument's.
+     */
+    fun allocation(by: AllocationBy): AllocationModel? = Allocations.of(
+        by,
+        CashRules.balanceOn(entries, today),
+        holdings,
+        portfolios,
+        KeptFields.prices(instruments),
+        instruments.associate { it.ticker to it.assetType },
+    )
 
     /** More as the screen draws it (section 6; CR2, 17). */
     val more: MoreModel
@@ -905,6 +921,7 @@ class AppViewModel(
                 portfolioMenuOpen = false,
                 renameDialog = null,
                 buySellMenuOpen = false,
+                allocationMenuOpen = false,
                 buyNotice = null,
                 buyRefusals = BuyRefusals(),
                 holdingTicker = null,
@@ -972,6 +989,8 @@ class AppViewModel(
      */
     fun onUnlocked() {
         refreshPrices()
+        // View 1: "Allocation by" is not saved; each unlock starts on Asset type (18).
+        mutableState.update { it.copy(allocationBy = AllocationBy.ASSET_TYPE, allocationMenuOpen = false) }
         val current = mutableState.value
         if (current.screen != Screen.TABS || current.portfolioDialog != null) return
         mutableState.update { it.copy(tab = Tab.OVERALL, buySellMenuOpen = false, buyNotice = null) }
@@ -1265,9 +1284,23 @@ class AppViewModel(
     fun openNetWorth() {
         val current = mutableState.value
         if (current.screen != Screen.TABS || current.tab !in setOf(Tab.OVERALL, Tab.MORE)) return
-        if (current.buySellMenuOpen || current.buyNotice != null || current.portfolioDialog != null) return
+        if (current.buySellMenuOpen || current.buyNotice != null || current.portfolioDialog != null || current.allocationMenuOpen) return
         mutableState.update { it.copy(screen = Screen.NET_WORTH) }
     }
+
+    /** "Allocation by" (view 1): opens its choice layer, drawn in the window; on Overall only, not over another layer. */
+    fun openAllocationMenu() {
+        val current = mutableState.value
+        if (current.screen != Screen.TABS || current.tab != Tab.OVERALL) return
+        if (current.buySellMenuOpen || current.buyNotice != null || current.portfolioDialog != null) return
+        mutableState.update { it.copy(allocationMenuOpen = true) }
+    }
+
+    /** Back or a tap outside the layer: closes it and keeps the choice. */
+    fun closeAllocationMenu() = mutableState.update { it.copy(allocationMenuOpen = false) }
+
+    /** One of the options: shown until the next unlock, not saved (view 1); closes the layer. */
+    fun chooseAllocation(by: AllocationBy) = mutableState.update { it.copy(allocationBy = by, allocationMenuOpen = false) }
 
     /** "<" or Android Back: back to the tab it was opened from. */
     fun closeNetWorth() {

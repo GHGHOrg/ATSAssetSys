@@ -38,7 +38,7 @@ import app.ghghorg.atsassets.ui.theme.gainLossColor
  * "updating" line (marker 2; decision 1), each portfolio with its value and gain/loss (marker 4), and the refresh-failed
  * line under them (marker 5); or the guided steps when the app holds no data. With cash and no portfolio it offers
  * Create a portfolio (criterion 24, part; 07 decision 2). Pulling down refreshes the prices (decision 2). Tapping net
- * worth opens Net Worth (Total) (navigation outline; 17).
+ * worth opens Net Worth (Total) (navigation outline; 17), and so does the allocation under it (marker 3; 18).
  */
 @Composable
 fun OverallScreen(
@@ -49,6 +49,7 @@ fun OverallScreen(
     onOpenPortfolio: (String) -> Unit = {},
     onRefresh: () -> Unit = {},
     onOpenNetWorth: () -> Unit = {},
+    onOpenAllocationChoice: () -> Unit = {},
 ) {
     PricePullToRefresh(state.refreshing, onRefresh, modifier.fillMaxSize()) {
         Column(
@@ -69,6 +70,7 @@ fun OverallScreen(
                     failedLineHere = false,
                     onOpen = onOpenNetWorth,
                 )
+                AllocationSummary(state, onOpenAllocationChoice, onOpenNetWorth)
                 if (state.portfolios.isEmpty()) {
                     NoPortfoliosYet(onCreatePortfolio)
                 } else {
@@ -154,6 +156,29 @@ internal fun NetWorthCard(
                 }
             }
             PriceRefreshLines(refreshing = refresh.refreshing, failed = failedLineHere && refresh.failed)
+        }
+    }
+}
+
+/**
+ * Marker 3 (18): "Allocation by" with the shown option, then that breakdown's donut and rows; a tap on them opens Net
+ * Worth (Total), the choice does not. With net worth of $0.00 one plain line stands in (4.8; 17 decision 4).
+ */
+@Composable
+private fun AllocationSummary(
+    state: AppState,
+    onOpenChoice: () -> Unit,
+    onOpenNetWorth: () -> Unit,
+) {
+    OutlinedCard(modifier = Modifier.fillMaxWidth()) {
+        Column(modifier = Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            AllocationByButton(state.allocationBy, onOpenChoice)
+            val model = state.allocation(state.allocationBy)
+            if (model == null) {
+                Text(text = stringResource(R.string.net_worth_zero), style = MaterialTheme.typography.bodyLarge)
+            } else {
+                AllocationBreakdown(model, onOpen = onOpenNetWorth)
+            }
         }
     }
 }
