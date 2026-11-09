@@ -1,6 +1,6 @@
 # plan/iterations/19-allocation-portfolio.md
 
-Stage: Build. Status: approved 2026-11-09 (your "Approved"); decisions 1 to 3 settled the same day (section 11). Built 2026-11-09 and 10 (steps 1 to 6); phone check 2026-11-10 all yes (section 13.3); the screen tests 37 of 37 on pull request #153 (section 13.4); reviewed against the spec refs (section 13.5).
+Stage: Build. Status: approved 2026-11-09 (your "Approved"); decisions 1 to 3 settled the same day (section 11). Built 2026-11-09 and 10 (steps 1 to 6); phone check 2026-11-10 all yes (section 13.3); the screen tests 37 of 37 on pull request #153 (section 13.4); reviewed against the spec refs (section 13.5); merged as 8b93443, main green (section 13.6).
 Source: plan.md section 4 (row 19), spec 4.2, 4.7, 4.8, 4.10, C12, section 6 (view 3, view 4, the navigation outline, More, number format and color, accessibility, error and loading states, portfolio create (10d)), AC-33, AC-46, AC-61, AC-62; wireframe 04 (frames A to D, markers 1 to 5), wireframe 03 (the links on a portfolio's screen), wireframe 10d and 10f; 18 (its core allocation, model, donut and rows, choice layer, defect 18-6); open items 48 and 51; CLAUDE.md's pitfall on layers and menus. "My reading" is an interpretation, not a test.
 
 ## 1. Outcome
@@ -111,6 +111,9 @@ From 19, the chooser's window focus, the chooser at the largest font in landscap
 
 ### 13.5 Review against the spec refs (2026-11-10, by reading main..HEAD; plan.md section 5, item 7)
 No finding that needs a change. In order: one portfolio's slices are its holdings at their price or at cost, a sold-out holding without a slice, no cash (4.8 portfolio level, view 4); asset type always lists stocks and ETFs, holding only what has value, one slice per holding (C12); the shares and amounts by largest remainder, as in 18 (4.10); the value and its age line from `PortfolioFigures`, the oldest price used in this portfolio, "some stale" (4.8, marker 2); "Updating prices" and the failed line in the value card, no pop-up (section 6, states (2) and (3)); the chooser drawn in the window, on the portfolio you came from or the first from More, not saved, Back to where you came from (marker 1; PortfolioChoiceFocusTest); the $0.00 line (marker 5) and "No portfolios yet" with Create a portfolio, the dialog over this screen and back to it (marker 4, 10d), "Set the opening balance first" before it exists (4.2); no logging (spec 9), no floating point and no new store write in the added code (Create uses the existing `createPortfolio`; section 14).
+
+### 13.6 The merge (2026-11-10)
+Pull request #153 merged as 8b93443 (16:52:58Z), 7 commits; the branch is gone from origin and locally. On the pull request's last commit (cd06c38) CI (run 42657988625, 2m 46s) and the screen tests (run 42657988774, 37 of 37, tests 160 s) green. On main after the merge: CI (run 42659202461, 2m 55s), CodeQL (run 42659201414) and the screen tests (run 42659202575, 37 of 37 at the first attempt, tests 151 s, 5m 55s) green (gh, read only).
 
 ## 14. Departures from the plan
 1. Step 4: the choice layer and its button became generic and shared with 18's "Allocation by" (`ChoiceLayer`, `ChoiceButton`), and "Hidden holdings >" a shared link row with "Allocation >"; section 5 named only AllocationParts.kt and PortfolioScreen.kt.
