@@ -1,6 +1,6 @@
 # plan/iterations/17-net-worth-screen.md
 
-Stage: Build. Status: approved 2026-11-09 (your "Yes"); decisions 1 to 4 settled the same day (section 11). In build: step 1.
+Stage: Build. Status: approved 2026-11-09 (your "Yes"); decisions 1 to 4 settled the same day (section 11). Built 2026-11-09 (steps 1 to 5); phone check 2026-11-09 all yes (section 13.3); the pull request's screen tests and the review to follow (sections 13.4 and 13.5).
 Source: plan.md section 4 (row 17), spec 4.8, 4.10, section 6 (view 2, the navigation outline, More, error and loading states, number format and color, accessibility), AC-34, AC-44, AC-61, AC-62; wireframe 02 (frames A and C, markers 1, 2 and 6) and wireframe 10f (More); 16a to 16c (their decisions and wording); open items 48 and 51. "My reading" is an interpretation, not a test.
 
 ## 1. Outcome
@@ -72,7 +72,8 @@ None.
 4. The $0.00 case applies when net worth shows as $0.00, also when it is above 0 but rounds to it (your A). Not chosen: (B) only when it is exactly 0.
 
 ## 12. Wording to approve (D9)
-To be shown on the phone in step 5:
+Approved on the phone 2026-11-09 (your A, check 10), as in strings.xml's "Iteration 17" block: the title "Net Worth (Total)" (also More's entry), the heading "Composition", the row "Cash", a composition row's TalkBack "<name>, <amount> dollars" (also for Cash and the "Net worth" row), and the $0.00 line "No net worth to show yet", which the phone did not show (its data is not at $0.00; the screen tests show it).
+Proposed in step 1, to be shown on the phone in step 5:
 - The screen's title "Net Worth (Total)", with the back arrow read as "Back".
 - The heading "Composition", the rows "Cash" and each portfolio's name with its amount, and the last row "Net worth" with the total; TalkBack "<name>, <amount> dollars".
 - The $0.00 line: "No net worth to show yet" (wireframe 02 frame C's placeholder).
@@ -82,5 +83,39 @@ To be shown on the phone in step 5:
 ## 13. Status and notes
 - Draft 2026-11-09; approved the same day; decisions 1 to 4 settled.
 
+### 13.1 Steps 1 to 4 (2026-11-09)
+- Step 1 (e598927): this file and the plan.md lines (with pull request #147's merge line). Full run green (15:13 to 15:15), 762 tests.
+- Step 2 (b982ee5): ui/NetWorthModel.kt (`NetWorthTotal.of`: net worth as cash as of today plus each portfolio's exact value, the age line over every holding, the refresh state, the composition by `Money.partsInCents`, null while net worth shows as $0.00) and ui/MoreModel.kt (`More.of`: never backed up, the Net Worth (Total) entry); `AppState.netWorthTotal` and `more`, worked out on each read. NetWorthModelTest 8 (Example A at $160: $9,600.00 and $1,280.00 adding to $10,880.00; a leftover cent to the larger dropped remainder, 0.6 over 0.4; a tie to the earlier portfolio, $0.01 and $0.00, while the second alone shows $0.01 (decision 3); a portfolio at cost with no age line; some stale with the oldest time and the refresh state; no portfolio, cash alone; $0.00; above 0 but shown as $0.00 (decision 4)); MoreModelTest 1; PriceRefreshFlowTest +1 (the screen's net worth and age line equal Overall's; the composition at the refreshed price). Shown red against stubs first: 21 tests, the 10 new ones failed. Green at the first full run (15:19 to 15:21). Tests 762 to 772.
+- Step 3 (c506289): ui/NetWorthScreen.kt; `Screen.NET_WORTH` with the bottom bar, `openNetWorth` (from Overall or More only, not under the Buy/Sell layer or a dialog) and `closeNetWorth` (back to the same tab); Overall's net worth card shared by both screens, a button on Overall, its TalkBack sentence unchanged, the failed line under Overall's rows and under the age line on the new screen (section 4); MoreScreen.kt drawn from its model with the entry (decision 1); pull-to-refresh (decision 2); strings.xml's "Iteration 17" block. NetWorthFlowTest 6 (from Overall and back; from More and back; ignored on Cash and a portfolio's screen, Back elsewhere does nothing; not under the Buy/Sell menu; an unlock on the screen keeps it and Back returns to More (risk 3); a tab tap leaves it). Green at the first full run (15:27 to 15:29). Tests 778.
+- Step 4 (6a0f962): NetWorthTalkBackTest, 5 tests (AC-61 (d), AC-44): fresh $160 (the net worth sentence with its age; "Cash, 9,600.00 dollars", "Portfolio P, 1,280.00 dollars", "Net worth, 10,880.00 dollars"; no updating or failed line); stale $140 while a failed refresh is retried ("some stale", 1,120.00 and 10,720.00, the updating and failed lines); $0.00 (the plain line, no composition); Overall's net worth and More's entry as buttons that open it. `@Test` lines 25 (were 20).
+- Steps 2 to 4 were committed together after step 4 (your "keep going", then "commit now"), each from its own green run; step 2's files were staged on their own before step 3 changed AppViewModel.kt again.
+- Each step's run: spotlessCheck, build, tests and lint with --rerun-tasks, plus `:app:compileDebugAndroidTestKotlin`; lint the 5 listed findings.
+
+### 13.2 Step 4's runs and the JVM crashes (2026-11-09)
+- Step 4's first full run (15:31) stopped: Gradle's daemon died in a JVM crash, and the androidTest compile then failed in KSP with `ClassFormatError: Unknown constant tag 0`. The second (15:32 to 15:35), after `--stop`, crashed again in spotlessCheck and the build; the tests (778), lint and the androidTest compile passed. Seven crashes in all, 15:31:14 to 15:33:33, each an `EXCEPTION_ACCESS_VIOLATION` in jvm.dll in a C2 compiler thread of Android Studio's Java 25.0.3, at a different address each time. The code had not changed since the green runs of 15:19 and 15:27. My reading: a fault of this PC at that time, not the project; not proven. The crash logs were moved from the repo root to the session's scratchpad. Your B: retried without a restart; the third run (15:36 to 15:38) was green with no crash. Not chosen: (A) restart the PC first; (C) pause.
+- Step 5: versionCode 26; full run 15:40 to 15:43 green, 778 tests, 0 failures, 1 skipped; lint the 5 listed findings. APK 42,597,795 bytes, built with the price-source key set (checked True/False only).
+
+### 13.3 Step 5: the phone check (2026-11-09, all yes)
+Check 1, before the install on 16c's build (versionCode 25), online: your screenshots of Overall, the Cash tab's balance, each portfolio's value and More; a force stop. versionCode 26 installed over it (`adb install -r`, Success; lastUpdateTime 15:59:27, first install 2026-10-29 kept).
+- 2 (AC-35, AC-44, AC-34): the first unlock; net worth's tap opens the screen with the bottom bar; net worth and its age line as on Overall, no failed line; the composition's cash as the Cash tab, each portfolio as its own screen, adding up to net worth; Back to Overall: yes.
+- 3 (decision 1): More's entry opens it; "<" and Android Back return to More: yes.
+- 4 (decision 2): pull-to-refresh; a tab tap leaves the screen: yes.
+- 5 (AC-42, risk 3): airplane mode, lock and unlock: ", some stale" and the failed line under it, the composition kept, no pop-up; a lock and unlock on the screen keeps it and Back goes to Overall; back online and a pull: refreshed, the marks gone: yes.
+- 6 (AC-39, risk 4): largest font and landscape, online and offline, on the screen and More: yes.
+- 7 (AC-39): TalkBack: Overall's net worth read as a button and opening the screen; Back, the title, the net worth sentence, "Composition", each row with its amount, the failed line and "some stale"; More's entry as a button: yes.
+- 8 (AC-40, AC-09): light and dark; the time with "ET": yes.
+- 9 (spec 9): `adb logcat -d -v time --uid=10454`. The first read (47 lines, 16:07:35 to 16:10:55) no longer held checks 2 to 5: the older lines had rolled out. Re-check: a force stop, an unlock, the screen from Overall with a pull, and from More; then a read (68 lines, 16:08:49 to 16:13:38, the new process from 16:13:03): the key not in it (a True/False test); no "finnhub", "token", AAPL, "quote" or "symbol="; the two amount-like matches are the system's window insets (`VRI[MainActivity]`, read with the digits masked: `statusBars:[9,999,9,9]`), not amounts; the 10 "$digit" matches are the class name `OnBackInvokedInput$createOnBackAnimationCallback$1`: yes.
+- 10 (D9): the wording approved (section 12).
+- Decision 3's cent did not show with your data.
+
+### 13.4 AC-62 and the screen tests
+From 17, the TalkBack labels of Net Worth (Total) and the buttons on Overall and More are checked by NetWorthTalkBackTest; the layout at the largest font stayed a hand check (check 6). The screen tests (25) run on the pull request; their result is added there.
+
+### 13.5 Review against the spec refs
+Added on the pull request.
+
 ## 14. Departures from the plan
-None yet.
+1. Step 3: Overall's net worth card became `NetWorthCard` (internal, in OverallScreen.kt), drawn by both screens, with a parameter for where the failed line goes. Not in section 5's file list.
+2. Step 3: the wiring tests for opening and Back are their own class, NetWorthFlowTest.
+3. Steps 2 to 4 were committed together after step 4 (13.1), not one commit after each step.
+4. Step 5: the logcat read was done twice (13.3, check 9), the second after a short re-check, because the first no longer held checks 2 to 5.

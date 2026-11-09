@@ -386,7 +386,7 @@
     <string name="overall_portfolio_row_spoken">%1$s, %2$s dollars, gain or loss %3$s dollars</string>
     <string name="sell_lot_gain_spoken">Lot of %1$s Eastern Time, %2$s left, %3$s dollars per share, unrealized gain/loss %4$s dollars, %5$s</string>
     <string name="sell_lot_gain_stale_spoken">Lot of %1$s Eastern Time, %2$s left, %3$s dollars per share, unrealized gain/loss %4$s dollars, stale price as of %5$s Eastern Time, %6$s</string>
-    <!-- Iteration 17: Net Worth (Total) and More's entry (proposed 2026-11-09, to be approved on the phone, 17 file section 12). -->
+    <!-- Iteration 17: Net Worth (Total) and More's entry (approved on the phone 2026-11-09, 17 file section 12). -->
     <string name="net_worth_title">Net Worth (Total)</string>
     <string name="net_worth_composition_heading">Composition</string>
     <string name="net_worth_composition_cash">Cash</string>
