@@ -1,6 +1,6 @@
 # plan/iterations/16c-live-prices-overall.md
 
-Stage: Build. Status: approved 2026-11-09 (your "yes", after a check of the code that changed the draft); decisions 1 to 4 settled the same day (section 11). Built 2026-11-09 (steps 1 to 6); phone check 2026-11-09 all yes (section 13.3); the pull request's screen tests and the timing comparison to follow (sections 13.4 and 13.5).
+Stage: Build. Status: approved 2026-11-09 (your "yes", after a check of the code that changed the draft); decisions 1 to 4 settled the same day (section 11). Built 2026-11-09 (steps 1 to 6); phone check 2026-11-09 all yes (section 13.3); the screen tests 20 of 20 on pull request #146 (section 13.4); the app start timing compared with 16b (section 13.5); reviewed against the spec refs (section 13.6).
 Source: plan.md section 4 (row 16c), spec 4.4, 4.8, section 6 (view 1, the buy and sell entry, error and loading states, number format and color, accessibility), section 7, AC-41, AC-42, AC-61, AC-62; wireframe 01 (state A, markers 2, 4 and 5), wireframe 10a (the lot list, markers 12 and 14) and wireframe 10c (Reverse and re-enter of a sell); 16a and 16b (their decisions and wording); open items 48 and 51. "My reading" is an interpretation, not a test.
 
 ## 1. Outcome
@@ -108,10 +108,17 @@ Check 1, before the install on 16b's build (versionCode 24), online: your screen
 - 11 (D9): the wording approved (section 12).
 
 ### 13.4 AC-62 and the screen tests
-From 16c, the TalkBack labels of Overall's net worth and rows and of the sell lot list are checked by OverallAndSellTalkBackTest; their layout at the largest font stayed a hand check (check 7). The screen tests (20) run on the pull request; their result is added there.
+From 16c, the TalkBack labels of Overall's net worth and rows and of the sell lot list are checked by OverallAndSellTalkBackTest; their layout at the largest font stayed a hand check (check 7).
+- Pull request #146 at 6677ccd: the screen tests (run 42558487448) 20 of 20 at the first attempt (tests 164 s, run 03:49:41Z to 03:55:50Z), OverallAndSellTalkBackTest's 4 among them; CI (run 42558487514, 2m 26s) and CodeQL green (gh, read only).
 
 ### 13.5 App start timing (risk 3)
-AppStartTimingTest's "load and Overall" median on the pull request's run, against 16b's run on pull request #144: added there.
+AppStartTimingTest, 300 transactions, from the ScreenTestTiming lines in each run's artifact (one run each, emulator):
+- 16b, pull request #144 at 22c8b59 (run 42495826227): load and Overall 3,476, 2,793 and 2,791 ms, median 2,793 ms; main-thread CPU in that phase 650, 670 and 530 ms.
+- 16c, pull request #146 at 6677ccd (run 42558487448): load and Overall 5,016, 2,598 and 3,188 ms, median 3,188 ms (+395 ms, +14%); main-thread CPU 1,170, 700 and 720 ms (median 720 against 650, +70 ms).
+- My reading: Overall now works out every portfolio's figures on each draw, which may cost a little; but 16c's own runs spread from 2,598 to 5,016 ms and its quickest is quicker than any of 16b's, so one run each cannot tell a change from the emulator's spread. Not proven. Recorded on open item 51 (measure before changing); no change in 16c.
+
+### 13.6 Review against the spec refs (2026-11-09, by reading main..HEAD; plan.md section 5, item 7)
+No finding that needs a change. In order: net worth's age line is the oldest price used over every holding, by the same `PortfolioFigures.pricesAsOf` as a portfolio's, with ", some stale" (4.8; 16b decision 1); "Updating prices" in the net worth card and the failed line once, under the rows, no pop-up (section 6, states (2) and (3); decision 1); each row its value and gain with sign and color, never color alone, or "(all holdings at cost)", and a tap opens the portfolio (view 1, marker 4); pull-to-refresh on Overall (decision 2); net worth's TalkBack sentence starts "Net worth" (risk 4; AppStartTimingTest passed); a lot's gain only for a lot that can be picked, at the latest price in today's shares through `Sells.unitsToToday`, both ways round, and in Reverse and re-enter from the transactions as after the reversal (4.4, 4.8, decision 4); the stale flag only with a stale price, "no price" without one (wireframe 10a marker 14); exact arithmetic in core (4.10); no logging (spec 9); the screens only read, K1 and K4 unchanged (section 14). Noted, not findings: (a) the row's "(all holdings at cost)" is joined to the gain inside the composable, as on the Portfolios list since 16b (open item 48's form); (b) `AppState.overall` and `sellLotRows` are worked out on each read, the split factor included (open item 51).
 
 ## 14. Departures from the plan
 1. Steps 3 and 4 are one commit (0f017fc): both change strings.xml's "Iteration 16c" block, and a file is not staged in parts.
