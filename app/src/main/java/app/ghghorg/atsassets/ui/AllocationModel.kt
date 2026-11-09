@@ -7,6 +7,7 @@ import app.ghghorg.atsassets.core.Holding
 import app.ghghorg.atsassets.core.Money
 import app.ghghorg.atsassets.core.Portfolio
 import app.ghghorg.atsassets.core.Price
+import app.ghghorg.atsassets.core.Slice
 import app.ghghorg.atsassets.core.SliceKey
 
 /*
@@ -74,9 +75,36 @@ object Allocations {
                 AllocationBy.PORTFOLIO -> Allocation.byPortfolio(cash, portfolios, holdings, prices)
                 AllocationBy.HOLDING -> Allocation.byHolding(cash, holdings, prices)
             }
+        return model(by, slices, portfolios.associate { it.id to it.name })
+    }
+
+    /**
+     * One portfolio's breakdown [by] asset type or holding (view 4; 19), its [holdings] at [prices] or at cost, no cash.
+     * Null for [AllocationBy.PORTFOLIO], which this level has not, and while the portfolio's value shows as $0.00.
+     */
+    fun ofPortfolio(
+        by: AllocationBy,
+        holdings: List<Holding>,
+        prices: Map<String, Price>,
+        types: Map<String, AssetType>,
+    ): AllocationModel? {
+        val slices =
+            when (by) {
+                AllocationBy.ASSET_TYPE -> Allocation.portfolioByAssetType(holdings, prices, types)
+                AllocationBy.HOLDING -> Allocation.portfolioByHolding(holdings, prices)
+                AllocationBy.PORTFOLIO -> return null
+            }
+        return model(by, slices, emptyMap())
+    }
+
+    /** The rows of [slices]: amounts and percentages by largest remainder; null while their total shows as $0.00. */
+    private fun model(
+        by: AllocationBy,
+        slices: List<Slice>,
+        names: Map<String, String>,
+    ): AllocationModel? {
         val values = slices.map { it.value }
         if (values.fold(Fraction.ZERO) { sum, value -> sum + value }.rounded(2).signum() == 0) return null
-        val names = portfolios.associate { it.id to it.name }
         val amounts = Money.partsInCents(values).map { Money.format(it) }
         val tenths = Allocation.tenths(values)
         val rows =
