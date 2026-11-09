@@ -8,6 +8,9 @@ package app.ghghorg.atsassets.ui
 /** The entries of More, in the order of wireframe 10f; only those built so far (17 decision 1). */
 enum class MoreEntry {
     NET_WORTH,
+
+    // 19 decision 1: on the first portfolio.
+    ALLOCATION,
 }
 
 /** [lastBackup] is the last backup's time, null for "never backed up" (no backup until 31). */
@@ -17,5 +20,5 @@ data class MoreModel(
 )
 
 object More {
-    fun of(): MoreModel = MoreModel(lastBackup = null, entries = listOf(MoreEntry.NET_WORTH))
+    fun of(): MoreModel = MoreModel(lastBackup = null, entries = listOf(MoreEntry.NET_WORTH, MoreEntry.ALLOCATION))
 }

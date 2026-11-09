@@ -120,6 +120,9 @@ enum class Screen {
 
     // Net Worth (Total) (view 2, wireframe 02, iteration 17), opened from Overall's net worth or from More.
     NET_WORTH,
+
+    // Allocation, one portfolio (view 4, wireframe 04, iteration 19), opened from a portfolio's screen or from More.
+    ALLOCATION,
 }
 
 // The id of the unsaved draft the reversal screen shows the effect of; never saved.
@@ -441,6 +444,9 @@ data class AppState(
     // Overall's "Allocation by" (view 1): not saved, Asset type at each load and unlock (18); its choice layer.
     val allocationBy: AllocationBy = AllocationBy.ASSET_TYPE,
     val allocationMenuOpen: Boolean = false,
+    // Allocation (view 4): the portfolio its chooser shows, not saved, and the chooser's layer (19).
+    val allocationPortfolioId: String? = null,
+    val portfolioChoiceOpen: Boolean = false,
     val buyNotice: BuyNotice? = null,
     val buyForm: BuyForm = BuyForm(),
     val buyRefusals: BuyRefusals = BuyRefusals(),
@@ -653,6 +659,18 @@ data class AppState(
         KeptFields.prices(instruments),
         instruments.associate { it.ticker to it.assetType },
     )
+
+    /** Allocation as the screen draws it (view 4; CR2, 19): the chooser's portfolio, its value and its breakdowns. */
+    val portfolioAllocation: PortfolioAllocationModel
+        get() =
+            PortfolioAllocation.of(
+                portfolios,
+                allocationPortfolioId,
+                ::holdingsOf,
+                KeptFields.prices(instruments),
+                instruments.associate { it.ticker to it.assetType },
+                priceRefresh,
+            )
 
     /** More as the screen draws it (section 6; CR2, 17). */
     val more: MoreModel
@@ -922,6 +940,7 @@ class AppViewModel(
                 renameDialog = null,
                 buySellMenuOpen = false,
                 allocationMenuOpen = false,
+                portfolioChoiceOpen = false,
                 buyNotice = null,
                 buyRefusals = BuyRefusals(),
                 holdingTicker = null,
@@ -990,7 +1009,7 @@ class AppViewModel(
     fun onUnlocked() {
         refreshPrices()
         // View 1: "Allocation by" is not saved; each unlock starts on Asset type (18).
-        mutableState.update { it.copy(allocationBy = AllocationBy.ASSET_TYPE, allocationMenuOpen = false) }
+        mutableState.update { it.copy(allocationBy = AllocationBy.ASSET_TYPE, allocationMenuOpen = false, portfolioChoiceOpen = false) }
         val current = mutableState.value
         if (current.screen != Screen.TABS || current.portfolioDialog != null) return
         mutableState.update { it.copy(tab = Tab.OVERALL, buySellMenuOpen = false, buyNotice = null) }
@@ -1204,11 +1223,12 @@ class AppViewModel(
 
     /**
      * New portfolio or Create a portfolio: opens an empty dialog over the selected tab, or, before the opening
-     * balance exists, asks for it instead (4.2, wireframe 10d). Ignored outside the tabs and while a save is running.
+     * balance exists, asks for it instead (4.2, wireframe 10d). Also over Allocation with no portfolio (wireframe 04
+     * marker 4; 19). Ignored elsewhere and while a save is running.
      */
     fun openPortfolioDialog() {
         val current = mutableState.value
-        if (current.screen != Screen.TABS || current.saving) return
+        if (current.screen !in setOf(Screen.TABS, Screen.ALLOCATION) || current.saving) return
         if (current.cashEntryType == CashType.OPENING_BALANCE) {
             mutableState.update { it.copy(portfolioNeedsOpeningBalance = true) }
             return
@@ -1252,7 +1272,13 @@ class AppViewModel(
             try {
                 target.savePortfolio(portfolio)
                 mutableState.update {
-                    it.copy(portfolios = it.portfolios + portfolio, portfolioDialog = null, saving = false)
+                    it.copy(
+                        portfolios = it.portfolios + portfolio,
+                        portfolioDialog = null,
+                        saving = false,
+                        // From Allocation (19): the screen shows the new portfolio (10d: back to where it was opened).
+                        allocationPortfolioId = if (it.screen == Screen.ALLOCATION) portfolio.id else it.allocationPortfolioId,
+                    )
                 }
                 if (mutableState.value.buyAfterPortfolio) {
                     mutableState.update { it.copy(buyAfterPortfolio = false) }
@@ -1301,6 +1327,53 @@ class AppViewModel(
 
     /** One of the options: shown until the next unlock, not saved (view 1); closes the layer. */
     fun chooseAllocation(by: AllocationBy) = mutableState.update { it.copy(allocationBy = by, allocationMenuOpen = false) }
+
+    /**
+     * Allocation (view 4): from a portfolio's screen ("Allocation >") on that portfolio, keeping it so Back returns there;
+     * from More (19 decision 1) on the first portfolio. Ignored elsewhere and while a layer is open.
+     */
+    fun openAllocation() {
+        val current = mutableState.value
+        if (current.saving || current.portfolioMenuOpen) return
+        when {
+            current.screen == Screen.PORTFOLIO ->
+                mutableState.update { it.copy(screen = Screen.ALLOCATION, allocationPortfolioId = it.portfolioId, portfolioChoiceOpen = false) }
+
+            current.screen == Screen.TABS && current.tab == Tab.MORE ->
+                mutableState.update {
+                    it.copy(screen = Screen.ALLOCATION, allocationPortfolioId = it.portfolios.firstOrNull()?.id, portfolioChoiceOpen = false)
+                }
+        }
+    }
+
+    /** "<" or Android Back: back to the portfolio it was opened from, or to More. Ignored while a save is running. */
+    fun closeAllocation() {
+        val current = mutableState.value
+        if (current.screen != Screen.ALLOCATION || current.saving) return
+        mutableState.update {
+            it.copy(
+                screen = if (it.portfolioId != null) Screen.PORTFOLIO else Screen.TABS,
+                portfolioChoiceOpen = false,
+                portfolioNeedsOpeningBalance = false,
+            )
+        }
+    }
+
+    /** The chooser (view 4, marker 1; decision 2): opens its layer, drawn in the window; on Allocation only, with portfolios. */
+    fun openPortfolioChoice() {
+        val current = mutableState.value
+        if (current.screen != Screen.ALLOCATION || current.portfolios.isEmpty() || current.portfolioDialog != null) return
+        mutableState.update { it.copy(portfolioChoiceOpen = true) }
+    }
+
+    /** Back or a tap outside the layer: closes it and keeps the shown portfolio. */
+    fun closePortfolioChoice() = mutableState.update { it.copy(portfolioChoiceOpen = false) }
+
+    /** A portfolio in the chooser: shown until Allocation is left, not saved (view 4); closes the layer. Unknown ids are ignored. */
+    fun choosePortfolio(id: String) {
+        if (mutableState.value.portfolios.none { it.id == id }) return
+        mutableState.update { it.copy(allocationPortfolioId = id, portfolioChoiceOpen = false) }
+    }
 
     /** "<" or Android Back: back to the tab it was opened from. */
     fun closeNetWorth() {
@@ -3159,6 +3232,7 @@ class AppViewModel(
                 Screen.REVERSE_TRANSACTION,
                 Screen.REPLACE_REVIEW,
                 Screen.NET_WORTH,
+                Screen.ALLOCATION,
             )
     }
 }

@@ -74,6 +74,25 @@ object Allocation {
     }
 
     /**
+     * One portfolio's [holdings] by asset type (4.8 portfolio level; view 4): stocks and ETFs, always both, even at $0.00;
+     * no cash. As [byAssetType] without its cash slice.
+     */
+    fun portfolioByAssetType(
+        holdings: List<Holding>,
+        prices: Map<String, Price>,
+        types: Map<String, AssetType>,
+    ): List<Slice> = byAssetType(Fraction.ZERO, holdings, prices, types).filter { it.key != SliceKey.Cash }
+
+    /**
+     * One portfolio's [holdings], one slice per holding (C12), by ticker, only what has value (view 4); no cash. As
+     * [byHolding] with no cash, which leaves cash out.
+     */
+    fun portfolioByHolding(
+        holdings: List<Holding>,
+        prices: Map<String, Price>,
+    ): List<Slice> = byHolding(Fraction.ZERO, holdings, prices)
+
+    /**
      * Each value's share of their total in tenths of a percent (section 6: 1 decimal, exactly 100.0%): each rounded down,
      * the tenths left over to reach 1,000 given one each to the largest dropped remainders, ties to the earlier row. All
      * 0 when the total is 0 (4.8: no shares of $0.00).
