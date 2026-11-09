@@ -135,13 +135,15 @@ class AllocationChoiceLargestFontLandscapeTest {
             composeRule.waitForIdle()
             assertEquals("The tap on ${string(id)} reached its option", by, chosen)
         }
+        // Upright again before the next test: turning back after it re-created its activity (#150, AllocationTalkBackTest).
+        composeRule.turn(landscape = false)
     }
 }
 
 /**
  * The allocation's rows (18, AC-61 (d), AC-43, AC-32): with Example A at $160, each row's TalkBack text reads its name,
  * amount and percentage in full; on Overall the rows are buttons that open Net Worth (Total), and the choice reads its
- * option; a slice under 5% shows its percentage in the row; Net Worth (Total) shows the three breakdowns; at $0.00 one
+ * option; Net Worth (Total) shows the three breakdowns; at $0.00 one
  * plain line stands in.
  */
 @RunWith(AndroidJUnit4::class)
@@ -228,8 +230,8 @@ class AllocationTalkBackTest {
         composeRule.onNode(hasContentDescription(text(R.string.allocation_by_spoken, text(R.string.allocation_asset_type))) and hasClickAction()).assertExists()
         composeRule.onNode(hasContentDescription(row(text(R.string.allocation_stocks), "1,280.00", "11.8")) and hasClickAction()).assertExists()
         composeRule.onNode(hasContentDescription(row(text(R.string.allocation_etfs), "0.00", "0.0")) and hasClickAction()).assertExists()
-        assertEquals("ETFs' 0.0% shown in its row", true, shown(text(R.string.allocation_percent, "0.0")))
-        assertEquals("Cash's 88.2% shown in its row", false, shown(text(R.string.allocation_percent, "88.2")))
+        // Where a percentage shows (in the row only under 5%) is not visible here: the row replaces its texts with its
+        // TalkBack sentence. AllocationModelTest checks it (percentInRow) (18, your A after #150).
         composeRule.onNode(hasContentDescription(row(text(R.string.net_worth_composition_cash), "9,600.00", "88.2")) and hasClickAction()).performClick()
         assertEquals("Opened from a row", 1, opened)
     }

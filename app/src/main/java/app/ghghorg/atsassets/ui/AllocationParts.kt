@@ -17,9 +17,11 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.widthIn
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.selection.selectableGroup
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.RadioButton
@@ -236,7 +238,7 @@ internal fun AllocationByButton(
 
 /**
  * The choice layer (view 1), drawn inside the activity window: a clear layer that closes on a tap outside or Back, and a
- * card with the options, the shown one selected. No DropdownMenu or Popup: a separate window would take MainActivity's
+ * card with the options, the shown one selected, scrolling when taller than the space (defect 18-6). No DropdownMenu or Popup: a separate window would take MainActivity's
  * focus (CLAUDE.md, 07). TalkBack reads only the layer while it is open.
  */
 @Composable
@@ -254,7 +256,7 @@ internal fun AllocationChoiceLayer(
         Surface(
             modifier =
             Modifier
-                .padding(32.dp)
+                .padding(16.dp)
                 .widthIn(max = 360.dp)
                 .pointerInput(Unit) { detectTapGestures { } }
                 .semantics { paneTitle = title },
@@ -263,7 +265,8 @@ internal fun AllocationChoiceLayer(
             tonalElevation = 3.dp,
             shadowElevation = 3.dp,
         ) {
-            Column(modifier = Modifier.padding(vertical = 8.dp).selectableGroup()) {
+            // Defect 18-6: at the largest font in landscape the options are taller than the space; they scroll.
+            Column(modifier = Modifier.verticalScroll(rememberScrollState()).padding(vertical = 8.dp).selectableGroup()) {
                 Text(
                     text = title,
                     style = MaterialTheme.typography.titleMedium,
