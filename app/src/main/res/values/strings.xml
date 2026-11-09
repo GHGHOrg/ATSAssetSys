@@ -405,4 +405,10 @@
     <string name="allocation_etfs">ETFs</string>
     <string name="allocation_percent">%1$s%%</string>
     <string name="allocation_row_spoken">%1$s, %2$s dollars, %3$s percent</string>
+    <!-- Iteration 19: Allocation, one portfolio (proposed 2026-11-09, to be approved on the phone, 19 file section 12). -->
+    <string name="allocation_title">Allocation</string>
+    <string name="allocation_portfolio_spoken">Portfolio, %1$s</string>
+    <string name="allocation_value_spoken">Portfolio value, %1$s dollars</string>
+    <string name="allocation_portfolio_zero">No value to show in this portfolio</string>
+    <string name="allocation_link_spoken">Allocation, opens a screen</string>
 </resources>

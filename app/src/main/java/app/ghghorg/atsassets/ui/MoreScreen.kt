@@ -27,13 +27,15 @@ import app.ghghorg.atsassets.R
 
 /**
  * More (section 6, wireframe 10f), drawn from its model (CR2, 17): the last backup line, then the entries built so far,
- * each a row that opens its screen (17 decision 1: Net Worth (Total)). The gear and the other entries come later.
+ * each a row that opens its screen (17 decision 1: Net Worth (Total); 19 decision 1: Allocation). The gear and the other
+ * entries come later.
  */
 @Composable
 fun MoreScreen(
     model: MoreModel,
     onOpenNetWorth: () -> Unit,
     modifier: Modifier = Modifier,
+    onOpenAllocation: () -> Unit = {},
 ) {
     Column(
         modifier = modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(16.dp),
@@ -56,6 +58,7 @@ fun MoreScreen(
                     if (index > 0) HorizontalDivider(modifier = Modifier.padding(horizontal = 12.dp))
                     when (entry) {
                         MoreEntry.NET_WORTH -> EntryRow(stringResource(R.string.net_worth_title), onOpenNetWorth)
+                        MoreEntry.ALLOCATION -> EntryRow(stringResource(R.string.allocation_title), onOpenAllocation)
                     }
                 }
             }

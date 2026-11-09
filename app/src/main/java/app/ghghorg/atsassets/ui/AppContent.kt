@@ -138,6 +138,7 @@ private fun BarContent(
                 onOpenHolding = viewModel::openHolding,
                 onOpenHidden = viewModel::openHiddenHoldings,
                 onRefresh = viewModel::onPullToRefresh,
+                onOpenAllocation = viewModel::openAllocation,
             ),
         )
 
@@ -250,6 +251,20 @@ private fun BarContent(
 
         Screen.SPLIT_REVIEW -> SplitReviewScreen(state, viewModel::confirmSplit, viewModel::backToSplit)
 
+        Screen.ALLOCATION -> PortfolioAllocationScreen(
+            state = state,
+            actions =
+            PortfolioAllocationActions(
+                onBack = viewModel::closeAllocation,
+                onRefresh = viewModel::onPullToRefresh,
+                onOpenChoice = viewModel::openPortfolioChoice,
+                onCloseChoice = viewModel::closePortfolioChoice,
+                onChoose = viewModel::choosePortfolio,
+                onCreatePortfolio = viewModel::openPortfolioDialog,
+                onSetOpeningBalance = viewModel::openForm,
+            ),
+        )
+
         Screen.NET_WORTH -> NetWorthScreen(
             state = state,
             actions = NetWorthActions(onBack = viewModel::closeNetWorth, onRefresh = viewModel::onPullToRefresh),
@@ -344,7 +359,7 @@ private fun TabScreen(
                 onRefresh = viewModel::onPullToRefresh,
             )
 
-        Tab.MORE -> MoreScreen(state.more, viewModel::openNetWorth)
+        Tab.MORE -> MoreScreen(state.more, viewModel::openNetWorth, onOpenAllocation = viewModel::openAllocation)
     }
 }
 

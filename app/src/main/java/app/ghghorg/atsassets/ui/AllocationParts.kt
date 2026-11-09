@@ -213,42 +213,65 @@ private fun AllocationRow(
  * Overall's "Allocation by" (view 1; decision 1): the label and a button with the shown option. TalkBack reads it as
  * "Allocation by, <option>" and a button. A tap opens the choice layer; it never opens Net Worth (Total).
  */
-@OptIn(ExperimentalLayoutApi::class)
 @Composable
 internal fun AllocationByButton(
     by: AllocationBy,
     onOpenChoice: () -> Unit,
 ) {
     val option = allocationOption(by)
-    val spoken = stringResource(R.string.allocation_by_spoken, option)
+    ChoiceButton(stringResource(R.string.allocation_by_label), option, stringResource(R.string.allocation_by_spoken, option), onOpenChoice)
+}
+
+/** A [label] and a button showing [shown] with "▾" that opens a [ChoiceLayer]; TalkBack reads [spoken] and a button. */
+@OptIn(ExperimentalLayoutApi::class)
+@Composable
+internal fun ChoiceButton(
+    label: String,
+    shown: String,
+    spoken: String,
+    onOpenChoice: () -> Unit,
+) {
     FlowRow(
         modifier = Modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.spacedBy(12.dp),
     ) {
         Text(
-            text = stringResource(R.string.allocation_by_label),
+            text = label,
             style = MaterialTheme.typography.titleMedium,
             modifier = Modifier.align(Alignment.CenterVertically).clearAndSetSemantics { },
         )
         OutlinedButton(onClick = onOpenChoice, modifier = Modifier.semantics { contentDescription = spoken }) {
-            Text(text = "$option ▾", style = MaterialTheme.typography.bodyLarge)
+            Text(text = "$shown ▾", style = MaterialTheme.typography.bodyLarge)
         }
     }
 }
 
-/**
- * The choice layer (view 1), drawn inside the activity window: a clear layer that closes on a tap outside or Back, and a
- * card with the options, the shown one selected, scrolling when taller than the space (defect 18-6). No DropdownMenu or Popup: a separate window would take MainActivity's
- * focus (CLAUDE.md, 07). TalkBack reads only the layer while it is open.
- */
+/** Overall's "Allocation by" choice (view 1; 18) in the shared [ChoiceLayer]. */
 @Composable
 internal fun AllocationChoiceLayer(
     selected: AllocationBy,
     onChoose: (AllocationBy) -> Unit,
     onClose: () -> Unit,
 ) {
+    val options = AllocationBy.entries.map { it to allocationOption(it) }
+    ChoiceLayer(stringResource(R.string.allocation_by_label), options, selected, onChoose, onClose)
+}
+
+/**
+ * A choice layer (view 1, view 4; 18 and 19), drawn inside the activity window: a clear layer that closes on a tap
+ * outside or Back, and a card titled [title] with [options] (a value and its label), the [selected] one checked,
+ * scrolling when taller than the space (defect 18-6). No DropdownMenu or Popup: a separate window would take
+ * MainActivity's focus (CLAUDE.md, 07). TalkBack reads only the layer while it is open.
+ */
+@Composable
+internal fun <T> ChoiceLayer(
+    title: String,
+    options: List<Pair<T, String>>,
+    selected: T,
+    onChoose: (T) -> Unit,
+    onClose: () -> Unit,
+) {
     BackHandler(onBack = onClose)
-    val title = stringResource(R.string.allocation_by_label)
     Box(
         modifier = Modifier.fillMaxSize().pointerInput(Unit) { detectTapGestures { onClose() } },
         contentAlignment = Alignment.Center,
@@ -272,18 +295,18 @@ internal fun AllocationChoiceLayer(
                     style = MaterialTheme.typography.titleMedium,
                     modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp).semantics { heading() },
                 )
-                AllocationBy.entries.forEach { by ->
+                options.forEach { (value, label) ->
                     Row(
                         modifier =
                         Modifier
                             .fillMaxWidth()
-                            .selectable(selected = by == selected, role = Role.RadioButton, onClick = { onChoose(by) })
+                            .selectable(selected = value == selected, role = Role.RadioButton, onClick = { onChoose(value) })
                             .padding(horizontal = 16.dp, vertical = 12.dp),
                         horizontalArrangement = Arrangement.spacedBy(12.dp),
                         verticalAlignment = Alignment.CenterVertically,
                     ) {
-                        RadioButton(selected = by == selected, onClick = null)
-                        Text(text = allocationOption(by), style = MaterialTheme.typography.bodyLarge)
+                        RadioButton(selected = value == selected, onClick = null)
+                        Text(text = label, style = MaterialTheme.typography.bodyLarge)
                     }
                 }
             }

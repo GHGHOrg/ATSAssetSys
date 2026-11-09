@@ -116,14 +116,22 @@ private fun PortfolioContent(
                 }
             }
         }
-        HiddenLink(actions.onOpenHidden)
+        // View 3's links, in its order: Allocation (19), Transaction history (27), Hidden holdings.
+        LinkRow(stringResource(R.string.allocation_title), stringResource(R.string.allocation_link_spoken), actions.onOpenAllocation)
+        LinkRow(stringResource(R.string.hidden_link), stringResource(R.string.hidden_link_spoken), actions.onOpenHidden)
     }
 }
 
-/** "Hidden holdings >", always listed, even with none hidden (wireframe 03 marker 7, wireframe 09 marker 1; 15 wording 2). */
+/**
+ * A link to another screen with ">" (wireframe 03): "Allocation >" (19) and "Hidden holdings >", the latter always
+ * listed, even with none hidden (wireframe 09 marker 1; 15 wording 2). TalkBack reads [spoken] and a button.
+ */
 @Composable
-private fun HiddenLink(onOpen: () -> Unit) {
-    val spoken = stringResource(R.string.hidden_link_spoken)
+private fun LinkRow(
+    label: String,
+    spoken: String,
+    onOpen: () -> Unit,
+) {
     OutlinedCard(modifier = Modifier.fillMaxWidth()) {
         Row(
             modifier =
@@ -141,7 +149,7 @@ private fun HiddenLink(onOpen: () -> Unit) {
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            Text(text = stringResource(R.string.hidden_link), style = MaterialTheme.typography.bodyLarge)
+            Text(text = label, style = MaterialTheme.typography.bodyLarge)
             Text(text = ">", style = MaterialTheme.typography.bodyLarge)
         }
     }
@@ -157,6 +165,8 @@ class PortfolioScreenActions(
     val onOpenHidden: () -> Unit,
     // 16b: pull-to-refresh (decision 2).
     val onRefresh: () -> Unit = {},
+    // 19: "Allocation >" (view 3, view 4).
+    val onOpenAllocation: () -> Unit = {},
 )
 
 @Composable
