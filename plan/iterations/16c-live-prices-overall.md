@@ -1,6 +1,6 @@
 # plan/iterations/16c-live-prices-overall.md
 
-Stage: Build. Status: approved 2026-11-09 (your "yes", after a check of the code that changed the draft); decisions 1 to 4 settled the same day (section 11). In build: step 1.
+Stage: Build. Status: approved 2026-11-09 (your "yes", after a check of the code that changed the draft); decisions 1 to 4 settled the same day (section 11). Built 2026-11-09 (steps 1 to 6); phone check 2026-11-09 all yes (section 13.3); the pull request's screen tests and the timing comparison to follow (sections 13.4 and 13.5).
 Source: plan.md section 4 (row 16c), spec 4.4, 4.8, section 6 (view 1, the buy and sell entry, error and loading states, number format and color, accessibility), section 7, AC-41, AC-42, AC-61, AC-62; wireframe 01 (state A, markers 2, 4 and 5), wireframe 10a (the lot list, markers 12 and 14) and wireframe 10c (Reverse and re-enter of a sell); 16a and 16b (their decisions and wording); open items 48 and 51. "My reading" is an interpretation, not a test.
 
 ## 1. Outcome
@@ -73,7 +73,8 @@ None.
 4. A lot's gain in the picker is for the quantity the row shows as left for the sell date, converted to today's shares through any split between the two dates, at the latest price; also in Reverse and re-enter, with the lots as after the reversal (your A). Not chosen: (B) the lot's whole remaining quantity today, as on Holding detail's Lots tab.
 
 ## 12. Wording to approve (D9)
-To be shown on the phone in step 6:
+Approved on the phone 2026-11-09 (your A, check 11), as in strings.xml's "Iteration 16c" block: the heading "Portfolios" on Overall; net worth's TalkBack sentence "Net worth, … dollars, Prices as of … Eastern Time[, some stale]"; a portfolio row's "<name>, … dollars, gain or loss … dollars" (at cost the approved "<name>, all holdings at cost"); a lot's "Lot of … Eastern Time, … left, … dollars per share, unrealized gain/loss … dollars[, stale price as of … Eastern Time], picked/not picked". The shown lines reuse 16a's and 16b's approved wording.
+Proposed in step 1, to be shown on the phone in step 6:
 - Net worth's age line: "Prices as of 2026-11-06 16:00 ET" and "…, some stale" (16b's approved form); its TalkBack sentence keeps "Net worth, … dollars" at its start.
 - A lot's stale flag: "stale, as of 2026-11-06 16:00 ET" (16b's approved form), beside its gain.
 - A portfolio row on Overall and its TalkBack sentence; a lot row's TalkBack sentence with its gain.
@@ -82,5 +83,35 @@ To be shown on the phone in step 6:
 ## 13. Status and notes
 - Draft 2026-11-09; changed after a check of the code (six findings: the split between the sell date and today, the sell screen's refresh lines, Reverse and re-enter's lot list, AppStartTimingTest's "Net worth" text, "(all holdings at cost)" on Overall's rows, the lot's TalkBack sentence); approved the same day; decisions 1 to 4 settled.
 
+### 13.1 Steps 1 to 5 (2026-11-09)
+- Step 1 (57fc0e5): this file and the plan.md lines. The first full run red in 15c's HoldingsScaleTest (`lotsOf` SPREAD 9.549 ms at 3,000, limit 7.0; 02:32:22); the next, unchanged, green (02:34:05 to 02:35:02).
+- Step 2 (602fa2f): core `Sells.unitsToToday` (the splits from the sell's place to the end of today; for a sell dated after today, the inverse of the splits from today to the sell) and `Sells.choiceGain` (available × toToday × price − available × cost per share; null with no price), exact. LotChoiceGainTest 5 tests: today's sell up (+600 at 160), down (−400 at 60) and under $1 (−39,799/40 at 0.5025); no price; a split after the sell date (+200, not −400); a sell after today with the split between (factor 1/2, +200); a split before both (factor 1). App: ui/OverallModel.kt, ui/SellLotsModel.kt, `KeptFields.sellUnitsToToday`, `AppState.overall` and `sellLotRows`, `PortfolioFigures.pricesAsOf` made public. OverallModelTest 4, SellLotsModelTest 6 (with two AppState wiring tests: a split since the sell date; Reverse and re-enter shows the sold lot back at 10 left), PriceRefreshFlowTest +1 (Overall's wiring). Shown red against stubs first: core 5 tests, 4 failed (the no-price case passed on the stub's null); app 21 tests, 11 failed. Before that red run one wrong expected value of mine was corrected (the under-$1 case). One red run fixed: spotlessCheck (an orphaned KDoc: the new functions sat between `lotChoices`' KDoc and `lotChoices`; moved below it). Tests 746 to 762.
+- Steps 3 and 4 (0f017fc, one commit, since both change strings.xml; section 14): OverallScreen draws from `state.overall`: the net worth card (net worth, "Prices as of … ET[, some stale]", "Updating prices"), the "Portfolios" heading and one row per portfolio (value, gain with sign and color, or "(all holdings at cost)"; a tap opens it and Back returns to Overall), the failed line under the rows (wireframe 01 marker 5), pull-to-refresh (decision 2). Net worth's TalkBack sentence starts "Net worth" (risk 4). SellScreen's lot rows draw from `state.sellLotRows` (the gain or "no price", "stale, as of … ET", the new TalkBack sentences) and the refresh lines under the "Lots" heading when there are lots. Green at the first run. Tests 762.
+- Step 5 (aeb5d7f): OverallAndSellTalkBackTest, 4 tests (AC-61 (d)): Overall at a fresh $160 (net worth 10,880.00 with its age, the row "plus 80.00", no failed line); Overall at a stale $140 while refreshing after a failed refresh (10,720.00, "some stale", the row "minus 80.00", the Updating and failed lines); a sell lot fresh ("8 left, 150.00 … plus 80.00, not picked"); a sell lot stale after a failed refresh ("minus 80.00", "stale price as of 2026-10-29 16:00 Eastern Time", the failed line). `@Test` lines 20 (were 16).
+- Each step's run: spotlessCheck, build, tests and lint with --rerun-tasks, plus `:app:compileDebugAndroidTestKotlin`; green at the end of each step; lint the 5 listed findings.
+
+### 13.2 Step 6 (2026-11-09)
+- versionCode 25. Full run 03:14:40 to 03:16:15, green: 762 tests, 0 failures, 1 skipped; lint the 5 listed findings (report 03:16:14). APK 42,546,603 bytes (03:15:24), built with the price-source key set (checked True/False only).
+- HoldingsScaleTest: one red recorded in this iteration (step 1, 13.1), re-run unchanged as decided in 16b (its file, 13.2, your B).
+
+### 13.3 Step 6: the phone check (2026-11-09, all yes)
+Check 1, before the install on 16b's build (versionCode 24), online: your screenshots of Overall, the Portfolios tab, a portfolio's screen and a holding's Lots tab with each lot's gain; a force stop. versionCode 25 installed over it (`adb install -r`, Success; lastUpdateTime 10:47:04, first install 2026-10-29 kept).
+- 2 (AC-35), online, the first unlock on Overall: net worth with "Prices as of 2026-11-06 16:00 ET", "Updating prices" briefly, no failed line; one row per portfolio with the figures of its own screen; net worth = cash + the rows; a row opens its portfolio, Back returns to Overall: yes.
+- 3: pull-to-refresh on Overall: yes.
+- 4: the sell screen (Buy/Sell > Sell, same portfolio and holding, dated today): each lot's gain as on the Lots tab, a pick works, left with Back: yes.
+- 5 (AC-42): airplane mode, lock and unlock: Overall "…, some stale" and the failed line under the rows, no pop-up; the sell screen's failed line under "Lots", each lot "stale, as of … ET", still pickable; back online on Overall: refreshed, the marks gone: yes.
+- 6 (wireframe 10c): Reverse and re-enter of a sell: the lots as after the reversal, each with its gain; left with Back, not confirmed: yes.
+- 7 (AC-39, risk 5): largest font and landscape on Overall and the sell lot list, online and offline: yes.
+- 8 (AC-39): TalkBack: net worth, a portfolio row, a lot fresh and stale, the failed line: yes.
+- 9 (AC-40, AC-09): light and dark; each shown time with "ET": yes.
+- 10 (spec 9): `adb logcat -d -v time --uid=10454` right after check 6: 110 lines, 10:45:58 to 11:02:49, covering the install and checks 2 to 6. The key not in it (a True/False test); no "finnhub", "token", AAPL, "quote", "symbol=" or amount outside the timestamps; the 46 "$digit" matches are all the class name `OnBackInvokedInput$createOnBackAnimationCallback$1`: yes.
+- 11 (D9): the wording approved (section 12).
+
+### 13.4 AC-62 and the screen tests
+From 16c, the TalkBack labels of Overall's net worth and rows and of the sell lot list are checked by OverallAndSellTalkBackTest; their layout at the largest font stayed a hand check (check 7). The screen tests (20) run on the pull request; their result is added there.
+
+### 13.5 App start timing (risk 3)
+AppStartTimingTest's "load and Overall" median on the pull request's run, against 16b's run on pull request #144: added there.
+
 ## 14. Departures from the plan
-None yet.
+1. Steps 3 and 4 are one commit (0f017fc): both change strings.xml's "Iteration 16c" block, and a file is not staged in parts.

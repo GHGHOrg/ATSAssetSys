@@ -380,7 +380,7 @@
     <string name="portfolio_prices_as_of_some_stale_spoken">Prices as of %1$s Eastern Time, some stale</string>
     <string name="holding_row_stale">stale, as of %1$s ET</string>
     <string name="holding_row_gain_stale_spoken">%1$s, %2$s, %3$s dollars, unrealized gain/loss %4$s dollars, stale price as of %5$s Eastern Time</string>
-    <!-- Iteration 16c: prices on Overall and the sell lot list (proposed 2026-11-09, to be approved on the phone, 16c file section 12). -->
+    <!-- Iteration 16c: prices on Overall and the sell lot list (approved on the phone 2026-11-09, 16c file section 12). -->
     <string name="net_worth_prices_spoken">%1$s, %2$s</string>
     <string name="overall_portfolios_heading">Portfolios</string>
     <string name="overall_portfolio_row_spoken">%1$s, %2$s dollars, gain or loss %3$s dollars</string>
