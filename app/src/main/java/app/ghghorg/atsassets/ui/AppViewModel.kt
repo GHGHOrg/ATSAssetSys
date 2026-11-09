@@ -117,6 +117,9 @@ enum class Screen {
 
     // Reverse and re-enter's combined review (wireframe 10c frames B and D, iteration 14a); the entry is BUY or SELL.
     REPLACE_REVIEW,
+
+    // Net Worth (Total) (view 2, wireframe 02, iteration 17), opened from Overall's net worth or from More.
+    NET_WORTH,
 }
 
 // The id of the unsaved draft the reversal screen shows the effect of; never saved.
@@ -1253,6 +1256,23 @@ class AppViewModel(
         val current = mutableState.value
         if (current.screen != Screen.TABS || current.portfolios.none { it.id == id }) return
         mutableState.update { it.copy(screen = Screen.PORTFOLIO, portfolioId = id, portfolioMenuOpen = false) }
+    }
+
+    /**
+     * Net Worth (Total) (view 2): from Overall's net worth (navigation outline) or More's entry (17 decision 1). The tab
+     * stays, so Back returns to it. Ignored elsewhere and while a layer is open.
+     */
+    fun openNetWorth() {
+        val current = mutableState.value
+        if (current.screen != Screen.TABS || current.tab !in setOf(Tab.OVERALL, Tab.MORE)) return
+        if (current.buySellMenuOpen || current.buyNotice != null || current.portfolioDialog != null) return
+        mutableState.update { it.copy(screen = Screen.NET_WORTH) }
+    }
+
+    /** "<" or Android Back: back to the tab it was opened from. */
+    fun closeNetWorth() {
+        if (mutableState.value.screen != Screen.NET_WORTH) return
+        mutableState.update { it.copy(screen = Screen.TABS) }
     }
 
     /** "<" or Android Back: back to the list. Ignored while a save is running. */
@@ -3105,6 +3125,7 @@ class AppViewModel(
                 Screen.TRANSACTION,
                 Screen.REVERSE_TRANSACTION,
                 Screen.REPLACE_REVIEW,
+                Screen.NET_WORTH,
             )
     }
 }
