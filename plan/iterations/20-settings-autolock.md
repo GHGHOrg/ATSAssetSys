@@ -1,6 +1,6 @@
 # plan/iterations/20-settings-autolock.md
 
-Stage: Build. Status: approved 2026-11-10 (your "Approved"); decisions 1 to 3 settled the same day (section 11). In build: step 1.
+Stage: Build. Status: approved 2026-11-10 (your "Approved"); decisions 1 to 3 settled the same day (section 11). In build: step 2 done (section 10.1).
 Source: plan.md section 4 (row 20), spec section 3 (Settings), section 6 (More, Settings entry, navigation outline, accessibility), section 8 (settings are in the backup file; 31), section 9 (the lock, the auto-lock choices), section 14 (K8), AC-06, AC-58 (the auto-lock part), AC-61, AC-62; wireframe 10f (frames A to C, markers 2, 3 and 7); iteration 01 (the lock), 17 and 19 (More), 18 and 19 (the choice layer); CLAUDE.md (security code not from memory; Room schema files; layers in the window). "My reading" is an interpretation, not a test.
 
 ## 1. Outcome
@@ -54,6 +54,7 @@ None.
 - 4. The idle check while in view needs a timer on the main thread; it must stop when the app leaves view.
 - 5. The choice layer must keep MainActivity's window focus and fit at the largest font (18, 19).
 - 6. The emulator is not the phone (C19); screen tests cannot press the power button reliably, so the phone-lock choice is a hand check.
+- 7. "Only when the phone locks" with the app in the background rests on a broadcast Android may defer for a cached app (10.1); the phone check tests that case, and a failure there blocks the merge.
 
 ## 9. Proof
 - Commands: as in 19, all with --rerun-tasks. The screen tests on the pull request: 37 plus this iteration's new ones.
@@ -64,6 +65,11 @@ None.
 - R1: Android's screen-off broadcast for an app registering it in code on API 33 to 37: whether it is delivered while the app is in the background, and which receiver flag API 34 and later need. The developer.android.com reference pages could not be fetched before (CLAUDE.md); I would ask you to paste the parts of the `Intent.ACTION_SCREEN_OFF` and `Context.registerReceiver` pages, or check the flags with javap on the cached jars. The phone check stays the proof.
 - R2: Room's migration test helper (`MigrationTestHelper`) for Room 3.0.3 (androidx.room3): whether it exists and works on the JVM; javap on the cached jar. Without it, the migration is checked by the install on the phone (AC-35), as in 16a.
 - No version change is planned: no new library.
+
+### 10.1 Results (2026-11-10, step 2)
+- R1, by your C: the web-fetch agent on both pages (your yes). The Intent reference came back only in part: its `ACTION_SCREEN_OFF` entry was in a summary, not in the verbatim text ("Sent when the device goes to sleep and becomes non-interactive", not quoted from the page), so nothing about who may receive it is checked. The broadcasts guide (developer.android.com/develop/background-work/background-tasks/broadcasts), read in full, says: "If this receiver is listening for broadcasts sent from the system or from other apps … use the `RECEIVER_EXPORTED` flag"; with `RECEIVER_NOT_EXPORTED` "the receiver is able to receive some system broadcasts"; for Android 14, "While apps are in a cached state … the system defers less important system broadcasts such as `ACTION_SCREEN_ON` … Once the app goes from the cached state into an active process lifecycle, the system delivers any deferred broadcasts"; "delivery times of broadcasts are not guaranteed"; and "If you register with the Application context, you receive broadcasts as long as the app runs." The page does not say a flag is required on API 34, nor name `ACTION_SCREEN_OFF` among the deferred ones.
+- What follows for the design (my reading): the receiver is registered with the application context and `RECEIVER_EXPORTED`; a fake screen-off from another app could only lock the app, the safe side. When the phone locks while the app is in view, `onStop` comes with the screen off, so the lock also checks there whether the screen is off, without the broadcast. When the app is already in the background, the broadcast may be deferred until the app is active again, and whether it then arrives before the screen shows is not known: risk 7. The phone check tests this case directly; if it does not lock, the design changes before the merge.
+- R2: javap was not needed. Room's testing artifact (`androidx.room3:room3-testing`, which holds `MigrationTestHelper`) is neither in the project nor in Gradle's cache; using it would be a new library. The migration 7 to 8 is checked as in 16a: 8.json against 7.json, then the install over 19 on the phone (AC-35).
 
 ## 11. Decisions (Build, settled by you 2026-11-10)
 1. "Idle" for the 1- and 5-minute choices is no touch in the app for that long, the time away counting as idle: the app also locks while it is in view and untouched (your A). Not chosen: (B) only the time away, checked on return.
