@@ -303,7 +303,14 @@ private fun TabScreen(
     viewModel: AppViewModel,
 ) {
     when (state.tab) {
-        Tab.OVERALL -> OverallScreen(state, viewModel::openForm, viewModel::openPortfolioDialog)
+        Tab.OVERALL ->
+            OverallScreen(
+                state,
+                viewModel::openForm,
+                viewModel::openPortfolioDialog,
+                onOpenPortfolio = viewModel::openPortfolio,
+                onRefresh = viewModel::onPullToRefresh,
+            )
 
         Tab.CASH -> CashScreen(
             state = state,

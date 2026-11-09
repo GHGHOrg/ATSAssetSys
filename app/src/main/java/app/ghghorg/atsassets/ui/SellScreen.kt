@@ -50,7 +50,6 @@ import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import app.ghghorg.atsassets.R
 import app.ghghorg.atsassets.core.Fraction
-import app.ghghorg.atsassets.core.LotChoice
 import app.ghghorg.atsassets.core.LotUnavailable
 import app.ghghorg.atsassets.core.Money
 import app.ghghorg.atsassets.core.Quantity
@@ -209,35 +208,37 @@ private fun TickerChips(
 }
 
 /**
- * The lot list (wireframe 10a markers 10 to 13): "Lots, oldest first", one row per lot, then "Picked X of Y shares"
- * and, after a date change dropped picks, the line saying so.
+ * The lot list (wireframe 10a markers 10 to 14), drawn from its model (CR2, 16c decision 3): "Lots, oldest first", the
+ * "updating" and refresh-failed lines once it shows prices (section 6, states (2) and (3); 16c), one row per lot, then
+ * "Picked X of Y shares" and, after a date change dropped picks, the line saying so.
  */
 @Composable
 private fun LotList(
     state: AppState,
     actions: SellActions,
 ) {
-    val choices = state.sellLotChoices
+    val rows = state.sellLotRows
     val replacing = state.replacingId != null
     Text(
         text = stringResource(if (replacing) R.string.replace_lots_heading else R.string.sell_lots_heading),
         style = MaterialTheme.typography.titleMedium,
         modifier = Modifier.semantics { heading() },
     )
-    if (choices.isNotEmpty()) {
+    if (rows.isNotEmpty()) {
+        PriceRefreshLines(state.priceRefresh.refreshing, state.priceRefresh.failed)
         OutlinedCard(modifier = Modifier.fillMaxWidth()) {
             Column(modifier = Modifier.padding(12.dp)) {
-                choices.forEachIndexed { index, choice ->
+                rows.forEachIndexed { index, row ->
                     if (index > 0) HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
-                    if (choice.unavailable == null) {
+                    if (row.unavailable == null) {
                         LotPickRow(
-                            choice = choice,
-                            pick = state.sellForm.picks[choice.buyId],
-                            error = state.sellRefusals.picks[choice.buyId],
+                            row = row,
+                            pick = state.sellForm.picks[row.key],
+                            error = state.sellRefusals.picks[row.key],
                             actions = actions,
                         )
                     } else {
-                        UnavailableLotRow(choice)
+                        UnavailableLotRow(row)
                     }
                 }
             }
@@ -267,21 +268,33 @@ private fun LotList(
 
 /**
  * A lot that passes the lot rules (11 wording 1): a tap on the left part picks or unpicks it; a picked lot shows
- * "Sell:" and its quantity field, prefilled with the full remainder. "no price" stands for the gain/loss until 16.
+ * "Sell:" and its quantity field, prefilled with the full remainder. Its unrealized gain/loss in green or red with its
+ * sign, at the latest price in today's shares (16c decision 4), with "stale, as of … ET" under it when the price is
+ * stale, or "no price" (wireframe 10a markers 12 and 14). TalkBack reads them with the lot.
  */
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
 private fun LotPickRow(
-    choice: LotChoice,
+    row: SellLotRowModel,
     pick: String?,
     error: QuantityError?,
     actions: SellActions,
 ) {
-    val date = choice.buyDate.toString()
-    val left = Quantity.format(choice.available)
-    val perShare = Money.formatPerShare(choice.costPerShare)
+    val date = row.date
+    val left = row.left
+    val perShare = row.perShare
+    val gain = row.gain
+    val staleAsOf = row.staleAsOf
     val state = stringResource(if (pick != null) R.string.sell_lot_picked else R.string.sell_lot_not_picked)
-    val spoken = stringResource(R.string.sell_lot_spoken, date, left, perShare.substringAfter('$'), state)
+    val spoken =
+        when {
+            gain is GainModel.Figure && staleAsOf != null ->
+                stringResource(R.string.sell_lot_gain_stale_spoken, date, left, row.spokenPerShare, spoken(gain.spoken), staleAsOf, state)
+
+            gain is GainModel.Figure -> stringResource(R.string.sell_lot_gain_spoken, date, left, row.spokenPerShare, spoken(gain.spoken), state)
+
+            else -> stringResource(R.string.sell_lot_spoken, date, left, row.spokenPerShare, state)
+        }
     FlowRow(
         modifier = Modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.spacedBy(12.dp),
@@ -290,7 +303,7 @@ private fun LotPickRow(
         Row(
             modifier =
             Modifier
-                .toggleable(value = pick != null, role = Role.Checkbox, onValueChange = { actions.onToggleLot(choice.buyId) })
+                .toggleable(value = pick != null, role = Role.Checkbox, onValueChange = { actions.onToggleLot(row.key) })
                 .clearAndSetSemantics { contentDescription = spoken },
             verticalAlignment = Alignment.CenterVertically,
         ) {
@@ -307,7 +320,7 @@ private fun LotPickRow(
                     Text(text = stringResource(R.string.sell_pick_label), style = MaterialTheme.typography.bodyLarge)
                     OutlinedTextField(
                         value = pick,
-                        onValueChange = { actions.onPickChange(choice.buyId, it) },
+                        onValueChange = { actions.onPickChange(row.key, it) },
                         modifier = Modifier.width(140.dp).padding(start = 8.dp).semantics { contentDescription = fieldSpoken },
                         isError = error != null,
                         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
@@ -323,12 +336,31 @@ private fun LotPickRow(
                     )
                 }
             }
-            Text(
-                text = stringResource(R.string.holding_lot_no_price),
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                textAlign = TextAlign.End,
-            )
+            when (gain) {
+                is GainModel.Figure ->
+                    Text(
+                        text = gain.text,
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = gainLossColor(sign(gain)),
+                        textAlign = TextAlign.End,
+                    )
+
+                else ->
+                    Text(
+                        text = stringResource(R.string.holding_lot_no_price),
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        textAlign = TextAlign.End,
+                    )
+            }
+            if (staleAsOf != null) {
+                Text(
+                    text = stringResource(R.string.holding_row_stale, staleAsOf),
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    textAlign = TextAlign.End,
+                )
+            }
         }
     }
 }
@@ -338,15 +370,15 @@ private fun LotPickRow(
  * text, and no way to pick it. It keeps its place in the order.
  */
 @Composable
-private fun UnavailableLotRow(choice: LotChoice) {
-    val date = choice.buyDate.toString()
-    val left = Quantity.format(choice.available)
-    val perShare = Money.formatPerShare(choice.costPerShare)
+private fun UnavailableLotRow(row: SellLotRowModel) {
+    val date = row.date
+    val left = row.left
+    val perShare = row.perShare
     val reason =
         stringResource(
-            if (choice.unavailable == LotUnavailable.BOUGHT_AFTER_SELL_DATE) R.string.sell_lot_bought_after else R.string.sell_lot_entered_after,
+            if (row.unavailable == LotUnavailable.BOUGHT_AFTER_SELL_DATE) R.string.sell_lot_bought_after else R.string.sell_lot_entered_after,
         )
-    val spoken = stringResource(R.string.sell_lot_unavailable_spoken, date, left, perShare.substringAfter('$'), reason)
+    val spoken = stringResource(R.string.sell_lot_unavailable_spoken, date, left, row.spokenPerShare, reason)
     val outline = MaterialTheme.colorScheme.outline
     Column(
         modifier =
