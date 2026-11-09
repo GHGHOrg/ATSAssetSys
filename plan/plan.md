@@ -349,7 +349,8 @@ when it adds a command, a convention or a pitfall.
 | Iteration 17 | built 2026-11-09 ([its file](iterations/17-net-worth-screen.md)): steps 1 to 5 on iter-17-net-worth-screen; 778 tests; phone checks 2026-11-09 all yes; wording approved; pull request #148: CI and the screen tests (25 of 25) green; reviewed against the spec refs, no finding; merged as 6b67cf3, main green (gh, read only) |
 | Iteration 18 | built 2026-11-09 ([its file](iterations/18-allocation-net-worth.md)): steps 1 to 7 on iter-18-allocation-net-worth; 797 tests; defect 18-6 found on the phone and fixed (failing test first on #150, closed); phone checks 2026-11-09 all yes after the fix; wording and colors approved; pull request #151: CI and the screen tests (31 of 31) green; reviewed against the spec refs, no finding; merged as 57cc8cd, main green (gh, read only) |
 | Iteration 19 | built 2026-11-09 and 10 ([its file](iterations/19-allocation-portfolio.md)): steps 1 to 6 on iter-19-allocation-portfolio; 810 tests; phone checks 2026-11-10 all yes; wording approved; pull request #153: CI and the screen tests (37 of 37) green; reviewed against the spec refs, no finding; merged as 8b93443, main green (gh, read only) |
-| Iterations 20 to 35 | not started, files not written |
+| Iteration 20 | approved 2026-11-10, in build ([its file](iterations/20-settings-autolock.md)) |
+| Iterations 21 to 35 | not started, files not written |
 
 ## 12. Change log
 Each departure from this plan is recorded here with its date and the reason.
@@ -520,6 +521,7 @@ Each departure from this plan is recorded here with its date and the reason.
 - 2026-11-10: iteration 19 steps 2 to 6 built on iter-19-allocation-portfolio: core's portfolio level of the allocation; Allocation for one portfolio drawn from a model, with a portfolio chooser drawn in the window, the value and its age line, the breakdowns by asset type and holding, the $0.00 line and the no-portfolio case with Create a portfolio; opened from "Allocation >" on a portfolio's screen and from More, Back to each; the choice layer shared with Overall's; screen tests (AC-61 (a), (b) and (d)). Phone check all yes; wording approved (your A). Departures 1 to 3: the 19 file, section 14. Results: its section 13.
 - 2026-11-10: pull request #153 (iteration 19) at 76012a8: the screen tests (run 42655091904) 37 of 37 at the first attempt, CI and CodeQL green. Reviewed against the spec refs: no finding (the 19 file, 13.5).
 - 2026-11-10: pull request #153 (iteration 19) was merged as 8b93443, 7 commits; the branch is gone from origin and locally. On the pull request's last commit (cd06c38) CI and the screen tests green (37 of 37); on main after the merge CI (2m 55s), the screen tests (37 of 37, 5m 55s) and CodeQL green (gh, read only). Next: 20.
+- 2026-11-10: pull request #154 (the 19 merge record) was merged as a8efd68; main's CI, screen tests (37 of 37) and CodeQL green. Iteration 20's file (plan/iterations/20-settings-autolock.md) drafted: Settings from a gear on More, with the four auto-lock choices, stored (database version 8) and applied by the app lock; the look-ups of its section 10 come first. Approved by you; decisions 1 to 3 settled (idle is no touch, the time away counting; an in-view lock shows the prompt at once; one settings row with a column per setting). Built on iter-20-settings-autolock.
 
 ## 13. Out of scope for this plan
 Performance over time, per-holding dividends, ETF look-through, the next intent.md items,
