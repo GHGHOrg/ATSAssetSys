@@ -89,6 +89,20 @@ data class InstrumentRow(
     @ColumnInfo(defaultValue = "0") val priceStale: Boolean = false,
 )
 
+/**
+ * The settings (spec section 3), one row with a column per setting (20 decision 3): the row's [id] is always
+ * [ONLY_ID]. [autoLock] is an [app.ghghorg.atsassets.core.AutoLock] by name. Each later setting adds a column.
+ */
+@Entity(tableName = "settings")
+data class SettingsRow(
+    @PrimaryKey val id: Int = ONLY_ID,
+    val autoLock: String,
+) {
+    companion object {
+        const val ONLY_ID = 1
+    }
+}
+
 @Dao
 interface CashEntryDao {
     /** One transaction. The default conflict rule (abort) is kept: records are permanent. */
@@ -279,11 +293,27 @@ interface InstrumentDao {
     suspend fun loadAll(): List<InstrumentRow>
 }
 
+@Dao
+interface SettingsDao {
+    @Upsert
+    suspend fun upsert(row: SettingsRow)
+
+    /** The settings row, or null when no setting was ever saved. */
+    @Query("SELECT * FROM settings WHERE id = ${SettingsRow.ONLY_ID}")
+    suspend fun load(): SettingsRow?
+
+    /** Sets the auto-lock column of the settings row, making the row if there is none; the other columns are kept. */
+    @Transaction
+    suspend fun saveAutoLock(autoLock: String) {
+        upsert(load()?.copy(autoLock = autoLock) ?: SettingsRow(autoLock = autoLock))
+    }
+}
+
 /**
  * Version 2 (iteration 07) adds the portfolios table, version 3 (09) the transactions and instruments tables, version 4
  * (11) the sell_allocations table, version 5 (12) the two split columns of transactions, version 6 (15) the
- * hidden_holdings table, version 7 (16a) the three price columns of instruments; Room generates each step out of the
- * schemas in app/schemas.
+ * hidden_holdings table, version 7 (16a) the three price columns of instruments, version 8 (20) the settings table;
+ * Room generates each step out of the schemas in app/schemas.
  */
 @Database(
     entities = [
@@ -293,8 +323,9 @@ interface InstrumentDao {
         InstrumentRow::class,
         SellAllocationRow::class,
         HiddenHoldingRow::class,
+        SettingsRow::class,
     ],
-    version = 7,
+    version = 8,
     autoMigrations = [
         AutoMigration(from = 1, to = 2),
         AutoMigration(from = 2, to = 3),
@@ -302,6 +333,7 @@ interface InstrumentDao {
         AutoMigration(from = 4, to = 5),
         AutoMigration(from = 5, to = 6),
         AutoMigration(from = 6, to = 7),
+        AutoMigration(from = 7, to = 8),
     ],
 )
 abstract class AtsDatabase : RoomDatabase() {
@@ -312,4 +344,6 @@ abstract class AtsDatabase : RoomDatabase() {
     abstract fun transactionDao(): TransactionDao
 
     abstract fun instrumentDao(): InstrumentDao
+
+    abstract fun settingsDao(): SettingsDao
 }

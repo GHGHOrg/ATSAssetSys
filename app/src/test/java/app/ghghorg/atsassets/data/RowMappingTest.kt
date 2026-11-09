@@ -1,6 +1,7 @@
 package app.ghghorg.atsassets.data
 
 import app.ghghorg.atsassets.core.AssetType
+import app.ghghorg.atsassets.core.AutoLock
 import app.ghghorg.atsassets.core.Fraction
 import app.ghghorg.atsassets.core.HiddenHolding
 import app.ghghorg.atsassets.core.Instrument
@@ -318,5 +319,26 @@ class RowMappingTest {
         assertEquals(hidden, checkHidden(listOf(buy, soldOut), hidden))
         assertThrows(UnreadableDataException::class.java) { checkHidden(listOf(buy), hidden) }
         assertThrows(UnreadableDataException::class.java) { checkHidden(listOf(buy, soldOut), listOf(HiddenHolding("p1", "MSFT"))) }
+    }
+
+    // 20: the auto-lock choice in the settings row (decision 3).
+    @Test
+    fun noSettingsRow_isTheDefault_everyLeave() {
+        val none: SettingsRow? = null
+        assertEquals(AutoLock.EVERY_LEAVE, none.toAutoLock())
+    }
+
+    @Test
+    fun eachAutoLockChoice_isStoredByName_andReadBack() {
+        for (choice in AutoLock.entries) {
+            assertEquals(choice, SettingsRow(autoLock = choice.name).toAutoLock())
+        }
+    }
+
+    @Test
+    fun anUnknownAutoLockChoice_isUnreadable_notTheDefault() {
+        for (text in listOf("", "NEVER", "idle_1_min", "IDLE_10_MIN")) {
+            assertThrows(text, UnreadableDataException::class.java) { SettingsRow(autoLock = text).toAutoLock() }
+        }
     }
 }

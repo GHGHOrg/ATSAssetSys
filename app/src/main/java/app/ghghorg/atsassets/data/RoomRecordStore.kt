@@ -1,6 +1,7 @@
 package app.ghghorg.atsassets.data
 
 import app.ghghorg.atsassets.core.AssetType
+import app.ghghorg.atsassets.core.AutoLock
 import app.ghghorg.atsassets.core.CashEntry
 import app.ghghorg.atsassets.core.CashType
 import app.ghghorg.atsassets.core.Fraction
@@ -311,6 +312,33 @@ class RoomRecordStore(
         hiddenDao().unhide(holding.toRow())
     }
 
+    override suspend fun loadAutoLock(): AutoLock = withContext(Dispatchers.IO) {
+        try {
+            database.settingsDao().load().toAutoLock()
+        } catch (e: CancellationException) {
+            throw e
+        } catch (e: UnreadableDataException) {
+            throw e
+        } catch (e: Exception) {
+            throw UnreadableDataException("The stored data could not be read.", e)
+        }
+    }
+
+    override suspend fun saveAutoLock(choice: AutoLock) {
+        val dao = withContext(Dispatchers.IO) {
+            try {
+                database.settingsDao()
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: UnreadableDataException) {
+                throw e
+            } catch (e: Exception) {
+                throw UnreadableDataException("The stored data could not be opened.", e)
+            }
+        }
+        dao.saveAutoLock(choice.name)
+    }
+
     private suspend fun hiddenDao(): TransactionDao = withContext(Dispatchers.IO) {
         try {
             database.transactionDao()
@@ -507,6 +535,15 @@ private fun CashEntryRow.toEntry() = CashEntry(
     reversesId = reversesId,
     transactionId = transactionId,
 )
+
+/**
+ * No settings row is the default, every time you leave (spec section 9). Throws [UnreadableDataException] for a stored
+ * choice that is not one of the four; nothing is guessed, not even the default. The message names no value (spec 9).
+ */
+internal fun SettingsRow?.toAutoLock(): AutoLock {
+    if (this == null) return AutoLock.EVERY_LEAVE
+    return AutoLock.entries.firstOrNull { it.name == autoLock } ?: throw UnreadableDataException("A stored setting could not be read.")
+}
 
 internal fun HiddenHolding.toRow() = HiddenHoldingRow(portfolioId = portfolioId, ticker = ticker)
 
