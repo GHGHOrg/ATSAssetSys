@@ -1,6 +1,6 @@
 # plan/iterations/19-allocation-portfolio.md
 
-Stage: Build. Status: approved 2026-11-09 (your "Approved"); decisions 1 to 3 settled the same day (section 11). Built 2026-11-09 and 10 (steps 1 to 6); phone check 2026-11-10 all yes (section 13.3); the screen tests 37 of 37 on pull request #153 (section 13.4); reviewed against the spec refs (section 13.5); merged as 8b93443, main green (section 13.6).
+Stage: Build. Status: approved 2026-11-09 (your "Approved"); decisions 1 to 3 settled the same day (section 11). Done: built 2026-11-09 and 10 (steps 1 to 6); phone check 2026-11-10 all yes (section 13.3); the screen tests 37 of 37 on pull request #153 (section 13.4); reviewed against the spec refs (section 13.5); merged as 8b93443, main green (section 13.6).
 Source: plan.md section 4 (row 19), spec 4.2, 4.7, 4.8, 4.10, C12, section 6 (view 3, view 4, the navigation outline, More, number format and color, accessibility, error and loading states, portfolio create (10d)), AC-33, AC-46, AC-61, AC-62; wireframe 04 (frames A to D, markers 1 to 5), wireframe 03 (the links on a portfolio's screen), wireframe 10d and 10f; 18 (its core allocation, model, donut and rows, choice layer, defect 18-6); open items 48 and 51; CLAUDE.md's pitfall on layers and menus. "My reading" is an interpretation, not a test.
 
 ## 1. Outcome
