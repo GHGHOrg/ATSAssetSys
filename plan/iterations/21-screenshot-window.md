@@ -1,6 +1,6 @@
 # plan/iterations/21-screenshot-window.md
 
-Stage: Build. Status: approved 2026-11-10 (your "Approved"). In build.
+Stage: Build. Status: approved 2026-11-10 (your "Approved"); decisions 1 and 2 settled the same day (section 11). In build: step 3 done (section 10.1).
 Source: plan.md section 4 (row 21), spec section 9 (privacy by default, the screenshot window, the [UNVERIFIED] note on `FLAG_SECURE` and the recents preview), section 6 (More and Settings entry), section 3 (not a setting: never saved), section 8 (not in the backup file), section 14 (K8), AC-20, AC-58 (the screenshot window part), AC-61, AC-62; wireframe 10f (frame B's Security row, frame C marker 8); iteration 01 (the lock and `FLAG_SECURE`), 20 (Settings, the lock rules, `LockHolder`); open-items.md item 53; CLAUDE.md (security code not from memory; layers in the window; a defect in test support needs no intent file). "My reading" is an interpretation, not a test.
 
 ## 1. Outcome
@@ -67,9 +67,13 @@ None.
 - R1: AndroidX Biometric (the version in the project): what a second `BiometricPrompt` object in the same activity does to the first one's callback, and what happens to a result after the activity is re-created. By javap on the cached jar, or the library's source if you paste it (developer.android.com could not be fetched before, CLAUDE.md). It decides decision 2.
 - No version change is planned: no new library.
 
-## 11. Decisions (Build)
-1. Does a lock while the window is on (the idle lock in view, 20; the phone locking with the app in view) also end the window? (A, my leaning) yes, any lock ends it: every doubt ends it. (B) only leaving, the 3 minutes and Turn off end it, as the spec's words say; an idle lock in view would then leave the lock screen capturable until the window runs out (it shows only the app's name).
-2. One prompt or two: (A, my leaning unless R1 shows two objects are safe) one `BiometricPrompt` that remembers what it was opened for, the lock or the window, the purpose kept in `LockHolder` so it survives a turn of the phone, a result with no purpose ignored; (B) a second prompt object for the window. Maintainability, test time and APK size shown with R1's result.
+### 10.1 Results (2026-11-10, step 3)
+- R1, by javap (your yes): Gradle's cache holds androidx.biometric 1.1.0 as an aar without sources; its classes.jar disassembled with `javap -p -c` in the scratchpad. Every `BiometricPrompt` constructor gets the `BiometricViewModel` through `new ViewModelProvider(activity).get(BiometricViewModel.class)` (`getViewModel`) and then calls `init`, which calls `setClientExecutor` and `setClientCallback` on it; `authenticate` sets no callback (it calls `findOrAddBiometricFragment(...).authenticate`); `ResetCallbackObserver` only calls `resetClientCallback`.
+- What follows (my reading): one ViewModel per activity, shared by every prompt object, so the last object constructed receives every result, the lock's included: a second prompt object for the window is not safe (decision 2). After a re-creation, the new activity's `onCreate` builds the prompt again and sets its callback on the same ViewModel, which the re-creation keeps, so a late result reaches the new activity's callback, as for the lock since 01.
+
+## 11. Decisions (Build, settled by you 2026-11-10)
+1. A lock while the window is on (the idle lock in view, 20; the phone locking with the app in view) also ends the window: any lock ends it (your A). Not chosen: (B) only leaving, the 3 minutes and Turn off end it, as the spec's words say.
+2. One `BiometricPrompt` that remembers what it was opened for, the lock or the window, the purpose kept in `LockHolder` so a turn of the phone keeps it; a result with no purpose is ignored (your A). Not chosen: (B) a second prompt object, which R1 rules out (10.1).
 
 ## 12. Wording to approve (D9)
 To be shown on the phone in step 8:
