@@ -112,6 +112,15 @@ interface RecordStore {
 
     /** Saves the auto-lock choice in place of the one before; the other settings are kept (20 decision 3). */
     suspend fun saveAutoLock(choice: AutoLock)
+
+    /**
+     * The bottom bar's order (spec 6, a setting), [TabOrder.DEFAULT] when none was saved. Throws
+     * [UnreadableDataException] if a stored order exists but is not each tab once (22).
+     */
+    suspend fun loadTabOrder(): TabOrder
+
+    /** Saves the tab order in place of the one before; the other settings are kept (22). */
+    suspend fun saveTabOrder(order: TabOrder)
 }
 
 class UnreadableDataException(

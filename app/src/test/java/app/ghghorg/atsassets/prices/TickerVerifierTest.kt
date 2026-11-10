@@ -12,6 +12,7 @@ import app.ghghorg.atsassets.core.Price
 import app.ghghorg.atsassets.core.PriceSource
 import app.ghghorg.atsassets.core.Quote
 import app.ghghorg.atsassets.core.RecordStore
+import app.ghghorg.atsassets.core.TabOrder
 import app.ghghorg.atsassets.core.TickerRefusal
 import app.ghghorg.atsassets.core.Transaction
 import kotlinx.coroutines.test.runTest
@@ -103,6 +104,10 @@ class TickerVerifierTest {
         override suspend fun loadAutoLock(): AutoLock = error("not used")
 
         override suspend fun saveAutoLock(choice: AutoLock) = error("not used")
+
+        override suspend fun loadTabOrder(): TabOrder = error("not used")
+
+        override suspend fun saveTabOrder(order: TabOrder) = error("not used")
     }
 
     private val aapl = Listing(type = "Common Stock", exchange = "XNAS", currency = "USD")

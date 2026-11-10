@@ -26,6 +26,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import app.ghghorg.atsassets.R
+import app.ghghorg.atsassets.core.Tab
 
 /** The bottom bar (spec 6, navigation outline): text-only tabs in [order], left to right (02b decision 7). */
 @Composable
@@ -85,8 +86,9 @@ private fun TabItem(
     }
 }
 
+/** A tab's name, as the bar shows it; also the Tab order screen's and Settings' (22). */
 @get:StringRes
-private val Tab.labelRes: Int
+internal val Tab.labelRes: Int
     get() = when (this) {
         Tab.MORE -> R.string.tab_more
         Tab.CASH -> R.string.tab_cash

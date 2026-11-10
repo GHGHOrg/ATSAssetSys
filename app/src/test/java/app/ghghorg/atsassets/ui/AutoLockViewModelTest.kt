@@ -1,6 +1,7 @@
 package app.ghghorg.atsassets.ui
 
 import app.ghghorg.atsassets.core.AutoLock
+import app.ghghorg.atsassets.core.Tab
 import app.ghghorg.atsassets.core.UnreadableDataException
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Dispatchers

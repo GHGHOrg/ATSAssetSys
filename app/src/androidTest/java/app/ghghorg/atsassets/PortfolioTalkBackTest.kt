@@ -11,6 +11,7 @@ import app.ghghorg.atsassets.core.Instrument
 import app.ghghorg.atsassets.core.Portfolio
 import app.ghghorg.atsassets.core.Price
 import app.ghghorg.atsassets.core.SellAllocation
+import app.ghghorg.atsassets.core.Tab
 import app.ghghorg.atsassets.core.Transaction
 import app.ghghorg.atsassets.core.TransactionType
 import app.ghghorg.atsassets.ui.AppState
@@ -18,7 +19,6 @@ import app.ghghorg.atsassets.ui.PortfolioScreen
 import app.ghghorg.atsassets.ui.PortfolioScreenActions
 import app.ghghorg.atsassets.ui.PortfoliosScreen
 import app.ghghorg.atsassets.ui.Screen
-import app.ghghorg.atsassets.ui.Tab
 import app.ghghorg.atsassets.ui.theme.ATSAssetSystemTheme
 import org.junit.Assert.assertEquals
 import org.junit.Rule

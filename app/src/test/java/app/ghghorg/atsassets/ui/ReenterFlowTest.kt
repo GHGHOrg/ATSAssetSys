@@ -19,6 +19,7 @@ import app.ghghorg.atsassets.core.SellAllocation
 import app.ghghorg.atsassets.core.Sells
 import app.ghghorg.atsassets.core.SplitRatio
 import app.ghghorg.atsassets.core.SplitRefusal
+import app.ghghorg.atsassets.core.Tab
 import app.ghghorg.atsassets.core.Transaction
 import app.ghghorg.atsassets.core.TransactionType
 import app.ghghorg.atsassets.prices.CheckRefusal

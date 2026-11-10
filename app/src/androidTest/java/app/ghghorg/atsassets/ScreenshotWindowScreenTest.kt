@@ -22,13 +22,13 @@ import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
+import app.ghghorg.atsassets.core.Tab
 import app.ghghorg.atsassets.ui.AppState
 import app.ghghorg.atsassets.ui.BottomBar
 import app.ghghorg.atsassets.ui.DEFAULT_TAB_ORDER
 import app.ghghorg.atsassets.ui.Screen
 import app.ghghorg.atsassets.ui.SettingsActions
 import app.ghghorg.atsassets.ui.SettingsScreen
-import app.ghghorg.atsassets.ui.Tab
 import app.ghghorg.atsassets.ui.theme.ATSAssetSystemTheme
 import org.junit.Assert.assertEquals
 import org.junit.Rule

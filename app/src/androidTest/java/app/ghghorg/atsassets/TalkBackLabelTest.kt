@@ -6,6 +6,7 @@ import androidx.test.ext.junit.runners.AndroidJUnit4
 import app.ghghorg.atsassets.core.Holdings
 import app.ghghorg.atsassets.core.Portfolio
 import app.ghghorg.atsassets.core.SplitRatio
+import app.ghghorg.atsassets.core.Tab
 import app.ghghorg.atsassets.core.Transaction
 import app.ghghorg.atsassets.core.TransactionType
 import app.ghghorg.atsassets.ui.AppState
@@ -13,7 +14,6 @@ import app.ghghorg.atsassets.ui.HoldingActions
 import app.ghghorg.atsassets.ui.HoldingDetailScreen
 import app.ghghorg.atsassets.ui.ReversalActions
 import app.ghghorg.atsassets.ui.Screen
-import app.ghghorg.atsassets.ui.Tab
 import app.ghghorg.atsassets.ui.TransactionReversalScreen
 import app.ghghorg.atsassets.ui.theme.ATSAssetSystemTheme
 import org.junit.Rule

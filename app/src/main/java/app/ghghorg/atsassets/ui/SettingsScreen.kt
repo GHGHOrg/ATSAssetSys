@@ -45,13 +45,15 @@ class SettingsActions(
     val onCloseScreenshots: () -> Unit = {},
     val onAllowScreenshots: () -> Unit = {},
     val onTurnOffScreenshots: () -> Unit = {},
+    val onOpenTabOrder: () -> Unit = {},
 )
 
 /**
  * Settings (section 6, wireframe 10f frame B; iterations 20 and 21), drawn from its model (CR2): "<" and the title,
  * then the Security section (marker 3) with Auto-lock and its current choice, which opens the choice of four in the
  * shared choice layer with the default marked and "Takes effect at once. Saved." (frame C, marker 7), and the Screenshot
- * window with "Off" or its time left, which opens its layer (marker 8). Only what is built shows: the other sections
+ * window with "Off" or its time left, which opens its layer (marker 8); the Navigation section with the Tab order and
+ * the order in force, which opens the Tab order screen (marker 5, 22). Only what is built shows: the other sections
  * follow with their iterations. Back returns to More.
  */
 @Composable
@@ -92,6 +94,22 @@ fun SettingsScreen(
                     value = shown,
                     spoken = stringResource(R.string.settings_screenshot_spoken, screenshotSpoken(left)),
                     onOpen = actions.onOpenScreenshots,
+                    enabled = !state.saving,
+                )
+            }
+            Text(
+                text = stringResource(R.string.settings_navigation),
+                style = MaterialTheme.typography.titleMedium,
+                modifier = Modifier.semantics { heading() },
+            )
+            OutlinedCard(modifier = Modifier.fillMaxWidth()) {
+                val order = model.tabOrder.map { stringResource(it.labelRes) }
+                val value = stringResource(R.string.tab_order_value, *order.toTypedArray())
+                SettingRow(
+                    name = stringResource(R.string.settings_tab_order),
+                    value = value,
+                    spoken = stringResource(R.string.settings_tab_order_spoken, value),
+                    onOpen = actions.onOpenTabOrder,
                     enabled = !state.saving,
                 )
             }

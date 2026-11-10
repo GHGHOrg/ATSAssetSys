@@ -17,6 +17,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.unit.dp
 import app.ghghorg.atsassets.R
+import app.ghghorg.atsassets.core.Tab
 
 /**
  * Shows the screen the ViewModel names. Only the unlocked branch of MainActivity calls this. [screenshots] are
@@ -49,7 +50,7 @@ fun AppContent(
                 Box(modifier = Modifier.weight(1f)) {
                     BarContent(state, viewModel, screenshots)
                 }
-                BottomBar(DEFAULT_TAB_ORDER, state.tab, viewModel::selectTab)
+                BottomBar(state.tabOrder.tabs, state.tab, viewModel::selectTab)
             }
             PortfolioDialogs(state, viewModel)
         }
@@ -288,7 +289,13 @@ private fun BarContent(
                 onCloseScreenshots = viewModel::closeScreenshotLayer,
                 onAllowScreenshots = screenshots.onAllow,
                 onTurnOffScreenshots = screenshots.onTurnOff,
+                onOpenTabOrder = viewModel::openTabOrder,
             ),
+        )
+
+        Screen.TAB_ORDER -> TabOrderScreen(
+            state = state,
+            actions = TabOrderActions(onBack = viewModel::closeTabOrder, onUp = viewModel::moveTabUp, onDown = viewModel::moveTabDown),
         )
 
         Screen.NET_WORTH -> NetWorthScreen(
