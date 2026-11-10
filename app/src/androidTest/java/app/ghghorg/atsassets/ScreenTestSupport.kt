@@ -104,7 +104,8 @@ class DeviceUnlockedRule : ExternalResource() {
 
 /**
  * Sets the system font scale before the activity starts, so it opens at that scale, and afterwards puts it back and frees
- * the rotation [turn] fixed, also when the test fails.
+ * the rotation [turn] fixed, also when the test fails. It waits for the scale to be back before the next test starts:
+ * without the wait, the change reached the next test about 2 s in and Android re-created its activity (open item 53).
  */
 class DeviceSettingsRule(
     private val fontScale: Float,
@@ -118,12 +119,15 @@ class DeviceSettingsRule(
     }
 
     override fun after() {
+        // With no setting stored, Android uses the scale 1.0 (my reading).
+        val restored = previousFontScale.toFloatOrNull() ?: 1.0f
         if (previousFontScale.isEmpty() || previousFontScale == "null") {
             shell("settings delete system font_scale")
         } else {
             shell("settings put system font_scale $previousFontScale")
         }
         InstrumentationRegistry.getInstrumentation().uiAutomation.setRotation(UiAutomation.ROTATION_UNFREEZE)
+        waitFor("font scale $restored again") { Resources.getSystem().configuration.fontScale == restored }
     }
 }
 
