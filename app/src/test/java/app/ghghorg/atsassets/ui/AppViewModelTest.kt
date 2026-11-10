@@ -6,7 +6,6 @@ import app.ghghorg.atsassets.core.CashDirection
 import app.ghghorg.atsassets.core.CashEntry
 import app.ghghorg.atsassets.core.CashEntryRefusal
 import app.ghghorg.atsassets.core.CashType
-import app.ghghorg.atsassets.core.ClassList
 import app.ghghorg.atsassets.core.ClassLists
 import app.ghghorg.atsassets.core.Classification
 import app.ghghorg.atsassets.core.HiddenHolding
@@ -1852,14 +1851,7 @@ internal class FakeStore(
                     }
                 saved[instrument.ticker]?.let { priced.copy(profile = it) } ?: priced
             }
-        for ((list, value) in Classification.additions(storedClassLists, saved.values)) {
-            storedClassLists =
-                if (list == ClassList.SECTOR) {
-                    storedClassLists.copy(sectors = storedClassLists.sectors + value)
-                } else {
-                    storedClassLists.copy(geographies = storedClassLists.geographies + value)
-                }
-        }
+        storedClassLists = Classification.extended(storedClassLists, saved.values)
     }
 
     var storedHidden: List<HiddenHolding> = emptyList()

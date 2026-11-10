@@ -18,6 +18,8 @@ import app.ghghorg.atsassets.core.CashPairResult
 import app.ghghorg.atsassets.core.CashRow
 import app.ghghorg.atsassets.core.CashRules
 import app.ghghorg.atsassets.core.CashType
+import app.ghghorg.atsassets.core.ClassLists
+import app.ghghorg.atsassets.core.Classification
 import app.ghghorg.atsassets.core.Fraction
 import app.ghghorg.atsassets.core.HiddenHolding
 import app.ghghorg.atsassets.core.Hiding
@@ -243,6 +245,9 @@ data class HiddenRow(
 enum class HoldingTab {
     TRANSACTIONS,
     LOTS,
+
+    // Sector, geography and the split history (view 6, wireframe 06 frame C; 23a).
+    CLASSIFICATION,
 }
 
 /**
@@ -537,6 +542,8 @@ data class AppState(
     // 22: the bottom bar's order as stored, the default until it is loaded; why a move was not saved.
     val tabOrder: TabOrder = TabOrder.DEFAULT,
     val tabOrderRefusal: SaveRefusal? = null,
+    // 23a: the sector and geography lists as stored, loaded with the records and extended by each refresh's profiles.
+    val classLists: ClassLists = ClassLists(),
     // 15c: the kept fields, worked out in KeptFields.kt from the fields above, so reading one costs nothing. Every write
     // through the view model refreshes them; a state built directly gets them from these defaults.
     // As of today (4.8), by portfolio, then ticker.
@@ -644,6 +651,15 @@ data class AppState(
     /** Its Lots tab's rows, with each lot's gain at the latest price (view 6; CR2, 16a step 6). */
     val holdingLotRows: List<LotRowModel>
         get() = HoldingDetail.lots(holdingLots, shownPrice)
+
+    /** Its Classification tab (view 6, frame C; CR2, 23a); null when no holding is shown. */
+    val holdingClassification: ClassificationModel?
+        get() {
+            val id = portfolioId ?: return null
+            val ticker = holdingTicker ?: return null
+            val profile = instruments.firstOrNull { it.ticker == ticker }?.profile
+            return HoldingDetail.classification(profile, classLists, transactions, id, ticker)
+        }
 
     /** A portfolio's value, cost and gain/loss as the Portfolios list and its screen draw them (view 3; CR2, 16a). */
     fun portfolioFigures(portfolioId: String): PortfolioFiguresModel = PortfolioFigures.of(holdingsOf(portfolioId), KeptFields.prices(instruments))
@@ -940,7 +956,9 @@ class AppViewModel(
                 val autoLock = opened.loadAutoLock()
                 // 22: the tab order too; until then the bar is not shown (LOADING).
                 val tabOrder = opened.loadTabOrder()
-                showLoaded(entries, portfolios, transactions, instruments, hidden, autoLock, tabOrder)
+                // 23a: the sector and geography lists, for the Classification tab.
+                val classLists = opened.loadClassLists()
+                showLoaded(entries, portfolios, transactions, instruments, hidden, autoLock, tabOrder, classLists)
                 // The first unlock's refresh: onUnlocked came while the records were still loading (16a decision 2).
                 refreshPrices()
             } catch (e: UnreadableDataException) {
@@ -1018,8 +1036,11 @@ class AppViewModel(
             try {
                 val outcome = PriceRefresh.refresh(tickers, isOnline(), priceSource, opened, unasked)
                 mutableState.update {
+                    // 23a: the lists gain what the store added: the texts of the profiles of stored instruments.
+                    val saved = outcome.profiles.filterKeys { ticker -> it.instruments.any { i -> i.ticker == ticker } }
                     it.copy(
                         instruments = PriceRefresh.applied(it.instruments, outcome),
+                        classLists = Classification.extended(it.classLists, saved.values),
                         refreshing = false,
                         refreshFailed = outcome.refreshFailed,
                     )
@@ -2263,6 +2284,7 @@ class AppViewModel(
         hidden: List<HiddenHolding>,
         autoLock: AutoLock,
         tabOrder: TabOrder,
+        classLists: ClassLists,
     ) {
         mutableState.update {
             valued(
@@ -2275,6 +2297,7 @@ class AppViewModel(
                     hidden = hidden,
                     autoLock = autoLock,
                     tabOrder = tabOrder,
+                    classLists = classLists,
                 ),
             )
         }

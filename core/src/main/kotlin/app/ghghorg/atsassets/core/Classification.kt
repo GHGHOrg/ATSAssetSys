@@ -73,6 +73,14 @@ object Classification {
         after.drop(lists[list].size).map { list to it }
     }
 
+    /** [lists] with the [additions] of [profiles] added, as the store keeps them after a refresh (23a). */
+    fun extended(
+        lists: ClassLists,
+        profiles: Collection<SourceProfile>,
+    ): ClassLists = additions(lists, profiles).fold(lists) { kept, (list, value) ->
+        if (list == ClassList.SECTOR) kept.copy(sectors = kept.sectors + value) else kept.copy(geographies = kept.geographies + value)
+    }
+
     /**
      * The effective value without an override (24): the list's value for the source's text, or the text itself while
      * the list does not hold it yet, or "Unclassified" when the source gives no value.

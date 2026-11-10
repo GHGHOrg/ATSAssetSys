@@ -75,6 +75,13 @@ class ClassificationTest {
     }
 
     @Test
+    fun extended_addsTheAdditionsToTheirLists() {
+        val lists = ClassLists(sectors = listOf("Technology"))
+        val extended = Classification.extended(lists, listOf(SourceProfile("Energy", "US"), SourceProfile("technology", null)))
+        assertEquals(ClassLists(sectors = listOf("Technology", "Energy"), geographies = listOf("US")), extended)
+    }
+
+    @Test
     fun aTextNotYetOnTheList_isStillItsOwnValue_fromTheSource() {
         // The list is updated with each refresh (step 5); until then the source's own text is shown, trimmed.
         assertEquals(EffectiveClass("Energy", ClassOrigin.SOURCE), Classification.effective(sectors, " Energy"))

@@ -45,6 +45,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import app.ghghorg.atsassets.R
+import app.ghghorg.atsassets.core.EffectiveClass
 import app.ghghorg.atsassets.core.Holding
 import app.ghghorg.atsassets.core.Reversals
 import app.ghghorg.atsassets.core.SplitRatio
@@ -179,7 +180,7 @@ private fun FixedPart(
                 )
             }
         }
-        val tabs = listOf(HoldingTab.TRANSACTIONS, HoldingTab.LOTS)
+        val tabs = listOf(HoldingTab.TRANSACTIONS, HoldingTab.LOTS, HoldingTab.CLASSIFICATION)
         PrimaryTabRow(selectedTabIndex = tabs.indexOf(state.holdingTab)) {
             tabs.forEach { tab ->
                 Tab(
@@ -219,6 +220,8 @@ private fun TabContent(
                     RowList(state.holdingLotRows) { LotRow(it) }
                 }
             }
+
+            HoldingTab.CLASSIFICATION -> state.holdingClassification?.let { ClassificationTab(it) }
         }
     }
 }
@@ -226,6 +229,81 @@ private fun TabContent(
 private fun tabLabel(tab: HoldingTab): Int = when (tab) {
     HoldingTab.TRANSACTIONS -> R.string.holding_tab_transactions
     HoldingTab.LOTS -> R.string.holding_tab_lots
+    HoldingTab.CLASSIFICATION -> R.string.holding_tab_classification
+}
+
+/**
+ * The Classification tab (view 6, wireframe 06 frame C and marker 7; 23a), drawn from its model (CR2): Sector and
+ * Geography, each with its value and "From the source", or "Unclassified" (4.9, C14); then "Split history", every split
+ * of the holding, newest first, a reversed one marked (C9; your B), or one plain line when there is none.
+ */
+@Composable
+private fun ClassificationTab(model: ClassificationModel) {
+    Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+        ClassRow(stringResource(R.string.class_sector), model.sector)
+        ClassRow(stringResource(R.string.class_geography), model.geography)
+        Text(
+            text = stringResource(R.string.split_history),
+            style = MaterialTheme.typography.titleMedium,
+            modifier = Modifier.semantics { heading() },
+        )
+        if (model.splits.isEmpty()) {
+            Text(text = stringResource(R.string.split_history_none), style = MaterialTheme.typography.bodyLarge)
+        } else {
+            model.splits.forEach { SplitHistoryRow(it) }
+        }
+    }
+}
+
+/** "Sector", its value and its origin under it, read as one line: "Sector, Technology, from the source". */
+@OptIn(ExperimentalLayoutApi::class)
+@Composable
+private fun ClassRow(
+    name: String,
+    effective: EffectiveClass,
+) {
+    val value = effective.value
+    val spoken =
+        if (value == null) stringResource(R.string.class_row_unclassified_spoken, name) else stringResource(R.string.class_row_spoken, name, value)
+    Column(modifier = Modifier.fillMaxWidth().clearAndSetSemantics { contentDescription = spoken }) {
+        FlowRow(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
+            Text(text = name, style = MaterialTheme.typography.bodyLarge)
+            Text(
+                text = value ?: stringResource(R.string.class_unclassified),
+                style = MaterialTheme.typography.bodyLarge,
+                fontWeight = FontWeight.Medium,
+            )
+        }
+        if (value != null) {
+            Text(
+                text = stringResource(R.string.class_from_source),
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+        }
+    }
+}
+
+/** One split: its date with "ET" and its ratio, "(reversed)" when reversed; read as one line. */
+@OptIn(ExperimentalLayoutApi::class)
+@Composable
+private fun SplitHistoryRow(row: SplitHistoryRowModel) {
+    val shown = ratioText(row.ratio)
+    val spoken =
+        if (row.reversed) {
+            stringResource(R.string.split_history_reversed_spoken, row.date, shown)
+        } else {
+            stringResource(R.string.holding_transaction_split_spoken, row.date, shown)
+        }
+    FlowRow(
+        modifier = Modifier.fillMaxWidth().clearAndSetSemantics { contentDescription = spoken },
+        horizontalArrangement = Arrangement.spacedBy(16.dp),
+        verticalArrangement = Arrangement.spacedBy(2.dp),
+    ) {
+        Text(text = stringResource(R.string.date_with_et, row.date), style = MaterialTheme.typography.bodyLarge)
+        Text(text = shown, style = MaterialTheme.typography.bodyLarge)
+        if (row.reversed) Text(text = stringResource(R.string.split_history_reversed), style = MaterialTheme.typography.bodyLarge)
+    }
 }
 
 /** "<" and the ticker; TalkBack reads "<" as Back. */
