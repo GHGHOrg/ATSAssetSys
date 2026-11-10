@@ -186,6 +186,21 @@ internal fun MainRule.unlockApp() {
 }
 
 /**
+ * Passes a check that is not the unlock, such as the screenshot window's (21): types the test PIN once the PIN pad is up
+ * and waits until it closes; retried as [unlockApp] is.
+ */
+internal fun passCheck() {
+    repeat(3) { attempt ->
+        waitFor("the check's PIN pad ($PIN_PAD_ENTER)", 15_000) { pinPadUp() }
+        shell("input keyevent " + List(8) { "KEYCODE_DEL" }.joinToString(" "))
+        typePin()
+        if (poll(5_000) { !pinPadUp() }) return
+        saveScreen("check-${SystemClock.uptimeMillis()}-$attempt")
+    }
+    fail("The check did not take the test PIN")
+}
+
+/**
  * What the screen showed when the unlock failed (plan/spikes/screen-tests.md 11.6, run 2): a screenshot in
  * /data/local/tmp, which the workflow pulls, and the focused window and the active window's nodes in logcat under
  * ScreenTestUnlock.
