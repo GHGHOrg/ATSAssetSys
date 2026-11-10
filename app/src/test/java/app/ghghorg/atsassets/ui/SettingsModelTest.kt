@@ -3,6 +3,7 @@ package app.ghghorg.atsassets.ui
 import app.ghghorg.atsassets.core.AutoLock
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
+import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
@@ -32,6 +33,32 @@ class SettingsModelTest {
             ),
             options,
         )
+    }
+
+    // 21: the screenshot window's time left (marker 8), in whole seconds rounded up, so 3:00 shows at the start.
+    @Test
+    fun theScreenshotWindow_offShowsNoTime() {
+        assertNull(Settings.of(AutoLock.EVERY_LEAVE, refusal = null).screenshotLeft)
+        assertNull(Settings.of(AutoLock.EVERY_LEAVE, refusal = null, screenshotLeftMs = null).screenshotLeft)
+        assertNull(Settings.of(AutoLock.EVERY_LEAVE, refusal = null, screenshotLeftMs = 0L).screenshotLeft)
+    }
+
+    @Test
+    fun theScreenshotWindow_showsMinutesAndSeconds_roundedUp() {
+        val cases =
+            mapOf(
+                180_000L to ScreenshotTimeLeft("3:00", 3, 0),
+                179_001L to ScreenshotTimeLeft("3:00", 3, 0),
+                179_000L to ScreenshotTimeLeft("2:59", 2, 59),
+                161_000L to ScreenshotTimeLeft("2:41", 2, 41),
+                160_001L to ScreenshotTimeLeft("2:41", 2, 41),
+                60_000L to ScreenshotTimeLeft("1:00", 1, 0),
+                59_000L to ScreenshotTimeLeft("0:59", 0, 59),
+                1L to ScreenshotTimeLeft("0:01", 0, 1),
+            )
+        for ((ms, expected) in cases) {
+            assertEquals("$ms ms", expected, Settings.of(AutoLock.EVERY_LEAVE, refusal = null, screenshotLeftMs = ms).screenshotLeft)
+        }
     }
 
     @Test

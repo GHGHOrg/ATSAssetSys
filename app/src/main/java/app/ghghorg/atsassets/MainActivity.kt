@@ -45,6 +45,7 @@ import app.ghghorg.atsassets.prices.NetworkStatus
 import app.ghghorg.atsassets.prices.finnhub.FinnhubSource
 import app.ghghorg.atsassets.ui.AppContent
 import app.ghghorg.atsassets.ui.AppViewModel
+import app.ghghorg.atsassets.ui.ScreenshotControls
 import app.ghghorg.atsassets.ui.theme.ATSAssetSystemTheme
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.map
@@ -152,6 +153,7 @@ class MainActivity : FragmentActivity() {
                             AppContent(
                                 viewModel = viewModel,
                                 modifier = Modifier.padding(innerPadding),
+                                screenshots = ScreenshotControls(::allowScreenshots, ::turnOffScreenshots),
                             )
                         } else {
                             CoverScreen(modifier = Modifier.padding(innerPadding))
@@ -213,13 +215,13 @@ class MainActivity : FragmentActivity() {
     }
 
     /** Settings' "Allow screenshots for 3 minutes" (21): the check, only while unlocked and the window is off. */
-    fun allowScreenshots() {
+    private fun allowScreenshots() {
         if (lock.state != LockState.Unlocked || !screenshots.requestCheck()) return
         prompt.authenticate(screenshotPromptInfo)
     }
 
     /** Settings' Turn off (21). */
-    fun turnOffScreenshots() = endScreenshotWindow()
+    private fun turnOffScreenshots() = endScreenshotWindow()
 
     private fun endScreenshotWindow() {
         screenshots.end()

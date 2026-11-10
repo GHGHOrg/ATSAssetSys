@@ -86,4 +86,5 @@ To be shown on the phone in step 8:
 - Draft 2026-11-10; approved the same day.
 
 ## 14. Departures from the plan
-None yet.
+- Step 5: a turn of the phone keeps the window only while the app stays unlocked; under "every time you leave" a turn locks the app (since 01), so it also ends the window (decision 1). `onStop` ends it unless the activity is only re-created and the app is still unlocked.
+- Step 6: the frame of 18 to 20's choice layer (the clear layer, the titled card, the scroll) became `LayerCard` in AllocationParts.kt, shared by the choice layer and the screenshot layer; the choice layer's radio group is now a column inside the card. A first version passed the group as a second modifier parameter, which lint flagged (ModifierParameter, a sixth finding); it was changed, not silenced. The time left is shown in whole seconds rounded up, so the window starts at 3:00 and its last second reads 0:01. TalkBack reads the time with plurals ("1 minute", "2 minutes").

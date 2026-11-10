@@ -533,8 +533,10 @@ data class AppState(
     val autoLockRefusal: SaveRefusal? = null,
     // Settings' Auto-lock choice layer (wireframe 10f frame C), drawn in the window.
     val autoLockChoiceOpen: Boolean = false,
-    // 21: the screenshot window's milliseconds left, as MainActivity last passed them; null while it is off.
+    // 21: the screenshot window's milliseconds left, as MainActivity last passed them; null while it is off. Its layer
+    // on Settings (wireframe 10f frame C, marker 8), drawn in the window.
     val screenshotWindowLeftMs: Long? = null,
+    val screenshotLayerOpen: Boolean = false,
     // 15c: the kept fields, worked out in KeptFields.kt from the fields above, so reading one costs nothing. Every write
     // through the view model refreshes them; a state built directly gets them from these defaults.
     // As of today (4.8), by portfolio, then ticker.
@@ -690,7 +692,7 @@ data class AppState(
 
     /** Settings as the screen draws it (section 6; CR2, 20). */
     val settings: SettingsModel
-        get() = Settings.of(autoLock, autoLockRefusal)
+        get() = Settings.of(autoLock, autoLockRefusal, screenshotWindowLeftMs)
 
     /** The sell screen's lot rows, each lot's gain at the latest price in today's shares (16c decisions 3 and 4). */
     val sellLotRows: List<SellLotRowModel>
@@ -961,6 +963,7 @@ class AppViewModel(
                 allocationMenuOpen = false,
                 portfolioChoiceOpen = false,
                 autoLockChoiceOpen = false,
+                screenshotLayerOpen = false,
                 autoLockRefusal = null,
                 buyNotice = null,
                 buyRefusals = BuyRefusals(),
@@ -1030,9 +1033,15 @@ class AppViewModel(
     fun onUnlocked() {
         refreshPrices()
         // View 1: "Allocation by" is not saved; each unlock starts on Asset type (18).
-        // The choice layers close, as after 18; Settings' layer too (20).
+        // The choice layers close, as after 18; Settings' layers too (20, 21).
         mutableState.update {
-            it.copy(allocationBy = AllocationBy.ASSET_TYPE, allocationMenuOpen = false, portfolioChoiceOpen = false, autoLockChoiceOpen = false)
+            it.copy(
+                allocationBy = AllocationBy.ASSET_TYPE,
+                allocationMenuOpen = false,
+                portfolioChoiceOpen = false,
+                autoLockChoiceOpen = false,
+                screenshotLayerOpen = false,
+            )
         }
         val current = mutableState.value
         if (current.screen != Screen.TABS || current.portfolioDialog != null) return
@@ -2355,6 +2364,16 @@ class AppViewModel(
     /** The screenshot window's milliseconds left, null when off, from MainActivity at each change and tick (21). Shown only. */
     fun onScreenshotWindow(leftMs: Long?) = mutableState.update { it.copy(screenshotWindowLeftMs = leftMs) }
 
+    /** The Screenshot window row (marker 8): opens its layer, drawn in the window; on Settings only, not over another layer. */
+    fun openScreenshotLayer() {
+        val current = mutableState.value
+        if (current.screen != Screen.SETTINGS || current.saving || current.autoLockChoiceOpen) return
+        mutableState.update { it.copy(screenshotLayerOpen = true) }
+    }
+
+    /** Back or a tap outside the layer: closes it; the window goes on or stays off as it is. */
+    fun closeScreenshotLayer() = mutableState.update { it.copy(screenshotLayerOpen = false) }
+
     /** More's gear (section 6; wireframe 10f marker 2): opens Settings; the tab stays More, so Back returns there. */
     fun openSettings() {
         val current = mutableState.value
@@ -2366,13 +2385,13 @@ class AppViewModel(
     fun closeSettings() {
         val current = mutableState.value
         if (current.screen != Screen.SETTINGS || current.saving) return
-        mutableState.update { it.copy(screen = Screen.TABS, autoLockChoiceOpen = false, autoLockRefusal = null) }
+        mutableState.update { it.copy(screen = Screen.TABS, autoLockChoiceOpen = false, screenshotLayerOpen = false, autoLockRefusal = null) }
     }
 
     /** The Auto-lock row (marker 3): opens the choice layer (frame C), drawn in the window; on Settings only. */
     fun openAutoLockChoice() {
         val current = mutableState.value
-        if (current.screen != Screen.SETTINGS || current.saving) return
+        if (current.screen != Screen.SETTINGS || current.saving || current.screenshotLayerOpen) return
         mutableState.update { it.copy(autoLockChoiceOpen = true, autoLockRefusal = null) }
     }
 

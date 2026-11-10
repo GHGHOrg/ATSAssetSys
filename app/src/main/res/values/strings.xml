@@ -424,4 +424,23 @@
     <string name="auto_lock_note">Takes effect at once. Saved.</string>
     <!-- Iteration 21: the screenshot window (proposed, 21 file section 12; approval on the phone in step 8). -->
     <string name="screenshot_prompt_title">Allow screenshots</string>
+    <string name="settings_screenshot">Screenshot window</string>
+    <string name="settings_screenshot_spoken">Screenshot window, %1$s</string>
+    <string name="screenshot_off">Off</string>
+    <string name="screenshot_on_row">On, %1$s left</string>
+    <string name="screenshot_on_spoken">on, %1$s %2$s left</string>
+    <plurals name="screenshot_minutes_spoken">
+        <item quantity="one">%d minute</item>
+        <item quantity="other">%d minutes</item>
+    </plurals>
+    <plurals name="screenshot_seconds_spoken">
+        <item quantity="one">%d second</item>
+        <item quantity="other">%d seconds</item>
+    </plurals>
+    <string name="screenshot_off_line">Off: screenshots and recording are blocked.</string>
+    <string name="screenshot_allow">Allow screenshots for 3 minutes</string>
+    <string name="screenshot_allow_note">Asks for your fingerprint or phone PIN each time.</string>
+    <string name="screenshot_on_line">On, %1$s left. Ends when you leave the app.</string>
+    <string name="screenshot_on_warning">Anything can capture the screen while it is on.</string>
+    <string name="screenshot_turn_off">Turn off</string>
 </resources>
