@@ -18,11 +18,15 @@ import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.unit.dp
 import app.ghghorg.atsassets.R
 
-/** Shows the screen the ViewModel names. Only the unlocked branch of MainActivity calls this. */
+/**
+ * Shows the screen the ViewModel names. Only the unlocked branch of MainActivity calls this. [screenshots] are
+ * MainActivity's Allow and Turn off for the screenshot window, which K8 owns (21).
+ */
 @Composable
 fun AppContent(
     viewModel: AppViewModel,
     modifier: Modifier = Modifier,
+    screenshots: ScreenshotControls = ScreenshotControls({}, {}),
 ) {
     val state by viewModel.state.collectAsState()
     when (state.screen) {
@@ -43,7 +47,7 @@ fun AppContent(
             val under = if (dialogOpen) Modifier.clearAndSetSemantics { } else Modifier
             Column(modifier = Modifier.fillMaxSize().then(under)) {
                 Box(modifier = Modifier.weight(1f)) {
-                    BarContent(state, viewModel)
+                    BarContent(state, viewModel, screenshots)
                 }
                 BottomBar(DEFAULT_TAB_ORDER, state.tab, viewModel::selectTab)
             }
@@ -90,10 +94,17 @@ private fun PortfolioDialogs(
     }
 }
 
+/** The screenshot window's two actions, from MainActivity (21). */
+class ScreenshotControls(
+    val onAllow: () -> Unit,
+    val onTurnOff: () -> Unit,
+)
+
 @Composable
 private fun BarContent(
     state: AppState,
     viewModel: AppViewModel,
+    screenshots: ScreenshotControls,
 ) {
     BackHandler(enabled = state.backGoesToOverall) { viewModel.selectTab(Tab.OVERALL) }
     when (state.screen) {
@@ -273,6 +284,10 @@ private fun BarContent(
                 onOpenChoice = viewModel::openAutoLockChoice,
                 onCloseChoice = viewModel::closeAutoLockChoice,
                 onChoose = viewModel::chooseAutoLock,
+                onOpenScreenshots = viewModel::openScreenshotLayer,
+                onCloseScreenshots = viewModel::closeScreenshotLayer,
+                onAllowScreenshots = screenshots.onAllow,
+                onTurnOffScreenshots = screenshots.onTurnOff,
             ),
         )
 

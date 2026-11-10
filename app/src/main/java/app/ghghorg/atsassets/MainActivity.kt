@@ -40,10 +40,12 @@ import app.ghghorg.atsassets.data.SqlCipherOpener
 import app.ghghorg.atsassets.lock.AppLock
 import app.ghghorg.atsassets.lock.LockHolder
 import app.ghghorg.atsassets.lock.LockState
+import app.ghghorg.atsassets.lock.ScreenshotWindow
 import app.ghghorg.atsassets.prices.NetworkStatus
 import app.ghghorg.atsassets.prices.finnhub.FinnhubSource
 import app.ghghorg.atsassets.ui.AppContent
 import app.ghghorg.atsassets.ui.AppViewModel
+import app.ghghorg.atsassets.ui.ScreenshotControls
 import app.ghghorg.atsassets.ui.theme.ATSAssetSystemTheme
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.map
@@ -57,10 +59,14 @@ private const val IDLE_CHECK_MS = 1_000L
 class MainActivity : FragmentActivity() {
     // Kept across a re-creation by LockHolder; set first in onCreate.
     private lateinit var lock: AppLock
+    private lateinit var screenshots: ScreenshotWindow
     private var lockState by mutableStateOf(LockState.Locked)
     private var windowFocused by mutableStateOf(false)
+
+    // 21 decision 2: one prompt for the lock and the screenshot window, each with its own title.
     private lateinit var prompt: BiometricPrompt
     private lateinit var promptInfo: BiometricPrompt.PromptInfo
+    private lateinit var screenshotPromptInfo: BiometricPrompt.PromptInfo
     private lateinit var viewModel: AppViewModel
 
     // Stops watching the network; set while the app is in view (16a decision 2).
@@ -77,9 +83,14 @@ class MainActivity : FragmentActivity() {
             }
         }
 
+    // 21: while the screenshot window is on, the time left on each second, and the window's end at exactly 0 (risk 4).
+    private val screenshotTick = Runnable { applyScreenshotWindow() }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        lock = ViewModelProvider(this)[LockHolder::class.java].lock
+        val holder = ViewModelProvider(this)[LockHolder::class.java]
+        lock = holder.lock
+        screenshots = holder.screenshots
         lockState = lock.state
         // Default privacy (spec section 9): blocked screenshots and recording, hidden recents preview.
         window.setFlags(
@@ -95,7 +106,13 @@ class MainActivity : FragmentActivity() {
             ContextCompat.getMainExecutor(this),
             object : BiometricPrompt.AuthenticationCallback() {
                 override fun onAuthenticationSucceeded(result: BiometricPrompt.AuthenticationResult) {
-                    lock.onAuthSucceeded(SystemClock.elapsedRealtime())
+                    val now = SystemClock.elapsedRealtime()
+                    // 21 decision 2: a check the window asked for is the window's, never the lock's.
+                    if (screenshots.onCheckPassed(now, appUnlocked = lock.state == LockState.Unlocked)) {
+                        applyScreenshotWindow()
+                        return
+                    }
+                    lock.onAuthSucceeded(now)
                     lockState = lock.state
                     // Here, not on every composition: a turn of the phone that keeps the app unlocked (20) is no unlock.
                     if (lockState == LockState.Unlocked) {
@@ -106,6 +123,7 @@ class MainActivity : FragmentActivity() {
 
                 // Dismissed or error. One wrong attempt is onAuthenticationFailed, not this.
                 override fun onAuthenticationError(errorCode: Int, errString: CharSequence) {
+                    screenshots.onCheckEnded()
                     lock.onAuthCancelledOrFailed()
                     lockState = lock.state
                 }
@@ -113,6 +131,10 @@ class MainActivity : FragmentActivity() {
         )
         promptInfo = BiometricPrompt.PromptInfo.Builder()
             .setTitle(getString(R.string.prompt_title))
+            .setAllowedAuthenticators(BIOMETRIC_STRONG or DEVICE_CREDENTIAL)
+            .build()
+        screenshotPromptInfo = BiometricPrompt.PromptInfo.Builder()
+            .setTitle(getString(R.string.screenshot_prompt_title))
             .setAllowedAuthenticators(BIOMETRIC_STRONG or DEVICE_CREDENTIAL)
             .build()
         viewModel = ViewModelProvider(this, viewModelFactory())[AppViewModel::class.java]
@@ -131,6 +153,7 @@ class MainActivity : FragmentActivity() {
                             AppContent(
                                 viewModel = viewModel,
                                 modifier = Modifier.padding(innerPadding),
+                                screenshots = ScreenshotControls(::allowScreenshots, ::turnOffScreenshots),
                             )
                         } else {
                             CoverScreen(modifier = Modifier.padding(innerPadding))
@@ -165,12 +188,15 @@ class MainActivity : FragmentActivity() {
         lockState = lock.state
         showPromptIfNeeded()
         idleHandler.postDelayed(idleCheck, IDLE_CHECK_MS)
+        // 21: a window kept across a turn of the phone goes on in the new activity; otherwise it is off.
+        applyScreenshotWindow()
         // When the phone comes back online, a refresh that failed runs again (16a decision 2).
         stopWatchingNetwork = NetworkStatus(applicationContext).watch(Handler(Looper.getMainLooper())) { viewModel.onOnline() }
     }
 
     override fun onStop() {
         idleHandler.removeCallbacks(idleCheck)
+        idleHandler.removeCallbacks(screenshotTick)
         stopWatchingNetwork()
         stopWatchingNetwork = {}
         prompt.cancelAuthentication()
@@ -178,7 +204,45 @@ class MainActivity : FragmentActivity() {
         val screenOff = !getSystemService(PowerManager::class.java).isInteractive
         lock.onAppLeft(SystemClock.elapsedRealtime(), screenOff)
         lockState = lock.state
+        // 21: leaving ends the screenshot window (spec 9), and so does any lock (decision 1); a turn of the phone that
+        // keeps the app unlocked is no leaving, and the new activity goes on with it (onStart).
+        if (!isChangingConfigurations || lock.state != LockState.Unlocked) screenshots.end()
+        if (screenshots.timeLeft(SystemClock.elapsedRealtime()) == null) {
+            window.setFlags(WindowManager.LayoutParams.FLAG_SECURE, WindowManager.LayoutParams.FLAG_SECURE)
+            viewModel.onScreenshotWindow(null)
+        }
         super.onStop()
+    }
+
+    /** Settings' "Allow screenshots for 3 minutes" (21): the check, only while unlocked and the window is off. */
+    private fun allowScreenshots() {
+        if (lock.state != LockState.Unlocked || !screenshots.requestCheck()) return
+        prompt.authenticate(screenshotPromptInfo)
+    }
+
+    /** Settings' Turn off (21). */
+    private fun turnOffScreenshots() = endScreenshotWindow()
+
+    private fun endScreenshotWindow() {
+        screenshots.end()
+        applyScreenshotWindow()
+    }
+
+    /**
+     * The flag follows the window (spec section 9; 21): cleared while it is on, set at once otherwise; the recents
+     * preview stays off all along (setRecentsScreenshotEnabled in onCreate). While on, it runs again on the next whole
+     * second of the time left, so the window ends at exactly 0, and passes the time left to the screen.
+     */
+    private fun applyScreenshotWindow() {
+        idleHandler.removeCallbacks(screenshotTick)
+        val left = screenshots.timeLeft(SystemClock.elapsedRealtime())
+        if (left == null) {
+            window.setFlags(WindowManager.LayoutParams.FLAG_SECURE, WindowManager.LayoutParams.FLAG_SECURE)
+        } else {
+            window.clearFlags(WindowManager.LayoutParams.FLAG_SECURE)
+            idleHandler.postDelayed(screenshotTick, (left - 1) % 1_000 + 1)
+        }
+        viewModel.onScreenshotWindow(left)
     }
 
     /**
@@ -195,9 +259,13 @@ class MainActivity : FragmentActivity() {
         return super.dispatchTouchEvent(ev)
     }
 
-    /** After a lock in view (decision 2): the lock screen with the prompt at once. True if the app is now locked. */
+    /**
+     * After a lock in view (20 decision 2): the lock screen with the prompt at once, and the screenshot window ended (21
+     * decision 1). True if the app is now locked.
+     */
     private fun showLockIfLocked(): Boolean {
         if (lockState != LockState.Unlocked || lock.state == LockState.Unlocked) return false
+        endScreenshotWindow()
         lockState = lock.state
         showPromptIfNeeded()
         return true

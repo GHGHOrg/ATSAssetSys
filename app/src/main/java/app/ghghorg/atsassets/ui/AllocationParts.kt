@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
@@ -273,6 +274,46 @@ internal fun <T> ChoiceLayer(
     onClose: () -> Unit,
     note: String? = null,
 ) {
+    LayerCard(title, onClose) {
+        Column(modifier = Modifier.selectableGroup()) {
+            options.forEach { (value, label) ->
+                Row(
+                    modifier =
+                    Modifier
+                        .fillMaxWidth()
+                        .selectable(selected = value == selected, role = Role.RadioButton, onClick = { onChoose(value) })
+                        .padding(horizontal = 16.dp, vertical = 12.dp),
+                    horizontalArrangement = Arrangement.spacedBy(12.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    RadioButton(selected = value == selected, onClick = null)
+                    Text(text = label, style = MaterialTheme.typography.bodyLarge)
+                }
+            }
+        }
+        note?.let {
+            Text(
+                text = it,
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
+            )
+        }
+    }
+}
+
+/**
+ * The frame of a layer drawn inside the activity window (18 to 21): a clear layer that closes on a tap outside or Back,
+ * and a card titled [title] with [content] under the title, scrolling when taller than the space (defect 18-6). No
+ * Dialog or Popup: a separate window would take MainActivity's focus (CLAUDE.md, 07). TalkBack reads only the layer
+ * while it is open.
+ */
+@Composable
+internal fun LayerCard(
+    title: String,
+    onClose: () -> Unit,
+    content: @Composable ColumnScope.() -> Unit,
+) {
     BackHandler(onBack = onClose)
     Box(
         modifier = Modifier.fillMaxSize().pointerInput(Unit) { detectTapGestures { onClose() } },
@@ -290,35 +331,14 @@ internal fun <T> ChoiceLayer(
             tonalElevation = 3.dp,
             shadowElevation = 3.dp,
         ) {
-            // Defect 18-6: at the largest font in landscape the options are taller than the space; they scroll.
-            Column(modifier = Modifier.verticalScroll(rememberScrollState()).padding(vertical = 8.dp).selectableGroup()) {
+            // Defect 18-6: at the largest font in landscape the content is taller than the space; it scrolls.
+            Column(modifier = Modifier.verticalScroll(rememberScrollState()).padding(vertical = 8.dp)) {
                 Text(
                     text = title,
                     style = MaterialTheme.typography.titleMedium,
                     modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp).semantics { heading() },
                 )
-                options.forEach { (value, label) ->
-                    Row(
-                        modifier =
-                        Modifier
-                            .fillMaxWidth()
-                            .selectable(selected = value == selected, role = Role.RadioButton, onClick = { onChoose(value) })
-                            .padding(horizontal = 16.dp, vertical = 12.dp),
-                        horizontalArrangement = Arrangement.spacedBy(12.dp),
-                        verticalAlignment = Alignment.CenterVertically,
-                    ) {
-                        RadioButton(selected = value == selected, onClick = null)
-                        Text(text = label, style = MaterialTheme.typography.bodyLarge)
-                    }
-                }
-                note?.let {
-                    Text(
-                        text = it,
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
-                    )
-                }
+                content()
             }
         }
     }

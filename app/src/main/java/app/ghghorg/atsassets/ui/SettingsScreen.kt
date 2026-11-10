@@ -11,12 +11,16 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.Button
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedCard
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.LiveRegionMode
 import androidx.compose.ui.semantics.Role
@@ -31,19 +35,24 @@ import androidx.compose.ui.unit.dp
 import app.ghghorg.atsassets.R
 import app.ghghorg.atsassets.core.AutoLock
 
-/** Settings' callbacks, passed together. */
+/** Settings' callbacks, passed together. Allow and Turn off are MainActivity's, which owns the screenshot window (21). */
 class SettingsActions(
     val onBack: () -> Unit,
     val onOpenChoice: () -> Unit,
     val onCloseChoice: () -> Unit,
     val onChoose: (AutoLock) -> Unit,
+    val onOpenScreenshots: () -> Unit = {},
+    val onCloseScreenshots: () -> Unit = {},
+    val onAllowScreenshots: () -> Unit = {},
+    val onTurnOffScreenshots: () -> Unit = {},
 )
 
 /**
- * Settings (section 6, wireframe 10f frame B; iteration 20), drawn from its model (CR2): "<" and the title, then the
- * Security section with Auto-lock and its current choice (marker 3), which opens the choice of four in the shared
- * choice layer with the default marked and "Takes effect at once. Saved." (frame C, marker 7). Only what is built
- * shows: the other rows and sections follow with their iterations. Back returns to More.
+ * Settings (section 6, wireframe 10f frame B; iterations 20 and 21), drawn from its model (CR2): "<" and the title,
+ * then the Security section (marker 3) with Auto-lock and its current choice, which opens the choice of four in the
+ * shared choice layer with the default marked and "Takes effect at once. Saved." (frame C, marker 7), and the Screenshot
+ * window with "Off" or its time left, which opens its layer (marker 8). Only what is built shows: the other sections
+ * follow with their iterations. Back returns to More.
  */
 @Composable
 fun SettingsScreen(
@@ -54,8 +63,8 @@ fun SettingsScreen(
     BackHandler(enabled = !state.saving, onBack = actions.onBack)
     val model = state.settings
     Box(modifier = modifier.fillMaxSize()) {
-        // While the choice layer is open, TalkBack reads only the layer.
-        val under = if (state.autoLockChoiceOpen) Modifier.clearAndSetSemantics { } else Modifier
+        // While a layer is open, TalkBack reads only the layer.
+        val under = if (state.autoLockChoiceOpen || state.screenshotLayerOpen) Modifier.clearAndSetSemantics { } else Modifier
         Column(
             modifier = Modifier.fillMaxSize().then(under).verticalScroll(rememberScrollState()).padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp),
@@ -73,6 +82,16 @@ fun SettingsScreen(
                     value = value,
                     spoken = stringResource(R.string.settings_auto_lock_spoken, value),
                     onOpen = actions.onOpenChoice,
+                    enabled = !state.saving,
+                )
+                HorizontalDivider(modifier = Modifier.padding(horizontal = 12.dp))
+                val left = model.screenshotLeft
+                val shown = if (left == null) stringResource(R.string.screenshot_off) else stringResource(R.string.screenshot_on_row, left.text)
+                SettingRow(
+                    name = stringResource(R.string.settings_screenshot),
+                    value = shown,
+                    spoken = stringResource(R.string.settings_screenshot_spoken, screenshotSpoken(left)),
+                    onOpen = actions.onOpenScreenshots,
                     enabled = !state.saving,
                 )
             }
@@ -98,6 +117,58 @@ fun SettingsScreen(
                 onClose = actions.onCloseChoice,
                 note = stringResource(R.string.auto_lock_note),
             )
+        }
+        if (state.screenshotLayerOpen) {
+            ScreenshotLayer(model.screenshotLeft, actions)
+        }
+    }
+}
+
+/** The screenshot window's state for TalkBack: "Off", or "on, 2 minutes 41 seconds left". */
+@Composable
+private fun screenshotSpoken(left: ScreenshotTimeLeft?): String {
+    if (left == null) return stringResource(R.string.screenshot_off)
+    val minutes = pluralStringResource(R.plurals.screenshot_minutes_spoken, left.minutes, left.minutes)
+    val seconds = pluralStringResource(R.plurals.screenshot_seconds_spoken, left.seconds, left.seconds)
+    return stringResource(R.string.screenshot_on_spoken, minutes, seconds)
+}
+
+/**
+ * The Screenshot window's layer (wireframe 10f frame C, marker 8), drawn in the window. Off: the blocked line,
+ * "Allow screenshots for 3 minutes" and the check line. On: the time left with "Ends when you leave the app.", the line
+ * that anything can capture the screen, and Turn off. The fingerprint or PIN prompt is the system's own window.
+ */
+@Composable
+private fun ScreenshotLayer(
+    left: ScreenshotTimeLeft?,
+    actions: SettingsActions,
+) {
+    LayerCard(title = stringResource(R.string.settings_screenshot), onClose = actions.onCloseScreenshots) {
+        Column(
+            modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp),
+        ) {
+            if (left == null) {
+                Text(text = stringResource(R.string.screenshot_off_line), style = MaterialTheme.typography.bodyLarge)
+                Button(onClick = actions.onAllowScreenshots) {
+                    Text(text = stringResource(R.string.screenshot_allow))
+                }
+                Text(
+                    text = stringResource(R.string.screenshot_allow_note),
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            } else {
+                Text(text = stringResource(R.string.screenshot_on_line, left.text), style = MaterialTheme.typography.bodyLarge)
+                Text(
+                    text = stringResource(R.string.screenshot_on_warning),
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+                OutlinedButton(onClick = actions.onTurnOffScreenshots) {
+                    Text(text = stringResource(R.string.screenshot_turn_off))
+                }
+            }
         }
     }
 }
