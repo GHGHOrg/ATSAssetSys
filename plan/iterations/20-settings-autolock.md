@@ -1,6 +1,6 @@
 # plan/iterations/20-settings-autolock.md
 
-Stage: Build. Status: approved 2026-11-10 (your "Approved"); decisions 1 to 3 settled the same day (section 11). In build: step 2 done (section 10.1); step 3 done (decision 4); step 5 done (decision 5; section 14); step 6 done (section 14).
+Stage: Build. Status: approved 2026-11-10 (your "Approved"); decisions 1 to 3 settled the same day (section 11). Built 2026-11-10 (steps 2 to 8; section 10.1, decisions 4 and 5, section 14); phone check 2026-11-10 all yes (section 13.3).
 Source: plan.md section 4 (row 20), spec section 3 (Settings), section 6 (More, Settings entry, navigation outline, accessibility), section 8 (settings are in the backup file; 31), section 9 (the lock, the auto-lock choices), section 14 (K8), AC-06, AC-58 (the auto-lock part), AC-61, AC-62; wireframe 10f (frames A to C, markers 2, 3 and 7); iteration 01 (the lock), 17 and 19 (More), 18 and 19 (the choice layer); CLAUDE.md (security code not from memory; Room schema files; layers in the window). "My reading" is an interpretation, not a test.
 
 ## 1. Outcome
@@ -85,6 +85,34 @@ To be shown on the phone in step 8:
 
 ## 13. Status and notes
 - Draft 2026-11-10; approved the same day; decisions 1 to 3 settled.
+
+### 13.1 Steps 1 to 7 (2026-11-10)
+- Step 1 (2e26a8c): this file and the plan.md lines (with pull request #154's merge line).
+- Step 2 (05bff7e): the look-ups R1 and R2, risk 7 (section 10.1).
+- Step 3 (3988ebb): core's `AutoLock` (four choices); `AppLock` with the four rules, the idle time on a monotonic clock passed in, from the last touch or the unlock, the strictest rule until the choice is loaded, a restart locked whatever the choice (decision 4: the phone lock does not lock under the idle choices). AppLockTest 36 (12 kept with the new signatures, 24 new). Red against a stub that kept 01's rule first: 36 tests, 10 failed; 14 new ones passed on the stub, each paired with one that failed. Tests 810 to 834.
+- Step 4 (6b4ff46): `RecordStore.loadAutoLock` and `saveAutoLock`; the settings table, one row (`id` 1) with the column `autoLock` (decision 3), whose save changes only that column; database version 8 with `AutoMigration(7, 8)`; 8.json against 7.json: the six tables the same, one new (`settings`). RowMappingTest 3 new: no row is the default, each choice read back, an unknown text unreadable. Red against a stub first: 3 tests, 2 failed (no row passed on the stub's default). Tests 837.
+- Step 5 (2285b64): the choice in the screen state, loaded with the records, saved first and applied once saved; `lock/LockHolder.kt` (the lock kept across a turn of the phone, the screen-off receiver on the application context, exported); MainActivity: the choice applied to the lock, a touch as activity (idle checked first), the idle check every second while in view, the time away on return, the screen-off check in `onStop` (decision 5: typing on the keyboard is not activity). AutoLockViewModelTest 11. Red against stubs first: 11 tests, 8 failed. Tests 848.
+- Step 6 (8bf37d0): ui/SettingsModel.kt and ui/SettingsScreen.kt (CR2): the Security section with Auto-lock and its value, the choice layer with "(default)" and the note; the gear on More; `ChoiceLayer`'s optional note; `Screen.SETTINGS` with the bottom bar; a choice only from the open layer; the "Iteration 20" strings. SettingsModelTest 4, AutoLockViewModelTest 8 more (19; step 5's choice tests now open the layer first). Red against stubs first: 23 tests, 10 failed. Tests 860.
+- Step 7 (fbbc006): SettingsScreenTest.kt (androidTest): AutoLockChoiceFocusTest (AC-61 (b)), AutoLockChoiceLargestFontLandscapeTest (AC-61 (a); font scale 2.0, landscape, upright again at the end), SettingsTalkBackTest 5 (AC-61 (d)). `@Test` lines 44 (were 37).
+- Each step's run: spotlessCheck, build, tests and lint with --rerun-tasks, plus `:app:compileDebugAndroidTestKotlin`; lint the 5 listed findings. Steps 3 to 5 and 6 and 7 were committed after a later step (your "go", then "commit"), each from its own green run; step 3 from its staged files through a temporary index, as step 5 changed two of them again.
+
+### 13.2 Step 8 (2026-11-10)
+- versionCode 29; full run 09:50 to 09:54 green, 860 tests, 0 failures, 1 skipped; lint the 5 listed findings. APK 42,854,731 bytes, built with the price-source key set (checked True/False only).
+
+### 13.3 Step 8: the phone check (2026-11-10, all yes)
+versionCode 29 installed over 19's build (versionCode 28; `adb install -r`, Success; lastUpdateTime 2026-11-10 10:02:14, first install 2026-10-29 kept). The screen timeout set to 10 minutes or more for the in-view checks.
+- 1 (AC-35, schema 7 to 8): the data opened after the install; no unreadable-data screen: yes.
+- 2 (AC-58): the gear on More; Settings with Security and Auto-lock "Every time I leave the app"; the layer with four choices, the first "(default)" and selected, the note; closed by a tap outside; Back to More: yes.
+- 3 (AC-06): every time you leave: Home and back at once locks; a turn of the phone locks, as since 01: yes.
+- 4 (AC-06; decisions 1, 2, 4 and 5): after 1 minute idle: away about 50 s open, about 70 s locked; untouched in view over 1 minute, the lock screen and the prompt by themselves; a tap every 40 s keeps it open; a turn keeps it open; the phone locked and unlocked within 30 s, still open; typing a note for over 1 minute locks, the text kept: yes.
+- 5 (AC-06): after 5 minutes idle: away about 4 min 50 s open, about 5 min 10 s locked; untouched in view over 5 minutes locks: yes.
+- 6 (AC-06; risk 7): only when the phone locks or the app restarts: away 6 minutes open, a turn open; the phone locked with the app in view locks; the phone locked with the app in the background, unlocked after about 1 minute and after 10 minutes or more, locked both times: yes.
+- 7 (AC-06): a force stop locks; the choice kept after the restart: yes.
+- 8 (AC-39, risk 5): largest font and landscape: Settings and the layer readable, every choice and the note reached, the gear shown: yes.
+- 9 (AC-39): TalkBack: the gear "Settings, button"; the row "Auto-lock, <choice>, button"; the choices as radio buttons, the default marked; the note read: yes.
+- 10 (AC-40): light and dark: yes.
+- 11 (spec 9): `adb logcat -d -v threadtime,uid`, the app's lines by uid 10454: 20 lines, 10:58:59 to 11:00:46, from the process start at 10:58:59.602 (`Start proc 29237`): the key not in them nor anywhere in the buffer (a True/False test); no "finnhub", "token", AAPL, "quote", "symbol=", amount or "$digit"; tags only the system's window, keyboard and back handling: yes.
+- 12 (D9): the wording of section 12 approved as shown.
 
 ## 14. Departures from the plan
 - Step 3 changed MainActivity's two calls to AppLock (the time passed in) so the app still built; the wiring stayed in step 5. `onAuthSucceeded` takes the time too: an unlock restarts the idle time.
