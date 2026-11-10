@@ -1,6 +1,6 @@
 # plan/iterations/14b-reverse-and-reenter-split-cash.md
 
-Stage: Build. Status: approved 2026-11-02, built 2026-11-02, checked and merged 2026-11-03 (section 12). Decision 1 settled (section 10).
+Stage: Build. Status: approved 2026-11-02; done: built 2026-11-02, checked 2026-11-03, pull request #114 merged as 7229ef3 (2026-11-03) (section 12). Decision 1 settled (section 10).
 Source: plan/plan.md section 4 (row 14b), intent/intent.md v52 (final), spec/spec.md v4 (final). "My reading" is an interpretation, not a test.
 
 ## 1. Outcome

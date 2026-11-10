@@ -1,6 +1,6 @@
 # plan/iterations/07-create-portfolio.md
 
-Stage: Build. Status: built on branch iter-07-create-portfolio (steps 1 to 6 and one fix, commits 449ae9b to dd85e96) and checked on the phone 2026-10-30, all checks yes except check 10, which is not run (decision 3, open item 33) (section 13). Pull request #94 merged as 1eb7220 on 2026-10-30; CI green on the pull request and on main (your reports). Decisions 1 to 4 settled (section 10). Sections 1 to 12 were written before the build; where the build differs, section 14 says so.
+Stage: Build. Status: done: built on branch iter-07-create-portfolio (steps 1 to 6 and one fix, commits 449ae9b to dd85e96) and checked on the phone 2026-10-30, all checks yes except check 10, which is not run (decision 3, open item 33) (section 13). Pull request #94 merged as 1eb7220 on 2026-10-30; CI green on the pull request and on main (your reports). Decisions 1 to 4 settled (section 10). Sections 1 to 12 were written before the build; where the build differs, section 14 says so.
 Source: plan/plan.md section 4 (row 07), intent/intent.md v52 (final), spec/spec.md v4 (final). "My reading" is an interpretation, not a test.
 
 ## 1. Outcome

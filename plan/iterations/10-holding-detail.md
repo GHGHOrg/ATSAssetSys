@@ -1,6 +1,6 @@
 # plan/iterations/10-holding-detail.md
 
-Stage: Build. Status: built on branch iter-10-holding-detail (steps 1 to 6 and one fix, commits e6c128a to fb2d270) and checked on the phone 2026-10-31, all checks yes (section 13). Pull request #102 merged as 43a2c7f on 2026-10-31; CI green on the pull request and on main (your reports). Decisions 1 to 5 settled (section 10). Sections 1 to 12 were written before the build; where the build differs, section 14 says so.
+Stage: Build. Status: done: built on branch iter-10-holding-detail (steps 1 to 6 and one fix, commits e6c128a to fb2d270) and checked on the phone 2026-10-31, all checks yes (section 13). Pull request #102 merged as 43a2c7f on 2026-10-31; CI green on the pull request and on main (your reports). Decisions 1 to 5 settled (section 10). Sections 1 to 12 were written before the build; where the build differs, section 14 says so.
 Source: plan/plan.md section 4 (row 10), intent/intent.md v52 (final), spec/spec.md v4 (final). "My reading" is an interpretation, not a test.
 
 ## 1. Outcome

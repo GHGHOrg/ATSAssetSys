@@ -1,6 +1,6 @@
 # plan/iterations/14a-reverse-and-reenter-trades.md
 
-Stage: Build. Status: approved 2026-11-02, built, checked and merged 2026-11-02 (section 12). Decisions 1 to 5 settled (section 10).
+Stage: Build. Status: approved 2026-11-02; done: built and checked 2026-11-02, pull request #112 merged as bcd5e3b (2026-11-02) (section 12). Decisions 1 to 5 settled (section 10).
 Source: plan/plan.md section 4 (row 14a), intent/intent.md v52 (final), spec/spec.md v4 (final). "My reading" is an interpretation, not a test.
 
 ## 1. Outcome

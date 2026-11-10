@@ -1,6 +1,6 @@
 # plan/iterations/01-unlock-app.md
 
-Stage: Build. Status: approved by you on 2026-10-19 (draft plus the four decisions in section 9). Built and checked on the phone (2026-10-19); merged as pull request #70 (merge commit 8a5703e). See section 10.
+Stage: Build. Status: approved by you on 2026-10-19 (draft plus the four decisions in section 9). Done: built and checked on the phone (2026-10-19); pull request #70 merged as 8a5703e. See section 10.
 Source: plan/plan.md section 4 (row 01), intent/intent.md v52 (final), spec/spec.md v4 (final).
 This iteration is built; what was run and checked, and what was not, is stated in section 10. Sections 1 to 9 are the plan as approved. "My reading" means an interpretation of spec.md that you approved, not a test.
 

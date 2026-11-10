@@ -1,6 +1,6 @@
 # plan/iterations/09-buy-stock.md
 
-Stage: Build. Status: built on branch iter-09-buy-stock (steps 1 to 10 and two fixes, commits 6e00841 to 54b1bdb) and checked on the phone 2026-10-31, all checks yes (section 13). Pull request #100 merged as e31c558 on 2026-10-31; CI green on the pull request and on main (your reports). Decisions 1 to 11 settled (section 10). Sections 1 to 12 were written before the build; where the build differs, section 14 says so.
+Stage: Build. Status: done: built on branch iter-09-buy-stock (steps 1 to 10 and two fixes, commits 6e00841 to 54b1bdb) and checked on the phone 2026-10-31, all checks yes (section 13). Pull request #100 merged as e31c558 on 2026-10-31; CI green on the pull request and on main (your reports). Decisions 1 to 11 settled (section 10). Sections 1 to 12 were written before the build; where the build differs, section 14 says so.
 Source: plan/plan.md section 4 (row 09), plan/spikes/price-source.md (decisions 1 to 7, sections 10.2 and 10.3), intent/intent.md v52 (final), spec/spec.md v4 (final). "My reading" is an interpretation, not a test.
 
 ## 1. Outcome
