@@ -16,6 +16,7 @@ import app.ghghorg.atsassets.core.PriceSource
 import app.ghghorg.atsassets.core.Quote
 import app.ghghorg.atsassets.core.RecordStore
 import app.ghghorg.atsassets.core.Tab
+import app.ghghorg.atsassets.core.TabOrder
 import app.ghghorg.atsassets.core.Transaction
 import app.ghghorg.atsassets.core.UnreadableDataException
 import kotlinx.coroutines.CompletableDeferred
@@ -1854,5 +1855,21 @@ internal class FakeStore(
         saveError?.let { throw it }
         savedAutoLocks.add(choice)
         storedAutoLock = choice
+    }
+
+    // 22: null until an order is saved; loading then gives the default, as RoomRecordStore does.
+    var storedTabOrder: TabOrder? = null
+    val savedTabOrders = mutableListOf<TabOrder>()
+
+    override suspend fun loadTabOrder(): TabOrder {
+        loadError?.let { throw it }
+        return storedTabOrder ?: TabOrder.DEFAULT
+    }
+
+    override suspend fun saveTabOrder(order: TabOrder) {
+        gate?.await()
+        saveError?.let { throw it }
+        savedTabOrders.add(order)
+        storedTabOrder = order
     }
 }

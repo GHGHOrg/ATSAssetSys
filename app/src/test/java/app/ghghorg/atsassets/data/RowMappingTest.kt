@@ -8,6 +8,8 @@ import app.ghghorg.atsassets.core.Instrument
 import app.ghghorg.atsassets.core.Price
 import app.ghghorg.atsassets.core.SellAllocation
 import app.ghghorg.atsassets.core.SplitRatio
+import app.ghghorg.atsassets.core.Tab
+import app.ghghorg.atsassets.core.TabOrder
 import app.ghghorg.atsassets.core.Transaction
 import app.ghghorg.atsassets.core.TransactionType
 import app.ghghorg.atsassets.core.UnreadableDataException
@@ -340,5 +342,47 @@ class RowMappingTest {
         for (text in listOf("", "NEVER", "idle_1_min", "IDLE_10_MIN")) {
             assertThrows(text, UnreadableDataException::class.java) { SettingsRow(autoLock = text).toAutoLock() }
         }
+    }
+
+    // 22: the tab order in the same row, as spec 8's text.
+    @Test
+    fun noSettingsRow_orNoOrderInIt_isTheDefaultOrder() {
+        val none: SettingsRow? = null
+        assertEquals(TabOrder.DEFAULT, none.toTabOrder())
+        assertEquals(TabOrder.DEFAULT, SettingsRow(autoLock = AutoLock.IDLE_1_MIN.name).toTabOrder())
+    }
+
+    @Test
+    fun aTabOrder_isStoredAsItsText_andReadBack() {
+        val order = TabOrder.of(listOf(Tab.OVERALL, Tab.PORTFOLIOS, Tab.CASH, Tab.MORE))!!
+        val row = null.withTabOrder(order.text)
+        assertEquals("overall;portfolios;cash;more", row.tabOrder)
+        assertEquals(order, row.toTabOrder())
+    }
+
+    @Test
+    fun aStoredOrderThatIsNotEachTabOnce_isUnreadable_notTheDefault() {
+        val bad = listOf("", "more;cash;portfolios", "more;cash;cash;overall", "more;cash;portfolios;settings", "more,cash,portfolios,overall")
+        for (text in bad) {
+            val row = SettingsRow(autoLock = AutoLock.EVERY_LEAVE.name, tabOrder = text)
+            assertThrows(text, UnreadableDataException::class.java) { row.toTabOrder() }
+        }
+    }
+
+    @Test
+    fun savingTheTabOrder_keepsTheAutoLockChoice_andTheOtherWayRound() {
+        val old = "overall;more;cash;portfolios"
+        val new = "cash;more;portfolios;overall"
+        val both = SettingsRow(autoLock = AutoLock.IDLE_5_MIN.name, tabOrder = old)
+        assertEquals(SettingsRow(autoLock = AutoLock.IDLE_5_MIN.name, tabOrder = new), both.withTabOrder(new))
+        assertEquals(SettingsRow(autoLock = AutoLock.IDLE_1_MIN.name, tabOrder = old), both.withAutoLock(AutoLock.IDLE_1_MIN.name))
+    }
+
+    @Test
+    fun theFirstSave_makesTheRow_withTheOtherSettingAtItsDefault() {
+        // A tab order saved first leaves the auto-lock choice at its default; an auto-lock choice saved first, no order.
+        val order = "cash;more;portfolios;overall"
+        assertEquals(SettingsRow(autoLock = AutoLock.EVERY_LEAVE.name, tabOrder = order), null.withTabOrder(order))
+        assertEquals(SettingsRow(autoLock = AutoLock.IDLE_1_MIN.name, tabOrder = null), null.withAutoLock(AutoLock.IDLE_1_MIN.name))
     }
 }

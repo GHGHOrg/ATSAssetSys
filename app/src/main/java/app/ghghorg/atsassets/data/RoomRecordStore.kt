@@ -14,6 +14,7 @@ import app.ghghorg.atsassets.core.RecordStore
 import app.ghghorg.atsassets.core.SellAllocation
 import app.ghghorg.atsassets.core.SplitRatio
 import app.ghghorg.atsassets.core.Splits
+import app.ghghorg.atsassets.core.TabOrder
 import app.ghghorg.atsassets.core.Transaction
 import app.ghghorg.atsassets.core.TransactionType
 import app.ghghorg.atsassets.core.UnreadableDataException
@@ -339,6 +340,33 @@ class RoomRecordStore(
         dao.saveAutoLock(choice.name)
     }
 
+    override suspend fun loadTabOrder(): TabOrder = withContext(Dispatchers.IO) {
+        try {
+            database.settingsDao().load().toTabOrder()
+        } catch (e: CancellationException) {
+            throw e
+        } catch (e: UnreadableDataException) {
+            throw e
+        } catch (e: Exception) {
+            throw UnreadableDataException("The stored data could not be read.", e)
+        }
+    }
+
+    override suspend fun saveTabOrder(order: TabOrder) {
+        val dao = withContext(Dispatchers.IO) {
+            try {
+                database.settingsDao()
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: UnreadableDataException) {
+                throw e
+            } catch (e: Exception) {
+                throw UnreadableDataException("The stored data could not be opened.", e)
+            }
+        }
+        dao.saveTabOrder(order.text)
+    }
+
     private suspend fun hiddenDao(): TransactionDao = withContext(Dispatchers.IO) {
         try {
             database.transactionDao()
@@ -543,6 +571,24 @@ private fun CashEntryRow.toEntry() = CashEntry(
 internal fun SettingsRow?.toAutoLock(): AutoLock {
     if (this == null) return AutoLock.EVERY_LEAVE
     return AutoLock.entries.firstOrNull { it.name == autoLock } ?: throw UnreadableDataException("A stored setting could not be read.")
+}
+
+/**
+ * No settings row, or none with an order, is the default order (spec 6; 22). Throws [UnreadableDataException] for a
+ * stored order that is not each tab once (spec 8's rule); nothing is guessed, not even the default.
+ */
+internal fun SettingsRow?.toTabOrder(): TabOrder {
+    val text = this?.tabOrder ?: return TabOrder.DEFAULT
+    return TabOrder.parse(text) ?: throw UnreadableDataException("A stored setting could not be read.")
+}
+
+/** The settings row with [autoLock] in place of its choice, or a new row with only that choice. */
+internal fun SettingsRow?.withAutoLock(autoLock: String): SettingsRow = this?.copy(autoLock = autoLock) ?: SettingsRow(autoLock = autoLock)
+
+/** The settings row with [tabOrder] in place of its order, or a new row with it and the default auto-lock choice. */
+internal fun SettingsRow?.withTabOrder(tabOrder: String): SettingsRow {
+    if (this == null) return SettingsRow(autoLock = AutoLock.EVERY_LEAVE.name, tabOrder = tabOrder)
+    return copy(tabOrder = tabOrder)
 }
 
 internal fun HiddenHolding.toRow() = HiddenHoldingRow(portfolioId = portfolioId, ticker = ticker)

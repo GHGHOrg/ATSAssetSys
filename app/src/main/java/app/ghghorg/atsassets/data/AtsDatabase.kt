@@ -91,12 +91,14 @@ data class InstrumentRow(
 
 /**
  * The settings (spec section 3), one row with a column per setting (20 decision 3): the row's [id] is always
- * [ONLY_ID]. [autoLock] is an [app.ghghorg.atsassets.core.AutoLock] by name. Each later setting adds a column.
+ * [ONLY_ID]. [autoLock] is an [app.ghghorg.atsassets.core.AutoLock] by name. [tabOrder] is spec 8's `tab_order` text
+ * (22), null until an order is saved. Each later setting adds a column.
  */
 @Entity(tableName = "settings")
 data class SettingsRow(
     @PrimaryKey val id: Int = ONLY_ID,
     val autoLock: String,
+    val tabOrder: String? = null,
 ) {
     companion object {
         const val ONLY_ID = 1
@@ -305,15 +307,21 @@ interface SettingsDao {
     /** Sets the auto-lock column of the settings row, making the row if there is none; the other columns are kept. */
     @Transaction
     suspend fun saveAutoLock(autoLock: String) {
-        upsert(load()?.copy(autoLock = autoLock) ?: SettingsRow(autoLock = autoLock))
+        upsert(load().withAutoLock(autoLock))
+    }
+
+    /** Sets the tab order column of the settings row, making the row if there is none; the other columns are kept. */
+    @Transaction
+    suspend fun saveTabOrder(tabOrder: String) {
+        upsert(load().withTabOrder(tabOrder))
     }
 }
 
 /**
  * Version 2 (iteration 07) adds the portfolios table, version 3 (09) the transactions and instruments tables, version 4
  * (11) the sell_allocations table, version 5 (12) the two split columns of transactions, version 6 (15) the
- * hidden_holdings table, version 7 (16a) the three price columns of instruments, version 8 (20) the settings table;
- * Room generates each step out of the schemas in app/schemas.
+ * hidden_holdings table, version 7 (16a) the three price columns of instruments, version 8 (20) the settings table,
+ * version 9 (22) its tab order column; Room generates each step out of the schemas in app/schemas.
  */
 @Database(
     entities = [
@@ -325,7 +333,7 @@ interface SettingsDao {
         HiddenHoldingRow::class,
         SettingsRow::class,
     ],
-    version = 8,
+    version = 9,
     autoMigrations = [
         AutoMigration(from = 1, to = 2),
         AutoMigration(from = 2, to = 3),
@@ -334,6 +342,7 @@ interface SettingsDao {
         AutoMigration(from = 5, to = 6),
         AutoMigration(from = 6, to = 7),
         AutoMigration(from = 7, to = 8),
+        AutoMigration(from = 8, to = 9),
     ],
 )
 abstract class AtsDatabase : RoomDatabase() {
