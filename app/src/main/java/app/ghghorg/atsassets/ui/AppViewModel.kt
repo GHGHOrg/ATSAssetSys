@@ -62,6 +62,7 @@ import app.ghghorg.atsassets.core.SplitRefusal
 import app.ghghorg.atsassets.core.SplitResult
 import app.ghghorg.atsassets.core.Splits
 import app.ghghorg.atsassets.core.Tab
+import app.ghghorg.atsassets.core.TabOrder
 import app.ghghorg.atsassets.core.TickerCheck
 import app.ghghorg.atsassets.core.Transaction
 import app.ghghorg.atsassets.core.TransactionType
@@ -128,6 +129,9 @@ enum class Screen {
 
     // Settings (section 6, wireframe 10f frame B, iteration 20), opened from More's gear.
     SETTINGS,
+
+    // The tab order (wireframe 10f frame E, iteration 22), opened from Settings' Navigation section.
+    TAB_ORDER,
 }
 
 // The id of the unsaved draft the reversal screen shows the effect of; never saved.
@@ -362,8 +366,8 @@ internal fun sellTotal(text: String): AmountResult = when (val parsed = Money.pa
     is AmountResult.Cents -> parsed
 }
 
-/** The default order, left to right. Iteration 22 makes the order a setting. */
-val DEFAULT_TAB_ORDER = listOf(Tab.MORE, Tab.CASH, Tab.PORTFOLIOS, Tab.OVERALL)
+/** The default order, left to right, for screens drawn without the app's state; the app's bar follows [AppState.tabOrder] (22). */
+val DEFAULT_TAB_ORDER = TabOrder.DEFAULT.tabs
 
 enum class DateRefusal {
     EMPTY,
@@ -530,6 +534,9 @@ data class AppState(
     // on Settings (wireframe 10f frame C, marker 8), drawn in the window.
     val screenshotWindowLeftMs: Long? = null,
     val screenshotLayerOpen: Boolean = false,
+    // 22: the bottom bar's order as stored, the default until it is loaded; why a move was not saved.
+    val tabOrder: TabOrder = TabOrder.DEFAULT,
+    val tabOrderRefusal: SaveRefusal? = null,
     // 15c: the kept fields, worked out in KeptFields.kt from the fields above, so reading one costs nothing. Every write
     // through the view model refreshes them; a state built directly gets them from these defaults.
     // As of today (4.8), by portfolio, then ticker.
@@ -927,7 +934,9 @@ class AppViewModel(
                 val hidden = opened.loadHidden(transactions)
                 // 20: the auto-lock choice comes with the records; until then the lock keeps its strictest rule.
                 val autoLock = opened.loadAutoLock()
-                showLoaded(entries, portfolios, transactions, instruments, hidden, autoLock)
+                // 22: the tab order too; until then the bar is not shown (LOADING).
+                val tabOrder = opened.loadTabOrder()
+                showLoaded(entries, portfolios, transactions, instruments, hidden, autoLock, tabOrder)
                 // The first unlock's refresh: onUnlocked came while the records were still loading (16a decision 2).
                 refreshPrices()
             } catch (e: UnreadableDataException) {
@@ -958,6 +967,7 @@ class AppViewModel(
                 autoLockChoiceOpen = false,
                 screenshotLayerOpen = false,
                 autoLockRefusal = null,
+                tabOrderRefusal = null,
                 buyNotice = null,
                 buyRefusals = BuyRefusals(),
                 holdingTicker = null,
@@ -2246,6 +2256,7 @@ class AppViewModel(
         instruments: List<Instrument>,
         hidden: List<HiddenHolding>,
         autoLock: AutoLock,
+        tabOrder: TabOrder,
     ) {
         mutableState.update {
             valued(
@@ -2257,6 +2268,7 @@ class AppViewModel(
                     instruments = instruments,
                     hidden = hidden,
                     autoLock = autoLock,
+                    tabOrder = tabOrder,
                 ),
             )
         }
@@ -2413,6 +2425,50 @@ class AppViewModel(
                 mutableState.update { it.copy(screen = Screen.UNREADABLE, saving = false) }
             } catch (e: Exception) {
                 mutableState.update { it.copy(saving = false, autoLockRefusal = SaveRefusal.SAVE_FAILED) }
+            }
+        }
+    }
+
+    /** Settings' Tab order row (wireframe 10f marker 5): opens the Tab order screen (frame E); on Settings only. */
+    fun openTabOrder() {
+        val current = mutableState.value
+        if (current.screen != Screen.SETTINGS || current.saving || current.autoLockChoiceOpen || current.screenshotLayerOpen) return
+        mutableState.update { it.copy(screen = Screen.TAB_ORDER, tabOrderRefusal = null) }
+    }
+
+    /** "<" or Android Back: back to Settings. Ignored while a save is running. */
+    fun closeTabOrder() {
+        val current = mutableState.value
+        if (current.screen != Screen.TAB_ORDER || current.saving) return
+        mutableState.update { it.copy(screen = Screen.SETTINGS, tabOrderRefusal = null) }
+    }
+
+    /** Up on [tab]'s row: one place left (frame E, marker 11). */
+    fun moveTabUp(tab: Tab) = moveTab(mutableState.value.tabOrder.moveUp(tab))
+
+    /** Down on [tab]'s row: one place right. */
+    fun moveTabDown(tab: Tab) = moveTab(mutableState.value.tabOrder.moveDown(tab))
+
+    /**
+     * Saves [moved] and applies it once saved, as the auto-lock choice (20): the bar follows [AppState.tabOrder], so an
+     * order that could not be saved never shows, and a failure says so. Ignored off the Tab order screen, while a save is
+     * running, and when nothing moved (the first's Up, the last's Down; decision 1).
+     */
+    private fun moveTab(moved: TabOrder) {
+        val current = mutableState.value
+        val target = store ?: return
+        if (current.screen != Screen.TAB_ORDER || current.saving || moved == current.tabOrder) return
+        mutableState.update { it.copy(saving = true, tabOrderRefusal = null) }
+        viewModelScope.launch {
+            try {
+                target.saveTabOrder(moved)
+                mutableState.update { it.copy(saving = false, tabOrder = moved) }
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: UnreadableDataException) {
+                mutableState.update { it.copy(screen = Screen.UNREADABLE, saving = false) }
+            } catch (e: Exception) {
+                mutableState.update { it.copy(saving = false, tabOrderRefusal = SaveRefusal.SAVE_FAILED) }
             }
         }
     }
@@ -3325,6 +3381,7 @@ class AppViewModel(
                 Screen.NET_WORTH,
                 Screen.ALLOCATION,
                 Screen.SETTINGS,
+                Screen.TAB_ORDER,
             )
     }
 }

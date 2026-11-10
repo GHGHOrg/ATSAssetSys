@@ -1857,9 +1857,11 @@ internal class FakeStore(
         storedAutoLock = choice
     }
 
-    // 22: null until an order is saved; loading then gives the default, as RoomRecordStore does.
+    // 22: null until an order is saved; loading then gives the default, as RoomRecordStore does. [tabOrderSaveError]
+    // fails this save alone, so the start's price refresh still saves.
     var storedTabOrder: TabOrder? = null
     val savedTabOrders = mutableListOf<TabOrder>()
+    var tabOrderSaveError: Throwable? = null
 
     override suspend fun loadTabOrder(): TabOrder {
         loadError?.let { throw it }
@@ -1868,7 +1870,7 @@ internal class FakeStore(
 
     override suspend fun saveTabOrder(order: TabOrder) {
         gate?.await()
-        saveError?.let { throw it }
+        (tabOrderSaveError ?: saveError)?.let { throw it }
         savedTabOrders.add(order)
         storedTabOrder = order
     }

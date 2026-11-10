@@ -50,7 +50,7 @@ fun AppContent(
                 Box(modifier = Modifier.weight(1f)) {
                     BarContent(state, viewModel, screenshots)
                 }
-                BottomBar(DEFAULT_TAB_ORDER, state.tab, viewModel::selectTab)
+                BottomBar(state.tabOrder.tabs, state.tab, viewModel::selectTab)
             }
             PortfolioDialogs(state, viewModel)
         }
