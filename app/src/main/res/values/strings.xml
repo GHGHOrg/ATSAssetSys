@@ -422,4 +422,6 @@
     <string name="auto_lock_phone_lock">Only when the phone locks or the app restarts</string>
     <string name="auto_lock_default">%1$s (default)</string>
     <string name="auto_lock_note">Takes effect at once. Saved.</string>
+    <!-- Iteration 21: the screenshot window (proposed, 21 file section 12; approval on the phone in step 8). -->
+    <string name="screenshot_prompt_title">Allow screenshots</string>
 </resources>

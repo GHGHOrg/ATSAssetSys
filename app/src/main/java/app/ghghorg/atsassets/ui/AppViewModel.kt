@@ -533,6 +533,8 @@ data class AppState(
     val autoLockRefusal: SaveRefusal? = null,
     // Settings' Auto-lock choice layer (wireframe 10f frame C), drawn in the window.
     val autoLockChoiceOpen: Boolean = false,
+    // 21: the screenshot window's milliseconds left, as MainActivity last passed them; null while it is off.
+    val screenshotWindowLeftMs: Long? = null,
     // 15c: the kept fields, worked out in KeptFields.kt from the fields above, so reading one costs nothing. Every write
     // through the view model refreshes them; a state built directly gets them from these defaults.
     // As of today (4.8), by portfolio, then ticker.
@@ -2349,6 +2351,9 @@ class AppViewModel(
             }
         }
     }
+
+    /** The screenshot window's milliseconds left, null when off, from MainActivity at each change and tick (21). Shown only. */
+    fun onScreenshotWindow(leftMs: Long?) = mutableState.update { it.copy(screenshotWindowLeftMs = leftMs) }
 
     /** More's gear (section 6; wireframe 10f marker 2): opens Settings; the tab stays More, so Back returns there. */
     fun openSettings() {
