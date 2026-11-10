@@ -1,6 +1,6 @@
 # plan/iterations/15-hide-holdings.md
 
-Stage: Build. Status: approved, built, checked and merged 2026-11-03 (section 12). Decisions 1 to 3 settled (section 10).
+Stage: Build. Status: approved; done: built and checked 2026-11-03, pull request #117 merged as d7630a8 (2026-11-03) (section 12). Decisions 1 to 3 settled (section 10).
 Source: plan/plan.md section 4 (row 15), intent/intent.md v52 (final), intent/intent-cr-01-tiny-remainders.md (CR1), spec/spec.md v5 (final). "My reading" is an interpretation, not a test.
 
 ## 1. Outcome

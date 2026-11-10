@@ -1,6 +1,6 @@
 # plan/iterations/06-cash-filters-date-type.md
 
-Stage: Build. Status: built on branch iter-06-cash-filters-date-type (steps 1 to 5 and one change, commits d93f99a to 42121aa) and checked on the phone 2026-10-29, all checks yes (section 13). Pull request #91 merged as 0d5e2f4 on 2026-10-29; CI green on the pull request and on main (your reports). Decisions 1 to 4 settled; decision 1 changed after phone check 12 (section 14). Sections 1 to 12 were written before the build; where the build differs, section 14 says so.
+Stage: Build. Status: done: built on branch iter-06-cash-filters-date-type (steps 1 to 5 and one change, commits d93f99a to 42121aa) and checked on the phone 2026-10-29, all checks yes (section 13). Pull request #91 merged as 0d5e2f4 on 2026-10-29; CI green on the pull request and on main (your reports). Decisions 1 to 4 settled; decision 1 changed after phone check 12 (section 14). Sections 1 to 12 were written before the build; where the build differs, section 14 says so.
 Source: plan/plan.md section 4 (row 06), intent/intent.md v52 (final), spec/spec.md v4 (final). "My reading" is an interpretation, not a test.
 
 ## 1. Outcome
