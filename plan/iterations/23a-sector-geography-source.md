@@ -63,6 +63,9 @@ None.
 ## 10. Research (step 2; each look-up shown to you first, CLAUDE.md section 8)
 - R1: `/stock/profile2` today: one call for AAPL and one for SPY, with the key in the header, nothing saved, to check that the fields and the ETF answer are as on 2026-10-30. Or you paste the Company Profile 2 page. It decides step 5's parsing.
 
+### 10.1 Results (2026-11-11, step 2)
+- R1, your yes: two calls at 2026-11-11 01:15:41 +08:00, `Invoke-WebRequest` with the key in the `X-Finnhub-Token` header only (set: True; never printed), redirects off, nothing saved. AAPL: status 200, fields ticker, name, country, currency, estimateCurrency, exchange, ipo, marketCapitalization, logo, shareOutstanding, finnhubIndustry, phone, weburl, floatingShare; `finnhubIndustry` "Technology", `country` "US", `exchange` "NASDAQ NMS - GLOBAL MARKET", `currency` "USD". SPY: status 200, an empty object (no field). Both as on 2026-10-30 (the price-source note, call 5 and e). Step 5 reads `finnhubIndustry` as the source sector and `country` as the source geography; an empty object, a missing field, an empty text or "N/A" is no value (decision 2).
+
 ## 11. Decisions (settled by you 2026-11-11)
 1. (Plan) 23 split before it starts: 23a (this file: the source values on Holding detail) and 23b (Overall's Sector and Geography, Net Worth (Total)'s and Allocation's two breakdowns), each its own file, branch and pull request (your A). Not chosen: (B) one iteration.
 2. (Build) "N/A", an empty text or a missing field is no value: the holding is "Unclassified" for it and nothing is added to a list (your A). Not chosen: (B) every text a value, "N/A" included.
@@ -76,6 +79,10 @@ To be shown on the phone in step 8:
 
 ## 13. Status and notes
 - Draft 2026-11-11 as iteration 23; approved; decisions 1 to 4 settled, and 23 split into 23a and 23b (decision 1).
+
+### 13.1 Steps (2026-11-11)
+- Step 1 (c7f3738): this file, 23 split into 23a and 23b in plan.md section 4, and the plan.md lines (with #163's merge line).
+- Step 2: the look-up R1 (section 10.1): profile2 for AAPL and SPY answered as on 2026-10-30.
 
 ## 14. Departures from the plan
 None yet.
