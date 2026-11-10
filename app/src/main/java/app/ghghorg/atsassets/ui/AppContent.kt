@@ -265,6 +265,17 @@ private fun BarContent(
             ),
         )
 
+        Screen.SETTINGS -> SettingsScreen(
+            state = state,
+            actions =
+            SettingsActions(
+                onBack = viewModel::closeSettings,
+                onOpenChoice = viewModel::openAutoLockChoice,
+                onCloseChoice = viewModel::closeAutoLockChoice,
+                onChoose = viewModel::chooseAutoLock,
+            ),
+        )
+
         Screen.NET_WORTH -> NetWorthScreen(
             state = state,
             actions = NetWorthActions(onBack = viewModel::closeNetWorth, onRefresh = viewModel::onPullToRefresh),
@@ -359,7 +370,12 @@ private fun TabScreen(
                 onRefresh = viewModel::onPullToRefresh,
             )
 
-        Tab.MORE -> MoreScreen(state.more, viewModel::openNetWorth, onOpenAllocation = viewModel::openAllocation)
+        Tab.MORE -> MoreScreen(
+            state.more,
+            viewModel::openNetWorth,
+            onOpenAllocation = viewModel::openAllocation,
+            onOpenSettings = viewModel::openSettings,
+        )
     }
 }
 

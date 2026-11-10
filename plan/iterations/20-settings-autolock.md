@@ -1,6 +1,6 @@
 # plan/iterations/20-settings-autolock.md
 
-Stage: Build. Status: approved 2026-11-10 (your "Approved"); decisions 1 to 3 settled the same day (section 11). In build: step 2 done (section 10.1); step 3 done (decision 4); step 5 done (decision 5; section 14).
+Stage: Build. Status: approved 2026-11-10 (your "Approved"); decisions 1 to 3 settled the same day (section 11). In build: step 2 done (section 10.1); step 3 done (decision 4); step 5 done (decision 5; section 14); step 6 done (section 14).
 Source: plan.md section 4 (row 20), spec section 3 (Settings), section 6 (More, Settings entry, navigation outline, accessibility), section 8 (settings are in the backup file; 31), section 9 (the lock, the auto-lock choices), section 14 (K8), AC-06, AC-58 (the auto-lock part), AC-61, AC-62; wireframe 10f (frames A to C, markers 2, 3 and 7); iteration 01 (the lock), 17 and 19 (More), 18 and 19 (the choice layer); CLAUDE.md (security code not from memory; Room schema files; layers in the window). "My reading" is an interpretation, not a test.
 
 ## 1. Outcome
@@ -91,3 +91,4 @@ To be shown on the phone in step 8:
 - Step 5: MainActivity is re-created when the phone is turned (no `configChanges` in the manifest), and a new `AppLock` starts locked, so a turn would have locked the app under every choice. The lock is kept in `lock/LockHolder.kt`, a view model that lives as long as the activity's screen state and not past the process (a restart still locks); it also holds the screen-off receiver. Under "every time you leave" a turn still locks, as since 01 (`onStop` runs).
 - Step 5: the store opens and Overall shows on the prompt's success, no longer on every composition that finds the app unlocked; a turn that keeps the app unlocked is no unlock (02b decision 9, 16a decision 2).
 - Step 5: a choice is saved first and applied once saved, so a choice that could not be saved never applies (my reading of "Takes effect at once. Saved.").
+- Step 6: Settings' Auto-lock row shows its value under the name, not beside it as in wireframe 10f frame B, so the longest choice fits at the largest font. A failed save shows the approved line "Not saved. Nothing was changed. Try again." (save_failed) on Settings; no new wording. A choice counts only from the open layer on Settings, so step 5's choice tests now open it first (their checks unchanged). The gear is the text sign U+2699 in its text form inside a 48 dp button, not an icon from a library.
