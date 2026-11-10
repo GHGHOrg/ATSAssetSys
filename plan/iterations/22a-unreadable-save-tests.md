@@ -1,6 +1,6 @@
 # plan/iterations/22a-unreadable-save-tests.md
 
-Stage: Build. Status: approved 2026-11-10 (your "Approved, with my input"); decision 1 settled the same day (section 11). Built 2026-11-10 (steps 1 to 4; section 14); no phone check (nothing under app/src/main changed); open item 54 closed, items 55 and 56 recorded; CI and the screen tests green on pull request #162 (section 13.2); reviewed against the spec refs (section 13.3); not yet merged.
+Stage: Build. Status: approved 2026-11-10 (your "Approved, with my input"); decision 1 settled the same day (section 11). Done: built 2026-11-10 (steps 1 to 4; section 14); no phone check (nothing under app/src/main changed); open item 54 closed, items 55 and 56 recorded; CI and the screen tests green on pull request #162 (section 13.2); reviewed against the spec refs (section 13.3); pull request #162 merged as c5fae68, main green (section 13.4).
 Source: open-items.md item 54 (your decision 2026-11-10: its own iteration after 22, not a step of 23; a one-off, CLAUDE.md section 4's rule stays); the 22 file, 13.1 (step 4); spec section 9 and C18 (data that cannot be read shows the unreadable-data screen, nothing guessed); iterations 02a, 07, 08 and 20 (the four tests), 16a (the price refresh at start); CLAUDE.md (a defect in test support is not a change request and needs no intent file; tests first, never weakened). "My reading" is an interpretation, not a test.
 
 ## 1. Outcome
@@ -76,6 +76,9 @@ None: no text the user sees changes.
 
 ### 13.3 Review against the spec refs (2026-11-11, by reading main..HEAD; plan.md section 5, item 7)
 No finding that needs a change. The branch changes 6 files, all under app/src/test or plan (git diff bf29f39..HEAD, nothing else), so the app is as before. Section 9 and C18: each of the four tests now fails unless its own save shows the unreadable-data screen (red against stubs, 5 of 5), and the price save at start, which is the one place where the start itself meets unreadable data on a save, has a test of its own; no test was weakened or removed, and 919 tests run. Open items 55 and 56 are what this review did not settle.
+
+### 13.4 The merge (2026-11-10)
+Pull request #162 merged as c5fae68 (16:20:33Z), 5 commits; the branch is gone from origin and locally. On the pull request's last commit (20ca76c) CI (run 42851859988), the screen tests (run 42851859942) and CodeQL green; a first watch of those runs ended before CI and the screen tests had started, so they were read again before the merge. On main after the merge, all at the first attempt: CI (run 42853557452, 2m 39s), CodeQL (run 42853554554) and the screen tests (run 42853557371, 16:20:34Z to 16:28:33Z, the workflow's count of 57 met) green (gh, read only).
 
 ## 14. Departures from the plan
 - Step 2: section 4 read all four tests as passing on the start's price refresh alone. 02a's did not: after the start had shown the unreadable screen, `openForm()` opened the cash form from it, so the test still reached its own save. Recorded as open item 55; the fix of step 3 was the same for all four.
