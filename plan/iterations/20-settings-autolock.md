@@ -1,6 +1,6 @@
 # plan/iterations/20-settings-autolock.md
 
-Stage: Build. Status: approved 2026-11-10 (your "Approved"); decisions 1 to 3 settled the same day (section 11). Built 2026-11-10 (steps 2 to 8; section 10.1, decisions 4 and 5, section 14); phone check 2026-11-10 all yes (section 13.3).
+Stage: Build. Status: approved 2026-11-10 (your "Approved"); decisions 1 to 3 settled the same day (section 11). Built 2026-11-10 (steps 2 to 8; section 10.1, decisions 4 and 5, section 14); phone check 2026-11-10 all yes (section 13.3); the screen tests 44 of 44 on pull request #155 (section 13.4); reviewed against the spec refs (section 13.5).
 Source: plan.md section 4 (row 20), spec section 3 (Settings), section 6 (More, Settings entry, navigation outline, accessibility), section 8 (settings are in the backup file; 31), section 9 (the lock, the auto-lock choices), section 14 (K8), AC-06, AC-58 (the auto-lock part), AC-61, AC-62; wireframe 10f (frames A to C, markers 2, 3 and 7); iteration 01 (the lock), 17 and 19 (More), 18 and 19 (the choice layer); CLAUDE.md (security code not from memory; Room schema files; layers in the window). "My reading" is an interpretation, not a test.
 
 ## 1. Outcome
@@ -113,6 +113,13 @@ versionCode 29 installed over 19's build (versionCode 28; `adb install -r`, Succ
 - 10 (AC-40): light and dark: yes.
 - 11 (spec 9): `adb logcat -d -v threadtime,uid`, the app's lines by uid 10454: 20 lines, 10:58:59 to 11:00:46, from the process start at 10:58:59.602 (`Start proc 29237`): the key not in them nor anywhere in the buffer (a True/False test); no "finnhub", "token", AAPL, "quote", "symbol=", amount or "$digit"; tags only the system's window, keyboard and back handling: yes.
 - 12 (D9): the wording of section 12 approved as shown.
+
+### 13.4 AC-62 and the screen tests
+From 20, the Auto-lock choice layer's window focus, the choices at the largest font in landscape and Settings' TalkBack text (the gear's label and size, the row with its value, the choices with the default marked, the note, a failed save) are checked by SettingsScreenTest.kt (androidTest); the lock's timing on the phone stays a hand check (13.3).
+- Pull request #155 at 137a812: the screen tests (run 42747380912) 44 of 44 at the first attempt (tests 192 s, run 03:07:44Z to 03:15:05Z), AutoLockChoiceFocusTest 1, AutoLockChoiceLargestFontLandscapeTest 1 and SettingsTalkBackTest 5 among them, all passing at their first run; CI (run 42747381239, 2m 32s) and CodeQL (run 42747378479) green (gh, read only). AppStartTimingTest's "load and Overall" median 2,604 ms (19's #153: 3,043 ms); 20 adds one read of a one-row table to the start, so this is the emulator's spread.
+
+### 13.5 Review against the spec refs (2026-11-10, by reading main..HEAD; plan.md section 5, item 7)
+No finding that needs a change. In order: the four choices of section 9, "every time you leave" the default (`AutoLock`, Settings' model); each choice's rule in `AppLock`, idle as no touch with the time away counting on a clock that does not follow the wall clock (decisions 1, 4 and 5); an in-view lock shows the lock screen and the prompt (decision 2); fails closed: the strictest rule until the choice is loaded, a stored choice that cannot be read is unreadable data and not the default, a restart always locks, a touch after the limit does not reach the screen (risk 1); the choice saved, then applied, in one settings row (decision 3; K2), no write to transactions or cash (K1 not involved); the receiver exported, a screen-off from another app can only lock (10.1); the gear labelled "Settings" and at least 48 dp, Settings' row with its value, the choice layer drawn in the window with the default marked and "Takes effect at once. Saved." (wireframe 10f markers 2, 3 and 7; AutoLockChoiceFocusTest); Back to More (navigation outline); no logging (spec 9) and no floating point (4.10) in the added code. Spec section 8's "a missing row is never an error" is about the backup file's settings (31), not the database.
 
 ## 14. Departures from the plan
 - Step 3 changed MainActivity's two calls to AppLock (the time passed in) so the app still built; the wiring stayed in step 5. `onAuthSucceeded` takes the time too: an unlock restarts the idle time.
