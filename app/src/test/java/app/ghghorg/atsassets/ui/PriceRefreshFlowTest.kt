@@ -10,6 +10,7 @@ import app.ghghorg.atsassets.core.Price
 import app.ghghorg.atsassets.core.Quote
 import app.ghghorg.atsassets.core.Transaction
 import app.ghghorg.atsassets.core.TransactionType
+import app.ghghorg.atsassets.core.UnreadableDataException
 import app.ghghorg.atsassets.core.Valuation
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Dispatchers
@@ -131,6 +132,15 @@ class PriceRefreshFlowTest {
         assertEquals(dollars(10_880), vm.state.value.netWorth)
         vm.onOnline()
         assertEquals(listOf("AAPL"), source.quoted)
+    }
+
+    @Test
+    fun anUnreadableStoreOnThePriceSaveAtStart_showsTheUnreadableScreen() {
+        // 22a (open item 54, your input): this save on its own; the tests of other saves no longer reach it.
+        val store = store().apply { pricesSaveError = UnreadableDataException("unreadable") }
+        val vm = started(store, source = FakeSource().apply { quotes = mapOf("AAPL" to Quote.Priced(BigDecimal("160"), at)) })
+        assertEquals(Screen.UNREADABLE, vm.state.value.screen)
+        assertFalse(vm.state.value.refreshing)
     }
 
     @Test

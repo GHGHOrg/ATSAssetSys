@@ -123,6 +123,9 @@ class AutoLockViewModelTest {
     @Test
     fun anUnreadableStoreOnSave_showsTheUnreadableScreen() {
         val vm = choosing(FakeStore(saveError = UnreadableDataException("unreadable")))
+        // 22a: on Settings with the layer open before the save, so only the save can show the unreadable screen.
+        assertEquals(Screen.SETTINGS, vm.state.value.screen)
+        assertTrue(vm.state.value.autoLockChoiceOpen)
         vm.chooseAutoLock(AutoLock.IDLE_1_MIN)
         assertEquals(Screen.UNREADABLE, vm.state.value.screen)
         assertEquals(AutoLock.EVERY_LEAVE, vm.state.value.autoLock)

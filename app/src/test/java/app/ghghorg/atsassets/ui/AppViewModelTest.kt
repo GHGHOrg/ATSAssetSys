@@ -263,6 +263,8 @@ class AppViewModelTest {
         vm.openForm()
         vm.fill(date = "2026-01-01", amount = "10000.00")
         vm.review()
+        // 22a: on the review before the save, so only the save can show the unreadable screen.
+        assertEquals(Screen.REVIEW, vm.state.value.screen)
         vm.confirm()
         assertEquals(Screen.UNREADABLE, vm.state.value.screen)
     }
@@ -1314,6 +1316,9 @@ class AppViewModelTest {
         val vm = started(store)
         vm.openPortfolioDialog()
         vm.onPortfolioNameChange("Main")
+        // 22a: on Overall with the dialog open before the save, so only the save can show the unreadable screen.
+        assertEquals(Screen.TABS, vm.state.value.screen)
+        assertEquals("Main", vm.state.value.portfolioDialog?.nameText)
         vm.createPortfolio()
         assertEquals(Screen.UNREADABLE, vm.state.value.screen)
     }
@@ -1510,6 +1515,9 @@ class AppViewModelTest {
         vm.openPortfolio("p1")
         vm.openRename()
         vm.onRenameNameChange("Main Account")
+        // 22a: on the portfolio with the dialog open before the save, so only the save can show the unreadable screen.
+        assertEquals(Screen.PORTFOLIO, vm.state.value.screen)
+        assertEquals("Main Account", vm.state.value.renameDialog?.nameText)
         vm.saveRename()
         assertEquals(Screen.UNREADABLE, vm.state.value.screen)
     }
@@ -1804,11 +1812,15 @@ internal class FakeStore(
     // 16a: each refresh's prices as saved, applied to the stored instruments as RoomRecordStore does.
     val savedPrices = mutableListOf<Pair<Map<String, Price>, Collection<String>>>()
 
+    // 22a: the price save fails only by [pricesSaveError], not by [saveError], so a test of another save is not ended by the
+    // price refresh at start (open item 54).
+    var pricesSaveError: Throwable? = null
+
     override suspend fun savePrices(
         fresh: Map<String, Price>,
         failed: Collection<String>,
     ) {
-        saveError?.let { throw it }
+        pricesSaveError?.let { throw it }
         savedPrices.add(fresh to failed)
         storedInstruments =
             storedInstruments.map { instrument ->
