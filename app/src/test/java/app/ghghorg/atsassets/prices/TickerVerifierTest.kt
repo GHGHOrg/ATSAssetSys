@@ -3,6 +3,7 @@ package app.ghghorg.atsassets.prices
 import app.ghghorg.atsassets.core.AssetType
 import app.ghghorg.atsassets.core.AutoLock
 import app.ghghorg.atsassets.core.CashEntry
+import app.ghghorg.atsassets.core.ClassLists
 import app.ghghorg.atsassets.core.HiddenHolding
 import app.ghghorg.atsassets.core.Instrument
 import app.ghghorg.atsassets.core.Listing
@@ -108,6 +109,8 @@ class TickerVerifierTest {
         override suspend fun loadTabOrder(): TabOrder = error("not used")
 
         override suspend fun saveTabOrder(order: TabOrder) = error("not used")
+
+        override suspend fun loadClassLists(): ClassLists = error("not used")
     }
 
     private val aapl = Listing(type = "Common Stock", exchange = "XNAS", currency = "USD")

@@ -12,6 +12,14 @@ enum class ClassOrigin {
     UNCLASSIFIED,
 }
 
+/** The two lists' values, each in the order they were added (spec 3, 4.9; 23a). */
+data class ClassLists(
+    val sectors: List<String> = emptyList(),
+    val geographies: List<String> = emptyList(),
+) {
+    operator fun get(list: ClassList): List<String> = if (list == ClassList.SECTOR) sectors else geographies
+}
+
 /** A holding's effective sector or geography: [value] as its list spells it, null when [origin] is UNCLASSIFIED (C14). */
 data class EffectiveClass(
     val value: String?,

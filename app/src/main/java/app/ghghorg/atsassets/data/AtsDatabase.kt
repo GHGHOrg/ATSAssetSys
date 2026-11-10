@@ -87,6 +87,22 @@ data class InstrumentRow(
     val price: String? = null,
     val priceTime: Long? = null,
     @ColumnInfo(defaultValue = "0") val priceStale: Boolean = false,
+    // 23a: the source profile, asked once (decision 3); the two texts are null when the source gave none.
+    val sourceSector: String? = null,
+    val sourceGeography: String? = null,
+    @ColumnInfo(defaultValue = "0") val profileAsked: Boolean = false,
+)
+
+/**
+ * One value of the sector or geography list (spec 3, 4.9; 23a): [list] is a [app.ghghorg.atsassets.core.ClassList] by
+ * name, and [seq] keeps the order values were added in. K10 adds a value only when none matches (D7), and reading
+ * refuses two that match.
+ */
+@Entity(tableName = "list_values")
+data class ListValueRow(
+    @PrimaryKey(autoGenerate = true) val seq: Long = 0,
+    val list: String,
+    val value: String,
 )
 
 /**
@@ -264,10 +280,13 @@ interface InstrumentDao {
     @Query("SELECT * FROM instruments WHERE ticker = :ticker")
     suspend fun find(ticker: String): InstrumentRow?
 
-    /** As [upsert], keeping the stored price of the row it replaces (16a): only a refresh sets a price. */
+    /**
+     * As [upsert], keeping the stored price (16a) and the source profile (23a) of the row it replaces: only a refresh sets
+     * them, so a buy that saves its instrument again loses neither.
+     */
     @Transaction
     suspend fun upsertKeepingPrice(row: InstrumentRow) {
-        upsert(row.withPriceOf(find(row.ticker)))
+        upsert(row.withStoredOf(find(row.ticker)))
     }
 
     @Query("UPDATE instruments SET price = :price, priceTime = :time, priceStale = 0 WHERE ticker = :ticker")
@@ -296,6 +315,16 @@ interface InstrumentDao {
 }
 
 @Dao
+interface ListValueDao {
+    @Insert
+    suspend fun insert(row: ListValueRow)
+
+    /** Both lists, each value in the order it was added. */
+    @Query("SELECT * FROM list_values ORDER BY seq")
+    suspend fun loadAll(): List<ListValueRow>
+}
+
+@Dao
 interface SettingsDao {
     @Upsert
     suspend fun upsert(row: SettingsRow)
@@ -321,7 +350,8 @@ interface SettingsDao {
  * Version 2 (iteration 07) adds the portfolios table, version 3 (09) the transactions and instruments tables, version 4
  * (11) the sell_allocations table, version 5 (12) the two split columns of transactions, version 6 (15) the
  * hidden_holdings table, version 7 (16a) the three price columns of instruments, version 8 (20) the settings table,
- * version 9 (22) its tab order column; Room generates each step out of the schemas in app/schemas.
+ * version 9 (22) its tab order column, version 10 (23a) the three profile columns of instruments and the list_values
+ * table; Room generates each step out of the schemas in app/schemas.
  */
 @Database(
     entities = [
@@ -332,8 +362,9 @@ interface SettingsDao {
         SellAllocationRow::class,
         HiddenHoldingRow::class,
         SettingsRow::class,
+        ListValueRow::class,
     ],
-    version = 9,
+    version = 10,
     autoMigrations = [
         AutoMigration(from = 1, to = 2),
         AutoMigration(from = 2, to = 3),
@@ -343,6 +374,7 @@ interface SettingsDao {
         AutoMigration(from = 6, to = 7),
         AutoMigration(from = 7, to = 8),
         AutoMigration(from = 8, to = 9),
+        AutoMigration(from = 9, to = 10),
     ],
 )
 abstract class AtsDatabase : RoomDatabase() {
@@ -355,4 +387,6 @@ abstract class AtsDatabase : RoomDatabase() {
     abstract fun instrumentDao(): InstrumentDao
 
     abstract fun settingsDao(): SettingsDao
+
+    abstract fun listValueDao(): ListValueDao
 }

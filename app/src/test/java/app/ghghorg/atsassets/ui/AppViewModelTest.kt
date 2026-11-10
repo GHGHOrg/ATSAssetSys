@@ -6,6 +6,7 @@ import app.ghghorg.atsassets.core.CashDirection
 import app.ghghorg.atsassets.core.CashEntry
 import app.ghghorg.atsassets.core.CashEntryRefusal
 import app.ghghorg.atsassets.core.CashType
+import app.ghghorg.atsassets.core.ClassLists
 import app.ghghorg.atsassets.core.HiddenHolding
 import app.ghghorg.atsassets.core.Instrument
 import app.ghghorg.atsassets.core.Lookup
@@ -1885,5 +1886,13 @@ internal class FakeStore(
         (tabOrderSaveError ?: saveError)?.let { throw it }
         savedTabOrders.add(order)
         storedTabOrder = order
+    }
+
+    // 23a: the sector and geography lists, empty until a profile adds to them.
+    var storedClassLists = ClassLists()
+
+    override suspend fun loadClassLists(): ClassLists {
+        loadError?.let { throw it }
+        return storedClassLists
     }
 }

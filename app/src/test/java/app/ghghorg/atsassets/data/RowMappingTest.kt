@@ -2,11 +2,13 @@ package app.ghghorg.atsassets.data
 
 import app.ghghorg.atsassets.core.AssetType
 import app.ghghorg.atsassets.core.AutoLock
+import app.ghghorg.atsassets.core.ClassLists
 import app.ghghorg.atsassets.core.Fraction
 import app.ghghorg.atsassets.core.HiddenHolding
 import app.ghghorg.atsassets.core.Instrument
 import app.ghghorg.atsassets.core.Price
 import app.ghghorg.atsassets.core.SellAllocation
+import app.ghghorg.atsassets.core.SourceProfile
 import app.ghghorg.atsassets.core.SplitRatio
 import app.ghghorg.atsassets.core.Tab
 import app.ghghorg.atsassets.core.TabOrder
@@ -105,9 +107,81 @@ class RowMappingTest {
     fun savingAnInstrumentAgain_keepsItsStoredPrice() {
         val stored = spy.copy(price = stalePrice).toRow()
         val again = spy.copy(assetType = AssetType.STOCK).toRow()
-        assertEquals(again.copy(price = "348.9100", priceTime = 1_793_304_000L, priceStale = true), again.withPriceOf(stored))
-        assertEquals(again, again.withPriceOf(null))
-        assertEquals(again, again.withPriceOf(spy.toRow()))
+        assertEquals(again.copy(price = "348.9100", priceTime = 1_793_304_000L, priceStale = true), again.withStoredOf(stored))
+        assertEquals(again, again.withStoredOf(null))
+        assertEquals(again, again.withStoredOf(spy.toRow()))
+    }
+
+    // 23a: the source profile on the instrument (decision 3) and the two lists.
+    private val aapl = Instrument(ticker = "AAPL", assetType = AssetType.STOCK, verified = true)
+
+    @Test
+    fun instrument_withAProfile_storesItsTexts_andReadsThemBack() {
+        val row = aapl.copy(profile = SourceProfile("Technology", "US")).toRow()
+        assertEquals("Technology", row.sourceSector)
+        assertEquals("US", row.sourceGeography)
+        assertEquals(true, row.profileAsked)
+        assertEquals(aapl.copy(profile = SourceProfile("Technology", "US")), row.toInstrument())
+    }
+
+    @Test
+    fun instrument_askedWithNoValues_isReadBackAsAsked() {
+        // An ETF's empty answer: asked, nothing given, so not asked again (decision 3).
+        val row = spy.copy(profile = SourceProfile(null, null)).toRow()
+        assertEquals(true, row.profileAsked)
+        assertEquals(spy.copy(profile = SourceProfile(null, null)), row.toInstrument())
+    }
+
+    @Test
+    fun instrument_neverAsked_hasNoProfile() {
+        val row = aapl.toRow()
+        assertEquals(false, row.profileAsked)
+        assertEquals(null, row.sourceSector)
+        assertEquals(null, row.toInstrument().profile)
+    }
+
+    @Test
+    fun aSourceTextWithoutTheAskedMark_isUnreadable_withNoValueInTheMessage() {
+        for (row in listOf(aapl.toRow().copy(sourceSector = "Technology"), aapl.toRow().copy(sourceGeography = "US"))) {
+            val error = assertThrows(row.toString(), UnreadableDataException::class.java) { row.toInstrument() }
+            assertFalse(row.toString(), error.message!!.contains("Technology") || error.message!!.contains("US"))
+        }
+    }
+
+    @Test
+    fun savingAnInstrumentAgain_keepsItsStoredProfile() {
+        // A buy saves its instrument again (09); only a refresh sets the profile (23a).
+        val stored = aapl.copy(price = stalePrice, profile = SourceProfile("Technology", null)).toRow()
+        val again = aapl.toRow()
+        assertEquals(aapl.copy(price = stalePrice, profile = SourceProfile("Technology", null)), again.withStoredOf(stored).toInstrument())
+    }
+
+    @Test
+    fun listRows_readBackAsTheTwoLists_eachInTheOrderAdded() {
+        val rows =
+            listOf(
+                ListValueRow(seq = 1, list = "SECTOR", value = "Technology"),
+                ListValueRow(seq = 2, list = "GEOGRAPHY", value = "US"),
+                ListValueRow(seq = 3, list = "SECTOR", value = "Energy"),
+            )
+        assertEquals(ClassLists(sectors = listOf("Technology", "Energy"), geographies = listOf("US")), rows.toClassLists())
+        assertEquals(ClassLists(), emptyList<ListValueRow>().toClassLists())
+    }
+
+    @Test
+    fun anUnknownList_orTwoMatchingValuesInAList_isUnreadable() {
+        val bad =
+            listOf(
+                listOf(ListValueRow(seq = 1, list = "INDUSTRY", value = "Technology")),
+                listOf(ListValueRow(seq = 1, list = "SECTOR", value = "Technology"), ListValueRow(seq = 2, list = "SECTOR", value = "technology ")),
+            )
+        for (rows in bad) {
+            val error = assertThrows(rows.toString(), UnreadableDataException::class.java) { rows.toClassLists() }
+            assertFalse(rows.toString(), error.message!!.contains("Technology"))
+        }
+        // The same text in the two lists is allowed: they are separate (4.9).
+        val both = listOf(ListValueRow(seq = 1, list = "SECTOR", value = "Global"), ListValueRow(seq = 2, list = "GEOGRAPHY", value = "Global"))
+        assertEquals(ClassLists(sectors = listOf("Global"), geographies = listOf("Global")), both.toClassLists())
     }
 
     private val laterBuy = buy.copy(id = "t2", date = LocalDate.of(2026, 2, 3), enteredSeq = 5L, quantity = BigDecimal("10"))

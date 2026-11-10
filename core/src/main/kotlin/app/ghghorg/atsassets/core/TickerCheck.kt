@@ -12,13 +12,24 @@ enum class AssetType {
 
 /**
  * An instrument (spec section 3): a ticker that passed the check of 4.3, its asset type and, from 16a, its latest
- * [price] (null when none was ever fetched, 4.8). Source sector and geography (23) join later. Written only by K4.
+ * [price] (null when none was ever fetched, 4.8); from 23a its source [profile], null until the source was asked
+ * (decision 3). Written only by K4.
  */
 data class Instrument(
     val ticker: String,
     val assetType: AssetType,
     val verified: Boolean,
     val price: Price? = null,
+    val profile: SourceProfile? = null,
+)
+
+/**
+ * What the source gave for an instrument's sector and geography when it was asked (spec 3, 4.9; 23a): each a value
+ * text, or null when the source gave none ("N/A", empty or missing: decision 2). An ETF's empty answer is both null.
+ */
+data class SourceProfile(
+    val sector: String?,
+    val geography: String?,
 )
 
 /**

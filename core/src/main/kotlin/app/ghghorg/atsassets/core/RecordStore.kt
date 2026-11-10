@@ -121,6 +121,12 @@ interface RecordStore {
 
     /** Saves the tab order in place of the one before; the other settings are kept (22). */
     suspend fun saveTabOrder(order: TabOrder)
+
+    /**
+     * The sector and geography lists (spec 3, 4.9; 23a), each in the order its values were added; empty lists when
+     * none was saved. Throws [UnreadableDataException] for an unknown list or two values in a list that match (D7).
+     */
+    suspend fun loadClassLists(): ClassLists
 }
 
 class UnreadableDataException(

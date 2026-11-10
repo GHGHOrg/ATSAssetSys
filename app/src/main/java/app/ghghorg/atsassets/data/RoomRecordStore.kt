@@ -4,6 +4,9 @@ import app.ghghorg.atsassets.core.AssetType
 import app.ghghorg.atsassets.core.AutoLock
 import app.ghghorg.atsassets.core.CashEntry
 import app.ghghorg.atsassets.core.CashType
+import app.ghghorg.atsassets.core.ClassList
+import app.ghghorg.atsassets.core.ClassLists
+import app.ghghorg.atsassets.core.Classification
 import app.ghghorg.atsassets.core.Fraction
 import app.ghghorg.atsassets.core.HiddenHolding
 import app.ghghorg.atsassets.core.Hiding
@@ -12,6 +15,7 @@ import app.ghghorg.atsassets.core.Portfolio
 import app.ghghorg.atsassets.core.Price
 import app.ghghorg.atsassets.core.RecordStore
 import app.ghghorg.atsassets.core.SellAllocation
+import app.ghghorg.atsassets.core.SourceProfile
 import app.ghghorg.atsassets.core.SplitRatio
 import app.ghghorg.atsassets.core.Splits
 import app.ghghorg.atsassets.core.TabOrder
@@ -367,6 +371,18 @@ class RoomRecordStore(
         dao.saveTabOrder(order.text)
     }
 
+    override suspend fun loadClassLists(): ClassLists = withContext(Dispatchers.IO) {
+        try {
+            database.listValueDao().loadAll().toClassLists()
+        } catch (e: CancellationException) {
+            throw e
+        } catch (e: UnreadableDataException) {
+            throw e
+        } catch (e: Exception) {
+            throw UnreadableDataException("The stored data could not be read.", e)
+        }
+    }
+
     private suspend fun hiddenDao(): TransactionDao = withContext(Dispatchers.IO) {
         try {
             database.transactionDao()
@@ -508,6 +524,9 @@ internal fun Instrument.toRow() = InstrumentRow(
     price = price?.perShare?.toPlainString(),
     priceTime = price?.time?.epochSecond,
     priceStale = price?.stale ?: false,
+    sourceSector = profile?.sector,
+    sourceGeography = profile?.geography,
+    profileAsked = profile != null,
 )
 
 /**
@@ -532,11 +551,46 @@ internal fun InstrumentRow.toInstrument(): Instrument {
                 Price(perShare, Instant.ofEpochSecond(priceTime), priceStale)
             }
         }
-    return Instrument(ticker = ticker, assetType = AssetType.valueOf(assetType), verified = verified, price = stored)
+    return Instrument(ticker = ticker, assetType = AssetType.valueOf(assetType), verified = verified, price = stored, profile = toProfile())
 }
 
-/** This row with the price columns of [stored]: saving an instrument again keeps its price (only a refresh sets one). */
-internal fun InstrumentRow.withPriceOf(stored: InstrumentRow?): InstrumentRow = copy(price = stored?.price, priceTime = stored?.priceTime, priceStale = stored?.priceStale ?: false)
+/**
+ * The source profile (23a, decision 3): none until asked; once asked, its two texts, each possibly null. Throws
+ * [UnreadableDataException] for a text without the asked mark. The message names no value (spec 9).
+ */
+private fun InstrumentRow.toProfile(): SourceProfile? {
+    if (profileAsked) return SourceProfile(sourceSector, sourceGeography)
+    if (sourceSector != null || sourceGeography != null) throw UnreadableDataException("A stored profile is damaged.")
+    return null
+}
+
+/**
+ * This row with the price columns (16a) and the profile columns (23a) of [stored]: saving an instrument again keeps
+ * both, since only a refresh sets them.
+ */
+internal fun InstrumentRow.withStoredOf(stored: InstrumentRow?): InstrumentRow = copy(
+    price = stored?.price,
+    priceTime = stored?.priceTime,
+    priceStale = stored?.priceStale ?: false,
+    sourceSector = stored?.sourceSector,
+    sourceGeography = stored?.sourceGeography,
+    profileAsked = stored?.profileAsked ?: false,
+)
+
+/**
+ * The two lists from their rows, each in the order added (23a). Throws [UnreadableDataException] for an unknown list
+ * or two values in one list that match (D7); nothing is guessed. The messages name no value (spec 9).
+ */
+internal fun List<ListValueRow>.toClassLists(): ClassLists {
+    val byList = ClassList.entries.associateWith { mutableListOf<String>() }
+    for (row in sortedBy { it.seq }) {
+        val list = ClassList.entries.firstOrNull { it.name == row.list } ?: throw UnreadableDataException("A stored list could not be read.")
+        val values = byList.getValue(list)
+        if (Classification.valueFor(values, row.value) != null) throw UnreadableDataException("A stored list holds a value twice.")
+        values += row.value
+    }
+    return ClassLists(sectors = byList.getValue(ClassList.SECTOR), geographies = byList.getValue(ClassList.GEOGRAPHY))
+}
 
 private fun Portfolio.toRow() = PortfolioRow(id = id, name = name, createdSeq = createdSeq)
 
