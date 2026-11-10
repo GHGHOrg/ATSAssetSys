@@ -1,6 +1,8 @@
 package app.ghghorg.atsassets.ui
 
 import app.ghghorg.atsassets.core.AutoLock
+import app.ghghorg.atsassets.core.Tab
+import app.ghghorg.atsassets.core.TabOrder
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
@@ -65,5 +67,14 @@ class SettingsModelTest {
     fun aFailedSave_isShown_andNoRefusalShowsNothing() {
         assertTrue(Settings.of(AutoLock.EVERY_LEAVE, SaveRefusal.SAVE_FAILED).notSaved)
         assertFalse(Settings.of(AutoLock.EVERY_LEAVE, refusal = null).notSaved)
+    }
+
+    // 22: the Navigation section's Tab order row shows the order in force (marker 5).
+    @Test
+    fun theTabOrderRow_showsTheOrderInForce_theDefaultWhenNoneIsGiven() {
+        val overallFirst = TabOrder.of(listOf(Tab.OVERALL, Tab.MORE, Tab.CASH, Tab.PORTFOLIOS))!!
+        val shown = Settings.of(AutoLock.EVERY_LEAVE, refusal = null, tabOrder = overallFirst).tabOrder
+        assertEquals(listOf(Tab.OVERALL, Tab.MORE, Tab.CASH, Tab.PORTFOLIOS), shown)
+        assertEquals(listOf(Tab.MORE, Tab.CASH, Tab.PORTFOLIOS, Tab.OVERALL), Settings.of(AutoLock.EVERY_LEAVE, refusal = null).tabOrder)
     }
 }

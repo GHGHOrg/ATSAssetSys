@@ -692,7 +692,11 @@ data class AppState(
 
     /** Settings as the screen draws it (section 6; CR2, 20). */
     val settings: SettingsModel
-        get() = Settings.of(autoLock, autoLockRefusal, screenshotWindowLeftMs)
+        get() = Settings.of(autoLock, autoLockRefusal, screenshotWindowLeftMs, tabOrder)
+
+    // 22: the Tab order screen (wireframe 10f frame E), from the order in force.
+    val tabOrderScreen: TabOrderModel
+        get() = TabOrders.of(tabOrder, tabOrderRefusal)
 
     /** The sell screen's lot rows, each lot's gain at the latest price in today's shares (16c decisions 3 and 4). */
     val sellLotRows: List<SellLotRowModel>

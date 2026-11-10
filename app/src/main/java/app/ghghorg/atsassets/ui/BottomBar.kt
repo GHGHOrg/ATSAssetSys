@@ -86,8 +86,9 @@ private fun TabItem(
     }
 }
 
+/** A tab's name, as the bar shows it; also the Tab order screen's and Settings' (22). */
 @get:StringRes
-private val Tab.labelRes: Int
+internal val Tab.labelRes: Int
     get() = when (this) {
         Tab.MORE -> R.string.tab_more
         Tab.CASH -> R.string.tab_cash

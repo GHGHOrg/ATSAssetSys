@@ -289,7 +289,13 @@ private fun BarContent(
                 onCloseScreenshots = viewModel::closeScreenshotLayer,
                 onAllowScreenshots = screenshots.onAllow,
                 onTurnOffScreenshots = screenshots.onTurnOff,
+                onOpenTabOrder = viewModel::openTabOrder,
             ),
+        )
+
+        Screen.TAB_ORDER -> TabOrderScreen(
+            state = state,
+            actions = TabOrderActions(onBack = viewModel::closeTabOrder, onUp = viewModel::moveTabUp, onDown = viewModel::moveTabDown),
         )
 
         Screen.NET_WORTH -> NetWorthScreen(

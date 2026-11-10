@@ -178,6 +178,15 @@ class TabOrderViewModelTest {
     }
 
     @Test
+    fun theScreensModels_followAMove() {
+        // CR2: the Tab order screen and Settings' row draw from the state's models.
+        val vm = ordering(FakeStore())
+        vm.moveTabDown(Tab.MORE)
+        assertEquals(listOf(Tab.CASH, Tab.MORE, Tab.PORTFOLIOS, Tab.OVERALL), vm.state.value.tabOrderScreen.rows.map { it.tab })
+        assertEquals(listOf(Tab.CASH, Tab.MORE, Tab.PORTFOLIOS, Tab.OVERALL), vm.state.value.settings.tabOrder)
+    }
+
+    @Test
     fun anUnlock_opensOverall_whereverItSits() {
         // Spec 6: after unlock the app opens on Overall, here the first tab.
         val store = FakeStore().also { it.storedTabOrder = overallFirst }
