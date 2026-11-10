@@ -1,6 +1,6 @@
 # plan/iterations/22a-unreadable-save-tests.md
 
-Stage: Build. Status: approved 2026-11-10 (your "Approved, with my input"); decision 1 settled the same day (section 11). Built 2026-11-10 (steps 1 to 4; section 14); no phone check (nothing under app/src/main changed); open item 54 closed, items 55 and 56 recorded; not yet merged.
+Stage: Build. Status: approved 2026-11-10 (your "Approved, with my input"); decision 1 settled the same day (section 11). Built 2026-11-10 (steps 1 to 4; section 14); no phone check (nothing under app/src/main changed); open item 54 closed, items 55 and 56 recorded; CI and the screen tests green on pull request #162 (section 13.2); reviewed against the spec refs (section 13.3); not yet merged.
 Source: open-items.md item 54 (your decision 2026-11-10: its own iteration after 22, not a step of 23; a one-off, CLAUDE.md section 4's rule stays); the 22 file, 13.1 (step 4); spec section 9 and C18 (data that cannot be read shows the unreadable-data screen, nothing guessed); iterations 02a, 07, 08 and 20 (the four tests), 16a (the price refresh at start); CLAUDE.md (a defect in test support is not a change request and needs no intent file; tests first, never weakened). "My reading" is an interpretation, not a test.
 
 ## 1. Outcome
@@ -70,6 +70,12 @@ None: no text the user sees changes.
 - Step 3, the fix (decision 1): `FakeStore.savePrices` throws only its own `pricesSaveError`; each of the four tests checks the screen it is on before its action (02a the review, 07 Overall with the dialog and its name, 08 the portfolio with the Rename dialog and its name, 20 Settings with the layer open); PriceRefreshFlowTest's new `anUnreadableStoreOnThePriceSaveAtStart_showsTheUnreadableScreen` makes only the price save unreadable and checks the unreadable-data screen. Red against scratch stubs first (the four actions doing nothing; the refresh treating an unreadable save as a failed one): 5 tests, 5 failed, each at its last line with the screen before the action (REVIEW, PORTFOLIO, TABS, SETTINGS, TABS), so each check before the action held. The stubs were taken out; app/src/main unchanged. Against the code: 919 tests, 0 failures; no other test changed result (risk 1).
 - Step 4: open item 54 closed with the evidence; items 55 (`openForm()` and the unreadable screen) and 56 (no test of an ordinary price save failure) recorded; plan.md's row and change log; the pull request draft.
 - Each step's run: spotlessCheck, build, tests and lint with --rerun-tasks, plus `:app:compileDebugAndroidTestKotlin`; lint the 5 listed findings at the end of each step; app/src/main unchanged after each (risk 2). Each step committed after its run (your "commit").
+
+### 13.2 The pull request's runs
+- Pull request #162 at 2c4487d: the screen tests (run 42848285842) green at the first attempt (2026-11-10 15:48:54Z to 15:57:31Z; the workflow's count of 57 met), CI (run 42848286337, 3m 42s) and CodeQL (run 42848271741) green (gh, read only).
+
+### 13.3 Review against the spec refs (2026-11-11, by reading main..HEAD; plan.md section 5, item 7)
+No finding that needs a change. The branch changes 6 files, all under app/src/test or plan (git diff bf29f39..HEAD, nothing else), so the app is as before. Section 9 and C18: each of the four tests now fails unless its own save shows the unreadable-data screen (red against stubs, 5 of 5), and the price save at start, which is the one place where the start itself meets unreadable data on a save, has a test of its own; no test was weakened or removed, and 919 tests run. Open items 55 and 56 are what this review did not settle.
 
 ## 14. Departures from the plan
 - Step 2: section 4 read all four tests as passing on the start's price refresh alone. 02a's did not: after the start had shown the unreadable screen, `openForm()` opened the cash form from it, so the test still reached its own save. Recorded as open item 55; the fix of step 3 was the same for all four.
