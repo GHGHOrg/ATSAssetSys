@@ -26,6 +26,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import app.ghghorg.atsassets.R
+import app.ghghorg.atsassets.core.Tab
 
 /** The bottom bar (spec 6, navigation outline): text-only tabs in [order], left to right (02b decision 7). */
 @Composable

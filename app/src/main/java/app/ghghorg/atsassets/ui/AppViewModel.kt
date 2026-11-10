@@ -61,6 +61,7 @@ import app.ghghorg.atsassets.core.SplitRatio
 import app.ghghorg.atsassets.core.SplitRefusal
 import app.ghghorg.atsassets.core.SplitResult
 import app.ghghorg.atsassets.core.Splits
+import app.ghghorg.atsassets.core.Tab
 import app.ghghorg.atsassets.core.TickerCheck
 import app.ghghorg.atsassets.core.Transaction
 import app.ghghorg.atsassets.core.TransactionType
@@ -359,14 +360,6 @@ data class BuyRefusals(
 internal fun sellTotal(text: String): AmountResult = when (val parsed = Money.parseCents(text)) {
     is AmountResult.Refused -> if (parsed.reason == AmountError.ZERO) AmountResult.Cents(0L) else parsed
     is AmountResult.Cents -> parsed
-}
-
-/** The four bottom bar tabs (spec 6, navigation outline). */
-enum class Tab {
-    MORE,
-    CASH,
-    PORTFOLIOS,
-    OVERALL,
 }
 
 /** The default order, left to right. Iteration 22 makes the order a setting. */

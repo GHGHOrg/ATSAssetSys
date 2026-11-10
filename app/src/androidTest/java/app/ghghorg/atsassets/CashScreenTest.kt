@@ -18,13 +18,13 @@ import app.ghghorg.atsassets.core.CashType
 import app.ghghorg.atsassets.core.Fraction
 import app.ghghorg.atsassets.core.Portfolio
 import app.ghghorg.atsassets.core.SellAllocation
+import app.ghghorg.atsassets.core.Tab
 import app.ghghorg.atsassets.core.Transaction
 import app.ghghorg.atsassets.core.TransactionType
 import app.ghghorg.atsassets.ui.AppState
 import app.ghghorg.atsassets.ui.CashFilterActions
 import app.ghghorg.atsassets.ui.CashScreen
 import app.ghghorg.atsassets.ui.Screen
-import app.ghghorg.atsassets.ui.Tab
 import app.ghghorg.atsassets.ui.theme.ATSAssetSystemTheme
 import org.junit.Assert.assertTrue
 import org.junit.Rule

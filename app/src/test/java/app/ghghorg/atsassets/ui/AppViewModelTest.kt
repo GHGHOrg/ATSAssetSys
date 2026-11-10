@@ -15,6 +15,7 @@ import app.ghghorg.atsassets.core.Price
 import app.ghghorg.atsassets.core.PriceSource
 import app.ghghorg.atsassets.core.Quote
 import app.ghghorg.atsassets.core.RecordStore
+import app.ghghorg.atsassets.core.Tab
 import app.ghghorg.atsassets.core.Transaction
 import app.ghghorg.atsassets.core.UnreadableDataException
 import kotlinx.coroutines.CompletableDeferred

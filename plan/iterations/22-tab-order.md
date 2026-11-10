@@ -78,5 +78,9 @@ To be shown on the phone in step 7:
 ## 13. Status and notes
 - Draft 2026-11-10; approved the same day; decisions 1 to 3 settled.
 
+### 13.1 Steps (2026-11-10)
+- Step 1: this file and the plan.md lines (with #158's and #159's merge lines).
+- Step 2: core/Tab.kt, the four tabs moved from app's AppViewModel.kt (decision 3), each with its key in spec 8's text; core/TabOrder.kt: each tab once, made only by `of` or `parse`; Up and Down one place, the first's Up and the last's Down changing nothing (decision 1); the default; spec 8's text both ways, case ignored, refused when a tab is missing, twice or unknown. The `Tab` import in 28 app files (11 androidTest, 3 main, 14 unit tests), nothing else in them changed. TabOrderTest 10. Red against a stub first: 10 tests, 8 failed (the two refusal tests passed on the stub, which refuses everything). One expected value, in `moves_keepEachTabOnce`, was worked out wrong by hand; the code's Portfolios, Cash, Overall, More is right (the steps are in the test), so the value was corrected and no assertion removed. Tests 893. HoldingsScaleTest red in one full run (1 holdings, SPREAD: grew 20.4 times, bound 8; 70.8 ms at 3,000, limit 65.0 ms), re-run unchanged and green (16b's decision, your B).
+
 ## 14. Departures from the plan
 None yet.

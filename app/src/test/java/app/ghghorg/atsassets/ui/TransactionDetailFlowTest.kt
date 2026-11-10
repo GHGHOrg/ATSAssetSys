@@ -7,6 +7,7 @@ import app.ghghorg.atsassets.core.Portfolio
 import app.ghghorg.atsassets.core.SellAllocation
 import app.ghghorg.atsassets.core.SplitEffect
 import app.ghghorg.atsassets.core.SplitRatio
+import app.ghghorg.atsassets.core.Tab
 import app.ghghorg.atsassets.core.Transaction
 import app.ghghorg.atsassets.core.TransactionType
 import kotlinx.coroutines.Dispatchers
