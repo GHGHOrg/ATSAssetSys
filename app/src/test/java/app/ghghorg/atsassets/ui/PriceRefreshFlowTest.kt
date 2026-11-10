@@ -3,11 +3,14 @@ package app.ghghorg.atsassets.ui
 import app.ghghorg.atsassets.core.AssetType
 import app.ghghorg.atsassets.core.CashEntry
 import app.ghghorg.atsassets.core.CashType
+import app.ghghorg.atsassets.core.ClassLists
 import app.ghghorg.atsassets.core.Fraction
 import app.ghghorg.atsassets.core.Instrument
 import app.ghghorg.atsassets.core.Portfolio
 import app.ghghorg.atsassets.core.Price
+import app.ghghorg.atsassets.core.ProfileAnswer
 import app.ghghorg.atsassets.core.Quote
+import app.ghghorg.atsassets.core.SourceProfile
 import app.ghghorg.atsassets.core.Transaction
 import app.ghghorg.atsassets.core.TransactionType
 import app.ghghorg.atsassets.core.UnreadableDataException
@@ -132,6 +135,40 @@ class PriceRefreshFlowTest {
         assertEquals(dollars(10_880), vm.state.value.netWorth)
         vm.onOnline()
         assertEquals(listOf("AAPL"), source.quoted)
+    }
+
+    // 23a: the profile, asked once per instrument at a refresh (decision 3), saved with its texts added to the lists.
+    @Test
+    fun theFirstRefresh_asksAnUnaskedProfile_savesIt_andAddsItsTexts_andThenNeverAsksAgain() {
+        val store = store()
+        val source = FakeSource().apply { profiles = mapOf("AAPL" to ProfileAnswer.Given(SourceProfile("Technology", "US"))) }
+        val vm = started(store, source = source)
+        assertEquals(listOf("AAPL"), source.profiled)
+        assertEquals(SourceProfile("Technology", "US"), store.storedInstruments.single().profile)
+        assertEquals(ClassLists(sectors = listOf("Technology"), geographies = listOf("US")), store.storedClassLists)
+        assertEquals(SourceProfile("Technology", "US"), vm.state.value.instruments.single().profile)
+        vm.onPullToRefresh()
+        vm.onUnlocked()
+        assertEquals(listOf("AAPL"), source.profiled)
+    }
+
+    @Test
+    fun anInstrumentAlreadyAsked_isNotAskedAgain() {
+        val store = store().apply { storedInstruments = storedInstruments.map { it.copy(profile = SourceProfile(null, null)) } }
+        val source = FakeSource()
+        started(store, source = source)
+        assertEquals(emptyList<String>(), source.profiled)
+    }
+
+    @Test
+    fun aProfileWithoutAnAnswer_leavesTheInstrumentUnasked_andTheRefreshNotFailed() {
+        val store = store()
+        val source = FakeSource().apply { profiles = mapOf("AAPL" to ProfileAnswer.Unreadable) }
+        val vm = started(store, source = source)
+        assertEquals(null, store.storedInstruments.single().profile)
+        assertFalse(vm.state.value.refreshFailed)
+        vm.onPullToRefresh()
+        assertEquals(listOf("AAPL", "AAPL"), source.profiled)
     }
 
     @Test

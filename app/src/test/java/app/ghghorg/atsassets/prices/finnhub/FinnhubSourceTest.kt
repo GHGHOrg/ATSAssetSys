@@ -2,7 +2,9 @@ package app.ghghorg.atsassets.prices.finnhub
 
 import app.ghghorg.atsassets.core.Listing
 import app.ghghorg.atsassets.core.Lookup
+import app.ghghorg.atsassets.core.ProfileAnswer
 import app.ghghorg.atsassets.core.Quote
+import app.ghghorg.atsassets.core.SourceProfile
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -320,6 +322,99 @@ class FinnhubSourceTest {
         }
     }
 }
+
+/** 23a: Finnhub's /stock/profile2 call and its answer (R1, 2026-11-11; decisions 2 and 3). */
+class FinnhubProfileTest {
+    private fun profiling(
+        code: Int,
+        body: String,
+        failure: IOException? = null,
+    ): Pair<FinnhubSource, FakeConnection> {
+        val connection = FakeConnection(code, body, failure)
+        return FinnhubSource("test-key") { url -> connection.also { it.opened = url } } to connection
+    }
+
+    @Test
+    fun profile_aStock_givesItsIndustryAndCountry_andSendsTheKeyInTheHeaderOnly() = runTest {
+        val (source, connection) = profiling(200, AAPL_PROFILE)
+        assertEquals(ProfileAnswer.Given(SourceProfile("Technology", "US")), source.profile("AAPL"))
+        assertEquals("https://finnhub.io/api/v1/stock/profile2?symbol=AAPL", connection.opened.toString())
+        assertEquals("test-key", connection.getRequestProperty("X-Finnhub-Token"))
+        assertFalse(connection.opened.toString().contains("test-key"))
+        assertEquals("GET", connection.requestMethod)
+        assertFalse(connection.instanceFollowRedirects)
+        assertTrue(connection.connectTimeout > 0)
+        assertTrue(connection.readTimeout > 0)
+        assertTrue(connection.disconnected)
+    }
+
+    @Test
+    fun profile_anEtfsEmptyAnswer_isGivenWithNoValues() = runTest {
+        // SPY, R1: {}. Given, so the instrument is not asked again (decision 3).
+        assertEquals(ProfileAnswer.Given(SourceProfile(null, null)), profiling(200, "{}").first.profile("SPY"))
+    }
+
+    @Test
+    fun profile_NA_anEmptyText_aMissingField_orNotText_isNoValue() = runTest {
+        // Decision 2; AABB's "N/A" of 2026-10-30.
+        val cases =
+            mapOf(
+                """{"ticker":"AABB","finnhubIndustry":"N/A","country":"US"}""" to SourceProfile(null, "US"),
+                """{"ticker":"X","finnhubIndustry":"Energy","country":""}""" to SourceProfile("Energy", null),
+                """{"ticker":"X","country":"US"}""" to SourceProfile(null, "US"),
+                """{"ticker":"X","finnhubIndustry":null,"country":5}""" to SourceProfile(null, null),
+            )
+        for ((body, expected) in cases) {
+            assertEquals(body, ProfileAnswer.Given(expected), profiling(200, body).first.profile("X"))
+        }
+    }
+
+    @Test
+    fun profile_anErrorObject_orABodyThatIsNotAnObject_isUnreadable_soAskedAgain() = runTest {
+        for (body in listOf("""{"error":"Invalid API key"}""", "<html>", "[]", "", "null")) {
+            val (source, connection) = profiling(200, body)
+            assertEquals(body, ProfileAnswer.Unreadable, source.profile("AAPL"))
+            assertTrue(connection.disconnected)
+        }
+    }
+
+    @Test
+    fun profile_eachStatus_givesItsKind_andFollowsNoRedirect() = runTest {
+        assertEquals(ProfileAnswer.KeyRefused(401), profiling(401, "").first.profile("AAPL"))
+        assertEquals(ProfileAnswer.KeyRefused(403), profiling(403, "").first.profile("AAPL"))
+        assertEquals(ProfileAnswer.TooManyCalls, profiling(429, "").first.profile("AAPL"))
+        for (code in listOf(302, 404, 500, 503)) {
+            val opened = mutableListOf<URL>()
+            val connection = FakeConnection(code, "", location = "https://static2.finnhub.io/p.json")
+            val source = FinnhubSource("test-key") { url -> connection.also { opened.add(url) } }
+            assertEquals(code.toString(), ProfileAnswer.NoAnswer(code), source.profile("AAPL"))
+            assertEquals(code.toString(), 1, opened.size)
+            assertTrue(connection.disconnected)
+        }
+    }
+
+    @Test
+    fun profile_withAnEmptyKey_isNoKey_andConnectsNowhere() = runTest {
+        var connected = false
+        val source = FinnhubSource("") {
+            connected = true
+            FakeConnection(200, AAPL_PROFILE)
+        }
+        assertEquals(ProfileAnswer.NoKey, source.profile("AAPL"))
+        assertFalse(connected)
+    }
+
+    @Test
+    fun profile_aFailedConnection_isNoAnswer_withoutAStatus() = runTest {
+        val (source, connection) = profiling(200, AAPL_PROFILE, failure = IOException("no route"))
+        assertEquals(ProfileAnswer.NoAnswer(status = null), source.profile("AAPL"))
+        assertTrue(connection.disconnected)
+    }
+}
+
+/** Finnhub's /stock/profile2 answer for AAPL of 2026-11-11 (R1), the logo, phone and web address left out. */
+private const val AAPL_PROFILE =
+    """{"ticker":"AAPL","name":"Apple Inc.","country":"US","currency":"USD","estimateCurrency":"USD","exchange":"NASDAQ NMS - GLOBAL MARKET","finnhubIndustry":"Technology"}"""
 
 /** Finnhub's /quote answer for AAPL of 2026-10-30 (price-source note 10.2). */
 private const val AAPL_QUOTE = """{"c":348.91,"d":5.08,"dp":1.4775,"h":351.43,"l":347.3,"o":348,"pc":343.83,"t":1793304000}"""

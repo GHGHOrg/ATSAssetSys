@@ -61,6 +61,19 @@ object Classification {
     }
 
     /**
+     * The values [profiles] add to [lists] (4.9): each value text not yet on its list, once, sectors first, each in the
+     * order of [profiles]. A text that matches a value (D7) or is no value adds nothing.
+     */
+    fun additions(
+        lists: ClassLists,
+        profiles: Collection<SourceProfile>,
+    ): List<Pair<ClassList, String>> = ClassList.entries.flatMap { list ->
+        val texts = profiles.map { if (list == ClassList.SECTOR) it.sector else it.geography }
+        val after = texts.fold(lists[list]) { values, text -> withSource(values, text) }
+        after.drop(lists[list].size).map { list to it }
+    }
+
+    /**
      * The effective value without an override (24): the list's value for the source's text, or the text itself while
      * the list does not hold it yet, or "Unclassified" when the source gives no value.
      */

@@ -1011,10 +1011,12 @@ class AppViewModel(
         val opened = store ?: return
         if (current.screen == Screen.LOADING || current.screen == Screen.UNREADABLE || current.refreshing) return
         val tickers = PriceRefresh.tickers(current.transactions, current.hidden)
+        // 23a: the profile is asked once per instrument (decision 3); an instrument not stored yet is not asked.
+        val unasked = current.instruments.filter { it.profile == null }.map { it.ticker }.toSet()
         mutableState.update { it.copy(refreshing = true) }
         viewModelScope.launch {
             try {
-                val outcome = PriceRefresh.refresh(tickers, isOnline(), priceSource, opened)
+                val outcome = PriceRefresh.refresh(tickers, isOnline(), priceSource, opened, unasked)
                 mutableState.update {
                     it.copy(
                         instruments = PriceRefresh.applied(it.instruments, outcome),

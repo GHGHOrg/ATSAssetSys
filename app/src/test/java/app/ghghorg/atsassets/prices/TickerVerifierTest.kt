@@ -11,8 +11,10 @@ import app.ghghorg.atsassets.core.Lookup
 import app.ghghorg.atsassets.core.Portfolio
 import app.ghghorg.atsassets.core.Price
 import app.ghghorg.atsassets.core.PriceSource
+import app.ghghorg.atsassets.core.ProfileAnswer
 import app.ghghorg.atsassets.core.Quote
 import app.ghghorg.atsassets.core.RecordStore
+import app.ghghorg.atsassets.core.SourceProfile
 import app.ghghorg.atsassets.core.TabOrder
 import app.ghghorg.atsassets.core.TickerRefusal
 import app.ghghorg.atsassets.core.Transaction
@@ -32,6 +34,8 @@ class TickerVerifierTest {
         }
 
         override suspend fun quote(ticker: String): Quote = error("not used")
+
+        override suspend fun profile(ticker: String): ProfileAnswer = error("not used")
     }
 
     /** Only instruments are used here; the other calls are not expected. */
@@ -94,6 +98,7 @@ class TickerVerifierTest {
         override suspend fun savePrices(
             fresh: Map<String, Price>,
             failed: Collection<String>,
+            profiles: Map<String, SourceProfile>,
         ) = error("not used")
 
         override suspend fun loadHidden(): List<HiddenHolding> = error("not used")

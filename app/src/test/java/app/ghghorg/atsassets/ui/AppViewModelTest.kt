@@ -6,7 +6,9 @@ import app.ghghorg.atsassets.core.CashDirection
 import app.ghghorg.atsassets.core.CashEntry
 import app.ghghorg.atsassets.core.CashEntryRefusal
 import app.ghghorg.atsassets.core.CashType
+import app.ghghorg.atsassets.core.ClassList
 import app.ghghorg.atsassets.core.ClassLists
+import app.ghghorg.atsassets.core.Classification
 import app.ghghorg.atsassets.core.HiddenHolding
 import app.ghghorg.atsassets.core.Instrument
 import app.ghghorg.atsassets.core.Lookup
@@ -14,8 +16,10 @@ import app.ghghorg.atsassets.core.Portfolio
 import app.ghghorg.atsassets.core.PortfolioRefusal
 import app.ghghorg.atsassets.core.Price
 import app.ghghorg.atsassets.core.PriceSource
+import app.ghghorg.atsassets.core.ProfileAnswer
 import app.ghghorg.atsassets.core.Quote
 import app.ghghorg.atsassets.core.RecordStore
+import app.ghghorg.atsassets.core.SourceProfile
 import app.ghghorg.atsassets.core.Tab
 import app.ghghorg.atsassets.core.TabOrder
 import app.ghghorg.atsassets.core.Transaction
@@ -1607,6 +1611,15 @@ internal class FakeSource(
         quoteGate?.await()
         return quotes[ticker] ?: Quote.NoQuote
     }
+
+    // 23a: each ticker's profile answer (an empty answer, as for an ETF, when not set) and the tickers asked in order.
+    var profiles: Map<String, ProfileAnswer> = emptyMap()
+    val profiled = mutableListOf<String>()
+
+    override suspend fun profile(ticker: String): ProfileAnswer {
+        profiled.add(ticker)
+        return profiles[ticker] ?: ProfileAnswer.Given(SourceProfile(null, null))
+    }
 }
 
 private fun AppViewModel.fill(
@@ -1817,20 +1830,36 @@ internal class FakeStore(
     // price refresh at start (open item 54).
     var pricesSaveError: Throwable? = null
 
+    // 23a: the profiles each save was given, as RoomRecordStore saves them.
+    val savedProfiles = mutableListOf<Map<String, SourceProfile>>()
+
     override suspend fun savePrices(
         fresh: Map<String, Price>,
         failed: Collection<String>,
+        profiles: Map<String, SourceProfile>,
     ) {
         pricesSaveError?.let { throw it }
         savedPrices.add(fresh to failed)
+        savedProfiles.add(profiles)
+        val saved = profiles.filterKeys { ticker -> storedInstruments.any { it.ticker == ticker } }
         storedInstruments =
             storedInstruments.map { instrument ->
-                when (instrument.ticker) {
-                    in fresh -> instrument.copy(price = fresh.getValue(instrument.ticker).copy(stale = false))
-                    in failed -> instrument.copy(price = instrument.price?.copy(stale = true))
-                    else -> instrument
-                }
+                val priced =
+                    when (instrument.ticker) {
+                        in fresh -> instrument.copy(price = fresh.getValue(instrument.ticker).copy(stale = false))
+                        in failed -> instrument.copy(price = instrument.price?.copy(stale = true))
+                        else -> instrument
+                    }
+                saved[instrument.ticker]?.let { priced.copy(profile = it) } ?: priced
             }
+        for ((list, value) in Classification.additions(storedClassLists, saved.values)) {
+            storedClassLists =
+                if (list == ClassList.SECTOR) {
+                    storedClassLists.copy(sectors = storedClassLists.sectors + value)
+                } else {
+                    storedClassLists.copy(geographies = storedClassLists.geographies + value)
+                }
+        }
     }
 
     var storedHidden: List<HiddenHolding> = emptyList()

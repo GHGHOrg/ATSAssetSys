@@ -1,9 +1,12 @@
 package app.ghghorg.atsassets.prices.finnhub
 
+import app.ghghorg.atsassets.core.Classification
 import app.ghghorg.atsassets.core.Listing
 import app.ghghorg.atsassets.core.Lookup
 import app.ghghorg.atsassets.core.PriceSource
+import app.ghghorg.atsassets.core.ProfileAnswer
 import app.ghghorg.atsassets.core.Quote
+import app.ghghorg.atsassets.core.SourceProfile
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.ExperimentalSerializationApi
@@ -81,8 +84,33 @@ object FinnhubQuote {
     }
 }
 
+/** Reads Finnhub's /stock/profile2 answer (23a, R1): finnhubIndustry as the source sector, country as the geography. */
+object FinnhubProfile {
+    /**
+     * Given for a JSON object, its two fields as value texts (Classification.sourceText: "N/A", empty, missing or not
+     * text is no value, decision 2); an ETF's empty object is Given with neither. Unreadable for anything that is not a
+     * JSON object, and for an object carrying "error", so an error answer never marks the instrument as asked.
+     */
+    fun read(body: String): ProfileAnswer {
+        val fields =
+            try {
+                Json.parseToJsonElement(body) as? JsonObject
+            } catch (e: IllegalArgumentException) {
+                null
+            } ?: return ProfileAnswer.Unreadable
+        if ("error" in fields) return ProfileAnswer.Unreadable
+        return ProfileAnswer.Given(SourceProfile(sector = fields.text("finnhubIndustry"), geography = fields.text("country")))
+    }
+
+    /** The field as a value text, or null when it is missing, JSON null, not text, or no value. */
+    private fun JsonObject.text(name: String): String? {
+        val field = this[name] as? JsonPrimitive ?: return null
+        return if (field.isString) Classification.sourceText(field.content) else null
+    }
+}
+
 /**
- * K4 on Finnhub: verify (09) and quote (16a) (spec 7; spike decisions 3 and 5; 09 decisions 4, 5 and 8). The key goes in the
+ * K4 on Finnhub: verify (09), quote (16a) and profile (23a) (spec 7; spike decisions 3 and 5; 09 decisions 4, 5 and 8). The key goes in the
  * X-Finnhub-Token header only, never in the URL. Nothing is logged: no ticker, no key, no response, no link (spec
  * section 9). Finnhub answers the list with a redirect to a signed link on its file host (static2.finnhub.io; defect
  * found in 09 phone check 3). That one redirect is followed by hand, only over https to finnhub.io or a subdomain,
@@ -100,6 +128,30 @@ class FinnhubSource(
     override suspend fun quote(ticker: String): Quote {
         if (key.isEmpty()) return Quote.NoKey
         return withContext(Dispatchers.IO) { fetchQuote(ticker) }
+    }
+
+    override suspend fun profile(ticker: String): ProfileAnswer {
+        if (key.isEmpty()) return ProfileAnswer.NoKey
+        return withContext(Dispatchers.IO) { fetchProfile(ticker) }
+    }
+
+    /** As [fetchQuote]: one GET with the key in the header, no redirect followed (23a, R1). */
+    private fun fetchProfile(ticker: String): ProfileAnswer {
+        var api: HttpURLConnection? = null
+        return try {
+            api = prepared(URL(PROFILE + URLEncoder.encode(ticker, Charsets.UTF_8)))
+            api.setRequestProperty("X-Finnhub-Token", key)
+            when (val status = api.responseCode) {
+                HttpURLConnection.HTTP_OK -> api.inputStream.use { FinnhubProfile.read(it.readBytes().decodeToString()) }
+                HttpURLConnection.HTTP_UNAUTHORIZED, HttpURLConnection.HTTP_FORBIDDEN -> ProfileAnswer.KeyRefused(status)
+                TOO_MANY_REQUESTS -> ProfileAnswer.TooManyCalls
+                else -> ProfileAnswer.NoAnswer(status)
+            }
+        } catch (e: IOException) {
+            ProfileAnswer.NoAnswer(status = null)
+        } finally {
+            api?.disconnect()
+        }
     }
 
     /** /quote does not redirect (open item 40, checked 2026-11-08), so a redirect is NoAnswer and is not followed. */
@@ -193,6 +245,7 @@ class FinnhubSource(
     private companion object {
         val US_LIST = URL("https://finnhub.io/api/v1/stock/symbol?exchange=US")
         const val QUOTE = "https://finnhub.io/api/v1/quote?symbol="
+        const val PROFILE = "https://finnhub.io/api/v1/stock/profile2?symbol="
         const val CONNECT_TIMEOUT_MS = 15_000
         const val READ_TIMEOUT_MS = 30_000
         const val TOO_MANY_REQUESTS = 429

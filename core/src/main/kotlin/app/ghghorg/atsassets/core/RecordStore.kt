@@ -82,11 +82,13 @@ interface RecordStore {
     /**
      * After a price refresh (K4 only, 16a), as one all-or-nothing batch: each of [fresh] becomes its ticker's latest
      * price, not stale; the stored price of each of [failed] is kept and marked stale (4.8). A ticker that never had a
-     * price keeps none, and a ticker with no stored instrument is skipped.
+     * price keeps none, and a ticker with no stored instrument is skipped. From 23a, each of [profiles] becomes its
+     * instrument's source profile, marking it asked, and each of its value texts not yet on its list is added (4.9).
      */
     suspend fun savePrices(
         fresh: Map<String, Price>,
         failed: Collection<String>,
+        profiles: Map<String, SourceProfile> = emptyMap(),
     )
 
     /** The hidden holdings, each at 0 shares. Throws [UnreadableDataException] if stored data cannot be read or checked. */

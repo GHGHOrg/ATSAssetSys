@@ -56,6 +56,25 @@ class ClassificationTest {
     }
 
     @Test
+    fun additions_areEachNewValueTextOnce_sectorsFirst_eachInProfileOrder() {
+        // Step 5: what a refresh's profiles add to the lists (4.9), saved in the same batch as the prices.
+        val lists = ClassLists(sectors = listOf("Technology"))
+        val profiles =
+            listOf(
+                SourceProfile("technology", "US"),
+                SourceProfile("Energy", "us"),
+                SourceProfile(null, "N/A"),
+                SourceProfile("Energy ", "Canada"),
+            )
+        assertEquals(
+            listOf(ClassList.SECTOR to "Energy", ClassList.GEOGRAPHY to "US", ClassList.GEOGRAPHY to "Canada"),
+            Classification.additions(lists, profiles),
+        )
+        assertEquals(emptyList<Pair<ClassList, String>>(), Classification.additions(lists, listOf(SourceProfile(null, null))))
+        assertEquals(emptyList<Pair<ClassList, String>>(), Classification.additions(lists, emptyList()))
+    }
+
+    @Test
     fun aTextNotYetOnTheList_isStillItsOwnValue_fromTheSource() {
         // The list is updated with each refresh (step 5); until then the source's own text is shown, trimmed.
         assertEquals(EffectiveClass("Energy", ClassOrigin.SOURCE), Classification.effective(sectors, " Energy"))

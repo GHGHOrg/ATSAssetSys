@@ -279,6 +279,7 @@ class RoomRecordStore(
     override suspend fun savePrices(
         fresh: Map<String, Price>,
         failed: Collection<String>,
+        profiles: Map<String, SourceProfile>,
     ) {
         val dao = withContext(Dispatchers.IO) {
             try {
@@ -291,7 +292,7 @@ class RoomRecordStore(
                 throw UnreadableDataException("The stored data could not be opened.", e)
             }
         }
-        dao.savePrices(fresh.mapValues { (_, price) -> price.perShare.toPlainString() to price.time.epochSecond }, failed)
+        dao.savePrices(fresh.mapValues { (_, price) -> price.perShare.toPlainString() to price.time.epochSecond }, failed, profiles)
     }
 
     override suspend fun loadHidden(): List<HiddenHolding> = loadHidden(loadTransactions())

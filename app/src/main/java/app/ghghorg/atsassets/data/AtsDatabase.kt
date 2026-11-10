@@ -11,6 +11,8 @@ import androidx.room3.Query
 import androidx.room3.RoomDatabase
 import androidx.room3.Transaction
 import androidx.room3.Upsert
+import app.ghghorg.atsassets.core.Classification
+import app.ghghorg.atsassets.core.SourceProfile
 
 /** One cash entry row. The date is text (YYYY-MM-DD), the amount is integer cents (4.10). */
 @Entity(tableName = "cash_entries")
@@ -300,14 +302,38 @@ interface InstrumentDao {
     @Query("UPDATE instruments SET priceStale = 1 WHERE ticker = :ticker AND price IS NOT NULL")
     suspend fun markStale(ticker: String)
 
-    /** One refresh's prices in one database transaction (K4 only, 16a): each fresh price as text and Unix seconds. */
+    /** Sets an instrument's source profile and marks it asked (23a); returns the number of rows changed. */
+    @Query("UPDATE instruments SET sourceSector = :sector, sourceGeography = :geography, profileAsked = 1 WHERE ticker = :ticker")
+    suspend fun setProfile(
+        ticker: String,
+        sector: String?,
+        geography: String?,
+    ): Int
+
+    @Query("SELECT * FROM list_values ORDER BY seq")
+    suspend fun loadListValues(): List<ListValueRow>
+
+    @Insert
+    suspend fun insertListValue(row: ListValueRow)
+
+    /**
+     * One refresh's prices and profiles in one database transaction (K4 only, 16a and 23a): each fresh price as text
+     * and Unix seconds; each profile on its instrument, and its texts not yet on their list added (4.9, K10). A profile
+     * for a ticker with no stored instrument adds nothing.
+     */
     @Transaction
     suspend fun savePrices(
         fresh: Map<String, Pair<String, Long>>,
         failed: Collection<String>,
+        profiles: Map<String, SourceProfile>,
     ) {
         for ((ticker, price) in fresh) setPrice(ticker, price.first, price.second)
         for (ticker in failed) markStale(ticker)
+        if (profiles.isEmpty()) return
+        val saved = profiles.filter { (ticker, profile) -> setProfile(ticker, profile.sector, profile.geography) > 0 }
+        for ((list, value) in Classification.additions(loadListValues().toClassLists(), saved.values)) {
+            insertListValue(ListValueRow(list = list.name, value = value))
+        }
     }
 
     @Query("SELECT * FROM instruments ORDER BY ticker")
