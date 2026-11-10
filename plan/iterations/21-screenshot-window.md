@@ -1,6 +1,6 @@
 # plan/iterations/21-screenshot-window.md
 
-Stage: Build. Status: approved 2026-11-10 (your "Approved"); decisions 1 and 2 settled the same day (section 11). In build: step 3 done (section 10.1).
+Stage: Build. Status: approved 2026-11-10 (your "Approved"); decisions 1 and 2 settled the same day (section 11). Built 2026-11-10 (steps 1 to 8; section 10.1, section 14); phone check 2026-11-10 all yes (section 13.3).
 Source: plan.md section 4 (row 21), spec section 9 (privacy by default, the screenshot window, the [UNVERIFIED] note on `FLAG_SECURE` and the recents preview), section 6 (More and Settings entry), section 3 (not a setting: never saved), section 8 (not in the backup file), section 14 (K8), AC-20, AC-58 (the screenshot window part), AC-61, AC-62; wireframe 10f (frame B's Security row, frame C marker 8); iteration 01 (the lock and `FLAG_SECURE`), 20 (Settings, the lock rules, `LockHolder`); open-items.md item 53; CLAUDE.md (security code not from memory; layers in the window; a defect in test support needs no intent file). "My reading" is an interpretation, not a test.
 
 ## 1. Outcome
@@ -83,8 +83,42 @@ To be shown on the phone in step 8:
 - TalkBack for the row: "Screenshot window, Off" or "Screenshot window, on, 2 minutes 41 seconds left".
 
 ## 13. Status and notes
-- Draft 2026-11-10; approved the same day.
+- Draft 2026-11-10; approved the same day; decisions 1 and 2 settled.
+
+### 13.1 Steps 1 to 7 (2026-11-10)
+- Step 1 (b3440a9): this file and the plan.md lines (with pull request #156's merge line).
+- Step 2 (2cb434b): open item 53: `DeviceSettingsRule.after()` waits until the font scale is back (1.0 when none was stored, my reading of Android's default). No failing test: the race cannot be forced; the evidence is run 42749660919, attempt 1.
+- Step 3 (b043102): R1 by javap on androidx.biometric 1.1.0 (10.1); decisions 1 and 2 (A and A).
+- Step 4 (85176cd): lock/ScreenshotWindow.kt: the check asked for only while off, a passed check the window's only if it asked and starting it only while unlocked, the end on Turn off, leaving or a lock, the time left ending at exactly 3:00. ScreenshotWindowTest 13. Red against a stub first: 13 tests, 11 failed (off at start and never on without a check passed on the stub). Tests 860 to 873.
+- Step 5 (eb58984): the wiring: one prompt with the window's own title, a result the window asked for never reaching the lock; `FLAG_SECURE` cleared while on and set again at once otherwise, the recents preview off all along; the tick on each whole second of the time left; the end in `onStop` (not on a turn of the phone that keeps the app unlocked) and at a lock in view. `ScreenshotWindow` kept in `LockHolder`. ScreenshotWindowViewModelTest 4. Red against a stub first: 4 tests, 2 failed. Tests 877.
+- Step 6 (579535d): Settings' Screenshot window row ("Off" or "On, m:ss left"; TalkBack in words, with plurals) and its layer drawn in the window (off: the blocked line, Allow, the check line; on: the time left with "Ends when you leave the app.", the warning, Turn off); `LayerCard`, the frame shared with the choice layer; the layer opened on Settings only, closed by Back, a tap outside, leaving Settings, a tab or an unlock; the "Iteration 21" strings. SettingsModelTest 2 more, ScreenshotWindowViewModelTest 4 more. Red against stubs first: 6 tests, 3 failed. One lint finding (ModifierParameter) changed away, not silenced. Tests 883.
+- Step 7 (6673888): ScreenshotWindowScreenTest.kt (androidTest): ScreenshotLayerFocusTest (AC-61 (b)), ScreenshotWindowFlagTest (the flag after the test PIN, Turn off and Home), ScreenshotLayerLargestFontLandscapeTest (AC-61 (a); upright again at the end), ScreenshotTalkBackTest 5 (AC-61 (d)); `passCheck()` in ScreenTestSupport.kt. `@Test` lines 52 (were 44).
+- Each step's run: spotlessCheck, build, tests and lint with --rerun-tasks, plus `:app:compileDebugAndroidTestKotlin`; lint the 5 listed findings at the end of each step. Steps 1 to 7 were committed together after step 7 (your "go", then "commit"), each from its own versions through a temporary index; a first attempt put each step's files under the next step's message and was reset with your yes (section 14).
+
+### 13.2 Step 8 (2026-11-10)
+- versionCode 30; full run 13:26 to 13:30 green, 883 tests, 0 failures, 1 skipped; lint the 5 listed findings. APK 42,892,795 bytes, built with the price-source key set (checked True/False only). No schema change (database version 8).
+
+### 13.3 Step 8: the phone check (2026-11-10, all yes)
+versionCode 30 installed over 20's build (versionCode 29; `adb install -r`, Success; lastUpdateTime 2026-11-10 13:33:00, first install 2026-10-29 kept).
+- 1 (AC-35): the data opened after the install: yes.
+- 2 (spec 9, AC-20): by default a screenshot refused, a recording black, the recents card without content: yes.
+- 3 (AC-58): the row "Screenshot window / Off"; the layer's three lines and Allow; closed by a tap outside: yes.
+- 4: the check cancelled leaves it off, a screenshot still refused: yes.
+- 5 (AC-20, risk 3): after the check, the countdown from 3:00, the warning and Turn off; a screenshot with power and volume down and a screen recording show the app; the recents card still without content; back from recents the window off (leaving the app): yes. Note: recents' own Screenshot button stays unavailable during the window, since it captures the recents preview, which spec 9 keeps hidden all along; screenshots during the window are taken with the phone's keys.
+- 6: at 0:00 Off, and a screenshot refused again: yes.
+- 7: Turn off ends it at once: yes.
+- 8: Home ends it: yes.
+- 9: a turn of the phone keeps it and its count (auto-lock "only when the phone locks"): yes.
+- 10 (decision 1): an idle lock in view ends it: yes.
+- 11: after a force stop and restart it is off: yes.
+- 12 (AC-39, risk 5): largest font and landscape, off and on: yes.
+- 13 (AC-39): TalkBack: the row with its state, the layer's lines and buttons: yes.
+- 14 (AC-40): light and dark: yes.
+- 15 (spec 9): `adb logcat -d -v threadtime,uid`, the app's lines by uid 10454. The first read (102 lines, 14:03:47 to 14:05:53) held no start of the app. Re-check: a force stop, an unlock, the window turned on and off, Home; then a read (85 lines, the process start at 14:07:23.582, `Start proc 31238`, to 14:07:46): the key not in them nor in the buffer (a True/False test); no "finnhub", "token", AAPL, "quote", "symbol=" or amount; the "$digit" matches are the class name `OnBackInvokedInput$createOnBackAnimationCallback$1`; `E/BiometricPromptCompat` "Unable to cancel authentication. BiometricFragment not found." from `onStop` with no prompt up (as in 19): yes.
+- 16 (D9): the wording of section 12 approved as shown.
 
 ## 14. Departures from the plan
 - Step 5: a turn of the phone keeps the window only while the app stays unlocked; under "every time you leave" a turn locks the app (since 01), so it also ends the window (decision 1). `onStop` ends it unless the activity is only re-created and the app is still unlocked.
 - Step 6: the frame of 18 to 20's choice layer (the clear layer, the titled card, the scroll) became `LayerCard` in AllocationParts.kt, shared by the choice layer and the screenshot layer; the choice layer's radio group is now a column inside the card. A first version passed the group as a second modifier parameter, which lint flagged (ModifierParameter, a sixth finding); it was changed, not silenced. The time left is shown in whole seconds rounded up, so the window starts at 3:00 and its last second reads 0:01. TalkBack reads the time with plurals ("1 minute", "2 minutes").
+- Committing: the first attempt to build steps 1 to 6's commits from their saved versions took each step's files from the next step (a PowerShell ordered table indexed by position); five wrong commits, not pushed, were dropped with `git reset --soft c6c1881` (your yes), and the steps committed again, each diff stat checked against its report first (CLAUDE.md pitfall added).
+- Step 8: the logcat read was done twice (13.3, check 15), the second after a short re-check, because the first held no start of the app.
