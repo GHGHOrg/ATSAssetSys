@@ -1,6 +1,6 @@
 # plan/iterations/16c-live-prices-overall.md
 
-Stage: Build. Status: approved 2026-11-09 (your "yes", after a check of the code that changed the draft); decisions 1 to 4 settled the same day (section 11). Built 2026-11-09 (steps 1 to 6); phone check 2026-11-09 all yes (section 13.3); the screen tests 20 of 20 on pull request #146 (section 13.4); the app start timing compared with 16b (section 13.5); reviewed against the spec refs (section 13.6); merged as 2af640a, main green (section 13.7).
+Stage: Build. Status: approved 2026-11-09 (your "yes", after a check of the code that changed the draft); decisions 1 to 4 settled the same day (section 11). Done: built 2026-11-09 (steps 1 to 6); phone check 2026-11-09 all yes (section 13.3); the screen tests 20 of 20 on pull request #146 (section 13.4); the app start timing compared with 16b (section 13.5); reviewed against the spec refs (section 13.6); merged as 2af640a, main green (section 13.7).
 Source: plan.md section 4 (row 16c), spec 4.4, 4.8, section 6 (view 1, the buy and sell entry, error and loading states, number format and color, accessibility), section 7, AC-41, AC-42, AC-61, AC-62; wireframe 01 (state A, markers 2, 4 and 5), wireframe 10a (the lot list, markers 12 and 14) and wireframe 10c (Reverse and re-enter of a sell); 16a and 16b (their decisions and wording); open items 48 and 51. "My reading" is an interpretation, not a test.
 
 ## 1. Outcome

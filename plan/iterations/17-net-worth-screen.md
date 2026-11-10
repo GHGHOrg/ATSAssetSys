@@ -1,6 +1,6 @@
 # plan/iterations/17-net-worth-screen.md
 
-Stage: Build. Status: approved 2026-11-09 (your "Yes"); decisions 1 to 4 settled the same day (section 11). Built 2026-11-09 (steps 1 to 5); phone check 2026-11-09 all yes (section 13.3); the screen tests 25 of 25 on pull request #148 (section 13.4); the app start timing compared with 16c and reviewed against the spec refs (section 13.5); merged as 6b67cf3, main green (section 13.6).
+Stage: Build. Status: approved 2026-11-09 (your "Yes"); decisions 1 to 4 settled the same day (section 11). Done: built 2026-11-09 (steps 1 to 5); phone check 2026-11-09 all yes (section 13.3); the screen tests 25 of 25 on pull request #148 (section 13.4); the app start timing compared with 16c and reviewed against the spec refs (section 13.5); merged as 6b67cf3, main green (section 13.6).
 Source: plan.md section 4 (row 17), spec 4.8, 4.10, section 6 (view 2, the navigation outline, More, error and loading states, number format and color, accessibility), AC-34, AC-44, AC-61, AC-62; wireframe 02 (frames A and C, markers 1, 2 and 6) and wireframe 10f (More); 16a to 16c (their decisions and wording); open items 48 and 51. "My reading" is an interpretation, not a test.
 
 ## 1. Outcome

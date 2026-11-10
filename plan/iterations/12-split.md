@@ -1,6 +1,6 @@
 # plan/iterations/12-split.md
 
-Stage: Build. Status: approved 2026-11-01, built and checked 2026-11-01 (section 12). Decisions 1 to 4 settled (section 10).
+Stage: Build. Status: approved 2026-11-01; done: built and checked 2026-11-01, pull request #106 merged as 08198bd (2026-11-01) (section 12). Decisions 1 to 4 settled (section 10).
 Source: plan/plan.md section 4 (row 12), intent/intent.md v52 (final), spec/spec.md v4 (final). "My reading" is an interpretation, not a test.
 
 ## 1. Outcome

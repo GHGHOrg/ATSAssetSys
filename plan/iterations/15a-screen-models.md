@@ -1,6 +1,6 @@
 # plan/iterations/15a-screen-models.md
 
-Stage: Build. Status: approved, built and checked on the phone 2026-11-03 (section 12). Decision 1 settled (section 10).
+Stage: Build. Status: approved; done: built and checked on the phone 2026-11-03, pull request #120 merged as 2411066 (2026-11-03) (section 12). Decision 1 settled (section 10).
 Source: plan/plan.md section 4 (row 15a), intent/intent-cr-02-screen-models.md (CR2), spec/spec.md v5 (final; no change, CR2 Design), plan/discussions/screen-tests.md. "My reading" is an interpretation, not a test.
 
 ## 1. Outcome

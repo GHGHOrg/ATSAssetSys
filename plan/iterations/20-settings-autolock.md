@@ -1,6 +1,6 @@
 # plan/iterations/20-settings-autolock.md
 
-Stage: Build. Status: approved 2026-11-10 (your "Approved"); decisions 1 to 3 settled the same day (section 11). Built 2026-11-10 (steps 2 to 8; section 10.1, decisions 4 and 5, section 14); phone check 2026-11-10 all yes (section 13.3); the screen tests 44 of 44 on pull request #155 (section 13.4); reviewed against the spec refs (section 13.5); merged as e83e6f4, main green after one re-run of its screen tests (section 13.6).
+Stage: Build. Status: approved 2026-11-10 (your "Approved"); decisions 1 to 3 settled the same day (section 11). Done: built 2026-11-10 (steps 1 to 8; section 10.1, decisions 4 and 5, section 14); phone check 2026-11-10 all yes (section 13.3); the screen tests 44 of 44 on pull request #155 (section 13.4); reviewed against the spec refs (section 13.5); merged as e83e6f4, main green after one re-run of its screen tests (section 13.6).
 Source: plan.md section 4 (row 20), spec section 3 (Settings), section 6 (More, Settings entry, navigation outline, accessibility), section 8 (settings are in the backup file; 31), section 9 (the lock, the auto-lock choices), section 14 (K8), AC-06, AC-58 (the auto-lock part), AC-61, AC-62; wireframe 10f (frames A to C, markers 2, 3 and 7); iteration 01 (the lock), 17 and 19 (More), 18 and 19 (the choice layer); CLAUDE.md (security code not from memory; Room schema files; layers in the window). "My reading" is an interpretation, not a test.
 
 ## 1. Outcome

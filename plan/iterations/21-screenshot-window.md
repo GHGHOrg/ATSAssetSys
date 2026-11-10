@@ -1,6 +1,6 @@
 # plan/iterations/21-screenshot-window.md
 
-Stage: Build. Status: approved 2026-11-10 (your "Approved"); decisions 1 and 2 settled the same day (section 11). Built 2026-11-10 (steps 1 to 8; section 10.1, section 14); phone check 2026-11-10 all yes (section 13.3); the screen tests 52 of 52 on pull request #157 (section 13.4); reviewed against the spec refs (section 13.5); merged as 93ea83d, main green (section 13.6).
+Stage: Build. Status: approved 2026-11-10 (your "Approved"); decisions 1 and 2 settled the same day (section 11). Done: built 2026-11-10 (steps 1 to 8; section 10.1, section 14); phone check 2026-11-10 all yes (section 13.3); the screen tests 52 of 52 on pull request #157 (section 13.4); reviewed against the spec refs (section 13.5); merged as 93ea83d, main green (section 13.6).
 Source: plan.md section 4 (row 21), spec section 9 (privacy by default, the screenshot window, the [UNVERIFIED] note on `FLAG_SECURE` and the recents preview), section 6 (More and Settings entry), section 3 (not a setting: never saved), section 8 (not in the backup file), section 14 (K8), AC-20, AC-58 (the screenshot window part), AC-61, AC-62; wireframe 10f (frame B's Security row, frame C marker 8); iteration 01 (the lock and `FLAG_SECURE`), 20 (Settings, the lock rules, `LockHolder`); open-items.md item 53; CLAUDE.md (security code not from memory; layers in the window; a defect in test support needs no intent file). "My reading" is an interpretation, not a test.
 
 ## 1. Outcome

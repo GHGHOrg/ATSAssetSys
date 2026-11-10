@@ -1,6 +1,6 @@
 # plan/iterations/11-sell-with-lots.md
 
-Stage: Build. Status: approved 2026-10-31, not built. Decisions 1 to 3 settled (section 10).
+Stage: Build. Status: approved 2026-10-31; done: built and checked 2026-10-31 to 2026-11-01, pull request #104 merged as e689af9 (2026-11-01) (section 12). Decisions 1 to 3 settled (section 10).
 Source: plan/plan.md section 4 (row 11), intent/intent.md v52 (final), spec/spec.md v4 (final). "My reading" is an interpretation, not a test.
 
 ## 1. Outcome

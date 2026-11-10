@@ -1,6 +1,6 @@
 # plan/iterations/18-allocation-net-worth.md
 
-Stage: Build. Status: approved 2026-11-09 (your "approve"); decisions 1 to 4 settled the same day (section 11). Built 2026-11-09 (steps 1 to 7), with defect 18-6 found and fixed in step 7; phone check 2026-11-09 all yes after the fix (section 13.3); the screen tests 31 of 31 on pull request #151 (section 13.4); the app start timing compared with 17 and reviewed against the spec refs (section 13.5); merged as 57cc8cd, main green (section 13.6).
+Stage: Build. Status: approved 2026-11-09 (your "approve"); decisions 1 to 4 settled the same day (section 11). Done: built 2026-11-09 (steps 1 to 7), with defect 18-6 found and fixed in step 7; phone check 2026-11-09 all yes after the fix (section 13.3); the screen tests 31 of 31 on pull request #151 (section 13.4); the app start timing compared with 17 and reviewed against the spec refs (section 13.5); merged as 57cc8cd, main green (section 13.6).
 Source: plan.md section 4 (row 18), spec 4.8, 4.10, C12, section 6 (view 1, view 2, the navigation outline, number format and color, accessibility (2), (5) and (6), error and loading states), AC-32, AC-43, AC-61, AC-62; wireframe 01 (state A, marker 3) and wireframe 02 (markers 3 and 4); 17 (its model, screen and decisions); open items 48 and 51; CLAUDE.md's pitfall on layers and menus. "My reading" is an interpretation, not a test.
 
 ## 1. Outcome
