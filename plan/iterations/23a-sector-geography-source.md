@@ -82,7 +82,8 @@ To be shown on the phone in step 8:
 
 ### 13.1 Steps (2026-11-11)
 - Step 1 (c7f3738): this file, 23 split into 23a and 23b in plan.md section 4, and the plan.md lines (with #163's merge line).
-- Step 2: the look-up R1 (section 10.1): profile2 for AAPL and SPY answered as on 2026-10-30.
+- Step 2 (40a5698): the look-up R1 (section 10.1): profile2 for AAPL and SPY answered as on 2026-10-30.
+- Step 3: core/Classification.kt (K10): `ClassList` (sector, geography); `ClassOrigin` (from the source, unclassified; the override comes in 24); `sourceText` (trimmed, or no value when missing, blank or "N/A", decision 2); `valueFor` (the list's own spelling, matched with D7's key, `Portfolios.nameKey`, as portfolio names are); `withSource` (a new text added once, at the end); `effective` (the list's value, the source's text while the list does not hold it yet, or "Unclassified"). No remembered text is looked up before 25 (decision 4). ClassificationTest 7. Red against a stub first: 7 tests, 6 failed (a no-value text adding nothing passed on the stub, which adds nothing). Tests 926.
 
 ## 14. Departures from the plan
 None yet.
