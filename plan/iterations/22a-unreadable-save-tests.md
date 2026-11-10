@@ -64,5 +64,9 @@ None: no text the user sees changes.
 ## 13. Status and notes
 - Draft 2026-11-10; approved the same day with your input (the price save at start tested on its own); decision 1 settled.
 
+### 13.1 Steps (2026-11-10)
+- Step 1 (3270310): this file and the plan.md lines (with #161's merge line).
+- Step 2, the evidence, on scratch changes never committed: each action's first line made `if (store != null) return` (`confirm`, `createPortfolio`, `saveRename`, `chooseAutoLock`; a bare `return` did not compile, the rest of `confirm` then being unreachable). Against these stubs three of the four tests still passed: 07's `unreadableDataOnSaveShowsTheUnreadableScreen`, 08's `unreadableDataOnRenameShowsTheUnreadableScreen` and 20's `anUnreadableStoreOnSave_showsTheUnreadableScreen` (the weakness confirmed). 02a's `anUnreadableStoreDuringSaveShowsTheUnreadableScreen` failed ("expected UNREADABLE but was REVIEW"). A scratch test (deleted with your yes) printed the screen right after `started()` for both stores the four tests use: UNREADABLE for each, so the price save at start trips all four. 02a's test still reaches its own save because `openForm()` does not check for the unreadable screen and opens the form from it; on the phone that screen is a message with no button and no bar (AppContent.kt), so the user cannot do this. Recorded as open item 55 in step 4 (section 3). The stubs were taken out again; app/src/main unchanged.
+
 ## 14. Departures from the plan
 None yet.
