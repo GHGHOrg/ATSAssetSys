@@ -1,6 +1,7 @@
 package app.ghghorg.atsassets.prices
 
 import app.ghghorg.atsassets.core.AssetType
+import app.ghghorg.atsassets.core.AutoLock
 import app.ghghorg.atsassets.core.CashEntry
 import app.ghghorg.atsassets.core.HiddenHolding
 import app.ghghorg.atsassets.core.Instrument
@@ -98,6 +99,10 @@ class TickerVerifierTest {
         override suspend fun hide(holding: HiddenHolding) = error("not used")
 
         override suspend fun unhide(holding: HiddenHolding) = error("not used")
+
+        override suspend fun loadAutoLock(): AutoLock = error("not used")
+
+        override suspend fun saveAutoLock(choice: AutoLock) = error("not used")
     }
 
     private val aapl = Listing(type = "Common Stock", exchange = "XNAS", currency = "USD")

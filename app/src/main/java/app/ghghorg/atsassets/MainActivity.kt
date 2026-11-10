@@ -3,6 +3,9 @@ package app.ghghorg.atsassets
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
+import android.os.PowerManager
+import android.os.SystemClock
+import android.view.MotionEvent
 import android.view.WindowManager
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
@@ -19,7 +22,6 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
@@ -31,21 +33,30 @@ import androidx.core.content.ContextCompat
 import androidx.fragment.app.FragmentActivity
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
+import androidx.lifecycle.lifecycleScope
 import app.ghghorg.atsassets.data.DatabaseKey
 import app.ghghorg.atsassets.data.RoomRecordStore
 import app.ghghorg.atsassets.data.SqlCipherOpener
 import app.ghghorg.atsassets.lock.AppLock
+import app.ghghorg.atsassets.lock.LockHolder
 import app.ghghorg.atsassets.lock.LockState
 import app.ghghorg.atsassets.prices.NetworkStatus
 import app.ghghorg.atsassets.prices.finnhub.FinnhubSource
 import app.ghghorg.atsassets.ui.AppContent
 import app.ghghorg.atsassets.ui.AppViewModel
 import app.ghghorg.atsassets.ui.theme.ATSAssetSystemTheme
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.launch
 import java.time.Clock
 import java.util.UUID
 
+// 20: how often the idle time is checked while the app is in view; a touch also checks it first.
+private const val IDLE_CHECK_MS = 1_000L
+
 class MainActivity : FragmentActivity() {
-    private val lock = AppLock()
+    // Kept across a re-creation by LockHolder; set first in onCreate.
+    private lateinit var lock: AppLock
     private var lockState by mutableStateOf(LockState.Locked)
     private var windowFocused by mutableStateOf(false)
     private lateinit var prompt: BiometricPrompt
@@ -55,8 +66,21 @@ class MainActivity : FragmentActivity() {
     // Stops watching the network; set while the app is in view (16a decision 2).
     private var stopWatchingNetwork: () -> Unit = {}
 
+    // 20: the idle check while the app is in view, every IDLE_CHECK_MS from onStart to onStop (risk 4).
+    private val idleHandler = Handler(Looper.getMainLooper())
+    private val idleCheck =
+        object : Runnable {
+            override fun run() {
+                lock.onIdleCheck(SystemClock.elapsedRealtime())
+                showLockIfLocked()
+                idleHandler.postDelayed(this, IDLE_CHECK_MS)
+            }
+        }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        lock = ViewModelProvider(this)[LockHolder::class.java].lock
+        lockState = lock.state
         // Default privacy (spec section 9): blocked screenshots and recording, hidden recents preview.
         window.setFlags(
             WindowManager.LayoutParams.FLAG_SECURE,
@@ -71,8 +95,13 @@ class MainActivity : FragmentActivity() {
             ContextCompat.getMainExecutor(this),
             object : BiometricPrompt.AuthenticationCallback() {
                 override fun onAuthenticationSucceeded(result: BiometricPrompt.AuthenticationResult) {
-                    lock.onAuthSucceeded()
+                    lock.onAuthSucceeded(SystemClock.elapsedRealtime())
                     lockState = lock.state
+                    // Here, not on every composition: a turn of the phone that keeps the app unlocked (20) is no unlock.
+                    if (lockState == LockState.Unlocked) {
+                        viewModel.start()
+                        viewModel.onUnlocked()
+                    }
                 }
 
                 // Dismissed or error. One wrong attempt is onAuthenticationFailed, not this.
@@ -87,15 +116,13 @@ class MainActivity : FragmentActivity() {
             .setAllowedAuthenticators(BIOMETRIC_STRONG or DEVICE_CREDENTIAL)
             .build()
         viewModel = ViewModelProvider(this, viewModelFactory())[AppViewModel::class.java]
+        // 20: the stored choice applies to the lock once loaded and at each change; until then the strictest rule holds.
+        lifecycleScope.launch {
+            viewModel.state.map { it.autoLock }.distinctUntilChanged().collect { choice -> choice?.let(lock::setAutoLock) }
+        }
 
         setContent {
             ATSAssetSystemTheme {
-                LaunchedEffect(lockState) {
-                    if (lockState == LockState.Unlocked) {
-                        viewModel.start()
-                        viewModel.onUnlocked()
-                    }
-                }
                 Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
                     when (lockState) {
                         // Cover while the window is not focused (for example recents), so the
@@ -133,19 +160,47 @@ class MainActivity : FragmentActivity() {
         val canAuthenticate = BiometricManager.from(this)
             .canAuthenticate(BIOMETRIC_STRONG or DEVICE_CREDENTIAL) == BiometricManager.BIOMETRIC_SUCCESS
         lock.updateScreenLockAvailable(canAuthenticate)
+        // 20: the time away counts as idle (decision 1).
+        lock.onAppReturned(SystemClock.elapsedRealtime())
         lockState = lock.state
         showPromptIfNeeded()
+        idleHandler.postDelayed(idleCheck, IDLE_CHECK_MS)
         // When the phone comes back online, a refresh that failed runs again (16a decision 2).
         stopWatchingNetwork = NetworkStatus(applicationContext).watch(Handler(Looper.getMainLooper())) { viewModel.onOnline() }
     }
 
     override fun onStop() {
+        idleHandler.removeCallbacks(idleCheck)
         stopWatchingNetwork()
         stopWatchingNetwork = {}
         prompt.cancelAuthentication()
-        lock.onAppLeft()
+        // 20: the phone locked with the app in view when the screen is already off; no broadcast is needed for that.
+        val screenOff = !getSystemService(PowerManager::class.java).isInteractive
+        lock.onAppLeft(SystemClock.elapsedRealtime(), screenOff)
         lockState = lock.state
         super.onStop()
+    }
+
+    /**
+     * A touch in the app is activity (20 decision 1; typing on the keyboard, Android's own window, is not: decision 5).
+     * Idle is checked first, so a touch after the limit but before the next timed check cannot reach the screen.
+     */
+    override fun dispatchTouchEvent(ev: MotionEvent): Boolean {
+        if (ev.actionMasked == MotionEvent.ACTION_DOWN) {
+            val now = SystemClock.elapsedRealtime()
+            lock.onIdleCheck(now)
+            if (showLockIfLocked()) return true
+            lock.onInteraction(now)
+        }
+        return super.dispatchTouchEvent(ev)
+    }
+
+    /** After a lock in view (decision 2): the lock screen with the prompt at once. True if the app is now locked. */
+    private fun showLockIfLocked(): Boolean {
+        if (lockState != LockState.Unlocked || lock.state == LockState.Unlocked) return false
+        lockState = lock.state
+        showPromptIfNeeded()
+        return true
     }
 
     private fun showPromptIfNeeded() {

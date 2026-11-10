@@ -4,6 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import app.ghghorg.atsassets.core.AmountError
 import app.ghghorg.atsassets.core.AmountResult
+import app.ghghorg.atsassets.core.AutoLock
 import app.ghghorg.atsassets.core.BuyRefusal
 import app.ghghorg.atsassets.core.BuyResult
 import app.ghghorg.atsassets.core.CashAccount
@@ -123,6 +124,9 @@ enum class Screen {
 
     // Allocation, one portfolio (view 4, wireframe 04, iteration 19), opened from a portfolio's screen or from More.
     ALLOCATION,
+
+    // Settings (section 6, wireframe 10f frame B, iteration 20), opened from More's gear.
+    SETTINGS,
 }
 
 // The id of the unsaved draft the reversal screen shows the effect of; never saved.
@@ -523,6 +527,12 @@ data class AppState(
     // 16a: a price refresh runs (the "updating" indicator), and the last one failed (the quiet refresh-failed line).
     val refreshing: Boolean = false,
     val refreshFailed: Boolean = false,
+    // 20: the auto-lock choice as stored, null until it is loaded (the lock then keeps "every time you leave"); why a
+    // choice was not saved.
+    val autoLock: AutoLock? = null,
+    val autoLockRefusal: SaveRefusal? = null,
+    // Settings' Auto-lock choice layer (wireframe 10f frame C), drawn in the window.
+    val autoLockChoiceOpen: Boolean = false,
     // 15c: the kept fields, worked out in KeptFields.kt from the fields above, so reading one costs nothing. Every write
     // through the view model refreshes them; a state built directly gets them from these defaults.
     // As of today (4.8), by portfolio, then ticker.
@@ -675,6 +685,10 @@ data class AppState(
     /** More as the screen draws it (section 6; CR2, 17). */
     val more: MoreModel
         get() = More.of()
+
+    /** Settings as the screen draws it (section 6; CR2, 20). */
+    val settings: SettingsModel
+        get() = Settings.of(autoLock, autoLockRefusal)
 
     /** The sell screen's lot rows, each lot's gain at the latest price in today's shares (16c decisions 3 and 4). */
     val sellLotRows: List<SellLotRowModel>
@@ -913,7 +927,10 @@ class AppViewModel(
                 val transactions = opened.loadTransactions()
                 val instruments = opened.loadInstruments()
                 // The hidden holdings are checked against the transactions just read, not a second read (15c).
-                showLoaded(entries, portfolios, transactions, instruments, opened.loadHidden(transactions))
+                val hidden = opened.loadHidden(transactions)
+                // 20: the auto-lock choice comes with the records; until then the lock keeps its strictest rule.
+                val autoLock = opened.loadAutoLock()
+                showLoaded(entries, portfolios, transactions, instruments, hidden, autoLock)
                 // The first unlock's refresh: onUnlocked came while the records were still loading (16a decision 2).
                 refreshPrices()
             } catch (e: UnreadableDataException) {
@@ -941,6 +958,8 @@ class AppViewModel(
                 buySellMenuOpen = false,
                 allocationMenuOpen = false,
                 portfolioChoiceOpen = false,
+                autoLockChoiceOpen = false,
+                autoLockRefusal = null,
                 buyNotice = null,
                 buyRefusals = BuyRefusals(),
                 holdingTicker = null,
@@ -1009,7 +1028,10 @@ class AppViewModel(
     fun onUnlocked() {
         refreshPrices()
         // View 1: "Allocation by" is not saved; each unlock starts on Asset type (18).
-        mutableState.update { it.copy(allocationBy = AllocationBy.ASSET_TYPE, allocationMenuOpen = false, portfolioChoiceOpen = false) }
+        // The choice layers close, as after 18; Settings' layer too (20).
+        mutableState.update {
+            it.copy(allocationBy = AllocationBy.ASSET_TYPE, allocationMenuOpen = false, portfolioChoiceOpen = false, autoLockChoiceOpen = false)
+        }
         val current = mutableState.value
         if (current.screen != Screen.TABS || current.portfolioDialog != null) return
         mutableState.update { it.copy(tab = Tab.OVERALL, buySellMenuOpen = false, buyNotice = null) }
@@ -2219,6 +2241,7 @@ class AppViewModel(
         transactions: List<Transaction>,
         instruments: List<Instrument>,
         hidden: List<HiddenHolding>,
+        autoLock: AutoLock,
     ) {
         mutableState.update {
             valued(
@@ -2229,6 +2252,7 @@ class AppViewModel(
                     transactions = transactions,
                     instruments = instruments,
                     hidden = hidden,
+                    autoLock = autoLock,
                 ),
             )
         }
@@ -2322,6 +2346,56 @@ class AppViewModel(
                 mutableState.update { it.copy(screen = Screen.UNREADABLE, saving = false) }
             } catch (e: Exception) {
                 mutableState.update { it.copy(saving = false, hideRefusal = SaveRefusal.SAVE_FAILED) }
+            }
+        }
+    }
+
+    /** More's gear (section 6; wireframe 10f marker 2): opens Settings; the tab stays More, so Back returns there. */
+    fun openSettings() {
+        val current = mutableState.value
+        if (current.screen != Screen.TABS || current.tab != Tab.MORE || current.saving) return
+        mutableState.update { it.copy(screen = Screen.SETTINGS, autoLockChoiceOpen = false, autoLockRefusal = null) }
+    }
+
+    /** "<" or Android Back: back to More. Ignored while a save is running. */
+    fun closeSettings() {
+        val current = mutableState.value
+        if (current.screen != Screen.SETTINGS || current.saving) return
+        mutableState.update { it.copy(screen = Screen.TABS, autoLockChoiceOpen = false, autoLockRefusal = null) }
+    }
+
+    /** The Auto-lock row (marker 3): opens the choice layer (frame C), drawn in the window; on Settings only. */
+    fun openAutoLockChoice() {
+        val current = mutableState.value
+        if (current.screen != Screen.SETTINGS || current.saving) return
+        mutableState.update { it.copy(autoLockChoiceOpen = true, autoLockRefusal = null) }
+    }
+
+    /** Back or a tap outside the layer: closes it and keeps the choice. */
+    fun closeAutoLockChoice() = mutableState.update { it.copy(autoLockChoiceOpen = false) }
+
+    /**
+     * One of the four choices in the layer: closes it, then saves [choice] and applies it once saved (20): the lock
+     * follows [AppState.autoLock], so a choice that could not be saved never applies, and a failure says so (D9 wording
+     * in the screens). Ignored without the layer open, while a save is running, and for the choice already made.
+     */
+    fun chooseAutoLock(choice: AutoLock) {
+        val current = mutableState.value
+        val target = store ?: return
+        if (current.screen != Screen.SETTINGS || !current.autoLockChoiceOpen || current.saving) return
+        mutableState.update { it.copy(autoLockChoiceOpen = false) }
+        if (current.autoLock == null || choice == current.autoLock) return
+        mutableState.update { it.copy(saving = true, autoLockRefusal = null) }
+        viewModelScope.launch {
+            try {
+                target.saveAutoLock(choice)
+                mutableState.update { it.copy(saving = false, autoLock = choice) }
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: UnreadableDataException) {
+                mutableState.update { it.copy(screen = Screen.UNREADABLE, saving = false) }
+            } catch (e: Exception) {
+                mutableState.update { it.copy(saving = false, autoLockRefusal = SaveRefusal.SAVE_FAILED) }
             }
         }
     }
@@ -3233,6 +3307,7 @@ class AppViewModel(
                 Screen.REPLACE_REVIEW,
                 Screen.NET_WORTH,
                 Screen.ALLOCATION,
+                Screen.SETTINGS,
             )
     }
 }

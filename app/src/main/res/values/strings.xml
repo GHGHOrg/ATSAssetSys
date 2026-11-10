@@ -411,4 +411,15 @@
     <string name="allocation_value_spoken">Portfolio value, %1$s dollars</string>
     <string name="allocation_portfolio_zero">No value to show in this portfolio</string>
     <string name="allocation_link_spoken">Allocation, opens a screen</string>
+    <!-- Iteration 20: Settings and the auto-lock choice (proposed, 20 file section 12; approval on the phone in step 8). -->
+    <string name="settings_title">Settings</string>
+    <string name="settings_security">Security</string>
+    <string name="settings_auto_lock">Auto-lock</string>
+    <string name="settings_auto_lock_spoken">Auto-lock, %1$s</string>
+    <string name="auto_lock_every_leave">Every time I leave the app</string>
+    <string name="auto_lock_idle_1_min">After 1 minute idle</string>
+    <string name="auto_lock_idle_5_min">After 5 minutes idle</string>
+    <string name="auto_lock_phone_lock">Only when the phone locks or the app restarts</string>
+    <string name="auto_lock_default">%1$s (default)</string>
+    <string name="auto_lock_note">Takes effect at once. Saved.</string>
 </resources>

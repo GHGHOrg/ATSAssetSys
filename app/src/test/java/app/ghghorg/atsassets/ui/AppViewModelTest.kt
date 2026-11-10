@@ -1,6 +1,7 @@
 package app.ghghorg.atsassets.ui
 
 import app.ghghorg.atsassets.core.AmountError
+import app.ghghorg.atsassets.core.AutoLock
 import app.ghghorg.atsassets.core.CashDirection
 import app.ghghorg.atsassets.core.CashEntry
 import app.ghghorg.atsassets.core.CashEntryRefusal
@@ -1836,5 +1837,21 @@ internal class FakeStore(
         saveError?.let { throw it }
         check(holding in storedHidden) { "not hidden" }
         storedHidden = storedHidden - holding
+    }
+
+    // 20: null until a choice is saved; loading then gives the default, as RoomRecordStore does.
+    var storedAutoLock: AutoLock? = null
+    val savedAutoLocks = mutableListOf<AutoLock>()
+
+    override suspend fun loadAutoLock(): AutoLock {
+        loadError?.let { throw it }
+        return storedAutoLock ?: AutoLock.EVERY_LEAVE
+    }
+
+    override suspend fun saveAutoLock(choice: AutoLock) {
+        gate?.await()
+        saveError?.let { throw it }
+        savedAutoLocks.add(choice)
+        storedAutoLock = choice
     }
 }

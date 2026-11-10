@@ -103,6 +103,15 @@ interface RecordStore {
 
     /** Unhides [holding] (view 9). Throws if it was not hidden. */
     suspend fun unhide(holding: HiddenHolding)
+
+    /**
+     * The auto-lock choice (spec section 9), [AutoLock.EVERY_LEAVE] when none was saved. Throws
+     * [UnreadableDataException] if stored data exists but cannot be read.
+     */
+    suspend fun loadAutoLock(): AutoLock
+
+    /** Saves the auto-lock choice in place of the one before; the other settings are kept (20 decision 3). */
+    suspend fun saveAutoLock(choice: AutoLock)
 }
 
 class UnreadableDataException(

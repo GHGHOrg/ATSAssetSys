@@ -258,10 +258,11 @@ internal fun AllocationChoiceLayer(
 }
 
 /**
- * A choice layer (view 1, view 4; 18 and 19), drawn inside the activity window: a clear layer that closes on a tap
- * outside or Back, and a card titled [title] with [options] (a value and its label), the [selected] one checked,
- * scrolling when taller than the space (defect 18-6). No DropdownMenu or Popup: a separate window would take
- * MainActivity's focus (CLAUDE.md, 07). TalkBack reads only the layer while it is open.
+ * A choice layer (view 1, view 4; 18 and 19; Settings' Auto-lock, 20), drawn inside the activity window: a clear layer
+ * that closes on a tap outside or Back, and a card titled [title] with [options] (a value and its label), the [selected]
+ * one checked, and an optional [note] under them, scrolling when taller than the space (defect 18-6). No DropdownMenu or
+ * Popup: a separate window would take MainActivity's focus (CLAUDE.md, 07). TalkBack reads only the layer while it is
+ * open.
  */
 @Composable
 internal fun <T> ChoiceLayer(
@@ -270,6 +271,7 @@ internal fun <T> ChoiceLayer(
     selected: T,
     onChoose: (T) -> Unit,
     onClose: () -> Unit,
+    note: String? = null,
 ) {
     BackHandler(onBack = onClose)
     Box(
@@ -308,6 +310,14 @@ internal fun <T> ChoiceLayer(
                         RadioButton(selected = value == selected, onClick = null)
                         Text(text = label, style = MaterialTheme.typography.bodyLarge)
                     }
+                }
+                note?.let {
+                    Text(
+                        text = it,
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
+                    )
                 }
             }
         }
