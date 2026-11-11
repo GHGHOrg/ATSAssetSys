@@ -3,9 +3,12 @@ package app.ghghorg.atsassets.ui
 import app.ghghorg.atsassets.core.AssetType
 import app.ghghorg.atsassets.core.CashEntry
 import app.ghghorg.atsassets.core.CashType
+import app.ghghorg.atsassets.core.ClassLists
 import app.ghghorg.atsassets.core.Instrument
 import app.ghghorg.atsassets.core.Portfolio
 import app.ghghorg.atsassets.core.Price
+import app.ghghorg.atsassets.core.ProfileAnswer
+import app.ghghorg.atsassets.core.SourceProfile
 import app.ghghorg.atsassets.core.Tab
 import app.ghghorg.atsassets.core.Transaction
 import app.ghghorg.atsassets.core.TransactionType
@@ -121,5 +124,33 @@ class AllocationFlowTest {
         val byPortfolio = state.allocation(AllocationBy.PORTFOLIO)!!.rows.map { it.amount }
         val composition = state.netWorthTotal.composition!!
         assertEquals(listOf(composition.cash) + composition.portfolios.map { it.amount }, byPortfolio)
+    }
+
+    // 23b, CR2's wiring test: the stored profile through the stored lists reaches both levels' sector and geography.
+    @Test
+    fun theStoredProfile_reachesTheSectorAndGeographyBreakdowns() {
+        val store =
+            store().apply {
+                storedInstruments = listOf(Instrument("AAPL", AssetType.STOCK, true, Price(BigDecimal("160"), at), SourceProfile("technology", "US")))
+                storedClassLists = ClassLists(sectors = listOf("Technology"), geographies = listOf("US"))
+            }
+        val state = started(store, online = { false }).state.value
+        assertEquals(listOf(SliceName.Cash, SliceName.Named("Technology")), state.allocation(AllocationBy.SECTOR)!!.rows.map { it.name })
+        assertEquals(listOf(SliceName.Cash, SliceName.Named("US")), state.allocation(AllocationBy.GEOGRAPHY)!!.rows.map { it.name })
+        assertEquals(
+            listOf(AllocationBy.ASSET_TYPE, AllocationBy.HOLDING, AllocationBy.SECTOR, AllocationBy.GEOGRAPHY),
+            state.portfolioAllocation.breakdowns!!.map { it.by },
+        )
+        assertEquals(listOf(SliceName.Named("Technology")), state.portfolioAllocation.breakdowns!![2].rows.map { it.name })
+    }
+
+    // 23b: before the source is asked the holding is "Unclassified"; the refresh at start gives its sector.
+    @Test
+    fun aRefreshThatGivesTheProfile_changesTheSectorBreakdown() {
+        val offline = started(store(), online = { false }).state.value
+        assertEquals(listOf(SliceName.Cash, SliceName.Unclassified), offline.allocation(AllocationBy.SECTOR)!!.rows.map { it.name })
+        val source = FakeSource().apply { profiles = mapOf("AAPL" to ProfileAnswer.Given(SourceProfile("Technology", "US"))) }
+        val state = started(store(), source = source).state.value
+        assertEquals(listOf(SliceName.Cash, SliceName.Named("Technology")), state.allocation(AllocationBy.SECTOR)!!.rows.map { it.name })
     }
 }

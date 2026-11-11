@@ -36,8 +36,8 @@ class NetWorthActions(
  * Net Worth (Total) (view 2, wireframe 02; iteration 17), drawn from its model (CR2): "<" and the title, net worth with
  * its age line, "Updating prices" and the failed line (marker 1), then the composition (marker 2), or with net worth of
  * $0.00 one plain line (marker 6; decision 4). One scrolling screen; pulling down refreshes the prices (decision 2).
- * Back returns to Overall or More. Under the composition the breakdowns by asset type, portfolio and holding (18); sector
- * and geography follow in 23.
+ * Back returns to Overall or More. Under the composition the breakdowns by asset type, portfolio and holding (18), then
+ * sector and geography (23b).
  */
 @Composable
 fun NetWorthScreen(

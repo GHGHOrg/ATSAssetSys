@@ -24,11 +24,13 @@ import androidx.test.platform.app.InstrumentationRegistry
 import app.ghghorg.atsassets.core.AssetType
 import app.ghghorg.atsassets.core.CashEntry
 import app.ghghorg.atsassets.core.CashType
+import app.ghghorg.atsassets.core.ClassLists
 import app.ghghorg.atsassets.core.Fraction
 import app.ghghorg.atsassets.core.Instrument
 import app.ghghorg.atsassets.core.Portfolio
 import app.ghghorg.atsassets.core.Price
 import app.ghghorg.atsassets.core.SellAllocation
+import app.ghghorg.atsassets.core.SourceProfile
 import app.ghghorg.atsassets.core.Tab
 import app.ghghorg.atsassets.core.Transaction
 import app.ghghorg.atsassets.core.TransactionType
@@ -96,7 +98,7 @@ class AllocationChoiceFocusTest {
 /**
  * Defect 18-6 (18 phone check 6, item 3): at the largest font in landscape the "Allocation by" card showed only its first
  * option; the other two could not be read or tapped. Drawn as on Overall, above the bottom bar, turned and at font scale
- * 2.0 (AC-61 (a)): each option can be scrolled to, is shown and takes a tap.
+ * 2.0 (AC-61 (a)): each option can be scrolled to, is shown and takes a tap; from 23b, five options.
  */
 @RunWith(AndroidJUnit4::class)
 class AllocationChoiceLargestFontLandscapeTest {
@@ -129,6 +131,9 @@ class AllocationChoiceLargestFontLandscapeTest {
             AllocationBy.ASSET_TYPE to R.string.allocation_asset_type,
             AllocationBy.PORTFOLIO to R.string.allocation_portfolio,
             AllocationBy.HOLDING to R.string.allocation_holding,
+            // 23b: five options.
+            AllocationBy.SECTOR to R.string.allocation_sector,
+            AllocationBy.GEOGRAPHY to R.string.allocation_geography,
         ).forEach { (by, id) ->
             val option = composeRule.onNode(hasText(string(id)) and isSelectable())
             option.performScrollTo().assertIsDisplayed().performClick()
@@ -184,10 +189,12 @@ class AllocationTalkBackTest {
         cents: Long,
     ): CashEntry = CashEntry("c-${transaction.id}", transaction.date, cents, CashType.TRADE, "", transaction.enteredSeq, transactionId = transaction.id)
 
-    // Example A: $9,600.00 cash and 8 AAPL left in Portfolio P at $160.
+    // Example A: $9,600.00 cash and 8 AAPL left in Portfolio P at $160; from 23b, AAPL's source profile and the lists.
     private fun state(
         screen: Screen,
         by: AllocationBy = AllocationBy.ASSET_TYPE,
+        profile: SourceProfile? = null,
+        classLists: ClassLists = ClassLists(),
     ): AppState {
         val b1 = trade("b1", TransactionType.BUY, "2026-01-02", "10", 100_000L, 2L)
         val b2 = trade("b2", TransactionType.BUY, "2026-02-01", "10", 150_000L, 3L)
@@ -209,8 +216,9 @@ class AllocationTalkBackTest {
             transactions = listOf(b1, b2, s1),
             today = LocalDate.of(2026, 6, 1),
             portfolios = listOf(Portfolio("p1", "Portfolio P", 1L)),
-            instruments = listOf(Instrument("AAPL", AssetType.STOCK, verified = true, price = Price(BigDecimal("160"), close))),
+            instruments = listOf(Instrument("AAPL", AssetType.STOCK, verified = true, price = Price(BigDecimal("160"), close), profile = profile)),
             allocationBy = by,
+            classLists = classLists,
         )
     }
 
@@ -257,6 +265,25 @@ class AllocationTalkBackTest {
             true,
             composeRule.onAllNodes(hasContentDescription(row("AAPL", "1,280.00", "11.8")) and hasClickAction()).fetchSemanticsNodes().isEmpty(),
         )
+    }
+
+    // 23b, AC-44: the sector and geography breakdowns under the other three, the source's values in the lists' spelling.
+    @Test
+    fun netWorth_showsSectorAndGeography_withTheSourcesValuesReadInFull() {
+        val state = state(Screen.NET_WORTH, profile = SourceProfile("technology", "US"), classLists = ClassLists(listOf("Technology"), listOf("US")))
+        composeRule.setContent { ATSAssetSystemTheme { NetWorthScreen(state, NetWorthActions({}, {})) } }
+        listOf(R.string.allocation_by_sector, R.string.allocation_by_geography).forEach { assertEquals("${text(it)} shown", true, shown(text(it))) }
+        composeRule.onNode(hasContentDescription(row("Technology", "1,280.00", "11.8"))).assertExists()
+        composeRule.onNode(hasContentDescription(row("US", "1,280.00", "11.8"))).assertExists()
+    }
+
+    // 23b, C14 and AC-32: a holding with no value is read as "Unclassified"; cash keeps its own row.
+    @Test
+    fun overall_bySector_readsAHoldingWithNoValueAsUnclassified() {
+        composeRule.setContent { ATSAssetSystemTheme { OverallScreen(state(Screen.TABS, AllocationBy.SECTOR), {}, {}) } }
+        composeRule.onNode(hasContentDescription(text(R.string.allocation_by_spoken, text(R.string.allocation_sector)))).assertExists()
+        composeRule.onNode(hasContentDescription(row(text(R.string.class_unclassified), "1,280.00", "11.8"))).assertExists()
+        composeRule.onNode(hasContentDescription(row(text(R.string.net_worth_composition_cash), "9,600.00", "88.2"))).assertExists()
     }
 
     // 4.8: net worth of $0.00 (cash withdrawn to 0, no holding): one plain line in place of the allocation.

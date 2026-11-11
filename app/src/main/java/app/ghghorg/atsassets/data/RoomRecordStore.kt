@@ -374,7 +374,7 @@ class RoomRecordStore(
 
     override suspend fun loadClassLists(): ClassLists = withContext(Dispatchers.IO) {
         try {
-            database.listValueDao().loadAll().toClassLists()
+            database.instrumentDao().loadListValues().toClassLists()
         } catch (e: CancellationException) {
             throw e
         } catch (e: UnreadableDataException) {
