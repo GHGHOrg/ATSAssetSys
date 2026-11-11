@@ -1,6 +1,6 @@
 # plan/iterations/23a-sector-geography-source.md
 
-Stage: Build. Status: approved 2026-11-11 (your "Approved", as one iteration 23); decisions 1 to 4 settled the same day (section 11): 23 split into 23a (this file) and 23b (the breakdowns). Built 2026-11-11 (steps 1 to 8; section 14); phone check 2026-11-11 all yes (section 13.3); the screen tests 61 of 61 on pull request #166 (section 13.4); reviewed against the spec refs (section 13.5).
+Stage: Build. Status: approved 2026-11-11 (your "Approved", as one iteration 23); decisions 1 to 4 settled the same day (section 11): 23 split into 23a (this file) and 23b (the breakdowns). Done: built 2026-11-11 (steps 1 to 8; section 14); phone check 2026-11-11 all yes (section 13.3); the screen tests 61 of 61 on pull request #166 (section 13.4); reviewed against the spec refs (section 13.5); pull request #166 merged as 5f57cc7, main green (section 13.6).
 Source: plan.md section 4 (row 23, split into 23a and 23b), spec section 3 (Instrument: source sector and geography; Holding classification; Lists), 4.9 (effective value, source values mapped to the lists, a new text added), section 6 (view 6, the Classification tab with the split history), section 7 (the source supplies sector/geography texts when it has them), section 14 (K4, K10), C9, C14, AC-12 (the holding part), AC-61, AC-62; wireframe 06 (frame C, marker 7 and the notes on the tabs and the Classification tab); plan/spikes/price-source.md (profile2, the calls of 2026-10-30, question 5); iterations 10 (Holding detail), 16a (the refresh). "My reading" is an interpretation, not a test.
 
 ## 1. Outcome
@@ -118,6 +118,9 @@ No finding that needs a change. In order: a source text mapped to a list value b
 2. Low (maintainability): `ListValueDao.insert` is never called, and `InstrumentDao.loadListValues` repeats `ListValueDao.loadAll`. Open item 57, to tidy in 23b.
 3. Info: when the quotes stop on a refused key or too many calls (401, 403, 429), the profile loop still makes one call, gets the same answer and stops: one extra call on such a refresh, prices not affected. Recorded only.
 Not checked: the logcat minutes in which the first refresh asked the profiles (13.3, check 11).
+
+### 13.6 The merge (2026-11-11)
+Pull request #166 merged as 5f57cc7 (02:11:57Z), 9 commits; the branch is gone from origin and locally. On the pull request's last commit (10c63c4) CI (run 42942752307, 3m 39s), the screen tests (run 42942752445, 61 of 61) and CodeQL (run 42942747577) green. On main after the merge, all at the first attempt: CI (run 42944344362, 4m 26s), CodeQL (run 42944344414) and the screen tests (run 42944344261, 02:12:00Z to 02:22:08Z, 61 of 61 counted from the result XML) green (gh, read only). A Dependabot update for kotlinx-coroutines-test (run 42944500933) started on main at the same time; not part of 23a.
 
 ## 14. Departures from the plan
 - Step 4: `withPriceOf` became `withStoredOf`, which keeps the profile as well as the price when a buy saves its instrument again; no unique index on `list_values` (`Index` would be the database's first, and its room3 package was not checked; K10 adds only unmatched values and reading refuses two that match).
