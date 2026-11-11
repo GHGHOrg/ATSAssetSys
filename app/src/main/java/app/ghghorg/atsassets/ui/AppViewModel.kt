@@ -1028,6 +1028,10 @@ class AppViewModel(
                 holdingTicker = null,
                 holdingFromHidden = false,
                 hideRefusal = null,
+                // 24's Deploy review: the picker and a failed save or clear end with the holding.
+                classPicker = null,
+                classPickerChoice = null,
+                overrideRefusal = null,
                 buyFromHolding = false,
                 sellRefusals = SellRefusals(),
                 sellPicksDropped = false,
@@ -2347,7 +2351,13 @@ class AppViewModel(
         val id = current.portfolioId ?: return
         if (current.screen != Screen.PORTFOLIO || current.holdingsOf(id).none { it.ticker == ticker }) return
         mutableState.update {
-            it.copy(screen = Screen.HOLDING, holdingTicker = ticker, holdingTab = HoldingTab.TRANSACTIONS, portfolioMenuOpen = false)
+            it.copy(
+                screen = Screen.HOLDING,
+                holdingTicker = ticker,
+                holdingTab = HoldingTab.TRANSACTIONS,
+                portfolioMenuOpen = false,
+                overrideRefusal = null,
+            )
         }
     }
 
@@ -2361,6 +2371,8 @@ class AppViewModel(
                 holdingFromHidden = false,
                 buyNotice = null,
                 hideRefusal = null,
+                // 24's Deploy review: a failed clear's "Not saved" belongs to this visit.
+                overrideRefusal = null,
             )
         }
     }

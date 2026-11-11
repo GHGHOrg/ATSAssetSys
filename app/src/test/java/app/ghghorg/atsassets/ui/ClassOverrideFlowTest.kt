@@ -11,6 +11,7 @@ import app.ghghorg.atsassets.core.EffectiveClass
 import app.ghghorg.atsassets.core.Instrument
 import app.ghghorg.atsassets.core.Portfolio
 import app.ghghorg.atsassets.core.SourceProfile
+import app.ghghorg.atsassets.core.Tab
 import app.ghghorg.atsassets.core.Transaction
 import app.ghghorg.atsassets.core.TransactionType
 import app.ghghorg.atsassets.core.UnreadableDataException
@@ -217,6 +218,43 @@ class ClassOverrideFlowTest {
         val technology = ClassOverride("p1", "AAPL", ClassList.SECTOR, "Technology")
         assertEquals(listOf(technology), store.storedOverrides)
         assertEquals(EffectiveClass("Technology", ClassOrigin.OVERRIDE), vm.state.value.holdingClassification!!.sector)
+    }
+
+    // Deploy review (your A): a failed clear's "Not saved" belongs to that visit; leaving the holding (Back, or a tab in
+    // the bar) drops it, so the holding opened next does not say it.
+    @Test
+    fun aFailedClearsNotSaved_isDroppedOnLeavingTheHolding() {
+        val store = store().apply { storedOverrides = listOf(healthCare) }
+        val vm = onClassification(store)
+        store.overrideSaveError = IllegalStateException("disk full")
+        vm.clearClassOverride(ClassList.SECTOR)
+        assertEquals(true, vm.state.value.holdingClassification!!.notSaved)
+        vm.closeHolding()
+        vm.openHolding("AAPL")
+        vm.selectHoldingTab(HoldingTab.CLASSIFICATION)
+        assertEquals(false, vm.state.value.holdingClassification!!.notSaved)
+
+        vm.clearClassOverride(ClassList.SECTOR)
+        vm.selectTab(Tab.PORTFOLIOS)
+        vm.openPortfolio("p1")
+        vm.openHolding("AAPL")
+        vm.selectHoldingTab(HoldingTab.CLASSIFICATION)
+        assertEquals(false, vm.state.value.holdingClassification!!.notSaved)
+    }
+
+    // Deploy review (your A): leaving the picker by a tab in the bar drops it, as Cancel does, with nothing stored.
+    @Test
+    fun leavingThePickerByATab_dropsIt() {
+        val store = store()
+        val vm = onClassification(store)
+        vm.openClassPicker(ClassList.SECTOR)
+        vm.chooseClassValue("Health Care")
+        vm.selectTab(Tab.OVERALL)
+        assertEquals(Screen.TABS, vm.state.value.screen)
+        assertEquals(null, vm.state.value.classPicker)
+        assertEquals(null, vm.state.value.classPickerChoice)
+        assertEquals(null, vm.state.value.classPickerModel)
+        assertEquals(emptyList<ClassOverride>(), store.storedOverrides)
     }
 
     // 4.9: only a value of the list can be picked; with none picked (an ETF on an empty choice), Save does nothing.
