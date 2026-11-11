@@ -39,9 +39,9 @@ class PortfolioAllocationActions(
 /**
  * Allocation, one portfolio at a time (view 4, wireframe 04; iteration 19), drawn from its model (CR2): "<" and the
  * title, the chooser (marker 1; decision 2), the portfolio value with its age line, "Updating prices" and the failed line
- * (marker 2), then the breakdowns by asset type and holding (marker 3), or one plain line at $0.00 (marker 5). With no
- * portfolio, "No portfolios yet" and Create a portfolio (marker 4). One scrolling screen; pulling down refreshes the
- * prices (decision 3). Back returns to the portfolio or to More. Sector and geography follow in 23.
+ * (marker 2), then the breakdowns by asset type, holding, sector and geography (marker 3; 23b), or one plain line at
+ * $0.00 (marker 5). With no portfolio, "No portfolios yet" and Create a portfolio (marker 4). One scrolling screen;
+ * pulling down refreshes the prices (decision 3). Back returns to the portfolio or to More.
  */
 @Composable
 fun PortfolioAllocationScreen(

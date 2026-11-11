@@ -10,7 +10,7 @@ import app.ghghorg.atsassets.core.Valuation
 /*
  * Net Worth (Total) as the screen draws it (view 2, wireframe 02 markers 1, 2 and 6; CR2, 17): net worth with its price
  * age line and the refresh state, then the composition. Plain Kotlin: the screen picks the approved string and puts
- * these in. The breakdowns come in 18 and 23.
+ * these in. The breakdowns are built by Allocations (18, 23b).
  */
 
 /** One portfolio in the composition: its name and its value as shown there (by largest remainder, 4.10). */
