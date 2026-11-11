@@ -21,6 +21,17 @@ data class ClassLists(
     operator fun get(list: ClassList): List<String> = if (list == ClassList.SECTOR) sectors else geographies
 }
 
+/**
+ * A holding's override (4.9; 24): the holding ([portfolioId], [ticker]) has [value] on [list], as the list spells it. The
+ * store keeps the value's list row, so a rename (25) carries over (decision 3).
+ */
+data class ClassOverride(
+    val portfolioId: String,
+    val ticker: String,
+    val list: ClassList,
+    val value: String,
+)
+
 /** A holding's effective sector or geography: [value] as its list spells it, null when [origin] is UNCLASSIFIED (C14). */
 data class EffectiveClass(
     val value: String?,
