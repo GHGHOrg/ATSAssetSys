@@ -74,6 +74,7 @@ To be shown on the phone in step 7:
 
 ### 13.1 Steps (2026-11-11)
 - Step 1: this file and the plan.md lines (with #169's merge line; plan.md section 11 gains a row for 24). Only documents changed. The usual command red twice before green: HoldingsScaleTest ("4 lotsOf | SPREAD: 11.092 ms at 3,000, limit 7.0 ms"; 16b decision B), then the test fixtures (CLAUDE.md's pitfall); the third run, unchanged, green: 967 tests, 0 failures, 1 skipped; lint the 5 listed findings (report 15:20:03).
+- Step 2: core/Classification.kt (K10): `ClassOrigin.OVERRIDE`; `effective` takes the override first (a value of the list), else the source's value, else "Unclassified"; `overrideValue`, the rule for setting one: the value on the list that the choice matches (D7), in the list's spelling, or none (refused). Core and the screens work with value texts; the store turns a text into its list row on save and back on load (decision 3; step 3). ClassificationTest 3. Red against stubs first: 3 tests, 2 failed (clearing passed on the stub, which ignores the override and returns the source or "Unclassified"). The usual command green at the first try: 970 tests, 0 failures, 1 skipped; lint the 5 listed findings (report 15:29:19).
 
 ## 14. Departures from the plan
 None yet.

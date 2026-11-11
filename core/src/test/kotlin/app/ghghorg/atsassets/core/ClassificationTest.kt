@@ -86,4 +86,28 @@ class ClassificationTest {
         // The list is updated with each refresh (step 5); until then the source's own text is shown, trimmed.
         assertEquals(EffectiveClass("Energy", ClassOrigin.SOURCE), Classification.effective(sectors, " Energy"))
     }
+
+    // 24, 4.9: a manual value wins over the source's, and over no value (an ETF, C14).
+    @Test
+    fun anOverride_winsOverTheSource_andOverNoValue() {
+        assertEquals(EffectiveClass("Diversified", ClassOrigin.OVERRIDE), Classification.effective(sectors, "Technology", "Diversified"))
+        assertEquals(EffectiveClass("Diversified", ClassOrigin.OVERRIDE), Classification.effective(sectors, null, "Diversified"))
+    }
+
+    // 24, 4.9 and AC-22: clearing returns to the source's value, or "Unclassified" if there is none.
+    @Test
+    fun clearingTheOverride_returnsToTheSource_orUnclassified() {
+        assertEquals(EffectiveClass("Technology", ClassOrigin.SOURCE), Classification.effective(sectors, "technology", null))
+        assertEquals(EffectiveClass(null, ClassOrigin.UNCLASSIFIED), Classification.effective(sectors, "N/A", null))
+    }
+
+    // 24, 4.9: the override is picked from the matching list, in the list's spelling (D7); anything else is refused.
+    @Test
+    fun anOverride_mustBeOnItsList_inTheListsSpelling() {
+        assertEquals("Diversified", Classification.overrideValue(sectors, "Diversified"))
+        assertEquals("United States", Classification.overrideValue(geographies, " united  states "))
+        assertNull(Classification.overrideValue(sectors, "Energy"))
+        assertNull(Classification.overrideValue(sectors, "Global"))
+        assertNull(Classification.overrideValue(emptyList(), "Technology"))
+    }
 }
