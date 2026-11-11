@@ -45,32 +45,31 @@ class HoldingsScaleTest {
 
     /**
      * Step 7, every run: the code after 15c at four sizes. The growth from 1,000 to 3,000 transactions stays under its
-     * bound (15c section 9, part 2, item 2, step 6), and each call at 3,000 under its fixed time (decision 2).
+     * bound (15c section 9, part 2, item 2, step 6), and each call at 3,000 under its fixed time (decision 2). From 24a
+     * (decision 1, your B), a check that fails is measured again at 1,000 and 3,000 at once, up to 3 tries in all, and
+     * passes when any try passes; every try is in the table.
      */
     @Test
     fun theCodeAfter15c_growsWithinItsBounds() {
-        val table = ScaleTiming.run(NEW_CALLS, listOf(100, 300, 1_000, 3_000), capSeconds = 60.0)
-        ScaleTiming.write("holdings-scale-after.txt", "The code after 15c", table)
+        val sizes = listOf(100, 300, 1_000, 3_000)
+        val table = ScaleTiming.run(NEW_CALLS, sizes, capSeconds = 60.0)
+        val histories = mutableMapOf<Pair<ScaleShape, Int>, ScaleHistory>()
+        val retried = mutableListOf<String>()
         val problems = mutableListOf<String>()
         for (call in NEW_CALLS) {
             for (shape in ScaleShape.entries) {
-                val at1000 = table.single { it.call == call.name && it.shape == shape && it.size == 1_000 }.millis
-                val at3000 = table.single { it.call == call.name && it.shape == shape && it.size == 3_000 }.millis
-                if (at1000 == null || at3000 == null) {
-                    problems += "${call.name} | $shape: not timed"
-                    continue
+                fun timed(size: Int) = table.single { it.call == call.name && it.shape == shape && it.size == size }.millis
+
+                fun measured(size: Int) = ScaleTiming.measure(call, histories.getOrPut(shape to size) { ScaleHistories.build(size, shape) })
+                val check = ScaleCheck(call.name, shape, ratioBound(call.name, shape), LIMITS_AT_3000.getValue(call.name to shape))
+                val verdict = ScaleJudge.judge(check, ScaleTry(timed(1_000), timed(3_000))) { ScaleTry(measured(1_000), measured(3_000)) }
+                if (verdict.tries.size > 1) {
+                    verdict.tries.forEachIndexed { index, attempt -> retried += ScaleTiming.describe(check, index + 1, attempt) }
                 }
-                val ratio = at3000 / at1000
-                val bound = ratioBound(call.name, shape)
-                if (bound != null && ratio >= bound) {
-                    problems += String.format(Locale.ROOT, "%s | %s: grew %.1f times, bound %.0f", call.name, shape, ratio, bound)
-                }
-                val limit = LIMITS_AT_3000.getValue(call.name to shape)
-                if (at3000 >= limit) {
-                    problems += String.format(Locale.ROOT, "%s | %s: %.3f ms at 3,000, limit %.1f ms", call.name, shape, at3000, limit)
-                }
+                ScaleJudge.failure(verdict)?.let { problems += it }
             }
         }
+        ScaleTiming.write("holdings-scale-after.txt", "The code after 15c", table, retried)
         assertTrue(problems.joinToString("\n"), problems.isEmpty())
     }
 
@@ -263,6 +262,34 @@ internal object ScaleTiming {
 
     private fun progress(line: String) = PROGRESS.appendText(line + "\n")
 
+    /** [call]'s median ms per call on [history], measured as in [run]; for a check measured again (24a decision 1). */
+    fun measure(
+        call: ScaleCall,
+        history: ScaleHistory,
+        capSeconds: Double = 60.0,
+    ): Double = median(call, history, capSeconds) / 1_000_000.0
+
+    /** One try of a check measured again, as a line of the table's last part. */
+    fun describe(
+        check: ScaleCheck,
+        number: Int,
+        attempt: ScaleTry,
+    ): String {
+        val growth = if (attempt.at1000 != null && attempt.at3000 != null) attempt.at3000 / attempt.at1000 else null
+        val result = if (ScaleJudge.problem(check, attempt) == null) "passes" else "fails"
+        return String.format(
+            Locale.ROOT,
+            "%s | %s | try %d | %s ms at 1,000 | %s ms at 3,000 | growth %s | %s",
+            check.call,
+            check.shape,
+            number,
+            attempt.at1000?.let { String.format(Locale.ROOT, "%.3f", it) } ?: "not timed",
+            attempt.at3000?.let { String.format(Locale.ROOT, "%.3f", it) } ?: "not timed",
+            growth?.let { String.format(Locale.ROOT, "%.1f", it) } ?: "-",
+            result,
+        )
+    }
+
     private fun median(
         call: ScaleCall,
         history: ScaleHistory,
@@ -299,11 +326,15 @@ internal object ScaleTiming {
         return System.nanoTime() - start
     }
 
-    /** The table as text, with each size's growth over the size before; written to core/build/scale/[name] and printed. */
+    /**
+     * The table as text, with each size's growth over the size before, then each check measured again with every try
+     * (24a decision 1); written to core/build/scale/[name] and printed.
+     */
     fun write(
         name: String,
         title: String,
         rows: List<ScaleRow>,
+        retried: List<String>? = null,
     ) {
         val text =
             buildString {
@@ -319,6 +350,12 @@ internal object ScaleTiming {
                         }
                     val millis = row.millis?.let { String.format(Locale.ROOT, "%.3f", it) } ?: row.note
                     appendLine("${row.call} | ${row.shape} | ${row.size} | $millis | $growth")
+                }
+                if (retried != null) {
+                    appendLine()
+                    appendLine("Checks measured again (24a decision 1), every try:")
+                    if (retried.isEmpty()) appendLine("none")
+                    retried.forEach { appendLine(it) }
                 }
             }
         print(text)
