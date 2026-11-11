@@ -26,11 +26,13 @@ import androidx.test.platform.app.InstrumentationRegistry
 import app.ghghorg.atsassets.core.AssetType
 import app.ghghorg.atsassets.core.CashEntry
 import app.ghghorg.atsassets.core.CashType
+import app.ghghorg.atsassets.core.ClassLists
 import app.ghghorg.atsassets.core.Fraction
 import app.ghghorg.atsassets.core.Instrument
 import app.ghghorg.atsassets.core.Portfolio
 import app.ghghorg.atsassets.core.Price
 import app.ghghorg.atsassets.core.SellAllocation
+import app.ghghorg.atsassets.core.SourceProfile
 import app.ghghorg.atsassets.core.Tab
 import app.ghghorg.atsassets.core.Transaction
 import app.ghghorg.atsassets.core.TransactionType
@@ -186,12 +188,14 @@ class PortfolioAllocationTalkBackTest {
         cents: Long,
     ): CashEntry = CashEntry("c-${transaction.id}", transaction.date, cents, CashType.TRADE, "", transaction.enteredSeq, transactionId = transaction.id)
 
-    // Example A: 8 AAPL left in Portfolio P at a cost of $1,200; Portfolio Q empty.
+    // Example A: 8 AAPL left in Portfolio P at a cost of $1,200; Portfolio Q empty; from 23b, AAPL's profile and the lists.
     private fun state(
         shownId: String?,
         price: Price = Price(BigDecimal("160"), close),
         refreshing: Boolean = false,
         refreshFailed: Boolean = false,
+        profile: SourceProfile? = null,
+        classLists: ClassLists = ClassLists(),
     ): AppState {
         val b1 = trade("b1", TransactionType.BUY, "2026-01-02", "10", 100_000L, 2L)
         val b2 = trade("b2", TransactionType.BUY, "2026-02-01", "10", 150_000L, 3L)
@@ -213,10 +217,11 @@ class PortfolioAllocationTalkBackTest {
             transactions = listOf(b1, b2, s1),
             today = LocalDate.of(2026, 6, 1),
             portfolios = listOf(Portfolio("p1", "Portfolio P", 1L), Portfolio("p2", "Portfolio Q", 2L)),
-            instruments = listOf(Instrument("AAPL", AssetType.STOCK, verified = true, price = price)),
+            instruments = listOf(Instrument("AAPL", AssetType.STOCK, verified = true, price = price, profile = profile)),
             allocationPortfolioId = shownId,
             refreshing = refreshing,
             refreshFailed = refreshFailed,
+            classLists = classLists,
         )
     }
 
@@ -253,6 +258,23 @@ class PortfolioAllocationTalkBackTest {
             true,
             composeRule.onAllNodes(hasContentDescription(row("AAPL", "1,280.00", "100.0")) and hasClickAction()).fetchSemanticsNodes().isEmpty(),
         )
+    }
+
+    // 23b, AC-46: Portfolio P's sector and geography at 100.0% each, the geography as the source spells it (decision 2);
+    // before the source is asked, both read "Unclassified" (C14).
+    @Test
+    fun portfolioP_readsItsSectorAndGeography_orUnclassified() {
+        show(state("p1", profile = SourceProfile("Technology", "US"), classLists = ClassLists(listOf("Technology"), listOf("US"))))
+        listOf(R.string.allocation_by_sector, R.string.allocation_by_geography).forEach { assertEquals("${text(it)} shown", true, shown(text(it))) }
+        composeRule.onNode(hasContentDescription(row("Technology", "1,280.00", "100.0"))).assertExists()
+        composeRule.onNode(hasContentDescription(row("US", "1,280.00", "100.0"))).assertExists()
+    }
+
+    @Test
+    fun portfolioP_notAskedYet_readsUnclassifiedInBoth() {
+        show(state("p1"))
+        val unclassified = composeRule.onAllNodes(hasContentDescription(row(text(R.string.class_unclassified), "1,280.00", "100.0")))
+        assertEquals("Sector and geography each read Unclassified", 2, unclassified.fetchSemanticsNodes().size)
     }
 
     // Marker 5: Portfolio Q has no holding: $0.00 and one plain line, no breakdown.
