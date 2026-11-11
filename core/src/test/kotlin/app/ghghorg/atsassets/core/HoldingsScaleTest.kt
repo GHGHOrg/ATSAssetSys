@@ -66,7 +66,7 @@ class HoldingsScaleTest {
                 if (verdict.tries.size > 1) {
                     verdict.tries.forEachIndexed { index, attempt -> retried += ScaleTiming.describe(check, index + 1, attempt) }
                 }
-                verdict.problem?.let { problems += "$it (${verdict.tries.size} of ${ScaleJudge.TRIES} tries)" }
+                ScaleJudge.failure(verdict)?.let { problems += it }
             }
         }
         ScaleTiming.write("holdings-scale-after.txt", "The code after 15c", table, retried)

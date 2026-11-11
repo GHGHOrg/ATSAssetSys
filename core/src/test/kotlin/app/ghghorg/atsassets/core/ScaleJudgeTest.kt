@@ -81,6 +81,21 @@ class ScaleJudgeTest {
         assertEquals(0, again.asked)
     }
 
+    // 24a's Deploy review: a check that failed after its retries says how many tries it had.
+    @Test
+    fun aCheckThatFailedEveryTry_saysThreeOfThreeTries() {
+        val verdict = ScaleJudge.judge(netWorth, busy, Again(busy, busy))
+        assertEquals("2 netWorth | SPREAD: grew 10.1 times, bound 8 (3 of 3 tries)", ScaleJudge.failure(verdict))
+    }
+
+    // 24a's Deploy review: a check not timed had no retries, so its message names no tries; a passing check has none.
+    @Test
+    fun aCheckNotTimed_namesNoTries_andAPassingCheckHasNoMessage() {
+        val notTimed = ScaleJudge.judge(netWorth, ScaleTry(at1000 = 2.3, at3000 = null), Again())
+        assertEquals("2 netWorth | SPREAD: not timed", ScaleJudge.failure(notTimed))
+        assertNull(ScaleJudge.failure(ScaleJudge.judge(netWorth, normal, Again())))
+    }
+
     // Calls 6 and 8 on the spread shape have no growth bound (15c), only their fixed time; that stays so.
     @Test
     fun withNoGrowthBound_onlyTheFixedTimeCounts() {

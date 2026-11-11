@@ -49,7 +49,7 @@ There is no local.properties file on purpose (see pitfalls).
 - Install on the phone: & "$env:ANDROID_HOME\platform-tools\adb.exe" install -r app\build\outputs\apk\debug\app-debug.apk
   (adb is not on PATH on this machine. The APK path is confirmed. The install has been run on the phone:
   setup proof item 4 (2026-10-18), iteration 01 (2026-10-19) and the dependency-upgrade spike (2026-10-22).)
-CI (.github/workflows/ci.yml) runs the style check and then the same three steps on ubuntu-26.04 with Java 25 (Temurin).
+CI (.github/workflows/ci.yml) runs the style check and then the same three steps on ubuntu-26.04 with Java 25 (Temurin). After the unit tests, also when they fail, its step "Scale test retries" prints every check HoldingsScaleTest measured again, each try, or "none" (24a).
 
 ## 4. Conventions
 - One branch per iteration: iter-NN-name. One pull request per iteration.

@@ -50,6 +50,14 @@ internal object ScaleJudge {
         return ScaleVerdict(tries, problem)
     }
 
+    /**
+     * The test's message for [verdict], or null when it passed: the problem, with its tries named once it was measured
+     * again ("(3 of 3 tries)"); a check not timed had no retries, so it names none (24a's Deploy review).
+     */
+    fun failure(verdict: ScaleVerdict): String? = verdict.problem?.let {
+        if (verdict.tries.size > 1) "$it (${verdict.tries.size} of $TRIES tries)" else it
+    }
+
     /** Why [attempt] fails [check], each failed limit on its own line, or null when it passes. */
     fun problem(
         check: ScaleCheck,
