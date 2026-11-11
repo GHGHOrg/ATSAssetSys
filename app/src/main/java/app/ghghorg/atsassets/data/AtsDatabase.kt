@@ -310,6 +310,7 @@ interface InstrumentDao {
         geography: String?,
     ): Int
 
+    /** Both lists, each value in the order it was added (23a); also read by RoomRecordStore.loadClassLists. */
     @Query("SELECT * FROM list_values ORDER BY seq")
     suspend fun loadListValues(): List<ListValueRow>
 
@@ -338,16 +339,6 @@ interface InstrumentDao {
 
     @Query("SELECT * FROM instruments ORDER BY ticker")
     suspend fun loadAll(): List<InstrumentRow>
-}
-
-@Dao
-interface ListValueDao {
-    @Insert
-    suspend fun insert(row: ListValueRow)
-
-    /** Both lists, each value in the order it was added. */
-    @Query("SELECT * FROM list_values ORDER BY seq")
-    suspend fun loadAll(): List<ListValueRow>
 }
 
 @Dao
@@ -413,6 +404,4 @@ abstract class AtsDatabase : RoomDatabase() {
     abstract fun instrumentDao(): InstrumentDao
 
     abstract fun settingsDao(): SettingsDao
-
-    abstract fun listValueDao(): ListValueDao
 }
