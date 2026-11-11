@@ -11,6 +11,8 @@ import androidx.room3.Query
 import androidx.room3.RoomDatabase
 import androidx.room3.Transaction
 import androidx.room3.Upsert
+import app.ghghorg.atsassets.core.Classification
+import app.ghghorg.atsassets.core.SourceProfile
 
 /** One cash entry row. The date is text (YYYY-MM-DD), the amount is integer cents (4.10). */
 @Entity(tableName = "cash_entries")
@@ -87,6 +89,22 @@ data class InstrumentRow(
     val price: String? = null,
     val priceTime: Long? = null,
     @ColumnInfo(defaultValue = "0") val priceStale: Boolean = false,
+    // 23a: the source profile, asked once (decision 3); the two texts are null when the source gave none.
+    val sourceSector: String? = null,
+    val sourceGeography: String? = null,
+    @ColumnInfo(defaultValue = "0") val profileAsked: Boolean = false,
+)
+
+/**
+ * One value of the sector or geography list (spec 3, 4.9; 23a): [list] is a [app.ghghorg.atsassets.core.ClassList] by
+ * name, and [seq] keeps the order values were added in. K10 adds a value only when none matches (D7), and reading
+ * refuses two that match.
+ */
+@Entity(tableName = "list_values")
+data class ListValueRow(
+    @PrimaryKey(autoGenerate = true) val seq: Long = 0,
+    val list: String,
+    val value: String,
 )
 
 /**
@@ -264,10 +282,13 @@ interface InstrumentDao {
     @Query("SELECT * FROM instruments WHERE ticker = :ticker")
     suspend fun find(ticker: String): InstrumentRow?
 
-    /** As [upsert], keeping the stored price of the row it replaces (16a): only a refresh sets a price. */
+    /**
+     * As [upsert], keeping the stored price (16a) and the source profile (23a) of the row it replaces: only a refresh sets
+     * them, so a buy that saves its instrument again loses neither.
+     */
     @Transaction
     suspend fun upsertKeepingPrice(row: InstrumentRow) {
-        upsert(row.withPriceOf(find(row.ticker)))
+        upsert(row.withStoredOf(find(row.ticker)))
     }
 
     @Query("UPDATE instruments SET price = :price, priceTime = :time, priceStale = 0 WHERE ticker = :ticker")
@@ -281,18 +302,52 @@ interface InstrumentDao {
     @Query("UPDATE instruments SET priceStale = 1 WHERE ticker = :ticker AND price IS NOT NULL")
     suspend fun markStale(ticker: String)
 
-    /** One refresh's prices in one database transaction (K4 only, 16a): each fresh price as text and Unix seconds. */
+    /** Sets an instrument's source profile and marks it asked (23a); returns the number of rows changed. */
+    @Query("UPDATE instruments SET sourceSector = :sector, sourceGeography = :geography, profileAsked = 1 WHERE ticker = :ticker")
+    suspend fun setProfile(
+        ticker: String,
+        sector: String?,
+        geography: String?,
+    ): Int
+
+    @Query("SELECT * FROM list_values ORDER BY seq")
+    suspend fun loadListValues(): List<ListValueRow>
+
+    @Insert
+    suspend fun insertListValue(row: ListValueRow)
+
+    /**
+     * One refresh's prices and profiles in one database transaction (K4 only, 16a and 23a): each fresh price as text
+     * and Unix seconds; each profile on its instrument, and its texts not yet on their list added (4.9, K10). A profile
+     * for a ticker with no stored instrument adds nothing.
+     */
     @Transaction
     suspend fun savePrices(
         fresh: Map<String, Pair<String, Long>>,
         failed: Collection<String>,
+        profiles: Map<String, SourceProfile>,
     ) {
         for ((ticker, price) in fresh) setPrice(ticker, price.first, price.second)
         for (ticker in failed) markStale(ticker)
+        if (profiles.isEmpty()) return
+        val saved = profiles.filter { (ticker, profile) -> setProfile(ticker, profile.sector, profile.geography) > 0 }
+        for ((list, value) in Classification.additions(loadListValues().toClassLists(), saved.values)) {
+            insertListValue(ListValueRow(list = list.name, value = value))
+        }
     }
 
     @Query("SELECT * FROM instruments ORDER BY ticker")
     suspend fun loadAll(): List<InstrumentRow>
+}
+
+@Dao
+interface ListValueDao {
+    @Insert
+    suspend fun insert(row: ListValueRow)
+
+    /** Both lists, each value in the order it was added. */
+    @Query("SELECT * FROM list_values ORDER BY seq")
+    suspend fun loadAll(): List<ListValueRow>
 }
 
 @Dao
@@ -321,7 +376,8 @@ interface SettingsDao {
  * Version 2 (iteration 07) adds the portfolios table, version 3 (09) the transactions and instruments tables, version 4
  * (11) the sell_allocations table, version 5 (12) the two split columns of transactions, version 6 (15) the
  * hidden_holdings table, version 7 (16a) the three price columns of instruments, version 8 (20) the settings table,
- * version 9 (22) its tab order column; Room generates each step out of the schemas in app/schemas.
+ * version 9 (22) its tab order column, version 10 (23a) the three profile columns of instruments and the list_values
+ * table; Room generates each step out of the schemas in app/schemas.
  */
 @Database(
     entities = [
@@ -332,8 +388,9 @@ interface SettingsDao {
         SellAllocationRow::class,
         HiddenHoldingRow::class,
         SettingsRow::class,
+        ListValueRow::class,
     ],
-    version = 9,
+    version = 10,
     autoMigrations = [
         AutoMigration(from = 1, to = 2),
         AutoMigration(from = 2, to = 3),
@@ -343,6 +400,7 @@ interface SettingsDao {
         AutoMigration(from = 6, to = 7),
         AutoMigration(from = 7, to = 8),
         AutoMigration(from = 8, to = 9),
+        AutoMigration(from = 9, to = 10),
     ],
 )
 abstract class AtsDatabase : RoomDatabase() {
@@ -355,4 +413,6 @@ abstract class AtsDatabase : RoomDatabase() {
     abstract fun instrumentDao(): InstrumentDao
 
     abstract fun settingsDao(): SettingsDao
+
+    abstract fun listValueDao(): ListValueDao
 }

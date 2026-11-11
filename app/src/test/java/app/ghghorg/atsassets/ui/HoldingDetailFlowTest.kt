@@ -3,8 +3,12 @@ package app.ghghorg.atsassets.ui
 import app.ghghorg.atsassets.core.AssetType
 import app.ghghorg.atsassets.core.CashEntry
 import app.ghghorg.atsassets.core.CashType
+import app.ghghorg.atsassets.core.ClassLists
+import app.ghghorg.atsassets.core.ClassOrigin
+import app.ghghorg.atsassets.core.EffectiveClass
 import app.ghghorg.atsassets.core.Instrument
 import app.ghghorg.atsassets.core.Portfolio
+import app.ghghorg.atsassets.core.SourceProfile
 import app.ghghorg.atsassets.core.Tab
 import app.ghghorg.atsassets.core.Transaction
 import app.ghghorg.atsassets.core.TransactionType
@@ -64,6 +68,22 @@ class HoldingDetailFlowTest {
         vm.openPortfolio("p1")
         vm.openHolding("AAPL")
         return vm
+    }
+
+    @Test
+    fun theClassificationTab_showsTheStoredProfile_inTheLoadedListsSpelling() {
+        // 23a, CR2's wiring test: the tab draws from the state's model, built from the instrument and the lists.
+        val store =
+            store().apply {
+                storedInstruments = listOf(Instrument("AAPL", AssetType.STOCK, verified = true, profile = SourceProfile("technology", "US")))
+                storedClassLists = ClassLists(sectors = listOf("Technology"), geographies = listOf("US"))
+            }
+        val vm = onAapl(store)
+        vm.selectHoldingTab(HoldingTab.CLASSIFICATION)
+        assertEquals(HoldingTab.CLASSIFICATION, vm.state.value.holdingTab)
+        val model = vm.state.value.holdingClassification!!
+        assertEquals(EffectiveClass("Technology", ClassOrigin.SOURCE), model.sector)
+        assertEquals(EffectiveClass("US", ClassOrigin.SOURCE), model.geography)
     }
 
     @Test

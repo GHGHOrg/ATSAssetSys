@@ -1,12 +1,21 @@
 package app.ghghorg.atsassets.ui
 
+import app.ghghorg.atsassets.core.ClassLists
+import app.ghghorg.atsassets.core.Classification
+import app.ghghorg.atsassets.core.EffectiveClass
 import app.ghghorg.atsassets.core.Fraction
 import app.ghghorg.atsassets.core.Holding
+import app.ghghorg.atsassets.core.Holdings
 import app.ghghorg.atsassets.core.Lot
 import app.ghghorg.atsassets.core.MarketDate
 import app.ghghorg.atsassets.core.Money
 import app.ghghorg.atsassets.core.Price
 import app.ghghorg.atsassets.core.Quantity
+import app.ghghorg.atsassets.core.Reversals
+import app.ghghorg.atsassets.core.SourceProfile
+import app.ghghorg.atsassets.core.SplitRatio
+import app.ghghorg.atsassets.core.Transaction
+import app.ghghorg.atsassets.core.TransactionType
 import app.ghghorg.atsassets.core.Valuation
 import java.time.Instant
 import java.time.format.DateTimeFormatter
@@ -68,8 +77,50 @@ data class LotRowModel(
     val stale: Boolean,
 )
 
+/** One split in the Classification tab's history (C9; 23a): its date (YYYY-MM-DD; the screen adds "ET") and ratio. */
+data class SplitHistoryRowModel(
+    val transactionId: String,
+    val date: String,
+    val ratio: SplitRatio,
+    val reversed: Boolean,
+)
+
+/** Holding detail's Classification tab (view 6, wireframe 06 frame C; 23a): the effective values and the splits. */
+data class ClassificationModel(
+    val sector: EffectiveClass,
+    val geography: EffectiveClass,
+    val splits: List<SplitHistoryRowModel>,
+)
+
 object HoldingDetail {
     private val AS_OF = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm", Locale.ROOT)
+
+    /**
+     * The holding's effective sector and geography from its instrument's [profile] through [lists] (4.9, K10), or
+     * "Unclassified" when not asked yet or given no value (C14); and every split of the holding, newest first, a reversed
+     * one marked (C9; your B in step 6).
+     */
+    fun classification(
+        profile: SourceProfile?,
+        lists: ClassLists,
+        transactions: List<Transaction>,
+        portfolioId: String,
+        ticker: String,
+    ): ClassificationModel {
+        val splits =
+            Holdings
+                .transactionsOf(transactions, portfolioId, ticker)
+                .filter { it.type == TransactionType.SPLIT && it.split != null }
+                .map { split ->
+                    val reversed = Reversals.reversalOf(transactions, split.id) != null
+                    SplitHistoryRowModel(split.id, split.date.toString(), split.split!!, reversed)
+                }
+        return ClassificationModel(
+            sector = Classification.effective(lists.sectors, profile?.sector),
+            geography = Classification.effective(lists.geographies, profile?.geography),
+            splits = splits,
+        )
+    }
 
     /**
      * [holding] at [price] (4.8): its value, cost and gain, or at cost with "no price". A sold-out holding shows $0.00

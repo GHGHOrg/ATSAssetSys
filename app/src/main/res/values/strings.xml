@@ -455,4 +455,16 @@
     <string name="tab_order_up_spoken">Move %1$s up</string>
     <string name="tab_order_down_spoken">Move %1$s down</string>
     <string name="tab_order_note">Left to right in the bottom bar. Takes effect at once.</string>
+    <!-- Iteration 23a: Holding detail's Classification tab (proposed, 23a file section 12; approval on the phone in step 8). -->
+    <string name="holding_tab_classification">Classification</string>
+    <string name="class_sector">Sector</string>
+    <string name="class_geography">Geography</string>
+    <string name="class_from_source">From the source</string>
+    <string name="class_unclassified">Unclassified</string>
+    <string name="class_row_spoken">%1$s, %2$s, from the source</string>
+    <string name="class_row_unclassified_spoken">%1$s, unclassified</string>
+    <string name="split_history">Split history</string>
+    <string name="split_history_none">No splits recorded.</string>
+    <string name="split_history_reversed">(reversed)</string>
+    <string name="split_history_reversed_spoken">%1$s Eastern Time, split, %2$s, reversed</string>
 </resources>

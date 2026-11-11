@@ -107,8 +107,9 @@ Rules for the list:
 | 21 | screenshot-window | Temporary 3-minute screenshot window | 20 | 9, AC-20, AC-58 |
 | 22 | tab-order | Reorder the bottom tabs | 20 | AC-13, AC-58 |
 | 22a | unreadable-save-tests | Four unit tests of the unreadable-data screen on a save test their own save again, and the price save at start gets a test of its own; nothing in the app changes (open item 54) | 22 | 9, C18 |
-| 23 | sector-geography-source | Sector and geography from the source, "Unclassified", breakdowns | 16a, 18 | 4.9, C14, AC-12 |
-| 24 | sector-geography-override | Override a holding's sector and geography | 23 | 4.9, AC-22 |
+| 23a | sector-geography-source | Each holding's sector and geography from the source, or "Unclassified", and its split history on Holding detail's Classification tab (23 split, decision 1) | 16a, 10 | 3, 4.9, 6 (view 6), 7, C9, C14, AC-12 (holding part) |
+| 23b | sector-geography-breakdowns | Sector and Geography on Overall's "Allocation by", and the two breakdowns on Net Worth (Total) and Allocation (23 split, decision 1) | 23a, 18, 19 | 4.8, AC-12 (allocation part), AC-32, AC-43, AC-44, AC-46 |
+| 24 | sector-geography-override | Override a holding's sector and geography | 23a | 4.9, AC-22 |
 | 25 | manage-lists | Add, rename, delete list values; remembered source texts | 24 | 4.9, AC-22, AC-58 |
 | 26 | realized-gains | Realized gains with date filter | 11, 13 | view 5, AC-11, AC-23, AC-47 |
 | 27 | transaction-history | Per-portfolio history with filters | 13 | view 8, AC-10, AC-50 |
@@ -131,13 +132,13 @@ AC-60(a) in 15, AC-60(b) in 14a, AC-60(c) in 17, AC-60(d) in 11).
 |---|---|---|
 | K1 rules engine | 02a | 03 to 05, 09, 11 to 15, 29, 33 to 35 |
 | K2 storage | 02a | every iteration that adds a record type |
-| K3 valuation | 02a (cash only) | 09, 15c, 16a to 19, 23, 26 |
-| K4 price service | 09 (verify only) | 16a, 23, 30, 33 to 35 |
+| K3 valuation | 02a (cash only) | 09, 15c, 16a to 19, 23b, 26 |
+| K4 price service | 09 (verify only) | 16a, 23a, 30, 33 to 35 |
 | K5 entry flows | 03 | 04 to 05, 07 to 09, 11 to 15, 29 |
 | K6 backup and restore | 31 | 32 to 35 |
 | K8 app lock | 01 | 20, 21, 34 (file screens, AC-57) |
 | K9 screens | 01 | every iteration |
-| K10 classification | 23 | 24, 25 |
+| K10 classification | 23a | 23b, 24, 25 |
 
 ## 5. How an iteration runs
 1. I draft the iteration file from the template below and show it. You approve or change it.
@@ -354,7 +355,9 @@ when it adds a command, a convention or a pitfall.
 | Iteration 21 | done ([its file](iterations/21-screenshot-window.md)): built 2026-11-10 (steps 1 to 8 on iter-21-screenshot-window); 883 tests; phone checks 2026-11-10 all yes; wording approved; open item 53 fixed (step 2); pull request #157: CI and the screen tests (52 of 52) green; reviewed against the spec refs, no finding; merged as 93ea83d, main green (gh, read only) |
 | Iteration 22 | done ([its file](iterations/22-tab-order.md)): built 2026-11-10 (steps 1 to 7 on iter-22-tab-order); 918 tests; database version 9; phone checks 2026-11-10 all yes; wording approved; open item 54 recorded; pull request #160: CI and the screen tests (57 of 57) green; reviewed against the spec refs, no finding; merged as 19d7b2d, main green (gh, read only) |
 | Iteration 22a | done ([its file](iterations/22a-unreadable-save-tests.md)): built 2026-11-10 (steps 1 to 4 on iter-22a-unreadable-save-tests); 919 tests; no phone check (tests only); open item 54 closed, items 55 and 56 recorded; pull request #162: CI and the screen tests (57 of 57) green; reviewed against the spec refs, no finding; merged as c5fae68, main green (gh, read only) |
-| Iterations 23 to 35 | not started, files not written |
+| Iteration 23a | built ([its file](iterations/23a-sector-geography-source.md)): built 2026-11-11 (steps 1 to 8 on iter-23a-sector-geography-source); 955 tests; database version 10; phone checks 2026-11-11 all yes; wording approved; open item 57 recorded; pull request #166: CI and the screen tests (61 of 61) green; reviewed against the spec refs, one boundary finding kept (your A) |
+| Iteration 23b | not started, file not written (after 23a; decision 1 of the 23a file) |
+| Iterations 24 to 35 | not started, files not written |
 
 ## 12. Change log
 Each departure from this plan is recorded here with its date and the reason.
@@ -543,6 +546,9 @@ Each departure from this plan is recorded here with its date and the reason.
 - 2026-11-10: iteration 22a steps 2 to 4 built on iter-22a-unreadable-save-tests: the evidence (against stubs of their actions, 07's, 08's and 20's tests still passed; 02a's reached its save only because `openForm()` leaves the unreadable screen, open item 55); `FakeStore.savePrices` failing only by its own error, each of the four tests checking its screen before its action, and a test of its own for the price save at start (your input); red against stubs, 5 of 5, then 919 tests green. Open item 54 closed; items 55 and 56 (no test of an ordinary price save failure) recorded. Nothing under app/src/main changed. Departures: the 22a file, section 14.
 - 2026-11-11: pull request #162 (iteration 22a) at 2c4487d: the screen tests (run 42848285842) 57 of 57 at the first attempt, CI and CodeQL green. Reviewed against the spec refs: no finding; only tests and documents changed (the 22a file, 13.3).
 - 2026-11-10: pull request #162 (iteration 22a) was merged as c5fae68, 5 commits; the branch is gone from origin and locally. On the pull request's last commit (20ca76c) CI, the screen tests and CodeQL green; on main after the merge CI (2m 39s), CodeQL and the screen tests (57 of 57) green at the first attempt (gh, read only; the 22a file, 13.4). Next: 23.
+- 2026-11-11: pull request #163 (the 22a merge record) was merged as 2957219; main's CI, screen tests (57 of 57) and CodeQL green at the first attempt. Iteration 23's file drafted and approved by you; decision 1 split it before it started (section 4: plan.md splits an iteration that needs more than one capability): 23a, each holding's sector and geography from the source, or "Unclassified", and its split history on Holding detail's new Classification tab; 23b, Sector and Geography on Overall's "Allocation by" and the two breakdowns on Net Worth (Total) and Allocation. Section 4's row 23 became rows 23a and 23b, row 24 depends on 23a, and the components table names 23a and 23b. Decisions 2 to 4 (your A): "N/A", an empty text or a missing field is no value; the source profile is asked once per instrument; the remembered-texts table comes with rename in 25. The file is plan/iterations/23a-sector-geography-source.md; 23b's file is written after 23a. Built on iter-23a-sector-geography-source.
+- 2026-11-11: iteration 23a steps 2 to 8 built on iter-23a-sector-geography-source: the look-up R1 (profile2 as on 2026-10-30); K10 in core (the two lists, D7 matching, a source text added once, the effective value or "Unclassified"); the source profile on instruments and the `list_values` table (database version 10); Finnhub's profile2 asked once per instrument after the quotes, its texts added to the lists in the prices' transaction; Holding detail's Classification tab with the split history, a reversed split marked (your B in step 6); screen tests (AC-61 (d), the tab reachable). versionCode 32; 955 tests. Phone check all yes (logcat: the minutes of the first refresh no longer in the buffer); wording approved. Departures: the 23a file, section 14.
+- 2026-11-11: pull request #166 (iteration 23a, created by me on your word, this once) at e01e446: the screen tests (run 42941014073) 61 of 61 at the first attempt, CI and CodeQL green. Reviewed against the spec refs (the 23a file, 13.5): K4's price save also writes the lists' new values by K10's rule, in one transaction, kept (your A); open item 57 (an unused DAO insert and a repeated query) for 23b; one extra profile call after a refused key or 429, recorded only.
 
 ## 13. Out of scope for this plan
 Performance over time, per-holding dividends, ETF look-through, the next intent.md items,

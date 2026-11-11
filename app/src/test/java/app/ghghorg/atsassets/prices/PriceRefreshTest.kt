@@ -6,7 +6,9 @@ import app.ghghorg.atsassets.core.Instrument
 import app.ghghorg.atsassets.core.Lookup
 import app.ghghorg.atsassets.core.Price
 import app.ghghorg.atsassets.core.PriceSource
+import app.ghghorg.atsassets.core.ProfileAnswer
 import app.ghghorg.atsassets.core.Quote
+import app.ghghorg.atsassets.core.SourceProfile
 import app.ghghorg.atsassets.core.Transaction
 import app.ghghorg.atsassets.core.TransactionType
 import app.ghghorg.atsassets.ui.FakeStore
@@ -36,14 +38,24 @@ class PriceRefreshTest {
 
     private class Source(
         val quotes: Map<String, Quote>,
+        val profiles: Map<String, ProfileAnswer> = emptyMap(),
     ) : PriceSource {
         val asked = mutableListOf<String>()
+
+        // 23a: every call in order, "quote X" or "profile X", to show the order of the two loops.
+        val calls = mutableListOf<String>()
 
         override suspend fun lookUp(ticker: String): Lookup = error("not used")
 
         override suspend fun quote(ticker: String): Quote {
             asked.add(ticker)
+            calls.add("quote $ticker")
             return quotes[ticker] ?: Quote.NoQuote
+        }
+
+        override suspend fun profile(ticker: String): ProfileAnswer {
+            calls.add("profile $ticker")
+            return profiles[ticker] ?: ProfileAnswer.Given(SourceProfile(null, null))
         }
     }
 
@@ -66,6 +78,53 @@ class PriceRefreshTest {
         // KO is hidden in p1 but held in p2, so it is still asked for; OLD is hidden in its only portfolio.
         assertEquals(listOf("AAPL", "KO", "MSFT"), PriceRefresh.tickers(transactions, hidden))
         assertEquals(emptyList<String>(), PriceRefresh.tickers(emptyList(), emptyList()))
+    }
+
+    // 23a: the profile, asked once per instrument after the quotes (decision 3).
+    private val tech = SourceProfile("Technology", "US")
+
+    @Test
+    fun run_asksTheProfileOnlyForUnaskedTickers_afterEveryQuote() = runTest {
+        val source = Source(emptyMap(), mapOf("AAPL" to ProfileAnswer.Given(tech)))
+        val outcome = PriceRefresh.run(listOf("AAPL", "MSFT", "SPY"), online = true, source = source, unasked = setOf("AAPL", "SPY"))
+        assertEquals(listOf("quote AAPL", "quote MSFT", "quote SPY", "profile AAPL", "profile SPY"), source.calls)
+        assertEquals(mapOf("AAPL" to tech, "SPY" to SourceProfile(null, null)), outcome.profiles)
+    }
+
+    @Test
+    fun run_aProfileWithoutAnAnswer_isLeftOut_andFailsNeitherThePricesNorTheRefresh() = runTest {
+        val source = Source(mapOf("AAPL" to priced("160")), mapOf("AAPL" to ProfileAnswer.Unreadable, "SPY" to ProfileAnswer.NoAnswer(404)))
+        val outcome = PriceRefresh.run(listOf("AAPL", "MSFT", "SPY"), online = true, source = source, unasked = setOf("AAPL", "MSFT", "SPY"))
+        assertEquals(mapOf("MSFT" to SourceProfile(null, null)), outcome.profiles)
+        assertEquals(mapOf("AAPL" to Price(BigDecimal("160"), at)), outcome.fresh)
+        assertEquals(false, outcome.refreshFailed)
+    }
+
+    @Test
+    fun run_aProfileAnswerTheSameForEveryTicker_stopsTheProfiles_only() = runTest {
+        for (stop in listOf(ProfileAnswer.TooManyCalls, ProfileAnswer.KeyRefused(401), ProfileAnswer.NoKey, ProfileAnswer.NoAnswer(null), ProfileAnswer.NoAnswer(503))) {
+            val source = Source(mapOf("MSFT" to priced("400")), mapOf("AAPL" to stop))
+            val outcome = PriceRefresh.run(listOf("AAPL", "MSFT"), online = true, source = source, unasked = setOf("AAPL", "MSFT"))
+            assertEquals(stop.toString(), listOf("quote AAPL", "quote MSFT", "profile AAPL"), source.calls)
+            assertEquals(stop.toString(), emptyMap<String, SourceProfile>(), outcome.profiles)
+            assertEquals(stop.toString(), setOf("MSFT"), outcome.fresh.keys)
+        }
+    }
+
+    @Test
+    fun run_offline_asksNoProfile() = runTest {
+        val source = Source(emptyMap())
+        val outcome = PriceRefresh.run(listOf("AAPL"), online = false, source = source, unasked = setOf("AAPL"))
+        assertEquals(emptyList<String>(), source.calls)
+        assertEquals(emptyMap<String, SourceProfile>(), outcome.profiles)
+    }
+
+    @Test
+    fun applied_setsEachGivenProfile_andLeavesTheOthers() {
+        val aapl = Instrument("AAPL", AssetType.STOCK, true)
+        val spy = Instrument("SPY", AssetType.ETF, true, profile = SourceProfile(null, null))
+        val outcome = PriceRefresh.Outcome(emptyMap(), emptyList(), refreshFailed = false, profiles = mapOf("AAPL" to tech))
+        assertEquals(listOf(aapl.copy(profile = tech), spy), PriceRefresh.applied(listOf(aapl, spy), outcome))
     }
 
     @Test
