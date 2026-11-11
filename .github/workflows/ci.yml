@@ -27,6 +27,7 @@ jobs:
       # 24a: every check HoldingsScaleTest measured again, each try, also when the tests pass.
       - name: Scale test retries
         if: always()
-        run: sed -n '/^Checks measured again/,$p' core/build/scale/holdings-scale-after.txt 2>/dev/null || echo "No scale table: HoldingsScaleTest did not run."
+        run: |
+          sed -n '/^Checks measured again/,$p' core/build/scale/holdings-scale-after.txt 2>/dev/null || echo "No scale table: HoldingsScaleTest did not run."
       - name: Lint
         run: ./gradlew :app:lintDebug
