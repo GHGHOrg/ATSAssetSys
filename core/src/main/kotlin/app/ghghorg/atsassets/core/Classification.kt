@@ -6,8 +6,9 @@ enum class ClassList {
     GEOGRAPHY,
 }
 
-/** Where a holding's effective sector or geography comes from (view 6's labels; 23a). The override is added in 24. */
+/** Where a holding's effective sector or geography comes from (view 6's labels; 23a, the override from 24). */
 enum class ClassOrigin {
+    OVERRIDE,
     SOURCE,
     UNCLASSIFIED,
 }
@@ -19,6 +20,17 @@ data class ClassLists(
 ) {
     operator fun get(list: ClassList): List<String> = if (list == ClassList.SECTOR) sectors else geographies
 }
+
+/**
+ * A holding's override (4.9; 24): the holding ([portfolioId], [ticker]) has [value] on [list], as the list spells it. The
+ * store keeps the value's list row, so a rename (25) carries over (decision 3).
+ */
+data class ClassOverride(
+    val portfolioId: String,
+    val ticker: String,
+    val list: ClassList,
+    val value: String,
+)
 
 /** A holding's effective sector or geography: [value] as its list spells it, null when [origin] is UNCLASSIFIED (C14). */
 data class EffectiveClass(
@@ -82,14 +94,25 @@ object Classification {
     }
 
     /**
-     * The effective value without an override (24): the list's value for the source's text, or the text itself while
-     * the list does not hold it yet, or "Unclassified" when the source gives no value.
+     * The effective value (4.9): the [override] if set (24, a value of the list); else the list's value for the source's
+     * text, or the text itself while the list does not hold it yet; else "Unclassified" when the source gives no value.
      */
     fun effective(
         list: List<String>,
         sourceText: String?,
+        override: String? = null,
     ): EffectiveClass {
+        if (override != null) return EffectiveClass(override, ClassOrigin.OVERRIDE)
         val text = sourceText(sourceText) ?: return EffectiveClass(null, ClassOrigin.UNCLASSIFIED)
         return EffectiveClass(valueFor(list, text) ?: text, ClassOrigin.SOURCE)
+    }
+
+    /** The value [choice] picks as an override (4.9, 24): the value on [list] it matches (D7), in the list's spelling, or null. */
+    fun overrideValue(
+        list: List<String>,
+        choice: String,
+    ): String? {
+        val key = Portfolios.nameKey(choice)
+        return list.firstOrNull { Portfolios.nameKey(it) == key }
     }
 }

@@ -472,4 +472,17 @@
     <string name="allocation_geography">Geography</string>
     <string name="allocation_by_sector">By sector</string>
     <string name="allocation_by_geography">By geography</string>
+    <!-- Iteration 24: the override on Holding detail's Classification tab and the Edit picker (proposed, 24 file section 12; approval on the phone in step 7). A failed save uses save_failed. -->
+    <string name="class_override">Override</string>
+    <string name="class_row_override_spoken">%1$s, %2$s, override</string>
+    <string name="class_edit">Edit</string>
+    <string name="class_edit_sector_spoken">Edit sector</string>
+    <string name="class_edit_geography_spoken">Edit geography</string>
+    <string name="class_clear_override">Clear override</string>
+    <string name="class_clear_sector_spoken">Clear sector override</string>
+    <string name="class_clear_geography_spoken">Clear geography override</string>
+    <string name="class_picker_title">%1$s, %2$s</string>
+    <string name="class_picker_note">Choose from the list.</string>
+    <string name="class_picker_no_sectors">No sectors yet.</string>
+    <string name="class_picker_no_geographies">No geographies yet.</string>
 </resources>

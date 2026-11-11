@@ -6,7 +6,9 @@ import app.ghghorg.atsassets.core.CashDirection
 import app.ghghorg.atsassets.core.CashEntry
 import app.ghghorg.atsassets.core.CashEntryRefusal
 import app.ghghorg.atsassets.core.CashType
+import app.ghghorg.atsassets.core.ClassList
 import app.ghghorg.atsassets.core.ClassLists
+import app.ghghorg.atsassets.core.ClassOverride
 import app.ghghorg.atsassets.core.Classification
 import app.ghghorg.atsassets.core.HiddenHolding
 import app.ghghorg.atsassets.core.Instrument
@@ -1916,4 +1918,33 @@ internal class FakeStore(
         loadError?.let { throw it }
         return storedClassLists
     }
+
+    // 24: the holdings' overrides, each value on its list as RoomRecordStore requires; overrideSaveError fails a save or a
+    // clear alone.
+    var storedOverrides: List<ClassOverride> = emptyList()
+    var overrideSaveError: Exception? = null
+
+    override suspend fun loadOverrides(): List<ClassOverride> {
+        loadError?.let { throw it }
+        return storedOverrides
+    }
+
+    override suspend fun saveOverride(override: ClassOverride) {
+        gate?.await()
+        overrideSaveError?.let { throw it }
+        val value = requireNotNull(Classification.overrideValue(storedClassLists[override.list], override.value)) { "The value is not on its list." }
+        storedOverrides = storedOverrides.filterNot { it.sameHolding(override) } + override.copy(value = value)
+    }
+
+    override suspend fun clearOverride(
+        portfolioId: String,
+        ticker: String,
+        list: ClassList,
+    ) {
+        gate?.await()
+        overrideSaveError?.let { throw it }
+        storedOverrides = storedOverrides.filterNot { it.portfolioId == portfolioId && it.ticker == ticker && it.list == list }
+    }
+
+    private fun ClassOverride.sameHolding(other: ClassOverride): Boolean = portfolioId == other.portfolioId && ticker == other.ticker && list == other.list
 }

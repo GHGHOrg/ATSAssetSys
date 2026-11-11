@@ -4,7 +4,9 @@ import app.ghghorg.atsassets.core.Allocation
 import app.ghghorg.atsassets.core.AssetType
 import app.ghghorg.atsassets.core.ClassList
 import app.ghghorg.atsassets.core.ClassLists
+import app.ghghorg.atsassets.core.ClassOverride
 import app.ghghorg.atsassets.core.Classification
+import app.ghghorg.atsassets.core.EffectiveClass
 import app.ghghorg.atsassets.core.Fraction
 import app.ghghorg.atsassets.core.Holding
 import app.ghghorg.atsassets.core.Money
@@ -32,14 +34,34 @@ enum class AllocationBy {
 class HoldingClasses(
     val lists: ClassLists = ClassLists(),
     private val profiles: Map<String, SourceProfile> = emptyMap(),
+    // 24: the holdings' overrides, each first for its holding and list.
+    private val overrides: List<ClassOverride> = emptyList(),
 ) {
-    /** [holding]'s effective value on [list]: its instrument's source text through the list, or null ("Unclassified"). */
+    /** [holding]'s effective value on [list]; see [valueFor]. */
     fun valueOf(
         list: ClassList,
         holding: Holding,
-    ): String? {
-        val profile = profiles[holding.ticker]
-        return Classification.effective(lists[list], if (list == ClassList.SECTOR) profile?.sector else profile?.geography).value
+    ): String? = valueFor(list, holding.portfolioId, holding.ticker)
+
+    /**
+     * The holding's effective value on [list] (4.9): its override (24), else its instrument's source text through the list,
+     * else null ("Unclassified").
+     */
+    fun valueFor(
+        list: ClassList,
+        portfolioId: String,
+        ticker: String,
+    ): String? = effective(list, portfolioId, ticker).value
+
+    /** The holding's effective value on [list] with where it comes from (view 6's labels). */
+    fun effective(
+        list: ClassList,
+        portfolioId: String,
+        ticker: String,
+    ): EffectiveClass {
+        val profile = profiles[ticker]
+        val override = overrides.firstOrNull { it.portfolioId == portfolioId && it.ticker == ticker && it.list == list }?.value
+        return Classification.effective(lists[list], if (list == ClassList.SECTOR) profile?.sector else profile?.geography, override)
     }
 
     /** [valueOf] on [list], for K3's breakdowns. */

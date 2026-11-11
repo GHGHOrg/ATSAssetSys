@@ -18,7 +18,9 @@ import app.ghghorg.atsassets.core.CashPairResult
 import app.ghghorg.atsassets.core.CashRow
 import app.ghghorg.atsassets.core.CashRules
 import app.ghghorg.atsassets.core.CashType
+import app.ghghorg.atsassets.core.ClassList
 import app.ghghorg.atsassets.core.ClassLists
+import app.ghghorg.atsassets.core.ClassOverride
 import app.ghghorg.atsassets.core.Classification
 import app.ghghorg.atsassets.core.Fraction
 import app.ghghorg.atsassets.core.HiddenHolding
@@ -134,6 +136,9 @@ enum class Screen {
 
     // The tab order (wireframe 10f frame E, iteration 22), opened from Settings' Navigation section.
     TAB_ORDER,
+
+    // The Edit picker of a holding's sector or geography (wireframe 10f frame H, iteration 24), opened from its Classification tab.
+    CLASS_PICKER,
 }
 
 // The id of the unsaved draft the reversal screen shows the effect of; never saved.
@@ -544,6 +549,12 @@ data class AppState(
     val tabOrderRefusal: SaveRefusal? = null,
     // 23a: the sector and geography lists as stored, loaded with the records and extended by each refresh's profiles.
     val classLists: ClassLists = ClassLists(),
+    // 24: the holdings' overrides as stored; on CLASS_PICKER the list being edited and the value picked; why an override
+    // was not saved or cleared (on the picker or the Classification tab).
+    val overrides: List<ClassOverride> = emptyList(),
+    val classPicker: ClassList? = null,
+    val classPickerChoice: String? = null,
+    val overrideRefusal: SaveRefusal? = null,
     // 15c: the kept fields, worked out in KeptFields.kt from the fields above, so reading one costs nothing. Every write
     // through the view model refreshes them; a state built directly gets them from these defaults.
     // As of today (4.8), by portfolio, then ticker.
@@ -652,14 +663,29 @@ data class AppState(
     val holdingLotRows: List<LotRowModel>
         get() = HoldingDetail.lots(holdingLots, shownPrice)
 
-    /** Its Classification tab (view 6, frame C; CR2, 23a); null when no holding is shown. */
+    /** Its Classification tab (view 6, frame C; CR2, 23a; the overrides from 24); null when no holding is shown. */
     val holdingClassification: ClassificationModel?
         get() {
             val id = portfolioId ?: return null
             val ticker = holdingTicker ?: return null
-            val profile = instruments.firstOrNull { it.ticker == ticker }?.profile
-            return HoldingDetail.classification(profile, classLists, transactions, id, ticker)
+            return HoldingDetail.classification(holdingClasses, transactions, id, ticker, notSaved = overrideRefusal != null)
         }
+
+    /** The Edit picker as its screen draws it (wireframe 10f frame H; CR2, 24); null off CLASS_PICKER. */
+    val classPickerModel: ClassPickerModel?
+        get() {
+            val list = classPicker ?: return null
+            val ticker = holdingTicker ?: return null
+            return ClassPicker.of(list, ticker, classLists[list], classPickerChoice, classValueShown(list), saving, overrideRefusal)
+        }
+
+    /** The value the open holding's [list] row shows, as the list spells it; none when Unclassified or not on the list. */
+    internal fun classValueShown(list: ClassList): String? {
+        val portfolio = portfolioId ?: return null
+        val ticker = holdingTicker ?: return null
+        val shown = holdingClasses.valueFor(list, portfolio, ticker) ?: return null
+        return Classification.overrideValue(classLists[list], shown)
+    }
 
     /** A portfolio's value, cost and gain/loss as the Portfolios list and its screen draw them (view 3; CR2, 16a). */
     fun portfolioFigures(portfolioId: String): PortfolioFiguresModel = PortfolioFigures.of(holdingsOf(portfolioId), KeptFields.prices(instruments))
@@ -692,8 +718,8 @@ data class AppState(
     )
 
     /** Each holding's effective sector and geography from its instrument's profile through the lists (4.9, K10; 23b). */
-    private val holdingClasses: HoldingClasses
-        get() = HoldingClasses(classLists, instruments.mapNotNull { instrument -> instrument.profile?.let { instrument.ticker to it } }.toMap())
+    internal val holdingClasses: HoldingClasses
+        get() = HoldingClasses(classLists, instruments.mapNotNull { instrument -> instrument.profile?.let { instrument.ticker to it } }.toMap(), overrides)
 
     /** Allocation as the screen draws it (view 4; CR2, 19): the chooser's portfolio, its value and its breakdowns. */
     val portfolioAllocation: PortfolioAllocationModel
@@ -962,9 +988,10 @@ class AppViewModel(
                 val autoLock = opened.loadAutoLock()
                 // 22: the tab order too; until then the bar is not shown (LOADING).
                 val tabOrder = opened.loadTabOrder()
-                // 23a: the sector and geography lists, for the Classification tab.
+                // 23a: the sector and geography lists, for the Classification tab; 24: the holdings' overrides.
                 val classLists = opened.loadClassLists()
-                showLoaded(entries, portfolios, transactions, instruments, hidden, autoLock, tabOrder, classLists)
+                val overrides = opened.loadOverrides()
+                showLoaded(entries, portfolios, transactions, instruments, hidden, autoLock, tabOrder, classLists, overrides)
                 // The first unlock's refresh: onUnlocked came while the records were still loading (16a decision 2).
                 refreshPrices()
             } catch (e: UnreadableDataException) {
@@ -1001,6 +1028,10 @@ class AppViewModel(
                 holdingTicker = null,
                 holdingFromHidden = false,
                 hideRefusal = null,
+                // 24's Deploy review: the picker and a failed save or clear end with the holding.
+                classPicker = null,
+                classPickerChoice = null,
+                overrideRefusal = null,
                 buyFromHolding = false,
                 sellRefusals = SellRefusals(),
                 sellPicksDropped = false,
@@ -2291,6 +2322,7 @@ class AppViewModel(
         autoLock: AutoLock,
         tabOrder: TabOrder,
         classLists: ClassLists,
+        overrides: List<ClassOverride>,
     ) {
         mutableState.update {
             valued(
@@ -2304,6 +2336,7 @@ class AppViewModel(
                     autoLock = autoLock,
                     tabOrder = tabOrder,
                     classLists = classLists,
+                    overrides = overrides,
                 ),
             )
         }
@@ -2318,7 +2351,13 @@ class AppViewModel(
         val id = current.portfolioId ?: return
         if (current.screen != Screen.PORTFOLIO || current.holdingsOf(id).none { it.ticker == ticker }) return
         mutableState.update {
-            it.copy(screen = Screen.HOLDING, holdingTicker = ticker, holdingTab = HoldingTab.TRANSACTIONS, portfolioMenuOpen = false)
+            it.copy(
+                screen = Screen.HOLDING,
+                holdingTicker = ticker,
+                holdingTab = HoldingTab.TRANSACTIONS,
+                portfolioMenuOpen = false,
+                overrideRefusal = null,
+            )
         }
     }
 
@@ -2332,6 +2371,8 @@ class AppViewModel(
                 holdingFromHidden = false,
                 buyNotice = null,
                 hideRefusal = null,
+                // 24's Deploy review: a failed clear's "Not saved" belongs to this visit.
+                overrideRefusal = null,
             )
         }
     }
@@ -2507,6 +2548,103 @@ class AppViewModel(
             }
         }
     }
+
+    /**
+     * Edit on the Classification tab's [list] row (decision 2): opens the picker (frame H) on the value shown, when it is
+     * a value of the list; on Holding detail only.
+     */
+    fun openClassPicker(list: ClassList) {
+        val current = mutableState.value
+        if (current.portfolioId == null || current.holdingTicker == null) return
+        if (current.screen != Screen.HOLDING || current.saving) return
+        val choice = current.classValueShown(list)
+        mutableState.update { it.copy(screen = Screen.CLASS_PICKER, classPicker = list, classPickerChoice = choice, overrideRefusal = null) }
+    }
+
+    /** A row of the picker: picks [value] when it is on the list (4.9: picked, not typed). */
+    fun chooseClassValue(value: String) {
+        val current = mutableState.value
+        val list = current.classPicker ?: return
+        if (current.screen != Screen.CLASS_PICKER || current.saving) return
+        val picked = Classification.overrideValue(current.classLists[list], value) ?: return
+        mutableState.update { it.copy(classPickerChoice = picked, overrideRefusal = null) }
+    }
+
+    /** Cancel, "<" or Android Back: back to the Classification tab, nothing changed. Ignored while a save is running. */
+    fun cancelClassPicker() {
+        val current = mutableState.value
+        if (current.screen != Screen.CLASS_PICKER || current.saving) return
+        mutableState.update { it.copy(screen = Screen.HOLDING, classPicker = null, classPickerChoice = null, overrideRefusal = null) }
+    }
+
+    /**
+     * Save (frame H): stores the pick as the holding's override and applies it once stored, as the tab order (22); back on
+     * the Classification tab, the breakdowns following. A failure keeps the picker and the pick and says so.
+     */
+    fun saveClassOverride() {
+        val current = mutableState.value
+        val target = store ?: return
+        val list = current.classPicker ?: return
+        val value = current.classPickerChoice ?: return
+        val portfolioId = current.portfolioId ?: return
+        val ticker = current.holdingTicker ?: return
+        if (current.screen != Screen.CLASS_PICKER || current.saving) return
+        // Step 7 fix (your A): nothing to save while the value shown is still picked.
+        if (current.classPickerModel?.canSave != true) return
+        val override = ClassOverride(portfolioId, ticker, list, value)
+        mutableState.update { it.copy(saving = true, overrideRefusal = null) }
+        viewModelScope.launch {
+            try {
+                target.saveOverride(override)
+                mutableState.update {
+                    it.copy(
+                        saving = false,
+                        screen = Screen.HOLDING,
+                        overrides = it.overrides.filterNot { kept -> kept.isFor(portfolioId, ticker, list) } + override,
+                        classPicker = null,
+                        classPickerChoice = null,
+                    )
+                }
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: UnreadableDataException) {
+                mutableState.update { it.copy(screen = Screen.UNREADABLE, saving = false) }
+            } catch (e: Exception) {
+                mutableState.update { it.copy(saving = false, overrideRefusal = SaveRefusal.SAVE_FAILED) }
+            }
+        }
+    }
+
+    /**
+     * Clear override on the Classification tab's [list] row (4.9): back to the source's value or "Unclassified" once
+     * cleared in the store. Ignored when the holding has no override on [list]; a failure keeps it and says so.
+     */
+    fun clearClassOverride(list: ClassList) {
+        val current = mutableState.value
+        val target = store ?: return
+        val portfolioId = current.portfolioId ?: return
+        val ticker = current.holdingTicker ?: return
+        if (current.screen != Screen.HOLDING || current.saving || current.overrides.none { it.isFor(portfolioId, ticker, list) }) return
+        mutableState.update { it.copy(saving = true, overrideRefusal = null) }
+        viewModelScope.launch {
+            try {
+                target.clearOverride(portfolioId, ticker, list)
+                mutableState.update { it.copy(saving = false, overrides = it.overrides.filterNot { kept -> kept.isFor(portfolioId, ticker, list) }) }
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: UnreadableDataException) {
+                mutableState.update { it.copy(screen = Screen.UNREADABLE, saving = false) }
+            } catch (e: Exception) {
+                mutableState.update { it.copy(saving = false, overrideRefusal = SaveRefusal.SAVE_FAILED) }
+            }
+        }
+    }
+
+    private fun ClassOverride.isFor(
+        portfolioId: String,
+        ticker: String,
+        list: ClassList,
+    ): Boolean = this.portfolioId == portfolioId && this.ticker == ticker && this.list == list
 
     /** Not saved: the next opening starts on Transactions (view 6). */
     fun selectHoldingTab(tab: HoldingTab) {
@@ -3417,6 +3555,7 @@ class AppViewModel(
                 Screen.ALLOCATION,
                 Screen.SETTINGS,
                 Screen.TAB_ORDER,
+                Screen.CLASS_PICKER,
             )
     }
 }

@@ -1,7 +1,6 @@
 package app.ghghorg.atsassets.ui
 
-import app.ghghorg.atsassets.core.ClassLists
-import app.ghghorg.atsassets.core.Classification
+import app.ghghorg.atsassets.core.ClassList
 import app.ghghorg.atsassets.core.EffectiveClass
 import app.ghghorg.atsassets.core.Fraction
 import app.ghghorg.atsassets.core.Holding
@@ -12,7 +11,6 @@ import app.ghghorg.atsassets.core.Money
 import app.ghghorg.atsassets.core.Price
 import app.ghghorg.atsassets.core.Quantity
 import app.ghghorg.atsassets.core.Reversals
-import app.ghghorg.atsassets.core.SourceProfile
 import app.ghghorg.atsassets.core.SplitRatio
 import app.ghghorg.atsassets.core.Transaction
 import app.ghghorg.atsassets.core.TransactionType
@@ -85,27 +83,31 @@ data class SplitHistoryRowModel(
     val reversed: Boolean,
 )
 
-/** Holding detail's Classification tab (view 6, wireframe 06 frame C; 23a): the effective values and the splits. */
+/**
+ * Holding detail's Classification tab (view 6, wireframe 06 frame C; 23a): the effective values and the splits; from 24,
+ * [notSaved] when a clear of an override failed (the shared "Not saved" line).
+ */
 data class ClassificationModel(
     val sector: EffectiveClass,
     val geography: EffectiveClass,
     val splits: List<SplitHistoryRowModel>,
+    val notSaved: Boolean = false,
 )
 
 object HoldingDetail {
     private val AS_OF = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm", Locale.ROOT)
 
     /**
-     * The holding's effective sector and geography from its instrument's [profile] through [lists] (4.9, K10), or
-     * "Unclassified" when not asked yet or given no value (C14); and every split of the holding, newest first, a reversed
-     * one marked (C9; your B in step 6).
+     * The holding's effective sector and geography from [classes] (4.9, K10): its override (24), else its instrument's
+     * source value through the list, else "Unclassified" (C14); every split of the holding, newest first, a reversed one
+     * marked (C9; 23a's B in step 6); and [notSaved] after a failed clear.
      */
     fun classification(
-        profile: SourceProfile?,
-        lists: ClassLists,
+        classes: HoldingClasses,
         transactions: List<Transaction>,
         portfolioId: String,
         ticker: String,
+        notSaved: Boolean = false,
     ): ClassificationModel {
         val splits =
             Holdings
@@ -116,9 +118,10 @@ object HoldingDetail {
                     SplitHistoryRowModel(split.id, split.date.toString(), split.split!!, reversed)
                 }
         return ClassificationModel(
-            sector = Classification.effective(lists.sectors, profile?.sector),
-            geography = Classification.effective(lists.geographies, profile?.geography),
+            sector = classes.effective(ClassList.SECTOR, portfolioId, ticker),
+            geography = classes.effective(ClassList.GEOGRAPHY, portfolioId, ticker),
             splits = splits,
+            notSaved = notSaved,
         )
     }
 

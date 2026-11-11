@@ -6,6 +6,7 @@ import app.ghghorg.atsassets.core.CashEntry
 import app.ghghorg.atsassets.core.CashType
 import app.ghghorg.atsassets.core.ClassList
 import app.ghghorg.atsassets.core.ClassLists
+import app.ghghorg.atsassets.core.ClassOverride
 import app.ghghorg.atsassets.core.Classification
 import app.ghghorg.atsassets.core.Fraction
 import app.ghghorg.atsassets.core.HiddenHolding
@@ -384,6 +385,43 @@ class RoomRecordStore(
         }
     }
 
+    override suspend fun loadOverrides(): List<ClassOverride> = withContext(Dispatchers.IO) {
+        try {
+            val dao = database.instrumentDao()
+            dao.loadOverrides().toOverrides(dao.loadListValues())
+        } catch (e: CancellationException) {
+            throw e
+        } catch (e: UnreadableDataException) {
+            throw e
+        } catch (e: Exception) {
+            throw UnreadableDataException("The stored data could not be read.", e)
+        }
+    }
+
+    override suspend fun saveOverride(override: ClassOverride) {
+        instrumentDao().saveOverride(override)
+    }
+
+    override suspend fun clearOverride(
+        portfolioId: String,
+        ticker: String,
+        list: ClassList,
+    ) {
+        instrumentDao().deleteOverride(portfolioId, ticker, list.name)
+    }
+
+    private suspend fun instrumentDao(): InstrumentDao = withContext(Dispatchers.IO) {
+        try {
+            database.instrumentDao()
+        } catch (e: CancellationException) {
+            throw e
+        } catch (e: UnreadableDataException) {
+            throw e
+        } catch (e: Exception) {
+            throw UnreadableDataException("The stored data could not be opened.", e)
+        }
+    }
+
     private suspend fun hiddenDao(): TransactionDao = withContext(Dispatchers.IO) {
         try {
             database.transactionDao()
@@ -591,6 +629,24 @@ internal fun List<ListValueRow>.toClassLists(): ClassLists {
         values += row.value
     }
     return ClassLists(sectors = byList.getValue(ClassList.SECTOR), geographies = byList.getValue(ClassList.GEOGRAPHY))
+}
+
+/**
+ * The overrides from their rows (24, decision 3), each value as the list row it names spells it. Throws
+ * [UnreadableDataException] for an unknown list or a row naming no value of its own list; nothing is guessed. The
+ * messages name no holding or value (spec 9).
+ */
+internal fun List<ClassOverrideRow>.toOverrides(values: List<ListValueRow>): List<ClassOverride> = map { row ->
+    val list = ClassList.entries.firstOrNull { it.name == row.list } ?: throw UnreadableDataException("A stored override could not be read.")
+    val value = values.firstOrNull { it.seq == row.valueSeq && it.list == row.list } ?: throw UnreadableDataException("A stored override names no value.")
+    ClassOverride(row.portfolioId, row.ticker, list, value.value)
+}
+
+/** The row for this override (24, decision 3): naming the row of its own list whose value matches (D7), or null if none does. */
+internal fun ClassOverride.toRow(values: List<ListValueRow>): ClassOverrideRow? {
+    val ofList = values.filter { it.list == list.name }
+    val value = Classification.overrideValue(ofList.map { it.value }, value) ?: return null
+    return ClassOverrideRow(portfolioId, ticker, list.name, ofList.first { it.value == value }.seq)
 }
 
 private fun Portfolio.toRow() = PortfolioRow(id = id, name = name, createdSeq = createdSeq)

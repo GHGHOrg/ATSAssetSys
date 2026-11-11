@@ -129,6 +129,25 @@ interface RecordStore {
      * none was saved. Throws [UnreadableDataException] for an unknown list or two values in a list that match (D7).
      */
     suspend fun loadClassLists(): ClassLists
+
+    /**
+     * Every holding's override (4.9; 24), each value as its list spells it. Throws [UnreadableDataException] for an
+     * override naming no value of its list (decision 3) or an unknown list.
+     */
+    suspend fun loadOverrides(): List<ClassOverride>
+
+    /**
+     * Sets [override] in place of the holding's override on that list, naming the list's value that matches (D7). Throws
+     * when no value of the list matches; nothing is saved then.
+     */
+    suspend fun saveOverride(override: ClassOverride)
+
+    /** Clears the holding's override on [list], if it has one (4.9; 24). */
+    suspend fun clearOverride(
+        portfolioId: String,
+        ticker: String,
+        list: ClassList,
+    )
 }
 
 class UnreadableDataException(

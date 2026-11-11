@@ -2,7 +2,9 @@ package app.ghghorg.atsassets.data
 
 import app.ghghorg.atsassets.core.AssetType
 import app.ghghorg.atsassets.core.AutoLock
+import app.ghghorg.atsassets.core.ClassList
 import app.ghghorg.atsassets.core.ClassLists
+import app.ghghorg.atsassets.core.ClassOverride
 import app.ghghorg.atsassets.core.Fraction
 import app.ghghorg.atsassets.core.HiddenHolding
 import app.ghghorg.atsassets.core.Instrument
@@ -182,6 +184,48 @@ class RowMappingTest {
         // The same text in the two lists is allowed: they are separate (4.9).
         val both = listOf(ListValueRow(seq = 1, list = "SECTOR", value = "Global"), ListValueRow(seq = 2, list = "GEOGRAPHY", value = "Global"))
         assertEquals(ClassLists(sectors = listOf("Global"), geographies = listOf("Global")), both.toClassLists())
+    }
+
+    // 24: the list values an override can name; "Global" is on both lists, as separate rows.
+    private val listValues =
+        listOf(
+            ListValueRow(seq = 1, list = "SECTOR", value = "Technology"),
+            ListValueRow(seq = 2, list = "GEOGRAPHY", value = "US"),
+            ListValueRow(seq = 3, list = "SECTOR", value = "Global"),
+            ListValueRow(seq = 4, list = "GEOGRAPHY", value = "Global"),
+        )
+
+    // 24 decision 3: an override row names its value's list row; read back as the value, as the list spells it.
+    @Test
+    fun overrideRows_readBackAsTheValuesTheyName() {
+        val rows = listOf(ClassOverrideRow("p1", "VT", "SECTOR", 3), ClassOverrideRow("p1", "VT", "GEOGRAPHY", 4), ClassOverrideRow("p2", "AAPL", "GEOGRAPHY", 2))
+        assertEquals(
+            listOf(
+                ClassOverride("p1", "VT", ClassList.SECTOR, "Global"),
+                ClassOverride("p1", "VT", ClassList.GEOGRAPHY, "Global"),
+                ClassOverride("p2", "AAPL", ClassList.GEOGRAPHY, "US"),
+            ),
+            rows.toOverrides(listValues),
+        )
+    }
+
+    // 24 decision 3: an override naming no row, a row of the other list, or an unknown list is unreadable; nothing guessed.
+    @Test
+    fun anOverrideNamingNoValueOfItsList_isUnreadable() {
+        val bad = listOf(ClassOverrideRow("p1", "VT", "SECTOR", 9), ClassOverrideRow("p1", "VT", "SECTOR", 2), ClassOverrideRow("p1", "VT", "INDUSTRY", 1))
+        for (row in bad) {
+            val error = assertThrows(row.toString(), UnreadableDataException::class.java) { listOf(row).toOverrides(listValues) }
+            assertFalse(row.toString(), error.message!!.contains("VT"))
+        }
+    }
+
+    // 24 decision 3 and 4.9 (D7): a save names the row of its own list whose value matches, ignoring case and spaces.
+    @Test
+    fun anOverride_namesTheMatchingRowOfItsOwnList_orNone() {
+        assertEquals(ClassOverrideRow("p1", "VT", "GEOGRAPHY", 4), ClassOverride("p1", "VT", ClassList.GEOGRAPHY, " global ").toRow(listValues))
+        assertEquals(ClassOverrideRow("p1", "VT", "SECTOR", 1), ClassOverride("p1", "VT", ClassList.SECTOR, "TECHNOLOGY").toRow(listValues))
+        assertEquals(null, ClassOverride("p1", "VT", ClassList.SECTOR, "US").toRow(listValues))
+        assertEquals(null, ClassOverride("p1", "VT", ClassList.SECTOR, "Energy").toRow(listValues))
     }
 
     private val laterBuy = buy.copy(id = "t2", date = LocalDate.of(2026, 2, 3), enteredSeq = 5L, quantity = BigDecimal("10"))

@@ -11,6 +11,7 @@ import androidx.room3.Query
 import androidx.room3.RoomDatabase
 import androidx.room3.Transaction
 import androidx.room3.Upsert
+import app.ghghorg.atsassets.core.ClassOverride
 import app.ghghorg.atsassets.core.Classification
 import app.ghghorg.atsassets.core.SourceProfile
 
@@ -105,6 +106,19 @@ data class ListValueRow(
     @PrimaryKey(autoGenerate = true) val seq: Long = 0,
     val list: String,
     val value: String,
+)
+
+/**
+ * A holding's override on one list (4.9; 24): [list] is a [app.ghghorg.atsassets.core.ClassList] by name and [valueSeq]
+ * the [ListValueRow] it names (decision 3), so a rename (25) carries over. An override naming no row of its list is
+ * unreadable.
+ */
+@Entity(tableName = "class_overrides", primaryKeys = ["portfolioId", "ticker", "list"])
+data class ClassOverrideRow(
+    val portfolioId: String,
+    val ticker: String,
+    val list: String,
+    val valueSeq: Long,
 )
 
 /**
@@ -339,6 +353,27 @@ interface InstrumentDao {
 
     @Query("SELECT * FROM instruments ORDER BY ticker")
     suspend fun loadAll(): List<InstrumentRow>
+
+    // 24: the holdings' overrides, here with the list values they name, so a save reads the list in its own transaction.
+    @Query("SELECT * FROM class_overrides ORDER BY portfolioId, ticker, list")
+    suspend fun loadOverrides(): List<ClassOverrideRow>
+
+    @Upsert
+    suspend fun upsertOverride(row: ClassOverrideRow)
+
+    /** Returns the number of rows removed. */
+    @Query("DELETE FROM class_overrides WHERE portfolioId = :portfolioId AND ticker = :ticker AND list = :list")
+    suspend fun deleteOverride(
+        portfolioId: String,
+        ticker: String,
+        list: String,
+    ): Int
+
+    /** Sets [override] naming its list's matching value (decision 3), in one database transaction; throws if none matches. */
+    @Transaction
+    suspend fun saveOverride(override: ClassOverride) {
+        upsertOverride(override.toRow(loadListValues()) ?: throw IllegalArgumentException("The value is not on its list."))
+    }
 }
 
 @Dao
@@ -368,7 +403,7 @@ interface SettingsDao {
  * (11) the sell_allocations table, version 5 (12) the two split columns of transactions, version 6 (15) the
  * hidden_holdings table, version 7 (16a) the three price columns of instruments, version 8 (20) the settings table,
  * version 9 (22) its tab order column, version 10 (23a) the three profile columns of instruments and the list_values
- * table; Room generates each step out of the schemas in app/schemas.
+ * table, version 11 (24) the class_overrides table; Room generates each step out of the schemas in app/schemas.
  */
 @Database(
     entities = [
@@ -380,8 +415,9 @@ interface SettingsDao {
         HiddenHoldingRow::class,
         SettingsRow::class,
         ListValueRow::class,
+        ClassOverrideRow::class,
     ],
-    version = 10,
+    version = 11,
     autoMigrations = [
         AutoMigration(from = 1, to = 2),
         AutoMigration(from = 2, to = 3),
@@ -392,6 +428,7 @@ interface SettingsDao {
         AutoMigration(from = 7, to = 8),
         AutoMigration(from = 8, to = 9),
         AutoMigration(from = 9, to = 10),
+        AutoMigration(from = 10, to = 11),
     ],
 )
 abstract class AtsDatabase : RoomDatabase() {

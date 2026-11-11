@@ -166,6 +166,18 @@ private fun BarContent(
                 onOpenTransaction = viewModel::openTransaction,
                 onHide = viewModel::hide,
                 onRefresh = viewModel::onPullToRefresh,
+                onEditClass = viewModel::openClassPicker,
+                onClearClass = viewModel::clearClassOverride,
+            ),
+        )
+
+        Screen.CLASS_PICKER -> ClassPickerScreen(
+            state = state,
+            actions =
+            ClassPickerActions(
+                onCancel = viewModel::cancelClassPicker,
+                onChoose = viewModel::chooseClassValue,
+                onSave = viewModel::saveClassOverride,
             ),
         )
 
