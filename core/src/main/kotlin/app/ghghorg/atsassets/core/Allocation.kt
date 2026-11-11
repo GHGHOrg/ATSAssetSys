@@ -2,7 +2,10 @@ package app.ghghorg.atsassets.core
 
 import java.math.BigInteger
 
-/** What a slice of an allocation stands for (4.8): cash, an asset type, a portfolio or a ticker. */
+/**
+ * What a slice of an allocation stands for (4.8): cash, an asset type, a portfolio, a ticker, or a sector or geography
+ * value and the holdings with none (23b).
+ */
 sealed interface SliceKey {
     data object Cash : SliceKey
 
@@ -17,6 +20,12 @@ sealed interface SliceKey {
     data class OfTicker(
         val ticker: String,
     ) : SliceKey
+
+    data class OfClass(
+        val value: String,
+    ) : SliceKey
+
+    data object Unclassified : SliceKey
 }
 
 /** One slice of an allocation and its exact value (4.10). */
@@ -27,7 +36,8 @@ data class Slice(
 
 /*
  * K3's allocation of net worth (4.8, C12; 18): cash as of today and each holding at its price or at cost, sliced by
- * asset type, portfolio or ticker, with the shares in tenths of a percent by largest remainder (section 6).
+ * asset type, portfolio, ticker, or sector or geography (23b), with the shares in tenths of a percent by largest
+ * remainder (section 6).
  */
 object Allocation {
     /**
@@ -91,6 +101,41 @@ object Allocation {
         holdings: List<Holding>,
         prices: Map<String, Price>,
     ): List<Slice> = byHolding(Fraction.ZERO, holdings, prices)
+
+    /**
+     * Cash, then one slice per sector or geography value (4.8, 4.9; 23b): each holding's value from [valueOf] (null when
+     * it has none, C14), values that match (D7) merged in [list]'s spelling and order (decision 1), a value not on [list]
+     * after them in the order of [holdings], then "Unclassified" last; only what has value (view 1). The value is each
+     * holding's, not each ticker's, as an override (24) will be. Cash is never "Unclassified" (AC-32).
+     */
+    fun byClass(
+        cash: Fraction,
+        holdings: List<Holding>,
+        prices: Map<String, Price>,
+        list: List<String>,
+        valueOf: (Holding) -> String?,
+    ): List<Slice> {
+        var names = list
+        val sums = HashMap<String, Fraction>()
+        var unclassified = Fraction.ZERO
+        for (holding in withShares(holdings)) {
+            val worth = Valuation.valued(holding, prices[holding.ticker]).value
+            val text = valueOf(holding)
+            names = Classification.withSource(names, text)
+            val name = Classification.valueFor(names, text)
+            if (name == null) unclassified += worth else sums[name] = (sums[name] ?: Fraction.ZERO) + worth
+        }
+        val slices = names.filter { it in sums }.map { Slice(SliceKey.OfClass(it), sums.getValue(it)) }
+        return withValue(listOf(Slice(SliceKey.Cash, cash)) + slices + Slice(SliceKey.Unclassified, unclassified))
+    }
+
+    /** One portfolio's [holdings] by sector or geography (4.8 portfolio level; view 4): as [byClass] with no cash. */
+    fun portfolioByClass(
+        holdings: List<Holding>,
+        prices: Map<String, Price>,
+        list: List<String>,
+        valueOf: (Holding) -> String?,
+    ): List<Slice> = byClass(Fraction.ZERO, holdings, prices, list, valueOf)
 
     /**
      * Each value's share of their total in tenths of a percent (section 6: 1 decimal, exactly 100.0%): each rounded down,

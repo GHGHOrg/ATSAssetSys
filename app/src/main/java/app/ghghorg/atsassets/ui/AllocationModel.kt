@@ -121,6 +121,7 @@ object Allocations {
         return AllocationModel(by, rows)
     }
 
+    // 23b step 2: the sector and geography keys are stubs, not reached until step 3 builds those breakdowns.
     private fun nameOf(
         key: SliceKey,
         portfolioNames: Map<String, String>,
@@ -129,6 +130,7 @@ object Allocations {
         is SliceKey.Type -> SliceName.Type(key.type)
         is SliceKey.OfPortfolio -> SliceName.Named(portfolioNames[key.portfolioId].orEmpty())
         is SliceKey.OfTicker -> SliceName.Named(key.ticker)
+        is SliceKey.OfClass, SliceKey.Unclassified -> error("23b step 3")
     }
 
     // View 1: a slice of 5% or more shows its percentage on the donut, a smaller one in its row.

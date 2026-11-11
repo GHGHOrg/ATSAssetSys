@@ -74,6 +74,7 @@ To be shown on the phone in step 7:
 
 ### 13.1 Steps (2026-11-11)
 - Step 1: this file and the plan.md lines (with #167's merge line). Only documents changed. The full run was red twice before it was green: first on HoldingsScaleTest alone (`theCodeAfter15c_growsWithinItsBounds`, "2 netWorth | SPREAD: 62.280 ms at 3,000, limit 60.0 ms"), then once more after 30 s with 1 failure whose test I did not read; the third run, unchanged, green (16b decision B): 955 tests, 0 failures, 1 skipped; lint the 5 listed findings (report 11:02:02).
+- Step 2: core/Allocation.kt: `SliceKey.OfClass` (a sector or geography value) and `SliceKey.Unclassified`; `byClass` (cash, then one slice per value, each holding's value from the caller, values that match (D7) merged in the list's spelling and order (decision 1), a value not on the list after them in the order of the holdings, then "Unclassified" last; only what has value; cash never "Unclassified") and `portfolioByClass` (the same with no cash). Values are matched and added through K10's `Classification.withSource` and `valueFor`, so the breakdown and the lists use one rule. ClassAllocationTest 7. Red against stubs first: 7 tests, 7 failed. The app's `AllocationModel.nameOf` must cover the two new keys to compile; until step 3 it throws for them (section 14). Tests 962 (1 skipped).
 
 ## 14. Departures from the plan
-None yet.
+- Step 2: a stub against section 7's "None": the app's `AllocationModel.nameOf` throws for `SliceKey.OfClass` and `SliceKey.Unclassified` until step 3, which replaces it with the slice names, tests first. Nothing reaches it in step 2: no app code builds a sector or geography breakdown yet. Writing the names in step 2 instead would have let step 3's name tests pass before they could be shown red.
