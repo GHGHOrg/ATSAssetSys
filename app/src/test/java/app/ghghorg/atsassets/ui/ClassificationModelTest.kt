@@ -1,7 +1,9 @@
 package app.ghghorg.atsassets.ui
 
+import app.ghghorg.atsassets.core.ClassList
 import app.ghghorg.atsassets.core.ClassLists
 import app.ghghorg.atsassets.core.ClassOrigin
+import app.ghghorg.atsassets.core.ClassOverride
 import app.ghghorg.atsassets.core.EffectiveClass
 import app.ghghorg.atsassets.core.SourceProfile
 import app.ghghorg.atsassets.core.SplitRatio
@@ -14,13 +16,18 @@ import java.time.LocalDate
 
 /** 23a: Holding detail's Classification tab model (view 6, wireframe 06 frame C; CR2; C9, C14). */
 class ClassificationModelTest {
-    private val lists = ClassLists(sectors = listOf("Technology"), geographies = listOf("US"))
+    private val lists = ClassLists(sectors = listOf("Technology", "Global"), geographies = listOf("US", "Global"))
     private val unclassified = EffectiveClass(null, ClassOrigin.UNCLASSIFIED)
 
+    // From 24 the model takes each holding's values as the breakdowns do (HoldingClasses), overrides included.
     private fun model(
         profile: SourceProfile?,
         transactions: List<Transaction> = emptyList(),
-    ): ClassificationModel = HoldingDetail.classification(profile, lists, transactions, "p1", "AAPL")
+        overrides: List<ClassOverride> = emptyList(),
+    ): ClassificationModel {
+        val profiles = profile?.let { mapOf("AAPL" to it) }.orEmpty()
+        return HoldingDetail.classification(HoldingClasses(lists, profiles, overrides), transactions, "p1", "AAPL")
+    }
 
     private val buy =
         Transaction(
@@ -101,5 +108,23 @@ class ClassificationModelTest {
     @Test
     fun noSplit_givesAnEmptyHistory() {
         assertEquals(emptyList<SplitHistoryRowModel>(), model(null, listOf(buy)).splits)
+    }
+
+    // 24, view 6: an override shows as "Override" on its row only; the other row keeps its source value. Another
+    // holding's override does not count.
+    @Test
+    fun anOverride_showsOnItsRowOnly_asOverride() {
+        val overrides = listOf(ClassOverride("p1", "AAPL", ClassList.GEOGRAPHY, "Global"), ClassOverride("p2", "AAPL", ClassList.SECTOR, "Global"))
+        val shown = model(SourceProfile("technology", "US"), overrides = overrides)
+        assertEquals(EffectiveClass("Technology", ClassOrigin.SOURCE), shown.sector)
+        assertEquals(EffectiveClass("Global", ClassOrigin.OVERRIDE), shown.geography)
+    }
+
+    // 24: a failed clear is said on the tab (the shared "Not saved" line).
+    @Test
+    fun aFailedClear_isSaidOnTheTab() {
+        val failed = HoldingDetail.classification(HoldingClasses(lists), emptyList(), "p1", "AAPL", notSaved = true)
+        assertEquals(true, failed.notSaved)
+        assertEquals(false, model(null).notSaved)
     }
 }

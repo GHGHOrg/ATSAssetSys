@@ -45,6 +45,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import app.ghghorg.atsassets.R
+import app.ghghorg.atsassets.core.ClassList
+import app.ghghorg.atsassets.core.ClassOrigin
 import app.ghghorg.atsassets.core.EffectiveClass
 import app.ghghorg.atsassets.core.Holding
 import app.ghghorg.atsassets.core.Reversals
@@ -64,6 +66,9 @@ class HoldingActions(
     val onHide: () -> Unit,
     // 16a: pull-to-refresh (decision 2).
     val onRefresh: () -> Unit = {},
+    // 24: Edit and Clear override on a Classification row (decision 2).
+    val onEditClass: (ClassList) -> Unit = {},
+    val onClearClass: (ClassList) -> Unit = {},
 )
 
 /**
@@ -102,7 +107,7 @@ private fun Content(
         val fixedPart: @Composable () -> Unit = {
             FixedPart(state, holding, header, actions, Modifier.onSizeChanged { fixedHeight = it.height })
         }
-        val list: @Composable () -> Unit = { TabContent(state, actions.onOpenTransaction, Modifier.fillMaxWidth().padding(16.dp)) }
+        val list: @Composable () -> Unit = { TabContent(state, actions, Modifier.fillMaxWidth().padding(16.dp)) }
         if (fixedHeight > limit) {
             Column(modifier = Modifier.fillMaxSize().verticalScroll(rememberScrollState())) {
                 fixedPart()
@@ -197,7 +202,7 @@ private fun FixedPart(
 @Composable
 private fun TabContent(
     state: AppState,
-    onOpenTransaction: (String) -> Unit,
+    actions: HoldingActions,
     modifier: Modifier,
 ) {
     Column(modifier = modifier) {
@@ -205,7 +210,7 @@ private fun TabContent(
             // Drawn only from the rows' models (CR2): the screen picks the approved string and puts the values in.
             HoldingTab.TRANSACTIONS ->
                 RowList(state.holdingRows) {
-                    val open = { onOpenTransaction(it.transactionId) }
+                    val open = { actions.onOpenTransaction(it.transactionId) }
                     when (it) {
                         is HoldingRowModel.Reversal -> ReversalRow(it, open)
                         is HoldingRowModel.Split -> SplitRow(it, open)
@@ -221,7 +226,7 @@ private fun TabContent(
                 }
             }
 
-            HoldingTab.CLASSIFICATION -> state.holdingClassification?.let { ClassificationTab(it) }
+            HoldingTab.CLASSIFICATION -> state.holdingClassification?.let { ClassificationTab(it, actions, enabled = !state.saving) }
         }
     }
 }
@@ -234,14 +239,43 @@ private fun tabLabel(tab: HoldingTab): Int = when (tab) {
 
 /**
  * The Classification tab (view 6, wireframe 06 frame C and marker 7; 23a), drawn from its model (CR2): Sector and
- * Geography, each with its value and "From the source", or "Unclassified" (4.9, C14); then "Split history", every split
- * of the holding, newest first, a reversed one marked (C9; your B), or one plain line when there is none.
+ * Geography, each with its value and "Override", "From the source" or "Unclassified" (4.9, C14), and from 24 its own Edit
+ * and, while it has an override, Clear override (decision 2); the shared "Not saved" line after a failed clear; then
+ * "Split history", every split of the holding, newest first, a reversed one marked (C9; 23a's B), or one plain line.
  */
 @Composable
-private fun ClassificationTab(model: ClassificationModel) {
+private fun ClassificationTab(
+    model: ClassificationModel,
+    actions: HoldingActions,
+    enabled: Boolean,
+) {
     Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-        ClassRow(stringResource(R.string.class_sector), model.sector)
-        ClassRow(stringResource(R.string.class_geography), model.geography)
+        ClassRow(
+            name = stringResource(R.string.class_sector),
+            effective = model.sector,
+            editSpoken = stringResource(R.string.class_edit_sector_spoken),
+            clearSpoken = stringResource(R.string.class_clear_sector_spoken),
+            enabled = enabled,
+            onEdit = { actions.onEditClass(ClassList.SECTOR) },
+            onClear = { actions.onClearClass(ClassList.SECTOR) },
+        )
+        ClassRow(
+            name = stringResource(R.string.class_geography),
+            effective = model.geography,
+            editSpoken = stringResource(R.string.class_edit_geography_spoken),
+            clearSpoken = stringResource(R.string.class_clear_geography_spoken),
+            enabled = enabled,
+            onEdit = { actions.onEditClass(ClassList.GEOGRAPHY) },
+            onClear = { actions.onClearClass(ClassList.GEOGRAPHY) },
+        )
+        if (model.notSaved) {
+            Text(
+                text = stringResource(R.string.save_failed),
+                style = MaterialTheme.typography.bodyLarge,
+                color = MaterialTheme.colorScheme.error,
+                modifier = Modifier.semantics { liveRegion = LiveRegionMode.Polite },
+            )
+        }
         Text(
             text = stringResource(R.string.split_history),
             style = MaterialTheme.typography.titleMedium,
@@ -255,31 +289,57 @@ private fun ClassificationTab(model: ClassificationModel) {
     }
 }
 
-/** "Sector", its value and its origin under it, read as one line: "Sector, Technology, from the source". */
+/**
+ * "Sector", its value and its origin under it, read as one line ("Sector, Technology, from the source"; "Sector,
+ * Diversified, override"); then Edit, and Clear override only while the row has an override (decision 2), each naming
+ * its list for TalkBack ("Edit sector").
+ */
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
 private fun ClassRow(
     name: String,
     effective: EffectiveClass,
+    editSpoken: String,
+    clearSpoken: String,
+    enabled: Boolean,
+    onEdit: () -> Unit,
+    onClear: () -> Unit,
 ) {
     val value = effective.value
+    val overridden = effective.origin == ClassOrigin.OVERRIDE
     val spoken =
-        if (value == null) stringResource(R.string.class_row_unclassified_spoken, name) else stringResource(R.string.class_row_spoken, name, value)
-    Column(modifier = Modifier.fillMaxWidth().clearAndSetSemantics { contentDescription = spoken }) {
-        FlowRow(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
-            Text(text = name, style = MaterialTheme.typography.bodyLarge)
-            Text(
-                text = value ?: stringResource(R.string.class_unclassified),
-                style = MaterialTheme.typography.bodyLarge,
-                fontWeight = FontWeight.Medium,
-            )
+        when {
+            value == null -> stringResource(R.string.class_row_unclassified_spoken, name)
+            overridden -> stringResource(R.string.class_row_override_spoken, name, value)
+            else -> stringResource(R.string.class_row_spoken, name, value)
         }
-        if (value != null) {
-            Text(
-                text = stringResource(R.string.class_from_source),
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
+    Column(modifier = Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+        Column(modifier = Modifier.fillMaxWidth().clearAndSetSemantics { contentDescription = spoken }) {
+            FlowRow(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
+                Text(text = name, style = MaterialTheme.typography.bodyLarge)
+                Text(
+                    text = value ?: stringResource(R.string.class_unclassified),
+                    style = MaterialTheme.typography.bodyLarge,
+                    fontWeight = FontWeight.Medium,
+                )
+            }
+            if (value != null) {
+                Text(
+                    text = stringResource(if (overridden) R.string.class_override else R.string.class_from_source),
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            }
+        }
+        FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            OutlinedButton(onClick = onEdit, enabled = enabled, modifier = Modifier.semantics { contentDescription = editSpoken }) {
+                Text(text = stringResource(R.string.class_edit))
+            }
+            if (overridden) {
+                OutlinedButton(onClick = onClear, enabled = enabled, modifier = Modifier.semantics { contentDescription = clearSpoken }) {
+                    Text(text = stringResource(R.string.class_clear_override))
+                }
+            }
         }
     }
 }

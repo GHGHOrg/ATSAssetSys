@@ -663,13 +663,20 @@ data class AppState(
     val holdingLotRows: List<LotRowModel>
         get() = HoldingDetail.lots(holdingLots, shownPrice)
 
-    /** Its Classification tab (view 6, frame C; CR2, 23a); null when no holding is shown. */
+    /** Its Classification tab (view 6, frame C; CR2, 23a; the overrides from 24); null when no holding is shown. */
     val holdingClassification: ClassificationModel?
         get() {
             val id = portfolioId ?: return null
             val ticker = holdingTicker ?: return null
-            val profile = instruments.firstOrNull { it.ticker == ticker }?.profile
-            return HoldingDetail.classification(profile, classLists, transactions, id, ticker)
+            return HoldingDetail.classification(holdingClasses, transactions, id, ticker, notSaved = overrideRefusal != null)
+        }
+
+    /** The Edit picker as its screen draws it (wireframe 10f frame H; CR2, 24); null off CLASS_PICKER. */
+    val classPickerModel: ClassPickerModel?
+        get() {
+            val list = classPicker ?: return null
+            val ticker = holdingTicker ?: return null
+            return ClassPicker.of(list, ticker, classLists[list], classPickerChoice, saving, overrideRefusal)
         }
 
     /** A portfolio's value, cost and gain/loss as the Portfolios list and its screen draw them (view 3; CR2, 16a). */

@@ -5,7 +5,9 @@ import app.ghghorg.atsassets.core.CashEntry
 import app.ghghorg.atsassets.core.CashType
 import app.ghghorg.atsassets.core.ClassList
 import app.ghghorg.atsassets.core.ClassLists
+import app.ghghorg.atsassets.core.ClassOrigin
 import app.ghghorg.atsassets.core.ClassOverride
+import app.ghghorg.atsassets.core.EffectiveClass
 import app.ghghorg.atsassets.core.Instrument
 import app.ghghorg.atsassets.core.Portfolio
 import app.ghghorg.atsassets.core.SourceProfile
@@ -80,6 +82,22 @@ class ClassOverrideFlowTest {
         val vm = onClassification(store().apply { storedOverrides = listOf(healthCare) })
         assertEquals(listOf(healthCare), vm.state.value.overrides)
         assertEquals(listOf(SliceName.Cash, SliceName.Named("Health Care")), sectorNames(vm))
+    }
+
+    // CR2's wiring test: the picker's screen and the Classification tab draw from the state's models.
+    @Test
+    fun thePickerAndTheTab_drawFromTheStatesModels() {
+        val vm = onClassification()
+        vm.openClassPicker(ClassList.SECTOR)
+        assertEquals(
+            listOf(ClassPickerRowModel("Technology", selected = true), ClassPickerRowModel("Health Care", selected = false)),
+            vm.state.value.classPickerModel!!.rows,
+        )
+        vm.chooseClassValue("Health Care")
+        vm.saveClassOverride()
+        assertEquals(EffectiveClass("Health Care", ClassOrigin.OVERRIDE), vm.state.value.holdingClassification!!.sector)
+        assertEquals(EffectiveClass("US", ClassOrigin.SOURCE), vm.state.value.holdingClassification!!.geography)
+        assertEquals(null, vm.state.value.classPickerModel)
     }
 
     // Decision 2: Edit on a row opens the picker for that list, on the value shown (frame H: the current value checked).
