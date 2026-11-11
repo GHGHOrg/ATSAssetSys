@@ -15,7 +15,7 @@ data class ClassPickerRowModel(
 
 /**
  * The picker for [ticker]'s [list]: its [rows] (empty: the plain "No sectors yet." line and no Save, marker 17), whether
- * Save can be tapped, and [notSaved] after a failed save (the shared "Not saved" line).
+ * Save can be tapped (only after a change), and [notSaved] after a failed save (the shared "Not saved" line).
  */
 data class ClassPickerModel(
     val list: ClassList,
@@ -26,19 +26,23 @@ data class ClassPickerModel(
 )
 
 object ClassPicker {
-    /** [values] of [list] in its order, [choice] checked; Save while a value is picked and no save runs (4.9, frame H). */
+    /**
+     * [values] of [list] in its order, [choice] checked; Save while a value is picked that differs from [shown], the value
+     * the row shows as the list spells it, and no save runs (4.9, frame H; step 7 fix, your A).
+     */
     fun of(
         list: ClassList,
         ticker: String,
         values: List<String>,
         choice: String?,
+        shown: String?,
         saving: Boolean,
         refusal: SaveRefusal?,
     ): ClassPickerModel = ClassPickerModel(
         list = list,
         ticker = ticker,
         rows = values.map { ClassPickerRowModel(it, selected = it == choice) },
-        canSave = choice != null && choice in values && !saving,
+        canSave = choice != null && choice in values && choice != shown && !saving,
         notSaved = refusal != null,
     )
 }

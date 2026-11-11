@@ -11,9 +11,10 @@ class ClassPickerModelTest {
     private fun of(
         values: List<String> = sectors,
         choice: String? = "Health Care",
+        shown: String? = null,
         saving: Boolean = false,
         refusal: SaveRefusal? = null,
-    ): ClassPickerModel = ClassPicker.of(ClassList.SECTOR, "AAPL", values, choice, saving, refusal)
+    ): ClassPickerModel = ClassPicker.of(ClassList.SECTOR, "AAPL", values, choice, shown, saving, refusal)
 
     // Marker 16: every value of the list, in the list's order, the pick checked; Save can be tapped.
     @Test
@@ -49,6 +50,15 @@ class ClassPickerModelTest {
         assertEquals(false, of(choice = null).canSave)
         assertEquals(listOf(false, false, false), of(choice = null).rows.map { it.selected })
         assertEquals(false, of(saving = true).canSave)
+    }
+
+    // Step 7 fix (your A): with the value the row shows still picked there is nothing to save, so Save cannot be tapped;
+    // another value can be saved, the source's own included over an override.
+    @Test
+    fun theValueShownStillPicked_saveCannotBeTapped_anotherCan() {
+        assertEquals(false, of(choice = "Health Care", shown = "Health Care").canSave)
+        assertEquals(true, of(choice = "Global", shown = "Health Care").canSave)
+        assertEquals(true, of(choice = "Technology", shown = "Health Care").canSave)
     }
 
     // Risk 2: a failed save is said (the shared "Not saved" line).

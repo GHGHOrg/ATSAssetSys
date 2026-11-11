@@ -676,8 +676,16 @@ data class AppState(
         get() {
             val list = classPicker ?: return null
             val ticker = holdingTicker ?: return null
-            return ClassPicker.of(list, ticker, classLists[list], classPickerChoice, saving, overrideRefusal)
+            return ClassPicker.of(list, ticker, classLists[list], classPickerChoice, classValueShown(list), saving, overrideRefusal)
         }
+
+    /** The value the open holding's [list] row shows, as the list spells it; none when Unclassified or not on the list. */
+    internal fun classValueShown(list: ClassList): String? {
+        val portfolio = portfolioId ?: return null
+        val ticker = holdingTicker ?: return null
+        val shown = holdingClasses.valueFor(list, portfolio, ticker) ?: return null
+        return Classification.overrideValue(classLists[list], shown)
+    }
 
     /** A portfolio's value, cost and gain/loss as the Portfolios list and its screen draw them (view 3; CR2, 16a). */
     fun portfolioFigures(portfolioId: String): PortfolioFiguresModel = PortfolioFigures.of(holdingsOf(portfolioId), KeptFields.prices(instruments))
@@ -2535,11 +2543,9 @@ class AppViewModel(
      */
     fun openClassPicker(list: ClassList) {
         val current = mutableState.value
-        val portfolioId = current.portfolioId ?: return
-        val ticker = current.holdingTicker ?: return
+        if (current.portfolioId == null || current.holdingTicker == null) return
         if (current.screen != Screen.HOLDING || current.saving) return
-        val shown = current.holdingClasses.valueFor(list, portfolioId, ticker)
-        val choice = shown?.let { Classification.overrideValue(current.classLists[list], it) }
+        val choice = current.classValueShown(list)
         mutableState.update { it.copy(screen = Screen.CLASS_PICKER, classPicker = list, classPickerChoice = choice, overrideRefusal = null) }
     }
 
@@ -2571,6 +2577,8 @@ class AppViewModel(
         val portfolioId = current.portfolioId ?: return
         val ticker = current.holdingTicker ?: return
         if (current.screen != Screen.CLASS_PICKER || current.saving) return
+        // Step 7 fix (your A): nothing to save while the value shown is still picked.
+        if (current.classPickerModel?.canSave != true) return
         val override = ClassOverride(portfolioId, ticker, list, value)
         mutableState.update { it.copy(saving = true, overrideRefusal = null) }
         viewModelScope.launch {

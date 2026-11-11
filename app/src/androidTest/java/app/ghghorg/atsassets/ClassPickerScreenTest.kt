@@ -12,6 +12,7 @@ import androidx.compose.ui.test.SemanticsMatcher
 import androidx.compose.ui.test.SemanticsNodeInteraction
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertIsEnabled
+import androidx.compose.ui.test.assertIsNotEnabled
 import androidx.compose.ui.test.assertIsNotSelected
 import androidx.compose.ui.test.assertIsSelected
 import androidx.compose.ui.test.hasClickAction
@@ -26,6 +27,7 @@ import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
 import app.ghghorg.atsassets.core.ClassList
 import app.ghghorg.atsassets.core.ClassLists
+import app.ghghorg.atsassets.core.ClassOverride
 import app.ghghorg.atsassets.core.Portfolio
 import app.ghghorg.atsassets.core.Tab
 import app.ghghorg.atsassets.ui.AppState
@@ -73,6 +75,7 @@ private fun pickerState(
     sectors: List<String> = listOf("Technology", "Health Care", "Diversified"),
     choice: String? = "Health Care",
     refusal: SaveRefusal? = null,
+    overrides: List<ClassOverride> = emptyList(),
 ): AppState = AppState(
     screen = Screen.CLASS_PICKER,
     tab = Tab.PORTFOLIOS,
@@ -83,12 +86,14 @@ private fun pickerState(
     classPicker = list,
     classPickerChoice = choice,
     overrideRefusal = refusal,
+    overrides = overrides,
 )
 
 /**
  * The Edit picker for TalkBack (24, frame H; AC-61 (d), AC-22): the title is a heading naming the list and the holding;
  * each value is a radio row in the list's order, the pick selected, and a tap names its value; the note; Save is on with
- * a pick. An empty list reads its line and has no Save (marker 17, decision 1). A failed save says so.
+ * a pick, and off while the value the row shows is still picked (step 7 fix). An empty list reads its line and has no
+ * Save (marker 17, decision 1). A failed save says so.
  */
 @RunWith(AndroidJUnit4::class)
 class ClassPickerTalkBackTest {
@@ -121,6 +126,14 @@ class ClassPickerTalkBackTest {
         assertEquals("The tap names its value", listOf("Diversified"), chosen)
         composeRule.onNodeWithText(text(R.string.class_picker_note)).assertExists()
         composeRule.onNode(saveButton()).assertIsEnabled()
+    }
+
+    // Step 7 fix (your A): the value the row shows still picked, Save is off; another pick turns it on (the model's rule).
+    @Test
+    fun theValueShownStillPicked_saveIsOff() {
+        show(pickerState(overrides = listOf(ClassOverride("p1", "AAPL", ClassList.SECTOR, "Health Care"))))
+        row("Health Care").assertIsSelected()
+        composeRule.onNode(saveButton()).assertIsNotEnabled()
     }
 
     @Test

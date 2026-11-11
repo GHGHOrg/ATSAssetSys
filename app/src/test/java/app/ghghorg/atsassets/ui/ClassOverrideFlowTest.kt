@@ -184,6 +184,41 @@ class ClassOverrideFlowTest {
         assertEquals(Screen.UNREADABLE, vm.state.value.screen)
     }
 
+    // Step 7 fix (your A; phone check): Edit, then Save at once, stores nothing and marks nothing "Override"; the picker
+    // stays open with Save off until another value is picked, and picking the shown value again turns it off again.
+    @Test
+    fun saveWithTheValueShown_storesNothing_andSaveIsOffUntilAnotherIsPicked() {
+        val store = store()
+        val vm = onClassification(store)
+        vm.openClassPicker(ClassList.SECTOR)
+        assertEquals(false, vm.state.value.classPickerModel!!.canSave)
+        vm.saveClassOverride()
+        assertEquals(Screen.CLASS_PICKER, vm.state.value.screen)
+        assertEquals(emptyList<ClassOverride>(), store.storedOverrides)
+        assertEquals(emptyList<ClassOverride>(), vm.state.value.overrides)
+        vm.chooseClassValue("Health Care")
+        assertEquals(true, vm.state.value.classPickerModel!!.canSave)
+        vm.chooseClassValue("Technology")
+        assertEquals(false, vm.state.value.classPickerModel!!.canSave)
+        vm.cancelClassPicker()
+        assertEquals(EffectiveClass("Technology", ClassOrigin.SOURCE), vm.state.value.holdingClassification!!.sector)
+    }
+
+    // The same over an override: its own value picked saves nothing; the source's value can replace it.
+    @Test
+    fun overAnOverride_itsValueSavesNothing_theSourcesValueCanBeSaved() {
+        val store = store().apply { storedOverrides = listOf(healthCare) }
+        val vm = onClassification(store)
+        vm.openClassPicker(ClassList.SECTOR)
+        assertEquals("Health Care", vm.state.value.classPickerChoice)
+        assertEquals(false, vm.state.value.classPickerModel!!.canSave)
+        vm.chooseClassValue("Technology")
+        vm.saveClassOverride()
+        val technology = ClassOverride("p1", "AAPL", ClassList.SECTOR, "Technology")
+        assertEquals(listOf(technology), store.storedOverrides)
+        assertEquals(EffectiveClass("Technology", ClassOrigin.OVERRIDE), vm.state.value.holdingClassification!!.sector)
+    }
+
     // 4.9: only a value of the list can be picked; with none picked (an ETF on an empty choice), Save does nothing.
     @Test
     fun onlyAValueOfTheList_canBePicked_andNothingPicked_savesNothing() {
