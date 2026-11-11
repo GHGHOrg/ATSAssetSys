@@ -141,6 +141,7 @@ CI (.github/workflows/ci.yml) runs the style check and then the same three steps
 - In a GitHub Actions workflow, `$SECONDS` restarts in each step. Carry times between steps as clock time (`date +%s`) through `GITHUB_ENV`.
 - On GitHub's runner, avdmanager and the emulator need the same `ANDROID_AVD_HOME`, set explicitly (plan/spikes/screen-tests.md 11.6, run 1: the emulator found no AVD).
 - Gradle's per-test logcat paths in the scratchpad can pass Windows' 260-character limit, and `Get-Content` then fails. Use the Grep tool, or the `\\?\` prefix with `[IO.File]::ReadAllLines`.
+- The local full run sometimes fails in `:core:compileTestFixturesKotlin`: ScaleHistories.kt cannot resolve core's own classes, and Room's KSP then fails with "references a type that is not present". The code is not at fault. Cause not found: it is not the Kotlin daemon and not a reused configuration cache entry (23b file, 13.1, step 5). The task passes alone. Read the cause, then re-run the same command unchanged; `--continue` shows every task's result in one run. CI has not shown it.
 
 ## 7. Standing checks for every iteration's screens
 AC-09, AC-39 to AC-42, and the install-over-previous-build check (AC-35).
