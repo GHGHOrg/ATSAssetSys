@@ -1,10 +1,12 @@
 package app.ghghorg.atsassets.ui
 
 import app.ghghorg.atsassets.core.AssetType
+import app.ghghorg.atsassets.core.ClassLists
 import app.ghghorg.atsassets.core.Fraction
 import app.ghghorg.atsassets.core.Holding
 import app.ghghorg.atsassets.core.Portfolio
 import app.ghghorg.atsassets.core.Price
+import app.ghghorg.atsassets.core.SourceProfile
 import org.junit.Assert.assertEquals
 import org.junit.Test
 import java.math.BigDecimal
@@ -77,6 +79,41 @@ class AllocationModelTest {
         AllocationBy.entries.forEach { by ->
             assertEquals("$by", 1_000, of(by, 960_000L, holdings, prices)!!.rows.sumOf { it.tenths })
         }
+    }
+
+    // 23b: AAPL's source gave "technology" and "US"; VT, an ETF held at cost, gave none (C14).
+    private val vt = Holding("p1", "VT", dollars(10), dollars(1_000))
+    private val classes =
+        HoldingClasses(
+            ClassLists(sectors = listOf("Technology"), geographies = listOf("US")),
+            mapOf("AAPL" to SourceProfile("technology", "US"), "VT" to SourceProfile(null, null)),
+        )
+
+    private fun byClass(by: AllocationBy): AllocationModel? = Allocations.of(by, 960_000L, listOf(vt, aapl), listOf(portfolioP), mapOf("AAPL" to price("160")), types, classes)
+
+    // 23b, AC-12: by sector, cash, the list's spelling of the source's value, then "Unclassified" last (decision 1).
+    @Test
+    fun bySector_isCash_theListsValue_andUnclassifiedLast() {
+        val rows = byClass(AllocationBy.SECTOR)!!.rows
+        assertEquals(listOf(SliceName.Cash, SliceName.Named("Technology"), SliceName.Unclassified), rows.map { it.name })
+        // $9,600, $1,280 and $1,000 of $11,880: 80.8%, 10.8% and 8.4%, adding up to 100.0%.
+        assertEquals(listOf("$9,600.00", "$1,280.00", "$1,000.00"), rows.map { it.amount })
+        assertEquals(listOf("80.8", "10.8", "8.4"), rows.map { it.percent })
+    }
+
+    // 23b: by geography takes the geography, as the source spells it until a rename (decision 2).
+    @Test
+    fun byGeography_takesTheGeography() {
+        val rows = byClass(AllocationBy.GEOGRAPHY)!!.rows
+        assertEquals(listOf(SliceName.Cash, SliceName.Named("US"), SliceName.Unclassified), rows.map { it.name })
+    }
+
+    // 23b, C14: a holding whose profile was never asked is "Unclassified" too.
+    @Test
+    fun aHoldingNotAskedYet_isUnclassified() {
+        val rows = Allocations.of(AllocationBy.SECTOR, 0L, listOf(aapl), listOf(portfolioP), mapOf("AAPL" to price("160")), types, HoldingClasses())!!.rows
+        assertEquals(listOf(SliceName.Unclassified), rows.map { it.name })
+        assertEquals(listOf("100.0"), rows.map { it.percent })
     }
 
     // 4.8 and 17 decision 4: no breakdown while net worth shows as $0.00, also when it is above 0 but rounds to it.

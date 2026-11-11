@@ -2,6 +2,9 @@ package app.ghghorg.atsassets.ui
 
 import app.ghghorg.atsassets.core.Allocation
 import app.ghghorg.atsassets.core.AssetType
+import app.ghghorg.atsassets.core.ClassList
+import app.ghghorg.atsassets.core.ClassLists
+import app.ghghorg.atsassets.core.Classification
 import app.ghghorg.atsassets.core.Fraction
 import app.ghghorg.atsassets.core.Holding
 import app.ghghorg.atsassets.core.Money
@@ -9,17 +12,38 @@ import app.ghghorg.atsassets.core.Portfolio
 import app.ghghorg.atsassets.core.Price
 import app.ghghorg.atsassets.core.Slice
 import app.ghghorg.atsassets.core.SliceKey
+import app.ghghorg.atsassets.core.SourceProfile
 
 /*
  * The allocation of net worth as Overall and Net Worth (Total) draw it (view 1, view 2; wireframe 01 marker 3, wireframe
  * 02 markers 3 and 4; CR2, 18). Plain Kotlin: the screens pick the approved string for a name and put these in.
  */
 
-/** "Allocation by" (view 1): the breakdowns built so far, Asset type first (18 decision 1). */
+/** "Allocation by" (view 1): Asset type first (18 decision 1); Sector and Geography from 23b. */
 enum class AllocationBy {
     ASSET_TYPE,
     PORTFOLIO,
     HOLDING,
+    SECTOR,
+    GEOGRAPHY,
+}
+
+/** Each holding's effective sector and geography (4.9, K10; 23b) and the two lists, for the breakdowns. */
+class HoldingClasses(
+    val lists: ClassLists = ClassLists(),
+    private val profiles: Map<String, SourceProfile> = emptyMap(),
+) {
+    /** [holding]'s effective value on [list]: its instrument's source text through the list, or null ("Unclassified"). */
+    fun valueOf(
+        list: ClassList,
+        holding: Holding,
+    ): String? {
+        val profile = profiles[holding.ticker]
+        return Classification.effective(lists[list], if (list == ClassList.SECTOR) profile?.sector else profile?.geography).value
+    }
+
+    /** [valueOf] on [list], for K3's breakdowns. */
+    fun of(list: ClassList): (Holding) -> String? = { valueOf(list, it) }
 }
 
 /** A slice's name: cash and the asset types take the approved words; a portfolio's name or a ticker is shown as it is. */
@@ -33,6 +57,8 @@ sealed interface SliceName {
     data class Named(
         val name: String,
     ) : SliceName
+
+    data object Unclassified : SliceName
 }
 
 /**
@@ -67,6 +93,7 @@ object Allocations {
         portfolios: List<Portfolio>,
         prices: Map<String, Price>,
         types: Map<String, AssetType>,
+        classes: HoldingClasses = HoldingClasses(),
     ): AllocationModel? {
         val cash = Fraction.ofCents(cashCents)
         val slices =
@@ -74,12 +101,15 @@ object Allocations {
                 AllocationBy.ASSET_TYPE -> Allocation.byAssetType(cash, holdings, prices, types)
                 AllocationBy.PORTFOLIO -> Allocation.byPortfolio(cash, portfolios, holdings, prices)
                 AllocationBy.HOLDING -> Allocation.byHolding(cash, holdings, prices)
+                AllocationBy.SECTOR -> Allocation.byClass(cash, holdings, prices, classes.lists.sectors, classes.of(ClassList.SECTOR))
+                AllocationBy.GEOGRAPHY -> Allocation.byClass(cash, holdings, prices, classes.lists.geographies, classes.of(ClassList.GEOGRAPHY))
             }
         return model(by, slices, portfolios.associate { it.id to it.name })
     }
 
     /**
-     * One portfolio's breakdown [by] asset type or holding (view 4; 19), its [holdings] at [prices] or at cost, no cash.
+     * One portfolio's breakdown [by] asset type, holding, sector or geography (view 4; 19, 23b), its [holdings] at [prices]
+     * or at cost, no cash.
      * Null for [AllocationBy.PORTFOLIO], which this level has not, and while the portfolio's value shows as $0.00.
      */
     fun ofPortfolio(
@@ -87,11 +117,14 @@ object Allocations {
         holdings: List<Holding>,
         prices: Map<String, Price>,
         types: Map<String, AssetType>,
+        classes: HoldingClasses = HoldingClasses(),
     ): AllocationModel? {
         val slices =
             when (by) {
                 AllocationBy.ASSET_TYPE -> Allocation.portfolioByAssetType(holdings, prices, types)
                 AllocationBy.HOLDING -> Allocation.portfolioByHolding(holdings, prices)
+                AllocationBy.SECTOR -> Allocation.portfolioByClass(holdings, prices, classes.lists.sectors, classes.of(ClassList.SECTOR))
+                AllocationBy.GEOGRAPHY -> Allocation.portfolioByClass(holdings, prices, classes.lists.geographies, classes.of(ClassList.GEOGRAPHY))
                 AllocationBy.PORTFOLIO -> return null
             }
         return model(by, slices, emptyMap())
@@ -121,7 +154,6 @@ object Allocations {
         return AllocationModel(by, rows)
     }
 
-    // 23b step 2: the sector and geography keys are stubs, not reached until step 3 builds those breakdowns.
     private fun nameOf(
         key: SliceKey,
         portfolioNames: Map<String, String>,
@@ -130,7 +162,8 @@ object Allocations {
         is SliceKey.Type -> SliceName.Type(key.type)
         is SliceKey.OfPortfolio -> SliceName.Named(portfolioNames[key.portfolioId].orEmpty())
         is SliceKey.OfTicker -> SliceName.Named(key.ticker)
-        is SliceKey.OfClass, SliceKey.Unclassified -> error("23b step 3")
+        is SliceKey.OfClass -> SliceName.Named(key.value)
+        SliceKey.Unclassified -> SliceName.Unclassified
     }
 
     // View 1: a slice of 5% or more shows its percentage on the donut, a smaller one in its row.

@@ -69,6 +69,8 @@ internal fun allocationOption(by: AllocationBy): String = stringResource(
         AllocationBy.ASSET_TYPE -> R.string.allocation_asset_type
         AllocationBy.PORTFOLIO -> R.string.allocation_portfolio
         AllocationBy.HOLDING -> R.string.allocation_holding
+        AllocationBy.SECTOR -> R.string.allocation_sector
+        AllocationBy.GEOGRAPHY -> R.string.allocation_geography
     },
 )
 
@@ -78,6 +80,8 @@ internal fun allocationHeading(by: AllocationBy): String = stringResource(
         AllocationBy.ASSET_TYPE -> R.string.allocation_by_asset_type
         AllocationBy.PORTFOLIO -> R.string.allocation_by_portfolio
         AllocationBy.HOLDING -> R.string.allocation_by_holding
+        AllocationBy.SECTOR -> R.string.allocation_by_sector
+        AllocationBy.GEOGRAPHY -> R.string.allocation_by_geography
     },
 )
 
@@ -113,6 +117,7 @@ private fun sliceName(name: SliceName): String = when (name) {
     SliceName.Cash -> stringResource(R.string.net_worth_composition_cash)
     is SliceName.Type -> stringResource(if (name.type == AssetType.ETF) R.string.allocation_etfs else R.string.allocation_stocks)
     is SliceName.Named -> name.name
+    SliceName.Unclassified -> stringResource(R.string.class_unclassified)
 }
 
 /**

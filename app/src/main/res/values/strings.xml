@@ -467,4 +467,9 @@
     <string name="split_history_none">No splits recorded.</string>
     <string name="split_history_reversed">(reversed)</string>
     <string name="split_history_reversed_spoken">%1$s Eastern Time, split, %2$s, reversed</string>
+    <!-- Iteration 23b: Sector and Geography in the allocation (proposed, 23b file section 12; approval on the phone in step 7). The slice name "Unclassified" is class_unclassified (23a). -->
+    <string name="allocation_sector">Sector</string>
+    <string name="allocation_geography">Geography</string>
+    <string name="allocation_by_sector">By sector</string>
+    <string name="allocation_by_geography">By geography</string>
 </resources>

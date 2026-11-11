@@ -1,10 +1,12 @@
 package app.ghghorg.atsassets.ui
 
 import app.ghghorg.atsassets.core.AssetType
+import app.ghghorg.atsassets.core.ClassLists
 import app.ghghorg.atsassets.core.Fraction
 import app.ghghorg.atsassets.core.Holding
 import app.ghghorg.atsassets.core.Portfolio
 import app.ghghorg.atsassets.core.Price
+import app.ghghorg.atsassets.core.SourceProfile
 import org.junit.Assert.assertEquals
 import org.junit.Test
 import java.math.BigDecimal
@@ -27,14 +29,18 @@ class PortfolioAllocationModelTest {
     private val types = mapOf("AAPL" to AssetType.STOCK, "OLDCO" to AssetType.STOCK)
     private val refresh = PriceRefreshModel(refreshing = false, failed = false)
 
+    // 23b: AAPL's source gave "Technology" and "US" (23a, R1).
+    private val classes = HoldingClasses(ClassLists(listOf("Technology"), listOf("US")), mapOf("AAPL" to SourceProfile("Technology", "US")))
+
     private fun of(
         portfolios: List<Portfolio>,
         shownId: String?,
         refresh: PriceRefreshModel = this.refresh,
         prices: Map<String, Price> = this.prices,
-    ): PortfolioAllocationModel = PortfolioAllocation.of(portfolios, shownId, { id -> holdings.filter { it.portfolioId == id } }, prices, types, refresh)
+    ): PortfolioAllocationModel = PortfolioAllocation.of(portfolios, shownId, { id -> holdings.filter { it.portfolioId == id } }, prices, types, refresh, classes)
 
-    // AC-46: Example A at $160, Portfolio P: $1,280.00 with its age; Stocks 100.0% and ETFs 0.0% (in its row); AAPL 100.0%.
+    // AC-46: Example A at $160, Portfolio P: $1,280.00 with its age; Stocks 100.0% and ETFs 0.0% (in its row); AAPL 100.0%;
+    // from 23b, Technology and the geography 100.0% each, the geography as the source spells it (decision 2).
     @Test
     fun exampleA_portfolioP_matchesAC46() {
         val choices = listOf(PortfolioChoiceModel("p1", "Portfolio P"), PortfolioChoiceModel("p2", "Portfolio Q"))
@@ -58,6 +64,14 @@ class PortfolioAllocationModelTest {
                     AllocationModel(
                         AllocationBy.HOLDING,
                         listOf(AllocationRowModel(SliceName.Named("AAPL"), "$1,280.00", "1,280.00", "100.0", percentInRow = false, tenths = 1_000)),
+                    ),
+                    AllocationModel(
+                        AllocationBy.SECTOR,
+                        listOf(AllocationRowModel(SliceName.Named("Technology"), "$1,280.00", "1,280.00", "100.0", percentInRow = false, tenths = 1_000)),
+                    ),
+                    AllocationModel(
+                        AllocationBy.GEOGRAPHY,
+                        listOf(AllocationRowModel(SliceName.Named("US"), "$1,280.00", "1,280.00", "100.0", percentInRow = false, tenths = 1_000)),
                     ),
                 ),
             ),

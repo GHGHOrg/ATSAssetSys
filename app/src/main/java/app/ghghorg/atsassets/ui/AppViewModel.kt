@@ -688,7 +688,12 @@ data class AppState(
         portfolios,
         KeptFields.prices(instruments),
         instruments.associate { it.ticker to it.assetType },
+        holdingClasses,
     )
+
+    /** Each holding's effective sector and geography from its instrument's profile through the lists (4.9, K10; 23b). */
+    private val holdingClasses: HoldingClasses
+        get() = HoldingClasses(classLists, instruments.mapNotNull { instrument -> instrument.profile?.let { instrument.ticker to it } }.toMap())
 
     /** Allocation as the screen draws it (view 4; CR2, 19): the chooser's portfolio, its value and its breakdowns. */
     val portfolioAllocation: PortfolioAllocationModel
@@ -700,6 +705,7 @@ data class AppState(
                 KeptFields.prices(instruments),
                 instruments.associate { it.ticker to it.assetType },
                 priceRefresh,
+                holdingClasses,
             )
 
     /** More as the screen draws it (section 6; CR2, 17). */

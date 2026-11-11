@@ -19,7 +19,7 @@ data class PortfolioChoiceModel(
 /**
  * The chooser's portfolios as created and the shown one, null with no portfolio (marker 4); the shown portfolio's value
  * with its digits for TalkBack, the age of the oldest price used in it and the refresh state (marker 2); and its
- * breakdowns by asset type and holding (marker 3), null while the value shows as $0.00 (marker 5).
+ * breakdowns by asset type, holding, sector and geography (marker 3; 23b), null while the value shows as $0.00 (marker 5).
  */
 data class PortfolioAllocationModel(
     val portfolios: List<PortfolioChoiceModel>,
@@ -43,13 +43,17 @@ object PortfolioAllocation {
         prices: Map<String, Price>,
         types: Map<String, AssetType>,
         refresh: PriceRefreshModel,
+        classes: HoldingClasses = HoldingClasses(),
     ): PortfolioAllocationModel {
         val choices = portfolios.map { PortfolioChoiceModel(it.id, it.name) }
         val shown = choices.firstOrNull { it.id == shownId } ?: choices.firstOrNull()
         if (shown == null) return PortfolioAllocationModel(choices, null, "", "", null, refresh, null)
         val holdings = holdingsOf(shown.id)
         val figures = PortfolioFigures.of(holdings, prices)
-        val breakdowns = listOf(AllocationBy.ASSET_TYPE, AllocationBy.HOLDING).mapNotNull { Allocations.ofPortfolio(it, holdings, prices, types) }
+        // View 4's order: asset type, holding, sector, geography (23b).
+        val breakdowns =
+            listOf(AllocationBy.ASSET_TYPE, AllocationBy.HOLDING, AllocationBy.SECTOR, AllocationBy.GEOGRAPHY)
+                .mapNotNull { Allocations.ofPortfolio(it, holdings, prices, types, classes) }
         return PortfolioAllocationModel(
             portfolios = choices,
             shown = shown,
