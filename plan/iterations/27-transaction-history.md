@@ -1,6 +1,6 @@
 # plan/iterations/27-transaction-history.md
 
-Stage: Build. Status: built 2026-11-13 (steps 1 to 6 on iter-27-transaction-history); approved 2026-11-12; decisions 1 to 3 settled the same day (your B, A, A) and decision 4 at phone check 6 (your word; section 11); phone checks 1 to 19 passed and wording approved (13.2, section 12); pull request #178: CI and the screen tests (91 of 91) green after one test fix; reviewed (13.3), no fix, findings recorded; not yet merged.
+Stage: Build. Status: approved 2026-11-12; decisions 1 to 3 settled the same day (your B, A, A) and decision 4 at phone check 6 (your word; section 11). Done: built 2026-11-13 (steps 1 to 6 and one screen-test fix; section 13.1, 13.3); no database change; phone checks 2026-11-13 all yes, wording approved as shown (section 13.2, section 12); the screen tests 91 of 91 on pull request #178; reviewed, no finding fixed and three recorded (section 13.3); pull request #178 merged as cf02cec, main green (section 13.4).
 Source: plan.md section 4 (row 27), spec section 6 (view 8; view 3's links; view 5's "opens the sell in that portfolio's Transaction history"; Date fields; Number format and color), 4.1 (order), 4.6 (reversal chain), 4.10 (quantity shown), section 14 (K3, K9), AC-10, AC-50, AC-61; wireframe 08 (frames A to E, markers 1 to 7); iterations 13a (the transaction and its cash line), 13b (reversal links), 15d (the Cash list's filters), 26 (Realized gains, decision 1; Deploy finding 3). "My reading" is an interpretation, not a test.
 
 ## 1. Outcome
@@ -110,6 +110,10 @@ Approved by you 2026-11-13 as shown on the phone, the ticker on the reversal row
 - Finding 3 (low): the history is a getter, so each redraw (each keystroke in From or To) builds it again: 0.300 ms (spread) and 0.588 ms (one holding) at 3,000 transactions run alone, growing linearly, unlike 25's list screen, which ran the ledger on each keystroke (25's Deploy finding, fixed there as a kept field). Recorded, as section 5 allowed.
 - For the record: decision 4 keeps AC-50's "the original and the reversal each open the other" (the reversal's screen links to the original; the original's "Reversed on" opens the reversal), spec.md unchanged. The Ticker menu stays open over a lock and unlock, as the portfolio's ⋮ menu; only "Allocation by" and the choice layers reset on unlock. 26's Deploy finding 3 (a sale opening the sell until 27) is closed by decision 1.
 - Checked with no finding: K3 only reads (TransactionHistory.kt takes lists and returns rows); no direct cash entry under Cash (AC-10); the order 4.1 reversed, as the Cash list; a buy's quantity `boughtQuantity` (CR1) through `Quantity.format`, which uses `Quantity.shown` (4.10); every figure worked out in the model (CR2); the Ticker menu drawn in the activity window, no Popup, Dialog or DropdownMenu; no logging added and logcat clean on the phone (13.2); lint's 5 findings unchanged; CodeQL green.
+- At fe0724b (the review's commit): CI (3m 32s; "Scale test retries": none), CodeQL and the screen tests (91 of 91, 9m 19s) green (gh, read only).
+
+### 13.4 The merge (2026-11-13)
+- Pull request #178 merged by you as cf02cec (17:58 UTC), 4 commits (steps 1 to 5, step 6, the screen-test fix and the Deploy review). On main at cf02cec: CI (4m 3s, "Scale test retries": none), CodeQL and the screen tests (91 of 91, 13m 54s) green at the first attempt (gh, read only).
 
 ## 14. Departures from the plan
 - Decision 4 (2026-11-13, at phone check 6): the reversal row opens the reversal itself, not its original as section 1 first said (it now says so). Three test files changed with it (13.1, step 6).
