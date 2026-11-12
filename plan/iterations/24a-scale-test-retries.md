@@ -1,6 +1,6 @@
 # plan/iterations/24a-scale-test-retries.md
 
-Stage: Build. Status: approved 2026-11-12 (your "approved"); decision 1 settled the same day (section 11). Built 2026-11-12 (steps 1 to 4 and one Deploy fix; section 14); no phone check (tests only); open item 59 closed; the screen tests 72 of 72 on pull request #172 (section 13.2); reviewed, two findings fixed (section 13.3).
+Stage: Build. Status: approved 2026-11-12 (your "approved"); decision 1 settled the same day (section 11). Done: built 2026-11-12 (steps 1 to 4, one Deploy fix and its YAML fix; section 14); no phone check (tests only); open item 59 closed; the screen tests 72 of 72 on pull request #172 (section 13.2); reviewed, two findings fixed (section 13.3); pull request #172 merged as 58c8d75, main green (section 13.4).
 Source: open-items.md item 59 (your decision 2026-11-12: its own iteration after 24, not a step of 25; a one-off, CLAUDE.md section 4's rule stays); the 15c file (section 9, part 2: the timing method; decision 2: the fixed times at 3,000; section 8: "a failing ratio is re-run once before it is treated as real"); the 16b file, 13.2 (the scale test red in full runs; your B, re-run and record); CLAUDE.md (tests first; never weaken or delete a test to make it pass). "My reading" is an interpretation, not a test.
 
 ## 1. Outcome
@@ -69,12 +69,17 @@ None: no text the user sees changes.
 
 ### 13.2 The pull request's runs (2026-11-12)
 - Pull request #172 (created by me on your word, this once; reviewer msfsgh) at 3e25a0a: CI (3m 7s), Analyze (actions) and CodeQL green; the screen tests (run 43072794197, 10m 41s) 72 of 72 test cases, 0 failed, exit-code file 0. CI's log does not show a passing test's output, so whether HoldingsScaleTest measured a check again there could not be seen (finding 1).
+- At 6b21564 (the review fix): CI did not start, GitHub unable to read ci.yml (run 43076525866; section 14, item 2); CodeQL and the screen tests (run 43076533968, 8m 17s) green.
+- At cf1f5b8 (the YAML fix): CI (run 43078589052, 3m 17s) green, its step "Scale test retries" printing "Checks measured again (24a decision 1), every try:" and "none"; CodeQL green; the screen tests (run 43078589507, 10m 44s) 72 of 72 test cases, 0 failed, exit-code file 0.
 
 ### 13.3 Deploy review (2026-11-12)
 The branch against this file, 15c's limits and bounds and CLAUDE.md's rule on weakening tests; it changes only core/src/test and plan.
 - Finding 1 (Low): on GitHub a check rescued by a retry passed unseen: every try is in core/build/scale/holdings-scale-after.txt and the test's printed output, but CI's log leaves out a passing test's output and the workflow does not upload the file. Fixed on your B (section 14, item 1).
 - Finding 2 (Low): a check not timed failed at once, as meant, but its message ended "(1 of 3 tries)", as if retries had been possible. Fixed on your B (section 14, item 1).
 - Recorded, nothing to change: passing on any 1 of 3 tries is more lenient than one try, your decision 1 knowingly, with the limits and bounds unchanged and a steady slowdown failing every try (step 3); 15c's section 8 ("a failing ratio is re-run once … that re-run needs your yes") is about re-running a run on CI, which still needs your yes, not about the test's own re-measure; the retries time the same data (ScaleHistories has nothing random); `timesTheCodeBefore15c` and its table unchanged; no file under app/ or core/src/main.
+
+### 13.4 The merge (2026-11-12)
+- Pull request #172 merged as 58c8d75 (6 commits) at 18:46:30 UTC, after msfsgh's approval; the branch is gone from origin. On main after the merge, at the first attempt: CodeQL (Push on main, 50 s), CI (run 43080944022, 4m 10s; "Scale test retries" printing "none") and the screen tests (run 43080945909, 8m 33s; 72 of 72 test cases, 0 failed) green (gh, read only).
 
 ## 14. Departures from the plan
 - 1. Deploy review, findings 1 and 2 (your B): .github/workflows/ci.yml gains a step after the unit tests, "Scale test retries", run also when the tests fail, printing the table's "Checks measured again" part (every try of each check measured again, or "none"; "No scale table" when HoldingsScaleTest did not run); the command was tried in Git Bash on today's table, on step 3's run 2 table (its retry printed) and on a missing file. `ScaleJudge.failure` gives the test's message: the tries are named only once a check was measured again, so a check not timed reads "not timed" alone. Tests first: ScaleJudgeTest 2 (the "(3 of 3 tries)" message, the same before and after; not timed with no tries and a passing check with no message), red against a stub that always named the tries (1 of 2 failed, "not timed (1 of 3 tries)"); then green. The usual command green at the first try: 1,002 tests, 0 failures, 1 skipped; no check measured again; lint the 5 listed findings (report 02:14:51). CLAUDE.md section 3 names the new CI step.
