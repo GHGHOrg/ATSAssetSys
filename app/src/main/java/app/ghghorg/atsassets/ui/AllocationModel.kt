@@ -53,15 +53,17 @@ class HoldingClasses(
         ticker: String,
     ): String? = effective(list, portfolioId, ticker).value
 
-    /** The holding's effective value on [list] with where it comes from (view 6's labels). */
+    /**
+     * The holding's effective value on [list] with where it comes from (view 6's labels); the source's text maps through
+     * the remembered texts first (25).
+     */
     fun effective(
         list: ClassList,
         portfolioId: String,
         ticker: String,
     ): EffectiveClass {
-        val profile = profiles[ticker]
         val override = overrides.firstOrNull { it.portfolioId == portfolioId && it.ticker == ticker && it.list == list }?.value
-        return Classification.effective(lists[list], if (list == ClassList.SECTOR) profile?.sector else profile?.geography, override)
+        return Classification.effective(lists[list], Classification.textOn(list, profiles[ticker]), override, lists.rememberedOn(list))
     }
 
     /** [valueOf] on [list], for K3's breakdowns. */

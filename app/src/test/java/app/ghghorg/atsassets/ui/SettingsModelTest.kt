@@ -1,6 +1,8 @@
 package app.ghghorg.atsassets.ui
 
 import app.ghghorg.atsassets.core.AutoLock
+import app.ghghorg.atsassets.core.ClassList
+import app.ghghorg.atsassets.core.ClassLists
 import app.ghghorg.atsassets.core.Tab
 import app.ghghorg.atsassets.core.TabOrder
 import org.junit.Assert.assertEquals
@@ -76,5 +78,19 @@ class SettingsModelTest {
         val shown = Settings.of(AutoLock.EVERY_LEAVE, refusal = null, tabOrder = overallFirst).tabOrder
         assertEquals(listOf(Tab.OVERALL, Tab.MORE, Tab.CASH, Tab.PORTFOLIOS), shown)
         assertEquals(listOf(Tab.MORE, Tab.CASH, Tab.PORTFOLIOS, Tab.OVERALL), Settings.of(AutoLock.EVERY_LEAVE, refusal = null).tabOrder)
+    }
+
+    // 25: the Lists section (marker 6), Sectors then Geographies, each with its number of values.
+    @Test
+    fun theListsSection_showsEachListsNumberOfValues() {
+        val lists = ClassLists(sectors = listOf("Technology", "Diversified"), geographies = listOf("Global"))
+        assertEquals(
+            listOf(SettingsListRow(ClassList.SECTOR, 2), SettingsListRow(ClassList.GEOGRAPHY, 1)),
+            Settings.of(AutoLock.EVERY_LEAVE, refusal = null, classLists = lists).lists,
+        )
+        assertEquals(
+            listOf(SettingsListRow(ClassList.SECTOR, 0), SettingsListRow(ClassList.GEOGRAPHY, 0)),
+            Settings.of(AutoLock.EVERY_LEAVE, refusal = null).lists,
+        )
     }
 }

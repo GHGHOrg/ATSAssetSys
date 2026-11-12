@@ -83,12 +83,14 @@ interface RecordStore {
      * After a price refresh (K4 only, 16a), as one all-or-nothing batch: each of [fresh] becomes its ticker's latest
      * price, not stale; the stored price of each of [failed] is kept and marked stale (4.8). A ticker that never had a
      * price keeps none, and a ticker with no stored instrument is skipped. From 23a, each of [profiles] becomes its
-     * instrument's source profile, marking it asked, and each of its value texts not yet on its list is added (4.9).
+     * instrument's source profile, marking it asked, and each of its value texts that maps to no value is added (4.9).
+     * From 25 (decision 4), so is each such text of the [held] tickers' stored profiles.
      */
     suspend fun savePrices(
         fresh: Map<String, Price>,
         failed: Collection<String>,
         profiles: Map<String, SourceProfile> = emptyMap(),
+        held: Collection<String> = emptyList(),
     )
 
     /** The hidden holdings, each at 0 shares. Throws [UnreadableDataException] if stored data cannot be read or checked. */
@@ -125,10 +127,38 @@ interface RecordStore {
     suspend fun saveTabOrder(order: TabOrder)
 
     /**
-     * The sector and geography lists (spec 3, 4.9; 23a), each in the order its values were added; empty lists when
-     * none was saved. Throws [UnreadableDataException] for an unknown list or two values in a list that match (D7).
+     * The sector and geography lists (spec 3, 4.9; 23a), each in the order its values were added, with their remembered
+     * texts (25); empty lists when none was saved. Throws [UnreadableDataException] for an unknown list, two values in a
+     * list that match (D7), or a remembered text naming no value or matching a value or another text of its list.
      */
     suspend fun loadClassLists(): ClassLists
+
+    /** Adds [name] to [list] by K10's rule (4.9; 25), against the stored lists. Throws if K10 refuses it; nothing is saved then. */
+    suspend fun addListValue(
+        list: ClassList,
+        name: String,
+    )
+
+    /**
+     * Renames [from] on [list] to [to] by K10's rule (4.9; 25, decisions 1 and 2), against the stored lists and every
+     * stored instrument's source texts: its overrides and remembered texts follow, and the text K10 remembers is added.
+     * Throws if K10 refuses it; nothing is saved then.
+     */
+    suspend fun renameListValue(
+        list: ClassList,
+        from: String,
+        to: String,
+    )
+
+    /**
+     * Deletes [value] from [list] with its remembered texts and the overrides in [removed] (4.9; 25 decision 3: K10's
+     * [ListResult.Deleted.overridesRemoved]). Throws if another override names it; nothing is saved then.
+     */
+    suspend fun deleteListValue(
+        list: ClassList,
+        value: String,
+        removed: List<ClassOverride>,
+    )
 
     /**
      * Every holding's override (4.9; 24), each value as its list spells it. Throws [UnreadableDataException] for an

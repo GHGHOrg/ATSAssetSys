@@ -9,6 +9,7 @@ import app.ghghorg.atsassets.core.Fraction
 import app.ghghorg.atsassets.core.HiddenHolding
 import app.ghghorg.atsassets.core.Instrument
 import app.ghghorg.atsassets.core.Price
+import app.ghghorg.atsassets.core.RememberedText
 import app.ghghorg.atsassets.core.SellAllocation
 import app.ghghorg.atsassets.core.SourceProfile
 import app.ghghorg.atsassets.core.SplitRatio
@@ -226,6 +227,117 @@ class RowMappingTest {
         assertEquals(ClassOverrideRow("p1", "VT", "SECTOR", 1), ClassOverride("p1", "VT", ClassList.SECTOR, "TECHNOLOGY").toRow(listValues))
         assertEquals(null, ClassOverride("p1", "VT", ClassList.SECTOR, "US").toRow(listValues))
         assertEquals(null, ClassOverride("p1", "VT", ClassList.SECTOR, "Energy").toRow(listValues))
+    }
+
+    // 25: the lists with remembered texts; each text names its value's row, as an override does (24 decision 3).
+    private val namedValues =
+        listOf(
+            ListValueRow(seq = 1, list = "SECTOR", value = "Technology"),
+            ListValueRow(seq = 2, list = "GEOGRAPHY", value = "USA"),
+            ListValueRow(seq = 3, list = "SECTOR", value = "Diversified"),
+        )
+    private val texts =
+        listOf(
+            SourceTextRow(seq = 1, list = "SECTOR", valueSeq = 1, text = "Information Technology"),
+            SourceTextRow(seq = 2, list = "GEOGRAPHY", valueSeq = 2, text = "United States"),
+        )
+
+    @Test
+    fun textRows_readBackAsRememberedTexts_ofTheValuesTheyName() {
+        assertEquals(
+            ClassLists(
+                sectors = listOf("Technology", "Diversified"),
+                geographies = listOf("USA"),
+                remembered =
+                listOf(
+                    RememberedText(ClassList.SECTOR, "Information Technology", "Technology"),
+                    RememberedText(ClassList.GEOGRAPHY, "United States", "USA"),
+                ),
+            ),
+            namedValues.toClassLists(texts),
+        )
+    }
+
+    // 4.9: a text naming no row of its list, of an unknown list, matching another text or matching a value is unreadable.
+    @Test
+    fun aTextNamingNoValue_orMatchingATextOrAValue_isUnreadable() {
+        val bad =
+            listOf(
+                listOf(SourceTextRow(seq = 1, list = "SECTOR", valueSeq = 9, text = "Info Tech")),
+                listOf(SourceTextRow(seq = 1, list = "SECTOR", valueSeq = 2, text = "Info Tech")),
+                listOf(SourceTextRow(seq = 1, list = "INDUSTRY", valueSeq = 1, text = "Info Tech")),
+                listOf(
+                    SourceTextRow(seq = 1, list = "SECTOR", valueSeq = 1, text = "Info Tech"),
+                    SourceTextRow(seq = 2, list = "SECTOR", valueSeq = 3, text = "info  tech"),
+                ),
+                listOf(SourceTextRow(seq = 1, list = "SECTOR", valueSeq = 3, text = " DIVERSIFIED")),
+            )
+        for (rows in bad) {
+            val error = assertThrows(rows.toString(), UnreadableDataException::class.java) { namedValues.toClassLists(rows) }
+            assertFalse(rows.toString(), error.message!!.contains("Info"))
+            assertFalse(rows.toString(), error.message!!.contains("DIVERSIFIED"))
+        }
+    }
+
+    @Test
+    fun anAddedValue_isItsTrimmedName_onItsList_andARefusedOneThrows() {
+        assertEquals(ListValueRow(list = "SECTOR", value = "Energy"), addedRow(namedValues, texts, ClassList.SECTOR, " Energy "))
+        assertEquals(ListValueRow(list = "GEOGRAPHY", value = "Global"), addedRow(namedValues, texts, ClassList.GEOGRAPHY, "Global"))
+        for (name in listOf("technology", "information  technology", "  ")) {
+            assertThrows(name, IllegalArgumentException::class.java) { addedRow(namedValues, texts, ClassList.SECTOR, name) }
+        }
+    }
+
+    // Decision 1: the old name is remembered only when a stored source text matches it.
+    @Test
+    fun aRename_changesItsRow_andRemembersTheSourcesText() {
+        val profiles = listOf(SourceProfile(null, "usa"), SourceProfile("Information Technology", null))
+        assertEquals(
+            ListValueRow(seq = 2, list = "GEOGRAPHY", value = "America") to SourceTextRow(list = "GEOGRAPHY", valueSeq = 2, text = "USA"),
+            renamedRows(namedValues, texts, profiles, ClassList.GEOGRAPHY, "USA", "America"),
+        )
+        assertEquals(
+            ListValueRow(seq = 3, list = "SECTOR", value = "Multi") to null,
+            renamedRows(namedValues, texts, profiles, ClassList.SECTOR, "Diversified", " Multi "),
+        )
+    }
+
+    @Test
+    fun aRefusedRename_orOneOfAValueNotOnTheList_throws() {
+        val cases = listOf(ClassList.SECTOR to "Information Technology", ClassList.SECTOR to "technology", ClassList.GEOGRAPHY to "Multi")
+        for ((list, to) in cases) {
+            assertThrows("$list $to", IllegalArgumentException::class.java) {
+                renamedRows(namedValues, texts, emptyList(), list, "Diversified", to)
+            }
+        }
+    }
+
+    // Decision 3: a delete takes the overrides naming the value only when K10 listed them as of holdings no longer there.
+    @Test
+    fun aDelete_namesItsRow_andOnlyListedOverridesGoWithIt() {
+        assertEquals(3L, deletedSeq(namedValues, emptyList(), ClassList.SECTOR, "Diversified", emptyList()))
+        val gone = ClassOverride("p9", "GONE", ClassList.SECTOR, "Diversified")
+        val rows = listOf(ClassOverrideRow("p9", "GONE", "SECTOR", 3), ClassOverrideRow("p1", "AAPL", "SECTOR", 1))
+        assertEquals(3L, deletedSeq(namedValues, rows, ClassList.SECTOR, "Diversified", listOf(gone)))
+        val live = rows + ClassOverrideRow("p1", "VT", "SECTOR", 3)
+        assertThrows(IllegalArgumentException::class.java) { deletedSeq(namedValues, live, ClassList.SECTOR, "Diversified", listOf(gone)) }
+        assertThrows(IllegalArgumentException::class.java) { deletedSeq(namedValues, emptyList(), ClassList.GEOGRAPHY, "Diversified", emptyList()) }
+    }
+
+    // Decision 4: a price save adds the fresh profiles' texts, then the stored texts of held instruments.
+    @Test
+    fun aPriceSave_handsK10TheFreshProfiles_thenTheHeldInstrumentsStoredOnes() {
+        val fresh = SourceProfile("Technology", "US")
+        val msft = SourceProfile("Software", "US")
+        val stored =
+            listOf(
+                InstrumentRow("AAPL", "STOCK", true, sourceSector = "Old", sourceGeography = null, profileAsked = true),
+                InstrumentRow("MSFT", "STOCK", true, sourceSector = "Software", sourceGeography = "US", profileAsked = true),
+                InstrumentRow("VT", "ETF", true),
+                InstrumentRow("IBM", "STOCK", true, sourceSector = "Hardware", sourceGeography = "US", profileAsked = true),
+            )
+        assertEquals(listOf(fresh, msft), profilesToAdd(mapOf("AAPL" to fresh), stored, listOf("AAPL", "MSFT", "VT", "XOM")))
+        assertEquals(listOf(fresh), profilesToAdd(mapOf("AAPL" to fresh), stored, emptyList()))
     }
 
     private val laterBuy = buy.copy(id = "t2", date = LocalDate.of(2026, 2, 3), enteredSeq = 5L, quantity = BigDecimal("10"))

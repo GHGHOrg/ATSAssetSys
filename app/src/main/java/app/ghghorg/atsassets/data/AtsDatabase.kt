@@ -10,7 +10,9 @@ import androidx.room3.PrimaryKey
 import androidx.room3.Query
 import androidx.room3.RoomDatabase
 import androidx.room3.Transaction
+import androidx.room3.Update
 import androidx.room3.Upsert
+import app.ghghorg.atsassets.core.ClassList
 import app.ghghorg.atsassets.core.ClassOverride
 import app.ghghorg.atsassets.core.Classification
 import app.ghghorg.atsassets.core.SourceProfile
@@ -119,6 +121,19 @@ data class ClassOverrideRow(
     val ticker: String,
     val list: String,
     val valueSeq: Long,
+)
+
+/**
+ * A remembered source text (spec 3, 4.9; 25): on [list], a [app.ghghorg.atsassets.core.ClassList] by name, the source's
+ * [text] maps to the [ListValueRow] [valueSeq] names, so a rename of that value carries it over. A text naming no row of
+ * its list, two texts of a list that match (D7), or a text that matches a value of its list is unreadable.
+ */
+@Entity(tableName = "source_texts")
+data class SourceTextRow(
+    @PrimaryKey(autoGenerate = true) val seq: Long = 0,
+    val list: String,
+    val valueSeq: Long,
+    val text: String,
 )
 
 /**
@@ -331,24 +346,87 @@ interface InstrumentDao {
     @Insert
     suspend fun insertListValue(row: ListValueRow)
 
+    /** The remembered source texts (25), in the order remembered; also read by RoomRecordStore.loadClassLists. */
+    @Query("SELECT * FROM source_texts ORDER BY seq")
+    suspend fun loadSourceTexts(): List<SourceTextRow>
+
+    @Insert
+    suspend fun insertSourceText(row: SourceTextRow)
+
+    @Update
+    suspend fun updateListValue(row: ListValueRow): Int
+
+    @Query("DELETE FROM list_values WHERE seq = :seq")
+    suspend fun deleteListValueRow(seq: Long): Int
+
+    @Query("DELETE FROM source_texts WHERE valueSeq = :seq")
+    suspend fun deleteSourceTextsOf(seq: Long): Int
+
+    @Query("DELETE FROM class_overrides WHERE valueSeq = :seq")
+    suspend fun deleteOverridesOf(seq: Long): Int
+
     /**
      * One refresh's prices and profiles in one database transaction (K4 only, 16a and 23a): each fresh price as text
-     * and Unix seconds; each profile on its instrument, and its texts not yet on their list added (4.9, K10). A profile
-     * for a ticker with no stored instrument adds nothing.
+     * and Unix seconds; each profile on its instrument; then the texts of those profiles and (25 decision 4) of the
+     * [held] tickers' stored profiles that map to no value are added (4.9, K10). A profile for a ticker with no stored
+     * instrument adds nothing.
      */
     @Transaction
     suspend fun savePrices(
         fresh: Map<String, Pair<String, Long>>,
         failed: Collection<String>,
         profiles: Map<String, SourceProfile>,
+        held: Collection<String>,
     ) {
         for ((ticker, price) in fresh) setPrice(ticker, price.first, price.second)
         for (ticker in failed) markStale(ticker)
-        if (profiles.isEmpty()) return
+        if (profiles.isEmpty() && held.isEmpty()) return
         val saved = profiles.filter { (ticker, profile) -> setProfile(ticker, profile.sector, profile.geography) > 0 }
-        for ((list, value) in Classification.additions(loadListValues().toClassLists(), saved.values)) {
+        val lists = loadListValues().toClassLists(loadSourceTexts())
+        for ((list, value) in Classification.additions(lists, profilesToAdd(saved, loadAll(), held))) {
             insertListValue(ListValueRow(list = list.name, value = value))
         }
+    }
+
+    /** Adds [name] to [list] in one database transaction (25), by K10's rule against the stored lists; throws if refused. */
+    @Transaction
+    suspend fun addListValue(
+        list: ClassList,
+        name: String,
+    ) {
+        insertListValue(addedRow(loadListValues(), loadSourceTexts(), list, name))
+    }
+
+    /**
+     * Renames [from] on [list] to [to] in one database transaction (25): its row changes, so its overrides and texts
+     * follow by seq, and the text K10 remembers (decision 1) is added. Throws if K10 refuses it.
+     */
+    @Transaction
+    suspend fun renameListValue(
+        list: ClassList,
+        from: String,
+        to: String,
+    ) {
+        val profiles = loadAll().mapNotNull { it.toProfile() }
+        val (row, text) = renamedRows(loadListValues(), loadSourceTexts(), profiles, list, from, to)
+        if (updateListValue(row) != 1) throw IllegalStateException("The value was not renamed.")
+        text?.let { insertSourceText(it) }
+    }
+
+    /**
+     * Deletes [value] from [list] in one database transaction (25): its texts and the overrides naming it, each of them
+     * one of [removed] (decision 3), then its row. Throws if another override names it.
+     */
+    @Transaction
+    suspend fun deleteListValue(
+        list: ClassList,
+        value: String,
+        removed: List<ClassOverride>,
+    ) {
+        val seq = deletedSeq(loadListValues(), loadOverrides(), list, value, removed)
+        deleteOverridesOf(seq)
+        deleteSourceTextsOf(seq)
+        deleteListValueRow(seq)
     }
 
     @Query("SELECT * FROM instruments ORDER BY ticker")
@@ -403,7 +481,8 @@ interface SettingsDao {
  * (11) the sell_allocations table, version 5 (12) the two split columns of transactions, version 6 (15) the
  * hidden_holdings table, version 7 (16a) the three price columns of instruments, version 8 (20) the settings table,
  * version 9 (22) its tab order column, version 10 (23a) the three profile columns of instruments and the list_values
- * table, version 11 (24) the class_overrides table; Room generates each step out of the schemas in app/schemas.
+ * table, version 11 (24) the class_overrides table, version 12 (25) the source_texts table; Room generates each step out
+ * of the schemas in app/schemas.
  */
 @Database(
     entities = [
@@ -416,8 +495,9 @@ interface SettingsDao {
         SettingsRow::class,
         ListValueRow::class,
         ClassOverrideRow::class,
+        SourceTextRow::class,
     ],
-    version = 11,
+    version = 12,
     autoMigrations = [
         AutoMigration(from = 1, to = 2),
         AutoMigration(from = 2, to = 3),
@@ -429,6 +509,7 @@ interface SettingsDao {
         AutoMigration(from = 8, to = 9),
         AutoMigration(from = 9, to = 10),
         AutoMigration(from = 10, to = 11),
+        AutoMigration(from = 11, to = 12),
     ],
 )
 abstract class AtsDatabase : RoomDatabase() {

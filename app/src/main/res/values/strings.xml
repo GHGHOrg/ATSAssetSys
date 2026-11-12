@@ -482,7 +482,45 @@
     <string name="class_clear_sector_spoken">Clear sector override</string>
     <string name="class_clear_geography_spoken">Clear geography override</string>
     <string name="class_picker_title">%1$s, %2$s</string>
-    <string name="class_picker_note">Choose from the list.</string>
-    <string name="class_picker_no_sectors">No sectors yet.</string>
-    <string name="class_picker_no_geographies">No geographies yet.</string>
+    <!-- Iteration 25 (24 decision 1): the picker's lines now point to Settings, Lists (wireframe 10f frame H, markers 16 and 17). -->
+    <string name="class_picker_note">Choose from the list. To add a value, go to Settings -> Lists.</string>
+    <string name="class_picker_no_sectors">No sectors yet. Add one in Settings -> Lists.</string>
+    <string name="class_picker_no_geographies">No geographies yet. Add one in Settings -> Lists.</string>
+    <!-- Iteration 25: Settings, Lists and the list screens (proposed, 25 file section 12; approval on the phone in step 7). A failed add or rename uses save_failed. -->
+    <string name="settings_lists">Lists</string>
+    <string name="settings_sectors">Sectors</string>
+    <string name="settings_geographies">Geographies</string>
+    <plurals name="settings_list_values">
+        <item quantity="one">%d value</item>
+        <item quantity="other">%d values</item>
+    </plurals>
+    <string name="settings_list_spoken">%1$s, %2$s</string>
+    <string name="list_no_sectors">No sectors yet.</string>
+    <string name="list_no_geographies">No geographies yet.</string>
+    <plurals name="list_used_by">
+        <item quantity="one">Used by %d holding.</item>
+        <item quantity="other">Used by %d holdings.</item>
+    </plurals>
+    <string name="list_also_matches">Also matches: %1$s</string>
+    <string name="list_row_spoken">%1$s, %2$s</string>
+    <string name="list_row_also_spoken">%1$s, %2$s, also matches %3$s</string>
+    <string name="list_rename">Rename</string>
+    <string name="list_delete">Delete</string>
+    <string name="list_rename_spoken">Rename %1$s</string>
+    <string name="list_delete_spoken">Delete %1$s</string>
+    <string name="list_add_value">Add value</string>
+    <string name="list_rename_title">Rename %1$s</string>
+    <string name="list_name_label">Name</string>
+    <string name="list_name_blank">Not saved. Type a name.</string>
+    <string name="list_name_duplicate">Not saved. A value named \"%1$s\" already exists. Case and spaces are ignored.</string>
+    <string name="list_name_remembered">Not saved. \"%1$s\" is already a remembered source text for %2$s. Case and spaces are ignored.</string>
+    <plurals name="list_in_use">
+        <item quantity="one">Not deleted. %1$s is used by %2$d holding (hidden holdings count). Change that holding first.</item>
+        <item quantity="other">Not deleted. %1$s is used by %2$d holdings (hidden holdings count). Change those holdings first.</item>
+    </plurals>
+    <string name="list_not_deleted">Not deleted. Nothing was changed. Try again.</string>
+    <string name="list_added">Added %1$s.</string>
+    <string name="list_renamed">Renamed %1$s to %2$s.</string>
+    <string name="list_renamed_remembering">Renamed. Source text \"%1$s\" still maps to %2$s.</string>
+    <string name="list_deleted">Deleted %1$s.</string>
 </resources>

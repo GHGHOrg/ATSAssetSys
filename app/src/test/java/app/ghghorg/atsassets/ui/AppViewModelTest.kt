@@ -12,6 +12,8 @@ import app.ghghorg.atsassets.core.ClassOverride
 import app.ghghorg.atsassets.core.Classification
 import app.ghghorg.atsassets.core.HiddenHolding
 import app.ghghorg.atsassets.core.Instrument
+import app.ghghorg.atsassets.core.ListResult
+import app.ghghorg.atsassets.core.ListUsers
 import app.ghghorg.atsassets.core.Lookup
 import app.ghghorg.atsassets.core.Portfolio
 import app.ghghorg.atsassets.core.PortfolioRefusal
@@ -1831,17 +1833,20 @@ internal class FakeStore(
     // price refresh at start (open item 54).
     var pricesSaveError: Throwable? = null
 
-    // 23a: the profiles each save was given, as RoomRecordStore saves them.
+    // 23a: the profiles each save was given, as RoomRecordStore saves them; 25: the held tickers each save was given.
     val savedProfiles = mutableListOf<Map<String, SourceProfile>>()
+    val savedHeld = mutableListOf<Collection<String>>()
 
     override suspend fun savePrices(
         fresh: Map<String, Price>,
         failed: Collection<String>,
         profiles: Map<String, SourceProfile>,
+        held: Collection<String>,
     ) {
         pricesSaveError?.let { throw it }
         savedPrices.add(fresh to failed)
         savedProfiles.add(profiles)
+        savedHeld.add(held)
         val saved = profiles.filterKeys { ticker -> storedInstruments.any { it.ticker == ticker } }
         storedInstruments =
             storedInstruments.map { instrument ->
@@ -1853,7 +1858,12 @@ internal class FakeStore(
                     }
                 saved[instrument.ticker]?.let { priced.copy(profile = it) } ?: priced
             }
-        storedClassLists = Classification.extended(storedClassLists, saved.values)
+        // 25 decision 4: then the stored profiles of the held tickers, as RoomRecordStore's profilesToAdd.
+        val again =
+            held.distinct().filter { it !in saved }.mapNotNull { ticker ->
+                storedInstruments.firstOrNull { it.ticker == ticker }?.profile
+            }
+        storedClassLists = Classification.extended(storedClassLists, saved.values + again)
     }
 
     var storedHidden: List<HiddenHolding> = emptyList()
@@ -1917,6 +1927,53 @@ internal class FakeStore(
     override suspend fun loadClassLists(): ClassLists {
         loadError?.let { throw it }
         return storedClassLists
+    }
+
+    // 25: add, rename and delete by K10's rule, as RoomRecordStore's DAO does; listSaveError fails one of them alone.
+    var listSaveError: Exception? = null
+
+    override suspend fun addListValue(
+        list: ClassList,
+        name: String,
+    ) {
+        gate?.await()
+        listSaveError?.let { throw it }
+        val added =
+            Classification.add(storedClassLists, list, name) as? ListResult.Added
+                ?: throw IllegalArgumentException("The value was refused.")
+        storedClassLists = added.lists
+    }
+
+    override suspend fun renameListValue(
+        list: ClassList,
+        from: String,
+        to: String,
+    ) {
+        gate?.await()
+        listSaveError?.let { throw it }
+        val profiles = storedInstruments.mapNotNull { it.profile }
+        val renamed =
+            Classification.rename(storedClassLists, list, from, to, profiles) as? ListResult.Renamed
+                ?: throw IllegalArgumentException("The new name was refused.")
+        storedClassLists = renamed.lists
+        storedOverrides = storedOverrides.map { if (it.list == list && it.value == renamed.from) it.copy(value = renamed.to) else it }
+    }
+
+    override suspend fun deleteListValue(
+        list: ClassList,
+        value: String,
+        removed: List<ClassOverride>,
+    ) {
+        gate?.await()
+        listSaveError?.let { throw it }
+        val naming = storedOverrides.filter { it.list == list && it.value == value }
+        require(naming.all { o -> removed.any { it.sameHolding(o) } }) { "The value is in use." }
+        val users = ListUsers(overrides = storedOverrides)
+        val deleted =
+            Classification.delete(storedClassLists, list, value, users) as? ListResult.Deleted
+                ?: throw IllegalArgumentException("The value was refused.")
+        storedClassLists = deleted.lists
+        storedOverrides = storedOverrides - naming.toSet()
     }
 
     // 24: the holdings' overrides, each value on its list as RoomRecordStore requires; overrideSaveError fails a save or a

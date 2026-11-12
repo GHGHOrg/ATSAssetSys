@@ -182,6 +182,19 @@ internal object KeptFields {
         form: CashFilterForm,
     ): CashListModel = CashList.of(entries, transactions, portfolios, form)
 
+    /**
+     * Every holding as (portfolio id, ticker) as of the latest transaction date or today, whichever is later (a buy dated
+     * after today is a holding too), hidden and sold-out ones included: the holdings K10 counts on the list screen (4.9;
+     * 25, Deploy finding 1).
+     */
+    fun listHoldings(
+        transactions: List<Transaction>,
+        today: LocalDate,
+    ): List<Pair<String, String>> {
+        val last = transactions.maxOfOrNull { it.date }?.takeIf { it.isAfter(today) } ?: today
+        return Holdings.holdings(transactions, last).map { it.portfolioId to it.ticker }
+    }
+
     // The transactions a sell is entered against: with the replaced sell's reversal drafted at its date (14a).
     private fun sellTransactions(
         entries: List<CashEntry>,
@@ -300,6 +313,7 @@ internal fun AppState.refreshed(): AppState {
         } else {
             cashList
         },
+        listHoldings = if (holdingsChanged) KeptFields.listHoldings(transactions, today) else listHoldings,
         keptFrom = now,
     )
 }

@@ -181,6 +181,20 @@ private fun BarContent(
             ),
         )
 
+        Screen.CLASS_LIST -> ClassListScreen(
+            state = state,
+            actions =
+            ClassListActions(
+                onBack = viewModel::closeClassList,
+                onAdd = viewModel::openAddClassValue,
+                onRename = viewModel::openRenameClassValue,
+                onDelete = viewModel::deleteClassValue,
+                onNameChange = viewModel::typeClassValueName,
+                onNameSave = viewModel::saveClassValueName,
+                onNameCancel = viewModel::cancelClassValueName,
+            ),
+        )
+
         Screen.HIDDEN_HOLDINGS -> HiddenHoldingsScreen(
             state = state,
             actions =
@@ -302,6 +316,7 @@ private fun BarContent(
                 onAllowScreenshots = screenshots.onAllow,
                 onTurnOffScreenshots = screenshots.onTurnOff,
                 onOpenTabOrder = viewModel::openTabOrder,
+                onOpenList = viewModel::openClassList,
             ),
         )
 
