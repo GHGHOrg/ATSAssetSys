@@ -1,6 +1,6 @@
 # plan/iterations/25-manage-lists.md
 
-Stage: Build. Status: approved 2026-11-12; decisions 1 to 4 settled the same day (your A each; section 11); built, phone check passed 2026-11-12 (13.2); pull request #174 green, reviewed, one finding fixed and two recorded (13.3).
+Stage: Build. Status: approved 2026-11-12; decisions 1 to 4 settled the same day (your A each; section 11). Done: built 2026-11-12 (steps 1 to 7 and one Deploy fix; section 14); database version 12; phone checks 2026-11-12 all yes, wording approved with the picker's lines changed (section 13.2); the screen tests 81 of 81 on pull request #174; reviewed, one finding fixed and two recorded (section 13.3); pull request #174 merged as aee2772, main green (section 13.4).
 Source: plan.md section 4 (row 25), spec 3 (Lists, Settings), 4.9 (lists, remembered source texts, rename, delete, matching), section 6 ("More and Settings entry": Settings, Lists, the list screen, the Edit picker's pointer line), section 14 (K10, rule 2), AC-22, AC-58, AC-61, AC-62; wireframe 10f (frame B marker 6, frames F, G and H, markers 12 to 17); iterations 23a, 23b and 24. "My reading" is an interpretation, not a test.
 
 ## 1. Outcome
@@ -105,6 +105,11 @@ To be shown on the phone in step 7 (wireframe 10f's placeholders as the first pr
 - Finding 2 (low, recorded): the store's delete re-checks the overrides but not the source texts; K10's full check runs on the state's copy. A refresh saving a new profile in the instant before the state takes it in could let a delete pass while that holding's source maps to the value; decision 4 adds it back at the next price save.
 - Finding 3 (low, recorded): after an add, rename or delete, the state takes the lists K10 worked out before the store call; a refresh finishing during the write would lose its additions from the state (not the database) until the next refresh or start.
 - For 31: the backup file must carry the remembered texts (spec 8, `source_text`).
+- The Deploy fix at 9a3a249 (pushed on your word, this once): CI (4m 3s, "Scale test retries": none), CodeQL, Analyze (actions) and the screen tests (81 of 81, 10m 24s) green at the first attempt (gh, read only).
+- Dropped by you the same day: a confirmation before a list value is deleted (it would have been change request 4); nothing was written for it.
+
+### 13.4 The merge (2026-11-12)
+- Pull request #174 merged by you as aee2772 (06:05 UTC), 8 commits (steps 1 to 7 and the Deploy fix). On main at aee2772: CI (4m 21s, "Scale test retries": none), CodeQL and the screen tests (81 of 81, 8m 26s) green at the first attempt (gh, read only).
 
 ## 14. Departures from the plan
 1. Step 2 (2026-11-12): RecordStore's add, rename and delete and the remembered texts' load move from step 2 to step 3. A new method in core's interface would leave RoomRecordStore and the test stores unbuilt until step 3.
