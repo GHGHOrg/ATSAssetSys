@@ -605,6 +605,9 @@ data class AppState(
     val transactionLot: Lot? = KeptFields.transactionLot(transactions, transactionId, today),
     // The Cash list as the screen draws it (view 7; 15d).
     val cashList: CashListModel = KeptFields.cashList(entries, transactions, portfolios, cashFilterForm),
+    // 25 (Deploy finding 1): every holding as (portfolio id, ticker) as of the latest transaction date or today, whichever
+    // is later, hidden and sold-out ones included, for K10's counts on the list screen.
+    val listHoldings: List<Pair<String, String>> = KeptFields.listHoldings(transactions, today),
     // The inputs the kept fields above were worked out from.
     val keptFrom: KeptInputs =
         KeptInputs(
@@ -744,15 +747,11 @@ data class AppState(
 
     /**
      * What K10 needs to count a value's holdings (4.9; 25): every holding as of the latest transaction date or today,
-     * whichever is later (a buy dated after today is a holding too), hidden ones included, whatever its shares; each
-     * instrument's profile; every override.
+     * whichever is later (a buy dated after today is a holding too), hidden ones included, whatever its shares, kept in
+     * [listHoldings] (Deploy finding 1); each instrument's profile; every override.
      */
     internal val listUsers: ListUsers
-        get() {
-            val last = transactions.maxOfOrNull { it.date }?.takeIf { it.isAfter(today) } ?: today
-            val held = Holdings.holdings(transactions, last).map { it.portfolioId to it.ticker }
-            return ListUsers(held, profiles, overrides)
-        }
+        get() = ListUsers(listHoldings, profiles, overrides)
 
     // Each instrument's source profile by ticker (23a), for the effective values and the counts.
     private val profiles: Map<String, SourceProfile>

@@ -3,6 +3,7 @@ package app.ghghorg.atsassets.ui
 import app.ghghorg.atsassets.core.AssetType
 import app.ghghorg.atsassets.core.CashEntry
 import app.ghghorg.atsassets.core.CashType
+import app.ghghorg.atsassets.core.ClassList
 import app.ghghorg.atsassets.core.Fraction
 import app.ghghorg.atsassets.core.HiddenHolding
 import app.ghghorg.atsassets.core.Holdings
@@ -64,6 +65,9 @@ internal fun assertKeptFieldsFresh(
     )
     assertEquals("$case: transaction lot", KeptFields.transactionLot(transactions, transactionId, today), transactionLot)
     assertEquals("$case: cash list", CashList.of(entries, transactions, portfolios, cashFilterForm), cashList)
+    // 25 (Deploy finding 1): as of the latest transaction date or today, whichever is later.
+    val last = transactions.maxOfOrNull { it.date }?.takeIf { it.isAfter(today) } ?: today
+    assertEquals("$case: list holdings", Holdings.holdings(transactions, last).map { it.portfolioId to it.ticker }, listHoldings)
 }
 
 // 15c: the kept fields of AppState follow their inputs, and a field whose inputs did not change stays the same object.
@@ -195,6 +199,13 @@ class KeptFieldsTest {
                 { it.cashList },
             ),
             Case("cash filter", base, { it.copy(cashFilterForm = CashFilterForm(type = CashType.DEPOSIT)) }, { it.cashList }),
+            // 25 (Deploy finding 1): a buy dated after today is a holding K10 counts.
+            Case(
+                "transactions after today",
+                base,
+                { it.copy(transactions = it.transactions + bought("f1", "NVDA", "2026-11-30", "1", 10_000L, 9L)) },
+                { it.listHoldings },
+            ),
             // 16a: a refresh changes the instruments' prices.
             Case(
                 "instruments",
@@ -240,6 +251,27 @@ class KeptFieldsTest {
         assertSame(base.holdingLots, typed.holdingLots)
         assertSame(base.holdings, typed.holdings)
         assertSame(base.cashList, typed.cashList)
+        assertSame(base.listHoldings, typed.listHoldings)
+    }
+
+    // 25 (Deploy finding 1): typing a list value's name runs no ledger.
+    @Test
+    fun typingInTheNameLayer_leavesEveryKeptFieldTheSameObject() {
+        val listed = base.copy(screen = Screen.CLASS_LIST, classListShown = ClassList.SECTOR).refreshed()
+        val typed = listed.copy(classValueEdit = ClassValueEdit(renaming = null, text = "Ener")).refreshed()
+        assertSame(listed.keptFrom, typed.keptFrom)
+        assertSame(listed.listHoldings, typed.listHoldings)
+        assertSame(listed.holdings, typed.holdings)
+    }
+
+    // 25 (Deploy finding 1): the sold-out KO counts, and so does a buy dated after today.
+    @Test
+    fun listHoldings_holdSoldOutHoldingsAndBuysAfterToday() {
+        val later = bought("f1", "NVDA", "2026-11-30", "1", 10_000L, 9L)
+        assertEquals(
+            listOf("p1" to "AAPL", "p1" to "KO", "p1" to "MSFT", "p1" to "NVDA"),
+            KeptFields.listHoldings(transactions + later, LocalDate.of(2026, 10, 26)),
+        )
     }
 
     @Test
