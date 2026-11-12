@@ -101,6 +101,7 @@ class TickerVerifierTest {
             fresh: Map<String, Price>,
             failed: Collection<String>,
             profiles: Map<String, SourceProfile>,
+            held: Collection<String>,
         ) = error("not used")
 
         override suspend fun loadHidden(): List<HiddenHolding> = error("not used")
@@ -118,6 +119,23 @@ class TickerVerifierTest {
         override suspend fun saveTabOrder(order: TabOrder) = error("not used")
 
         override suspend fun loadClassLists(): ClassLists = error("not used")
+
+        override suspend fun addListValue(
+            list: ClassList,
+            name: String,
+        ) = error("not used")
+
+        override suspend fun renameListValue(
+            list: ClassList,
+            from: String,
+            to: String,
+        ) = error("not used")
+
+        override suspend fun deleteListValue(
+            list: ClassList,
+            value: String,
+            removed: List<ClassOverride>,
+        ) = error("not used")
 
         override suspend fun loadOverrides(): List<ClassOverride> = error("not used")
 

@@ -12,9 +12,12 @@ import app.ghghorg.atsassets.core.Fraction
 import app.ghghorg.atsassets.core.HiddenHolding
 import app.ghghorg.atsassets.core.Hiding
 import app.ghghorg.atsassets.core.Instrument
+import app.ghghorg.atsassets.core.ListResult
 import app.ghghorg.atsassets.core.Portfolio
+import app.ghghorg.atsassets.core.Portfolios
 import app.ghghorg.atsassets.core.Price
 import app.ghghorg.atsassets.core.RecordStore
+import app.ghghorg.atsassets.core.RememberedText
 import app.ghghorg.atsassets.core.SellAllocation
 import app.ghghorg.atsassets.core.SourceProfile
 import app.ghghorg.atsassets.core.SplitRatio
@@ -281,6 +284,7 @@ class RoomRecordStore(
         fresh: Map<String, Price>,
         failed: Collection<String>,
         profiles: Map<String, SourceProfile>,
+        held: Collection<String>,
     ) {
         val dao = withContext(Dispatchers.IO) {
             try {
@@ -293,7 +297,7 @@ class RoomRecordStore(
                 throw UnreadableDataException("The stored data could not be opened.", e)
             }
         }
-        dao.savePrices(fresh.mapValues { (_, price) -> price.perShare.toPlainString() to price.time.epochSecond }, failed, profiles)
+        dao.savePrices(fresh.mapValues { (_, price) -> price.perShare.toPlainString() to price.time.epochSecond }, failed, profiles, held)
     }
 
     override suspend fun loadHidden(): List<HiddenHolding> = loadHidden(loadTransactions())
@@ -375,7 +379,8 @@ class RoomRecordStore(
 
     override suspend fun loadClassLists(): ClassLists = withContext(Dispatchers.IO) {
         try {
-            database.instrumentDao().loadListValues().toClassLists()
+            val dao = database.instrumentDao()
+            dao.loadListValues().toClassLists(dao.loadSourceTexts())
         } catch (e: CancellationException) {
             throw e
         } catch (e: UnreadableDataException) {
@@ -383,6 +388,29 @@ class RoomRecordStore(
         } catch (e: Exception) {
             throw UnreadableDataException("The stored data could not be read.", e)
         }
+    }
+
+    override suspend fun addListValue(
+        list: ClassList,
+        name: String,
+    ) {
+        instrumentDao().addListValue(list, name)
+    }
+
+    override suspend fun renameListValue(
+        list: ClassList,
+        from: String,
+        to: String,
+    ) {
+        instrumentDao().renameListValue(list, from, to)
+    }
+
+    override suspend fun deleteListValue(
+        list: ClassList,
+        value: String,
+        removed: List<ClassOverride>,
+    ) {
+        instrumentDao().deleteListValue(list, value, removed)
     }
 
     override suspend fun loadOverrides(): List<ClassOverride> = withContext(Dispatchers.IO) {
@@ -597,7 +625,7 @@ internal fun InstrumentRow.toInstrument(): Instrument {
  * The source profile (23a, decision 3): none until asked; once asked, its two texts, each possibly null. Throws
  * [UnreadableDataException] for a text without the asked mark. The message names no value (spec 9).
  */
-private fun InstrumentRow.toProfile(): SourceProfile? {
+internal fun InstrumentRow.toProfile(): SourceProfile? {
     if (profileAsked) return SourceProfile(sourceSector, sourceGeography)
     if (sourceSector != null || sourceGeography != null) throw UnreadableDataException("A stored profile is damaged.")
     return null
@@ -617,10 +645,12 @@ internal fun InstrumentRow.withStoredOf(stored: InstrumentRow?): InstrumentRow =
 )
 
 /**
- * The two lists from their rows, each in the order added (23a). Throws [UnreadableDataException] for an unknown list
- * or two values in one list that match (D7); nothing is guessed. The messages name no value (spec 9).
+ * The two lists from their rows, each in the order added (23a), with their remembered [texts] in the order remembered
+ * (25). Throws [UnreadableDataException] for an unknown list, two values in one list that match (D7), or a text naming
+ * no value of its list, matching another text of its list or matching a value of its list (4.9); nothing is guessed.
+ * The messages name no value (spec 9).
  */
-internal fun List<ListValueRow>.toClassLists(): ClassLists {
+internal fun List<ListValueRow>.toClassLists(texts: List<SourceTextRow> = emptyList()): ClassLists {
     val byList = ClassList.entries.associateWith { mutableListOf<String>() }
     for (row in sortedBy { it.seq }) {
         val list = ClassList.entries.firstOrNull { it.name == row.list } ?: throw UnreadableDataException("A stored list could not be read.")
@@ -628,7 +658,94 @@ internal fun List<ListValueRow>.toClassLists(): ClassLists {
         if (Classification.valueFor(values, row.value) != null) throw UnreadableDataException("A stored list holds a value twice.")
         values += row.value
     }
-    return ClassLists(sectors = byList.getValue(ClassList.SECTOR), geographies = byList.getValue(ClassList.GEOGRAPHY))
+    val remembered = mutableListOf<RememberedText>()
+    for (row in texts.sortedBy { it.seq }) {
+        val list =
+            ClassList.entries.firstOrNull { it.name == row.list }
+                ?: throw UnreadableDataException("A stored source text could not be read.")
+        val value =
+            firstOrNull { it.seq == row.valueSeq && it.list == row.list }
+                ?: throw UnreadableDataException("A stored source text names no value.")
+        val key = Portfolios.nameKey(row.text)
+        val clash = byList.getValue(list).any { Portfolios.nameKey(it) == key } ||
+            remembered.any { it.list == list && Portfolios.nameKey(it.text) == key }
+        if (clash) throw UnreadableDataException("A stored source text matches a value or another text.")
+        remembered += RememberedText(list, row.text, value.value)
+    }
+    return ClassLists(
+        sectors = byList.getValue(ClassList.SECTOR),
+        geographies = byList.getValue(ClassList.GEOGRAPHY),
+        remembered = remembered,
+    )
+}
+
+/** The row a new value takes (25): [name] added to [list] by K10's rule (4.9). Throws when K10 refuses it. */
+internal fun addedRow(
+    values: List<ListValueRow>,
+    texts: List<SourceTextRow>,
+    list: ClassList,
+    name: String,
+): ListValueRow {
+    val added =
+        Classification.add(values.toClassLists(texts), list, name) as? ListResult.Added
+            ?: throw IllegalArgumentException("The value was refused.")
+    return ListValueRow(list = list.name, value = added.value)
+}
+
+/**
+ * The rows a rename writes (25): [from]'s row with its new name, and the remembered text K10 adds (decision 1), or null.
+ * [profiles] are every stored instrument's source texts. Throws when K10 refuses it or [from] is not on [list].
+ */
+internal fun renamedRows(
+    values: List<ListValueRow>,
+    texts: List<SourceTextRow>,
+    profiles: Collection<SourceProfile>,
+    list: ClassList,
+    from: String,
+    to: String,
+): Pair<ListValueRow, SourceTextRow?> {
+    val renamed =
+        Classification.rename(values.toClassLists(texts), list, from, to, profiles) as? ListResult.Renamed
+            ?: throw IllegalArgumentException("The new name was refused.")
+    val row = values.first { it.list == list.name && it.value == renamed.from }
+    return row.copy(value = renamed.to) to renamed.remembered?.let { SourceTextRow(list = list.name, valueSeq = row.seq, text = it) }
+}
+
+/**
+ * The seq of [value]'s row on [list], to delete with its texts and the overrides naming it (25). Throws when [value] is
+ * not on [list], or when an override naming it is not one of [removed] (decision 3: only overrides of holdings no
+ * longer there go with it; K10 refused the delete otherwise).
+ */
+internal fun deletedSeq(
+    values: List<ListValueRow>,
+    overrides: List<ClassOverrideRow>,
+    list: ClassList,
+    value: String,
+    removed: List<ClassOverride>,
+): Long {
+    val row =
+        values.firstOrNull { it.list == list.name && it.value == value }
+            ?: throw IllegalArgumentException("The value is not on its list.")
+    val naming = overrides.filter { it.list == list.name && it.valueSeq == row.seq }
+    val listed = naming.all { o -> removed.any { it.list == list && it.portfolioId == o.portfolioId && it.ticker == o.ticker } }
+    if (!listed) throw IllegalArgumentException("The value is in use.")
+    return row.seq
+}
+
+/**
+ * The profiles a price save hands to K10's additions (4.9; 25 decision 4): the fresh [saved] ones, then the stored
+ * profile of each [held] ticker not among them, so a held instrument's text that maps to no value is added again.
+ */
+internal fun profilesToAdd(
+    saved: Map<String, SourceProfile>,
+    stored: List<InstrumentRow>,
+    held: Collection<String>,
+): List<SourceProfile> {
+    val again =
+        held.distinct().filter { it !in saved }.mapNotNull { ticker ->
+            stored.firstOrNull { it.ticker == ticker }?.toProfile()
+        }
+    return saved.values.toList() + again
 }
 
 /**
