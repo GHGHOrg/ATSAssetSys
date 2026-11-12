@@ -1,6 +1,6 @@
 # plan/iterations/26-realized-gains.md
 
-Stage: Build. Status: approved 2026-11-12; decisions 1 to 3 settled the same day (your A each; section 11). Built 2026-11-12 (steps 1 to 6; section 13.1); no database change; phone checks 2026-11-12 all yes, wording approved as shown (section 13.2); the pull request is next.
+Stage: Build. Status: approved 2026-11-12; decisions 1 to 3 settled the same day (your A each; section 11). Built 2026-11-12 (steps 1 to 6; section 13.1); no database change; phone checks 2026-11-12 all yes, wording approved as shown (section 13.2); pull request #176: CI and the screen tests (85 of 85) green; reviewed, one finding fixed and three recorded (section 13.3).
 Source: plan.md section 4 (row 26), spec section 6 (view 5; "More"), 4.4 (sells and lots), 4.6 (reversal), 4.10 (rounding, largest remainder), section 14 (K3, K9), C10, AC-11, AC-23, AC-42 (its Realized gains sentence), AC-47, AC-61; wireframe 05 (frames A to C, markers 1 to 7); spec/example-backup-expected.md (its Realized gains rows); iterations 11, 13a, 13b, 14a, 15 and 15d. "My reading" is an interpretation, not a test.
 
 ## 1. Outcome
@@ -93,6 +93,15 @@ To be shown on the phone in step 6 (wireframe 05's placeholders as the first pro
 - Checks 12 to 16 passed: colors and signs (zero uncolored); largest font and landscape; TalkBack; light and dark; offline.
 - Check 17, logcat (your yes; `adb logcat --uid 10454`, 17:45:45 to 17:48:13, 125 lines, during a repeat of checks 2 to 10): no amounts, tickers, quantities, notes or portfolio names, and none of the words realized, gain, proceeds, ticker or portfolio. Seen: Back gesture callbacks (57), the keyboard (35) and insets (19 and 2); the date fields' own selection pop-ups as "Pop-Up Window" surfaces (8; not app layers, no cover-screen loop); one touch dropped during a Back gesture (coordinates only); AssistStructure sizes only. The 52 lines matching "$" were class names, not figures.
 - Wording (D9): approved as shown (section 12).
+
+### 13.3 Deploy review (2026-11-12, pull request #176 at 69c085e)
+- On the pull request, each at its first attempt: CI (3m 8s; "Scale test retries": none), CodeQL and the screen tests (85 of 85) green.
+- Reviewed against sections 2, 9 and 11 and spec view 5 (bugs, security, compliance). No High finding.
+- Finding 1 (Medium), fixed on your A: K3's report is a kept field, worked out on every write and at app start, and HoldingsScaleTest did not time it. Now call "10 realizedGains" (all dates), with limits at 3,000 transactions of 40 ms (spread) and 45 ms (one holding), about 10 times its first measurement on this PC (3.681 and 4.253 ms, run alone), rounded up, as 15c decision 2; the ratio bound 8, as every linear call. It grows linearly (2.9 from 1,000 to 3,000), below `holdings` (6.116 and 7.503 ms). In the full run that followed: 6.489 and 12.536 ms, none measured again; 1,089 tests (the call runs inside the existing test).
+- Finding 2 (Low), recorded: `Sells.pieces` stops at a sell that names a missing lot (`getValue`). Before, only that sell's own screen met it; now the report reads every sell on each refresh, so such a record would stop the app at start. K1 cannot make one, and there is no restore until 31: 31's checks of a backup file should refuse it.
+- Finding 3 (Low, compliance), recorded: view 5 opens a sale "in that portfolio's Transaction history"; until 27 it opens the sell's own screen (decision 1). 27 changes where it opens.
+- Finding 4 (Low), no change: a holding hidden by the dates keeps its expanded mark and shows expanded when the dates bring it back; my reading of decision 2 ("the expanded rows last while you are on Realized gains").
+- Checked and found right: a reversed sell left out before any work on it; the totals rounded once, half away from zero, and each holding's sales split by `partsInCents` against the same rounded total; a sell carries no quantity ratio (only a buy does, CR1), so its quantity matches its own screen; K3 writes nothing; no logging in the new code, and logcat clean (13.2, check 17); no new window or layer; More's order as view 5.
 
 ## 14. Departures from the plan
 - Files beyond section 5, each needed by the step it names: KeptFields.kt and KeptFieldsTest.kt (step 3: K3's report as a kept field, 15c's pattern, so expanding a row runs nothing); CashScreen.kt (step 4: the Cash list's `FilterDateField` made internal, shared with Realized gains, unchanged otherwise); MoreModel.kt and MoreModelTest.kt (step 4: More's entries live in its model since 17; section 5 named MoreScreen.kt only).

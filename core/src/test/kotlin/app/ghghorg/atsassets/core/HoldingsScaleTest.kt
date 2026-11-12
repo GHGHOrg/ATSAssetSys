@@ -105,6 +105,9 @@ class HoldingsScaleTest {
                 ("7 Hide" to ScaleShape.ONE_HOLDING) to 135.0,
                 ("8 effects" to ScaleShape.ONE_HOLDING) to 85.0,
                 ("9 pieces" to ScaleShape.ONE_HOLDING) to 3.5,
+                // 26 Deploy finding 1: about 10 times its first measurement on this PC (2026-11-12: 3.681 and 4.253 ms), rounded up.
+                ("10 realizedGains" to ScaleShape.SPREAD) to 40.0,
+                ("10 realizedGains" to ScaleShape.ONE_HOLDING) to 45.0,
             )
 
         // The same calls on the code after 15c; the exponent is the expected growth, for the cap.
@@ -128,6 +131,8 @@ class HoldingsScaleTest {
                     Splits.effect(it.transactions, split) to Reversals.effect(it.transactions + reversal, reversal)
                 },
                 ScaleCall("9 pieces", 1) { Sells.pieces(it.transactions, it.lastSell) },
+                // 26 Deploy finding 1: K3's report on all dates, worked out again on every write and at app start.
+                ScaleCall("10 realizedGains", 1) { RealizedGains.report(it.transactions, it.portfolios, null, null) },
             )
 
         // The calls of 15c section 9, part 2, item 1, on the code before 15c; the exponent is today's growth, for the cap.
