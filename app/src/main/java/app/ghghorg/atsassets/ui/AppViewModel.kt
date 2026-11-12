@@ -28,6 +28,8 @@ import app.ghghorg.atsassets.core.Hiding
 import app.ghghorg.atsassets.core.Holding
 import app.ghghorg.atsassets.core.Holdings
 import app.ghghorg.atsassets.core.Instrument
+import app.ghghorg.atsassets.core.ListResult
+import app.ghghorg.atsassets.core.ListUsers
 import app.ghghorg.atsassets.core.Lot
 import app.ghghorg.atsassets.core.LotChoice
 import app.ghghorg.atsassets.core.MarketDate
@@ -59,6 +61,7 @@ import app.ghghorg.atsassets.core.SellRefusal
 import app.ghghorg.atsassets.core.SellResult
 import app.ghghorg.atsassets.core.Sells
 import app.ghghorg.atsassets.core.SoldPiece
+import app.ghghorg.atsassets.core.SourceProfile
 import app.ghghorg.atsassets.core.SplitEffect
 import app.ghghorg.atsassets.core.SplitPairResult
 import app.ghghorg.atsassets.core.SplitRatio
@@ -139,7 +142,19 @@ enum class Screen {
 
     // The Edit picker of a holding's sector or geography (wireframe 10f frame H, iteration 24), opened from its Classification tab.
     CLASS_PICKER,
+
+    // A sector or geography list (wireframe 10f frame F, iteration 25), opened from Settings' Lists section.
+    CLASS_LIST,
 }
+
+/**
+ * The Name layer of a list screen (wireframe 10f frame G, marker 14; 25): [renaming] is the value being renamed, null
+ * for Add value; [text] is what is typed, kept when a save is refused or fails.
+ */
+data class ClassValueEdit(
+    val renaming: String?,
+    val text: String,
+)
 
 // The id of the unsaved draft the reversal screen shows the effect of; never saved.
 internal const val PREVIEW_ID = "preview"
@@ -555,6 +570,12 @@ data class AppState(
     val classPicker: ClassList? = null,
     val classPickerChoice: String? = null,
     val overrideRefusal: SaveRefusal? = null,
+    // 25: Settings, Lists: the list shown on CLASS_LIST; its Name layer (frame G) for Add value or Rename; K10's outcome
+    // of the last add, rename or delete there (a refusal, or the line confirming it); a save or delete the store failed.
+    val classListShown: ClassList? = null,
+    val classValueEdit: ClassValueEdit? = null,
+    val listOutcome: ListResult? = null,
+    val listSaveRefusal: SaveRefusal? = null,
     // 15c: the kept fields, worked out in KeptFields.kt from the fields above, so reading one costs nothing. Every write
     // through the view model refreshes them; a state built directly gets them from these defaults.
     // As of today (4.8), by portfolio, then ticker.
@@ -719,7 +740,23 @@ data class AppState(
 
     /** Each holding's effective sector and geography from its instrument's profile through the lists (4.9, K10; 23b). */
     internal val holdingClasses: HoldingClasses
-        get() = HoldingClasses(classLists, instruments.mapNotNull { instrument -> instrument.profile?.let { instrument.ticker to it } }.toMap(), overrides)
+        get() = HoldingClasses(classLists, profiles, overrides)
+
+    /**
+     * What K10 needs to count a value's holdings (4.9; 25): every holding as of the latest transaction date or today,
+     * whichever is later (a buy dated after today is a holding too), hidden ones included, whatever its shares; each
+     * instrument's profile; every override.
+     */
+    internal val listUsers: ListUsers
+        get() {
+            val last = transactions.maxOfOrNull { it.date }?.takeIf { it.isAfter(today) } ?: today
+            val held = Holdings.holdings(transactions, last).map { it.portfolioId to it.ticker }
+            return ListUsers(held, profiles, overrides)
+        }
+
+    // Each instrument's source profile by ticker (23a), for the effective values and the counts.
+    private val profiles: Map<String, SourceProfile>
+        get() = instruments.mapNotNull { instrument -> instrument.profile?.let { instrument.ticker to it } }.toMap()
 
     /** Allocation as the screen draws it (view 4; CR2, 19): the chooser's portfolio, its value and its breakdowns. */
     val portfolioAllocation: PortfolioAllocationModel
@@ -1032,6 +1069,11 @@ class AppViewModel(
                 classPicker = null,
                 classPickerChoice = null,
                 overrideRefusal = null,
+                // 25: the list screen, its Name layer and its lines end with it.
+                classListShown = null,
+                classValueEdit = null,
+                listOutcome = null,
+                listSaveRefusal = null,
                 buyFromHolding = false,
                 sellRefusals = SellRefusals(),
                 sellPicksDropped = false,
@@ -1068,16 +1110,23 @@ class AppViewModel(
         val tickers = PriceRefresh.tickers(current.transactions, current.hidden)
         // 23a: the profile is asked once per instrument (decision 3); an instrument not stored yet is not asked.
         val unasked = current.instruments.filter { it.profile == null }.map { it.ticker }.toSet()
+        // 25 decision 4: every held ticker, hidden ones included, so the store adds their texts that map to no value.
+        val held = current.listUsers.holdings.map { it.second }.distinct()
         mutableState.update { it.copy(refreshing = true) }
         viewModelScope.launch {
             try {
-                val outcome = PriceRefresh.refresh(tickers, isOnline(), priceSource, opened, unasked)
+                val outcome = PriceRefresh.refresh(tickers, isOnline(), priceSource, opened, unasked, held)
                 mutableState.update {
-                    // 23a: the lists gain what the store added: the texts of the profiles of stored instruments.
+                    // 23a: the lists gain what the store added: the texts of the profiles of stored instruments; 25: then
+                    // the stored profiles of the held tickers not among them, as the store's profilesToAdd.
                     val saved = outcome.profiles.filterKeys { ticker -> it.instruments.any { i -> i.ticker == ticker } }
+                    val again =
+                        held.filter { ticker -> ticker !in saved }.mapNotNull { ticker ->
+                            it.instruments.firstOrNull { i -> i.ticker == ticker }?.profile
+                        }
                     it.copy(
                         instruments = PriceRefresh.applied(it.instruments, outcome),
-                        classLists = Classification.extended(it.classLists, saved.values),
+                        classLists = Classification.extended(it.classLists, saved.values + again),
                         refreshing = false,
                         refreshFailed = outcome.refreshFailed,
                     )
@@ -2646,6 +2695,160 @@ class AppViewModel(
         list: ClassList,
     ): Boolean = this.portfolioId == portfolioId && this.ticker == ticker && this.list == list
 
+    /** Settings' Sectors or Geographies row (wireframe 10f marker 6): opens that list's screen (frame F); on Settings only. */
+    fun openClassList(list: ClassList) {
+        val current = mutableState.value
+        if (current.screen != Screen.SETTINGS || current.saving || current.autoLockChoiceOpen || current.screenshotLayerOpen) return
+        mutableState.update { it.copy(screen = Screen.CLASS_LIST, classListShown = list).leftListLines() }
+    }
+
+    /** "<" or Android Back: back to Settings. Ignored while a save is running. */
+    fun closeClassList() {
+        val current = mutableState.value
+        if (current.screen != Screen.CLASS_LIST || current.saving) return
+        mutableState.update { it.copy(screen = Screen.SETTINGS, classListShown = null).leftListLines() }
+    }
+
+    /** Add value (frame F, marker 13): opens the Name layer, empty. */
+    fun openAddClassValue() = openClassValueEdit(ClassValueEdit(renaming = null, text = ""))
+
+    /** Rename on [value]'s row: opens the Name layer on its name; ignored for a value not on the list shown. */
+    fun openRenameClassValue(value: String) {
+        val list = mutableState.value.classListShown ?: return
+        if (value !in mutableState.value.classLists[list]) return
+        openClassValueEdit(ClassValueEdit(renaming = value, text = value))
+    }
+
+    private fun openClassValueEdit(edit: ClassValueEdit) {
+        val current = mutableState.value
+        if (current.screen != Screen.CLASS_LIST || current.saving || current.classValueEdit != null) return
+        mutableState.update { it.copy(classValueEdit = edit).leftListLines(keepEdit = true) }
+    }
+
+    /** The Name field: keeps [text] as typed; a refusal or failure shown is cleared. */
+    fun typeClassValueName(text: String) {
+        val current = mutableState.value
+        val edit = current.classValueEdit ?: return
+        if (current.screen != Screen.CLASS_LIST || current.saving) return
+        mutableState.update { it.copy(classValueEdit = edit.copy(text = text)).leftListLines(keepEdit = true) }
+    }
+
+    /** Cancel or Back on the Name layer: closes it, nothing changed. Ignored while a save is running. */
+    fun cancelClassValueName() {
+        val current = mutableState.value
+        if (current.screen != Screen.CLASS_LIST || current.saving || current.classValueEdit == null) return
+        mutableState.update { it.leftListLines() }
+    }
+
+    /**
+     * Save on the Name layer (frame G): adds or renames by K10's rule (4.9; decisions 1 and 2), judged on the lists in the
+     * state first; a refusal keeps the layer and the typed text and says why. Once stored, the lists (and with a rename
+     * the overrides, by their row) follow, so the tab, the picker and the breakdowns change at once; the layer closes
+     * and a line confirms it. A rename to the same name stores nothing. A failure keeps the layer and says so.
+     */
+    fun saveClassValueName() {
+        val current = mutableState.value
+        val target = store ?: return
+        val list = current.classListShown ?: return
+        val edit = current.classValueEdit ?: return
+        if (current.screen != Screen.CLASS_LIST || current.saving) return
+        val renaming = edit.renaming
+        val result =
+            if (renaming == null) {
+                Classification.add(current.classLists, list, edit.text)
+            } else {
+                Classification.rename(current.classLists, list, renaming, edit.text, current.instruments.mapNotNull { it.profile })
+            }
+        when (result) {
+            is ListResult.Refused -> {
+                mutableState.update { it.copy(listOutcome = result, listSaveRefusal = null) }
+                return
+            }
+
+            is ListResult.Renamed ->
+                if (result.from == result.to) {
+                    mutableState.update { it.leftListLines() }
+                    return
+                }
+
+            else -> Unit
+        }
+        mutableState.update { it.copy(saving = true, listOutcome = null, listSaveRefusal = null) }
+        viewModelScope.launch {
+            try {
+                val lists =
+                    when (result) {
+                        is ListResult.Added -> result.lists.also { target.addListValue(list, result.value) }
+                        is ListResult.Renamed -> result.lists.also { target.renameListValue(list, result.from, result.to) }
+                        else -> return@launch
+                    }
+                mutableState.update {
+                    val overrides =
+                        if (result is ListResult.Renamed) {
+                            it.overrides.map { o -> if (o.list == list && o.value == result.from) o.copy(value = result.to) else o }
+                        } else {
+                            it.overrides
+                        }
+                    it.copy(saving = false, classLists = lists, overrides = overrides, classValueEdit = null, listOutcome = result)
+                }
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: UnreadableDataException) {
+                mutableState.update { it.copy(screen = Screen.UNREADABLE, saving = false) }
+            } catch (e: Exception) {
+                mutableState.update { it.copy(saving = false, listSaveRefusal = SaveRefusal.SAVE_FAILED) }
+            }
+        }
+    }
+
+    /**
+     * Delete on [value]'s row (frame F): refused while K10 counts a holding that uses it, hidden ones included (4.9);
+     * otherwise deleted with its remembered texts and the overrides of holdings no longer there (decision 3), and a line
+     * confirms it. A failure keeps the value and says so. Ignored while the Name layer is open or a save is running.
+     */
+    fun deleteClassValue(value: String) {
+        val current = mutableState.value
+        val target = store ?: return
+        val list = current.classListShown ?: return
+        if (current.screen != Screen.CLASS_LIST || current.saving || current.classValueEdit != null) return
+        if (value !in current.classLists[list]) return
+        val deleted =
+            when (val result = Classification.delete(current.classLists, list, value, current.listUsers)) {
+                is ListResult.Deleted -> result
+
+                else -> {
+                    mutableState.update { it.copy(listOutcome = result, listSaveRefusal = null) }
+                    return
+                }
+            }
+        mutableState.update { it.copy(saving = true, listOutcome = null, listSaveRefusal = null) }
+        viewModelScope.launch {
+            try {
+                target.deleteListValue(list, deleted.value, deleted.overridesRemoved)
+                mutableState.update {
+                    it.copy(
+                        saving = false,
+                        classLists = deleted.lists,
+                        overrides = it.overrides - deleted.overridesRemoved.toSet(),
+                        listOutcome = deleted,
+                    )
+                }
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: UnreadableDataException) {
+                mutableState.update { it.copy(screen = Screen.UNREADABLE, saving = false) }
+            } catch (e: Exception) {
+                mutableState.update { it.copy(saving = false, listSaveRefusal = SaveRefusal.SAVE_FAILED) }
+            }
+        }
+    }
+
+    /** The list screen's layer and lines dropped; with [keepEdit] the Name layer stays. */
+    private fun AppState.leftListLines(keepEdit: Boolean = false): AppState {
+        val edit = if (keepEdit) classValueEdit else null
+        return copy(classValueEdit = edit, listOutcome = null, listSaveRefusal = null)
+    }
+
     /** Not saved: the next opening starts on Transactions (view 6). */
     fun selectHoldingTab(tab: HoldingTab) {
         if (mutableState.value.screen != Screen.HOLDING) return
@@ -3556,6 +3759,7 @@ class AppViewModel(
                 Screen.SETTINGS,
                 Screen.TAB_ORDER,
                 Screen.CLASS_PICKER,
+                Screen.CLASS_LIST,
             )
     }
 }

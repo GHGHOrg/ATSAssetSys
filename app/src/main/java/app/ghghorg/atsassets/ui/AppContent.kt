@@ -181,6 +181,9 @@ private fun BarContent(
             ),
         )
 
+        // 25: the list screen (frame F) comes with step 5; until then nothing opens it.
+        Screen.CLASS_LIST -> Unit
+
         Screen.HIDDEN_HOLDINGS -> HiddenHoldingsScreen(
             state = state,
             actions =

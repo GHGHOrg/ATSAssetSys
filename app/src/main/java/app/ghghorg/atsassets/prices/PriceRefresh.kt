@@ -104,7 +104,8 @@ object PriceRefresh {
 
     /**
      * A whole refresh: [run], then the outcome saved to [store] in one batch (K4 writes the prices itself, section 14;
-     * Deploy finding L1). Store failures propagate; the prices then stay as stored.
+     * Deploy finding L1), with the [held] tickers whose texts that map to no value the store adds (25 decision 4). Store
+     * failures propagate; the prices then stay as stored.
      */
     suspend fun refresh(
         tickers: List<String>,
@@ -112,7 +113,8 @@ object PriceRefresh {
         source: PriceSource,
         store: RecordStore,
         unasked: Set<String> = emptySet(),
-    ): Outcome = run(tickers, online, source, unasked).also { store.savePrices(it.fresh, it.failed, it.profiles) }
+        held: Collection<String> = emptyList(),
+    ): Outcome = run(tickers, online, source, unasked).also { store.savePrices(it.fresh, it.failed, it.profiles, held) }
 
     /**
      * [instruments] after [outcome], as the store saves it: fresh prices set, the failed tickers' prices marked stale,
