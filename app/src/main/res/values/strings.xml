@@ -562,4 +562,33 @@
     <string name="gains_proceeds">Proceeds</string>
     <string name="gains_cost">Cost of lots used</string>
     <string name="gains_sale_spoken">Sale of %1$s Eastern Time, realized gain or loss %2$s dollars, quantity %3$s, proceeds %4$s dollars, cost of lots used %5$s dollars</string>
+    <!-- Iteration 27: Transaction history (proposed from wireframe 08's placeholders, 27 file section 12; approval on the phone in step 6). From, To, the date note, All, the row titles, "Reversal of the … of … ET", "Reversed on … ET", "Reversal of buy …" and the ratio are the existing strings. -->
+    <string name="history_link">Transaction history</string>
+    <string name="history_link_spoken">Transaction history, opens a screen</string>
+    <string name="history_title">Transaction history</string>
+    <string name="history_portfolio_label">Portfolio</string>
+    <string name="history_ticker_label">Ticker</string>
+    <string name="history_all_tickers">All tickers</string>
+    <string name="history_ticker_spoken">Ticker, %1$s</string>
+    <string name="history_ticker_menu">Tickers</string>
+    <string name="history_chip_buy">Buy</string>
+    <string name="history_chip_sell">Sell</string>
+    <string name="history_chip_split">Split</string>
+    <string name="history_chip_cash">Cash</string>
+    <string name="history_date_shares">%1$s ET, %2$s</string>
+    <string name="history_date">%1$s ET</string>
+    <string name="history_reversal_line">%1$s, %2$s ET, %3$s as traded</string>
+    <string name="history_reversal_split_line">%1$s, %2$s ET</string>
+    <string name="history_cash_effect">Cash %1$s</string>
+    <string name="history_cash_line_buy">Cash line, buy %1$s</string>
+    <string name="history_cash_line_sell">Cash line, sell %1$s</string>
+    <string name="history_none">No transactions match these filters</string>
+    <string name="history_trade_spoken">%1$s, %2$s Eastern Time, %3$s, total %4$s dollars</string>
+    <string name="history_trade_cash_spoken">%1$s, %2$s Eastern Time, %3$s, total %4$s dollars, cash %5$s dollars</string>
+    <string name="history_split_spoken">%1$s, %2$s Eastern Time, %3$s</string>
+    <string name="history_reversal_spoken">Reversal of the %1$s of %2$s Eastern Time, %3$s, %4$s Eastern Time, %5$s as traded, total %6$s dollars, cash %7$s dollars</string>
+    <string name="history_reversal_split_spoken">Reversal of the split of %1$s Eastern Time, %2$s, %3$s Eastern Time, %4$s</string>
+    <string name="history_cash_effect_spoken">Cash line, %1$s dollars</string>
+    <string name="history_reversed_on_spoken">Reversed on %1$s Eastern Time</string>
+    <string name="history_cash_row_spoken">%1$s, %2$s Eastern Time, %3$s dollars</string>
 </resources>

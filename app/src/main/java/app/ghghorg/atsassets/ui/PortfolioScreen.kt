@@ -118,6 +118,7 @@ private fun PortfolioContent(
         }
         // View 3's links, in its order: Allocation (19), Transaction history (27), Hidden holdings.
         LinkRow(stringResource(R.string.allocation_title), stringResource(R.string.allocation_link_spoken), actions.onOpenAllocation)
+        LinkRow(stringResource(R.string.history_link), stringResource(R.string.history_link_spoken), actions.onOpenHistory)
         LinkRow(stringResource(R.string.hidden_link), stringResource(R.string.hidden_link_spoken), actions.onOpenHidden)
     }
 }
@@ -167,6 +168,8 @@ class PortfolioScreenActions(
     val onRefresh: () -> Unit = {},
     // 19: "Allocation >" (view 3, view 4).
     val onOpenAllocation: () -> Unit = {},
+    // 27: "Transaction history >" (view 3, view 8).
+    val onOpenHistory: () -> Unit = {},
 )
 
 @Composable

@@ -151,6 +151,7 @@ private fun BarContent(
                 onOpenHidden = viewModel::openHiddenHoldings,
                 onRefresh = viewModel::onPullToRefresh,
                 onOpenAllocation = viewModel::openAllocation,
+                onOpenHistory = viewModel::openTransactionHistory,
             ),
         )
 
@@ -204,7 +205,23 @@ private fun BarContent(
                 onToChange = viewModel::onGainsToChange,
                 onClearDates = viewModel::clearGainsDates,
                 onToggleHolding = viewModel::toggleGainsHolding,
-                onOpenSale = viewModel::openTransaction,
+                onOpenSale = viewModel::openGainsSale,
+            ),
+        )
+
+        Screen.TRANSACTION_HISTORY -> TransactionHistoryScreen(
+            model = state.transactionHistoryScreen,
+            actions =
+            TransactionHistoryActions(
+                onBack = viewModel::closeTransactionHistory,
+                onFromChange = viewModel::onHistoryFromChange,
+                onToChange = viewModel::onHistoryToChange,
+                onChip = viewModel::selectHistoryChip,
+                onOpenTickerMenu = viewModel::openHistoryTickerMenu,
+                onCloseTickerMenu = viewModel::closeHistoryTickerMenu,
+                onPickTicker = viewModel::pickHistoryTicker,
+                onOpenTransaction = viewModel::openTransaction,
+                onOpenCashLine = viewModel::openHistoryCashLine,
             ),
         )
 
