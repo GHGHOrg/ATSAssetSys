@@ -777,7 +777,14 @@ data class AppState(
 
     /** Settings as the screen draws it (section 6; CR2, 20). */
     val settings: SettingsModel
-        get() = Settings.of(autoLock, autoLockRefusal, screenshotWindowLeftMs, tabOrder)
+        get() = Settings.of(autoLock, autoLockRefusal, screenshotWindowLeftMs, tabOrder, classLists)
+
+    /** The list screen as it draws it (wireframe 10f frames F and G; CR2, 25); null off CLASS_LIST. */
+    val classListScreen: ClassListModel?
+        get() {
+            val list = classListShown ?: return null
+            return ClassListScreens.of(list, classLists, listUsers, classValueEdit, listOutcome, listSaveRefusal, saving)
+        }
 
     // 22: the Tab order screen (wireframe 10f frame E), from the order in force.
     val tabOrderScreen: TabOrderModel

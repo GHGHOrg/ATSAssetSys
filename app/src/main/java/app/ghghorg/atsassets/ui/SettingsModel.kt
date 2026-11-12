@@ -1,6 +1,8 @@
 package app.ghghorg.atsassets.ui
 
 import app.ghghorg.atsassets.core.AutoLock
+import app.ghghorg.atsassets.core.ClassList
+import app.ghghorg.atsassets.core.ClassLists
 import app.ghghorg.atsassets.core.Tab
 import app.ghghorg.atsassets.core.TabOrder
 
@@ -24,9 +26,16 @@ data class ScreenshotTimeLeft(
     val seconds: Int,
 )
 
+/** A row of the Lists section (wireframe 10f marker 6; 25): [list] and its number of [values]. */
+data class SettingsListRow(
+    val list: ClassList,
+    val values: Int,
+)
+
 /**
  * [autoLock] is the choice the lock follows; [notSaved] when the last choice could not be saved; [screenshotLeft] the
- * screenshot window's time left, null while it is off; [tabOrder] the bottom bar's tabs, left to right.
+ * screenshot window's time left, null while it is off; [tabOrder] the bottom bar's tabs, left to right; [lists] Sectors
+ * then Geographies (25).
  */
 data class SettingsModel(
     val autoLock: AutoLock,
@@ -34,6 +43,7 @@ data class SettingsModel(
     val notSaved: Boolean,
     val screenshotLeft: ScreenshotTimeLeft? = null,
     val tabOrder: List<Tab> = emptyList(),
+    val lists: List<SettingsListRow> = emptyList(),
 )
 
 object Settings {
@@ -43,12 +53,14 @@ object Settings {
         refusal: SaveRefusal?,
         screenshotLeftMs: Long? = null,
         tabOrder: TabOrder = TabOrder.DEFAULT,
+        classLists: ClassLists = ClassLists(),
     ): SettingsModel = SettingsModel(
         autoLock = autoLock ?: AutoLock.EVERY_LEAVE,
         options = AutoLock.entries.map { AutoLockOption(it, isDefault = it == AutoLock.EVERY_LEAVE) },
         notSaved = refusal != null,
         screenshotLeft = timeLeft(screenshotLeftMs),
         tabOrder = tabOrder.tabs,
+        lists = ClassList.entries.map { SettingsListRow(it, classLists[it].size) },
     )
 
     /** Whole seconds rounded up, so the start shows 3:00 and the last second 0:01; nothing left is off. */

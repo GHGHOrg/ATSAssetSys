@@ -181,8 +181,19 @@ private fun BarContent(
             ),
         )
 
-        // 25: the list screen (frame F) comes with step 5; until then nothing opens it.
-        Screen.CLASS_LIST -> Unit
+        Screen.CLASS_LIST -> ClassListScreen(
+            state = state,
+            actions =
+            ClassListActions(
+                onBack = viewModel::closeClassList,
+                onAdd = viewModel::openAddClassValue,
+                onRename = viewModel::openRenameClassValue,
+                onDelete = viewModel::deleteClassValue,
+                onNameChange = viewModel::typeClassValueName,
+                onNameSave = viewModel::saveClassValueName,
+                onNameCancel = viewModel::cancelClassValueName,
+            ),
+        )
 
         Screen.HIDDEN_HOLDINGS -> HiddenHoldingsScreen(
             state = state,
@@ -305,6 +316,7 @@ private fun BarContent(
                 onAllowScreenshots = screenshots.onAllow,
                 onTurnOffScreenshots = screenshots.onTurnOff,
                 onOpenTabOrder = viewModel::openTabOrder,
+                onOpenList = viewModel::openClassList,
             ),
         )
 

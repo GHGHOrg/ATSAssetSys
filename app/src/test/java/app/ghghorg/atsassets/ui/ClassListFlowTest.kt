@@ -27,6 +27,7 @@ import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.setMain
 import org.junit.After
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNull
 import org.junit.Before
 import org.junit.Test
 import java.math.BigDecimal
@@ -121,6 +122,33 @@ class ClassListFlowTest {
         vm.closeClassList()
         assertEquals(Screen.SETTINGS, vm.state.value.screen)
         assertEquals(null, vm.state.value.classListShown)
+    }
+
+    // CR2's wiring test: Settings' Lists rows and the list screen draw from the state's models, which follow a change.
+    @Test
+    fun settingsAndTheListScreen_drawFromTheStatesModels() {
+        val vm = onList()
+        assertEquals(
+            listOf(SettingsListRow(ClassList.SECTOR, 2), SettingsListRow(ClassList.GEOGRAPHY, 2)),
+            vm.state.value.settings.lists,
+        )
+        assertEquals(
+            listOf(
+                ClassValueRowModel("Technology", holdings = 1, alsoMatches = "Information Technology"),
+                ClassValueRowModel("Diversified", holdings = 1, alsoMatches = null),
+            ),
+            vm.state.value.classListScreen!!.rows,
+        )
+        vm.deleteClassValue("Technology")
+        assertEquals(ClassListLine.InUse("Technology", 1), vm.state.value.classListScreen!!.line)
+        vm.openAddClassValue()
+        vm.typeClassValueName("Energy")
+        vm.saveClassValueName()
+        assertEquals(ClassListLine.Added("Energy"), vm.state.value.classListScreen!!.line)
+        assertEquals(3, vm.state.value.classListScreen!!.rows.size)
+        assertEquals(SettingsListRow(ClassList.SECTOR, 3), vm.state.value.settings.lists.first())
+        vm.closeClassList()
+        assertNull(vm.state.value.classListScreen)
     }
 
     // AC-58 and 4.9: each value's holdings, the hidden MSFT included.

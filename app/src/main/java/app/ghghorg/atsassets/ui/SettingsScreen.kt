@@ -34,6 +34,7 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import app.ghghorg.atsassets.R
 import app.ghghorg.atsassets.core.AutoLock
+import app.ghghorg.atsassets.core.ClassList
 
 /** Settings' callbacks, passed together. Allow and Turn off are MainActivity's, which owns the screenshot window (21). */
 class SettingsActions(
@@ -46,6 +47,7 @@ class SettingsActions(
     val onAllowScreenshots: () -> Unit = {},
     val onTurnOffScreenshots: () -> Unit = {},
     val onOpenTabOrder: () -> Unit = {},
+    val onOpenList: (ClassList) -> Unit = {},
 )
 
 /**
@@ -112,6 +114,26 @@ fun SettingsScreen(
                     onOpen = actions.onOpenTabOrder,
                     enabled = !state.saving,
                 )
+            }
+            // 25: the Lists section (marker 6), each list with its number of values; each opens its list screen (frame F).
+            Text(
+                text = stringResource(R.string.settings_lists),
+                style = MaterialTheme.typography.titleMedium,
+                modifier = Modifier.semantics { heading() },
+            )
+            OutlinedCard(modifier = Modifier.fillMaxWidth()) {
+                model.lists.forEachIndexed { index, row ->
+                    if (index > 0) HorizontalDivider(modifier = Modifier.padding(horizontal = 12.dp))
+                    val name = stringResource(if (row.list == ClassList.SECTOR) R.string.settings_sectors else R.string.settings_geographies)
+                    val value = pluralStringResource(R.plurals.settings_list_values, row.values, row.values)
+                    SettingRow(
+                        name = name,
+                        value = value,
+                        spoken = stringResource(R.string.settings_list_spoken, name, value),
+                        onOpen = { actions.onOpenList(row.list) },
+                        enabled = !state.saving,
+                    )
+                }
             }
             if (model.notSaved) {
                 Text(
