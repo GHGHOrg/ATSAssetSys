@@ -81,7 +81,10 @@ To be shown on the phone in step 7 (wireframe 10f's placeholders as the first pr
 - The picker: "Choose from the list. To add a value, use Settings, Lists."; "No sectors yet. Add one in Settings, Lists." (and for geographies).
 
 ## 13. Status and notes
-Not started.
+
+### 13.1 Steps (2026-11-12)
+- Step 1: this file and the plan.md lines, commit 1def82a.
+- Step 2: K10 in core (Classification.kt): `RememberedText` and `ClassLists.remembered`; the mapping through the remembered texts, then by name (`valueFor`, `withSource`, `effective`, `additions`); `holdingsUsing`, `add`, `rename` and `delete` returning a `ListResult` or a `ListRefusal`. ClassListEditTest's 22 tests first, red (22 failed, the other 383 core tests passed), then green; 1,024 tests. My reading of AC-58's rename sentence: after Technology is renamed Tech, a new "Tech" is refused because Tech is now a value's name (a duplicate); with AC-58's sample nothing else is remembered, as no source text is "Technology" (decision 1). 4.9's own example (the source's "Tech" renamed Technology, then a new "Tech" refused as a remembered text) is tested as written.
 
 ## 14. Departures from the plan
-None yet.
+1. Step 2 (2026-11-12): RecordStore's add, rename and delete and the remembered texts' load move from step 2 to step 3. A new method in core's interface would leave RoomRecordStore and the test stores unbuilt until step 3.
