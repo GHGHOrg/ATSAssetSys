@@ -48,6 +48,7 @@ import app.ghghorg.atsassets.core.PriceSource
 import app.ghghorg.atsassets.core.Quantity
 import app.ghghorg.atsassets.core.QuantityError
 import app.ghghorg.atsassets.core.QuantityResult
+import app.ghghorg.atsassets.core.RealizedReport
 import app.ghghorg.atsassets.core.RecordStore
 import app.ghghorg.atsassets.core.Reentries
 import app.ghghorg.atsassets.core.ReentryIds
@@ -145,6 +146,9 @@ enum class Screen {
 
     // A sector or geography list (wireframe 10f frame F, iteration 25), opened from Settings' Lists section.
     CLASS_LIST,
+
+    // Realized gains (view 5, wireframe 05, iteration 26), opened from More.
+    REALIZED_GAINS,
 }
 
 /**
@@ -576,6 +580,11 @@ data class AppState(
     val classValueEdit: ClassValueEdit? = null,
     val listOutcome: ListResult? = null,
     val listSaveRefusal: SaveRefusal? = null,
+    // 26: Realized gains (view 5): From and To as typed (digits, as the Cash list's; decision 3) and the holdings expanded,
+    // as (portfolio id, ticker); kept while on Realized gains and the screens it opens (decision 2).
+    val gainsFromText: String = "",
+    val gainsToText: String = "",
+    val gainsExpanded: Set<Pair<String, String>> = emptySet(),
     // 15c: the kept fields, worked out in KeptFields.kt from the fields above, so reading one costs nothing. Every write
     // through the view model refreshes them; a state built directly gets them from these defaults.
     // As of today (4.8), by portfolio, then ticker.
@@ -608,6 +617,8 @@ data class AppState(
     // 25 (Deploy finding 1): every holding as (portfolio id, ticker) as of the latest transaction date or today, whichever
     // is later, hidden and sold-out ones included, for K10's counts on the list screen.
     val listHoldings: List<Pair<String, String>> = KeptFields.listHoldings(transactions, today),
+    // 26: K3's realized gains for the From and To typed, each end empty or not a date counting as open (decision 3).
+    val realizedGains: RealizedReport = KeptFields.realizedGains(transactions, portfolios, gainsFromText, gainsToText),
     // The inputs the kept fields above were worked out from.
     val keptFrom: KeptInputs =
         KeptInputs(
@@ -626,6 +637,8 @@ data class AppState(
             portfolios = portfolios,
             cashFilterForm = cashFilterForm,
             instruments = instruments,
+            gainsFromText = gainsFromText,
+            gainsToText = gainsToText,
         ),
 ) {
     val shownPortfolio: Portfolio? get() = portfolioId?.let { id -> portfolios.firstOrNull { it.id == id } }
@@ -784,6 +797,10 @@ data class AppState(
             val list = classListShown ?: return null
             return ClassListScreens.of(list, classLists, listUsers, classValueEdit, listOutcome, listSaveRefusal, saving)
         }
+
+    /** Realized gains as the screen draws it (view 5, wireframe 05; CR2, 26), from the kept report. */
+    val realizedGainsScreen: RealizedGainsModel
+        get() = RealizedGainsScreens.of(realizedGains, portfolios, gainsFromText, gainsToText, gainsExpanded)
 
     // 22: the Tab order screen (wireframe 10f frame E), from the order in force.
     val tabOrderScreen: TabOrderModel
@@ -1092,7 +1109,7 @@ class AppViewModel(
                 transactionTrail = emptyList(),
                 transactionReversalDate = "",
                 transactionReversalRefusals = TransactionReversalRefusals(),
-            ).leftReplace()
+            ).leftReplace().leftGains()
         }
     }
 
@@ -1530,6 +1547,51 @@ class AppViewModel(
         mutableState.update { it.copy(allocationPortfolioId = id, portfolioChoiceOpen = false) }
     }
 
+    /** More's Realized gains (view 5; 26): opens it on all dates, nothing expanded. On More only, not over a layer. */
+    fun openRealizedGains() {
+        val current = mutableState.value
+        if (current.screen != Screen.TABS || current.tab != Tab.MORE || current.saving) return
+        mutableState.update { it.copy(screen = Screen.REALIZED_GAINS).leftGains() }
+    }
+
+    /** "<" or Android Back: back to More; the dates and the expanded holdings end with the screen (decision 2). */
+    fun closeRealizedGains() {
+        if (mutableState.value.screen != Screen.REALIZED_GAINS) return
+        mutableState.update { it.copy(screen = Screen.TABS).leftGains() }
+    }
+
+    /** From, as the Cash list's: a ninth digit is not accepted; other characters are kept, so their line shows at once. */
+    fun onGainsFromChange(text: String) {
+        if (mutableState.value.screen != Screen.REALIZED_GAINS || tooManyDigits(text)) return
+        mutableState.update { it.copy(gainsFromText = text) }
+    }
+
+    fun onGainsToChange(text: String) {
+        if (mutableState.value.screen != Screen.REALIZED_GAINS || tooManyDigits(text)) return
+        mutableState.update { it.copy(gainsToText = text) }
+    }
+
+    /** Clear dates (view 5): both empty, so all dates; the expanded holdings stay. */
+    fun clearGainsDates() {
+        if (mutableState.value.screen != Screen.REALIZED_GAINS) return
+        mutableState.update { it.copy(gainsFromText = "", gainsToText = "") }
+    }
+
+    /** A holding row: expands or collapses its sales (view 5). Ignored for a holding not listed. */
+    fun toggleGainsHolding(
+        portfolioId: String,
+        ticker: String,
+    ) {
+        val current = mutableState.value
+        if (current.screen != Screen.REALIZED_GAINS) return
+        if (current.realizedGains.holdings.none { it.portfolioId == portfolioId && it.ticker == ticker }) return
+        val key = portfolioId to ticker
+        mutableState.update { it.copy(gainsExpanded = if (key in it.gainsExpanded) it.gainsExpanded - key else it.gainsExpanded + key) }
+    }
+
+    // Realized gains' dates and expanded holdings dropped (decision 2).
+    private fun AppState.leftGains(): AppState = copy(gainsFromText = "", gainsToText = "", gainsExpanded = emptySet())
+
     /** "<" or Android Back: back to the tab it was opened from. */
     fun closeNetWorth() {
         if (mutableState.value.screen != Screen.NET_WORTH) return
@@ -1643,7 +1705,8 @@ class AppViewModel(
      */
     fun openTransaction(id: String) {
         val current = mutableState.value
-        if (current.screen != Screen.HOLDING && current.screen != Screen.TABS) return
+        // 26 decision 1: also a sale on Realized gains, until Transaction history (27).
+        if (current.screen != Screen.HOLDING && current.screen != Screen.TABS && current.screen != Screen.REALIZED_GAINS) return
         if (current.transactions.none { it.id == id }) return
         mutableState.update { it.copy(screen = Screen.TRANSACTION, transactionId = id, transactionFrom = current.screen) }
     }
@@ -3766,6 +3829,7 @@ class AppViewModel(
                 Screen.TAB_ORDER,
                 Screen.CLASS_PICKER,
                 Screen.CLASS_LIST,
+                Screen.REALIZED_GAINS,
             )
     }
 }

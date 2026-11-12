@@ -11,6 +11,8 @@ import app.ghghorg.atsassets.core.Lot
 import app.ghghorg.atsassets.core.LotChoice
 import app.ghghorg.atsassets.core.Portfolio
 import app.ghghorg.atsassets.core.Price
+import app.ghghorg.atsassets.core.RealizedGains
+import app.ghghorg.atsassets.core.RealizedReport
 import app.ghghorg.atsassets.core.Reversals
 import app.ghghorg.atsassets.core.Sells
 import app.ghghorg.atsassets.core.Transaction
@@ -45,6 +47,9 @@ data class KeptInputs(
     val cashFilterForm: CashFilterForm,
     // 16a: the instruments with their latest prices.
     val instruments: List<Instrument>,
+    // 26: Realized gains' From and To as typed.
+    val gainsFromText: String,
+    val gainsToText: String,
 )
 
 /** The kept fields of [AppState] (15c), each worked out here by one function, from its inputs only. */
@@ -195,6 +200,17 @@ internal object KeptFields {
         return Holdings.holdings(transactions, last).map { it.portfolioId to it.ticker }
     }
 
+    /**
+     * K3's realized gains (view 5; 26) for [fromText] and [toText] as typed: an end that is empty or not a whole date
+     * counts as open, so the list still shows while a date is typed (decision 3).
+     */
+    fun realizedGains(
+        transactions: List<Transaction>,
+        portfolios: List<Portfolio>,
+        fromText: String,
+        toText: String,
+    ): RealizedReport = RealizedGains.report(transactions, portfolios, DateDigits.toDate(fromText), DateDigits.toDate(toText))
+
     // The transactions a sell is entered against: with the replaced sell's reversal drafted at its date (14a).
     private fun sellTransactions(
         entries: List<CashEntry>,
@@ -225,6 +241,8 @@ internal fun AppState.keptInputs(): KeptInputs = KeptInputs(
     portfolios = portfolios,
     cashFilterForm = cashFilterForm,
     instruments = instruments,
+    gainsFromText = gainsFromText,
+    gainsToText = gainsToText,
 )
 
 /**
@@ -314,6 +332,12 @@ internal fun AppState.refreshed(): AppState {
             cashList
         },
         listHoldings = if (holdingsChanged) KeptFields.listHoldings(transactions, today) else listHoldings,
+        realizedGains =
+        if (changed({ it.transactions }, { it.portfolios }, { it.gainsFromText }, { it.gainsToText })) {
+            KeptFields.realizedGains(transactions, portfolios, gainsFromText, gainsToText)
+        } else {
+            realizedGains
+        },
         keptFrom = now,
     )
 }

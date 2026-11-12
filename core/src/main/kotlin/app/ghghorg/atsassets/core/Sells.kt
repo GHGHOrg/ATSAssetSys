@@ -315,10 +315,15 @@ object Sells {
     fun pieces(
         transactions: List<Transaction>,
         sell: Transaction,
+    ): List<SoldPiece> = pieces(Ledger(transactions), transactions.filter { it.type == TransactionType.BUY }.associateBy { it.id }, sell)
+
+    /** As [pieces], with the [ledger] and the [buys] by id built once for many sells (26: the realized gains report). */
+    internal fun pieces(
+        ledger: Ledger,
+        buys: Map<String, Transaction>,
+        sell: Transaction,
     ): List<SoldPiece> {
-        val buys = transactions.filter { it.type == TransactionType.BUY }.associateBy { it.id }
         val sumTaken = sell.allocations.fold(Fraction.ZERO) { sum, allocation -> sum + allocation.quantity }
-        val ledger = Ledger(transactions)
         return sell.allocations.map { allocation ->
             val buy = buys.getValue(allocation.lotId)
             val factor = ledger.splitFactor(buy.portfolioId, buy.ticker, buy.place, sell.place)

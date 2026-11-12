@@ -8,6 +8,10 @@ class MoreModelTest {
     // No backup until 31: "never backed up". Net Worth (Total) and Allocation, in wireframe 10f's order, are built so far.
     @Test
     fun more_isNeverBackedUp_withTheNetWorthAndAllocationEntries() {
-        assertEquals(MoreModel(lastBackup = null, entries = listOf(MoreEntry.NET_WORTH, MoreEntry.ALLOCATION)), More.of())
+        // 26: Realized gains after Allocation (section 6, More).
+        assertEquals(
+            MoreModel(lastBackup = null, entries = listOf(MoreEntry.NET_WORTH, MoreEntry.ALLOCATION, MoreEntry.REALIZED_GAINS)),
+            More.of(),
+        )
     }
 }

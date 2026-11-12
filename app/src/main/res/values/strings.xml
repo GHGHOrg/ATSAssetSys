@@ -523,4 +523,43 @@
     <string name="list_renamed">Renamed %1$s to %2$s.</string>
     <string name="list_renamed_remembering">Renamed. Source text \"%1$s\" still maps to %2$s.</string>
     <string name="list_deleted">Deleted %1$s.</string>
+    <!-- Iteration 26: Realized gains (proposed from wireframe 05's placeholders, 26 file section 12; approval on the phone in step 6). From, To, the date note and the date lines are the Cash list's. -->
+    <string name="realized_gains_title">Realized gains</string>
+    <string name="gains_clear_dates">Clear dates</string>
+    <string name="gains_total_label">Total realized gain</string>
+    <string name="gains_total_spoken">Total realized gain, %1$s dollars</string>
+    <plurals name="gains_count_all">
+        <item quantity="one">%1$d sale, all dates.</item>
+        <item quantity="other">%1$d sales, all dates.</item>
+    </plurals>
+    <plurals name="gains_count_between">
+        <item quantity="one">%1$d sale, %2$s to %3$s ET.</item>
+        <item quantity="other">%1$d sales, %2$s to %3$s ET.</item>
+    </plurals>
+    <plurals name="gains_count_from">
+        <item quantity="one">%1$d sale, from %2$s ET.</item>
+        <item quantity="other">%1$d sales, from %2$s ET.</item>
+    </plurals>
+    <plurals name="gains_count_up_to">
+        <item quantity="one">%1$d sale, up to %2$s ET.</item>
+        <item quantity="other">%1$d sales, up to %2$s ET.</item>
+    </plurals>
+    <string name="gains_by_holding">By holding</string>
+    <string name="gains_column">Realized gain/loss</string>
+    <plurals name="gains_holding_line">
+        <item quantity="one">%1$s, %2$d sale</item>
+        <item quantity="other">%1$s, %2$d sales</item>
+    </plurals>
+    <plurals name="gains_holding_spoken">
+        <item quantity="one">%1$s, %2$s, %3$d sale, total %4$s dollars</item>
+        <item quantity="other">%1$s, %2$s, %3$d sales, total %4$s dollars</item>
+    </plurals>
+    <string name="gains_expanded">expanded</string>
+    <string name="gains_collapsed">collapsed</string>
+    <string name="gains_none">No sales in this date range</string>
+    <string name="gains_sale_date">%1$s ET</string>
+    <string name="gains_quantity">Quantity</string>
+    <string name="gains_proceeds">Proceeds</string>
+    <string name="gains_cost">Cost of lots used</string>
+    <string name="gains_sale_spoken">Sale of %1$s Eastern Time, realized gain or loss %2$s dollars, quantity %3$s, proceeds %4$s dollars, cost of lots used %5$s dollars</string>
 </resources>

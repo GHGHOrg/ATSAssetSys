@@ -195,6 +195,19 @@ private fun BarContent(
             ),
         )
 
+        Screen.REALIZED_GAINS -> RealizedGainsScreen(
+            model = state.realizedGainsScreen,
+            actions =
+            RealizedGainsActions(
+                onBack = viewModel::closeRealizedGains,
+                onFromChange = viewModel::onGainsFromChange,
+                onToChange = viewModel::onGainsToChange,
+                onClearDates = viewModel::clearGainsDates,
+                onToggleHolding = viewModel::toggleGainsHolding,
+                onOpenSale = viewModel::openTransaction,
+            ),
+        )
+
         Screen.HIDDEN_HOLDINGS -> HiddenHoldingsScreen(
             state = state,
             actions =
@@ -424,6 +437,7 @@ private fun TabScreen(
             viewModel::openNetWorth,
             onOpenAllocation = viewModel::openAllocation,
             onOpenSettings = viewModel::openSettings,
+            onOpenRealizedGains = viewModel::openRealizedGains,
         )
     }
 }
