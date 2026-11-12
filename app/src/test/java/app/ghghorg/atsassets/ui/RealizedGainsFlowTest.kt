@@ -235,6 +235,21 @@ class RealizedGainsFlowTest {
         assertEquals(emptySet<Pair<String, String>>(), vm.state.value.gainsExpanded)
     }
 
+    // CR2's wiring test: the screen draws from the state's model, built from the kept report, which follows each action.
+    @Test
+    fun theScreenDrawsFromTheStatesModel() {
+        val vm = onGains()
+        val state = vm.state.value
+        assertEquals(RealizedGainsScreens.of(state.realizedGains, state.portfolios, "", "", emptySet()), state.realizedGainsScreen)
+        assertEquals("+$600.00", state.realizedGainsScreen.total.text)
+        vm.onGainsFromChange("20260301")
+        vm.onGainsToChange("20260301")
+        vm.toggleGainsHolding("p1", "AAPL")
+        val shown = vm.state.value.realizedGainsScreen
+        assertEquals(GainsCountLine.Between(1, "2026-03-01", "2026-03-01"), shown.countLine)
+        assertEquals(listOf("as"), shown.holdings.single().sales.map { it.sellId })
+    }
+
     // A tab from the sell opened here also ends Realized gains' dates and rows (decision 2).
     @Test
     fun aTabFromTheSellOpenedHere_resetsThemToo() {

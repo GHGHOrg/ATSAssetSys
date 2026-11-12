@@ -11,6 +11,9 @@ enum class MoreEntry {
 
     // 19 decision 1: on the first portfolio.
     ALLOCATION,
+
+    // 26: view 5.
+    REALIZED_GAINS,
 }
 
 /** [lastBackup] is the last backup's time, null for "never backed up" (no backup until 31). */
@@ -20,5 +23,5 @@ data class MoreModel(
 )
 
 object More {
-    fun of(): MoreModel = MoreModel(lastBackup = null, entries = listOf(MoreEntry.NET_WORTH, MoreEntry.ALLOCATION))
+    fun of(): MoreModel = MoreModel(lastBackup = null, entries = listOf(MoreEntry.NET_WORTH, MoreEntry.ALLOCATION, MoreEntry.REALIZED_GAINS))
 }

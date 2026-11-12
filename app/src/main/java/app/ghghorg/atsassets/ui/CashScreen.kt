@@ -257,8 +257,9 @@ private fun FilterCard(
     }
 }
 
+/** A From or To field (06), shared with Realized gains (26): digits on a number keyboard, the dashes shown, not typed. */
 @Composable
-private fun FilterDateField(
+internal fun FilterDateField(
     label: String,
     text: String,
     error: String?,

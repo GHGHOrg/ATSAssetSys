@@ -31,7 +31,7 @@ import app.ghghorg.atsassets.R
 /**
  * More (section 6, wireframe 10f), drawn from its model (CR2, 17): the title with the gear at the top right that opens
  * Settings (marker 2; 20), the last backup line, then the entries built so far, each a row that opens its screen (17
- * decision 1: Net Worth (Total); 19 decision 1: Allocation). The other entries come later.
+ * decision 1: Net Worth (Total); 19 decision 1: Allocation; 26: Realized gains). Backup/restore comes later (31).
  */
 @Composable
 fun MoreScreen(
@@ -40,6 +40,7 @@ fun MoreScreen(
     modifier: Modifier = Modifier,
     onOpenAllocation: () -> Unit = {},
     onOpenSettings: () -> Unit = {},
+    onOpenRealizedGains: () -> Unit = {},
 ) {
     Column(
         modifier = modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(16.dp),
@@ -67,6 +68,7 @@ fun MoreScreen(
                     when (entry) {
                         MoreEntry.NET_WORTH -> EntryRow(stringResource(R.string.net_worth_title), onOpenNetWorth)
                         MoreEntry.ALLOCATION -> EntryRow(stringResource(R.string.allocation_title), onOpenAllocation)
+                        MoreEntry.REALIZED_GAINS -> EntryRow(stringResource(R.string.realized_gains_title), onOpenRealizedGains)
                     }
                 }
             }

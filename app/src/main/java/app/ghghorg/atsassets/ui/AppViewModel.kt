@@ -798,6 +798,10 @@ data class AppState(
             return ClassListScreens.of(list, classLists, listUsers, classValueEdit, listOutcome, listSaveRefusal, saving)
         }
 
+    /** Realized gains as the screen draws it (view 5, wireframe 05; CR2, 26), from the kept report. */
+    val realizedGainsScreen: RealizedGainsModel
+        get() = RealizedGainsScreens.of(realizedGains, portfolios, gainsFromText, gainsToText, gainsExpanded)
+
     // 22: the Tab order screen (wireframe 10f frame E), from the order in force.
     val tabOrderScreen: TabOrderModel
         get() = TabOrders.of(tabOrder, tabOrderRefusal)
