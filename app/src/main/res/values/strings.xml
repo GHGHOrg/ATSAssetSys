@@ -483,9 +483,9 @@
     <string name="class_clear_geography_spoken">Clear geography override</string>
     <string name="class_picker_title">%1$s, %2$s</string>
     <!-- Iteration 25 (24 decision 1): the picker's lines now point to Settings, Lists (wireframe 10f frame H, markers 16 and 17). -->
-    <string name="class_picker_note">Choose from the list. To add a value, use Settings, Lists.</string>
-    <string name="class_picker_no_sectors">No sectors yet. Add one in Settings, Lists.</string>
-    <string name="class_picker_no_geographies">No geographies yet. Add one in Settings, Lists.</string>
+    <string name="class_picker_note">Choose from the list. To add a value, go to Settings -> Lists.</string>
+    <string name="class_picker_no_sectors">No sectors yet. Add one in Settings -> Lists.</string>
+    <string name="class_picker_no_geographies">No geographies yet. Add one in Settings -> Lists.</string>
     <!-- Iteration 25: Settings, Lists and the list screens (proposed, 25 file section 12; approval on the phone in step 7). A failed add or rename uses save_failed. -->
     <string name="settings_lists">Lists</string>
     <string name="settings_sectors">Sectors</string>
