@@ -6,6 +6,9 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.Surface
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.SemanticsProperties
+import androidx.compose.ui.test.SemanticsMatcher
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.hasClickAction
 import androidx.compose.ui.test.hasContentDescription
@@ -223,7 +226,9 @@ class TransactionHistoryLargestFontLandscapeTest {
         composeRule.onNode(hasSetTextAction() and hasText(string(R.string.filter_to))).performScrollTo().assertIsDisplayed()
         tap(text(R.string.history_ticker_spoken, string(R.string.history_all_tickers)))
         val chipLabels = listOf(R.string.filter_all, R.string.history_chip_buy, R.string.history_chip_sell, R.string.history_chip_split, R.string.history_chip_cash)
-        chipLabels.forEach { label -> composeRule.onNode(isSelectable() and hasText(string(label))).performScrollTo().assertIsDisplayed().performClick() }
+        // A chip is a Checkbox; the bottom bar's Cash tab, also selectable and reading "Cash", is a Tab (PR #178's first run).
+        val chip = SemanticsMatcher.expectValue(SemanticsProperties.Role, Role.Checkbox) and isSelectable()
+        chipLabels.forEach { label -> composeRule.onNode(chip and hasText(string(label))).performScrollTo().assertIsDisplayed().performClick() }
         val expectedOpened = mutableListOf<String>()
         val expectedCash = mutableListOf<String>()
         state.transactionHistoryScreen.rows.forEach { row ->
