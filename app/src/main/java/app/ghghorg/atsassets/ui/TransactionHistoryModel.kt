@@ -66,11 +66,11 @@ sealed interface HistoryRowModel {
 
     /**
      * A reversal: "Reversal of the buy of 2026-03-20 ET", its ticker and date, the original's quantity as traded and total
-     * (or a split's ratio), and its own cash effect; it opens its original (marker 4; AC-50: each opens the other).
+     * (or a split's ratio), and its own cash effect. It opens the reversal itself, whose detail links to the original
+     * (27 step 6, phone check 6: your choice of view 8's "A row opens the transaction" over marker 4's "opens it").
      */
     data class Reversal(
         val transactionId: String,
-        val originalId: String,
         val originalType: TransactionType,
         val originalDate: String,
         val ticker: String,
@@ -159,7 +159,6 @@ object TransactionHistories {
             original != null ->
                 HistoryRowModel.Reversal(
                     transactionId = transaction.id,
-                    originalId = original.id,
                     originalType = original.type,
                     originalDate = original.date.toString(),
                     ticker = transaction.ticker,

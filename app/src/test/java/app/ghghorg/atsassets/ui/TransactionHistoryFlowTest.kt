@@ -263,6 +263,28 @@ class TransactionHistoryFlowTest {
         assertEquals(listOf("c-os", reversal.cashLine?.id, "c-as", "c-a2", "c-o1", "c-a1"), vm.rowIds())
     }
 
+    // 27 step 6 (phone check 6): the reversal row opens the reversal itself; its "Reversal of" link opens the original,
+    // and Back goes back through the link, then to the history.
+    @Test
+    fun aReversalRow_opensTheReversal_whoseLinkOpensItsOriginal() {
+        val vm = onHistory()
+        vm.openTransaction("as")
+        vm.openTransactionReversal()
+        vm.confirmTransactionReversal()
+        vm.closeTransaction()
+        val entries = vm.state.value.historyRows.map { it as HistoryRow.Entry }
+        val reversalId = entries.first { it.transaction.type == TransactionType.REVERSAL }.transaction.id
+        vm.openTransaction(reversalId)
+        assertEquals(Screen.TRANSACTION, vm.state.value.screen)
+        assertEquals(reversalId, vm.state.value.transactionId)
+        vm.openTransactionLink()
+        assertEquals("as", vm.state.value.transactionId)
+        vm.closeTransaction()
+        assertEquals(reversalId, vm.state.value.transactionId)
+        vm.closeTransaction()
+        assertEquals(Screen.TRANSACTION_HISTORY, vm.state.value.screen)
+    }
+
     // Decision 2: "<" to the portfolio, or a tab, ends the filters; opening again starts on all.
     @Test
     fun leavingByBackOrATab_resetsTheFilters() {

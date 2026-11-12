@@ -252,7 +252,7 @@ class TransactionHistoryLargestFontLandscapeTest {
                     val type = string(R.string.transaction_type_buy_lower)
                     val quantity = shares(checkNotNull(row.shares) { "a reversal of a buy without its quantity" })
                     tap(text(R.string.history_reversal_spoken, type, row.originalDate, row.ticker, row.date, quantity, row.spokenTotal.orEmpty(), spokenOf(cash.text)))
-                    expectedOpened += row.originalId
+                    expectedOpened += row.transactionId
                     tap(text(R.string.history_cash_effect_spoken, spokenOf(cash.text)))
                     expectedCash += cash.transactionId
                 }
@@ -265,7 +265,9 @@ class TransactionHistoryLargestFontLandscapeTest {
         assertEquals("Each chip took its tap", HistoryChip.entries.toList(), chips)
         assertEquals("Each row and link took its tap", expectedOpened, opened)
         assertEquals("Each cash-effect line took its tap", expectedCash, cashOpened)
-        assertEquals("The reversal opens its original, the original's link the reversal", true, "b3" in opened && "rv" in opened)
+        // 27 step 6 (phone check 6): the reversal row opens the reversal itself, as the original's "Reversed on" link does.
+        assertEquals("The reversal row and the original's link both open the reversal", 2, opened.count { it == "rv" })
+        assertEquals("Only the original's own row opens the original", 1, opened.count { it == "b3" })
         composeRule.turn(landscape = false)
     }
 

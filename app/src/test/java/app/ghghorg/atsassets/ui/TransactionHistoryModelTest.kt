@@ -89,7 +89,7 @@ class TransactionHistoryModelTest {
         val rows = model().rows
         assertEquals(listOf("rv", "sp", "b3", "s1", "b2", "b1"), rows.map { it.key })
         val reversal = rows[0] as HistoryRowModel.Reversal
-        assertEquals("b3", reversal.originalId)
+        assertEquals("rv", reversal.transactionId)
         assertEquals(TransactionType.BUY, reversal.originalType)
         assertEquals("2026-03-20", reversal.originalDate)
         assertEquals("AAPL", reversal.ticker)

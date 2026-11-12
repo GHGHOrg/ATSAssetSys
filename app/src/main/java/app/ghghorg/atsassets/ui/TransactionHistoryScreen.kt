@@ -256,7 +256,7 @@ private fun SplitRow(
     }
 }
 
-/** A reversal (marker 4): "Reversal of the buy of … ET", its ticker, date and the original's figures; opens the original. */
+/** A reversal (marker 4): "Reversal of the buy of … ET", its ticker, date and the original's figures; opens the reversal itself. */
 @Composable
 private fun ReversalRow(
     row: HistoryRowModel.Reversal,
@@ -291,7 +291,7 @@ private fun ReversalRow(
         spoken = stringResource(R.string.history_reversal_split_spoken, row.originalDate, row.ticker, row.date, ratioShown)
     }
     Column {
-        MainLine(title, line, amount, spoken) { actions.onOpenTransaction(row.originalId) }
+        MainLine(title, line, amount, spoken) { actions.onOpenTransaction(row.transactionId) }
         cash?.let { CashEffectLine(it, actions) }
     }
 }
