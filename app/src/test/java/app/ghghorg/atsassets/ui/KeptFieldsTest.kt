@@ -10,6 +10,7 @@ import app.ghghorg.atsassets.core.Holdings
 import app.ghghorg.atsassets.core.Instrument
 import app.ghghorg.atsassets.core.Portfolio
 import app.ghghorg.atsassets.core.Price
+import app.ghghorg.atsassets.core.RealizedGains
 import app.ghghorg.atsassets.core.SellAllocation
 import app.ghghorg.atsassets.core.SplitRatio
 import app.ghghorg.atsassets.core.Transaction
@@ -68,6 +69,9 @@ internal fun assertKeptFieldsFresh(
     // 25 (Deploy finding 1): as of the latest transaction date or today, whichever is later.
     val last = transactions.maxOfOrNull { it.date }?.takeIf { it.isAfter(today) } ?: today
     assertEquals("$case: list holdings", Holdings.holdings(transactions, last).map { it.portfolioId to it.ticker }, listHoldings)
+    // 26: an end that is not a whole date counts as open (decision 3).
+    val gains = RealizedGains.report(transactions, portfolios, DateDigits.toDate(gainsFromText), DateDigits.toDate(gainsToText))
+    assertEquals("$case: realized gains", gains, realizedGains)
 }
 
 // 15c: the kept fields of AppState follow their inputs, and a field whose inputs did not change stays the same object.
@@ -206,6 +210,9 @@ class KeptFieldsTest {
                 { it.copy(transactions = it.transactions + bought("f1", "NVDA", "2026-11-30", "1", 10_000L, 9L)) },
                 { it.listHoldings },
             ),
+            // 26: Realized gains' From and To; s1 (Jan 3) is left out from Feb 1 on.
+            Case("gains from", base, { it.copy(gainsFromText = "20260201") }, { it.realizedGains }),
+            Case("gains to", base, { it.copy(gainsToText = "20260201") }, { it.realizedGains }),
             // 16a: a refresh changes the instruments' prices.
             Case(
                 "instruments",
@@ -262,6 +269,15 @@ class KeptFieldsTest {
         assertSame(listed.keptFrom, typed.keptFrom)
         assertSame(listed.listHoldings, typed.listHoldings)
         assertSame(listed.holdings, typed.holdings)
+    }
+
+    // 26: expanding a holding on Realized gains runs no report again.
+    @Test
+    fun expandingAHoldingOnRealizedGains_leavesTheReportTheSameObject() {
+        val shown = base.copy(screen = Screen.REALIZED_GAINS).refreshed()
+        val expanded = shown.copy(gainsExpanded = setOf("p1" to "AAPL")).refreshed()
+        assertSame(shown.keptFrom, expanded.keptFrom)
+        assertSame(shown.realizedGains, expanded.realizedGains)
     }
 
     // 25 (Deploy finding 1): the sold-out KO counts, and so does a buy dated after today.
