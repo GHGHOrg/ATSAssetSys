@@ -25,6 +25,9 @@ import app.ghghorg.atsassets.core.Classification
 import app.ghghorg.atsassets.core.Fraction
 import app.ghghorg.atsassets.core.HiddenHolding
 import app.ghghorg.atsassets.core.Hiding
+import app.ghghorg.atsassets.core.HistoryChip
+import app.ghghorg.atsassets.core.HistoryFilter
+import app.ghghorg.atsassets.core.HistoryRow
 import app.ghghorg.atsassets.core.Holding
 import app.ghghorg.atsassets.core.Holdings
 import app.ghghorg.atsassets.core.Instrument
@@ -73,6 +76,7 @@ import app.ghghorg.atsassets.core.Tab
 import app.ghghorg.atsassets.core.TabOrder
 import app.ghghorg.atsassets.core.TickerCheck
 import app.ghghorg.atsassets.core.Transaction
+import app.ghghorg.atsassets.core.TransactionHistory
 import app.ghghorg.atsassets.core.TransactionType
 import app.ghghorg.atsassets.core.Transactions
 import app.ghghorg.atsassets.core.UnreadableDataException
@@ -149,6 +153,10 @@ enum class Screen {
 
     // Realized gains (view 5, wireframe 05, iteration 26), opened from More.
     REALIZED_GAINS,
+
+    // A portfolio's Transaction history (view 8, wireframe 08, iteration 27), opened from the portfolio's screen or from a
+    // sale on Realized gains (27 decision 1).
+    TRANSACTION_HISTORY,
 }
 
 /**
@@ -513,6 +521,8 @@ data class AppState(
     val detailId: String? = null,
     // DETAIL shows a trade line opened from its transaction's cash link: Back returns to the transaction (13a decision 3).
     val detailFromTransaction: Boolean = false,
+    // DETAIL shows a trade line opened from Transaction history: Back, and its link's transaction, return there (27).
+    val detailFromHistory: Boolean = false,
     // The transaction shown on TRANSACTION, and the screen its Back returns to: HOLDING or TABS (13a decision 3).
     val transactionId: String? = null,
     val transactionFrom: Screen = Screen.TABS,
@@ -585,6 +595,16 @@ data class AppState(
     val gainsFromText: String = "",
     val gainsToText: String = "",
     val gainsExpanded: Set<Pair<String, String>> = emptySet(),
+    // 27: Transaction history (view 8): the portfolio shown, where "<" returns (the portfolio, or Realized gains for a
+    // sale, decision 1), From and To as typed, the ticker (null: all tickers), the chip and the Ticker menu; kept while
+    // on the history and the screens it opens (decision 2).
+    val historyPortfolioId: String? = null,
+    val historyFrom: Screen = Screen.PORTFOLIO,
+    val historyFromText: String = "",
+    val historyToText: String = "",
+    val historyTicker: String? = null,
+    val historyChip: HistoryChip = HistoryChip.ALL,
+    val historyTickerMenuOpen: Boolean = false,
     // 15c: the kept fields, worked out in KeptFields.kt from the fields above, so reading one costs nothing. Every write
     // through the view model refreshes them; a state built directly gets them from these defaults.
     // As of today (4.8), by portfolio, then ticker.
@@ -797,6 +817,33 @@ data class AppState(
             val list = classListShown ?: return null
             return ClassListScreens.of(list, classLists, listUsers, classValueEdit, listOutcome, listSaveRefusal, saving)
         }
+
+    /** 27: the history's portfolio's tickers, hidden holdings included (view 8). */
+    val historyTickers: List<String>
+        get() = historyPortfolioId?.let { TransactionHistory.tickers(transactions, it) }.orEmpty()
+
+    /** 27: the history's rows for the filters as typed; an end that is not a whole date counts as open (26 decision 3). */
+    val historyRows: List<HistoryRow>
+        get() =
+            historyPortfolioId
+                ?.let { id ->
+                    val filter = HistoryFilter(historyTicker, DateDigits.toDate(historyFromText), DateDigits.toDate(historyToText), historyChip)
+                    TransactionHistory.rows(transactions, entries, id, filter)
+                }.orEmpty()
+
+    /** Transaction history as the screen draws it (view 8, wireframe 08; CR2, 27). */
+    val transactionHistoryScreen: TransactionHistoryModel
+        get() =
+            TransactionHistories.of(
+                rows = historyRows,
+                portfolioName = portfolios.firstOrNull { it.id == historyPortfolioId }?.name.orEmpty(),
+                fromText = historyFromText,
+                toText = historyToText,
+                ticker = historyTicker,
+                tickers = historyTickers,
+                chip = historyChip,
+                menuOpen = historyTickerMenuOpen,
+            )
 
     /** Realized gains as the screen draws it (view 5, wireframe 05; CR2, 26), from the kept report. */
     val realizedGainsScreen: RealizedGainsModel
@@ -1109,7 +1156,7 @@ class AppViewModel(
                 transactionTrail = emptyList(),
                 transactionReversalDate = "",
                 transactionReversalRefusals = TransactionReversalRefusals(),
-            ).leftReplace().leftGains()
+            ).leftReplace().leftGains().leftHistory()
         }
     }
 
@@ -1592,6 +1639,97 @@ class AppViewModel(
     // Realized gains' dates and expanded holdings dropped (decision 2).
     private fun AppState.leftGains(): AppState = copy(gainsFromText = "", gainsToText = "", gainsExpanded = emptySet())
 
+    /** A portfolio's Transaction history (view 8; 27), from its screen: all dates, all tickers, All. Not over a layer. */
+    fun openTransactionHistory() {
+        val current = mutableState.value
+        if (current.screen != Screen.PORTFOLIO || current.saving || current.portfolioMenuOpen || current.renameDialog != null) return
+        val id = current.portfolioId ?: return
+        mutableState.update { it.leftHistory().copy(screen = Screen.TRANSACTION_HISTORY, historyPortfolioId = id, historyFrom = Screen.PORTFOLIO) }
+    }
+
+    /** 27 decision 1: a sale on Realized gains opens its portfolio's history with its ticker and the Sell chip. */
+    fun openGainsSale(sellId: String) {
+        val current = mutableState.value
+        if (current.screen != Screen.REALIZED_GAINS || current.saving) return
+        val sell = current.transactions.firstOrNull { it.id == sellId && it.type == TransactionType.SELL } ?: return
+        if (current.portfolios.none { it.id == sell.portfolioId }) return
+        mutableState.update {
+            it.leftHistory().copy(
+                screen = Screen.TRANSACTION_HISTORY,
+                historyPortfolioId = sell.portfolioId,
+                historyFrom = Screen.REALIZED_GAINS,
+                historyTicker = sell.ticker,
+                historyChip = HistoryChip.SELL,
+            )
+        }
+    }
+
+    /** "<" or Android Back: the Ticker menu closes first; then back where it was opened from, the filters ended (decision 2). */
+    fun closeTransactionHistory() {
+        val current = mutableState.value
+        if (current.screen != Screen.TRANSACTION_HISTORY) return
+        if (current.historyTickerMenuOpen) {
+            mutableState.update { it.copy(historyTickerMenuOpen = false) }
+            return
+        }
+        mutableState.update { it.copy(screen = it.historyFrom).leftHistory() }
+    }
+
+    /** From and To, as the Cash list's: a ninth digit is not accepted; other characters are kept, so their line shows. */
+    fun onHistoryFromChange(text: String) {
+        if (mutableState.value.screen != Screen.TRANSACTION_HISTORY || tooManyDigits(text)) return
+        mutableState.update { it.copy(historyFromText = text) }
+    }
+
+    fun onHistoryToChange(text: String) {
+        if (mutableState.value.screen != Screen.TRANSACTION_HISTORY || tooManyDigits(text)) return
+        mutableState.update { it.copy(historyToText = text) }
+    }
+
+    /** One chip at a time (view 8); none is disabled. */
+    fun selectHistoryChip(chip: HistoryChip) {
+        if (mutableState.value.screen != Screen.TRANSACTION_HISTORY) return
+        mutableState.update { it.copy(historyChip = chip, historyTickerMenuOpen = false) }
+    }
+
+    /** The Ticker field (decision 3): its menu, drawn in the window. */
+    fun openHistoryTickerMenu() {
+        if (mutableState.value.screen != Screen.TRANSACTION_HISTORY) return
+        mutableState.update { it.copy(historyTickerMenuOpen = true) }
+    }
+
+    fun closeHistoryTickerMenu() = mutableState.update { it.copy(historyTickerMenuOpen = false) }
+
+    /** A ticker in the menu, or null for "All tickers"; closes the menu. A ticker not offered is ignored. */
+    fun pickHistoryTicker(ticker: String?) {
+        val current = mutableState.value
+        if (current.screen != Screen.TRANSACTION_HISTORY || !current.historyTickerMenuOpen) return
+        if (ticker != null && ticker !in current.historyTickers) return
+        mutableState.update { it.copy(historyTicker = ticker, historyTickerMenuOpen = false) }
+    }
+
+    /** A cash-effect line on the history (view 8): that trade's line (frame H), whose Back returns to the history. */
+    fun openHistoryCashLine(transactionId: String) {
+        val current = mutableState.value
+        if (current.screen != Screen.TRANSACTION_HISTORY || current.historyTickerMenuOpen) return
+        val transaction = current.transactions.firstOrNull { it.id == transactionId } ?: return
+        if (transaction.portfolioId != current.historyPortfolioId) return
+        val line = current.entries.firstOrNull { it.type == CashType.TRADE && it.transactionId == transactionId } ?: return
+        mutableState.update { it.copy(screen = Screen.DETAIL, detailId = line.id, detailFromHistory = true, refusals = Refusals()) }
+    }
+
+    // Transaction history's portfolio, filters and menu dropped (27 decision 2).
+    private fun AppState.leftHistory(): AppState = copy(
+        historyPortfolioId = null,
+        historyFrom = Screen.PORTFOLIO,
+        historyFromText = "",
+        historyToText = "",
+        historyTicker = null,
+        historyChip = HistoryChip.ALL,
+        historyTickerMenuOpen = false,
+        detailFromHistory = false,
+    )
+
     /** "<" or Android Back: back to the tab it was opened from. */
     fun closeNetWorth() {
         if (mutableState.value.screen != Screen.NET_WORTH) return
@@ -1691,12 +1829,20 @@ class AppViewModel(
         mutableState.update { it.copy(screen = Screen.DETAIL, detailId = id, refusals = Refusals()) }
     }
 
-    /** Back from the detail to the Cash list, or to the transaction whose cash link opened it (13a decision 3). */
+    /**
+     * Back from the detail to the Cash list, to the transaction whose cash link opened it (13a decision 3), or to the
+     * Transaction history whose cash-effect line opened it (27).
+     */
     fun closeDetail() {
         val current = mutableState.value
         if (current.screen != Screen.DETAIL) return
-        val back = if (current.detailFromTransaction) Screen.TRANSACTION else Screen.TABS
-        mutableState.update { it.copy(screen = back, detailId = null, detailFromTransaction = false) }
+        val back =
+            when {
+                current.detailFromTransaction -> Screen.TRANSACTION
+                current.detailFromHistory -> Screen.TRANSACTION_HISTORY
+                else -> Screen.TABS
+            }
+        mutableState.update { it.copy(screen = back, detailId = null, detailFromTransaction = false, detailFromHistory = false) }
     }
 
     /**
@@ -1705,8 +1851,10 @@ class AppViewModel(
      */
     fun openTransaction(id: String) {
         val current = mutableState.value
-        // 26 decision 1: also a sale on Realized gains, until Transaction history (27).
-        if (current.screen != Screen.HOLDING && current.screen != Screen.TABS && current.screen != Screen.REALIZED_GAINS) return
+        // 27: also a row of Transaction history, not while its Ticker menu is open. A sale on Realized gains opens the
+        // history first (27 decision 1).
+        if (current.screen != Screen.HOLDING && current.screen != Screen.TABS && current.screen != Screen.TRANSACTION_HISTORY) return
+        if (current.historyTickerMenuOpen) return
         if (current.transactions.none { it.id == id }) return
         mutableState.update { it.copy(screen = Screen.TRANSACTION, transactionId = id, transactionFrom = current.screen) }
     }
@@ -2256,12 +2404,14 @@ class AppViewModel(
             if (it.detailFromTransaction && it.transactionId == transaction.id) {
                 it.copy(screen = Screen.TRANSACTION, detailId = null, detailFromTransaction = false)
             } else {
+                // 27: opened from Transaction history, the transaction's Back returns there.
                 it.copy(
                     screen = Screen.TRANSACTION,
                     transactionId = transaction.id,
-                    transactionFrom = Screen.TABS,
+                    transactionFrom = if (it.detailFromHistory) Screen.TRANSACTION_HISTORY else Screen.TABS,
                     detailId = null,
                     detailFromTransaction = false,
+                    detailFromHistory = false,
                 )
             }
         }
@@ -3830,6 +3980,7 @@ class AppViewModel(
                 Screen.CLASS_PICKER,
                 Screen.CLASS_LIST,
                 Screen.REALIZED_GAINS,
+                Screen.TRANSACTION_HISTORY,
             )
     }
 }

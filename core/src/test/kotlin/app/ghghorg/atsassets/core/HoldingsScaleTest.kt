@@ -108,6 +108,9 @@ class HoldingsScaleTest {
                 // 26 Deploy finding 1: about 10 times its first measurement on this PC (2026-11-12: 3.681 and 4.253 ms), rounded up.
                 ("10 realizedGains" to ScaleShape.SPREAD) to 40.0,
                 ("10 realizedGains" to ScaleShape.ONE_HOLDING) to 45.0,
+                // 27: about 10 times its first measurement on this PC (2026-11-12: 0.300 and 0.588 ms), rounded up.
+                ("11 history" to ScaleShape.SPREAD) to 3.0,
+                ("11 history" to ScaleShape.ONE_HOLDING) to 6.0,
             )
 
         // The same calls on the code after 15c; the exponent is the expected growth, for the cap.
@@ -133,6 +136,11 @@ class HoldingsScaleTest {
                 ScaleCall("9 pieces", 1) { Sells.pieces(it.transactions, it.lastSell) },
                 // 26 Deploy finding 1: K3's report on all dates, worked out again on every write and at app start.
                 ScaleCall("10 realizedGains", 1) { RealizedGains.report(it.transactions, it.portfolios, null, null) },
+                // 27: the largest portfolio's Transaction history, no filter, then its Cash chip.
+                ScaleCall("11 history", 1) {
+                    TransactionHistory.rows(it.transactions, it.cashEntries, it.largestPortfolioId, HistoryFilter()) to
+                        TransactionHistory.rows(it.transactions, it.cashEntries, it.largestPortfolioId, HistoryFilter(chip = HistoryChip.CASH))
+                },
             )
 
         // The calls of 15c section 9, part 2, item 1, on the code before 15c; the exponent is today's growth, for the cap.

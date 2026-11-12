@@ -184,16 +184,20 @@ class RealizedGainsFlowTest {
         assertEquals(setOf(oldco), vm.state.value.gainsExpanded)
     }
 
-    // Decisions 1 and 2: a sale opens the sell's own screen; Back returns to Realized gains with its dates and rows.
+    // 26 decision 2 and 27 decision 1: a sale opens its portfolio's history with its ticker and Sell; the sell opens
+    // there; Back returns to the history, then to Realized gains with its dates and rows.
     @Test
     fun aSaleOpensTheSell_andBackReturnsAsItWas() {
         val vm = onGains()
         vm.onGainsFromChange("20260301")
         vm.toggleGainsHolding("p1", "AAPL")
+        vm.openGainsSale("as")
+        assertEquals(Screen.TRANSACTION_HISTORY, vm.state.value.screen)
         vm.openTransaction("as")
         assertEquals(Screen.TRANSACTION, vm.state.value.screen)
         assertEquals("as", vm.state.value.transactionId)
         vm.closeTransaction()
+        vm.closeTransactionHistory()
         assertEquals(Screen.REALIZED_GAINS, vm.state.value.screen)
         assertEquals("20260301", vm.state.value.gainsFromText)
         assertEquals(setOf(aapl), vm.state.value.gainsExpanded)
@@ -205,11 +209,13 @@ class RealizedGainsFlowTest {
         val store = store()
         val vm = onGains(store)
         vm.toggleGainsHolding("p1", "AAPL")
+        vm.openGainsSale("as")
         vm.openTransaction("as")
         vm.openTransactionReversal()
         vm.confirmTransactionReversal()
         assertEquals(1, store.savedReversals.size)
         vm.closeTransaction()
+        vm.closeTransactionHistory()
         assertEquals(Screen.REALIZED_GAINS, vm.state.value.screen)
         assertEquals(listOf("OLDCO"), vm.tickers())
         assertEquals(dollars(-20_000L), vm.state.value.realizedGains.total)
@@ -250,12 +256,13 @@ class RealizedGainsFlowTest {
         assertEquals(listOf("as"), shown.holdings.single().sales.map { it.sellId })
     }
 
-    // A tab from the sell opened here also ends Realized gains' dates and rows (decision 2).
+    // A tab from the sell opened here (through its history, 27 decision 1) also ends Realized gains' dates and rows (decision 2).
     @Test
     fun aTabFromTheSellOpenedHere_resetsThemToo() {
         val vm = onGains()
         vm.onGainsFromChange("20260301")
         vm.toggleGainsHolding("p1", "AAPL")
+        vm.openGainsSale("as")
         vm.openTransaction("as")
         vm.selectTab(Tab.MORE)
         assertEquals("" to "", vm.state.value.gainsFromText to vm.state.value.gainsToText)
