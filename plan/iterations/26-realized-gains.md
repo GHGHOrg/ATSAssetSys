@@ -77,7 +77,10 @@ To be shown on the phone in step 6 (wireframe 05's placeholders as the first pro
 - TalkBack: a holding row "AAPL, Portfolio P, 1 sale, total plus 800 dollars"; a sale row with its date, gain/loss, quantity, proceeds and cost.
 
 ## 13. Status and notes
-Draft; nothing built.
+
+### 13.1 Steps (2026-11-12)
+- Step 1: this file and the plan.md lines, commit a6dc17b.
+- Step 2: K3 in core (RealizedGains.kt): `RealizedSale` (the sell, its proceeds as its total, the cost of the lots it took, its gain), `RealizedHolding` (newest first; its total) and `RealizedReport` (ticker order, then the portfolios' creation order; its total and count), each exact; a sell named by a reversal left out whatever the range. `Sells.pieces` gains an internal form taking one ledger, so the report builds the ledger once, not once per sell. The largest-remainder split stays `Money.partsInCents` (used in step 4). RealizedGainsTest's 13 tests first, red (10 failed; the three expecting an empty report passed against the stub), then green; 1,071 tests. My reading: a portfolio not in the list (none in the app) sorts last. The first full run failed in `:app:kspDebugKotlin` with `NoSuchFileException` on its own output folder, a new form of CLAUDE.md's intermittent failure; the same command re-run unchanged passed (open item 60).
 
 ## 14. Departures from the plan
 None yet.
