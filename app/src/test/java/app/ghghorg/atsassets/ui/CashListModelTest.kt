@@ -5,6 +5,7 @@ import app.ghghorg.atsassets.core.CashType
 import app.ghghorg.atsassets.core.Fraction
 import app.ghghorg.atsassets.core.Portfolio
 import app.ghghorg.atsassets.core.SellAllocation
+import app.ghghorg.atsassets.core.TradeSide
 import app.ghghorg.atsassets.core.Transaction
 import app.ghghorg.atsassets.core.TransactionType
 import org.junit.Assert.assertEquals
@@ -205,5 +206,55 @@ class CashListModelTest {
         assertEquals("−$50.00", model.balance)
         assertEquals(SpokenFigure("50.00", FigureSign.MINUS), model.spokenBalance)
         assertEquals(SpokenFigure("50.00", FigureSign.MINUS), model.rows.single().spokenBalanceAfter)
+    }
+
+    // 28 step 4: the ticker, the Buy and Sell chips and the direct chips' state (view 7, wireframe 07; AC-49).
+
+    // The sample file's Mar 20 buy of AAPL and its Apr 5 reversal, after Example A.
+    private val b3 = trade("b3", TransactionType.BUY, "2026-03-20", 5L, 36_000L)
+    private val rv = trade("rv", TransactionType.REVERSAL, "2026-04-05", 6L, 0L, reversesId = "b3")
+    private val deposit = direct("d1", "2026-03-10", 5_000L, 7L, CashType.DEPOSIT)
+    private val withChain = entries + listOf(line(b3, -36_000L), line(rv, 36_000L), deposit)
+    private val chainTrades = transactions + listOf(b3, rv)
+
+    @Test
+    fun noTicker_offersEveryTickerWithATradeLine_andEnablesTheDirectChips() {
+        val model = model(cash = withChain, trades = chainTrades)
+        assertEquals(listOf("AAPL"), model.tickers)
+        assertNull(model.ticker)
+        assertTrue(model.directChipsEnabled)
+    }
+
+    // AC-49: ticker AAPL with All: the trade lines only, no opening balance or deposit, the real balances; the direct
+    // chips disabled; the ticker counts as a filter.
+    @Test
+    fun aTicker_showsOnlyItsTradeLines_disablesTheDirectChips_andCountsAsAFilter() {
+        val model = model(CashFilterForm(ticker = "AAPL"), withChain, chainTrades)
+        assertEquals("AAPL", model.ticker)
+        assertFalse(model.directChipsEnabled)
+        assertTrue(model.filterActive)
+        assertEquals(listOf("c-rv", "c-b3", "c-s1", "c-b2", "c-b1"), model.rows.map { it.key })
+        assertEquals(listOf("$9,650.00", "$9,290.00", "$9,600.00", "$7,500.00", "$9,000.00"), model.rows.map { it.balanceAfter })
+    }
+
+    // AC-49 and wireframe 07 frame D: Buy shows the reversal titled "Reversal of buy" with the buys; Sell only the sell.
+    @Test
+    fun buyAndSell_takeTheTradeLines_theReversalUnderBuy() {
+        val buys = model(CashFilterForm(ticker = "AAPL", trade = TradeSide.BUY), withChain, chainTrades)
+        assertEquals(listOf("c-rv", "c-b3", "c-b2", "c-b1"), buys.rows.map { it.key })
+        assertEquals(TradeTitle.REVERSAL_OF_BUY, (buys.rows.first() as CashRowModel.Trade).title)
+        assertEquals("+$360.00", buys.rows.first().amount)
+        val sells = model(CashFilterForm(trade = TradeSide.SELL), withChain, chainTrades)
+        assertEquals(listOf("c-s1"), sells.rows.map { it.key })
+        assertTrue(sells.directChipsEnabled)
+        assertTrue(sells.filterActive)
+    }
+
+    // AC-49: ticker AAPL with Apr 1 to Apr 30 on Example A: no row.
+    @Test
+    fun aTickerAndARangeWithNoTrade_haveNoRows() {
+        val model = model(CashFilterForm(fromText = "20260401", toText = "20260430", ticker = "AAPL"))
+        assertTrue(model.hasEntries)
+        assertEquals(emptyList<CashRowModel>(), model.rows)
     }
 }

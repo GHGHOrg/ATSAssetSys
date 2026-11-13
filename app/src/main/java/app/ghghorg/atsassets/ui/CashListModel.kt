@@ -23,9 +23,14 @@ data class CashListModel(
     // Why each date bound is refused, if it is (06 decision 1).
     val fromRefusal: DateRefusal?,
     val toRefusal: DateRefusal?,
-    // A valid date bound or a chip other than All: the count line and Clear filters show (06 decision 3).
+    // A valid date bound, a chip other than All or a ticker: the count line and Clear filters show (06 decision 3; 28).
     val filterActive: Boolean,
     val rows: List<CashRowModel>,
+    // 28: the Ticker menu's tickers (each with a trade line, alphabetically), the ticker picked (null: All tickers), and
+    // whether the four direct-entry chips are enabled; while they are not, the screen shows the line saying why (view 7).
+    val tickers: List<String> = emptyList(),
+    val ticker: String? = null,
+    val directChipsEnabled: Boolean = true,
 )
 
 /** A cash figure for TalkBack: its digits without the dollar sign, and whether the screen says "plus" or "minus". */
@@ -130,6 +135,8 @@ object CashList {
                 from = DateDigits.toDate(form.fromText),
                 to = DateDigits.toDate(form.toText),
                 type = form.type,
+                ticker = form.ticker,
+                trade = form.trade,
             )
         val all = CashAccount.rows(entries)
         // The first record with each id, as the searches by id before 15d found.
@@ -143,8 +150,22 @@ object CashList {
             fromRefusal = DateDigits.refusal(form.fromText),
             toRefusal = DateDigits.refusal(form.toText),
             filterActive = filter.isActive,
-            rows = all.filter { filter.matches(it.entry) }.map { row(it, byId, names) },
+            rows = all.filter { matches(filter, it.entry, byId) }.map { row(it, byId, names) },
+            tickers = CashAccount.tickers(entries, transactions),
+            ticker = form.ticker,
+            directChipsEnabled = form.ticker == null,
         )
+    }
+
+    // Core's rule (28 decision 1), judged with the line's trade and, for a reversal, its original, found by id.
+    private fun matches(
+        filter: CashFilter,
+        entry: CashEntry,
+        byId: Map<String, Transaction>,
+    ): Boolean {
+        val trade = if (entry.type == CashType.TRADE) entry.transactionId?.let(byId::get) else null
+        val original = if (trade?.type == TransactionType.REVERSAL) trade.reversesId?.let(byId::get) else null
+        return filter.matches(entry, trade, original)
     }
 
     private fun row(

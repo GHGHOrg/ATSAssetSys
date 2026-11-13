@@ -239,6 +239,22 @@ class CashTickerFlowTest {
         assertEquals("AAPL", vm.state.value.cashFilterForm.ticker)
     }
 
+    // 28 step 4 (CR2): the screen's model in the state follows the ticker and the chip: the rows, the tickers, the
+    // direct chips' state, and the same model as a fresh build.
+    @Test
+    fun theScreensModel_followsTheTickerAndTheChip() {
+        val vm = onCash()
+        vm.pick("AAPL")
+        vm.onFilterTradeChange(TradeSide.SELL)
+        val model = vm.state.value.cashList
+        assertEquals(CashList.of(vm.state.value.entries, vm.state.value.transactions, vm.state.value.portfolios, vm.state.value.cashFilterForm), model)
+        assertEquals(listOf("c-as"), model.rows.map { it.key })
+        assertEquals(listOf("AAPL", "MSFT"), model.tickers)
+        assertEquals("AAPL", model.ticker)
+        assertFalse(model.directChipsEnabled)
+        assertTrue(model.filterActive)
+    }
+
     // The menu's flag is not an input of the kept Cash list (15d): opening and closing it only reads the list.
     @Test
     fun theMenu_doesNotRebuildTheCashList() {
