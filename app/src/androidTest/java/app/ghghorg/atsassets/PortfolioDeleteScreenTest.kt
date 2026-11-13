@@ -6,6 +6,8 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.Surface
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.semantics.SemanticsProperties
+import androidx.compose.ui.test.SemanticsMatcher
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertIsEnabled
 import androidx.compose.ui.test.assertIsNotEnabled
@@ -24,6 +26,7 @@ import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.test.performTextInput
 import androidx.compose.ui.test.performTouchInput
+import androidx.compose.ui.unit.dp
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
 import app.ghghorg.atsassets.core.CashEntry
@@ -264,7 +267,10 @@ class PortfolioDeleteKeyboardTest {
  * 29 step 10 (phone check 9, versionCode 39): at the largest font in landscape, the Delete dialog vanished once the
  * keyboard opened on its Name field. The dialog was drawn above the bottom bar, and its layer's imePadding, measured from
  * the window's bottom, took the bar's height as well as the keyboard's. On the real MainActivity: the dialog opened in
- * portrait, then turned (as on the phone), the field tapped; it must show, fully above the keyboard.
+ * portrait, then turned (as on the phone), the field tapped; it must show, fully above the keyboard, and the dialog must
+ * reach down to the keyboard: at this font it is taller than its room, so it fills the room, and its bottom lies its own
+ * margin (24 dp) above the keyboard's top, give or take 4 dp. The emulator's keyboard is lower than the phone's, so the
+ * field alone still fitted there (red run 43480636956); the room is short by the bar's height on any screen.
  */
 @RunWith(AndroidJUnit4::class)
 class PortfolioDeleteKeyboardLandscapeTest {
@@ -278,7 +284,7 @@ class PortfolioDeleteKeyboardLandscapeTest {
             .around(composeRule)
 
     @Test
-    fun theNameField_staysAboveTheKeyboard_inLandscape() {
+    fun theDialog_reachesDownToTheKeyboard_andShowsTheNameField_inLandscape() {
         composeRule.unlockApp()
         val name = createPortfolio(composeRule, "Wide")
         openDelete(composeRule, name)
@@ -292,6 +298,13 @@ class PortfolioDeleteKeyboardLandscapeTest {
         composeRule.onNode(nameField()).performScrollTo().performClick()
         val keyboardTop = composeRule.keyboardTop()
         composeRule.waitForIdle()
+        val dialogBottom = composeRule.onNode(SemanticsMatcher.keyIsDefined(SemanticsProperties.PaneTitle)).fetchSemanticsNode().boundsInWindow.bottom
+        val (margin, tolerance) = with(composeRule.density) { 24.dp.toPx() to 4.dp.toPx() }
+        val gap = keyboardTop - dialogBottom
+        assertTrue(
+            "The dialog ends at $dialogBottom px, $gap px above the keyboard's top at $keyboardTop px; expected its margin, $margin px",
+            gap >= margin - tolerance && gap <= margin + tolerance,
+        )
         composeRule.onNode(nameField()).assertIsDisplayed()
         val bounds = composeRule.onNode(nameField()).fetchSemanticsNode().boundsInWindow
         assertTrue("The Name field ends at ${bounds.bottom} px, below the keyboard's top at $keyboardTop px", bounds.bottom <= keyboardTop)
