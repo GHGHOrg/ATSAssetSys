@@ -58,13 +58,19 @@ fun PortfolioScreen(
 ) {
     val portfolio = state.shownPortfolio ?: return
     BackHandler(onBack = if (state.portfolioMenuOpen) actions.onCloseMenu else actions.onBack)
+    val dialog = state.deleteDialogModel
+    val blocked = state.deleteBlockedModel
     Box(modifier = modifier.fillMaxSize()) {
-        // While the menu is open, TalkBack reads only the menu.
-        val under = if (state.portfolioMenuOpen) Modifier.clearAndSetSemantics { } else Modifier
+        // While the menu, the Delete dialog or the blocked message is open, TalkBack reads only that layer.
+        val layerOpen = state.portfolioMenuOpen || dialog != null || blocked != null
+        val under = if (layerOpen) Modifier.clearAndSetSemantics { } else Modifier
         PricePullToRefresh(state.refreshing, actions.onRefresh, Modifier.fillMaxSize()) {
             PortfolioContent(state, portfolio.id, portfolio.name, actions, Modifier.fillMaxSize().then(under))
         }
         if (state.portfolioMenuOpen) PortfolioMenu(actions)
+        // 29: drawn after the screen's own Back handler, so Back closes the layer first.
+        if (dialog != null) DeleteDialogLayer(dialog, actions.deleteDialog)
+        if (blocked != null) DeleteBlockedLayer(blocked, actions.onCloseBlocked)
     }
 }
 
@@ -170,6 +176,10 @@ class PortfolioScreenActions(
     val onOpenAllocation: () -> Unit = {},
     // 27: "Transaction history >" (view 3, view 8).
     val onOpenHistory: () -> Unit = {},
+    // 29: Delete in the menu, the Delete dialog, and Close on the blocked message (wireframe 10d).
+    val onDelete: () -> Unit = {},
+    val deleteDialog: DeleteDialogActions = DeleteDialogActions({}, {}, {}),
+    val onCloseBlocked: () -> Unit = {},
 )
 
 @Composable
@@ -387,7 +397,8 @@ internal fun sharesText(shares: BigDecimal): String = sharesText(Fraction.of(sha
 
 /**
  * The ⋮ menu (08 decision 1), drawn inside the activity window: a clear layer that closes the menu on a tap outside,
- * and a card under ⋮ with Rename. No DropdownMenu or Popup: a separate window would take the focus (CLAUDE.md).
+ * and a card under ⋮ with Rename and Delete (view 3; 29). No DropdownMenu or Popup: a separate window would take the
+ * focus (CLAUDE.md).
  */
 @Composable
 private fun PortfolioMenu(actions: PortfolioScreenActions) {
@@ -403,8 +414,13 @@ private fun PortfolioMenu(actions: PortfolioScreenActions) {
             tonalElevation = 3.dp,
             shadowElevation = 3.dp,
         ) {
-            TextButton(onClick = actions.onRename, modifier = Modifier.padding(horizontal = 8.dp)) {
-                Text(text = stringResource(R.string.rename_button), style = MaterialTheme.typography.bodyLarge)
+            Column {
+                TextButton(onClick = actions.onRename, modifier = Modifier.padding(horizontal = 8.dp)) {
+                    Text(text = stringResource(R.string.rename_button), style = MaterialTheme.typography.bodyLarge)
+                }
+                TextButton(onClick = actions.onDelete, modifier = Modifier.padding(horizontal = 8.dp)) {
+                    Text(text = stringResource(R.string.portfolio_delete_button), style = MaterialTheme.typography.bodyLarge)
+                }
             }
         }
     }

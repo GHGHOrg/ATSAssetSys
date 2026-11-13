@@ -33,7 +33,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.PathEffect
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.graphics.drawOutline
 import androidx.compose.ui.graphics.drawscope.Stroke
@@ -380,19 +379,7 @@ private fun DirectChip(
         label = { Text(text = label) },
         enabled = enabled,
         border = if (enabled) FilterChipDefaults.filterChipBorder(enabled = true, selected = selected) else null,
-        modifier =
-        if (enabled) {
-            Modifier
-        } else {
-            Modifier.drawBehind {
-                val width = 1.dp.toPx()
-                val dash = 4.dp.toPx()
-                val outline = shape.createOutline(Size(size.width - width, size.height - width), layoutDirection, this)
-                translate(width / 2, width / 2) {
-                    drawOutline(outline, dashed, style = Stroke(width, pathEffect = PathEffect.dashPathEffect(floatArrayOf(dash, dash))))
-                }
-            }
-        },
+        modifier = if (enabled) Modifier else Modifier.dashedOutline(shape, dashed),
     )
 }
 

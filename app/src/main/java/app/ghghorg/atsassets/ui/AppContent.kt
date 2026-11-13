@@ -152,6 +152,9 @@ private fun BarContent(
                 onRefresh = viewModel::onPullToRefresh,
                 onOpenAllocation = viewModel::openAllocation,
                 onOpenHistory = viewModel::openTransactionHistory,
+                onDelete = viewModel::openDelete,
+                deleteDialog = DeleteDialogActions(viewModel::onDeleteNameChange, viewModel::confirmDelete, viewModel::cancelDelete),
+                onCloseBlocked = viewModel::closeDeleteBlocked,
             ),
         )
 

@@ -687,6 +687,12 @@ data class AppState(
 ) {
     val shownPortfolio: Portfolio? get() = portfolioId?.let { id -> portfolios.firstOrNull { it.id == id } }
 
+    /** 29: the Delete dialog as the screen draws it (CR2), while it is open. */
+    val deleteDialogModel: DeleteDialogModel? get() = deleteDialog?.let { PortfolioDeletions.dialog(it, saving) }
+
+    /** 29: the blocked message as the screen draws it (CR2), while it is shown. */
+    val deleteBlockedModel: DeleteBlockedModel? get() = PortfolioDeletions.blocked(deleteBlocked)
+
     /** Net worth rounded to cents, for Overall (4.10: rounded only when shown). */
     val netWorthCents: Long get() = netWorth.rounded(2).movePointRight(2).longValueExact()
 

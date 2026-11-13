@@ -297,6 +297,23 @@ class PortfolioDeleteFlowTest {
         assertEquals("AAPL", vm.state.value.cashFilterForm.ticker)
     }
 
+    // 29 step 5 (CR2): the screen's models in the state follow the dialog and the message.
+    @Test
+    fun theScreensModels_followTheDialogAndTheMessage() {
+        val vm = onMenu()
+        vm.openDelete()
+        vm.onDeleteNameChange("portfolio p")
+        val model = vm.state.value.deleteDialogModel
+        assertEquals(PortfolioDeletions.dialog(vm.state.value.deleteDialog!!, false), model)
+        assertEquals("+$800.00", model?.realizedGain)
+        assertTrue(model?.deleteEnabled == true)
+        assertNull(vm.state.value.deleteBlockedModel)
+        val blocked = onMenu(exampleE(), "p2")
+        blocked.openDelete()
+        assertEquals("2026-02-09", blocked.state.value.deleteBlockedModel?.exampleDate)
+        assertNull(blocked.state.value.deleteDialogModel)
+    }
+
     // A tab closes the dialog and the message.
     @Test
     fun aTab_closesTheDialogAndTheMessage() {
