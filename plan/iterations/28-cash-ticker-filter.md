@@ -1,0 +1,90 @@
+# plan/iterations/28-cash-ticker-filter.md
+
+Stage: Build. Status: approved 2026-11-13; decisions 1 to 3 settled the same day (your A, A, B; section 11).
+Source: plan.md section 4 (row 28), spec section 6 (view 7; Date fields; Number format and color), 4.1 (order), 4.6 (reversal), 4.8 (balance), section 14 (K3, K9), AC-49, AC-61; wireframe 07 (frames A to D, markers 1 to 8); iterations 06 (the Cash filters), 13b (reversal lines and their titles), 15d (the Cash list's model and kept field), 27 (the Ticker field and menu, decision 3; section 3: "27's Ticker field is built so 28 can use it"). "My reading" is an interpretation, not a test.
+
+## 1. Outcome
+The Cash tab gets the rest of view 7's filters. Under From and To with the date note, a Ticker field ("All tickers" or one ticker with a buy or sell line, any portfolio) opens the same short menu as Transaction history's, drawn in the activity window. The chips become All, Deposit, Withdrawal, Interest/dividend, Adjustment, Buy, Sell. Buy and Sell list the trade lines of buys and sells, a reversal's line under the chip of the entry it reverses (marker 8). With a ticker picked, only that ticker's trade lines show (no direct entry, no opening balance), the four direct-entry chips are disabled with one line saying why, and if one of them was on the chip goes back to All; picking "All tickers" enables them again. Clear filters also clears the ticker, and the count line counts with it. Every row still shows the real balance after it. Nothing else on the Cash tab changes.
+
+## 2. Spec refs
+- Section 6, view 7: the date range with the date note, a ticker picker, type chips (All, Deposit, Withdrawal, Interest/dividend, Adjustment, Buy, Sell), one at a time; filters optional, combined, not saved; the ticker picked from the tickers with a buy or sell line, not typed; with a ticker the four direct-entry chips disabled (not tappable, read as unavailable, with one line saying why; wireframe 07 marker 3 adds "greyed with a dashed outline"); a reversal's line reads "Reversal of buy" or "Reversal of sell" with the ticker and sits under the chip of the entry it reverses, not under the opposite one; every row with the real balance after it. Wireframe 07, frames B and D, markers 2, 3, 5, 6 and 8.
+- 4.1 (newest first, same-date entries in entry order), 4.6 (a reversal and its cash line), 4.8 (the balance, whatever the filters).
+- Section 14: K3 reads records and never writes them; K9 shows them.
+- AC-49 (Example A: ticker AAPL disables the four chips with the line, Sell shows only the Mar 1 sell with balance $9,600.00, All shows the three trade lines and no opening balance, Apr 1 to Apr 30 one plain line, clearing the ticker enables the chips, Clear filters resets all three, the count line "1 entry shown"; the sample file: AAPL and Buy show the Apr 5 reversal (+$360.00, $9,400.00), the Mar 20, Feb 1 and Jan 2 buys, and the reversal not under Sell; TalkBack: each row in full, a disabled chip read as unavailable; checked by hand). AC-61. Standing checks: AC-09, AC-35, AC-39 to AC-42.
+- CR2: the changed screen draws only from its model.
+
+## 3. Out of scope
+- The reversal's title on the Cash list ("Reversal of buy AAPL"): built in 13b (CashListModel's `TradeTitle`). 28 adds only its place under the Buy or Sell chip. My reading of plan.md's "reversal labels".
+- A ticker on direct entries or per-holding dividends: a planned later version (wireframe 07's closing note; intent v52).
+- Transaction history's filters: done in 27; only its Ticker field and menu move to the shared file (decision 2), with no change to how they look or work.
+- Moving work off the main thread (15c decision 5).
+
+## 4. Analysis (2026-11-13, by reading CashAccount.kt, CashListModel.kt, CashScreen.kt, KeptFields.kt, AppViewModel.kt, TransactionHistoryScreen.kt, wireframe 07 and the 06, 15d and 27 files)
+- What exists: core's `CashFilter` (from, to, one `CashType`) and `CashAccount.rows` (newest first, the real balance worked out on the whole list before filtering); the app's `CashFilterForm` (From and To as typed, one type), held in memory while the app runs (06 decision 4); `CashList.of`, a kept field (15d decision 1) refreshed when the entries, transactions, portfolios or the form change; the screen's chips All and the four direct types (`FILTER_TYPES`, "Buy and Sell arrive in 28"); the count line and Clear filters while a filter is active; each trade line's title, a reversal titled after its original (13b).
+- Buy and Sell: a trade line under Buy when its transaction is a buy or a reversal of a buy; under Sell likewise. A reversal of a split has no cash line, so it never shows here. A reversal whose original is not there shows under All only (my reading; the records keep the pair together, so no path makes one).
+- Ticker: a trade line matches when its transaction's ticker is the one picked; a direct entry, the opening balance and a trade line whose transaction is not there have no ticker and never match. The tickers offered: each ticker with a trade line, from every portfolio, each once, in alphabetical order (as 27 decision 3), hidden holdings included (a list shows everything, as 27).
+- The disabled chips: picking a ticker while Deposit, Withdrawal, Interest/dividend or Adjustment is on sets All; a tap on a disabled chip changes nothing (the ViewModel ignores it too). "All tickers" enables them again; the chip stays as it is.
+- The rule (which lines Buy, Sell and a ticker take) goes in core, with the date and type rule it joins (decision 1): `CashFilter` gains the ticker and the trade side, and `CashAccount` a `rows` that also takes the transactions (found through one id map, as 15d) and a `tickers`. The existing `rows(entries, filter)` and its tests stay as they are.
+- The model: `CashListModel` gains the tickers, the ticker picked, whether the four chips are enabled and the "why" line, and counts the ticker as an active filter. The menu's open flag stays outside the kept field's inputs, so opening the menu does not rebuild the list.
+- The Ticker field and menu: 27's `TickerField` and `TickerMenu` are private in TransactionHistoryScreen.kt and take its model. They move to a shared file, taking the ticker, the tickers and the menu's state as plain values (decision 2).
+- Navigation: the menu is drawn in the activity window over the Cash list (CLAUDE.md: a separate window loops with the cover screen). Back closes it first; a tab change closes it; the filters themselves stay while the app runs (06 decision 4); an unlock keeps the menu open, as 27's.
+- Scale: the extra work is one id map and one pass over the entries, inside the kept field, so it runs only when the inputs change. My reading: no new HoldingsScaleTest call (the Cash list was never one of its calls; 15d measured it with AppStartTimingTest).
+- No database change. No write: K3 reads the entries and transactions already in the state.
+
+## 5. Files
+- core/: CashAccount.kt (the ticker and the trade side in `CashFilter`; `rows` with the transactions; `tickers`); CashAccountTest (added tests only).
+- app/: ui: AppViewModel.kt (the form's ticker and chip, the menu, the reset to All, Clear filters, Back and a tab closing the menu), KeptFields.kt (the inputs unchanged; the model's new fields), CashListModel.kt (tickers, chip availability, the line, the count), CashScreen.kt (the Ticker field, the seven chips with the dashed outline when disabled (decision 3), the line, the menu over the list), a shared TickerPicker.kt and TransactionHistoryScreen.kt using it (decision 2), AppContent.kt (the actions), strings.xml (section 12); build.gradle.kts (versionCode 38).
+- Tests: CashAccountTest (Example A's and the sample file's AC-49 figures; a ticker with each chip; a reversal under its original's chip and not the opposite; direct entries and the opening balance never with a ticker; the tickers list; the balances unchanged by every filter); CashListModelTest (the chips' availability and line, the count with a ticker, the menu's tickers); a ViewModel flow test, CashTickerFlowTest (the menu, a pick, the reset to All, a disabled chip ignored, "All tickers", Clear filters, Back and a tab closing the menu, an unlock keeping it); KeptFieldsTest (the ticker as an input, added lines only); screen tests (section 9).
+- Documents: this file, plan.md (section 11 and the change log).
+
+## 6. Order of work
+Each step ends with spotlessCheck, build, tests and lint, all with --rerun-tasks, plus `:app:compileDebugAndroidTestKotlin`, and the report. Then I stop. Branch iter-28-cash-ticker-filter, one pull request.
+1. This file and the plan.md lines.
+2. K3 in core: the ticker and the Buy and Sell lines, the tickers; tests first, shown red.
+3. The state and the ViewModel: the ticker, the seven chips, the menu, the reset to All, Clear filters, Back, a tab, an unlock; tests first.
+4. The model and the screen: the builder's new fields, the Ticker field and menu (decision 2), the chips and the line, the strings; models first.
+5. The screen tests.
+6. Documents, versionCode 38, the phone check, the wording approval, the pull request draft, and the open item 33 reminder.
+
+## 7. Stubs
+None.
+
+## 8. Risks
+- 1. A reversal under the wrong chip, or its balance changed by a filter: core tests with the sample file's chain and Example A's balances (AC-49's figures).
+- 2. A direct entry or the opening balance showing with a ticker: a core test.
+- 3. TalkBack's word for a disabled chip: AC-49 says "unavailable"; Material's disabled chip is read by the platform, possibly as "disabled" (my reading, not checked). AC-49 is checked by hand for this reason; the phone check decides, and if the word differs I bring it to you as a question, not a change of my own.
+- 4. The menu over a lazy list: it must keep the window's focus (cover screen) and be reachable at the largest font in landscape: AC-61 (b) and (a). A focus test on the real MainActivity needs an entry before the filters show; if the test cannot make one through the screens, the focus test is drawn from a state and the phone check covers the real window (as 27 risk 5).
+- 5. The kept field: a missed input leaves the list stale. KeptFieldsTest gains the ticker; the menu flag stays out of the inputs.
+- 6. Decision 2 touches 27's screen: TransactionHistoryScreenTest's 6 tests must pass unchanged.
+- 7. The emulator is not the phone (C19).
+
+## 9. Proof
+- Commands: as in 27, all with --rerun-tasks (CLAUDE.md's pitfall on the intermittent local failure applies). The screen tests on the pull request: 91 plus this iteration's new ones.
+- Unit tests: steps 2 to 4, AC-49's figures among them.
+- Screen tests (AC-61), on ScreenTestSupport.kt: at the largest font in landscape, the Ticker field, each of the seven chips (matched by role, CLAUDE.md), the line and the rows reached and tapped, and the menu's items reached and tapped (a); the menu keeps the window's focus and takes a tap (b); the TalkBack text of a trade line under Buy with a ticker, of a reversal's line and of a disabled chip (d).
+- The phone check, over 27's build (versionCode 37): the Ticker field and menu; a pick, with each chip; the four chips disabled with the line, and the reset to All; "All tickers"; Clear filters and the count line; a reversal's line under its original's chip and not the opposite (on your data, or with your yes on a reversal you then re-enter); the balances against the unfiltered list; a row opening as before; Back and a tab with the menu open; largest font and landscape; TalkBack (rows, a disabled chip); light and dark; offline; logcat as in 27 (after `adb devices`).
+
+## 10. Research
+None.
+
+## 11. Decisions (Build, settled by you 2026-11-13)
+1. The Buy, Sell and ticker rule lives in core's `CashFilter` and `CashAccount`, beside the date and type rule; the existing `rows(entries, filter)` and its tests stay as they are (your A). Not chosen: (B) in the app's `CashList.of`, which would split the filter rule across two modules.
+2. One shared Ticker field and menu, moved out of TransactionHistoryScreen.kt and used by Transaction history and the Cash tab; 27's screen tests must pass unchanged (your A). Not chosen: (B) a copy on the Cash screen.
+3. A disabled chip is greyed with a dashed outline, in the theme's colors, without the strike-through, as wireframe 07 marker 3 says (your B). Spec view 7 says "disabled (not tappable, read as unavailable, with one line saying why)" and gives no look; the marker's text asks for "greyed with a dashed outline", and only the wireframe's drawing strikes the label through. Not chosen: (A) Material's disabled chip alone; (C) the strike-through as well (harder to read at the largest font). spec.md does not change.
+
+## 12. Wording to approve (D9)
+To be shown on the phone in step 6 (wireframe 07's placeholders and the approved strings as the first proposal):
+- The Ticker field and menu, as approved in 27: "Ticker", "All tickers", the menu's title "Tickers", TalkBack "Ticker, AAPL".
+- The chips "Buy" and "Sell" (27's strings), after the four direct ones.
+- The line under the chips while a ticker is picked: "Deposit, withdrawal, interest/dividend and adjustment are unavailable with a ticker (those entries have no ticker)." (wireframe 07, frame B).
+- Unchanged and reused: the trade lines' titles ("Buy AAPL", "Sell AAPL", "Reversal of buy AAPL", "Reversal of sell AAPL"), "No entries match these filters", "1 entry shown", "Clear filters".
+- TalkBack: a disabled chip by the platform's word (risk 3).
+
+## 13. Status and notes
+- Draft 2026-11-13; approved the same day.
+
+### 13.1 Steps (2026-11-13)
+- Step 1: this file and the plan.md lines (section 11's row; the change log with #179's and #180's merges). The first full run failed at 41 s in `:core:compileTestFixturesKotlin` (UNRESOLVED_REFERENCE, then Room's KSP; open item 60, CLAUDE.md's last pitfall; the failing file's name was not captured); the same command re-run unchanged was green: 1,119 tests (1 skipped, `HoldingsScaleTest.timesTheCodeBefore15c`), lint's 5 findings, the screen tests compiled. HoldingsScaleTest measured no check again.
+
+## 14. Departures from the plan
+None yet.
