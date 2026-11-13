@@ -5,6 +5,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.Surface
+import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.semantics.SemanticsProperties
 import androidx.compose.ui.test.SemanticsMatcher
@@ -41,6 +42,7 @@ import app.ghghorg.atsassets.ui.BottomBar
 import app.ghghorg.atsassets.ui.DEFAULT_TAB_ORDER
 import app.ghghorg.atsassets.ui.DeleteDialog
 import app.ghghorg.atsassets.ui.DeleteDialogActions
+import app.ghghorg.atsassets.ui.PortfolioDeleteLayers
 import app.ghghorg.atsassets.ui.PortfolioScreen
 import app.ghghorg.atsassets.ui.PortfolioScreenActions
 import app.ghghorg.atsassets.ui.Screen
@@ -77,19 +79,32 @@ private fun portfolioState(
     deleteBlocked = blocked,
 )
 
-private fun noActions(
-    dialog: DeleteDialogActions = DeleteDialogActions({}, {}, {}),
-    onCloseBlocked: () -> Unit = {},
-) = PortfolioScreenActions(
+private fun noActions() = PortfolioScreenActions(
     onBack = {},
     onOpenMenu = {},
     onCloseMenu = {},
     onRename = {},
     onOpenHolding = {},
     onOpenHidden = {},
-    deleteDialog = dialog,
-    onCloseBlocked = onCloseBlocked,
 )
+
+/** The portfolio's screen and the bottom bar, with the Delete layers over both, as AppContent draws them (29 step 10). */
+@Composable
+private fun OverTheBar(
+    state: AppState,
+    dialog: DeleteDialogActions = DeleteDialogActions({}, {}, {}),
+    onCloseBlocked: () -> Unit = {},
+) {
+    Surface {
+        Box(modifier = Modifier.fillMaxSize()) {
+            Column(modifier = Modifier.fillMaxSize()) {
+                Box(modifier = Modifier.weight(1f)) { PortfolioScreen(state, noActions()) }
+                BottomBar(DEFAULT_TAB_ORDER, Tab.PORTFOLIOS, {})
+            }
+            PortfolioDeleteLayers(state.deleteDialogModel, state.deleteBlockedModel, dialog, onCloseBlocked)
+        }
+    }
+}
 
 private val confirm = hasText(string(R.string.delete_confirm_button)) and hasClickAction()
 
@@ -105,7 +120,7 @@ class PortfolioDeleteTalkBackTest {
 
     @Test
     fun theSummary_readsItsFigures_andDeletePortfolio_waitsForTheName() {
-        composeRule.setContent { ATSAssetSystemTheme { PortfolioScreen(portfolioState(DeleteDialog(exampleA)), noActions()) } }
+        composeRule.setContent { ATSAssetSystemTheme { OverTheBar(portfolioState(DeleteDialog(exampleA))) } }
         composeRule.onNode(isHeading() and hasText(deleteText(R.string.delete_title, "Portfolio P"))).assertExists()
         val summary =
             deleteText(R.string.delete_summary_spoken, 3, 3, deleteText(R.string.spoken_plus, "800.00"), "9,600.00", "10,000.00")
@@ -117,7 +132,7 @@ class PortfolioDeleteTalkBackTest {
     @Test
     fun withTheName_deletePortfolio_isAvailable() {
         val state = portfolioState(DeleteDialog(exampleA, typedName = "portfolio p"))
-        composeRule.setContent { ATSAssetSystemTheme { PortfolioScreen(state, noActions()) } }
+        composeRule.setContent { ATSAssetSystemTheme { OverTheBar(state) } }
         composeRule.onNode(confirm).assertIsEnabled()
         composeRule.onNodeWithText(string(R.string.delete_not_matching)).assertDoesNotExist()
     }
@@ -125,7 +140,7 @@ class PortfolioDeleteTalkBackTest {
     @Test
     fun theBlockedMessage_readsAsWritten_withClose() {
         val state = portfolioState(blocked = DeletionCheck.Blocked(LocalDate.parse("2026-02-10"), 20_000L))
-        composeRule.setContent { ATSAssetSystemTheme { PortfolioScreen(state, noActions()) } }
+        composeRule.setContent { ATSAssetSystemTheme { OverTheBar(state) } }
         composeRule.onNodeWithText(deleteText(R.string.delete_blocked, "2026-02-10", "$200.00", "2026-02-09")).assertExists()
         composeRule.onNode(button(R.string.close_button)).assertExists()
         composeRule.onNode(confirm).assertDoesNotExist()
@@ -133,9 +148,9 @@ class PortfolioDeleteTalkBackTest {
 }
 
 /**
- * AC-39, AC-61 (a): the Delete dialog and the blocked message at the largest font in landscape, above the bottom bar as
- * in the app: the title, the summary, the warning, the field, Cancel and Delete portfolio reached, shown and tapped;
- * the message and Close reached, shown and tapped.
+ * AC-39, AC-61 (a): the Delete dialog and the blocked message at the largest font in landscape, over the bottom bar as
+ * in the app (step 10): the title, the summary, the warning, the field, Cancel and Delete portfolio reached, shown and
+ * tapped; the message and Close reached, shown and tapped.
  */
 @RunWith(AndroidJUnit4::class)
 class PortfolioDeleteLargestFontLandscapeTest {
@@ -148,29 +163,14 @@ class PortfolioDeleteLargestFontLandscapeTest {
             .around(DeviceSettingsRule(fontScale = 2.0f))
             .around(composeRule)
 
-    private fun show(
-        state: AppState,
-        actions: PortfolioScreenActions,
-    ) {
-        composeRule.setContent {
-            ATSAssetSystemTheme {
-                Surface {
-                    Column(modifier = Modifier.fillMaxSize()) {
-                        Box(modifier = Modifier.weight(1f)) { PortfolioScreen(state, actions) }
-                        BottomBar(DEFAULT_TAB_ORDER, Tab.PORTFOLIOS, {})
-                    }
-                }
-            }
-        }
-    }
-
     @Test
     fun theDialog_canBeReached_andTapped() {
         composeRule.turn(landscape = true)
         var cancelled = false
         var confirmed = false
-        val actions = noActions(DeleteDialogActions(onNameChange = {}, onConfirm = { confirmed = true }, onCancel = { cancelled = true }))
-        show(portfolioState(DeleteDialog(exampleA, typedName = "Portfolio P")), actions)
+        val actions = DeleteDialogActions(onNameChange = {}, onConfirm = { confirmed = true }, onCancel = { cancelled = true })
+        val state = portfolioState(DeleteDialog(exampleA, typedName = "Portfolio P"))
+        composeRule.setContent { ATSAssetSystemTheme { OverTheBar(state, actions) } }
         composeRule.onNode(isHeading() and hasText(deleteText(R.string.delete_title, "Portfolio P"))).performScrollTo().assertIsDisplayed()
         val summary =
             deleteText(R.string.delete_summary_spoken, 3, 3, deleteText(R.string.spoken_plus, "800.00"), "9,600.00", "10,000.00")
@@ -190,7 +190,7 @@ class PortfolioDeleteLargestFontLandscapeTest {
         composeRule.turn(landscape = true)
         var closed = false
         val state = portfolioState(blocked = DeletionCheck.CannotDelete(LocalDate.parse("2026-01-01"), 30_000L))
-        show(state, noActions(onCloseBlocked = { closed = true }))
+        composeRule.setContent { ATSAssetSystemTheme { OverTheBar(state, onCloseBlocked = { closed = true }) } }
         composeRule.onNodeWithText(deleteText(R.string.delete_cannot, "2026-01-01", "$300.00")).performScrollTo().assertIsDisplayed()
         composeRule.onNode(button(R.string.close_button)).performScrollTo().assertIsDisplayed().performClick()
         composeRule.waitForIdle()

@@ -58,19 +58,14 @@ fun PortfolioScreen(
 ) {
     val portfolio = state.shownPortfolio ?: return
     BackHandler(onBack = if (state.portfolioMenuOpen) actions.onCloseMenu else actions.onBack)
-    val dialog = state.deleteDialogModel
-    val blocked = state.deleteBlockedModel
     Box(modifier = modifier.fillMaxSize()) {
-        // While the menu, the Delete dialog or the blocked message is open, TalkBack reads only that layer.
-        val layerOpen = state.portfolioMenuOpen || dialog != null || blocked != null
-        val under = if (layerOpen) Modifier.clearAndSetSemantics { } else Modifier
+        // While the menu is open, TalkBack reads only the menu. The Delete dialog and the blocked message are drawn by
+        // AppContent over the bar, which hides this screen from TalkBack while they are open (29 step 10).
+        val under = if (state.portfolioMenuOpen) Modifier.clearAndSetSemantics { } else Modifier
         PricePullToRefresh(state.refreshing, actions.onRefresh, Modifier.fillMaxSize()) {
             PortfolioContent(state, portfolio.id, portfolio.name, actions, Modifier.fillMaxSize().then(under))
         }
         if (state.portfolioMenuOpen) PortfolioMenu(actions)
-        // 29: drawn after the screen's own Back handler, so Back closes the layer first.
-        if (dialog != null) DeleteDialogLayer(dialog, actions.deleteDialog)
-        if (blocked != null) DeleteBlockedLayer(blocked, actions.onCloseBlocked)
     }
 }
 
@@ -176,10 +171,8 @@ class PortfolioScreenActions(
     val onOpenAllocation: () -> Unit = {},
     // 27: "Transaction history >" (view 3, view 8).
     val onOpenHistory: () -> Unit = {},
-    // 29: Delete in the menu, the Delete dialog, and Close on the blocked message (wireframe 10d).
+    // 29: Delete in the menu (wireframe 10d); the dialog and the blocked message are AppContent's (step 10).
     val onDelete: () -> Unit = {},
-    val deleteDialog: DeleteDialogActions = DeleteDialogActions({}, {}, {}),
-    val onCloseBlocked: () -> Unit = {},
 )
 
 @Composable

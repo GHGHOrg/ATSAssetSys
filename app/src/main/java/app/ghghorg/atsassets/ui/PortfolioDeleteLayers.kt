@@ -7,9 +7,12 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.consumeWindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.imePadding
+import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.rememberScrollState
@@ -52,6 +55,21 @@ class DeleteDialogActions(
     val onConfirm: () -> Unit,
     val onCancel: () -> Unit,
 )
+
+/**
+ * The Delete dialog or the blocked message, whichever is open (29). AppContent draws them over the whole content, the
+ * bottom bar included, as Rename's dialog (08), so the bar takes no tap and TalkBack reads only the layer (step 10).
+ */
+@Composable
+internal fun PortfolioDeleteLayers(
+    dialog: DeleteDialogModel?,
+    blocked: DeleteBlockedModel?,
+    actions: DeleteDialogActions,
+    onCloseBlocked: () -> Unit,
+) {
+    if (dialog != null) DeleteDialogLayer(dialog, actions)
+    if (blocked != null) DeleteBlockedLayer(blocked, onCloseBlocked)
+}
 
 /**
  * The Delete dialog (wireframe 10d frames D and E; 29), drawn from its model (CR2) inside the activity window over a
@@ -190,7 +208,8 @@ internal fun DeleteBlockedLayer(
 }
 
 // The dimmed layer under a dialog in the window: it takes every tap, so a tap outside does nothing, and it gives way
-// to the keyboard (the app draws edge to edge; 08 phone check 9a).
+// to the keyboard (the app draws edge to edge; 08 phone check 9a). It ends where MainActivity's Scaffold padding ends,
+// above the navigation strip, so that strip is consumed first and the room ends at the keyboard's top (29 step 10).
 @Composable
 private fun Scrim(content: @Composable () -> Unit) {
     Box(
@@ -199,6 +218,7 @@ private fun Scrim(content: @Composable () -> Unit) {
             .fillMaxSize()
             .background(MaterialTheme.colorScheme.scrim.copy(alpha = DELETE_SCRIM_ALPHA))
             .pointerInput(Unit) { detectTapGestures { } }
+            .consumeWindowInsets(WindowInsets.navigationBars)
             .imePadding(),
         contentAlignment = Alignment.Center,
     ) {
