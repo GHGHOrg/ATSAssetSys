@@ -133,7 +133,7 @@ object CashList {
         val filter =
             CashFilter(
                 from = DateDigits.toDate(form.fromText),
-                to = DateDigits.toDate(form.toText),
+                to = DateDigits.toBound(form.fromText, form.toText),
                 type = form.type,
                 ticker = form.ticker,
                 trade = form.trade,
@@ -148,7 +148,7 @@ object CashList {
             spokenBalance = SpokenFigure.ofBalance(balance),
             hasEntries = all.isNotEmpty(),
             fromRefusal = DateDigits.refusal(form.fromText),
-            toRefusal = DateDigits.refusal(form.toText),
+            toRefusal = DateDigits.toRefusal(form.fromText, form.toText),
             filterActive = filter.isActive,
             rows = all.filter { matches(filter, it.entry, byId) }.map { row(it, byId, names) },
             tickers = CashAccount.tickers(entries, transactions),

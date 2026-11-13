@@ -417,6 +417,9 @@ enum class DateRefusal {
 
     // A character other than a digit in a digits-only date field (the Cash filters, iteration 06).
     NOT_DIGITS,
+
+    // A filter's To that is a whole date before its From (29 step 8, decision 4): the To counts as no bound.
+    BEFORE_FROM,
 }
 
 enum class SaveRefusal {
@@ -857,7 +860,8 @@ data class AppState(
         get() =
             historyPortfolioId
                 ?.let { id ->
-                    val filter = HistoryFilter(historyTicker, DateDigits.toDate(historyFromText), DateDigits.toDate(historyToText), historyChip)
+                    val to = DateDigits.toBound(historyFromText, historyToText)
+                    val filter = HistoryFilter(historyTicker, DateDigits.toDate(historyFromText), to, historyChip)
                     TransactionHistory.rows(transactions, entries, id, filter)
                 }.orEmpty()
 
@@ -997,13 +1001,13 @@ data class AppState(
      */
     val filterFromRefusal: DateRefusal? get() = DateDigits.refusal(cashFilterForm.fromText)
 
-    val filterToRefusal: DateRefusal? get() = DateDigits.refusal(cashFilterForm.toText)
+    val filterToRefusal: DateRefusal? get() = DateDigits.toRefusal(cashFilterForm.fromText, cashFilterForm.toText)
 
     /** Only eight digits of a real date count as a bound; anything else is no bound (06 decision 1). */
     val cashFilter: CashFilter
         get() = CashFilter(
             from = DateDigits.toDate(cashFilterForm.fromText),
-            to = DateDigits.toDate(cashFilterForm.toText),
+            to = DateDigits.toBound(cashFilterForm.fromText, cashFilterForm.toText),
             type = cashFilterForm.type,
             ticker = cashFilterForm.ticker,
             trade = cashFilterForm.trade,

@@ -1092,13 +1092,17 @@ class AppViewModelTest {
         assertEquals(4, vm.state.value.cashFilteredRows.size)
     }
 
+    // 29 step 8 (decision 4; the 29 file, 13.3) replaces 06's expectation "From after To shows no rows", which asserted the
+    // defect: To before From now shows its line and counts as no bound, so the list shows from From on.
     @Test
-    fun fromAfterToShowsNoRows() {
+    fun fromAfterTo_refusesTo_andShowsFromFromOn() {
         val vm = withFourEntries()
         vm.onFilterFromChange("20260108")
         vm.onFilterToChange("20260105")
         assertTrue(vm.state.value.filterActive)
-        assertTrue(vm.state.value.cashFilteredRows.isEmpty())
+        assertEquals(null, vm.state.value.filterFromRefusal)
+        assertEquals(DateRefusal.BEFORE_FROM, vm.state.value.filterToRefusal)
+        assertEquals(listOf("d4"), vm.shownIds())
     }
 
     @Test

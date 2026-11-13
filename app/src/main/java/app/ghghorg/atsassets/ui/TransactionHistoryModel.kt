@@ -136,7 +136,7 @@ object TransactionHistories {
         fromText = fromText,
         toText = toText,
         fromRefusal = DateDigits.refusal(fromText),
-        toRefusal = DateDigits.refusal(toText),
+        toRefusal = DateDigits.toRefusal(fromText, toText),
         ticker = ticker,
         tickers = tickers,
         chip = chip,

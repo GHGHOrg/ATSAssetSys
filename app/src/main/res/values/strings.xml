@@ -609,4 +609,6 @@
     <string name="delete_blocked">Not deleted. Cash would be negative from %1$s ET by %2$s. Add a deposit adjustment of at least %2$s, with a note, dated before %1$s ET (for example %3$s ET).</string>
     <string name="delete_cannot">Not deleted. Cash would be negative from the opening balance\'s date, %1$s ET, by %2$s. No entry can be dated before it, so this portfolio cannot be deleted.</string>
     <string name="close_button">Close</string>
+    <!-- Iteration 29 step 8: a filter's To before its From (decision 4; proposed, approval on the phone in step 9). -->
+    <string name="date_before_from">To is before From.</string>
 </resources>

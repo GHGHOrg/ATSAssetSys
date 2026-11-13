@@ -64,6 +64,30 @@ object DateDigits {
         return MarketDate.parse(format(text))
     }
 
+    /**
+     * A filter's To as a bound (29 step 8, decision 4): its date, or null when it is not a whole date or when it is
+     * before a whole From, so the range never runs backwards and the list shows from From on.
+     */
+    fun toBound(
+        fromText: String,
+        toText: String,
+    ): LocalDate? {
+        val to = toDate(toText) ?: return null
+        val from = toDate(fromText)
+        return if (from != null && to.isBefore(from)) null else to
+    }
+
+    /** A filter's To judged with its From: its own refusal first, then BEFORE_FROM when both are whole dates out of order. */
+    fun toRefusal(
+        fromText: String,
+        toText: String,
+    ): DateRefusal? {
+        refusal(toText)?.let { return it }
+        val to = toDate(toText) ?: return null
+        val from = toDate(fromText) ?: return null
+        return if (to.isBefore(from)) DateRefusal.BEFORE_FROM else null
+    }
+
     /** NOT_DIGITS at once for any other character; NOT_A_DATE only for eight digits that are no real date. */
     fun refusal(text: String): DateRefusal? = when {
         !isDigits(text) -> DateRefusal.NOT_DIGITS
