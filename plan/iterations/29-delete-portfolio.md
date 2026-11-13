@@ -1,0 +1,90 @@
+# plan/iterations/29-delete-portfolio.md
+
+Stage: Build. Status: approved 2026-11-13; decisions 1 and 2 settled the same day (your A, A; section 11).
+Source: plan.md section 4 (row 29), spec 4.7 (portfolios), 4.1 (order), 4.2 (opening balance), 4.8 (the balance in the deletion summary), section 3 (trade cash lines), view 3 (the portfolio's menu), view 5 (realized gains), section 6 (Number format and color), section 8 (transaction count), section 14 (K1, K2, K3), AC-28, AC-55, AC-61, Example A, Example E; wireframe 10d (frames D, E, F and the opening-date message, markers 9 to 13); iterations 07 and 08 (portfolio create and rename, the ⋮ menu, PortfolioNameDialog in the activity window), 13b (reversals), 26 (realized gains), 28 (Deploy finding 1: a Cash ticker that outlives its lines). "My reading" is an interpretation, not a test.
+
+## 1. Outcome
+The portfolio's ⋮ menu gets Delete, after Rename. Delete first runs the deletion check of 4.7. If removing the portfolio's trade cash lines would make cash negative on any date, no dialog opens: a message drawn in the window names the first date, the largest shortfall and the fix (a deposit adjustment with a note, dated before that date, for at least the shortfall), with Close only; if that first date is the opening balance's date, the message says the portfolio cannot be deleted. Otherwise the Delete dialog opens over the portfolio's screen, titled with its name: the number of transactions, the number of trade cash lines, the realized gains that go with it (colored and signed), the cash balance now and after, a plain warning that it cannot be undone except by restoring a backup, and a field where you type the portfolio's name. Delete portfolio stays inactive (dashed outline, read as unavailable, one line saying why) until the typed name matches, ignoring case and spaces; Cancel changes nothing. Delete portfolio runs the check again and then removes the portfolio, its transactions and their trade cash lines as one action; everything is worked out again as if it never existed, and the app shows the Portfolios tab ("No portfolios yet" after the last one).
+
+## 2. Spec refs
+- 4.7: delete, including the last one and all of them; a summary (transaction count, trade cash lines, realized gains) and a typed confirmation; the portfolio's transactions and their cash lines removed, history recomputed as if it never existed; blocked if cash would be negative on any date, the message stating the first date, the largest shortfall and the fix, a deposit dated on that date itself not helping (4.1); the opening-balance-date case, which cannot be deleted; the only exception to permanent transactions, the way back being a restore.
+- 4.8: the summary's before and after balances are on the latest entry date, entries dated after today included.
+- Section 3 and section 8: a transaction is a buy, sell, split or reversal (counted as in section 8); one trade cash line per buy or sell, reversals included, none for a split.
+- View 3: the menu with Rename and Delete. View 5: realized gains, a sale cancelled by a reversal not counted. Section 6: a gain green with a plus sign, a loss red with a minus sign, zero uncolored.
+- Section 14: K1 judges every write to transactions or cash (here: the deletion check and what is removed); K2 removes it as one action; K3 reads (the summary).
+- AC-28, AC-55 (Example A: 3 transactions, 3 trade cash lines, +$800.00, $9,600.00 to $10,000.00, Delete inactive until the name is typed, case and spaces ignored; a portfolio with no transactions still needs the name; Example E: no dialog, 2026-02-10 and $200.00, Close only, then a deposit adjustment dated 2026-02-09 lets it through and one dated 2026-02-10 does not; the opening-date case blocked whatever is added; the last portfolio leaves "No portfolios yet"; checked by hand), AC-61. Standing checks: AC-09, AC-35, AC-39 to AC-42.
+- Wireframe 10d, frames D, E, F and the opening-date message (markers 9 to 13); its "Design additions, to confirm" (the cash before and after, the typed name, no export button, no prefilled adjustment) came with the approved wireframe.
+
+## 3. Out of scope
+- Restore from a backup (31): the only way back after a deletion; 29 removes nothing that a restore would need, and the backup file itself is 31's.
+- A shortcut that opens a prefilled adjustment from the blocked message: wireframe 10d marker 13 says no.
+- Create and rename (07, 08) and their rules, unchanged.
+
+## 4. Analysis (2026-11-13, by reading spec 4.7, AC-28, AC-55, Example E, wireframe 10d, PortfolioScreen.kt, Portfolios.kt, OpeningBalance.kt (CashRules), RealizedGains.kt, RecordStore.kt and AtsDatabase.kt)
+- What exists: the ⋮ menu on the portfolio's screen with Rename only (PortfolioScreen.kt), drawn in the activity window; PortfolioNameDialog, a layer in the window with imePadding (07, 08); K1's portfolio rules (`Portfolios`: create, rename, `nameKey` for case and spaces); K1's cash replay (`CashRules.replay`: the first entry after which the balance is below 0, and the shortfall there); K3's realized gains (`RealizedGains.report`, a reversed sale left out, 26). No deletion anywhere: not in core, not in `RecordStore`, not in the DAOs.
+- The check (K1, core): the entries left once the portfolio's trade lines are gone, replayed in the 4.1 order. The first date is the date of the first entry after which the balance is below 0 (03's rule, so a deposit dated that date comes after the entries that make it negative). "The largest shortfall" (4.7): my reading, the most negative balance from that entry on, which is what an adjustment dated before the first date must cover to keep every later balance at 0 or above; for Example E both are $200.00, and a test with two negative dates tells them apart. If the first such entry is dated on the opening balance's date, the result is "cannot be deleted" (4.2: nothing is dated before it).
+- The lines removed and replayed: every trade cash line of the portfolio, its buys', sells' and reversals' (a reversal belongs to the portfolio of the entry it reverses, and its line is a trade cash line, section 3). A reversed buy's pair raises the balance between their dates when removed; a reversed sell's pair lowers it there, so a withdrawal in that window can block the deletion, and the replay of every date catches it. A reversed direct cash entry (a deposit and its reversal) is not the portfolio's: both stay and count in the replay, as on the Cash tab.
+- The summary (K1 with K3): the portfolio's transactions (buys, sells, splits, reversals); its trade cash lines (the cash entries whose transaction is one of them, reversals' lines included); its realized gain (K3, over all dates, a reversed sale left out); the balance on the latest entry date now and without those lines (4.8). Exact cents throughout (4.10).
+- The typed name: matched with `Portfolios.nameKey` (case and spaces ignored, D7), as AC-55 says.
+- The removal (K2): no foreign keys in the database, so one database transaction deletes, for the portfolio, its sell allocations, its transactions, the trade cash lines of those transactions and the portfolio row, and its own hidden-holding rows and overrides (decision 1). The state then drops them, and every kept field is worked out again (15c's single refresh point).
+- The state after the removal: the portfolio's screen, its menu and the dialog close and the Portfolios tab shows. A Cash ticker whose last trade line went with the portfolio goes back to All tickers (decision 2; 28 Deploy finding 1). Transaction history, Hidden holdings, Realized gains' expanded rows and a sell form only point at the portfolio while you are on its screens, which the removal leaves; tests check each is cleared.
+- The two layers (the dialog and the blocked message) are drawn in the activity window as PortfolioNameDialog (CLAUDE.md: a separate window loops with the cover screen); the dialog has a text field, so it needs imePadding and AC-61 (c).
+- The inactive Delete portfolio: dashed outline, as wireframe 10d marker 11 says and as 28's disabled chips (28 decision 3).
+- No database schema change (only delete queries), so no new schema version and no migration.
+- Scale: one pass over the entries and one over the transactions, run on Delete and on Delete portfolio only, not on every redraw. My reading: no HoldingsScaleTest call.
+
+## 5. Files
+- core/: PortfolioDeletion.kt (new, K1): the check (blocked with the first date and the largest shortfall, cannot be deleted, or allowed) and the summary (counts, realized gain, the balance now and after), and what is removed; tests. RecordStore.kt: `deletePortfolio`.
+- app/: data: AtsDatabase.kt (the delete queries and one transaction), RoomRecordStore.kt (`deletePortfolio`); ui: AppViewModel.kt (Delete in the menu, the check, the dialog with its typed name, Delete portfolio, the blocked message, the state after the removal, decisions 1 and 2), a model and its builder (PortfolioDeletionModel.kt), the screen parts (the dialog and the message, in PortfolioScreen.kt or a file of their own), AppContent.kt, strings.xml (section 12); build.gradle.kts (versionCode 39). The test store (FakeStore in AppViewModelTest.kt) gains `deletePortfolio`.
+- Tests: PortfolioDeletionTest (core; Example A, Example E with the Feb 9 and Feb 10 deposits, the opening-date case, two negative dates for the largest shortfall, a reversal inside the portfolio and its cash line (counted and removed), a reversed sell whose window holds a withdrawal (blocked), a reversed buy (never blocks by itself), a reversed direct cash entry (kept and replayed), a portfolio with no transactions, entries dated after today, another portfolio untouched); a ViewModel flow test, PortfolioDeleteFlowTest (the menu's Delete, the blocked message and Close, the dialog, the typed name, Cancel, Delete portfolio, the second check, the last portfolio, the state after, the store failing); the model's test; screen tests (section 9).
+- Documents: this file, plan.md (section 11 and the change log).
+
+## 6. Order of work
+Each step ends with spotlessCheck, build, tests and lint, all with --rerun-tasks, plus `:app:compileDebugAndroidTestKotlin`, and the report. Then I stop. Branch iter-29-delete-portfolio, one pull request.
+1. This file and the plan.md lines.
+2. K1 in core: the check, the summary and what is removed; tests first, shown red.
+3. K2: `RecordStore.deletePortfolio`, the DAO queries in one transaction, the test store.
+4. The state and the ViewModel: Delete, the check, the dialog, the typed name, Delete portfolio, the blocked message, the state after; tests first.
+5. The model and the screen: the builder, the menu's Delete, the dialog and the message in the window, the strings; models first.
+6. The screen tests.
+7. Documents, versionCode 39, the phone check (with your yes before anything is deleted on the phone), the wording approval, the pull request draft, and the open item 33 reminder.
+
+## 7. Stubs
+None.
+
+## 8. Risks
+- 1. Data loss: the deletion is the one write that removes records, and the database has no foreign keys. A missed table leaves orphans (an allocation pointing at a removed sell, a cash line without its trade); a wrong filter removes another portfolio's records. Guards: core decides what is removed and is tested with another portfolio present; one database transaction; no unit test runs the Room queries (none exist for the DAOs today), so a screen test deletes a portfolio on the real app and the phone check compares the other portfolios and the Cash tab before and after.
+- 2. The phone holds your real data and no backup file exists until 31. The phone check deletes only a portfolio made for it (a new one, with a test trade if you agree), after your yes, and never one of yours.
+- 3. The check's figures: the first date, the largest shortfall and the opening-date case must match 4.7 and AC-55 to the cent, and a deposit dated on the first date must not help: core tests with each.
+- 4. The dialog and the message must keep the window's focus (cover screen) and stay above the keyboard at the largest font: AC-61 (b) and (c).
+- 5. State left pointing at the removed portfolio (a picked Cash ticker, a sell form, Transaction history): ViewModel tests.
+- 6. The emulator is not the phone (C19); the local build machine crashed several times in 28 (the 28 file, 13.1, step 6).
+
+## 9. Proof
+- Commands: as in 28, all with --rerun-tasks (CLAUDE.md's pitfall on the intermittent local failure applies). The screen tests on the pull request: 96 plus this iteration's new ones.
+- Unit tests: steps 2 to 5, AC-28's and AC-55's figures among them.
+- Screen tests (AC-61), on ScreenTestSupport.kt: the dialog at the largest font in landscape: the summary, the warning, the field, Delete portfolio (inactive, then active) and Cancel reached and tapped (a); on the real MainActivity, a new portfolio's Delete dialog keeps the window's focus, its name typed, Delete portfolio removes it and the Portfolios tab shows (b); with the keyboard open at the largest font, the name field lies above it (c); the TalkBack text of the summary's figures, the inactive button and the blocked message (d).
+- The phone check, over 28's build (versionCode 38): the menu's Delete; Example E's blocked message rebuilt on a test portfolio (with your yes: a test buy, sell and withdrawal), the fix dated before and on the first date; the dialog's summary against the portfolio's screen, Realized gains and the Cash tab; the typed name; Cancel; the deletion of the test portfolio and the Portfolios tab after it; your other portfolios, the Cash balance and Net worth as worked out; largest font and landscape; TalkBack; light and dark; offline; logcat as in 28 (after `adb devices`).
+
+## 10. Research
+None.
+
+## 11. Decisions (Build, settled by you 2026-11-13)
+1. The deleted portfolio's own hidden-holding rows and sector/geography overrides are removed with it, in the same database transaction, as part of "as if it never existed": kept rows would name a holding that no longer exists, which the backup file of section 8 refuses for `hidden` and `override` (your A). Both are per holding, a ticker within a portfolio (spec section 3, C14; `ClassOverride` and the hidden row are keyed by portfolio and ticker), so another portfolio's rows, even for the same ticker, are never touched; you asked this before choosing. Not chosen: (B) kept, a cleanup left to 31.
+2. A Cash ticker picked when its last trade line goes with the portfolio (28 Deploy finding 1) is set back to All tickers, the direct chips enabled again; a ticker that still has a trade line elsewhere stays picked (your A). Not chosen: (B) left picked, "All tickers" or Clear filters recovering.
+
+## 12. Wording to approve (D9)
+To be shown on the phone in step 7 (wireframe 10d's placeholders and spec 4.7's text as the first proposal):
+- The menu: "Delete" after "Rename".
+- The dialog: the title "Delete [name]?"; "Transactions: 3", "Trade cash lines: 3", "Realized gains: +$800.00"; "Cash balance: $9,600.00 now, $10,000.00 after"; the line "Past net worth is recalculated as if this portfolio never existed."; the warning "This cannot be undone in the app. The only way back is restoring a backup."; "Type the portfolio's name to confirm"; the field "Name"; the line while it does not match "Type the name exactly as shown above to enable Delete portfolio"; the buttons "Delete portfolio" and "Cancel".
+- The blocked message: "Not deleted. Cash would be negative from 2026-02-10 by $200.00. Add a deposit adjustment of at least $200.00, with a note, dated before 2026-02-10 (for example 2026-02-09)."; the opening-date case: "Not deleted. Cash would be negative from the opening balance's date, 2026-01-01, by $300.00. No entry can be dated before it, so this portfolio cannot be deleted."; the button "Close".
+- TalkBack: the summary's figures in words with their sign; the inactive button read as unavailable, with its line.
+
+## 13. Status and notes
+- Draft 2026-11-13; the reversal lines made explicit in sections 4 and 5 at your question; approved the same day.
+
+### 13.1 Steps (2026-11-13)
+- Step 1: this file and the plan.md lines (section 11's row; the change log with #182's merge). The full run green: 1,148 tests (1 skipped, `HoldingsScaleTest.timesTheCodeBefore15c`), lint's 5 findings, the screen tests compiled; HoldingsScaleTest measured "7 Hide" again (spread: 18.644 ms at 3,000, then 9.151 ms; passes on try 2, 24a).
+
+## 14. Departures from the plan
+None yet.
