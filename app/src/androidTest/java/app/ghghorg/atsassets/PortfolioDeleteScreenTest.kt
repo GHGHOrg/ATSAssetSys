@@ -9,17 +9,21 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertIsEnabled
 import androidx.compose.ui.test.assertIsNotEnabled
+import androidx.compose.ui.test.click
 import androidx.compose.ui.test.hasClickAction
 import androidx.compose.ui.test.hasContentDescription
 import androidx.compose.ui.test.hasSetTextAction
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.isHeading
+import androidx.compose.ui.test.isSelectable
 import androidx.compose.ui.test.junit4.v2.createAndroidComposeRule
 import androidx.compose.ui.test.junit4.v2.createComposeRule
 import androidx.compose.ui.test.onNodeWithText
+import androidx.compose.ui.test.onRoot
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.test.performTextInput
+import androidx.compose.ui.test.performTouchInput
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
 import app.ghghorg.atsassets.core.CashEntry
@@ -254,6 +258,90 @@ class PortfolioDeleteKeyboardTest {
         val bottom = composeRule.onNode(field).fetchSemanticsNode().boundsInWindow.bottom
         assertTrue("The Name field ends at $bottom px, below the keyboard's top at $keyboardTop px", bottom <= keyboardTop)
     }
+}
+
+/**
+ * 29 step 10 (phone check 9, versionCode 39): at the largest font in landscape, the Delete dialog vanished once the
+ * keyboard opened on its Name field. The dialog was drawn above the bottom bar, and its layer's imePadding, measured from
+ * the window's bottom, took the bar's height as well as the keyboard's. On the real MainActivity: the dialog opened in
+ * portrait, then turned (as on the phone), the field tapped; it must show, fully above the keyboard.
+ */
+@RunWith(AndroidJUnit4::class)
+class PortfolioDeleteKeyboardLandscapeTest {
+    private val composeRule = createAndroidComposeRule<MainActivity>()
+
+    @get:Rule
+    val rules: RuleChain =
+        RuleChain
+            .outerRule(DeviceUnlockedRule())
+            .around(DeviceSettingsRule(fontScale = 2.0f))
+            .around(composeRule)
+
+    @Test
+    fun theNameField_staysAboveTheKeyboard_inLandscape() {
+        composeRule.unlockApp()
+        val name = createPortfolio(composeRule, "Wide")
+        openDelete(composeRule, name)
+        composeRule.turn(landscape = true)
+        composeRule.onNode(nameField()).performScrollTo().performClick()
+        val keyboardTop = composeRule.keyboardTop()
+        composeRule.waitForIdle()
+        composeRule.onNode(nameField()).assertIsDisplayed()
+        val bounds = composeRule.onNode(nameField()).fetchSemanticsNode().boundsInWindow
+        assertTrue("The Name field ends at ${bounds.bottom} px, below the keyboard's top at $keyboardTop px", bounds.bottom <= keyboardTop)
+        composeRule.turn(landscape = false)
+    }
+}
+
+/**
+ * 29 step 10 (phone check 9): while the Delete dialog is open, the bottom bar under it takes no tap and TalkBack does not
+ * reach it, as for Rename's dialog (08). On the phone a tab took a tap behind the dialog. The blocked message is drawn
+ * by the same code; it cannot be reached on the real app here (it needs a trade, which needs the price source).
+ */
+@RunWith(AndroidJUnit4::class)
+class PortfolioDeleteOverTheBarTest {
+    private val composeRule = createAndroidComposeRule<MainActivity>()
+
+    @get:Rule
+    val rules: RuleChain = RuleChain.outerRule(DeviceUnlockedRule()).around(composeRule)
+
+    private val cashTab = isSelectable() and hasText(string(R.string.tab_cash))
+
+    @Test
+    fun theBottomBar_takesNoTap_whileTheDialogIsOpen() {
+        composeRule.unlockApp()
+        val name = createPortfolio(composeRule, "Tap")
+        val cashAt = composeRule.onNode(cashTab).fetchSemanticsNode().boundsInRoot.center
+        openDelete(composeRule, name)
+        composeRule.onRoot().performTouchInput { click(cashAt) }
+        composeRule.waitForIdle()
+        assertTrue(
+            "A tap on the Cash tab under the Delete dialog closed the dialog",
+            composeRule.onAllNodes(nameField()).fetchSemanticsNodes().isNotEmpty(),
+        )
+    }
+
+    @Test
+    fun theBottomBar_isHiddenFromTalkBack_whileTheDialogIsOpen() {
+        composeRule.unlockApp()
+        val name = createPortfolio(composeRule, "Read")
+        openDelete(composeRule, name)
+        assertTrue(
+            "TalkBack still reaches the bottom bar's Cash tab under the Delete dialog",
+            composeRule.onAllNodes(cashTab).fetchSemanticsNodes().isEmpty(),
+        )
+    }
+}
+
+/** From the Portfolios tab: [name]'s screen, its ⋮ menu, Delete, and the dialog's Name field shown. */
+private fun openDelete(
+    composeRule: MainRule,
+    name: String,
+) {
+    composeRule.onNode(hasContentDescription(name, substring = true) and hasClickAction()).performScrollTo().performClick()
+    composeRule.onNode(hasContentDescription(string(R.string.portfolio_menu)) and hasClickAction()).performClick()
+    composeRule.onNode(button(R.string.portfolio_delete_button)).performClick()
+    composeRule.waitUntil(5_000) { composeRule.onAllNodes(nameField()).fetchSemanticsNodes().isNotEmpty() }
 }
 
 /**

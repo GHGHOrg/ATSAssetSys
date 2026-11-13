@@ -134,9 +134,9 @@ class DeviceSettingsRule(
 /**
  * Turns the emulator once the test's own activity is on top: before it, the launcher was on top and held the screen
  * upright (plan/spikes/screen-tests.md 11.4, series 3). Waits until the display and the activity both have the
- * orientation.
+ * orientation. Any activity's rule, MainActivity's included (29 step 10).
  */
-internal fun AndroidComposeTestRule<ActivityScenarioRule<ComponentActivity>, ComponentActivity>.turn(landscape: Boolean) {
+internal fun <A : ComponentActivity> AndroidComposeTestRule<ActivityScenarioRule<A>, A>.turn(landscape: Boolean) {
     InstrumentationRegistry.getInstrumentation().uiAutomation.setRotation(
         if (landscape) UiAutomation.ROTATION_FREEZE_90 else UiAutomation.ROTATION_FREEZE_0,
     )
