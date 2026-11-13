@@ -14,6 +14,7 @@ import app.ghghorg.atsassets.core.SellAllocation
 import app.ghghorg.atsassets.core.Tab
 import app.ghghorg.atsassets.core.Transaction
 import app.ghghorg.atsassets.core.TransactionType
+import app.ghghorg.atsassets.core.UnreadableDataException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
@@ -263,6 +264,20 @@ class PortfolioDeleteFlowTest {
         assertEquals(Screen.PORTFOLIO, state.screen)
         assertEquals(2, state.portfolios.size)
         assertEquals(4, state.transactions.size)
+    }
+
+    // 29 step 7 (the review's finding 4): unreadable data during the removal shows that screen with no dialog left set.
+    @Test
+    fun unreadableDataDuringTheRemoval_leavesNoDialog() {
+        val store = store()
+        store.deleteError = UnreadableDataException("gone")
+        val vm = onMenu(store)
+        vm.openDelete()
+        vm.onDeleteNameChange("Portfolio P")
+        vm.confirmDelete()
+        assertEquals(Screen.UNREADABLE, vm.state.value.screen)
+        assertNull(vm.state.value.deleteDialog)
+        assertFalse(vm.state.value.saving)
     }
 
     // Decision 2: a Cash ticker whose last trade line went with the portfolio goes back to All tickers.

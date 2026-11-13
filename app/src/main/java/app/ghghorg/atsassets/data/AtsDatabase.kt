@@ -317,11 +317,22 @@ interface TransactionDao {
     @Query("SELECT COUNT(*) FROM transactions WHERE portfolioId = :portfolioId")
     suspend fun countTransactionsOf(portfolioId: String): Int
 
+    // 29 step 7 (the review's finding 2): what still names a deleted transaction, after the deletes.
+    @Query("SELECT COUNT(*) FROM cash_entries WHERE type = 'TRADE' AND transactionId IN (:ids)")
+    suspend fun countTradeLinesOf(ids: List<String>): Int
+
+    @Query("SELECT COUNT(*) FROM sell_allocations WHERE sellId IN (:ids)")
+    suspend fun countAllocationsOfSells(ids: List<String>): Int
+
+    @Query("SELECT COUNT(*) FROM sell_allocations WHERE lotId IN (:ids)")
+    suspend fun countAllocationsOfLots(ids: List<String>): Int
+
     /**
      * A portfolio's deletion in one database transaction (4.7, K2; 29): its sells' allocations, its trade cash lines,
      * its transactions, its own hidden rows and overrides (decision 1), then the portfolio. Every count must be the one
-     * K1 expected and no transaction of the portfolio may be left; otherwise it throws and nothing is removed. The
-     * messages name counts only, never a portfolio name (spec section 9).
+     * K1 expected and no transaction of the portfolio may be left, and (step 7) no trade cash line or allocation may still
+     * name a deleted transaction, as its sell or as its lot; otherwise it throws and nothing is removed. The messages name
+     * counts only, never a portfolio name (spec section 9).
      */
     @Transaction
     suspend fun deletePortfolio(
@@ -337,6 +348,11 @@ interface TransactionDao {
         val trades = transactionIds.chunked(DELETE_CHUNK).sumOf { deleteTransactions(it) }
         check(trades == transactionIds.size) { "A deletion removed $trades transactions instead of ${transactionIds.size}." }
         check(countTransactionsOf(portfolioId) == 0) { "A deletion left transactions of the portfolio." }
+        val chunks = transactionIds.chunked(DELETE_CHUNK)
+        val linesLeft = chunks.sumOf { countTradeLinesOf(it) }
+        check(linesLeft == 0) { "A deletion left $linesLeft trade cash lines of deleted transactions." }
+        val allocationsLeft = chunks.sumOf { countAllocationsOfSells(it) + countAllocationsOfLots(it) }
+        check(allocationsLeft == 0) { "A deletion left $allocationsLeft allocations naming deleted transactions." }
         val hidden = deleteHiddenOf(portfolioId)
         check(hidden == hiddenCount) { "A deletion removed $hidden hidden rows instead of $hiddenCount." }
         val overrides = deleteOverridesOfPortfolio(portfolioId)

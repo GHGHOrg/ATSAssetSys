@@ -1149,56 +1149,61 @@ class AppViewModel(
     fun selectTab(tab: Tab) {
         val current = mutableState.value
         if (current.screen !in TAB_BAR_SCREENS || current.saving || current.checking) return
-        mutableState.update {
-            it.copy(
-                screen = Screen.TABS,
-                tab = tab,
-                refusals = Refusals(),
-                portfolioNeedsOpeningBalance = false,
-                portfolioId = null,
-                portfolioMenuOpen = false,
-                renameDialog = null,
-                // 29: the Delete dialog and the blocked message end with the portfolio's screen.
-                deleteDialog = null,
-                deleteBlocked = null,
-                buySellMenuOpen = false,
-                allocationMenuOpen = false,
-                portfolioChoiceOpen = false,
-                autoLockChoiceOpen = false,
-                screenshotLayerOpen = false,
-                // 28: the Cash tab's Ticker menu closes; its filters stay (06 decision 4).
-                cashTickerMenuOpen = false,
-                autoLockRefusal = null,
-                tabOrderRefusal = null,
-                buyNotice = null,
-                buyRefusals = BuyRefusals(),
-                holdingTicker = null,
-                holdingFromHidden = false,
-                hideRefusal = null,
-                // 24's Deploy review: the picker and a failed save or clear end with the holding.
-                classPicker = null,
-                classPickerChoice = null,
-                overrideRefusal = null,
-                // 25: the list screen, its Name layer and its lines end with it.
-                classListShown = null,
-                classValueEdit = null,
-                listOutcome = null,
-                listSaveRefusal = null,
-                buyFromHolding = false,
-                sellRefusals = SellRefusals(),
-                sellPicksDropped = false,
-                sellFromHolding = false,
-                sellReview = null,
-                splitRefusals = SplitRefusals(),
-                splitReview = null,
-                detailFromTransaction = false,
-                transactionId = null,
-                transactionTrail = emptyList(),
-                transactionReversalDate = "",
-                transactionReversalRefusals = TransactionReversalRefusals(),
-            ).leftReplace().leftGains().leftHistory()
-        }
+        mutableState.update { it.shownTab(tab) }
     }
+
+    /**
+     * [tab] shown, every screen, layer and line that ends with a tab change dropped: [selectTab]'s change, and (29 step 7,
+     * the review's finding 3) a deletion's, made in the same update as the removal, so it does not depend on [selectTab]'s
+     * guards.
+     */
+    private fun AppState.shownTab(tab: Tab): AppState = copy(
+        screen = Screen.TABS,
+        tab = tab,
+        refusals = Refusals(),
+        portfolioNeedsOpeningBalance = false,
+        portfolioId = null,
+        portfolioMenuOpen = false,
+        renameDialog = null,
+        // 29: the Delete dialog and the blocked message end with the portfolio's screen.
+        deleteDialog = null,
+        deleteBlocked = null,
+        buySellMenuOpen = false,
+        allocationMenuOpen = false,
+        portfolioChoiceOpen = false,
+        autoLockChoiceOpen = false,
+        screenshotLayerOpen = false,
+        // 28: the Cash tab's Ticker menu closes; its filters stay (06 decision 4).
+        cashTickerMenuOpen = false,
+        autoLockRefusal = null,
+        tabOrderRefusal = null,
+        buyNotice = null,
+        buyRefusals = BuyRefusals(),
+        holdingTicker = null,
+        holdingFromHidden = false,
+        hideRefusal = null,
+        // 24's Deploy review: the picker and a failed save or clear end with the holding.
+        classPicker = null,
+        classPickerChoice = null,
+        overrideRefusal = null,
+        // 25: the list screen, its Name layer and its lines end with it.
+        classListShown = null,
+        classValueEdit = null,
+        listOutcome = null,
+        listSaveRefusal = null,
+        buyFromHolding = false,
+        sellRefusals = SellRefusals(),
+        sellPicksDropped = false,
+        sellFromHolding = false,
+        sellReview = null,
+        splitRefusals = SplitRefusals(),
+        splitReview = null,
+        detailFromTransaction = false,
+        transactionId = null,
+        transactionTrail = emptyList(),
+        transactionReversalDate = "",
+        transactionReversalRefusals = TransactionReversalRefusals(),
+    ).leftReplace().leftGains().leftHistory()
 
     /** Pull-to-refresh (spec 7; 16a decision 2). */
     fun onPullToRefresh() = refreshPrices()
@@ -1950,7 +1955,11 @@ class AppViewModel(
         val target = store ?: return
         val removal =
             when (val check = current.toDelete(id)) {
-                is DeletionCheck.Allowed -> check.removal
+                // The review's finding 5: the removal must be the dialog's portfolio.
+                is DeletionCheck.Allowed -> check.removal.takeIf { it.portfolioId == dialog.summary.portfolio.id } ?: run {
+                    mutableState.update { it.copy(deleteDialog = null) }
+                    return
+                }
 
                 is DeletionCheck.Blocked, is DeletionCheck.CannotDelete -> {
                     mutableState.update { it.copy(deleteDialog = null, deleteBlocked = check) }
@@ -1966,12 +1975,13 @@ class AppViewModel(
         viewModelScope.launch {
             try {
                 target.deletePortfolio(removal)
-                mutableState.update { it.withoutPortfolio(removal).copy(saving = false, deleteDialog = null) }
-                selectTab(Tab.PORTFOLIOS)
+                // The review's finding 3: the Portfolios tab in the same update as the removal.
+                mutableState.update { it.withoutPortfolio(removal).copy(saving = false, deleteDialog = null).shownTab(Tab.PORTFOLIOS) }
             } catch (e: CancellationException) {
                 throw e
             } catch (e: UnreadableDataException) {
-                mutableState.update { it.copy(screen = Screen.UNREADABLE, saving = false) }
+                // The review's finding 4: no dialog left set behind the unreadable-data screen.
+                mutableState.update { it.copy(screen = Screen.UNREADABLE, saving = false, deleteDialog = null) }
             } catch (e: Exception) {
                 mutableState.update { it.copy(saving = false, deleteDialog = dialog.copy(save = SaveRefusal.SAVE_FAILED)) }
             }
