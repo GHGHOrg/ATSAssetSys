@@ -17,6 +17,7 @@ import app.ghghorg.atsassets.core.ListUsers
 import app.ghghorg.atsassets.core.Lookup
 import app.ghghorg.atsassets.core.Portfolio
 import app.ghghorg.atsassets.core.PortfolioRefusal
+import app.ghghorg.atsassets.core.PortfolioRemoval
 import app.ghghorg.atsassets.core.Price
 import app.ghghorg.atsassets.core.PriceSource
 import app.ghghorg.atsassets.core.ProfileAnswer
@@ -1719,6 +1720,22 @@ internal class FakeStore(
         saveError?.let { throw it }
         renames.add(id to name)
         storedPortfolios = storedPortfolios.map { if (it.id == id) it.copy(name = name) else it }
+    }
+
+    // 29: each deletion as given, and an error that fails a deletion alone (as pricesSaveError, open item 54).
+    val deletions = mutableListOf<PortfolioRemoval>()
+    var deleteError: Throwable? = null
+
+    /** All or nothing, as the Room store: a failure removes nothing. */
+    override suspend fun deletePortfolio(removal: PortfolioRemoval) {
+        gate?.await()
+        deleteError?.let { throw it }
+        deletions.add(removal)
+        storedPortfolios = storedPortfolios.filter { it.id != removal.portfolioId }
+        storedTransactions = storedTransactions.filter { it.id !in removal.transactionIds }
+        stored = stored.filter { it.id !in removal.cashEntryIds }
+        storedHidden = storedHidden - removal.hidden.toSet()
+        storedOverrides = storedOverrides - removal.overrides.toSet()
     }
 
     var storedTransactions: List<Transaction> = emptyList()
