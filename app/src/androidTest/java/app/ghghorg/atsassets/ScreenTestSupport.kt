@@ -201,6 +201,15 @@ internal fun passCheck() {
 }
 
 /**
+ * After [turn] on MainActivity: the turn relaunches it, and under the emulator's auto-lock choice (none stored, so
+ * every leave) its onStop locks the app, so the lock prompt comes up (29 step 10, red run 43477719319). Passes it if
+ * its PIN pad shows within 5 s; the screen under it keeps its state (the ViewModel).
+ */
+internal fun passLockAfterTurn() {
+    if (poll(5_000) { pinPadUp() }) passCheck()
+}
+
+/**
  * What the screen showed when the unlock failed (plan/spikes/screen-tests.md 11.6, run 2): a screenshot in
  * /data/local/tmp, which the workflow pulls, and the focused window and the active window's nodes in logcat under
  * ScreenTestUnlock.

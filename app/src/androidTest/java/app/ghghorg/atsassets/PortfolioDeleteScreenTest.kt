@@ -283,7 +283,9 @@ class PortfolioDeleteKeyboardLandscapeTest {
         val name = createPortfolio(composeRule, "Wide")
         openDelete(composeRule, name)
         composeRule.turn(landscape = true)
-        // The turn relaunches MainActivity, which shows its cover until the new window has the focus (red run 43473387648).
+        // The turn relaunches MainActivity, which locks under the emulator's auto-lock choice; the cover shows until the
+        // lock prompt is passed and the new window has the focus (red runs 43473387648 and 43477719319).
+        passLockAfterTurn()
         if (!poll(10_000) { composeRule.windowFocused() && composeRule.onAllNodes(nameField()).fetchSemanticsNodes().isNotEmpty() }) {
             fail("No Name field 10 s after the turn; window focused: ${composeRule.windowFocused()}")
         }
@@ -293,7 +295,6 @@ class PortfolioDeleteKeyboardLandscapeTest {
         composeRule.onNode(nameField()).assertIsDisplayed()
         val bounds = composeRule.onNode(nameField()).fetchSemanticsNode().boundsInWindow
         assertTrue("The Name field ends at ${bounds.bottom} px, below the keyboard's top at $keyboardTop px", bounds.bottom <= keyboardTop)
-        composeRule.turn(landscape = false)
     }
 }
 
