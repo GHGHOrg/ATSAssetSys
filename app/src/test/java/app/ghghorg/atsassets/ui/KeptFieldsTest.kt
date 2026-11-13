@@ -13,6 +13,7 @@ import app.ghghorg.atsassets.core.Price
 import app.ghghorg.atsassets.core.RealizedGains
 import app.ghghorg.atsassets.core.SellAllocation
 import app.ghghorg.atsassets.core.SplitRatio
+import app.ghghorg.atsassets.core.TradeSide
 import app.ghghorg.atsassets.core.Transaction
 import app.ghghorg.atsassets.core.TransactionType
 import app.ghghorg.atsassets.core.Valuation
@@ -203,6 +204,9 @@ class KeptFieldsTest {
                 { it.cashList },
             ),
             Case("cash filter", base, { it.copy(cashFilterForm = CashFilterForm(type = CashType.DEPOSIT)) }, { it.cashList }),
+            // 28: the ticker and the Buy and Sell chips.
+            Case("cash ticker", base, { it.copy(cashFilterForm = CashFilterForm(ticker = "MSFT")) }, { it.cashList }),
+            Case("cash trade side", base, { it.copy(cashFilterForm = CashFilterForm(trade = TradeSide.SELL)) }, { it.cashList }),
             // 25 (Deploy finding 1): a buy dated after today is a holding K10 counts.
             Case(
                 "transactions after today",

@@ -75,6 +75,7 @@ import app.ghghorg.atsassets.core.Splits
 import app.ghghorg.atsassets.core.Tab
 import app.ghghorg.atsassets.core.TabOrder
 import app.ghghorg.atsassets.core.TickerCheck
+import app.ghghorg.atsassets.core.TradeSide
 import app.ghghorg.atsassets.core.Transaction
 import app.ghghorg.atsassets.core.TransactionHistory
 import app.ghghorg.atsassets.core.TransactionType
@@ -439,13 +440,16 @@ data class ReversalForm(
 )
 
 /**
- * The Cash list filters as typed (view 7): From and To text and one type, null for All. Held in memory only, so
- * they last while the app runs and are never stored (06 decision 4).
+ * The Cash list filters as typed (view 7): From and To text, one chip (a direct [type], or Buy or Sell as [trade]
+ * (28); both null for All) and the ticker picked (28; null for All tickers). Held in memory only, so they last while
+ * the app runs and are never stored (06 decision 4).
  */
 data class CashFilterForm(
     val fromText: String = "",
     val toText: String = "",
     val type: CashType? = null,
+    val ticker: String? = null,
+    val trade: TradeSide? = null,
 )
 
 /**
@@ -550,6 +554,8 @@ data class AppState(
     val replaceSplitReview: SplitPairResult.Created? = null,
     val reversal: ReversalForm = ReversalForm(),
     val cashFilterForm: CashFilterForm = CashFilterForm(),
+    // 28: the Cash tab's Ticker menu, drawn in the window; not an input of the kept Cash list.
+    val cashTickerMenuOpen: Boolean = false,
     // In the order they were created (spec 3).
     val portfolios: List<Portfolio> = emptyList(),
     // The New portfolio dialog over the selected tab; null while it is closed.
@@ -975,13 +981,18 @@ data class AppState(
             from = DateDigits.toDate(cashFilterForm.fromText),
             to = DateDigits.toDate(cashFilterForm.toText),
             type = cashFilterForm.type,
+            ticker = cashFilterForm.ticker,
+            trade = cashFilterForm.trade,
         )
 
-    /** A valid date bound or a chip other than All (06 decision 3: the count line and Clear filters show then). */
+    /** The Cash tab's Ticker menu (28): each ticker with a trade line, from every portfolio, alphabetically (view 7). */
+    val cashTickers: List<String> get() = CashAccount.tickers(entries, transactions)
+
+    /** A valid date bound, a chip other than All or a ticker (06 decision 3: the count line and Clear filters show then). */
     val filterActive: Boolean get() = cashFilter.isActive
 
     /** The rows that match the filters, each with its real balance (view 7). */
-    val cashFilteredRows: List<CashRow> get() = CashAccount.rows(entries, cashFilter)
+    val cashFilteredRows: List<CashRow> get() = CashAccount.rows(entries, transactions, cashFilter)
 
     val holdsData: Boolean get() = CashRules.appHoldsData(entries)
 
@@ -1128,6 +1139,8 @@ class AppViewModel(
                 portfolioChoiceOpen = false,
                 autoLockChoiceOpen = false,
                 screenshotLayerOpen = false,
+                // 28: the Cash tab's Ticker menu closes; its filters stay (06 decision 4).
+                cashTickerMenuOpen = false,
                 autoLockRefusal = null,
                 tabOrderRefusal = null,
                 buyNotice = null,
@@ -1231,7 +1244,8 @@ class AppViewModel(
         }
         val current = mutableState.value
         if (current.screen != Screen.TABS || current.portfolioDialog != null) return
-        mutableState.update { it.copy(tab = Tab.OVERALL, buySellMenuOpen = false, buyNotice = null) }
+        // 28: the Cash tab's Ticker menu closes with the tab; its filters stay.
+        mutableState.update { it.copy(tab = Tab.OVERALL, buySellMenuOpen = false, buyNotice = null, cashTickerMenuOpen = false) }
     }
 
     /**
@@ -1431,14 +1445,47 @@ class AppViewModel(
         else -> null
     }
 
-    /** One chip at a time: null for All, or one of the four direct types. Other types are ignored. */
+    /**
+     * One chip at a time: null for All, or one of the four direct types; Buy or Sell is cleared (28). Other types are
+     * ignored, and so is a direct type while a ticker is picked: those chips are disabled then (view 7).
+     */
     fun onFilterTypeChange(type: CashType?) {
-        if (type != null && type !in ENTRY_TYPES) return
-        mutableState.update { it.copy(cashFilterForm = it.cashFilterForm.copy(type = type)) }
+        if (type != null && (type !in ENTRY_TYPES || mutableState.value.cashFilterForm.ticker != null)) return
+        mutableState.update { it.copy(cashFilterForm = it.cashFilterForm.copy(type = type, trade = null)) }
     }
 
     /** Clear filters: both dates empty and All (view 7). */
     fun clearFilters() = mutableState.update { it.copy(cashFilterForm = CashFilterForm()) }
+
+    /** Buy or Sell (28): one chip at a time, so the direct type is cleared; enabled with or without a ticker. */
+    fun onFilterTradeChange(side: TradeSide) {
+        mutableState.update { it.copy(cashFilterForm = it.cashFilterForm.copy(type = null, trade = side)) }
+    }
+
+    /** The Cash tab's Ticker field (28; 27 decision 3): its menu, drawn in the window, once some entry exists. */
+    fun openCashTickerMenu() {
+        val current = mutableState.value
+        if (current.screen != Screen.TABS || current.tab != Tab.CASH || !current.cashList.hasEntries) return
+        mutableState.update { it.copy(cashTickerMenuOpen = true) }
+    }
+
+    /** Back or a tap outside the menu: closes it without a change. */
+    fun closeCashTickerMenu() = mutableState.update { it.copy(cashTickerMenuOpen = false) }
+
+    /**
+     * A ticker in the menu, or null for "All tickers"; closes the menu. With a ticker a direct chip becomes All, since
+     * those entries have no ticker (view 7). A ticker not offered, or a pick with the menu closed, is ignored.
+     */
+    fun pickCashTicker(ticker: String?) {
+        val current = mutableState.value
+        if (!current.cashTickerMenuOpen) return
+        if (ticker != null && ticker !in current.cashTickers) return
+        mutableState.update {
+            val form = it.cashFilterForm
+            val type = if (ticker != null) null else form.type
+            it.copy(cashFilterForm = form.copy(ticker = ticker, type = type), cashTickerMenuOpen = false)
+        }
+    }
 
     /**
      * New portfolio or Create a portfolio: opens an empty dialog over the selected tab, or, before the opening

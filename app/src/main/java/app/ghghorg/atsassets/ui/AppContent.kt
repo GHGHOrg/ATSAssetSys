@@ -437,6 +437,10 @@ private fun TabScreen(
                 onToChange = viewModel::onFilterToChange,
                 onTypeChange = viewModel::onFilterTypeChange,
                 onClear = viewModel::clearFilters,
+                onTradeChange = viewModel::onFilterTradeChange,
+                onOpenTickerMenu = viewModel::openCashTickerMenu,
+                onPickTicker = viewModel::pickCashTicker,
+                onCloseTickerMenu = viewModel::closeCashTickerMenu,
             ),
         )
 

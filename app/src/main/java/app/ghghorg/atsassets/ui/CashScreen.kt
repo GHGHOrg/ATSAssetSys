@@ -1,7 +1,9 @@
 package app.ghghorg.atsassets.ui
 
+import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
@@ -18,6 +20,7 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.Button
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.FilterChip
+import androidx.compose.material3.FilterChipDefaults
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedCard
@@ -30,6 +33,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.PathEffect
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.graphics.drawOutline
 import androidx.compose.ui.graphics.drawscope.Stroke
@@ -50,13 +54,17 @@ import androidx.compose.ui.unit.dp
 import app.ghghorg.atsassets.R
 import app.ghghorg.atsassets.core.CashType
 import app.ghghorg.atsassets.core.Money
+import app.ghghorg.atsassets.core.TradeSide
 import app.ghghorg.atsassets.core.TransactionType
 
 /**
  * The Cash account (view 7, wireframe 07 frame A): the balance, the Cash entry button (the opening balance until
  * it exists, then a deposit or withdrawal, iteration 03), and the rows. A row opens its detail and shows its note
- * (05 decision 3). The date range and type filters (06) sit between the balance and the list; the ticker and the
- * Buy and Sell chips arrive in 28, trade lines in 09. Cash is not colored.
+ * (05 decision 3). The date range and type filters (06) sit between the balance and the list, with the Ticker field and
+ * the Buy and Sell chips (28); trade lines from 09. Cash is not colored.
+ *
+ * 28: the Ticker menu is drawn in the activity window over the list (decision 2; the shared TickerMenu), and Back
+ * closes it first.
  *
  * 15d: drawn only from the screen's model (state.cashList; CR2), in one lazy list, so only the rows on the screen are
  * laid out (decision 2). The rows' card is drawn in slices, one per row, so it still looks like one card.
@@ -71,11 +79,33 @@ fun CashScreen(
     modifier: Modifier = Modifier,
 ) {
     val model = state.cashList
+    val menuOpen = state.cashTickerMenuOpen
+    // 28: Back closes the Ticker menu first (27 decision 3); otherwise it goes to Overall (02b decision 3).
+    BackHandler(enabled = menuOpen, onBack = filterActions.onCloseTickerMenu)
+    Box(modifier = modifier.fillMaxSize()) {
+        // While the menu is open, TalkBack reads only the menu.
+        val under = if (menuOpen) Modifier.clearAndSetSemantics { } else Modifier
+        CashList(state, model, onCashEntry, onOpenEntry, onOpenTransaction, filterActions, Modifier.fillMaxSize().then(under))
+        if (menuOpen) TickerMenu(model.ticker, model.tickers, filterActions.onPickTicker, filterActions.onCloseTickerMenu)
+    }
+}
+
+/** The balance, the filters and the rows, in one lazy list (15d decision 2). */
+@Composable
+private fun CashList(
+    state: AppState,
+    model: CashListModel,
+    onCashEntry: () -> Unit,
+    onOpenEntry: (String) -> Unit,
+    onOpenTransaction: (String) -> Unit,
+    filterActions: CashFilterActions,
+    modifier: Modifier = Modifier,
+) {
     val shape = CardDefaults.outlinedShape
     val border = CardDefaults.outlinedCardBorder()
     val container = CardDefaults.outlinedCardColors().containerColor
     LazyColumn(
-        modifier = modifier.fillMaxSize(),
+        modifier = modifier,
         contentPadding = PaddingValues(16.dp),
     ) {
         item(key = "title") {
@@ -180,12 +210,19 @@ private fun tradeTitle(row: CashRowModel.Trade): String = stringResource(
     row.ticker,
 )
 
-/** The filter actions of the Cash list (iteration 06), passed together to keep the screen's parameters short. */
+/**
+ * The filter actions of the Cash list (iteration 06; the Buy and Sell chips and the Ticker field and menu, 28), passed
+ * together to keep the screen's parameters short.
+ */
 data class CashFilterActions(
     val onFromChange: (String) -> Unit,
     val onToChange: (String) -> Unit,
     val onTypeChange: (CashType?) -> Unit,
     val onClear: () -> Unit,
+    val onTradeChange: (TradeSide) -> Unit = {},
+    val onOpenTickerMenu: () -> Unit = {},
+    val onPickTicker: (String?) -> Unit = {},
+    val onCloseTickerMenu: () -> Unit = {},
 )
 
 /**
@@ -226,22 +263,38 @@ private fun FilterCard(
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
+            TickerField(model.ticker, actions.onOpenTickerMenu)
             FlowRow(
                 modifier = Modifier.selectableGroup(),
                 horizontalArrangement = Arrangement.spacedBy(8.dp),
             ) {
                 FilterChip(
-                    selected = form.type == null,
+                    selected = form.type == null && form.trade == null,
                     onClick = { actions.onTypeChange(null) },
                     label = { Text(text = stringResource(R.string.filter_all)) },
                 )
                 for (type in FILTER_TYPES) {
-                    FilterChip(
+                    DirectChip(
+                        label = cashTypeLabel(type),
                         selected = form.type == type,
+                        enabled = model.directChipsEnabled,
                         onClick = { actions.onTypeChange(type) },
-                        label = { Text(text = cashTypeLabel(type)) },
                     )
                 }
+                for (side in TradeSide.entries) {
+                    FilterChip(
+                        selected = form.trade == side,
+                        onClick = { actions.onTradeChange(side) },
+                        label = { Text(text = tradeSideLabel(side)) },
+                    )
+                }
+            }
+            if (!model.directChipsEnabled) {
+                Text(
+                    text = stringResource(R.string.cash_chips_unavailable),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
             }
             if (model.filterActive) {
                 val count = model.rows.size
@@ -295,8 +348,53 @@ internal object DateDigitsTransformation : VisualTransformation {
     }
 }
 
-// The chips after All, in the order of view 7; Buy and Sell arrive in 28.
+// The chips after All, in the order of view 7; Buy and Sell follow them (28).
 private val FILTER_TYPES = listOf(CashType.DEPOSIT, CashType.WITHDRAWAL, CashType.INTEREST_DIVIDEND, CashType.ADJUSTMENT)
+
+/** "Buy" or "Sell", Transaction history's chip labels (27). */
+@Composable
+private fun tradeSideLabel(side: TradeSide): String = stringResource(
+    when (side) {
+        TradeSide.BUY -> R.string.history_chip_buy
+        TradeSide.SELL -> R.string.history_chip_sell
+    },
+)
+
+/**
+ * A direct-entry chip (view 7). While a ticker is picked it is disabled: not tappable, read as disabled by the
+ * platform, greyed by Material, and drawn with a dashed outline in the theme's outline color instead of its own
+ * (wireframe 07 marker 3; 28 decision 3).
+ */
+@Composable
+private fun DirectChip(
+    label: String,
+    selected: Boolean,
+    enabled: Boolean,
+    onClick: () -> Unit,
+) {
+    val dashed = MaterialTheme.colorScheme.outline
+    val shape = FilterChipDefaults.shape
+    FilterChip(
+        selected = selected,
+        onClick = onClick,
+        label = { Text(text = label) },
+        enabled = enabled,
+        border = if (enabled) FilterChipDefaults.filterChipBorder(enabled = true, selected = selected) else null,
+        modifier =
+        if (enabled) {
+            Modifier
+        } else {
+            Modifier.drawBehind {
+                val width = 1.dp.toPx()
+                val dash = 4.dp.toPx()
+                val outline = shape.createOutline(Size(size.width - width, size.height - width), layoutDirection, this)
+                translate(width / 2, width / 2) {
+                    drawOutline(outline, dashed, style = Stroke(width, pathEffect = PathEffect.dashPathEffect(floatArrayOf(dash, dash))))
+                }
+            }
+        },
+    )
+}
 
 @Composable
 private fun BalanceCard(

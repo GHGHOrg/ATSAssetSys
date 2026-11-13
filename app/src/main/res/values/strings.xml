@@ -591,4 +591,6 @@
     <string name="history_cash_effect_spoken">Cash line, %1$s dollars</string>
     <string name="history_reversed_on_spoken">Reversed on %1$s Eastern Time</string>
     <string name="history_cash_row_spoken">%1$s, %2$s Eastern Time, %3$s dollars</string>
+    <!-- Iteration 28: the Cash tab's ticker filter (proposed from wireframe 07 frame B, 28 file section 12; approval on the phone in step 6). The Ticker field, its menu and the Buy and Sell chips use 27's strings. -->
+    <string name="cash_chips_unavailable">Deposit, withdrawal, interest/dividend and adjustment are unavailable with a ticker (those entries have no ticker).</string>
 </resources>
