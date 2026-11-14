@@ -1617,6 +1617,7 @@ internal class FakeSource(
 
     override suspend fun quote(ticker: String): Quote {
         quoted.add(ticker)
+        quotedWithKey.add(keyInUse)
         quoteGate?.await()
         return quotes[ticker] ?: Quote.NoQuote
     }
@@ -1634,6 +1635,7 @@ internal class FakeSource(
     // test's answer; [keyGate] makes the test wait.
     var keyInUse: String? = null
     val usedKeys = mutableListOf<String?>()
+    val quotedWithKey = mutableListOf<String?>()
     var keyCheck: KeyCheck = KeyCheck.Accepted
     val checkedKeys = mutableListOf<String>()
     var keyGate: CompletableDeferred<Unit>? = null
@@ -1962,9 +1964,10 @@ internal class FakeStore(
         storedTabOrder = order
     }
 
-    // 30: the price source's API key, null until one is saved; each save as given (null is a clear). [priceKeySaveError]
-    // fails this save alone, so the start's price refresh still saves.
-    var storedPriceKey: String? = null
+    // 30: the price source's API key; each save as given (null is a clear). A key is stored from the start, as the tests
+    // before 30 ran an app with a key; a test of an app without one sets null. [priceKeySaveError] fails this save alone,
+    // so the start's price refresh still saves.
+    var storedPriceKey: String? = "testkey1"
     val savedPriceKeys = mutableListOf<String?>()
     var priceKeySaveError: Throwable? = null
 
