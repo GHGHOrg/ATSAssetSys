@@ -1,6 +1,6 @@
 # plan/iterations/30-price-source-key.md
 
-Stage: Build. Status: approved 2026-11-14; decisions 0 to 4 settled the same day (section 11). Built 2026-11-14 (steps 1 to 8; section 13.1); 1,247 tests; database version 13 (the settings' key column); phone checks 1 to 17 all okay on versionCode 40, installed over 39 with your data kept, logcat clean (section 13.2); wording approved 2026-11-14, three messages as written, not seen on the phone (section 12); on draft #185 at 91a00a4 CI and the screen tests (124 of 124) green. Not yet reviewed or merged.
+Stage: Build. Status: approved 2026-11-14; decisions 0 to 4 settled the same day (section 11). Built 2026-11-14 (steps 1 to 8; section 13.1); 1,247 tests; database version 13 (the settings' key column); phone checks 1 to 17 all okay on versionCode 40, installed over 39 with your data kept, logcat clean (section 13.2); wording approved 2026-11-14, three messages as written, not seen on the phone (section 12); on draft #185 at 91a00a4 CI and the screen tests (124 of 124) green. Done: reviewed, no high or medium finding, one low fixed (1,250 tests) and four recorded (section 13.3); pull request #185 merged as 93bfec4, main green (section 13.4).
 Source: plan.md section 4 (row 30), spec section 7 (the price source setting; a failure keeps the last price, marked stale), section 9 (what leaves the phone), section 6 (More and Settings; wireframe 10f frame D), 4.3 (the ticker check), section 14 (K2, K4, K9), plan/spikes/price-source.md section 6 (decisions 3 and 5), open item 36.
 
 ## 1. Outcome
@@ -139,6 +139,10 @@ Approved 2026-11-14 (your A): every line below as shown on the phone (checks 3 t
 - Finding 3 (info, compliance, recorded): spec section 14 says K4 owns the selected-source setting; the key, which the spec does not mention, is stored by the ViewModel through RecordStore (K2) and given to K4 with `useKey`, as auto-lock and tab order are stored. K4 still sends only its own requests.
 - Finding 4 (info, recorded): while the key is checked (up to 15 s to connect and 30 s to read) every other save waits and Back is off in the entry and in Settings, so Android's Back leaves the app; an accepted key is then still saved. As every other save.
 - Finding 5 (info, recorded): a pasted key stays on the clipboard, and Show key during an open screenshot window allows a screenshot of it (risk 2); the autofill question is open item 64.
+- After the fix, on bb951a3 (the review's commit): CI green (run 43607227890, 3m 27s, "Scale test retries": none), the screen tests green (run 43607227835, 14m 2s; 124 test cases, 0 failures), CodeQL and Analyze green.
+
+### 13.4 The merge (2026-11-14)
+- Pull request #185 merged by you as 93bfec4 (15:10 UTC), 10 commits (steps 1 to 8, CLAUDE.md's lint line and the Deploy review). On main at 93bfec4: CI (run 43608781581, 4m 42s, "Scale test retries": none), CodeQL (run 43608781465) and the screen tests (run 43608781527, 12m 59s; 124 test cases, 0 failures, counted in the result XML) green at the first attempt (gh, read only).
 
 ## 14. Departures from the plan
 - plan.md's row 30 was "price-source-setting: Change the price source (sweep, offline warning)", with AC-07 and AC-58. With one source that cannot be exercised (open item 36), so 30 is the key entry (decision 0) and its file and branch are named price-source-key; the number stays.
