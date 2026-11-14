@@ -16,7 +16,7 @@ sealed interface Lookup {
     /** The source answered with status 200, but the body is not the list the app expects: a content problem. */
     data object Unreadable : Lookup
 
-    /** The source refused the key: status 401 or 403. Waiting does not help; a new key and build do. */
+    /** The source refused the key: status 401 or 403. Waiting does not help; a new key in Settings does (30). */
     data class KeyRefused(
         val status: Int,
     ) : Lookup
