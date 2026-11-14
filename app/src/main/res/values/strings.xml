@@ -611,7 +611,7 @@
     <string name="close_button">Close</string>
     <!-- Iteration 29 step 8: a filter's To before its From (decision 4; approved on the phone 2026-11-14). -->
     <string name="date_before_from">To is before From.</string>
-    <!-- Iteration 30: the price source and its API key in Settings (proposed, 30 file section 12; approval on the phone in step 8). %1$s is the source's own name, given by the price service. Save, Cancel and "Not saved" are the existing strings. -->
+    <!-- Iteration 30: the price source and its API key in Settings (30 file section 12; approved on the phone 2026-11-14, three messages as written). %1$s is the source's own name, given by the price service. Save, Cancel and "Not saved" are the existing strings. -->
     <string name="settings_prices">Prices</string>
     <string name="settings_price_source">Price source</string>
     <string name="price_source_key_ending">%1$s, key ending in %2$s</string>
