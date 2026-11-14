@@ -12,6 +12,7 @@ import app.ghghorg.atsassets.core.ClassOverride
 import app.ghghorg.atsassets.core.Classification
 import app.ghghorg.atsassets.core.HiddenHolding
 import app.ghghorg.atsassets.core.Instrument
+import app.ghghorg.atsassets.core.KeyCheck
 import app.ghghorg.atsassets.core.ListResult
 import app.ghghorg.atsassets.core.ListUsers
 import app.ghghorg.atsassets.core.Lookup
@@ -1627,6 +1628,25 @@ internal class FakeSource(
     override suspend fun profile(ticker: String): ProfileAnswer {
         profiled.add(ticker)
         return profiles[ticker] ?: ProfileAnswer.Given(SourceProfile(null, null))
+    }
+
+    // 30: each key the source was given to use (null is none) with the one in force, each key tested in order, and the
+    // test's answer; [keyGate] makes the test wait.
+    var keyInUse: String? = null
+    val usedKeys = mutableListOf<String?>()
+    var keyCheck: KeyCheck = KeyCheck.Accepted
+    val checkedKeys = mutableListOf<String>()
+    var keyGate: CompletableDeferred<Unit>? = null
+
+    override fun useKey(key: String?) {
+        usedKeys.add(key)
+        keyInUse = key
+    }
+
+    override suspend fun checkKey(key: String): KeyCheck {
+        checkedKeys.add(key)
+        keyGate?.await()
+        return keyCheck
     }
 }
 

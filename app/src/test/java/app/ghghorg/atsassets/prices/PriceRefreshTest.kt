@@ -3,6 +3,7 @@ package app.ghghorg.atsassets.prices
 import app.ghghorg.atsassets.core.AssetType
 import app.ghghorg.atsassets.core.HiddenHolding
 import app.ghghorg.atsassets.core.Instrument
+import app.ghghorg.atsassets.core.KeyCheck
 import app.ghghorg.atsassets.core.Lookup
 import app.ghghorg.atsassets.core.Price
 import app.ghghorg.atsassets.core.PriceSource
@@ -57,6 +58,10 @@ class PriceRefreshTest {
             calls.add("profile $ticker")
             return profiles[ticker] ?: ProfileAnswer.Given(SourceProfile(null, null))
         }
+
+        override fun useKey(key: String?) = error("not used")
+
+        override suspend fun checkKey(key: String): KeyCheck = error("not used")
     }
 
     private val at = Instant.ofEpochSecond(1_793_304_000L)
