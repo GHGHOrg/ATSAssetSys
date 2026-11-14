@@ -1,0 +1,105 @@
+# plan/iterations/30-price-source-key.md
+
+Stage: Build. Status: approved 2026-11-14; decisions 0 to 4 settled the same day (section 11). Not built.
+Source: plan.md section 4 (row 30), spec section 7 (the price source setting; a failure keeps the last price, marked stale), section 9 (what leaves the phone), section 6 (More and Settings; wireframe 10f frame D), 4.3 (the ticker check), section 14 (K2, K4, K9), plan/spikes/price-source.md section 6 (decisions 3 and 5), open item 36.
+
+## 1. Outcome
+Settings gets a Price source row. It names the one source the app ships with, Finnhub, and says whether a key is saved, with the key's last 4 characters. The row opens a key entry where you enter, change or clear the Finnhub API key. A key is checked with Finnhub before it is saved, and only an accepted key is saved. The app ships with no key built in: the build no longer reads `FINNHUB_API_KEY`. While no key is saved, the app makes no call to the source, the value screens say there is no key where they say "refresh failed" today, and a never-verified ticker cannot be bought, as today.
+
+## 2. Spec refs
+- Section 7: "In settings you choose the price source from the sources the app ships with (the list is decided in plan.md). The app starts on a default source." The list is Finnhub only (plan/spikes/price-source.md, section 6, decision 3), so it is the default and the only choice. "Failure keeps the last price, marked stale."
+- Section 9: the only outgoing connections are encrypted requests to the selected price source, carrying ticker symbols and the source's own request details (for example an API key); nothing of yours is logged.
+- Section 6: Settings (auto-lock, price source, tab order, the lists, the screenshot window); wireframe 10f, frame D and its Prices section (marker 9).
+- 4.3: a never-verified ticker is checked with the selected source before a buy is saved.
+- Section 8: the backup file holds "all settings (auto-lock, price source, tab order)"; the key is not among them, so it is not in the file.
+- Section 14: K2 (storage, encrypted at rest), K4 (the price service: only it sends anything outside the phone), K9 (screens show, K4 changes).
+- Criteria: AC-05 (offline use shows last prices with their age), AC-61 (the screen tests), and the standing checks AC-09, AC-39 to AC-42 and AC-35.
+- Not met by this iteration, and not changed: AC-07 and AC-58 (changing the source: the sweep and the offline warning). With one source there is nothing to change to; open item 36 stays open.
+
+## 3. Out of scope
+- Creating or deleting sources, a second source, choosing between sources, the sweep and the offline warning (decision 0; open item 36).
+- A step for the key in the first-launch list (section 6, AC-19): considered and dropped by you on 2026-11-14; the three steps stay.
+- A button from the buy's "no price source configured" message to the key entry (decision 3: the line only).
+- The key in the backup file (section 8), and what a restore or App initialization does with a saved key (open item 66, for 34).
+- A second layer of encryption for the key (decision 1).
+
+## 4. Analysis (2026-11-14, by reading the code and one trial of Finnhub's API)
+- The key today: app/build.gradle.kts reads `FINNHUB_API_KEY`, allows letters and digits only, and writes it to `BuildConfig`; MainActivity builds `FinnhubSource(BuildConfig.FINNHUB_API_KEY)` once, before the database is open.
+- "No key" already has a path: FinnhubSource makes no call with an empty key and answers `NoKey` (lookUp, quote, profile); PriceRefresh stops at it and the refresh counts as failed; TickerVerifier turns it into `CheckRefusal.NoKey`, shown as "Not saved. X could not be checked: no price source configured." (check_no_key).
+- The refresh line: the state has one Boolean, `refreshFailed`; `PriceRefreshModel` and Holding detail's header carry it and PriceRefreshParts.kt shows "Price refresh failed. Showing last prices.". A missing key needs its own reason there (decision 3).
+- Settings storage: one `settings` row (`autoLock`, `tabOrder`), written through SettingsDao; the database is at version 12 with one Room auto-migration per step. A nullable key column is one more auto-migration, 12 to 13, and a new schema file (decision 1).
+- The Settings screen: SettingsModel.kt (`Settings.of`) and SettingsScreen.kt (rows, and layers drawn in the activity window). The key entry has a text field, so it is drawn by AppContent over the bottom bar, its layer consuming the navigation bars' inset before `imePadding` (CLAUDE.md, 29's pitfalls).
+- Wireframe 10f, frame D, draws a pick list ("Source 1 (default)", "Source 2", "Use this source"). With one source there is nothing to pick, so the row opens the key entry, which names the source; the pick list is not drawn. A departure from the frame, said here (CLAUDE.md, 27's pitfall) and listed in section 14.
+- Where the key lives while the app runs: the source needs the key at each call, and the key is known only after the database is open. A small holder in prices/ keeps it in memory; the ViewModel sets it after the load and after a save or a clear, and FinnhubSource reads it at each call. The state that screens see holds the last 4 characters only, never the key (decision 4).
+- The key test (decisions 2 and 2a), tried on 2026-11-14 with your yes, redirects off, the key in the `X-Finnhub-Token` header only and never printed: `GET https://finnhub.io/api/v1/stock/market-status?exchange=US` answered 200 with your key (`{"exchange":"US","holiday":null,"isOpen":false,"session":null,"t":…,"timezone":"America/New_York"}`), 401 `{"error":"Invalid API key"}` with a made-up key, and 401 `{"error":"Please use an API key."}` with no key; none redirected. The first time a wrong key's answer was observed for this project; the app reads 401 and 403 as "key refused" since 09. The test reads the status only.
+- Finnhub offers no call made for testing a key or its health that I could find: its client's README (finnhub-python 2.4.30) has none; finnhub.io/docs/api could not be read (built by JavaScript), so this is not proven.
+
+## 5. Files
+- core/: PriceSource.kt (a key check beside lookUp, quote and profile, and its answers); RecordStore.kt (load, save and clear the key).
+- app/: data: AtsDatabase.kt (`SettingsRow`'s key column, version 13, the DAO's save), RoomRecordStore.kt, app/schemas/…/13.json (written by Room); prices: a key holder (new), finnhub/FinnhubSource.kt (reads the holder; the market-status request); ui: AppViewModel.kt (the key's state and actions, the no-key reason of the refresh line), SettingsModel.kt, SettingsScreen.kt, a key entry layer (new file), AppContent.kt (draws it over the bar), PriceRefreshParts.kt and HoldingDetailModel.kt (the no-key line), strings.xml; MainActivity.kt (the holder in place of the built-in key); app/build.gradle.kts (the key and its `buildConfigField` removed; versionCode 40).
+- Tests: the test stores (FakeStore; TickerVerifierTest's store); unit tests of the key check against a fake connection, of the state's flow (PriceKeyFlowTest, new), of the models (SettingsModelTest, the refresh line's model); screen tests of the key entry (new file) on ScreenTestSupport.kt.
+- Documents: this file, plan.md (row 30, section 11, the change log), plan/open-items.md, CLAUDE.md (the `FINNHUB_API_KEY` lines; step 7), plan/spikes/price-source.md (one line under its status saying decision 5 was replaced; step 7).
+
+## 6. Order of work
+Each step ends with spotlessCheck, build, tests and lint, all with --rerun-tasks, plus `:app:compileDebugAndroidTestKotlin`, and the report. Then I stop. Branch iter-30-price-source-key, one pull request.
+1. This file, the plan.md lines and the open items.
+2. K2: the key column and schema version 13; `RecordStore`'s load, save and clear; the test stores; tests first where a rule exists (an empty or cleared key loads as none).
+3. K4: the key check in `PriceSource` and its answers (accepted, refused with its status, too many calls, no answer with its status); FinnhubSource's market-status request (the key in the header only, no redirect followed, the status only) and the key holder it reads at each call; tests first, against a fake connection.
+4. The state and the ViewModel: the key loaded at start into the holder, the state keeping its last 4 characters; the key entry opened and closed; typing (letters and digits only); Save (offline: not saved; the check; saved only when accepted; then a refresh); change; Clear after a confirmation; the no-key reason for the refresh line; tests first.
+5. The model and the screens: the Settings row, the key entry layer (a field that hides its characters, with a show and hide control, no suggestions and no autofill: the Compose API read with javap on the day), the clear confirmation, the no-key line on the value screens, the strings; models first, and the wiring test (CR2).
+6. The screen tests (AC-61).
+7. The built-in key removed: app/build.gradle.kts, `BuildConfig`, MainActivity; CLAUDE.md's lines and the spike's status line.
+8. Documents, versionCode 40, the schema files compared, the phone check, the wording approval, the pull request draft, and the open item 33 reminder.
+
+## 7. Stubs
+None.
+
+## 8. Risks
+- 1. The key is a secret: it must not reach a log, an exception message, a web address, a screenshot or the screen in full. Only its last 4 characters are ever shown (decision 4). Checked by review at Deploy and by Logcat on the phone.
+- 2. The key passes through the keyboard app while typed, and through the clipboard when pasted; neither is the app's to control. The field asks for no suggestions and no autofill (open item 64 is the related question for the other fields).
+- 3. A key with other characters could break the request header: letters and digits only, as the build required until now.
+- 4. After the update your phone has no key until you enter it: prices do not refresh and show their age, marked stale at the first refresh without a key (section 7), as after any failed refresh.
+- 5. The database version step, 12 to 13: the schema files are compared before the install (CLAUDE.md, 15's pitfall); there is no backup file until 31.
+- 6. The market-status call was tried on one day with one key. Its answer on other days, a 403, or a change on Finnhub's side would show as "refused" or "could not be checked"; a key Finnhub accepts there could still be refused elsewhere (not seen).
+- 7. A Save can now fail for network reasons (decision 2b): the message must say which, and the typed key stays in the field.
+- 8. The key entry must keep the window's focus and stay above the keyboard at the largest font, in landscape too: AC-61, and 29's three pitfalls.
+- 9. CI and the emulator have no key, as before: the screen tests cannot reach Finnhub, so the accepted path is unit tested against a fake source and checked on the phone.
+- 10. The local build's intermittent failures (open item 60): a failed run is re-run unchanged after reading its cause; before the install the APK and its dex files are compared (CLAUDE.md, 29's pitfall).
+
+## 9. Proof
+- Commands: as in 29, all with --rerun-tasks. The screen tests on the pull request: 113 plus this iteration's new ones.
+- Unit tests: steps 2 to 5; a refused key and a key that could not be checked are not saved; an accepted key is saved and a refresh follows; a cleared key stops every call; the state never holds the key, only its last 4 characters.
+- Screen tests (AC-61), on ScreenTestSupport.kt: the key entry at the largest font in landscape (a); on the real MainActivity the entry keeps the window's focus (b) and its field stays above the keyboard at font 2.0, the layer's room checked (c); the Settings row's TalkBack text with the key's last 4 characters (d).
+- The phone check, over 29's build (versionCode 39), your data kept (AC-35): no key after the update, no call and the no-key line; a made-up key refused and not saved; Save in airplane mode not saved; your key accepted, the row showing its last 4 characters, prices refreshed, a never-verified ticker checked; the key changed; the key cleared after its confirmation; largest font and landscape (AC-39), TalkBack, light and dark (AC-40), airplane mode (AC-42); Logcat searched for the key and the usual data (section 9), the key given to the search only on your word and never printed.
+- Not provable here: what the keyboard app or the clipboard keeps of a typed or pasted key.
+
+## 10. Research
+- 2026-11-14, with your yes each time: a web search ("Finnhub API validate API key health check status endpoint"), finnhub.io/docs/api (not readable) and the finnhub-python README (read): no key-test or health call found; `market_status(exchange='US')` is the lightest call without a ticker. Then the three trial calls of section 4.
+
+## 11. Decisions (Build, settled by you 2026-11-14)
+0. Scope. Finnhub stays the one source the app ships with (the spike's decision 3 stands); you enter, change or clear its key in Settings, and no key is built into the app, which replaces the spike's decision 5 (the key built in at build time). No source is created or deleted, there is no second source, and intent.md and spec.md are not changed (your C). On the way you proposed and then set aside: a second source "Offline" that makes no calls; sources you create and delete; a fourth first-launch step for the key (a spec.md change). Not chosen either: (A) the same with a spec edit for create and delete; (B) that with a change-request intent file.
+1. The key is stored in the app's encrypted database, as a new column of the settings row, with a database version step from 12 to 13 (your A). Not chosen: (B) its own file encrypted with a Keystore key.
+2. The key is checked with Finnhub when you save it, by a test call (your B). Not chosen: (A) no separate check, the next refresh telling; (C) no check and no line.
+2a. The test call is `/stock/market-status?exchange=US`, which sends no ticker (your B), after the trial of section 4 showed it works with a free key. Not chosen: (A) `/quote` for a fixed ticker.
+2b. When the test gives no yes or no (offline, no answer, too many calls), the key is not saved; the message says why and the typed key stays in the field. A saved key is always one Finnhub accepted (your A). Not chosen: (B) saved unchecked, with a note.
+3. While no key is saved, the value screens show a "no key" line where "refresh failed" shows today; the buy's message stays as it is, with no button to the key entry (your B). Not chosen: (A) the line and a button at the buy; (C) nothing new.
+4. A saved key is never shown in full: the row and the key entry show its last 4 characters (your B). Not chosen: (A) only "key set"; (C) shown in full on request.
+
+## 12. Wording to approve (D9)
+A first proposal, to be shown on the phone in step 8:
+- Settings: the section "Prices"; the row "Price source", its value "Finnhub, key ending in a1b2" or "Finnhub, no key".
+- The key entry: the title "Finnhub API key"; "Current key ends in a1b2." or "No key saved."; "The key is checked with Finnhub before it is saved."; the field "API key"; the control "Show key" and "Hide key"; the buttons "Save", "Cancel" and, with a key saved, "Clear key".
+- Its messages: "Not saved. A key has letters and digits only."; "Not saved. Finnhub refused this key. (401)"; "Not saved. The key could not be checked: the phone is offline."; "Not saved. The key could not be checked: Finnhub did not answer. Try again later." (with the status when there is one); "Not saved. The key could not be checked: too many calls in a short time. Try again in a minute."; a failed save uses the existing "Not saved".
+- The clear confirmation: "Clear the key? Prices will not refresh and new tickers cannot be checked until a key is saved."; "Clear key" and "Cancel".
+- The value screens, in place of "Price refresh failed. Showing last prices." while no key is saved: "No price source key. Showing last prices. Enter the key in Settings."
+- TalkBack: the row and the "Current key" line read the last 4 characters one by one.
+
+## 13. Status and notes
+- Draft 2026-11-14, after open item 36's question and the scope talk of section 11, decision 0; approved the same day (your A).
+
+### 13.1 Steps (2026-11-14)
+- Step 1: this file, the plan.md lines (section 4's row 30, section 11's row, the change log with #184's merge) and open items 36 and 66. Only documents changed. The full run green at the first try: 1,188 tests (1 skipped), the screen tests compiled; one compile was "Compilation in Kotlin daemon has failed" and was done again outside the daemon (open item 60); HoldingsScaleTest measured "10 realizedGains" again (spread: 26.754 ms at 3,000, then 8.820 ms; passes on try 2). Lint (report 16:01:03) shows 6 findings, one more than listed: a new NewerVersionAvailable for kotlinx-serialization-json 1.12.0 (1.13.0 available, gradle/libs.versions.toml:18), from the library's new release, not from this step; also, coroutines-test's notice now names 1.11.0. Listed, not silenced.
+
+## 14. Departures from the plan
+- plan.md's row 30 was "price-source-setting: Change the price source (sweep, offline warning)", with AC-07 and AC-58. With one source that cannot be exercised (open item 36), so 30 is the key entry (decision 0) and its file and branch are named price-source-key; the number stays.
+- Wireframe 10f, frame D: the pick list of sources and "Use this source" are not drawn, as there is one source; the row opens the key entry, which the frame does not have (section 4).
