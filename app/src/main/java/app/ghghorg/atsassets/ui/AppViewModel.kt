@@ -1317,7 +1317,20 @@ class AppViewModel(
                 // The prices could not be saved: they stay as they were, and the refresh counts as failed.
                 mutableState.update { it.copy(refreshing = false, refreshFailed = true) }
             }
+            // 30, Deploy finding 1: a key saved or cleared while this refresh ran gets a refresh of its own.
+            if (refreshAfterKey) {
+                refreshAfterKey = false
+                refreshPrices()
+            }
         }
+    }
+
+    // 30, Deploy finding 1: the key changed while a refresh ran, which asked with the key before; one more follows it.
+    private var refreshAfterKey = false
+
+    /** After a key is saved or cleared: a refresh now, or, while one runs, right after it (30, Deploy finding 1). */
+    private fun refreshForKey() {
+        if (mutableState.value.refreshing) refreshAfterKey = true else refreshPrices()
     }
 
     /**
@@ -3175,7 +3188,7 @@ class AppViewModel(
             target.savePriceKey(key)
             priceSource.useKey(key)
             mutableState.update { it.copy(saving = false, keyEntry = null).withKey(key) }
-            refreshPrices()
+            refreshForKey()
         } catch (e: CancellationException) {
             throw e
         } catch (e: UnreadableDataException) {

@@ -400,6 +400,46 @@ class PriceKeyFlowTest {
         assertFalse(vm.state.value.refreshNoKey)
     }
 
+    // Deploy finding 1: a save or a clear while a refresh runs is followed by one more refresh, with the new key or none.
+    @Test
+    fun save_whileARefreshRuns_isFollowedByARefreshWithTheNewKey() {
+        val gate = CompletableDeferred<Unit>()
+        val source = FakeSource().also { it.quoteGate = gate }
+        val vm = typed(newKey, source = source)
+        assertTrue(vm.state.value.refreshing)
+        vm.saveKey()
+        assertEquals(listOf<String?>(oldKey, newKey), source.usedKeys)
+        gate.complete(Unit)
+        assertEquals(listOf<String?>(oldKey, newKey), source.quotedWithKey)
+        assertFalse(vm.state.value.refreshing)
+    }
+
+    @Test
+    fun clear_whileARefreshRuns_isFollowedByARefreshWithoutAKey_andTheNoKeyLine() {
+        val gate = CompletableDeferred<Unit>()
+        val source = FakeSource().also { it.quoteGate = gate }
+        val vm = onSettings(store(), source)
+        vm.openKeyEntry()
+        vm.askClearKey()
+        vm.confirmClearKey()
+        // As the real source answers without a key.
+        source.quotes = mapOf("AAPL" to Quote.NoKey)
+        gate.complete(Unit)
+        assertEquals(listOf<String?>(oldKey, null), source.quotedWithKey)
+        assertTrue(vm.state.value.refreshNoKey)
+    }
+
+    @Test
+    fun anUnrelatedRefreshAsked_whileOneRuns_isNotRepeated() {
+        // Only a key change asks for one more: a pull during a refresh is ignored, as before 30.
+        val gate = CompletableDeferred<Unit>()
+        val source = FakeSource().also { it.quoteGate = gate }
+        val vm = started(store(), source = source)
+        vm.onPullToRefresh()
+        gate.complete(Unit)
+        assertEquals(listOf("AAPL"), source.quoted)
+    }
+
     // Step 5: the wiring of the models (CR2).
     @Test
     fun theState_buildsSettingsRow_theEntry_andTheRefreshLine_fromItsOwnFields() {
