@@ -106,6 +106,8 @@ class OverallAndSellTalkBackTest {
             sellForm = SellForm(portfolioId = "p1", ticker = "AAPL", dateText = "20260601"),
             refreshing = refreshing,
             refreshFailed = refreshFailed,
+            // 30: a key is saved, so a failed refresh is not for want of one and its line is the refresh-failed line.
+            priceKeySet = true,
         )
     }
 

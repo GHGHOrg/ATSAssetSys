@@ -221,6 +221,8 @@ class PortfolioAllocationTalkBackTest {
             allocationPortfolioId = shownId,
             refreshing = refreshing,
             refreshFailed = refreshFailed,
+            // 30: a key is saved, so a failed refresh is not for want of one and its line is the refresh-failed line.
+            priceKeySet = true,
             classLists = classLists,
         )
     }
