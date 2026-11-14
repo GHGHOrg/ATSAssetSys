@@ -1,5 +1,6 @@
 package app.ghghorg.atsassets.prices.finnhub
 
+import app.ghghorg.atsassets.core.KeyCheck
 import app.ghghorg.atsassets.core.Listing
 import app.ghghorg.atsassets.core.Lookup
 import app.ghghorg.atsassets.core.ProfileAnswer
@@ -56,7 +57,7 @@ class FinnhubSourceTest {
     }
 
     private fun source(
-        key: String = "test-key",
+        key: String = "testkey1",
         connection: FakeConnection = FakeConnection(200, US_LIST),
     ): Pair<FinnhubSource, FakeConnection> = FinnhubSource(key) { url ->
         connection.also { it.opened = url }
@@ -67,8 +68,8 @@ class FinnhubSourceTest {
         val (source, connection) = source()
         assertEquals(Lookup.Found(Listing("ETP", "ARCX", "USD")), source.lookUp("SPY"))
         assertEquals("https://finnhub.io/api/v1/stock/symbol?exchange=US", connection.opened.toString())
-        assertEquals("test-key", connection.getRequestProperty("X-Finnhub-Token"))
-        assertFalse(connection.opened.toString().contains("test-key"))
+        assertEquals("testkey1", connection.getRequestProperty("X-Finnhub-Token"))
+        assertFalse(connection.opened.toString().contains("testkey1"))
         assertEquals("GET", connection.requestMethod)
         assertTrue(connection.connectTimeout > 0)
         assertTrue(connection.readTimeout > 0)
@@ -133,7 +134,7 @@ class FinnhubSourceTest {
     ) {
         val opened = mutableListOf<String>()
         val source =
-            FinnhubSource("test-key") { url ->
+            FinnhubSource("testkey1") { url ->
                 opened.add(url.toString())
                 if (url.host == "finnhub.io" && url.path.startsWith("/api/")) first else second
             }
@@ -146,7 +147,7 @@ class FinnhubSourceTest {
         val hops = TwoHops(FakeConnection(302, "", location = signedLink))
         assertEquals(Lookup.Found(Listing("ETP", "ARCX", "USD")), hops.source.lookUp("SPY"))
         assertEquals(listOf("https://finnhub.io/api/v1/stock/symbol?exchange=US", signedLink), hops.opened)
-        assertEquals("test-key", hops.first.getRequestProperty("X-Finnhub-Token"))
+        assertEquals("testkey1", hops.first.getRequestProperty("X-Finnhub-Token"))
         assertEquals(null, hops.second.getRequestProperty("X-Finnhub-Token"))
         assertFalse(hops.second.instanceFollowRedirects)
         assertTrue(hops.second.connectTimeout > 0)
@@ -234,8 +235,8 @@ class FinnhubSourceTest {
         val (source, connection) = quoting(200, AAPL_QUOTE)
         assertEquals(Quote.Priced(BigDecimal("348.91"), Instant.ofEpochSecond(1_793_304_000)), source.quote("AAPL"))
         assertEquals("https://finnhub.io/api/v1/quote?symbol=AAPL", connection.opened.toString())
-        assertEquals("test-key", connection.getRequestProperty("X-Finnhub-Token"))
-        assertFalse(connection.opened.toString().contains("test-key"))
+        assertEquals("testkey1", connection.getRequestProperty("X-Finnhub-Token"))
+        assertFalse(connection.opened.toString().contains("testkey1"))
         assertEquals("GET", connection.requestMethod)
         assertFalse(connection.instanceFollowRedirects)
         assertTrue(connection.connectTimeout > 0)
@@ -287,7 +288,7 @@ class FinnhubSourceTest {
         for (code in listOf(302, 404, 500, 503)) {
             val opened = mutableListOf<URL>()
             val connection = FakeConnection(code, "", location = "https://static2.finnhub.io/q.json")
-            val source = FinnhubSource("test-key") { url -> connection.also { opened.add(url) } }
+            val source = FinnhubSource("testkey1") { url -> connection.also { opened.add(url) } }
             assertEquals(code.toString(), Quote.NoAnswer(code), source.quote("AAPL"))
             assertEquals(code.toString(), 1, opened.size)
             assertTrue(connection.disconnected)
@@ -331,7 +332,7 @@ class FinnhubProfileTest {
         failure: IOException? = null,
     ): Pair<FinnhubSource, FakeConnection> {
         val connection = FakeConnection(code, body, failure)
-        return FinnhubSource("test-key") { url -> connection.also { it.opened = url } } to connection
+        return FinnhubSource("testkey1") { url -> connection.also { it.opened = url } } to connection
     }
 
     @Test
@@ -339,8 +340,8 @@ class FinnhubProfileTest {
         val (source, connection) = profiling(200, AAPL_PROFILE)
         assertEquals(ProfileAnswer.Given(SourceProfile("Technology", "US")), source.profile("AAPL"))
         assertEquals("https://finnhub.io/api/v1/stock/profile2?symbol=AAPL", connection.opened.toString())
-        assertEquals("test-key", connection.getRequestProperty("X-Finnhub-Token"))
-        assertFalse(connection.opened.toString().contains("test-key"))
+        assertEquals("testkey1", connection.getRequestProperty("X-Finnhub-Token"))
+        assertFalse(connection.opened.toString().contains("testkey1"))
         assertEquals("GET", connection.requestMethod)
         assertFalse(connection.instanceFollowRedirects)
         assertTrue(connection.connectTimeout > 0)
@@ -386,7 +387,7 @@ class FinnhubProfileTest {
         for (code in listOf(302, 404, 500, 503)) {
             val opened = mutableListOf<URL>()
             val connection = FakeConnection(code, "", location = "https://static2.finnhub.io/p.json")
-            val source = FinnhubSource("test-key") { url -> connection.also { opened.add(url) } }
+            val source = FinnhubSource("testkey1") { url -> connection.also { opened.add(url) } }
             assertEquals(code.toString(), ProfileAnswer.NoAnswer(code), source.profile("AAPL"))
             assertEquals(code.toString(), 1, opened.size)
             assertTrue(connection.disconnected)
@@ -411,6 +412,131 @@ class FinnhubProfileTest {
         assertTrue(connection.disconnected)
     }
 }
+
+/**
+ * 30: the key the source uses, and the test of a key at Finnhub's /stock/market-status call (decisions 2 and 2a; the
+ * 30 file, section 4: 200 with a free key, 401 with a made-up key and with none, no redirect, 2026-11-14).
+ */
+class FinnhubKeyTest {
+    private fun checking(
+        code: Int,
+        body: String = MARKET_STATUS,
+        failure: IOException? = null,
+    ): Pair<FinnhubSource, FakeConnection> {
+        val connection = FakeConnection(code, body, failure)
+        return FinnhubSource("testkey1") { url -> connection.also { it.opened = url } } to connection
+    }
+
+    @Test
+    fun checkKey_accepted_asksMarketStatus_withTheTestedKeyInTheHeaderOnly() = runTest {
+        val (source, connection) = checking(200)
+        assertEquals(KeyCheck.Accepted, source.checkKey("newkey2"))
+        assertEquals("https://finnhub.io/api/v1/stock/market-status?exchange=US", connection.opened.toString())
+        assertEquals("newkey2", connection.getRequestProperty("X-Finnhub-Token"))
+        assertFalse(connection.opened.toString().contains("newkey2"))
+        assertEquals("GET", connection.requestMethod)
+        assertTrue(connection.connectTimeout > 0)
+        assertTrue(connection.readTimeout > 0)
+        assertTrue(connection.disconnected)
+    }
+
+    @Test
+    fun checkKey_status200_isAccepted_whateverTheBody() = runTest {
+        // Only the status is read (the 30 file, section 4).
+        for (body in listOf("<html>", "", "[]")) assertEquals(body, KeyCheck.Accepted, checking(200, body).first.checkKey("newkey2"))
+    }
+
+    @Test
+    fun checkKey_status401or403_isRefused_withTheStatus() = runTest {
+        assertEquals(KeyCheck.Refused(401), checking(401, """{"error":"Invalid API key"}""").first.checkKey("newkey2"))
+        assertEquals(KeyCheck.Refused(403), checking(403, "").first.checkKey("newkey2"))
+    }
+
+    @Test
+    fun checkKey_status429_isTooManyCalls() = runTest {
+        assertEquals(KeyCheck.TooManyCalls, checking(429, "").first.checkKey("newkey2"))
+    }
+
+    @Test
+    fun checkKey_anyOtherStatus_isNoAnswer_andFollowsNoRedirect() = runTest {
+        for (code in listOf(302, 404, 500, 503)) {
+            val opened = mutableListOf<URL>()
+            val connection = FakeConnection(code, "", location = "https://static2.finnhub.io/s.json")
+            val source = FinnhubSource("testkey1") { url -> connection.also { opened.add(url) } }
+            assertEquals(code.toString(), KeyCheck.NoAnswer(code), source.checkKey("newkey2"))
+            assertEquals(code.toString(), 1, opened.size)
+            assertTrue(connection.disconnected)
+        }
+    }
+
+    @Test
+    fun checkKey_aFailedConnection_isNoAnswer_withoutAStatus() = runTest {
+        val (source, connection) = checking(200, failure = IOException("no route"))
+        assertEquals(KeyCheck.NoAnswer(status = null), source.checkKey("newkey2"))
+        assertTrue(connection.disconnected)
+    }
+
+    @Test
+    fun checkKey_aTextThatIsNoKey_isNotAKey_andConnectsNowhere() = runTest {
+        for (text in listOf("", "abc 123", "abc\n123", "abc:123")) {
+            var connected = false
+            val source = FinnhubSource("testkey1") {
+                connected = true
+                FakeConnection(200, MARKET_STATUS)
+            }
+            assertEquals(text, KeyCheck.NotAKey, source.checkKey(text))
+            assertFalse(text, connected)
+        }
+    }
+
+    // Every connection the source opens, in order, each answering 200 with a quote.
+    private class Opened {
+        val connections = mutableListOf<FakeConnection>()
+        val source = FinnhubSource("testkey1") { url -> FakeConnection(200, AAPL_QUOTE).also { it.opened = url }.also(connections::add) }
+    }
+
+    @Test
+    fun checkKey_doesNotChangeTheKeyInUse() = runTest {
+        val opened = Opened()
+        assertEquals(KeyCheck.Accepted, opened.source.checkKey("newkey2"))
+        assertTrue(opened.source.quote("AAPL") is Quote.Priced)
+        assertEquals(listOf("newkey2", "testkey1"), opened.connections.map { it.getRequestProperty("X-Finnhub-Token") })
+    }
+
+    @Test
+    fun useKey_theNextCallsUseTheNewKey() = runTest {
+        val opened = Opened()
+        opened.source.useKey("newkey2")
+        assertTrue(opened.source.quote("AAPL") is Quote.Priced)
+        assertEquals(listOf("newkey2"), opened.connections.map { it.getRequestProperty("X-Finnhub-Token") })
+    }
+
+    @Test
+    fun useKey_none_orATextThatIsNoKey_isNoKey_andConnectsNowhere() = runTest {
+        for (text in listOf(null, "", "abc 123", "abc\n123")) {
+            val opened = Opened()
+            opened.source.useKey(text)
+            assertEquals(text, Quote.NoKey, opened.source.quote("AAPL"))
+            assertEquals(text, Lookup.NoKey, opened.source.lookUp("AAPL"))
+            assertEquals(text, ProfileAnswer.NoKey, opened.source.profile("AAPL"))
+            assertEquals(text, 0, opened.connections.size)
+        }
+    }
+
+    @Test
+    fun aSourceMadeWithATextThatIsNoKey_hasNoKey() = runTest {
+        var connected = false
+        val source = FinnhubSource("abc 123") {
+            connected = true
+            FakeConnection(200, AAPL_QUOTE)
+        }
+        assertEquals(Quote.NoKey, source.quote("AAPL"))
+        assertFalse(connected)
+    }
+}
+
+/** Finnhub's /stock/market-status answer of 2026-11-14 with a free key (the 30 file, section 4), its time left as sent. */
+private const val MARKET_STATUS = """{"exchange":"US","holiday":null,"isOpen":false,"session":null,"t":1794642229,"timezone":"America/New_York"}"""
 
 /** Finnhub's /stock/profile2 answer for AAPL of 2026-11-11 (R1), the logo, phone and web address left out. */
 private const val AAPL_PROFILE =

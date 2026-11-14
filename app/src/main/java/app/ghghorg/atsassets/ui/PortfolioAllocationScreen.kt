@@ -138,7 +138,7 @@ private fun ValueCard(model: PortfolioAllocationModel) {
                     )
                 }
             }
-            PriceRefreshLines(refreshing = model.refresh.refreshing, failed = model.refresh.failed)
+            PriceRefreshLines(refreshing = model.refresh.refreshing, failed = model.refresh.failed, noKey = model.refresh.noKey)
         }
     }
 }

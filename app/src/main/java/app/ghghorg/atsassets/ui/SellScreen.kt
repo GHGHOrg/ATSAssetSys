@@ -225,7 +225,7 @@ private fun LotList(
         modifier = Modifier.semantics { heading() },
     )
     if (rows.isNotEmpty()) {
-        PriceRefreshLines(state.priceRefresh.refreshing, state.priceRefresh.failed)
+        PriceRefreshLines(state.priceRefresh.refreshing, state.priceRefresh.failed, state.priceRefresh.noKey)
         OutlinedCard(modifier = Modifier.fillMaxWidth()) {
             Column(modifier = Modifier.padding(12.dp)) {
                 rows.forEachIndexed { index, row ->

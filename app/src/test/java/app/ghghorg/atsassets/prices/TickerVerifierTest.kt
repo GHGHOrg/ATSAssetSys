@@ -8,6 +8,7 @@ import app.ghghorg.atsassets.core.ClassLists
 import app.ghghorg.atsassets.core.ClassOverride
 import app.ghghorg.atsassets.core.HiddenHolding
 import app.ghghorg.atsassets.core.Instrument
+import app.ghghorg.atsassets.core.KeyCheck
 import app.ghghorg.atsassets.core.Listing
 import app.ghghorg.atsassets.core.Lookup
 import app.ghghorg.atsassets.core.Portfolio
@@ -39,6 +40,12 @@ class TickerVerifierTest {
         override suspend fun quote(ticker: String): Quote = error("not used")
 
         override suspend fun profile(ticker: String): ProfileAnswer = error("not used")
+
+        override val name: String = "not used"
+
+        override fun useKey(key: String?) = error("not used")
+
+        override suspend fun checkKey(key: String): KeyCheck = error("not used")
     }
 
     /** Only instruments are used here; the other calls are not expected. */
@@ -120,6 +127,10 @@ class TickerVerifierTest {
         override suspend fun loadTabOrder(): TabOrder = error("not used")
 
         override suspend fun saveTabOrder(order: TabOrder) = error("not used")
+
+        override suspend fun loadPriceKey(): String? = error("not used")
+
+        override suspend fun savePriceKey(key: String?) = error("not used")
 
         override suspend fun loadClassLists(): ClassLists = error("not used")
 

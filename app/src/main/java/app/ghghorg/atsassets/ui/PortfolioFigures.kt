@@ -53,10 +53,14 @@ data class PortfolioHoldingRowModel(
     val staleAsOf: String?,
 )
 
-/** The price refresh as the Portfolios list and a portfolio's screen show it (section 6, error and loading states; 16b). */
+/**
+ * The price refresh as the Portfolios list and a portfolio's screen show it (section 6, error and loading states; 16b).
+ * [noKey] when it failed because no price source key is saved, so the line names the missing key (30 decision 3).
+ */
 data class PriceRefreshModel(
     val refreshing: Boolean,
     val failed: Boolean,
+    val noKey: Boolean = false,
 )
 
 object PortfolioFigures {

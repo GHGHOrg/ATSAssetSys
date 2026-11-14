@@ -12,6 +12,7 @@ import app.ghghorg.atsassets.core.ClassOverride
 import app.ghghorg.atsassets.core.Classification
 import app.ghghorg.atsassets.core.HiddenHolding
 import app.ghghorg.atsassets.core.Instrument
+import app.ghghorg.atsassets.core.KeyCheck
 import app.ghghorg.atsassets.core.ListResult
 import app.ghghorg.atsassets.core.ListUsers
 import app.ghghorg.atsassets.core.Lookup
@@ -1601,6 +1602,8 @@ internal class FakeSource(
     var answer: Lookup = Lookup.NotFound,
     val gate: CompletableDeferred<Unit>? = null,
 ) : PriceSource {
+    override val name: String = "Test source"
+
     val asked = mutableListOf<String>()
 
     override suspend fun lookUp(ticker: String): Lookup {
@@ -1616,6 +1619,7 @@ internal class FakeSource(
 
     override suspend fun quote(ticker: String): Quote {
         quoted.add(ticker)
+        quotedWithKey.add(keyInUse)
         quoteGate?.await()
         return quotes[ticker] ?: Quote.NoQuote
     }
@@ -1627,6 +1631,26 @@ internal class FakeSource(
     override suspend fun profile(ticker: String): ProfileAnswer {
         profiled.add(ticker)
         return profiles[ticker] ?: ProfileAnswer.Given(SourceProfile(null, null))
+    }
+
+    // 30: each key the source was given to use (null is none) with the one in force, each key tested in order, and the
+    // test's answer; [keyGate] makes the test wait.
+    var keyInUse: String? = null
+    val usedKeys = mutableListOf<String?>()
+    val quotedWithKey = mutableListOf<String?>()
+    var keyCheck: KeyCheck = KeyCheck.Accepted
+    val checkedKeys = mutableListOf<String>()
+    var keyGate: CompletableDeferred<Unit>? = null
+
+    override fun useKey(key: String?) {
+        usedKeys.add(key)
+        keyInUse = key
+    }
+
+    override suspend fun checkKey(key: String): KeyCheck {
+        checkedKeys.add(key)
+        keyGate?.await()
+        return keyCheck
     }
 }
 
@@ -1940,6 +1964,25 @@ internal class FakeStore(
         (tabOrderSaveError ?: saveError)?.let { throw it }
         savedTabOrders.add(order)
         storedTabOrder = order
+    }
+
+    // 30: the price source's API key; each save as given (null is a clear). A key is stored from the start, as the tests
+    // before 30 ran an app with a key; a test of an app without one sets null. [priceKeySaveError] fails this save alone,
+    // so the start's price refresh still saves.
+    var storedPriceKey: String? = "testkey1"
+    val savedPriceKeys = mutableListOf<String?>()
+    var priceKeySaveError: Throwable? = null
+
+    override suspend fun loadPriceKey(): String? {
+        loadError?.let { throw it }
+        return storedPriceKey
+    }
+
+    override suspend fun savePriceKey(key: String?) {
+        gate?.await()
+        (priceKeySaveError ?: saveError)?.let { throw it }
+        savedPriceKeys.add(key)
+        storedPriceKey = key
     }
 
     // 23a: the sector and geography lists, empty until a profile adds to them.

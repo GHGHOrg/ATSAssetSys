@@ -43,8 +43,8 @@ fun AppContent(
         else -> Box(
             modifier = modifier.fillMaxSize(),
         ) {
-            val dialogOpen =
-                state.portfolioDialog != null || state.renameDialog != null || state.deleteDialog != null || state.deleteBlocked != null
+            val deleteOpen = state.deleteDialog != null || state.deleteBlocked != null
+            val dialogOpen = state.portfolioDialog != null || state.renameDialog != null || deleteOpen || state.keyEntry != null
             // While a dialog is open, TalkBack reads only the dialog, not the screen or the bar under it.
             val under = if (dialogOpen) Modifier.clearAndSetSemantics { } else Modifier
             Column(modifier = Modifier.fillMaxSize().then(under)) {
@@ -60,6 +60,19 @@ fun AppContent(
                 blocked = state.deleteBlockedModel,
                 actions = DeleteDialogActions(viewModel::onDeleteNameChange, viewModel::confirmDelete, viewModel::cancelDelete),
                 onCloseBlocked = viewModel::closeDeleteBlocked,
+            )
+            // 30: the price source's key entry, over the bar as the Delete dialog, its field above the keyboard.
+            KeyEntryLayer(
+                model = state.keyEntryModel,
+                actions =
+                KeyEntryActions(
+                    onTextChange = viewModel::onKeyTextChange,
+                    onSave = viewModel::saveKey,
+                    onCancel = viewModel::cancelKeyEntry,
+                    onAskClear = viewModel::askClearKey,
+                    onCancelClear = viewModel::cancelClearKey,
+                    onConfirmClear = viewModel::confirmClearKey,
+                ),
             )
         }
     }
@@ -356,6 +369,7 @@ private fun BarContent(
                 onTurnOffScreenshots = screenshots.onTurnOff,
                 onOpenTabOrder = viewModel::openTabOrder,
                 onOpenList = viewModel::openClassList,
+                onOpenPriceSource = viewModel::openKeyEntry,
             ),
         )
 

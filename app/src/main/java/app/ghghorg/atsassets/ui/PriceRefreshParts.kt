@@ -54,12 +54,14 @@ internal fun PricePullToRefresh(
 
 /**
  * Section 6, error and loading states; AC-42: "Updating prices" while a refresh runs, and one quiet line when the last
- * refresh failed, with no pop-up. TalkBack reads each as it appears.
+ * refresh failed, with no pop-up. TalkBack reads each as it appears. When it failed because no price source key is
+ * saved ([noKey]), the line names the missing key and where to enter it (30 decision 3).
  */
 @Composable
 internal fun PriceRefreshLines(
     refreshing: Boolean,
     failed: Boolean,
+    noKey: Boolean = false,
 ) {
     if (refreshing) {
         Row(
@@ -77,7 +79,7 @@ internal fun PriceRefreshLines(
     }
     if (failed) {
         Text(
-            text = stringResource(R.string.price_refresh_failed),
+            text = stringResource(if (noKey) R.string.price_refresh_no_key else R.string.price_refresh_failed),
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
             modifier = Modifier.semantics { liveRegion = LiveRegionMode.Polite },

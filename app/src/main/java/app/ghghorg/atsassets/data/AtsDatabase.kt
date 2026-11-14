@@ -139,13 +139,15 @@ data class SourceTextRow(
 /**
  * The settings (spec section 3), one row with a column per setting (20 decision 3): the row's [id] is always
  * [ONLY_ID]. [autoLock] is an [app.ghghorg.atsassets.core.AutoLock] by name. [tabOrder] is spec 8's `tab_order` text
- * (22), null until an order is saved. Each later setting adds a column.
+ * (22), null until an order is saved. [priceKey] is the price source's API key (30 decision 1), null while none is
+ * saved; it is never logged and never part of a message. Each later setting adds a column.
  */
 @Entity(tableName = "settings")
 data class SettingsRow(
     @PrimaryKey val id: Int = ONLY_ID,
     val autoLock: String,
     val tabOrder: String? = null,
+    val priceKey: String? = null,
 ) {
     companion object {
         const val ONLY_ID = 1
@@ -540,6 +542,12 @@ interface SettingsDao {
     suspend fun saveTabOrder(tabOrder: String) {
         upsert(load().withTabOrder(tabOrder))
     }
+
+    /** Sets the key column of the settings row (null clears it), making the row if there is none; the other columns are kept (30). */
+    @Transaction
+    suspend fun savePriceKey(priceKey: String?) {
+        upsert(load().withPriceKey(priceKey))
+    }
 }
 
 /**
@@ -547,8 +555,8 @@ interface SettingsDao {
  * (11) the sell_allocations table, version 5 (12) the two split columns of transactions, version 6 (15) the
  * hidden_holdings table, version 7 (16a) the three price columns of instruments, version 8 (20) the settings table,
  * version 9 (22) its tab order column, version 10 (23a) the three profile columns of instruments and the list_values
- * table, version 11 (24) the class_overrides table, version 12 (25) the source_texts table; Room generates each step out
- * of the schemas in app/schemas.
+ * table, version 11 (24) the class_overrides table, version 12 (25) the source_texts table, version 13 (30) the
+ * settings' key column; Room generates each step out of the schemas in app/schemas.
  */
 // 29: ids per delete query, well under SQLite's limit on bound variables.
 internal const val DELETE_CHUNK = 500
@@ -566,7 +574,7 @@ internal const val DELETE_CHUNK = 500
         ClassOverrideRow::class,
         SourceTextRow::class,
     ],
-    version = 12,
+    version = 13,
     autoMigrations = [
         AutoMigration(from = 1, to = 2),
         AutoMigration(from = 2, to = 3),
@@ -579,6 +587,7 @@ internal const val DELETE_CHUNK = 500
         AutoMigration(from = 9, to = 10),
         AutoMigration(from = 10, to = 11),
         AutoMigration(from = 11, to = 12),
+        AutoMigration(from = 12, to = 13),
     ],
 )
 abstract class AtsDatabase : RoomDatabase() {

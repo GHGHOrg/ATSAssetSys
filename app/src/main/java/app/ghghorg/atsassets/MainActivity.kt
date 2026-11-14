@@ -287,7 +287,8 @@ class MainActivity : FragmentActivity() {
                 },
                 clock = Clock.systemUTC(),
                 newId = { UUID.randomUUID().toString() },
-                priceSource = FinnhubSource(BuildConfig.FINNHUB_API_KEY),
+                // 30: no key at start; the ViewModel gives the source the stored key once the records are loaded.
+                priceSource = FinnhubSource(),
                 isOnline = NetworkStatus(appContext)::isOnline,
             )
             return modelClass.cast(appViewModel)!!

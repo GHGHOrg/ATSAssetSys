@@ -615,4 +615,40 @@ class RowMappingTest {
         assertEquals(SettingsRow(autoLock = AutoLock.EVERY_LEAVE.name, tabOrder = order), null.withTabOrder(order))
         assertEquals(SettingsRow(autoLock = AutoLock.IDLE_1_MIN.name, tabOrder = null), null.withAutoLock(AutoLock.IDLE_1_MIN.name))
     }
+
+    // 30: the price source's API key, a column of the settings row (decision 1).
+    @Test
+    fun noSettingsRow_orNoKeyInIt_isNoKey() {
+        val none: SettingsRow? = null
+        assertEquals(null, none.toPriceKey())
+        assertEquals(null, SettingsRow(autoLock = AutoLock.IDLE_1_MIN.name, tabOrder = "cash;more;portfolios;overall").toPriceKey())
+    }
+
+    @Test
+    fun aKey_isStoredAsTyped_andReadBack() {
+        val row = null.withPriceKey("c0ffee0123456789a1b2")
+        assertEquals(SettingsRow(autoLock = AutoLock.EVERY_LEAVE.name, priceKey = "c0ffee0123456789a1b2"), row)
+        assertEquals("c0ffee0123456789a1b2", row.toPriceKey())
+    }
+
+    @Test
+    fun savingOrClearingAKey_keepsTheOtherSettings() {
+        val order = "cash;more;portfolios;overall"
+        val both = SettingsRow(autoLock = AutoLock.IDLE_5_MIN.name, tabOrder = order)
+        val keyed = both.withPriceKey("abc123")
+        assertEquals(SettingsRow(autoLock = AutoLock.IDLE_5_MIN.name, tabOrder = order, priceKey = "abc123"), keyed)
+        assertEquals(both, keyed.withPriceKey(null))
+        // And the other settings' saves keep the key.
+        assertEquals("abc123", keyed.withAutoLock(AutoLock.IDLE_1_MIN.name).priceKey)
+        assertEquals("abc123", keyed.withTabOrder("overall;more;cash;portfolios").priceKey)
+    }
+
+    @Test
+    fun aStoredKeyThatIsNoKey_isUnreadable_andItsMessageDoesNotHoldIt() {
+        for (text in listOf("", "abc 123", "abc-123", "abc\n123")) {
+            val row = SettingsRow(autoLock = AutoLock.EVERY_LEAVE.name, priceKey = text)
+            val thrown = assertThrows(UnreadableDataException::class.java) { row.toPriceKey() }
+            assertEquals("A stored setting could not be read.", thrown.message)
+        }
+    }
 }

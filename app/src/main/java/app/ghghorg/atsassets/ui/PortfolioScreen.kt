@@ -227,7 +227,7 @@ private fun SummaryCard(
                 amountColor = gainLossColor(sign(figures.gain)),
             )
             figures.prices?.let { PricesAsOfLine(it) }
-            PriceRefreshLines(refresh.refreshing, refresh.failed)
+            PriceRefreshLines(refresh.refreshing, refresh.failed, refresh.noKey)
         }
     }
 }

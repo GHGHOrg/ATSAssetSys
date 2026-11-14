@@ -80,7 +80,7 @@ fun PortfoliosScreen(
                     Text(text = stringResource(R.string.new_portfolio))
                 }
             }
-            PriceRefreshLines(state.priceRefresh.refreshing, state.priceRefresh.failed)
+            PriceRefreshLines(state.priceRefresh.refreshing, state.priceRefresh.failed, state.priceRefresh.noKey)
             if (state.portfolioNeedsOpeningBalance) {
                 Text(
                     text = stringResource(R.string.opening_balance_first),

@@ -107,6 +107,8 @@ class NetWorthTalkBackTest {
             instruments = listOf(Instrument("AAPL", AssetType.STOCK, verified = true, price = price)),
             refreshing = refreshing,
             refreshFailed = refreshFailed,
+            // 30: a key is saved, so a failed refresh is not for want of one and its line is the refresh-failed line.
+            priceKeySet = true,
         )
     }
 

@@ -93,6 +93,8 @@ class PortfolioTalkBackTest {
         portfolioId = "p1",
         instruments = listOf(Instrument("AAPL", AssetType.STOCK, verified = true, price = price)),
         refreshFailed = refreshFailed,
+        // 30: a key is saved, so a failed refresh is not for want of one and its line is the refresh-failed line.
+        priceKeySet = true,
     )
 
     private fun showPortfolio(state: AppState) {

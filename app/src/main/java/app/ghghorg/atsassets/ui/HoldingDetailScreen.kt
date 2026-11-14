@@ -141,7 +141,7 @@ private fun FixedPart(
         ) {
             TitleRow(holding.ticker, actions.onBack)
             Header(header)
-            PriceRefreshLines(header.refreshing, header.refreshFailed)
+            PriceRefreshLines(header.refreshing, header.refreshFailed, header.refreshNoKey)
             val buySpoken = stringResource(R.string.holding_buy_spoken, holding.ticker, portfolio)
             val sellSpoken = stringResource(R.string.holding_sell_spoken, holding.ticker, portfolio)
             val splitSpoken = stringResource(R.string.holding_split_spoken, holding.ticker, portfolio)

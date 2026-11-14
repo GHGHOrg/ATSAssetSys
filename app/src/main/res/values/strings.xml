@@ -611,4 +611,30 @@
     <string name="close_button">Close</string>
     <!-- Iteration 29 step 8: a filter's To before its From (decision 4; approved on the phone 2026-11-14). -->
     <string name="date_before_from">To is before From.</string>
+    <!-- Iteration 30: the price source and its API key in Settings (30 file section 12; approved on the phone 2026-11-14, three messages as written). %1$s is the source's own name, given by the price service. Save, Cancel and "Not saved" are the existing strings. -->
+    <string name="settings_prices">Prices</string>
+    <string name="settings_price_source">Price source</string>
+    <string name="price_source_key_ending">%1$s, key ending in %2$s</string>
+    <string name="price_source_key_set">%1$s, key saved</string>
+    <string name="price_source_no_key">%1$s, no key</string>
+    <string name="settings_price_source_spoken">Price source, %1$s</string>
+    <string name="key_entry_title">%1$s API key</string>
+    <string name="key_entry_current">Current key ends in %1$s.</string>
+    <string name="key_entry_current_set">A key is saved.</string>
+    <string name="key_entry_none">No key saved.</string>
+    <string name="key_entry_note">The key is checked with %1$s before it is saved.</string>
+    <string name="key_entry_field">API key</string>
+    <string name="key_entry_show">Show key</string>
+    <string name="key_entry_hide">Hide key</string>
+    <string name="key_entry_checking">Checking the key with %1$s…</string>
+    <string name="key_entry_clear">Clear key</string>
+    <string name="key_not_a_key">Not saved. A key has letters and digits only.</string>
+    <string name="key_refused">Not saved. %1$s refused this key. (%2$d)</string>
+    <string name="key_offline">Not saved. The key could not be checked: the phone is offline.</string>
+    <string name="key_no_answer">Not saved. The key could not be checked: %1$s did not answer. Try again later.</string>
+    <string name="key_no_answer_status">Not saved. The key could not be checked: %1$s did not answer. Try again later. (%2$d)</string>
+    <string name="key_too_many">Not saved. The key could not be checked: too many calls in a short time. Try again in a minute.</string>
+    <string name="key_clear_question">Clear the key? Prices will not refresh and new tickers cannot be checked until a key is saved.</string>
+    <!-- Iteration 30 decision 3: in place of price_refresh_failed while no key is saved. -->
+    <string name="price_refresh_no_key">No price source key. Showing last prices. Enter the key in Settings.</string>
 </resources>

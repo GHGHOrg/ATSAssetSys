@@ -1,8 +1,10 @@
 package app.ghghorg.atsassets.prices.finnhub
 
 import app.ghghorg.atsassets.core.Classification
+import app.ghghorg.atsassets.core.KeyCheck
 import app.ghghorg.atsassets.core.Listing
 import app.ghghorg.atsassets.core.Lookup
+import app.ghghorg.atsassets.core.PriceKey
 import app.ghghorg.atsassets.core.PriceSource
 import app.ghghorg.atsassets.core.ProfileAnswer
 import app.ghghorg.atsassets.core.Quote
@@ -110,16 +112,60 @@ object FinnhubProfile {
 }
 
 /**
- * K4 on Finnhub: verify (09), quote (16a) and profile (23a) (spec 7; spike decisions 3 and 5; 09 decisions 4, 5 and 8). The key goes in the
+ * K4 on Finnhub: verify (09), quote (16a), profile (23a) and the test of a key (30) (spec 7; spike decision 3; 09
+ * decisions 4, 5 and 8; 30 decisions 0 to 2b). The key is the one given to [useKey], held in memory. It goes in the
  * X-Finnhub-Token header only, never in the URL. Nothing is logged: no ticker, no key, no response, no link (spec
  * section 9). Finnhub answers the list with a redirect to a signed link on its file host (static2.finnhub.io; defect
  * found in 09 phone check 3). That one redirect is followed by hand, only over https to finnhub.io or a subdomain,
  * and without the key, which only finnhub.io itself receives. No further redirect is followed.
  */
 class FinnhubSource(
-    private val key: String,
+    key: String = "",
     private val open: (URL) -> HttpURLConnection = { it.openConnection() as HttpURLConnection },
 ) : PriceSource {
+    // 30: the key in use, in memory only; empty is no key. Set at start and after a save or a clear (useKey).
+    @Volatile
+    private var key: String = ""
+
+    init {
+        useKey(key)
+    }
+
+    override val name: String = "Finnhub"
+
+    /** A text that is not a key is no key: only letters and digits ever reach the header (30, risk 3). */
+    override fun useKey(key: String?) {
+        this.key = key?.takeIf(PriceKey::isKey).orEmpty()
+    }
+
+    override suspend fun checkKey(key: String): KeyCheck {
+        if (!PriceKey.isKey(key)) return KeyCheck.NotAKey
+        return withContext(Dispatchers.IO) { fetchKeyCheck(key) }
+    }
+
+    /**
+     * One GET of /stock/market-status with [tested] in the header, which sends no ticker (30 decision 2a). Only the status
+     * is read: 200 is accepted, 401 and 403 refused (a made-up key gave 401 on 2026-11-14). No redirect is followed (none
+     * came). The key in use is not touched.
+     */
+    private fun fetchKeyCheck(tested: String): KeyCheck {
+        var api: HttpURLConnection? = null
+        return try {
+            api = prepared(MARKET_STATUS)
+            api.setRequestProperty("X-Finnhub-Token", tested)
+            when (val status = api.responseCode) {
+                HttpURLConnection.HTTP_OK -> KeyCheck.Accepted
+                HttpURLConnection.HTTP_UNAUTHORIZED, HttpURLConnection.HTTP_FORBIDDEN -> KeyCheck.Refused(status)
+                TOO_MANY_REQUESTS -> KeyCheck.TooManyCalls
+                else -> KeyCheck.NoAnswer(status)
+            }
+        } catch (e: IOException) {
+            KeyCheck.NoAnswer(status = null)
+        } finally {
+            api?.disconnect()
+        }
+    }
+
     override suspend fun lookUp(ticker: String): Lookup {
         if (key.isEmpty()) return Lookup.NoKey
         return withContext(Dispatchers.IO) { fetch(ticker) }
@@ -246,6 +292,7 @@ class FinnhubSource(
         val US_LIST = URL("https://finnhub.io/api/v1/stock/symbol?exchange=US")
         const val QUOTE = "https://finnhub.io/api/v1/quote?symbol="
         const val PROFILE = "https://finnhub.io/api/v1/stock/profile2?symbol="
+        val MARKET_STATUS = URL("https://finnhub.io/api/v1/stock/market-status?exchange=US")
         const val CONNECT_TIMEOUT_MS = 15_000
         const val READ_TIMEOUT_MS = 30_000
         const val TOO_MANY_REQUESTS = 429

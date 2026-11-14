@@ -106,6 +106,8 @@ private fun holdingState(): AppState {
         instruments = listOf(Instrument(TICKER, AssetType.STOCK, verified = true, price = stalePrice)),
         refreshing = true,
         refreshFailed = true,
+        // 30: a key is saved, so the failed refresh is not for want of one and its line is the refresh-failed line.
+        priceKeySet = true,
     )
 }
 

@@ -16,7 +16,7 @@ sealed interface Lookup {
     /** The source answered with status 200, but the body is not the list the app expects: a content problem. */
     data object Unreadable : Lookup
 
-    /** The source refused the key: status 401 or 403. Waiting does not help; a new key and build do. */
+    /** The source refused the key: status 401 or 403. Waiting does not help; a new key in Settings does (30). */
     data class KeyRefused(
         val status: Int,
     ) : Lookup
@@ -29,7 +29,7 @@ sealed interface Lookup {
         val status: Int?,
     ) : Lookup
 
-    /** This build has no key for the source (spike decision 5: an empty key, as in CI). */
+    /** The source has no key: none is saved (30; until 30, a build without one, as in CI). */
     data object NoKey : Lookup
 }
 
@@ -60,7 +60,7 @@ sealed interface Quote {
         val status: Int?,
     ) : Quote
 
-    /** This build has no key for the source. */
+    /** The source has no key: none is saved (30). */
     data object NoKey : Quote
 }
 
@@ -90,12 +90,55 @@ sealed interface ProfileAnswer {
         val status: Int?,
     ) : ProfileAnswer
 
-    /** This build has no key for the source. */
+    /** The source has no key: none is saved (30). */
     data object NoKey : ProfileAnswer
 }
 
-/** K4: verify (09), quote (16a) and profile (23a). Spec 7: the source sits behind an interface so it can be replaced. */
+/**
+ * What testing a key at the price source gave (30 decisions 2 to 2b). Only [Accepted] lets the key be saved; a key is
+ * never part of an answer.
+ */
+sealed interface KeyCheck {
+    /** The source answered the test call with status 200. */
+    data object Accepted : KeyCheck
+
+    /** The source refused the key: status 401 or 403. */
+    data class Refused(
+        val status: Int,
+    ) : KeyCheck
+
+    /** Too many calls in a short time: status 429. */
+    data object TooManyCalls : KeyCheck
+
+    /** No usable answer: no connection or a timeout ([status] null), or another status than 200, 401, 403 and 429. */
+    data class NoAnswer(
+        val status: Int?,
+    ) : KeyCheck
+
+    /** The text is not a key ([PriceKey.isKey]); nothing was sent. */
+    data object NotAKey : KeyCheck
+}
+
+/**
+ * K4: verify (09), quote (16a) and profile (23a), with the key the source was given (30). Spec 7: the source sits behind
+ * an interface so it can be replaced.
+ */
 interface PriceSource {
+    /** The source's own name, as Settings shows it (30): the screens name no source themselves. */
+    val name: String
+
+    /**
+     * The key every later look-up, quote and profile uses (30); null, or a text that is not a key, is no key, and the
+     * source then makes no call. Kept in memory only.
+     */
+    fun useKey(key: String?)
+
+    /**
+     * Tests [key] at the source (30 decision 2) without keeping it: it changes neither the key in use nor anything
+     * stored. Never throws for a network failure.
+     */
+    suspend fun checkKey(key: String): KeyCheck
+
     /** Looks up [ticker], already trimmed and in capitals (TickerCheck.normalize). Never throws for a network failure. */
     suspend fun lookUp(ticker: String): Lookup
 

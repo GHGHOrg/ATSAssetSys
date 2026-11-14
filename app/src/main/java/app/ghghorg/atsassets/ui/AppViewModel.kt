@@ -33,6 +33,7 @@ import app.ghghorg.atsassets.core.HistoryRow
 import app.ghghorg.atsassets.core.Holding
 import app.ghghorg.atsassets.core.Holdings
 import app.ghghorg.atsassets.core.Instrument
+import app.ghghorg.atsassets.core.KeyCheck
 import app.ghghorg.atsassets.core.ListResult
 import app.ghghorg.atsassets.core.ListUsers
 import app.ghghorg.atsassets.core.Lot
@@ -51,6 +52,7 @@ import app.ghghorg.atsassets.core.PortfolioRenameResult
 import app.ghghorg.atsassets.core.PortfolioResult
 import app.ghghorg.atsassets.core.Portfolios
 import app.ghghorg.atsassets.core.Price
+import app.ghghorg.atsassets.core.PriceKey
 import app.ghghorg.atsassets.core.PriceSource
 import app.ghghorg.atsassets.core.Quantity
 import app.ghghorg.atsassets.core.QuantityError
@@ -469,6 +471,41 @@ data class DeleteDialog(
     val save: SaveRefusal? = null,
 )
 
+/** Why the key entry's Save or Clear did not go through (30 decisions 2 to 2b). Reasons only, no wording (D9). */
+sealed interface KeyRefusal {
+    /** Nothing typed, or a character other than a letter a to z or a digit; nothing was sent. */
+    data object NotAKey : KeyRefusal
+
+    /** The phone is offline, so the key could not be checked; nothing was sent. */
+    data object Offline : KeyRefusal
+
+    /** The source refused the key: status 401 or 403. */
+    data class Refused(
+        val status: Int,
+    ) : KeyRefusal
+
+    /** Too many calls in a short time: the key could not be checked. */
+    data object TooManyCalls : KeyRefusal
+
+    /** No usable answer, with its status when there was one: the key could not be checked. */
+    data class NoAnswer(
+        val status: Int?,
+    ) : KeyRefusal
+
+    /** The store did not take the change. */
+    data object SaveFailed : KeyRefusal
+}
+
+/**
+ * The key entry over Settings (30): the key as typed, why the last Save or Clear did not go through, and whether the
+ * clear confirmation is open. [text] is the only place the state ever holds a key; it goes when the entry closes.
+ */
+data class KeyEntry(
+    val text: String = "",
+    val refusal: KeyRefusal? = null,
+    val confirmingClear: Boolean = false,
+)
+
 /**
  * The New portfolio dialog (wireframe 10d frame A): the typed name, kept as typed except that a line break becomes
  * a space (07 decision 4), and the reason it was refused, if it was. Reasons only, no wording (D9).
@@ -590,6 +627,13 @@ data class AppState(
     // 16a: a price refresh runs (the "updating" indicator), and the last one failed (the quiet refresh-failed line).
     val refreshing: Boolean = false,
     val refreshFailed: Boolean = false,
+    // 30: whether a price source key is saved, and its last 4 characters: never the key itself (decision 4), which only
+    // the store and the source hold. The key entry over Settings, null while it is closed.
+    val priceKeySet: Boolean = false,
+    val priceKeyEnding: String = "",
+    val keyEntry: KeyEntry? = null,
+    // The price source's own name as Settings shows it (K4 gives it; the screens know no source by name).
+    val priceSourceName: String = "",
     // 20: the auto-lock choice as stored, null until it is loaded (the lock then keeps "every time you leave"); why a
     // choice was not saved.
     val autoLock: AutoLock? = null,
@@ -696,6 +740,9 @@ data class AppState(
     /** 29: the blocked message as the screen draws it (CR2), while it is shown. */
     val deleteBlockedModel: DeleteBlockedModel? get() = PortfolioDeletions.blocked(deleteBlocked)
 
+    /** 30 decision 3: the last refresh failed and no key is saved, so the refresh line names the missing key. */
+    val refreshNoKey: Boolean get() = refreshFailed && !priceKeySet
+
     /** Net worth rounded to cents, for Overall (4.10: rounded only when shown). */
     val netWorthCents: Long get() = netWorth.rounded(2).movePointRight(2).longValueExact()
 
@@ -746,7 +793,7 @@ data class AppState(
     val holdingHeader: HoldingHeaderModel?
         get() {
             val holding = shownHolding ?: return null
-            return HoldingDetail.header(holding, shownPortfolio?.name.orEmpty(), shownPrice, refreshing, refreshFailed)
+            return HoldingDetail.header(holding, shownPortfolio?.name.orEmpty(), shownPrice, refreshing, refreshFailed, refreshNoKey)
         }
 
     /** Its Lots tab's rows, with each lot's gain at the latest price (view 6; CR2, 16a step 6). */
@@ -782,7 +829,7 @@ data class AppState(
 
     /** The price refresh as the Portfolios list and a portfolio's screen draw it (16b), Overall and the sell screen (16c). */
     val priceRefresh: PriceRefreshModel
-        get() = PriceRefreshModel(refreshing, refreshFailed)
+        get() = PriceRefreshModel(refreshing, refreshFailed, refreshNoKey)
 
     /** Overall as the screen draws it (view 1; CR2, 16c). */
     val overall: OverallModel
@@ -842,7 +889,13 @@ data class AppState(
 
     /** Settings as the screen draws it (section 6; CR2, 20). */
     val settings: SettingsModel
-        get() = Settings.of(autoLock, autoLockRefusal, screenshotWindowLeftMs, tabOrder, classLists)
+        get() {
+            val priceSource = PriceKeys.row(priceSourceName, priceKeySet, priceKeyEnding)
+            return Settings.of(autoLock, autoLockRefusal, screenshotWindowLeftMs, tabOrder, classLists, priceSource)
+        }
+
+    /** 30: the key entry as the screen draws it (CR2), while it is open. */
+    val keyEntryModel: KeyEntryModel? get() = PriceKeys.entry(keyEntry, priceSourceName, priceKeySet, priceKeyEnding, saving)
 
     /** The list screen as it draws it (wireframe 10f frames F and G; CR2, 25); null off CLASS_LIST. */
     val classListScreen: ClassListModel?
@@ -1111,7 +1164,7 @@ class AppViewModel(
     private val isOnline: () -> Boolean,
 ) : ViewModel() {
     private val marketDate = MarketDate(clock)
-    private val mutableState = KeptStateFlow(AppState())
+    private val mutableState = KeptStateFlow(AppState(priceSourceName = priceSource.name))
     val state: StateFlow<AppState> = mutableState.readOnly
     private var store: RecordStore? = null
     private var started = false
@@ -1137,6 +1190,10 @@ class AppViewModel(
                 // 23a: the sector and geography lists, for the Classification tab; 24: the holdings' overrides.
                 val classLists = opened.loadClassLists()
                 val overrides = opened.loadOverrides()
+                // 30: the price source's key goes to the source before the first refresh; the state keeps its ending only.
+                val priceKey = opened.loadPriceKey()
+                priceSource.useKey(priceKey)
+                mutableState.update { it.withKey(priceKey) }
                 showLoaded(entries, portfolios, transactions, instruments, hidden, autoLock, tabOrder, classLists, overrides)
                 // The first unlock's refresh: onUnlocked came while the records were still loading (16a decision 2).
                 refreshPrices()
@@ -1177,6 +1234,8 @@ class AppViewModel(
         portfolioChoiceOpen = false,
         autoLockChoiceOpen = false,
         screenshotLayerOpen = false,
+        // 30: the key entry ends with Settings, its typed text with it.
+        keyEntry = null,
         // 28: the Cash tab's Ticker menu closes; its filters stay (06 decision 4).
         cashTickerMenuOpen = false,
         autoLockRefusal = null,
@@ -1258,7 +1317,20 @@ class AppViewModel(
                 // The prices could not be saved: they stay as they were, and the refresh counts as failed.
                 mutableState.update { it.copy(refreshing = false, refreshFailed = true) }
             }
+            // 30, Deploy finding 1: a key saved or cleared while this refresh ran gets a refresh of its own.
+            if (refreshAfterKey) {
+                refreshAfterKey = false
+                refreshPrices()
+            }
         }
+    }
+
+    // 30, Deploy finding 1: the key changed while a refresh ran, which asked with the key before; one more follows it.
+    private var refreshAfterKey = false
+
+    /** After a key is saved or cleared: a refresh now, or, while one runs, right after it (30, Deploy finding 1). */
+    private fun refreshForKey() {
+        if (mutableState.value.refreshing) refreshAfterKey = true else refreshPrices()
     }
 
     /**
@@ -1276,6 +1348,8 @@ class AppViewModel(
                 portfolioChoiceOpen = false,
                 autoLockChoiceOpen = false,
                 screenshotLayerOpen = false,
+                // 30: the key entry too, with its typed text.
+                keyEntry = null,
             )
         }
         val current = mutableState.value
@@ -2929,7 +3003,9 @@ class AppViewModel(
     fun closeSettings() {
         val current = mutableState.value
         if (current.screen != Screen.SETTINGS || current.saving) return
-        mutableState.update { it.copy(screen = Screen.TABS, autoLockChoiceOpen = false, screenshotLayerOpen = false, autoLockRefusal = null) }
+        mutableState.update {
+            it.copy(screen = Screen.TABS, autoLockChoiceOpen = false, screenshotLayerOpen = false, autoLockRefusal = null, keyEntry = null)
+        }
     }
 
     /** The Auto-lock row (marker 3): opens the choice layer (frame C), drawn in the window; on Settings only. */
@@ -3011,6 +3087,119 @@ class AppViewModel(
             }
         }
     }
+
+    /**
+     * Settings' Price source row (wireframe 10f marker 9; 30): opens the key entry, empty, drawn in the window; on
+     * Settings only and over no other layer.
+     */
+    fun openKeyEntry() {
+        val current = mutableState.value
+        if (current.screen != Screen.SETTINGS || current.saving || current.autoLockChoiceOpen || current.screenshotLayerOpen) return
+        mutableState.update { it.copy(keyEntry = KeyEntry()) }
+    }
+
+    /** The key as typed; typing clears the last refusal. Ignored while a check or a save runs. */
+    fun onKeyTextChange(text: String) {
+        if (mutableState.value.saving) return
+        mutableState.update { state -> state.copy(keyEntry = state.keyEntry?.copy(text = text, refusal = null)) }
+    }
+
+    /** Cancel or Back: closes the entry and drops the typed text; nothing is sent or stored. Ignored while a save runs. */
+    fun cancelKeyEntry() {
+        if (mutableState.value.saving) return
+        mutableState.update { it.copy(keyEntry = null) }
+    }
+
+    /**
+     * Save (30 decisions 2 to 2b): the typed text without the spaces and line breaks around it must be a key, and the
+     * phone online; then the source tests it, and only a key it accepts is stored, given to the source for every later
+     * call, and followed by a refresh. Anything else keeps the key in use and the typed text, with the reason. The state
+     * keeps the new key's last characters only (decision 4).
+     */
+    fun saveKey() {
+        val current = mutableState.value
+        val entry = current.keyEntry ?: return
+        val target = store ?: return
+        if (current.saving || entry.confirmingClear) return
+        val key = entry.text.trim()
+        val before =
+            when {
+                !PriceKey.isKey(key) -> KeyRefusal.NotAKey
+                !isOnline() -> KeyRefusal.Offline
+                else -> null
+            }
+        if (before != null) {
+            mutableState.update { it.copy(keyEntry = entry.copy(refusal = before)) }
+            return
+        }
+        mutableState.update { it.copy(saving = true, keyEntry = entry.copy(refusal = null)) }
+        viewModelScope.launch {
+            val refusal =
+                when (val check = priceSource.checkKey(key)) {
+                    KeyCheck.Accepted -> null
+                    is KeyCheck.Refused -> KeyRefusal.Refused(check.status)
+                    KeyCheck.TooManyCalls -> KeyRefusal.TooManyCalls
+                    is KeyCheck.NoAnswer -> KeyRefusal.NoAnswer(check.status)
+                    KeyCheck.NotAKey -> KeyRefusal.NotAKey
+                }
+            if (refusal != null) {
+                // An entry dropped meanwhile (an unlock) stays dropped, its typed text with it.
+                mutableState.update { it.copy(saving = false, keyEntry = it.keyEntry?.let { entry.copy(refusal = refusal) }) }
+                return@launch
+            }
+            storeKey(target, key, entry)
+        }
+    }
+
+    /** Clear key in the entry: asks first. Only with a key saved, and not while a save runs. */
+    fun askClearKey() {
+        val current = mutableState.value
+        if (current.saving || !current.priceKeySet) return
+        mutableState.update { state -> state.copy(keyEntry = state.keyEntry?.copy(confirmingClear = true, refusal = null)) }
+    }
+
+    /** Cancel on the clear confirmation: back to the entry; the key stays. */
+    fun cancelClearKey() {
+        if (mutableState.value.saving) return
+        mutableState.update { state -> state.copy(keyEntry = state.keyEntry?.copy(confirmingClear = false)) }
+    }
+
+    /**
+     * Clear key, confirmed: the key is removed from the store and the source, so no call is made until a key is saved
+     * again; no key is tested. A refresh follows, which fails for want of a key and so shows the no-key line.
+     */
+    fun confirmClearKey() {
+        val current = mutableState.value
+        val entry = current.keyEntry ?: return
+        val target = store ?: return
+        if (current.saving || !entry.confirmingClear) return
+        mutableState.update { it.copy(saving = true) }
+        viewModelScope.launch { storeKey(target, null, entry.copy(confirmingClear = false)) }
+    }
+
+    // Stores [key] (null clears it), then gives it to the source and the state its ending, closes the entry and
+    // refreshes. The source keeps the key before it when the store fails; [entry] then stays, with the reason.
+    private suspend fun storeKey(
+        target: RecordStore,
+        key: String?,
+        entry: KeyEntry,
+    ) {
+        try {
+            target.savePriceKey(key)
+            priceSource.useKey(key)
+            mutableState.update { it.copy(saving = false, keyEntry = null).withKey(key) }
+            refreshForKey()
+        } catch (e: CancellationException) {
+            throw e
+        } catch (e: UnreadableDataException) {
+            mutableState.update { it.copy(screen = Screen.UNREADABLE, saving = false, keyEntry = null) }
+        } catch (e: Exception) {
+            mutableState.update { it.copy(saving = false, keyEntry = it.keyEntry?.let { entry.copy(refusal = KeyRefusal.SaveFailed) }) }
+        }
+    }
+
+    // What the state keeps of [key] (30 decision 4): that one is saved, and its last characters.
+    private fun AppState.withKey(key: String?): AppState = copy(priceKeySet = key != null, priceKeyEnding = key?.let(PriceKey::ending).orEmpty())
 
     /**
      * Edit on the Classification tab's [list] row (decision 2): opens the picker (frame H) on the value shown, when it is

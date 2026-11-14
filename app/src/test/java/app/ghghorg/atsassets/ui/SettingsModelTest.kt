@@ -93,4 +93,12 @@ class SettingsModelTest {
             Settings.of(AutoLock.EVERY_LEAVE, refusal = null).lists,
         )
     }
+
+    // 30: the Prices section's row (marker 9), as given; none when the model is built without one.
+    @Test
+    fun thePricesSection_showsThePriceSourceRowItIsGiven() {
+        val row = PriceKeys.row("Finnhub", keySet = true, ending = "a1b2")
+        assertEquals(row, Settings.of(AutoLock.EVERY_LEAVE, refusal = null, priceSource = row).priceSource)
+        assertNull(Settings.of(AutoLock.EVERY_LEAVE, refusal = null).priceSource)
+    }
 }
