@@ -94,7 +94,7 @@ internal fun DeleteDialogLayer(
             spoken(model.spokenBalanceNow),
             spoken(model.spokenBalanceAfter),
         )
-    Scrim {
+    DialogScrim {
         Surface(
             modifier = Modifier.padding(24.dp).widthIn(max = 560.dp).semantics { paneTitle = title },
             shape = MaterialTheme.shapes.extraLarge,
@@ -184,7 +184,7 @@ internal fun DeleteBlockedLayer(
         } else {
             stringResource(R.string.delete_blocked, model.date, model.shortfall, model.exampleDate.orEmpty())
         }
-    Scrim {
+    DialogScrim {
         Surface(
             modifier = Modifier.padding(24.dp).widthIn(max = 560.dp).semantics { paneTitle = message },
             shape = MaterialTheme.shapes.extraLarge,
@@ -210,8 +210,9 @@ internal fun DeleteBlockedLayer(
 // The dimmed layer under a dialog in the window: it takes every tap, so a tap outside does nothing, and it gives way
 // to the keyboard (the app draws edge to edge; 08 phone check 9a). It ends where MainActivity's Scaffold padding ends,
 // above the navigation strip, so that strip is consumed first and the room ends at the keyboard's top (29 step 10).
+// Shared with the key entry (30), which AppContent draws over the bar in the same way.
 @Composable
-private fun Scrim(content: @Composable () -> Unit) {
+internal fun DialogScrim(content: @Composable () -> Unit) {
     Box(
         modifier =
         Modifier

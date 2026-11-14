@@ -76,7 +76,7 @@ fun OverallScreen(
                 } else {
                     PortfolioRows(overall.portfolios, onOpenPortfolio)
                 }
-                PriceRefreshLines(refreshing = false, failed = overall.refresh.failed)
+                PriceRefreshLines(refreshing = false, failed = overall.refresh.failed, noKey = overall.refresh.noKey)
             } else {
                 GuidedSteps(onSetOpeningBalance)
             }
@@ -155,7 +155,7 @@ internal fun NetWorthCard(
                     )
                 }
             }
-            PriceRefreshLines(refreshing = refresh.refreshing, failed = failedLineHere && refresh.failed)
+            PriceRefreshLines(refreshing = refresh.refreshing, failed = failedLineHere && refresh.failed, noKey = refresh.noKey)
         }
     }
 }

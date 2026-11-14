@@ -59,6 +59,8 @@ class PriceRefreshTest {
             return profiles[ticker] ?: ProfileAnswer.Given(SourceProfile(null, null))
         }
 
+        override val name: String = "not used"
+
         override fun useKey(key: String?) = error("not used")
 
         override suspend fun checkKey(key: String): KeyCheck = error("not used")

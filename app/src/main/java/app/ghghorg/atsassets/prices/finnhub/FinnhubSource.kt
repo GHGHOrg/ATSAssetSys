@@ -131,6 +131,8 @@ class FinnhubSource(
         useKey(key)
     }
 
+    override val name: String = "Finnhub"
+
     /** A text that is not a key is no key: only letters and digits ever reach the header (30, risk 3). */
     override fun useKey(key: String?) {
         this.key = key?.takeIf(PriceKey::isKey).orEmpty()

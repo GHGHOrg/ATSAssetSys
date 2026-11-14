@@ -48,6 +48,8 @@ class SettingsActions(
     val onTurnOffScreenshots: () -> Unit = {},
     val onOpenTabOrder: () -> Unit = {},
     val onOpenList: (ClassList) -> Unit = {},
+    // 30: the Price source row opens the key entry, which AppContent draws over the bar.
+    val onOpenPriceSource: () -> Unit = {},
 )
 
 /**
@@ -99,6 +101,8 @@ fun SettingsScreen(
                     enabled = !state.saving,
                 )
             }
+            // 30: the Prices section (marker 4) with the one price source and its key's state (marker 9).
+            model.priceSource?.let { PricesSection(it, actions.onOpenPriceSource, enabled = !state.saving) }
             Text(
                 text = stringResource(R.string.settings_navigation),
                 style = MaterialTheme.typography.titleMedium,
@@ -161,6 +165,41 @@ fun SettingsScreen(
         if (state.screenshotLayerOpen) {
             ScreenshotLayer(model.screenshotLeft, actions)
         }
+    }
+}
+
+/**
+ * The Prices section (wireframe 10f markers 4 and 9; 30): the source by its own name and "key ending in a1b2", "key
+ * saved" when nothing of the key may be shown, or "no key"; TalkBack reads the ending's characters one by one. The row
+ * opens the key entry; with one source there is no list to pick from (the 30 file, section 14).
+ */
+@Composable
+private fun PricesSection(
+    row: PriceSourceRow,
+    onOpen: () -> Unit,
+    enabled: Boolean,
+) {
+    Text(
+        text = stringResource(R.string.settings_prices),
+        style = MaterialTheme.typography.titleMedium,
+        modifier = Modifier.semantics { heading() },
+    )
+    OutlinedCard(modifier = Modifier.fillMaxWidth()) {
+        val value =
+            when {
+                !row.keySet -> stringResource(R.string.price_source_no_key, row.source)
+                row.keyEnding.isEmpty() -> stringResource(R.string.price_source_key_set, row.source)
+                else -> stringResource(R.string.price_source_key_ending, row.source, row.keyEnding)
+            }
+        val spokenValue =
+            if (row.keySet && row.keyEnding.isNotEmpty()) stringResource(R.string.price_source_key_ending, row.source, row.spokenEnding) else value
+        SettingRow(
+            name = stringResource(R.string.settings_price_source),
+            value = value,
+            spoken = stringResource(R.string.settings_price_source_spoken, spokenValue),
+            onOpen = onOpen,
+            enabled = enabled,
+        )
     }
 }
 

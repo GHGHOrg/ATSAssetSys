@@ -632,6 +632,8 @@ data class AppState(
     val priceKeySet: Boolean = false,
     val priceKeyEnding: String = "",
     val keyEntry: KeyEntry? = null,
+    // The price source's own name as Settings shows it (K4 gives it; the screens know no source by name).
+    val priceSourceName: String = "",
     // 20: the auto-lock choice as stored, null until it is loaded (the lock then keeps "every time you leave"); why a
     // choice was not saved.
     val autoLock: AutoLock? = null,
@@ -791,7 +793,7 @@ data class AppState(
     val holdingHeader: HoldingHeaderModel?
         get() {
             val holding = shownHolding ?: return null
-            return HoldingDetail.header(holding, shownPortfolio?.name.orEmpty(), shownPrice, refreshing, refreshFailed)
+            return HoldingDetail.header(holding, shownPortfolio?.name.orEmpty(), shownPrice, refreshing, refreshFailed, refreshNoKey)
         }
 
     /** Its Lots tab's rows, with each lot's gain at the latest price (view 6; CR2, 16a step 6). */
@@ -827,7 +829,7 @@ data class AppState(
 
     /** The price refresh as the Portfolios list and a portfolio's screen draw it (16b), Overall and the sell screen (16c). */
     val priceRefresh: PriceRefreshModel
-        get() = PriceRefreshModel(refreshing, refreshFailed)
+        get() = PriceRefreshModel(refreshing, refreshFailed, refreshNoKey)
 
     /** Overall as the screen draws it (view 1; CR2, 16c). */
     val overall: OverallModel
@@ -887,7 +889,13 @@ data class AppState(
 
     /** Settings as the screen draws it (section 6; CR2, 20). */
     val settings: SettingsModel
-        get() = Settings.of(autoLock, autoLockRefusal, screenshotWindowLeftMs, tabOrder, classLists)
+        get() {
+            val priceSource = PriceKeys.row(priceSourceName, priceKeySet, priceKeyEnding)
+            return Settings.of(autoLock, autoLockRefusal, screenshotWindowLeftMs, tabOrder, classLists, priceSource)
+        }
+
+    /** 30: the key entry as the screen draws it (CR2), while it is open. */
+    val keyEntryModel: KeyEntryModel? get() = PriceKeys.entry(keyEntry, priceSourceName, priceKeySet, priceKeyEnding, saving)
 
     /** The list screen as it draws it (wireframe 10f frames F and G; CR2, 25); null off CLASS_LIST. */
     val classListScreen: ClassListModel?
@@ -1156,7 +1164,7 @@ class AppViewModel(
     private val isOnline: () -> Boolean,
 ) : ViewModel() {
     private val marketDate = MarketDate(clock)
-    private val mutableState = KeptStateFlow(AppState())
+    private val mutableState = KeptStateFlow(AppState(priceSourceName = priceSource.name))
     val state: StateFlow<AppState> = mutableState.readOnly
     private var store: RecordStore? = null
     private var started = false

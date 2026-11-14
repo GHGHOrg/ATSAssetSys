@@ -41,6 +41,8 @@ class TickerVerifierTest {
 
         override suspend fun profile(ticker: String): ProfileAnswer = error("not used")
 
+        override val name: String = "not used"
+
         override fun useKey(key: String?) = error("not used")
 
         override suspend fun checkKey(key: String): KeyCheck = error("not used")

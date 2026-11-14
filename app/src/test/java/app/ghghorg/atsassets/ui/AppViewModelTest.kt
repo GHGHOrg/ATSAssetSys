@@ -1602,6 +1602,8 @@ internal class FakeSource(
     var answer: Lookup = Lookup.NotFound,
     val gate: CompletableDeferred<Unit>? = null,
 ) : PriceSource {
+    override val name: String = "Test source"
+
     val asked = mutableListOf<String>()
 
     override suspend fun lookUp(ticker: String): Lookup {

@@ -124,6 +124,9 @@ sealed interface KeyCheck {
  * an interface so it can be replaced.
  */
 interface PriceSource {
+    /** The source's own name, as Settings shows it (30): the screens name no source themselves. */
+    val name: String
+
     /**
      * The key every later look-up, quote and profile uses (30); null, or a text that is not a key, is no key, and the
      * source then makes no call. Kept in memory only.

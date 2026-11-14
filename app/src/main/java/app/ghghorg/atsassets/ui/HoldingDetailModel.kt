@@ -59,6 +59,8 @@ data class HoldingHeaderModel(
     // A refresh runs (the "updating" indicator), and the last one failed (the quiet line) (section 6, AC-42).
     val refreshing: Boolean,
     val refreshFailed: Boolean,
+    // 30 decision 3: it failed because no price source key is saved, so the line names the missing key.
+    val refreshNoKey: Boolean = false,
 )
 
 /** One lot on the Lots tab (wireframe 06 marker 5); [stale] when its gain comes from a stale price. */
@@ -135,6 +137,7 @@ object HoldingDetail {
         price: Price?,
         refreshing: Boolean,
         refreshFailed: Boolean,
+        refreshNoKey: Boolean = false,
     ): HoldingHeaderModel {
         val valued = Valuation.valued(holding, price)
         val shares = Quantity.format(holding.shares)
@@ -152,6 +155,7 @@ object HoldingDetail {
             price = price?.let { priceLine(it) },
             refreshing = refreshing,
             refreshFailed = refreshFailed,
+            refreshNoKey = refreshNoKey,
         )
     }
 

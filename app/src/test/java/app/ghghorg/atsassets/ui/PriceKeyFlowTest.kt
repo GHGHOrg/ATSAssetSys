@@ -400,6 +400,43 @@ class PriceKeyFlowTest {
         assertFalse(vm.state.value.refreshNoKey)
     }
 
+    // Step 5: the wiring of the models (CR2).
+    @Test
+    fun theState_buildsSettingsRow_theEntry_andTheRefreshLine_fromItsOwnFields() {
+        val source = FakeSource()
+        val vm = typed("abc", source = source)
+        val state = vm.state.value
+        assertEquals(PriceKeys.row("Test source", keySet = true, ending = "a1b2"), state.settings.priceSource)
+        assertEquals(PriceKeys.entry(KeyEntry(text = "abc"), "Test source", keySet = true, ending = "a1b2", saving = false), state.keyEntryModel)
+        assertEquals(PriceRefreshModel(refreshing = false, failed = false, noKey = false), state.priceRefresh)
+        vm.cancelKeyEntry()
+        assertNull(vm.state.value.keyEntryModel)
+    }
+
+    @Test
+    fun withoutAKey_theRowSaysSo_andAFailedRefreshsLineNamesTheKey_onHoldingDetailToo() {
+        val source = FakeSource().also { it.quotes = mapOf("AAPL" to Quote.NoKey) }
+        val vm = started(store(key = null), source = source)
+        assertEquals(PriceKeys.row("Test source", keySet = false, ending = ""), vm.state.value.settings.priceSource)
+        assertEquals(PriceRefreshModel(refreshing = false, failed = true, noKey = true), vm.state.value.priceRefresh)
+        vm.selectTab(Tab.PORTFOLIOS)
+        vm.openPortfolio("p1")
+        vm.openHolding("AAPL")
+        val header = vm.state.value.holdingHeader
+        assertNotNull(header)
+        assertTrue(header!!.refreshFailed)
+        assertTrue(header.refreshNoKey)
+    }
+
+    @Test
+    fun whileTheKeyIsChecked_theEntryIsBusy() {
+        val source = FakeSource().also { it.keyGate = CompletableDeferred() }
+        val vm = typed(newKey, source = source)
+        vm.saveKey()
+        assertTrue(vm.state.value.keyEntryModel!!.busy)
+        assertFalse(vm.state.value.keyEntryModel!!.saveEnabled)
+    }
+
     @Test
     fun anUnlockWhileTheCheckRuns_dropsTheEntry_andARefusalDoesNotBringItBack() {
         val gate = CompletableDeferred<Unit>()
