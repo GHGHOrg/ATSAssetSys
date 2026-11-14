@@ -17,6 +17,7 @@ import app.ghghorg.atsassets.core.Portfolio
 import app.ghghorg.atsassets.core.PortfolioRemoval
 import app.ghghorg.atsassets.core.Portfolios
 import app.ghghorg.atsassets.core.Price
+import app.ghghorg.atsassets.core.PriceKey
 import app.ghghorg.atsassets.core.RecordStore
 import app.ghghorg.atsassets.core.RememberedText
 import app.ghghorg.atsassets.core.SellAllocation
@@ -397,6 +398,33 @@ class RoomRecordStore(
             }
         }
         dao.saveTabOrder(order.text)
+    }
+
+    override suspend fun loadPriceKey(): String? = withContext(Dispatchers.IO) {
+        try {
+            database.settingsDao().load().toPriceKey()
+        } catch (e: CancellationException) {
+            throw e
+        } catch (e: UnreadableDataException) {
+            throw e
+        } catch (e: Exception) {
+            throw UnreadableDataException("The stored data could not be read.", e)
+        }
+    }
+
+    override suspend fun savePriceKey(key: String?) {
+        val dao = withContext(Dispatchers.IO) {
+            try {
+                database.settingsDao()
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: UnreadableDataException) {
+                throw e
+            } catch (e: Exception) {
+                throw UnreadableDataException("The stored data could not be opened.", e)
+            }
+        }
+        dao.savePriceKey(key)
     }
 
     override suspend fun loadClassLists(): ClassLists = withContext(Dispatchers.IO) {
@@ -839,6 +867,22 @@ internal fun SettingsRow?.withAutoLock(autoLock: String): SettingsRow = this?.co
 internal fun SettingsRow?.withTabOrder(tabOrder: String): SettingsRow {
     if (this == null) return SettingsRow(autoLock = AutoLock.EVERY_LEAVE.name, tabOrder = tabOrder)
     return copy(tabOrder = tabOrder)
+}
+
+/**
+ * No settings row, or none with a key, is no key (30). Throws [UnreadableDataException] for a stored key that is not a
+ * key; the message never holds the key (spec section 9).
+ */
+internal fun SettingsRow?.toPriceKey(): String? {
+    val key = this?.priceKey ?: return null
+    if (!PriceKey.isKey(key)) throw UnreadableDataException("A stored setting could not be read.")
+    return key
+}
+
+/** The settings row with [priceKey] in place of its key (null clears it), or a new row with it and the default auto-lock choice. */
+internal fun SettingsRow?.withPriceKey(priceKey: String?): SettingsRow {
+    if (this == null) return SettingsRow(autoLock = AutoLock.EVERY_LEAVE.name, priceKey = priceKey)
+    return copy(priceKey = priceKey)
 }
 
 internal fun HiddenHolding.toRow() = HiddenHoldingRow(portfolioId = portfolioId, ticker = ticker)

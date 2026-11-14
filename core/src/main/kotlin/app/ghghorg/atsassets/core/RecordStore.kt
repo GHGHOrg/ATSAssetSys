@@ -134,6 +134,15 @@ interface RecordStore {
     suspend fun saveTabOrder(order: TabOrder)
 
     /**
+     * The price source's API key (30; spec section 9), null when none is saved. Throws [UnreadableDataException] if
+     * stored data exists but cannot be read, or if the stored key is not a key ([PriceKey.isKey]).
+     */
+    suspend fun loadPriceKey(): String?
+
+    /** Saves the key in place of the one before, or clears it when [key] is null; the other settings are kept (30). */
+    suspend fun savePriceKey(key: String?)
+
+    /**
      * The sector and geography lists (spec 3, 4.9; 23a), each in the order its values were added, with their remembered
      * texts (25); empty lists when none was saved. Throws [UnreadableDataException] for an unknown list, two values in a
      * list that match (D7), or a remembered text naming no value or matching a value or another text of its list.

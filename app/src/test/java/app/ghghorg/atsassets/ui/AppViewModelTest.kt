@@ -1942,6 +1942,24 @@ internal class FakeStore(
         storedTabOrder = order
     }
 
+    // 30: the price source's API key, null until one is saved; each save as given (null is a clear). [priceKeySaveError]
+    // fails this save alone, so the start's price refresh still saves.
+    var storedPriceKey: String? = null
+    val savedPriceKeys = mutableListOf<String?>()
+    var priceKeySaveError: Throwable? = null
+
+    override suspend fun loadPriceKey(): String? {
+        loadError?.let { throw it }
+        return storedPriceKey
+    }
+
+    override suspend fun savePriceKey(key: String?) {
+        gate?.await()
+        (priceKeySaveError ?: saveError)?.let { throw it }
+        savedPriceKeys.add(key)
+        storedPriceKey = key
+    }
+
     // 23a: the sector and geography lists, empty until a profile adds to them.
     var storedClassLists = ClassLists()
 

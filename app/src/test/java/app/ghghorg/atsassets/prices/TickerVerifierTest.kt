@@ -121,6 +121,10 @@ class TickerVerifierTest {
 
         override suspend fun saveTabOrder(order: TabOrder) = error("not used")
 
+        override suspend fun loadPriceKey(): String? = error("not used")
+
+        override suspend fun savePriceKey(key: String?) = error("not used")
+
         override suspend fun loadClassLists(): ClassLists = error("not used")
 
         override suspend fun addListValue(
