@@ -43,8 +43,9 @@ fun AppContent(
         else -> Box(
             modifier = modifier.fillMaxSize(),
         ) {
-            val dialogOpen = state.portfolioDialog != null || state.renameDialog != null
-            // While a dialog is open, TalkBack reads only the dialog, not the screen under it.
+            val dialogOpen =
+                state.portfolioDialog != null || state.renameDialog != null || state.deleteDialog != null || state.deleteBlocked != null
+            // While a dialog is open, TalkBack reads only the dialog, not the screen or the bar under it.
             val under = if (dialogOpen) Modifier.clearAndSetSemantics { } else Modifier
             Column(modifier = Modifier.fillMaxSize().then(under)) {
                 Box(modifier = Modifier.weight(1f)) {
@@ -53,6 +54,13 @@ fun AppContent(
                 BottomBar(state.tabOrder.tabs, state.tab, viewModel::selectTab)
             }
             PortfolioDialogs(state, viewModel)
+            // 29 step 10: the Delete dialog and the blocked message over the bar too, drawn last so their Back comes first.
+            PortfolioDeleteLayers(
+                dialog = state.deleteDialogModel,
+                blocked = state.deleteBlockedModel,
+                actions = DeleteDialogActions(viewModel::onDeleteNameChange, viewModel::confirmDelete, viewModel::cancelDelete),
+                onCloseBlocked = viewModel::closeDeleteBlocked,
+            )
         }
     }
 }
@@ -152,6 +160,7 @@ private fun BarContent(
                 onRefresh = viewModel::onPullToRefresh,
                 onOpenAllocation = viewModel::openAllocation,
                 onOpenHistory = viewModel::openTransactionHistory,
+                onDelete = viewModel::openDelete,
             ),
         )
 

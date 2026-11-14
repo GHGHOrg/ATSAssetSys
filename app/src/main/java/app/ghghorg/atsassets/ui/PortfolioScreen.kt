@@ -59,7 +59,8 @@ fun PortfolioScreen(
     val portfolio = state.shownPortfolio ?: return
     BackHandler(onBack = if (state.portfolioMenuOpen) actions.onCloseMenu else actions.onBack)
     Box(modifier = modifier.fillMaxSize()) {
-        // While the menu is open, TalkBack reads only the menu.
+        // While the menu is open, TalkBack reads only the menu. The Delete dialog and the blocked message are drawn by
+        // AppContent over the bar, which hides this screen from TalkBack while they are open (29 step 10).
         val under = if (state.portfolioMenuOpen) Modifier.clearAndSetSemantics { } else Modifier
         PricePullToRefresh(state.refreshing, actions.onRefresh, Modifier.fillMaxSize()) {
             PortfolioContent(state, portfolio.id, portfolio.name, actions, Modifier.fillMaxSize().then(under))
@@ -170,6 +171,8 @@ class PortfolioScreenActions(
     val onOpenAllocation: () -> Unit = {},
     // 27: "Transaction history >" (view 3, view 8).
     val onOpenHistory: () -> Unit = {},
+    // 29: Delete in the menu (wireframe 10d); the dialog and the blocked message are AppContent's (step 10).
+    val onDelete: () -> Unit = {},
 )
 
 @Composable
@@ -387,7 +390,8 @@ internal fun sharesText(shares: BigDecimal): String = sharesText(Fraction.of(sha
 
 /**
  * The ⋮ menu (08 decision 1), drawn inside the activity window: a clear layer that closes the menu on a tap outside,
- * and a card under ⋮ with Rename. No DropdownMenu or Popup: a separate window would take the focus (CLAUDE.md).
+ * and a card under ⋮ with Rename and Delete (view 3; 29). No DropdownMenu or Popup: a separate window would take the
+ * focus (CLAUDE.md).
  */
 @Composable
 private fun PortfolioMenu(actions: PortfolioScreenActions) {
@@ -403,8 +407,13 @@ private fun PortfolioMenu(actions: PortfolioScreenActions) {
             tonalElevation = 3.dp,
             shadowElevation = 3.dp,
         ) {
-            TextButton(onClick = actions.onRename, modifier = Modifier.padding(horizontal = 8.dp)) {
-                Text(text = stringResource(R.string.rename_button), style = MaterialTheme.typography.bodyLarge)
+            Column {
+                TextButton(onClick = actions.onRename, modifier = Modifier.padding(horizontal = 8.dp)) {
+                    Text(text = stringResource(R.string.rename_button), style = MaterialTheme.typography.bodyLarge)
+                }
+                TextButton(onClick = actions.onDelete, modifier = Modifier.padding(horizontal = 8.dp)) {
+                    Text(text = stringResource(R.string.portfolio_delete_button), style = MaterialTheme.typography.bodyLarge)
+                }
             }
         }
     }

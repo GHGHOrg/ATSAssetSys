@@ -14,6 +14,7 @@ import app.ghghorg.atsassets.core.Hiding
 import app.ghghorg.atsassets.core.Instrument
 import app.ghghorg.atsassets.core.ListResult
 import app.ghghorg.atsassets.core.Portfolio
+import app.ghghorg.atsassets.core.PortfolioRemoval
 import app.ghghorg.atsassets.core.Portfolios
 import app.ghghorg.atsassets.core.Price
 import app.ghghorg.atsassets.core.RecordStore
@@ -115,6 +116,27 @@ class RoomRecordStore(
         // The message names only the count: never a portfolio name (spec section 9).
         val changed = dao.rename(id, name)
         check(changed == 1) { "A rename changed $changed rows instead of 1." }
+    }
+
+    override suspend fun deletePortfolio(removal: PortfolioRemoval) {
+        val dao = withContext(Dispatchers.IO) {
+            try {
+                database.transactionDao()
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: UnreadableDataException) {
+                throw e
+            } catch (e: Exception) {
+                throw UnreadableDataException("The stored data could not be opened.", e)
+            }
+        }
+        dao.deletePortfolio(
+            portfolioId = removal.portfolioId,
+            transactionIds = removal.transactionIds.sorted(),
+            cashEntryIds = removal.cashEntryIds.sorted(),
+            hiddenCount = removal.hidden.size,
+            overrideCount = removal.overrides.size,
+        )
     }
 
     override suspend fun loadTransactions(): List<Transaction> = withContext(Dispatchers.IO) {

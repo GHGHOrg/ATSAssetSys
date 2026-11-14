@@ -209,7 +209,7 @@ internal object KeptFields {
         portfolios: List<Portfolio>,
         fromText: String,
         toText: String,
-    ): RealizedReport = RealizedGains.report(transactions, portfolios, DateDigits.toDate(fromText), DateDigits.toDate(toText))
+    ): RealizedReport = RealizedGains.report(transactions, portfolios, DateDigits.toDate(fromText), DateDigits.toBound(fromText, toText))
 
     // The transactions a sell is entered against: with the replaced sell's reversal drafted at its date (14a).
     private fun sellTransactions(

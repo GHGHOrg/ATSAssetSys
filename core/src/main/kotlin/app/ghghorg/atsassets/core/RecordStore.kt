@@ -20,6 +20,13 @@ interface RecordStore {
         name: String,
     )
 
+    /**
+     * Deletes a portfolio as one all-or-nothing action (4.7; 29): what K1's [removal] names, the portfolio's sells'
+     * allocations with them. Throws if any count differs from the removal's, or if a transaction of the portfolio is
+     * left; nothing is removed then.
+     */
+    suspend fun deletePortfolio(removal: PortfolioRemoval)
+
     /** Each sell with its allocations. Throws [UnreadableDataException] if stored data exists but cannot be read. */
     suspend fun loadTransactions(): List<Transaction>
 

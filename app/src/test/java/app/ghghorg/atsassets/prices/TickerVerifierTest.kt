@@ -11,6 +11,7 @@ import app.ghghorg.atsassets.core.Instrument
 import app.ghghorg.atsassets.core.Listing
 import app.ghghorg.atsassets.core.Lookup
 import app.ghghorg.atsassets.core.Portfolio
+import app.ghghorg.atsassets.core.PortfolioRemoval
 import app.ghghorg.atsassets.core.Price
 import app.ghghorg.atsassets.core.PriceSource
 import app.ghghorg.atsassets.core.ProfileAnswer
@@ -60,6 +61,8 @@ class TickerVerifierTest {
             id: String,
             name: String,
         ) = error("not used")
+
+        override suspend fun deletePortfolio(removal: PortfolioRemoval) = error("not used")
 
         override suspend fun loadTransactions(): List<Transaction> = error("not used")
 

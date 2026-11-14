@@ -107,7 +107,7 @@ object RealizedGainsScreens {
         expanded: Set<Pair<String, String>>,
     ): RealizedGainsModel {
         val from = DateDigits.toDate(fromText)?.toString()
-        val to = DateDigits.toDate(toText)?.toString()
+        val to = DateDigits.toBound(fromText, toText)?.toString()
         val count = report.count
         val countLine =
             when {
@@ -149,7 +149,7 @@ object RealizedGainsScreens {
             fromText = fromText,
             toText = toText,
             fromRefusal = DateDigits.refusal(fromText),
-            toRefusal = DateDigits.refusal(toText),
+            toRefusal = DateDigits.toRefusal(fromText, toText),
             total = GainFigure.ofCents(cents(report.total)),
             countLine = countLine,
             holdings = holdings,

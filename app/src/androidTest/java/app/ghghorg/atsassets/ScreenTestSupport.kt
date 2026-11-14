@@ -134,9 +134,9 @@ class DeviceSettingsRule(
 /**
  * Turns the emulator once the test's own activity is on top: before it, the launcher was on top and held the screen
  * upright (plan/spikes/screen-tests.md 11.4, series 3). Waits until the display and the activity both have the
- * orientation.
+ * orientation. Any activity's rule, MainActivity's included (29 step 10).
  */
-internal fun AndroidComposeTestRule<ActivityScenarioRule<ComponentActivity>, ComponentActivity>.turn(landscape: Boolean) {
+internal fun <A : ComponentActivity> AndroidComposeTestRule<ActivityScenarioRule<A>, A>.turn(landscape: Boolean) {
     InstrumentationRegistry.getInstrumentation().uiAutomation.setRotation(
         if (landscape) UiAutomation.ROTATION_FREEZE_90 else UiAutomation.ROTATION_FREEZE_0,
     )
@@ -198,6 +198,15 @@ internal fun passCheck() {
         saveScreen("check-${SystemClock.uptimeMillis()}-$attempt")
     }
     fail("The check did not take the test PIN")
+}
+
+/**
+ * After [turn] on MainActivity: the turn relaunches it, and under the emulator's auto-lock choice (none stored, so
+ * every leave) its onStop locks the app, so the lock prompt comes up (29 step 10, red run 43477719319). Passes it if
+ * its PIN pad shows within 5 s; the screen under it keeps its state (the ViewModel).
+ */
+internal fun passLockAfterTurn() {
+    if (poll(5_000) { pinPadUp() }) passCheck()
 }
 
 /**

@@ -295,6 +295,72 @@ interface TransactionDao {
         insertTransaction(replacement)
     }
 
+    // 29: a portfolio's deletion (4.7), by the ids K1 decided (PortfolioRemoval). Each returns the rows removed.
+    @Query("DELETE FROM sell_allocations WHERE sellId IN (:sellIds)")
+    suspend fun deleteAllocationsOf(sellIds: List<String>): Int
+
+    @Query("DELETE FROM cash_entries WHERE id IN (:ids)")
+    suspend fun deleteCashEntries(ids: List<String>): Int
+
+    @Query("DELETE FROM transactions WHERE id IN (:ids)")
+    suspend fun deleteTransactions(ids: List<String>): Int
+
+    @Query("DELETE FROM hidden_holdings WHERE portfolioId = :portfolioId")
+    suspend fun deleteHiddenOf(portfolioId: String): Int
+
+    @Query("DELETE FROM class_overrides WHERE portfolioId = :portfolioId")
+    suspend fun deleteOverridesOfPortfolio(portfolioId: String): Int
+
+    @Query("DELETE FROM portfolios WHERE id = :portfolioId")
+    suspend fun deletePortfolioRow(portfolioId: String): Int
+
+    @Query("SELECT COUNT(*) FROM transactions WHERE portfolioId = :portfolioId")
+    suspend fun countTransactionsOf(portfolioId: String): Int
+
+    // 29 step 7 (the review's finding 2): what still names a deleted transaction, after the deletes.
+    @Query("SELECT COUNT(*) FROM cash_entries WHERE type = 'TRADE' AND transactionId IN (:ids)")
+    suspend fun countTradeLinesOf(ids: List<String>): Int
+
+    @Query("SELECT COUNT(*) FROM sell_allocations WHERE sellId IN (:ids)")
+    suspend fun countAllocationsOfSells(ids: List<String>): Int
+
+    @Query("SELECT COUNT(*) FROM sell_allocations WHERE lotId IN (:ids)")
+    suspend fun countAllocationsOfLots(ids: List<String>): Int
+
+    /**
+     * A portfolio's deletion in one database transaction (4.7, K2; 29): its sells' allocations, its trade cash lines,
+     * its transactions, its own hidden rows and overrides (decision 1), then the portfolio. Every count must be the one
+     * K1 expected and no transaction of the portfolio may be left, and (step 7) no trade cash line or allocation may still
+     * name a deleted transaction, as its sell or as its lot; otherwise it throws and nothing is removed. The messages name
+     * counts only, never a portfolio name (spec section 9).
+     */
+    @Transaction
+    suspend fun deletePortfolio(
+        portfolioId: String,
+        transactionIds: List<String>,
+        cashEntryIds: List<String>,
+        hiddenCount: Int,
+        overrideCount: Int,
+    ) {
+        for (chunk in transactionIds.chunked(DELETE_CHUNK)) deleteAllocationsOf(chunk)
+        val lines = cashEntryIds.chunked(DELETE_CHUNK).sumOf { deleteCashEntries(it) }
+        check(lines == cashEntryIds.size) { "A deletion removed $lines cash lines instead of ${cashEntryIds.size}." }
+        val trades = transactionIds.chunked(DELETE_CHUNK).sumOf { deleteTransactions(it) }
+        check(trades == transactionIds.size) { "A deletion removed $trades transactions instead of ${transactionIds.size}." }
+        check(countTransactionsOf(portfolioId) == 0) { "A deletion left transactions of the portfolio." }
+        val chunks = transactionIds.chunked(DELETE_CHUNK)
+        val linesLeft = chunks.sumOf { countTradeLinesOf(it) }
+        check(linesLeft == 0) { "A deletion left $linesLeft trade cash lines of deleted transactions." }
+        val allocationsLeft = chunks.sumOf { countAllocationsOfSells(it) + countAllocationsOfLots(it) }
+        check(allocationsLeft == 0) { "A deletion left $allocationsLeft allocations naming deleted transactions." }
+        val hidden = deleteHiddenOf(portfolioId)
+        check(hidden == hiddenCount) { "A deletion removed $hidden hidden rows instead of $hiddenCount." }
+        val overrides = deleteOverridesOfPortfolio(portfolioId)
+        check(overrides == overrideCount) { "A deletion removed $overrides overrides instead of $overrideCount." }
+        val portfolios = deletePortfolioRow(portfolioId)
+        check(portfolios == 1) { "A deletion removed $portfolios portfolios instead of 1." }
+    }
+
     @Query("SELECT * FROM transactions ORDER BY date, enteredSeq")
     suspend fun loadAll(): List<TransactionRow>
 
@@ -484,6 +550,9 @@ interface SettingsDao {
  * table, version 11 (24) the class_overrides table, version 12 (25) the source_texts table; Room generates each step out
  * of the schemas in app/schemas.
  */
+// 29: ids per delete query, well under SQLite's limit on bound variables.
+internal const val DELETE_CHUNK = 500
+
 @Database(
     entities = [
         CashEntryRow::class,

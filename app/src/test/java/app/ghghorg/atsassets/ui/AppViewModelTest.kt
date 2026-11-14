@@ -17,6 +17,7 @@ import app.ghghorg.atsassets.core.ListUsers
 import app.ghghorg.atsassets.core.Lookup
 import app.ghghorg.atsassets.core.Portfolio
 import app.ghghorg.atsassets.core.PortfolioRefusal
+import app.ghghorg.atsassets.core.PortfolioRemoval
 import app.ghghorg.atsassets.core.Price
 import app.ghghorg.atsassets.core.PriceSource
 import app.ghghorg.atsassets.core.ProfileAnswer
@@ -1091,13 +1092,17 @@ class AppViewModelTest {
         assertEquals(4, vm.state.value.cashFilteredRows.size)
     }
 
+    // 29 step 8 (decision 4; the 29 file, 13.3) replaces 06's expectation "From after To shows no rows", which asserted the
+    // defect: To before From now shows its line and counts as no bound, so the list shows from From on.
     @Test
-    fun fromAfterToShowsNoRows() {
+    fun fromAfterTo_refusesTo_andShowsFromFromOn() {
         val vm = withFourEntries()
         vm.onFilterFromChange("20260108")
         vm.onFilterToChange("20260105")
         assertTrue(vm.state.value.filterActive)
-        assertTrue(vm.state.value.cashFilteredRows.isEmpty())
+        assertEquals(null, vm.state.value.filterFromRefusal)
+        assertEquals(DateRefusal.BEFORE_FROM, vm.state.value.filterToRefusal)
+        assertEquals(listOf("d4"), vm.shownIds())
     }
 
     @Test
@@ -1719,6 +1724,22 @@ internal class FakeStore(
         saveError?.let { throw it }
         renames.add(id to name)
         storedPortfolios = storedPortfolios.map { if (it.id == id) it.copy(name = name) else it }
+    }
+
+    // 29: each deletion as given, and an error that fails a deletion alone (as pricesSaveError, open item 54).
+    val deletions = mutableListOf<PortfolioRemoval>()
+    var deleteError: Throwable? = null
+
+    /** All or nothing, as the Room store: a failure removes nothing. */
+    override suspend fun deletePortfolio(removal: PortfolioRemoval) {
+        gate?.await()
+        deleteError?.let { throw it }
+        deletions.add(removal)
+        storedPortfolios = storedPortfolios.filter { it.id != removal.portfolioId }
+        storedTransactions = storedTransactions.filter { it.id !in removal.transactionIds }
+        stored = stored.filter { it.id !in removal.cashEntryIds }
+        storedHidden = storedHidden - removal.hidden.toSet()
+        storedOverrides = storedOverrides - removal.overrides.toSet()
     }
 
     var storedTransactions: List<Transaction> = emptyList()

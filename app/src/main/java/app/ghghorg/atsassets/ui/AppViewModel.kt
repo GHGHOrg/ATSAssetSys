@@ -22,6 +22,8 @@ import app.ghghorg.atsassets.core.ClassList
 import app.ghghorg.atsassets.core.ClassLists
 import app.ghghorg.atsassets.core.ClassOverride
 import app.ghghorg.atsassets.core.Classification
+import app.ghghorg.atsassets.core.DeletionCheck
+import app.ghghorg.atsassets.core.DeletionSummary
 import app.ghghorg.atsassets.core.Fraction
 import app.ghghorg.atsassets.core.HiddenHolding
 import app.ghghorg.atsassets.core.Hiding
@@ -42,7 +44,9 @@ import app.ghghorg.atsassets.core.OpeningBalanceError
 import app.ghghorg.atsassets.core.OpeningBalanceResult
 import app.ghghorg.atsassets.core.Pick
 import app.ghghorg.atsassets.core.Portfolio
+import app.ghghorg.atsassets.core.PortfolioDeletion
 import app.ghghorg.atsassets.core.PortfolioRefusal
+import app.ghghorg.atsassets.core.PortfolioRemoval
 import app.ghghorg.atsassets.core.PortfolioRenameResult
 import app.ghghorg.atsassets.core.PortfolioResult
 import app.ghghorg.atsassets.core.Portfolios
@@ -413,6 +417,9 @@ enum class DateRefusal {
 
     // A character other than a digit in a digits-only date field (the Cash filters, iteration 06).
     NOT_DIGITS,
+
+    // A filter's To that is a whole date before its From (29 step 8, decision 4): the To counts as no bound.
+    BEFORE_FROM,
 }
 
 enum class SaveRefusal {
@@ -450,6 +457,16 @@ data class CashFilterForm(
     val type: CashType? = null,
     val ticker: String? = null,
     val trade: TradeSide? = null,
+)
+
+/**
+ * The Delete dialog (wireframe 10d frames D and E; 29): K1's summary when it opened, the name as typed (a line break
+ * becomes a space, as for names), and why the deletion was not saved, if it was not.
+ */
+data class DeleteDialog(
+    val summary: DeletionSummary,
+    val typedName: String = "",
+    val save: SaveRefusal? = null,
 )
 
 /**
@@ -566,6 +583,10 @@ data class AppState(
     val portfolioId: String? = null,
     val portfolioMenuOpen: Boolean = false,
     val renameDialog: PortfolioDialog? = null,
+    // 29: the Delete dialog over the portfolio's screen (wireframe 10d frames D and E), and the blocked message in its
+    // place (frame F; DeletionCheck.Blocked or CannotDelete), each drawn in the window.
+    val deleteDialog: DeleteDialog? = null,
+    val deleteBlocked: DeletionCheck? = null,
     // 16a: a price refresh runs (the "updating" indicator), and the last one failed (the quiet refresh-failed line).
     val refreshing: Boolean = false,
     val refreshFailed: Boolean = false,
@@ -668,6 +689,12 @@ data class AppState(
         ),
 ) {
     val shownPortfolio: Portfolio? get() = portfolioId?.let { id -> portfolios.firstOrNull { it.id == id } }
+
+    /** 29: the Delete dialog as the screen draws it (CR2), while it is open. */
+    val deleteDialogModel: DeleteDialogModel? get() = deleteDialog?.let { PortfolioDeletions.dialog(it, saving) }
+
+    /** 29: the blocked message as the screen draws it (CR2), while it is shown. */
+    val deleteBlockedModel: DeleteBlockedModel? get() = PortfolioDeletions.blocked(deleteBlocked)
 
     /** Net worth rounded to cents, for Overall (4.10: rounded only when shown). */
     val netWorthCents: Long get() = netWorth.rounded(2).movePointRight(2).longValueExact()
@@ -833,7 +860,8 @@ data class AppState(
         get() =
             historyPortfolioId
                 ?.let { id ->
-                    val filter = HistoryFilter(historyTicker, DateDigits.toDate(historyFromText), DateDigits.toDate(historyToText), historyChip)
+                    val to = DateDigits.toBound(historyFromText, historyToText)
+                    val filter = HistoryFilter(historyTicker, DateDigits.toDate(historyFromText), to, historyChip)
                     TransactionHistory.rows(transactions, entries, id, filter)
                 }.orEmpty()
 
@@ -973,13 +1001,13 @@ data class AppState(
      */
     val filterFromRefusal: DateRefusal? get() = DateDigits.refusal(cashFilterForm.fromText)
 
-    val filterToRefusal: DateRefusal? get() = DateDigits.refusal(cashFilterForm.toText)
+    val filterToRefusal: DateRefusal? get() = DateDigits.toRefusal(cashFilterForm.fromText, cashFilterForm.toText)
 
     /** Only eight digits of a real date count as a bound; anything else is no bound (06 decision 1). */
     val cashFilter: CashFilter
         get() = CashFilter(
             from = DateDigits.toDate(cashFilterForm.fromText),
-            to = DateDigits.toDate(cashFilterForm.toText),
+            to = DateDigits.toBound(cashFilterForm.fromText, cashFilterForm.toText),
             type = cashFilterForm.type,
             ticker = cashFilterForm.ticker,
             trade = cashFilterForm.trade,
@@ -1125,53 +1153,61 @@ class AppViewModel(
     fun selectTab(tab: Tab) {
         val current = mutableState.value
         if (current.screen !in TAB_BAR_SCREENS || current.saving || current.checking) return
-        mutableState.update {
-            it.copy(
-                screen = Screen.TABS,
-                tab = tab,
-                refusals = Refusals(),
-                portfolioNeedsOpeningBalance = false,
-                portfolioId = null,
-                portfolioMenuOpen = false,
-                renameDialog = null,
-                buySellMenuOpen = false,
-                allocationMenuOpen = false,
-                portfolioChoiceOpen = false,
-                autoLockChoiceOpen = false,
-                screenshotLayerOpen = false,
-                // 28: the Cash tab's Ticker menu closes; its filters stay (06 decision 4).
-                cashTickerMenuOpen = false,
-                autoLockRefusal = null,
-                tabOrderRefusal = null,
-                buyNotice = null,
-                buyRefusals = BuyRefusals(),
-                holdingTicker = null,
-                holdingFromHidden = false,
-                hideRefusal = null,
-                // 24's Deploy review: the picker and a failed save or clear end with the holding.
-                classPicker = null,
-                classPickerChoice = null,
-                overrideRefusal = null,
-                // 25: the list screen, its Name layer and its lines end with it.
-                classListShown = null,
-                classValueEdit = null,
-                listOutcome = null,
-                listSaveRefusal = null,
-                buyFromHolding = false,
-                sellRefusals = SellRefusals(),
-                sellPicksDropped = false,
-                sellFromHolding = false,
-                sellReview = null,
-                splitRefusals = SplitRefusals(),
-                splitReview = null,
-                detailFromTransaction = false,
-                transactionId = null,
-                transactionTrail = emptyList(),
-                transactionReversalDate = "",
-                transactionReversalRefusals = TransactionReversalRefusals(),
-            ).leftReplace().leftGains().leftHistory()
-        }
+        mutableState.update { it.shownTab(tab) }
     }
+
+    /**
+     * [tab] shown, every screen, layer and line that ends with a tab change dropped: [selectTab]'s change, and (29 step 7,
+     * the review's finding 3) a deletion's, made in the same update as the removal, so it does not depend on [selectTab]'s
+     * guards.
+     */
+    private fun AppState.shownTab(tab: Tab): AppState = copy(
+        screen = Screen.TABS,
+        tab = tab,
+        refusals = Refusals(),
+        portfolioNeedsOpeningBalance = false,
+        portfolioId = null,
+        portfolioMenuOpen = false,
+        renameDialog = null,
+        // 29: the Delete dialog and the blocked message end with the portfolio's screen.
+        deleteDialog = null,
+        deleteBlocked = null,
+        buySellMenuOpen = false,
+        allocationMenuOpen = false,
+        portfolioChoiceOpen = false,
+        autoLockChoiceOpen = false,
+        screenshotLayerOpen = false,
+        // 28: the Cash tab's Ticker menu closes; its filters stay (06 decision 4).
+        cashTickerMenuOpen = false,
+        autoLockRefusal = null,
+        tabOrderRefusal = null,
+        buyNotice = null,
+        buyRefusals = BuyRefusals(),
+        holdingTicker = null,
+        holdingFromHidden = false,
+        hideRefusal = null,
+        // 24's Deploy review: the picker and a failed save or clear end with the holding.
+        classPicker = null,
+        classPickerChoice = null,
+        overrideRefusal = null,
+        // 25: the list screen, its Name layer and its lines end with it.
+        classListShown = null,
+        classValueEdit = null,
+        listOutcome = null,
+        listSaveRefusal = null,
+        buyFromHolding = false,
+        sellRefusals = SellRefusals(),
+        sellPicksDropped = false,
+        sellFromHolding = false,
+        sellReview = null,
+        splitRefusals = SplitRefusals(),
+        splitReview = null,
+        detailFromTransaction = false,
+        transactionId = null,
+        transactionTrail = emptyList(),
+        transactionReversalDate = "",
+        transactionReversalRefusals = TransactionReversalRefusals(),
+    ).leftReplace().leftGains().leftHistory()
 
     /** Pull-to-refresh (spec 7; 16a decision 2). */
     fun onPullToRefresh() = refreshPrices()
@@ -1788,7 +1824,14 @@ class AppViewModel(
         val current = mutableState.value
         if (current.screen != Screen.PORTFOLIO || current.saving) return
         mutableState.update {
-            it.copy(screen = Screen.TABS, portfolioId = null, portfolioMenuOpen = false, renameDialog = null)
+            it.copy(
+                screen = Screen.TABS,
+                portfolioId = null,
+                portfolioMenuOpen = false,
+                renameDialog = null,
+                deleteDialog = null,
+                deleteBlocked = null,
+            )
         }
     }
 
@@ -1863,6 +1906,111 @@ class AppViewModel(
                 }
             }
         }
+    }
+
+    // K1's deletion check of the shown portfolio on the records as they are now (4.7).
+    private fun AppState.toDelete(id: String) = PortfolioDeletion.check(portfolios, transactions, entries, hidden, overrides, id)
+
+    /**
+     * Delete in the menu (wireframe 10d, marker 9): closes the menu and runs K1's check. Allowed opens the dialog with
+     * its summary; Blocked or CannotDelete shows the message instead (frame F). Ignored while a save is running.
+     */
+    fun openDelete() {
+        val current = mutableState.value
+        if (current.screen != Screen.PORTFOLIO || current.saving) return
+        val id = current.portfolioId ?: return
+        when (val check = current.toDelete(id)) {
+            is DeletionCheck.Allowed ->
+                mutableState.update { it.copy(portfolioMenuOpen = false, deleteDialog = DeleteDialog(check.summary)) }
+
+            is DeletionCheck.Blocked, is DeletionCheck.CannotDelete ->
+                mutableState.update { it.copy(portfolioMenuOpen = false, deleteBlocked = check) }
+
+            // Neither is reachable from a shown portfolio's records; the menu just closes.
+            DeletionCheck.NotFound, DeletionCheck.TooLarge -> mutableState.update { it.copy(portfolioMenuOpen = false) }
+        }
+    }
+
+    /** Close on the blocked message (frame F): nothing changes. */
+    fun closeDeleteBlocked() = mutableState.update { it.copy(deleteBlocked = null) }
+
+    /** The typed name (marker 11): a line break becomes a space, as for names; typing clears a failed save. */
+    fun onDeleteNameChange(text: String) = mutableState.update { state ->
+        state.copy(deleteDialog = state.deleteDialog?.copy(typedName = oneLine(text), save = null))
+    }
+
+    /** Cancel or Back: closes the dialog; nothing is removed. Ignored while a save is running. */
+    fun cancelDelete() {
+        if (mutableState.value.saving) return
+        mutableState.update { it.copy(deleteDialog = null) }
+    }
+
+    /**
+     * Delete portfolio (frame E): only once the typed name matches (case and spaces ignored). K1 checks again; if the
+     * records changed so that it is now blocked, the message replaces the dialog and nothing is removed. Otherwise K2
+     * removes the portfolio and what is its own as one action, the state drops the same records, and the Portfolios tab
+     * shows. A failed removal keeps the dialog with its line and changes nothing.
+     */
+    fun confirmDelete() {
+        val current = mutableState.value
+        val dialog = current.deleteDialog ?: return
+        val id = current.portfolioId ?: return
+        if (current.saving || !PortfolioDeletion.nameMatches(dialog.summary.portfolio, dialog.typedName)) return
+        val target = store ?: return
+        val removal =
+            when (val check = current.toDelete(id)) {
+                // The review's finding 5: the removal must be the dialog's portfolio.
+                is DeletionCheck.Allowed -> check.removal.takeIf { it.portfolioId == dialog.summary.portfolio.id } ?: run {
+                    mutableState.update { it.copy(deleteDialog = null) }
+                    return
+                }
+
+                is DeletionCheck.Blocked, is DeletionCheck.CannotDelete -> {
+                    mutableState.update { it.copy(deleteDialog = null, deleteBlocked = check) }
+                    return
+                }
+
+                DeletionCheck.NotFound, DeletionCheck.TooLarge -> {
+                    mutableState.update { it.copy(deleteDialog = null) }
+                    return
+                }
+            }
+        mutableState.update { it.copy(saving = true, deleteDialog = dialog.copy(save = null)) }
+        viewModelScope.launch {
+            try {
+                target.deletePortfolio(removal)
+                // The review's finding 3: the Portfolios tab in the same update as the removal.
+                mutableState.update { it.withoutPortfolio(removal).copy(saving = false, deleteDialog = null).shownTab(Tab.PORTFOLIOS) }
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: UnreadableDataException) {
+                // The review's finding 4: no dialog left set behind the unreadable-data screen.
+                mutableState.update { it.copy(screen = Screen.UNREADABLE, saving = false, deleteDialog = null) }
+            } catch (e: Exception) {
+                mutableState.update { it.copy(saving = false, deleteDialog = dialog.copy(save = SaveRefusal.SAVE_FAILED)) }
+            }
+        }
+    }
+
+    // The records [removal] names dropped from the state, as K2 removed them; a form that had the portfolio picked
+    // loses it, and a Cash ticker with no trade line left goes back to All tickers (decision 2).
+    private fun AppState.withoutPortfolio(removal: PortfolioRemoval): AppState {
+        val id = removal.portfolioId
+        val leftEntries = entries.filter { it.id !in removal.cashEntryIds }
+        val leftTransactions = transactions.filter { it.id !in removal.transactionIds }
+        val form = cashFilterForm
+        val ticker = form.ticker?.takeIf { it in CashAccount.tickers(leftEntries, leftTransactions) }
+        return copy(
+            portfolios = portfolios.filter { it.id != id },
+            transactions = leftTransactions,
+            entries = leftEntries,
+            hidden = hidden - removal.hidden.toSet(),
+            overrides = overrides - removal.overrides.toSet(),
+            cashFilterForm = if (ticker == form.ticker) form else form.copy(ticker = ticker),
+            buyForm = if (buyForm.portfolioId == id) buyForm.copy(portfolioId = null) else buyForm,
+            sellForm = if (sellForm.portfolioId == id) SellForm() else sellForm,
+            splitForm = if (splitForm.portfolioId == id) splitForm.copy(portfolioId = null) else splitForm,
+        )
     }
 
     // A line break, typed or pasted, becomes a space in a portfolio name (07 decision 4).
