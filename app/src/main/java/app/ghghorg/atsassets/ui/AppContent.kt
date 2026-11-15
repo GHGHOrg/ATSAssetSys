@@ -22,7 +22,7 @@ import app.ghghorg.atsassets.core.Tab
 /**
  * Shows the screen the ViewModel names. Only the unlocked branch of MainActivity calls this. [screenshots] are
  * MainActivity's Allow and Turn off for the screenshot window, which K8 owns (21). [onBackUpNow] is MainActivity's too:
- * it opens Android's file screen for a backup (31).
+ * it opens Android's file screen for a backup (31), from Backup and restore and from Overall's reminder (32).
  */
 @Composable
 fun AppContent(
@@ -391,21 +391,23 @@ private fun BarContent(
             actions = NetWorthActions(onBack = viewModel::closeNetWorth, onRefresh = viewModel::onPullToRefresh),
         )
 
-        else -> TabContent(state, viewModel)
+        else -> TabContent(state, viewModel, onBackUpNow)
     }
 }
 
 /**
  * The selected tab. Overall, Portfolios and Cash carry the Buy/Sell button under their content, and its menu or
  * notice over it (navigation outline; 09 decision 2). While the layer is open, TalkBack reads only the layer.
+ * [onBackUpNow] is for Overall's backup reminder (32).
  */
 @Composable
 private fun TabContent(
     state: AppState,
     viewModel: AppViewModel,
+    onBackUpNow: () -> Unit,
 ) {
     if (state.tab == Tab.MORE) {
-        TabScreen(state, viewModel)
+        TabScreen(state, viewModel, onBackUpNow)
         return
     }
     val layerOpen = state.buySellMenuOpen || state.buyNotice != null || state.allocationMenuOpen
@@ -413,7 +415,7 @@ private fun TabContent(
         val under = if (layerOpen) Modifier.clearAndSetSemantics { } else Modifier
         Column(modifier = Modifier.fillMaxSize().then(under)) {
             Box(modifier = Modifier.weight(1f)) {
-                TabScreen(state, viewModel)
+                TabScreen(state, viewModel, onBackUpNow)
             }
             BuySellButton(
                 onOpen = viewModel::openBuySellMenu,
@@ -444,6 +446,7 @@ private fun TabContent(
 private fun TabScreen(
     state: AppState,
     viewModel: AppViewModel,
+    onBackUpNow: () -> Unit,
 ) {
     when (state.tab) {
         Tab.OVERALL ->
@@ -455,6 +458,8 @@ private fun TabScreen(
                 onRefresh = viewModel::onPullToRefresh,
                 onOpenNetWorth = viewModel::openNetWorth,
                 onOpenAllocationChoice = viewModel::openAllocationMenu,
+                onBackUpNow = onBackUpNow,
+                onDismissReminder = viewModel::dismissBackupReminder,
             )
 
         Tab.CASH -> CashScreen(

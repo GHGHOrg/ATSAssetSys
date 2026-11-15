@@ -947,6 +947,23 @@ data class AppState(
     val backupScreen: BackupModel
         get() = Backups.screen(lastBackup, zone, backupInterrupted, holdsData, backupStage, backupOutcome, saving)
 
+    /**
+     * 32: Overall's backup reminder as the screen draws it (view 1, wireframe 01 marker 1; CR2), null when Overall shows
+     * nothing of it. An export's line is Overall's only while Overall is the screen shown (decision 1).
+     */
+    val backupReminder: BackupReminderModel?
+        get() =
+            Backups.reminder(
+                lastBackup = lastBackup,
+                zone = zone,
+                due = backupDue,
+                dismissed = reminderDismissed,
+                holdsData = holdsData,
+                stage = backupStage.takeIf { onOverall },
+                outcome = backupOutcome.takeIf { onOverall },
+                saving = saving,
+            )
+
     /** Settings as the screen draws it (section 6; CR2, 20). */
     val settings: SettingsModel
         get() {

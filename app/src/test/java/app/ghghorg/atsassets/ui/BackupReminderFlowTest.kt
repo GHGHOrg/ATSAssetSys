@@ -64,7 +64,7 @@ class BackupReminderFlowTest {
         store: FakeStore = store(),
         clock: Clock = MovingClock(now),
     ): AppViewModel {
-        val vm = started(store, clock = clock)
+        val vm = started(store, clock = clock, zone = ZoneId.of("UTC"))
         vm.onAppShown()
         vm.onUnlocked()
         return vm
@@ -317,6 +317,33 @@ class BackupReminderFlowTest {
         vm.selectTab(Tab.OVERALL)
         assertFalse(vm.state.value.backupReminderShown)
         assertNull(vm.state.value.backupOutcome)
+    }
+
+    // CR2, the wiring: Overall's reminder model follows the state: the banner, the export's line, then the line alone.
+    @Test
+    fun theReminderModel_followsTheState() {
+        val old = now.minus(Duration.ofDays(30))
+        val vm = opened(store(BackupState(lastBackup = old)))
+        val banner = BackupReminderModel(BackupDue.OLD, LastBackup("2026-10-16", "UTC"), canAct = true, writing = false, outcome = null)
+        assertEquals(banner, vm.state.value.backupReminder)
+        vm.beginBackup()
+        assertEquals(banner.copy(canAct = false), vm.state.value.backupReminder)
+        vm.onBackupPlace(null)
+        assertEquals(banner.copy(outcome = BackupOutcome.NOT_SAVED), vm.state.value.backupReminder)
+        vm.beginBackup()
+        vm.onBackupPlace(FakeTarget())
+        assertEquals(
+            BackupReminderModel(null, LastBackup("2026-11-15", "UTC"), canAct = true, writing = false, outcome = BackupOutcome.SAVED),
+            vm.state.value.backupReminder,
+        )
+        vm.selectTab(Tab.CASH)
+        vm.selectTab(Tab.OVERALL)
+        assertNull(vm.state.value.backupReminder)
+        // Dismissed, and with no data: nothing.
+        val dismissed = opened()
+        dismissed.dismissBackupReminder()
+        assertNull(dismissed.state.value.backupReminder)
+        assertNull(opened(FakeStore()).state.value.backupReminder)
     }
 
     @Test

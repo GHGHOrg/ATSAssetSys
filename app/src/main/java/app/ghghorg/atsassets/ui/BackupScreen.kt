@@ -57,7 +57,7 @@ fun BackupScreen(
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
-                BackupStatusLine(model)
+                BackupStatusLine(model.writing, noData = model.blocked == BackupBlocked.NO_DATA, model.outcome, model.lastBackup)
             }
         }
     }
@@ -108,21 +108,26 @@ private fun BackUpNowButton(
 }
 
 // One line at most, read by TalkBack when it appears: the reason the button is inactive, the indicator while the file
-// is written, or the last export's result (frame B: plain text, one or the other).
+// is written, or the last export's result (frame B: plain text, one or the other). Overall's reminder shows the same
+// line for an export started from it (32 decision 1); it never has the no-data reason.
 @Composable
-private fun BackupStatusLine(model: BackupModel) {
-    val last = model.lastBackup
+internal fun BackupStatusLine(
+    writing: Boolean,
+    noData: Boolean,
+    outcome: BackupOutcome?,
+    last: LastBackup?,
+) {
     val text =
         when {
-            model.writing -> stringResource(R.string.backup_writing)
-            model.blocked == BackupBlocked.NO_DATA -> stringResource(R.string.backup_no_data)
-            model.outcome == BackupOutcome.SAVED && last != null -> stringResource(R.string.backup_saved, last.date, last.zone)
-            model.outcome == BackupOutcome.NOT_SAVED -> stringResource(R.string.backup_not_saved)
-            model.outcome == BackupOutcome.NOT_SAVED_FILE_MAY_REMAIN -> stringResource(R.string.backup_not_saved_file_remains)
-            model.outcome == BackupOutcome.SAVED_NOT_RECORDED -> stringResource(R.string.backup_saved_not_recorded)
+            writing -> stringResource(R.string.backup_writing)
+            noData -> stringResource(R.string.backup_no_data)
+            outcome == BackupOutcome.SAVED && last != null -> stringResource(R.string.backup_saved, last.date, last.zone)
+            outcome == BackupOutcome.NOT_SAVED -> stringResource(R.string.backup_not_saved)
+            outcome == BackupOutcome.NOT_SAVED_FILE_MAY_REMAIN -> stringResource(R.string.backup_not_saved_file_remains)
+            outcome == BackupOutcome.SAVED_NOT_RECORDED -> stringResource(R.string.backup_saved_not_recorded)
             else -> return
         }
-    val failed = model.outcome != null && model.outcome != BackupOutcome.SAVED
+    val failed = outcome != null && outcome != BackupOutcome.SAVED
     Text(
         text = text,
         style = MaterialTheme.typography.bodyLarge,
