@@ -128,6 +128,12 @@ interface PriceSource {
     val name: String
 
     /**
+     * The source's word in the backup file's `price_source` row (spec 8; 31 decision 5a): fixed and in lowercase,
+     * separate from [name], so a change of the shown name never breaks an older backup.
+     */
+    val backupName: String
+
+    /**
      * The key every later look-up, quote and profile uses (30); null, or a text that is not a key, is no key, and the
      * source then makes no call. Kept in memory only.
      */

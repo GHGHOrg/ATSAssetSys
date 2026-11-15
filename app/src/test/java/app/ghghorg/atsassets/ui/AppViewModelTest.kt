@@ -1592,8 +1592,17 @@ internal fun started(
     source: FakeSource = FakeSource(),
     online: () -> Boolean = { true },
     newId: () -> String = { "c1" },
+    zone: ZoneId = ZoneOffset.UTC,
 ): AppViewModel {
-    val vm = AppViewModel(storeProvider = { store }, clock = clock, newId = newId, priceSource = source, isOnline = online)
+    val vm =
+        AppViewModel(
+            storeProvider = { store },
+            clock = clock,
+            newId = newId,
+            priceSource = source,
+            isOnline = online,
+            deviceZone = { zone },
+        )
     vm.start()
     return vm
 }
@@ -1604,6 +1613,8 @@ internal class FakeSource(
     val gate: CompletableDeferred<Unit>? = null,
 ) : PriceSource {
     override val name: String = "Test source"
+
+    override val backupName: String = "testsource"
 
     val asked = mutableListOf<String>()
 

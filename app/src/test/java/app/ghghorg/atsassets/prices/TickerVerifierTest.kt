@@ -45,6 +45,8 @@ class TickerVerifierTest {
 
         override val name: String = "not used"
 
+        override val backupName: String = "not used"
+
         override fun useKey(key: String?) = error("not used")
 
         override suspend fun checkKey(key: String): KeyCheck = error("not used")

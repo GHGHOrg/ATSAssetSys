@@ -341,4 +341,79 @@ class AppLockTest {
             assertEquals(choice.name, LockState.Locked, lock.state)
         }
     }
+
+    // 31, AC-57 (spec section 9): Android's file screen, opened by the app for a backup, does not count as leaving under
+    // "every time you leave"; before the choice is loaded the same strictest rule holds, with the same exemption.
+    @Test
+    fun theAppsOwnFileScreen_doesNotLock_underEveryLeave() {
+        for (choice in listOf(AutoLock.EVERY_LEAVE, null)) {
+            val lock = unlocked()
+            choice?.let(lock::setAutoLock)
+            lock.onFileScreenOpened()
+            lock.onAppLeft(start + 1, screenOff = false)
+            assertEquals(LockState.Unlocked, lock.state)
+            lock.onAppReturned(start + 120_000)
+            assertEquals(LockState.Unlocked, lock.state)
+            assertFalse(lock.shouldShowPrompt())
+        }
+    }
+
+    // Once the file screen has closed, leaving the app locks as usual (spec section 9).
+    @Test
+    fun afterTheFileScreenClosed_leavingLocksAgain() {
+        val lock = unlockedWith(AutoLock.EVERY_LEAVE)
+        lock.onFileScreenOpened()
+        lock.onAppLeft(start + 1, screenOff = false)
+        lock.onAppReturned(start + 2)
+        lock.onFileScreenClosed()
+        lock.onAppLeft(start + 3, screenOff = false)
+        assertEquals(LockState.Locked, lock.state)
+    }
+
+    // The exemption covers the one leaving that opens the file screen, not a later one while it is still marked open.
+    @Test
+    fun theFileScreensExemption_coversOneLeavingOnly() {
+        val lock = unlockedWith(AutoLock.EVERY_LEAVE)
+        lock.onFileScreenOpened()
+        lock.onAppLeft(start + 1, screenOff = false)
+        lock.onAppReturned(start + 2)
+        lock.onAppLeft(start + 3, screenOff = false)
+        assertEquals(LockState.Locked, lock.state)
+    }
+
+    // The other reasons to lock still apply while the file screen is open (spec section 9): the phone locking, with the
+    // screen already off at the leaving or reported later, and the idle time.
+    @Test
+    fun whileTheFileScreenIsOpen_thePhoneLockingStillLocks() {
+        val atLeaving = unlockedWith(AutoLock.EVERY_LEAVE)
+        atLeaving.onFileScreenOpened()
+        atLeaving.onAppLeft(start + 1, screenOff = true)
+        assertEquals(LockState.Locked, atLeaving.state)
+
+        val later = unlockedWith(AutoLock.EVERY_LEAVE)
+        later.onFileScreenOpened()
+        later.onAppLeft(start + 1, screenOff = false)
+        later.onPhoneLocked()
+        assertEquals(LockState.Locked, later.state)
+    }
+
+    @Test
+    fun whileTheFileScreenIsOpen_theIdleTimeStillLocks() {
+        val lock = unlockedWith(AutoLock.IDLE_1_MIN)
+        lock.onFileScreenOpened()
+        lock.onAppLeft(start + 1, screenOff = false)
+        assertEquals(LockState.Unlocked, lock.state)
+        lock.onAppReturned(start + oneMinute)
+        assertEquals(LockState.Locked, lock.state)
+    }
+
+    // A locked app is not unlocked by a file screen, and a restart starts locked whatever was open.
+    @Test
+    fun theFileScreen_neverUnlocks() {
+        val lock = lockWithScreenLock()
+        lock.onFileScreenOpened()
+        lock.onAppLeft(start, screenOff = false)
+        lock.onFileScreenClosed()
+        assertEquals(LockState.Locked, lock.state)
+    }
 }

@@ -2,9 +2,13 @@ package app.ghghorg.atsassets.ui
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import app.ghghorg.atsassets.backup.BackupTarget
 import app.ghghorg.atsassets.core.AmountError
 import app.ghghorg.atsassets.core.AmountResult
 import app.ghghorg.atsassets.core.AutoLock
+import app.ghghorg.atsassets.core.BackupFile
+import app.ghghorg.atsassets.core.BackupRecords
+import app.ghghorg.atsassets.core.BackupResult
 import app.ghghorg.atsassets.core.BuyRefusal
 import app.ghghorg.atsassets.core.BuyResult
 import app.ghghorg.atsassets.core.CashAccount
@@ -97,7 +101,9 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 import java.math.BigDecimal
 import java.time.Clock
+import java.time.Instant
 import java.time.LocalDate
+import java.time.ZoneId
 import java.util.Locale
 
 /** The one screen shown at a time. TABS shows the selected tab under the bottom bar. */
@@ -164,6 +170,28 @@ enum class Screen {
     // A portfolio's Transaction history (view 8, wireframe 08, iteration 27), opened from the portfolio's screen or from a
     // sale on Realized gains (27 decision 1).
     TRANSACTION_HISTORY,
+
+    // Backup and restore (wireframe 10e frame A, iteration 31), opened from More.
+    BACKUP,
+}
+
+/** 31: where a backup export stands: Android's file screen is open, or the chosen file is being written. */
+enum class BackupStage {
+    CHOOSING,
+    WRITING,
+}
+
+/**
+ * 31: how the last export ended (wireframe 10e frame B; decisions 4 and 7). Reasons only; the wording is D9. [SAVED]: the
+ * file is complete and its moment is the last backup. [NOT_SAVED]: cancelled, or failed with no file left.
+ * [NOT_SAVED_FILE_MAY_REMAIN]: failed, and the unfinished file could not be deleted. [SAVED_NOT_RECORDED]: the file is
+ * complete, but its moment could not be stored, so the last backup did not move.
+ */
+enum class BackupOutcome {
+    SAVED,
+    NOT_SAVED,
+    NOT_SAVED_FILE_MAY_REMAIN,
+    SAVED_NOT_RECORDED,
 }
 
 /**
@@ -676,6 +704,13 @@ data class AppState(
     val historyTicker: String? = null,
     val historyChip: HistoryChip = HistoryChip.ALL,
     val historyTickerMenuOpen: Boolean = false,
+    // 31: the moment of the last completed backup export, null for never (spec 9; no zone is kept, C15); a start found the
+    // mark of a backup whose write never ended (decision 7), until a backup completes; where an export stands, null with
+    // none under way; how the last one ended, until Backup and restore is left or the next one starts.
+    val lastBackup: Instant? = null,
+    val backupInterrupted: Boolean = false,
+    val backupStage: BackupStage? = null,
+    val backupOutcome: BackupOutcome? = null,
     // 15c: the kept fields, worked out in KeptFields.kt from the fields above, so reading one costs nothing. Every write
     // through the view model refreshes them; a state built directly gets them from these defaults.
     // As of today (4.8), by portfolio, then ticker.
@@ -1158,10 +1193,12 @@ data class AppState(
  */
 class AppViewModel(
     private val storeProvider: () -> RecordStore,
-    clock: Clock,
+    private val clock: Clock,
     private val newId: () -> String,
     private val priceSource: PriceSource,
     private val isOnline: () -> Boolean,
+    // 31: the device's time zone now, for the backup file's suggested name (C15).
+    private val deviceZone: () -> ZoneId = { ZoneId.systemDefault() },
 ) : ViewModel() {
     private val marketDate = MarketDate(clock)
     private val mutableState = KeptStateFlow(AppState(priceSourceName = priceSource.name))
@@ -1193,7 +1230,9 @@ class AppViewModel(
                 // 30: the price source's key goes to the source before the first refresh; the state keeps its ending only.
                 val priceKey = opened.loadPriceKey()
                 priceSource.useKey(priceKey)
-                mutableState.update { it.withKey(priceKey) }
+                // 31: the last backup's moment, and whether a backup's write never ended (decision 7).
+                val backup = opened.loadBackupState()
+                mutableState.update { it.withKey(priceKey).copy(lastBackup = backup.lastBackup, backupInterrupted = backup.unfinished) }
                 showLoaded(entries, portfolios, transactions, instruments, hidden, autoLock, tabOrder, classLists, overrides)
                 // The first unlock's refresh: onUnlocked came while the records were still loading (16a decision 2).
                 refreshPrices()
@@ -1236,6 +1275,8 @@ class AppViewModel(
         screenshotLayerOpen = false,
         // 30: the key entry ends with Settings, its typed text with it.
         keyEntry = null,
+        // 31: an export's result ends with Backup and restore.
+        backupOutcome = null,
         // 28: the Cash tab's Ticker menu closes; its filters stay (06 decision 4).
         cashTickerMenuOpen = false,
         autoLockRefusal = null,
@@ -3198,6 +3239,150 @@ class AppViewModel(
         }
     }
 
+    /** More's Backup and restore entry (wireframe 10f frame A; 31): opens the screen; the tab stays More, so Back returns there. */
+    fun openBackup() {
+        val current = mutableState.value
+        if (current.screen != Screen.TABS || current.tab != Tab.MORE || current.saving) return
+        mutableState.update { it.copy(screen = Screen.BACKUP, backupOutcome = null) }
+    }
+
+    /** "<" or Android Back: back to More. Ignored while a save is running or an export is under way. */
+    fun closeBackup() {
+        val current = mutableState.value
+        if (current.screen != Screen.BACKUP || current.saving || current.backupStage != null) return
+        mutableState.update { it.copy(screen = Screen.TABS, backupOutcome = null) }
+    }
+
+    /**
+     * Back up now (wireframe 10e marker 2): the suggested file name for Android's file screen, backup-YYYY-MM-DD.csv in
+     * the device's zone, when an export starts; null when none does: off Backup and restore, while a save runs or an
+     * export is under way, and while the app holds no data (decision 6: such a file could never be restored).
+     */
+    fun beginBackup(): String? {
+        val current = mutableState.value
+        if (store == null || current.screen != Screen.BACKUP || current.saving || current.backupStage != null) return null
+        if (!current.holdsData) return null
+        mutableState.update { it.copy(backupStage = BackupStage.CHOOSING, backupOutcome = null) }
+        return BackupFile.fileName(clock.instant(), deviceZone())
+    }
+
+    /**
+     * Android's file screen gave its answer: [target] is the place chosen, null when it was cancelled.
+     *
+     * With an export waiting, the file is written from the stored records, read once under the save lock, whether or not
+     * the app locked meanwhile (decision 7). The mark is stored just before the write. Only a completed write makes its
+     * moment the last backup (spec 9). A failed write tries to delete the unfinished file (decision 4) and removes the
+     * mark, unless an earlier interrupted backup's warning still stands. With no export waiting, the app was restarted
+     * while the file screen was open: nothing is written, and the empty file is deleted where possible.
+     */
+    fun onBackupPlace(target: BackupTarget?) {
+        val current = mutableState.value
+        val opened = store
+        if (opened == null || current.backupStage != BackupStage.CHOOSING || current.saving) {
+            if (target != null) viewModelScope.launch { target.delete() }
+            return
+        }
+        if (target == null) {
+            mutableState.update { it.copy(backupStage = null, backupOutcome = BackupOutcome.NOT_SAVED) }
+            return
+        }
+        mutableState.update { it.copy(saving = true, backupStage = BackupStage.WRITING) }
+        viewModelScope.launch {
+            try {
+                val (outcome, completedAt) = export(opened, target, current.backupInterrupted)
+                mutableState.update {
+                    it.copy(
+                        saving = false,
+                        backupStage = null,
+                        backupOutcome = outcome,
+                        lastBackup = completedAt ?: it.lastBackup,
+                        backupInterrupted = it.backupInterrupted && outcome != BackupOutcome.SAVED,
+                    )
+                }
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: UnreadableDataException) {
+                mutableState.update { it.copy(screen = Screen.UNREADABLE, saving = false, backupStage = null) }
+            }
+        }
+    }
+
+    // One export (31): the records read from the store, the text made by K6, the mark, the write, then the moment. Gives
+    // how it ended and, for a completed one whose moment is stored, that moment. Unreadable stored data is thrown on,
+    // after the file, which holds nothing complete, is deleted where possible.
+    private suspend fun export(
+        opened: RecordStore,
+        target: BackupTarget,
+        wasInterrupted: Boolean,
+    ): Pair<BackupOutcome, Instant?> {
+        var marked = false
+        val written =
+            try {
+                val text = (BackupFile.write(backupRecords(opened)) as? BackupResult.Written)?.text
+                if (text != null) {
+                    opened.saveBackupStarted()
+                    marked = true
+                    target.write(text)
+                }
+                text != null
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: UnreadableDataException) {
+                target.delete()
+                throw e
+            } catch (e: Exception) {
+                false
+            }
+        if (!written) {
+            val gone = target.delete()
+            // The mark goes with the failed write, unless an earlier interrupted backup's warning still stands (decision 7).
+            if (marked && !wasInterrupted) markRemoved(opened)
+            return (if (gone) BackupOutcome.NOT_SAVED else BackupOutcome.NOT_SAVED_FILE_MAY_REMAIN) to null
+        }
+        // Only now, with the whole file written, does its moment become the last backup (spec 9).
+        val moment = clock.instant()
+        return try {
+            opened.saveBackupEnded(moment)
+            BackupOutcome.SAVED to moment
+        } catch (e: CancellationException) {
+            throw e
+        } catch (e: UnreadableDataException) {
+            throw e
+        } catch (e: Exception) {
+            BackupOutcome.SAVED_NOT_RECORDED to null
+        }
+    }
+
+    // Removes the mark after a failed write, the last backup staying. False when the store could not: the mark then
+    // stays, and the next start warns, which is the safe side.
+    private suspend fun markRemoved(opened: RecordStore): Boolean = try {
+        opened.saveBackupEnded(null)
+        true
+    } catch (e: CancellationException) {
+        throw e
+    } catch (e: UnreadableDataException) {
+        throw e
+    } catch (e: Exception) {
+        false
+    }
+
+    // Everything the file holds (spec section 8), read from the store in one go while every other save waits, so the
+    // file is what is stored, not what a screen last showed.
+    private suspend fun backupRecords(opened: RecordStore): BackupRecords {
+        val transactions = opened.loadTransactions()
+        return BackupRecords(
+            cashEntries = opened.loadCashEntries(),
+            portfolios = opened.loadPortfolios(),
+            transactions = transactions,
+            hidden = opened.loadHidden(transactions),
+            overrides = opened.loadOverrides(),
+            lists = opened.loadClassLists(),
+            autoLock = opened.loadAutoLock(),
+            tabOrder = opened.loadTabOrder(),
+            priceSource = priceSource.backupName,
+        )
+    }
+
     // What the state keeps of [key] (30 decision 4): that one is saved, and its last characters.
     private fun AppState.withKey(key: String?): AppState = copy(priceKeySet = key != null, priceKeyEnding = key?.let(PriceKey::ending).orEmpty())
 
@@ -4365,6 +4550,7 @@ class AppViewModel(
                 Screen.CLASS_LIST,
                 Screen.REALIZED_GAINS,
                 Screen.TRANSACTION_HISTORY,
+                Screen.BACKUP,
             )
     }
 }
