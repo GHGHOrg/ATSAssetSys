@@ -1,5 +1,18 @@
 package app.ghghorg.atsassets.core
 
+import java.time.Instant
+
+/**
+ * The backup state (spec 3: app state, not a setting, and not in the backup file; 31): [lastBackup] is the exact moment
+ * of the last completed export, with no zone (C15), null for "never backed up". [unfinished] is the mark set just
+ * before a backup file is written and removed when the write ends: a start that finds it set knows a write was
+ * interrupted (decision 7). It is a yes or no; no file place is stored.
+ */
+data class BackupState(
+    val lastBackup: Instant? = null,
+    val unfinished: Boolean = false,
+)
+
 /** K2: where records are kept. `core/` knows no database, key or Android class. */
 interface RecordStore {
     /** Throws [UnreadableDataException] if stored data exists but cannot be read. */
@@ -141,6 +154,21 @@ interface RecordStore {
 
     /** Saves the key in place of the one before, or clears it when [key] is null; the other settings are kept (30). */
     suspend fun savePriceKey(key: String?)
+
+    /**
+     * The backup state (31): no last backup and no mark when nothing was saved. Throws [UnreadableDataException] if
+     * stored data exists but cannot be read.
+     */
+    suspend fun loadBackupState(): BackupState
+
+    /** Sets the mark of a backup being written (31 decision 7); the last backup and the settings are kept. */
+    suspend fun saveBackupStarted()
+
+    /**
+     * Removes the mark, in one write with the moment: with [completedAt], the export completed and that moment becomes
+     * the last backup (spec 9: only a completed export sets it); with null, the write failed and the last backup stays.
+     */
+    suspend fun saveBackupEnded(completedAt: Instant?)
 
     /**
      * The sector and geography lists (spec 3, 4.9; 23a), each in the order its values were added, with their remembered

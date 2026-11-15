@@ -2,6 +2,7 @@ package app.ghghorg.atsassets.ui
 
 import app.ghghorg.atsassets.core.AmountError
 import app.ghghorg.atsassets.core.AutoLock
+import app.ghghorg.atsassets.core.BackupState
 import app.ghghorg.atsassets.core.CashDirection
 import app.ghghorg.atsassets.core.CashEntry
 import app.ghghorg.atsassets.core.CashEntryRefusal
@@ -1983,6 +1984,30 @@ internal class FakeStore(
         (priceKeySaveError ?: saveError)?.let { throw it }
         savedPriceKeys.add(key)
         storedPriceKey = key
+    }
+
+    // 31: the backup state as the Room store keeps it, and each write of it in order ("started", then "ended" with the
+    // moment or null). [backupSaveError] fails these saves alone; [backupEndError] only the save after the write.
+    var storedBackupState: BackupState = BackupState()
+    val backupSaves = mutableListOf<Pair<String, Instant?>>()
+    var backupSaveError: Throwable? = null
+    var backupEndError: Throwable? = null
+
+    override suspend fun loadBackupState(): BackupState {
+        loadError?.let { throw it }
+        return storedBackupState
+    }
+
+    override suspend fun saveBackupStarted() {
+        (backupSaveError ?: saveError)?.let { throw it }
+        backupSaves.add("started" to null)
+        storedBackupState = storedBackupState.copy(unfinished = true)
+    }
+
+    override suspend fun saveBackupEnded(completedAt: Instant?) {
+        (backupEndError ?: backupSaveError ?: saveError)?.let { throw it }
+        backupSaves.add("ended" to completedAt)
+        storedBackupState = BackupState(lastBackup = completedAt ?: storedBackupState.lastBackup, unfinished = false)
     }
 
     // 23a: the sector and geography lists, empty until a profile adds to them.
