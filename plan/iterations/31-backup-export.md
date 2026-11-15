@@ -1,0 +1,108 @@
+# plan/iterations/31-backup-export.md
+
+Stage: Build. Status: approved 2026-11-15 (the second draft, after a check against the repo; your A); decisions 1 to 7 settled the same day (section 11). Step 1 (documents) done; steps 2 to 7 not built.
+Source: plan.md section 4 (row 31) and section 8 (AC-57 "decided in 31 and 34"); spec section 3 (settings, the last-backup moment, "app holds data"), 4.6, 4.7, 4.9, 4.10, section 6 (More; Backup export and restore entry; accessibility, number format, states), section 8, section 9, section 14 (K2, K6, K8, K9, rule 5), C15; wireframes 10e (frames A and B, markers 1, 2, 5, 6) and 10f (frame A); open items 58 and 66.
+
+## 1. Outcome
+More shows "Last backup: <date> <zone>", or "never backed up", and gets its fourth entry, "Backup and restore". That screen shows the same line and a Back up now button. Back up now opens Android's file screen with the suggested name backup-YYYY-MM-DD.csv, and you choose where the file goes. The app writes everything spec section 8 lists into one CSV file. Only a completed export moves the last-backup line; a cancelled or failed export says so and changes nothing. Leaving for the file screen does not lock the app under "every time you leave the app".
+
+## 2. Spec refs
+- Section 8, file contents. In the file: portfolios; every buy, sell, split and reversal; every cash entry except trade lines; hidden holdings; overrides; both lists with their remembered texts; the settings (auto-lock, price source, tab order). Not in the file: lots, trade lines, holdings, prices, the PIN or biometric, the screenshot window, the last-backup moment, the theme, the "Allocation by" choice, and the price key (section 8 does not list it; open item 66).
+- Section 8, format: UTF-8, no byte-order mark, LF line endings; all 19 columns in the header; the `format` row first with value 1; a column a row type does not use stays empty; an id on each cash entry, buy, sell and split; a reversal carries only `reverses`, its date and, for a cash reversal, its note (4.6); entries in entry order, portfolios in creation order, list values alphabetically; dates as YYYY-MM-DD; numbers with a dot and digits only, whatever the phone's language (section 6, number format); quantities up to 8 decimals, amounts 2; `lot_picks` as the lot picker shows them on the sell's date (4.4, 4.10); a re-entered buy's ratio in `split_to` and `split_from`; one row per hidden holding and per override.
+- Section 9: Last backup (the export moment, shown in the device's zone with its abbreviation; only a completed export sets it); Android's file screens do not apply the every-exit lock, the other lock reasons still apply; the screenshot window ends when you leave the app; the backup is one file to a location you choose, unencrypted allowed.
+- C15: the exact moment is stored and no zone; the line uses the device's zone when it is shown; the zone's short name on Android is unverified.
+- Section 6: More's line is information only and its four entries are in wireframe 10f's order (Net Worth (Total), Allocation, Realized gains, Backup and restore); Backup and restore follows wireframe 10e frame A, the export result frame B; accessibility (1) to (5); states (a message for a failed export; an indicator while writing).
+- Section 14: K6 exports one file and records the moment of each completed export; K2 stores; K8 the lock; K9 only shows. Rule 5: nothing of the data is logged, and the backup export is one of the two allowed ways out.
+- Criteria: AC-18 (the line; its banner is 32), AC-56's export sentences and AC-57's export part (decision 1), AC-58 (More's four entries; the tab order in the backup file), AC-09 (the last-backup date shows the device's zone, not "ET"), AC-61, and the standing checks AC-39 to AC-42 and AC-35.
+- Export halves only, fully proven in 34: AC-04, AC-27, AC-59 (c), (e) and (f), AC-60 (a) (no `hidden` row for a holding that was unhidden).
+
+## 3. Out of scope
+- The Overall banner and its Back up now (32).
+- Restore in any form: reading a file, the report, the wizard (33 to 35). The Backup and restore screen shows nothing about Restore until 33 (decision 2).
+- What a restore or App initialization does with the price key (open item 66, for 34).
+- Proving that a file 31 writes restores: no reader exists until 33 (risk 1).
+- AC-37, Android's own backup and transfer (open item 5): not this iteration.
+- Notes that earlier files filed under "31" but that are restore work, recorded here for 33 and 34: the file checks must refuse a sell that names a missing lot (26 file, 13.3); the Cash ticker filter after a restore removes trade lines (28 file, its review); a held ticker with no instrument (18 file, its review); a restore can set a weaker auto-lock (20 file, section 3).
+
+## 4. Analysis (2026-11-15, by reading the code; nothing run)
+- More today: "Last backup: never backed up" (`last_backup_never`); `MoreModel.lastBackup` is always null. Comments in MoreModel.kt, MoreScreen.kt and MoreModelTest.kt say "until 31".
+- The moment: app state (spec section 3), and every app record is stored encrypted (section 9), so it goes into the settings row as nullable milliseconds: database version 14, one auto-migration. The mark of decision 7 is a second column in the same step. The ViewModel stores the moment through K2 after K6's write completes; section 14 says K6 "records the moment" (the same shape as the 30 file's Deploy finding 3).
+- Records: RecordStore already loads everything the file needs (cash entries, portfolios, transactions with their allocations, hidden holdings, overrides, the lists, auto-lock, tab order).
+- Ids: the app's own ids are random UUIDs (MainActivity.kt, `newId`): 36 characters, often starting with a digit, so they cannot be file ids (section 8: at most 32 characters, starting with a letter). The file gets ids of its own (decision 5b); section 8 says they mean nothing outside the file.
+- Entry order: a buy, a sell and their reversals share their number with their trade line (Reentries.kt, the reversal's cash line). A split has no cash line, and a new cash entry is numbered from the cash lines only (`CashRules.nextSeq`), so a cash entry can share a split's number or get a lower one. My reading, not run; step 2 tests it first. It cannot change a balance (a split moves no cash). The writer orders by the number with a fixed rule for ties.
+- Picks: a sell's allocations are exact fractions per lot. Each is written in the sell's date terms as the picker shows it; a whole remaining lot as its shown remainder, which a restore reads as the exact remainder (4.4).
+- Quoting: a portfolio name may hold commas and quotes (4.7 asks only for 3 characters and one letter); list values and remembered texts come from the price source and may hold commas; notes are free text on one line (the note fields are single-line and the ViewModel's `oneLine` turns line breaks into spaces). The writer still refuses a stored line break rather than write a broken row. How such a cell is written: decision 3.
+- Open item 58: 29 already removes a deleted portfolio's hidden and override rows (29 file, decisions; your A). A holding whose transactions are all reversed still has its buy rows in the file, so section 8 ("a buy or sell for it is in the file") accepts its override. The writer still writes a hidden or override row only for a holding with a buy or sell row, as a safeguard; the item closes when step 2 has built and tested it. The 29 file's Deploy finding 4 (a deleted portfolio's instrument and price rows) does not reach the file: instruments and prices are not in it.
+- Settings rows: the value in force is written: `every_exit` when no auto-lock choice is stored; the tab order in its stored text form (22); the price source (decision 5a).
+- Speed: working out every sell's picks as shown could mean one replay per sell. Step 2 times the writer at 3,000 transactions.
+- The file screen and the lock: MainActivity's `onStop` locks under every-exit, so the export needs an exemption while its own file screen is open (AC-57). Idle time, the phone locking and a restart still lock (decision 7). The screenshot window ends on leaving, as today. The cover screen shows while the file screen has the focus (07's pitfall); it must go when the app has the focus again.
+- Android creates the file when you choose its place, before the app writes anything, so a failed or interrupted write leaves an empty or half-written file there (decisions 4 and 7). My reading, checked in section 10's research.
+
+## 5. Files
+- core/: BackupFile.kt (new; K6: records to text, ids, order, picks, quoting); RecordStore.kt (load and save the moment and the mark); PriceSource.kt (the source's word for the file, decision 5a).
+- app/: data: AtsDatabase.kt (two columns, version 14), RoomRecordStore.kt, app/schemas/…/14.json (written by Room); backup/ (new): the adapter that writes to the chosen document and deletes an unfinished one, the only code that knows ContentResolver; prices/finnhub/FinnhubSource.kt (`finnhub`); ui: AppViewModel.kt (the export flow, its result, the mark), BackupModel.kt and BackupScreen.kt (new), MoreModel.kt, MoreScreen.kt, AppContent.kt, strings.xml; MainActivity.kt (the file screen's launcher, the lock exemption); app/build.gradle.kts (versionCode 41).
+- Tests: BackupFileTest (core) with an expected file for Example A in the test resources; the test stores; BackupFlowTest; BackupModelTest; MoreModelTest; screen tests (new file) on ScreenTestSupport.kt.
+- Documents: this file; plan.md (row 31's refs, section 8's "unprotected until 31" line in step 7, section 11, the change log); plan/open-items.md (58); CLAUDE.md if a pitfall turns up.
+
+## 6. Order of work
+Each step ends with spotlessCheck, build, tests and lint, all with --rerun-tasks, plus `:app:compileDebugAndroidTestKotlin`, and the report. Then I stop. Branch iter-31-backup-export, one pull request.
+1. This file, the plan.md lines (row 31, section 11, the change log with #187's merge), open item 58.
+2. K6 in core: the writer. Tests first: the entry-order question; Example A to an expected file; every row type; AC-59 (c), (e) and (f) and the lot set 2/3, 5/3, 3/7, 1/7; commas and quotes in a note, a name, a list value and a remembered text; a cash reversal's note; no `hidden` row after an unhide (AC-60 (a)); a hidden or override row only for a holding in the file; the ids of decision 5b; a phone language with other digits; the timing at 3,000 transactions.
+3. K2: the moment's and the mark's columns (version 14), RecordStore, the test stores; tests first.
+4. The ViewModel and MainActivity: Back up now (inactive with no data, decision 6; the suggested name in the device's zone; the file screen opened with the every-exit lock exempt; the text built from one snapshot under the save lock; the mark set, the write with an indicator and the button inactive, the mark cleared; the moment saved only after the write completes); cancelled and failed results with the delete of decision 4; a lock, a restart and an interrupted write as decision 7 says; tests first.
+5. Models and screens: More's line (the zone given in each time it is shown) and its fourth entry; the Backup and restore screen and its result line; the interrupted-backup line on both; strings; the "until 31" comments. Models first, and a wiring test (CR2).
+6. The screen tests (AC-61).
+7. Documents, versionCode 41, the schema files compared, the phone check, the wording approval, the pull request draft, and the open item 33 reminder.
+
+## 7. Stubs
+None.
+
+## 8. Risks
+- 1. No reader until 33: the file is checked against section 8 by tests and by eye only. 33's first test reads 31's output, quoted cells included (decision 3).
+- 2. Entry order: if the tie rule is wrong, the file's order could differ from the app's. Step 2's first test; I stop and ask if a tie can change a result.
+- 3. Picks: a pick written in the wrong terms, or rounded differently from the picker, fails or changes at restore (CLAUDE.md, 12's pitfall).
+- 4. The file holds all your data unencrypted, as section 8 allows. Where it goes is your choice in Android's file screen, a cloud folder included. Nothing of it is logged; Logcat is checked on the phone.
+- 5. Excel can read a cell starting with `=`, `+`, `-` or `@` as a formula (section 8's Excel note is unverified). Negative amounts start with `-` by design. Recorded, not changed.
+- 6. Writing to a chosen document: whether an existing file's content is replaced, what a failed write leaves, whether a document can be deleted, and the name the provider gives when one exists, all depend on Android and the provider. Looked up on the day (section 10). Choosing an existing backup as the place replaces its content when the write starts, so a failed write loses that older backup too; the dated suggested name makes it unlikely, the app cannot prevent it.
+- 7. AC-57 is unverified platform behaviour (section 9): if the app cannot tell its own file screen from another app, the exemption could be too wide or too narrow. It is kept as narrow as possible and checked on the phone.
+- 8. C15: the abbreviation for your zone may be a short name or an offset; the app shows what Android gives.
+- 9. Database version 13 to 14: the schema files are compared before the install, and the unreadable-data screen is a stop. The install over versionCode 40 is the last one with no backup.
+- 10. A second tap, or a save during the export: the snapshot is taken under the save lock, and the button is inactive while writing.
+- 11. An interrupted write (a force stop, a crash, power loss) leaves an unfinished file the app cannot delete at that moment; the mark of decision 7 only warns, at the next start. A file cut at a row boundary can look complete.
+- 12. What Android does with the file screen at a force stop (my reading: it closes with the app and nothing was created) is not checked until the phone shows it.
+- 13. The local build's intermittent failures (open item 60): a failed run is re-run unchanged after reading its cause; before the install the APK and its dex files are compared (CLAUDE.md, 29's pitfall).
+
+## 9. Proof
+- Commands: the full run, all with --rerun-tasks. The screen tests on the pull request: 124 plus this iteration's new ones.
+- Unit tests: steps 2 to 5 as listed; only a completed export sets the moment; a cancelled or failed one changes nothing and says so; a write that dies leaves the mark, and the next start shows the line; the same moment shows another date and zone when the zone changes; the screens show only their models.
+- Screen tests (AC-61), on ScreenTestSupport.kt: Backup and restore at the largest font in landscape; the TalkBack text of More's line and of the screen, the inactive Back up now included. Android's file screen is not driven.
+- The phone check, over versionCode 40, your data kept (AC-35): More's four entries in order; "never backed up"; the suggested name; a cancel (nothing changes); a completed export, the line on More and on the screen with the zone as Android gives it; a second export on the same day (the name); not locked on return under every-exit, while leaving for another app still locks; the idle and phone-lock cases (the file written behind the lock, the result after unlocking); a force stop while the file screen is open; the screenshot window ended by the file screen; the largest font in landscape, TalkBack, light and dark, airplane mode (an export needs no network); Logcat; the file's bytes (no byte-order mark, LF, the header, the `format` row, the row counts against your data) read only with your yes: it holds your data, is pulled to the scratchpad, never into the repo, and deleted after.
+- Not provable here: that the file restores (33 and 34); Back up now with no data on the phone (your phone holds data; unit and screen tested); a failed write, a restart by Android and an interrupted write on the phone, unless a way to cause them by hand is found.
+
+## 10. Research (on the day, each with your yes)
+- The Android calls for the file screen, the write and deleting a document, and the file type to ask for. developer.android.com cannot be fetched by my tools (CLAUDE.md): you paste the page, or the cached library is read with javap, which is outside the repo.
+- Nothing looked up yet.
+
+## 11. Decisions (Build, settled by you 2026-11-15)
+1. plan.md's row 31 names the export parts of AC-56 and AC-57 and AC-58's two parts (More's four entries; the tab order in the file), beside 8, 9 and AC-18 (your A). Not chosen: (B) AC-56 and AC-57 only; (C) the row left as it was.
+2. The Backup and restore screen shows the last-backup line and Back up now only; nothing about Restore until 33 (your A), as More's own entries arrived one by one (17 file, decision 1). Not chosen: (B) the Restore button inactive with a temporary line; (C) the explaining line without a button.
+3. A cell that holds a comma or a double quote is wrapped in double quotes and a double quote inside it is doubled; other cells are written bare, as in spec/example-backup.csv. Recorded here; spec.md unchanged: "CSV" and AC-25's "saved as CSV UTF-8 from Excel" imply it, and 33's reader must read this form (your A). Not chosen: (B) the rule written into spec 8; (C) commas and quotes refused at entry.
+4. When a write fails, the app tries to delete the unfinished file and says the backup was not saved; where the place does not allow deleting, the message says an unfinished file may remain and should not be used (your A). Not chosen: (B) the file left and said so; (C) the file left and only "not saved".
+5a. The `price_source` row is written with the value `finnhub`, a fixed word supplied by the Finnhub adapter, separate from the name the screens show (your A). Known limit: a later version without Finnhub would refuse old backups for this row. Not chosen: (B) no row while one source ships; (C) the shown name.
+5b. The file's ids are a letter for the kind and a running number, per kind in entry order: `C<n>` cash entries, `L<n>` buys (the lot labels), `S<n>` sells, `X<n>` splits (your A). The same entry can get another id in the next backup. Not chosen: (B) one running number for everything; (C) ids made from the app's UUIDs. This replaces the first draft's "from the database's numbers", which was wrong: there are none.
+6. While the app holds no data (spec section 3), Back up now is inactive with one line saying why, read by TalkBack as unavailable; such a file could never be restored, as section 8 requires an opening balance (your A). Not chosen: (B) the file written anyway; (C) written with a warning.
+7. A lock while the file screen is open (the idle time, the phone locking) does not stop the export: the file is written behind the lock and the result shows after unlocking. A restart by Android drops it: nothing is written and the app tries to delete the empty file (decision 4). Just before writing, the app stores a yes-or-no mark in the settings row and removes it when the write ends, completed or failed; a start that finds the mark shows a line on More and on Backup and restore, until the next completed backup, saying the last backup was interrupted and the file may be unfinished. The mark holds no file place, so nothing is deleted after a restart, and it does not count as a backup (your B, asked again with the force stop included). Not chosen: (A) the same without the mark; (C) any lock or restart drops the export, with the mark. Not offered: stopping the idle clock while the file screen is open (it contradicts spec section 9).
+
+## 12. Wording to approve (D9; proposed in step 5, approved on the phone)
+- The entry "Backup and restore"; the line "Last backup: <date> <zone>"; "Back up now"; the writing indicator; frame B's two results; the "not saved, a file may remain" result (decision 4); the line under an inactive Back up now (decision 6); the interrupted-backup line (decision 7).
+- Nothing proposed yet.
+
+## 13. Status and notes
+- First draft 2026-11-15; checked against the repo on your word (every place that names 31, backup or export: spec.md, intent.md, plan.md, open-items.md, the earlier iteration files, setup.md, the code's comments, wireframes 10e and 10f), which added decisions 6 and 7, sections 10 and 12, the refs AC-58, AC-09 and the export halves, and corrected the open item 58 line; the second draft approved the same day (your A).
+- Not checked: whether a stored note can begin or end with a space. Section 8 keeps a note's spaces, so the writer writes it as stored.
+
+### 13.1 Steps
+- Step 1 (2026-11-15): this file, plan.md (row 31's refs, section 11's rows, the change log) and open item 58. Only documents changed.
+
+## 14. Departures from the plan
+- The approved draft said open item 58 closes in step 1. It closes with step 2, when the writer's safeguard is built and tested; step 1 records the reasoning in the item.
