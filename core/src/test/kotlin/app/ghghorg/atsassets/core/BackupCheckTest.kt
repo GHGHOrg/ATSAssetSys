@@ -460,9 +460,9 @@ class BackupCheckTest {
                 error(5, "quantity", RestoreReason.QuantityNotPositive),
                 error(6, "lot_picks", RestoreReason.DependsOn(5)),
                 error(7, "reverses", RestoreReason.DependsOn(5)),
-                error(10, "reverses", RestoreReason.DependsOn(5)),
                 error(8, "ticker", RestoreReason.DependsOn(5)),
                 error(9, "ticker", RestoreReason.DependsOn(5)),
+                error(10, "reverses", RestoreReason.DependsOn(5)),
             ),
             errors,
         )

@@ -309,10 +309,19 @@ data class RestoreSummary(
 
 /** What a check gives (section 8, restore steps 2 and 5; 33a decision 1). Nothing is stored either way (C3). */
 sealed interface RestoreCheck {
-    /** Every error found. */
+    /**
+     * Every error found, in line order, the file as a whole first; within a line, the form errors in the file's own
+     * column order, then the rule error or "depends on line N" (33a decision 4).
+     */
     data class Failed(
         val errors: List<RestoreError>,
-    ) : RestoreCheck
+    ) : RestoreCheck {
+        /** N of "N errors in M lines" (section 8). */
+        val errorCount: Int get() = errors.size
+
+        /** M of "N errors in M lines": the lines with an error; an error of the file as a whole is no line. */
+        val lineCount: Int get() = errors.mapNotNull { it.line }.distinct().size
+    }
 
     /**
      * A clean file: the [records] K1 made in the replay with the app's own ids, ready to load (34); the tickers with

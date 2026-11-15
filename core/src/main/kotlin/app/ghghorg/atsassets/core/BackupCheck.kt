@@ -19,8 +19,26 @@ object BackupCheck {
         val read = BackupReader.read(bytes)
         if (read is FileRead.Refused) return RestoreCheck.Failed(read.errors)
         val parsed = BackupRows.parse((read as FileRead.Read).rows, context.priceSources)
-        return Replay(parsed, context).run()
+        val checked = Replay(parsed, context).run()
+        if (checked !is RestoreCheck.Failed) return checked
+        return RestoreCheck.Failed(inReportOrder(checked.errors, formErrors = parsed.errors.size, read.columnOrder))
     }
+
+    // Decision 4: line order, the file as a whole first; within a line, the form errors (the first [formErrors] found,
+    // each row's own rules) in the file's column order, an error with no column first, then the rest in the order found.
+    private fun inReportOrder(
+        errors: List<RestoreError>,
+        formErrors: Int,
+        columnOrder: Map<String, Int>,
+    ): List<RestoreError> = errors
+        .withIndex()
+        .sortedWith(
+            compareBy<IndexedValue<RestoreError>>(
+                { it.value.line ?: -1 },
+                { if (it.index < formErrors) 0 else 1 },
+                { it.value.column?.let { column -> columnOrder[column] } ?: -1 },
+            ),
+        ).map { it.value }
 }
 
 /** One check's replay: what K1 has made so far, and every error found. */
