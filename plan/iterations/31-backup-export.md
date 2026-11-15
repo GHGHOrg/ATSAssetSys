@@ -1,6 +1,6 @@
 # plan/iterations/31-backup-export.md
 
-Stage: Build. Status: approved 2026-11-15 (the second draft, after a check against the repo; your A); decisions 1 to 7 settled the same day (section 11). Steps 1 to 6 built 2026-11-15 (section 13.1): 1,328 tests; database version 14 (the settings' two backup columns); 136 screen tests compiled; on draft #188 CI and the screen tests (136 of 136) green. Step 7 2026-11-15: versionCode 41 installed over 40 with your data kept; phone checks 1 to 18 all okay but two known limits after a force stop (open item 67); your first backups saved, the file's format checked; wording approved (section 12). Not done: the pull request made ready and reviewed, and the merge.
+Stage: Build. Status: approved 2026-11-15 (the second draft, after a check against the repo; your A); decisions 1 to 7 settled the same day (section 11). Steps 1 to 6 built 2026-11-15 (section 13.1): 1,328 tests; database version 14 (the settings' two backup columns); 136 screen tests compiled; on draft #188 CI and the screen tests (136 of 136) green. Step 7 2026-11-15: versionCode 41 installed over 40 with your data kept; phone checks 1 to 18 all okay but two known limits after a force stop (open item 67); your first backups saved, the file's format checked; wording approved (section 12). Done: reviewed, no high or medium finding, two low fixed (1,329 tests) and five recorded (section 13.3); pull request #188 merged as be02246 (section 13.4).
 Source: plan.md section 4 (row 31) and section 8 (AC-57 "decided in 31 and 34"); spec section 3 (settings, the last-backup moment, "app holds data"), 4.6, 4.7, 4.9, 4.10, section 6 (More; Backup export and restore entry; accessibility, number format, states), section 8, section 9, section 14 (K2, K6, K8, K9, rule 5), C15; wireframes 10e (frames A and B, markers 1, 2, 5, 6) and 10f (frame A); open items 58 and 66.
 
 ## 1. Outcome
@@ -177,6 +177,10 @@ The results, each in your words ("ALL YES", "ALL OKAY") unless said otherwise:
 - Finding 6 (info, recorded, as 30's finding 4): Back is off while the file is written, so Android's Back leaves the app; the write still completes.
 - Finding 7 (info, recorded): open item 67, the `startActivityForResult` departure (section 14) and the formula risk (risk 5).
 - The full run after the fixes green at the first try: 1,329 tests (1 skipped), lint's 6 listed findings (report 16:16:08), 136 screen tests compiled.
+- On e0beb7b: CI green (run 43692759761, "Scale test retries": none), the screen tests green (run 43692759730; 136 test cases, 0 failures). On 5eb6b23 (the review's commit), pushed once: CI green (run 43694099367, 4m 34s, "Scale test retries": none), the screen tests green (run 43694099289, 14m 57s; 136 test cases, 0 failures, 0 skipped), Analyze and CodeQL green, CodeQL also on the draft. The phone given 5eb6b23's build (your word): classes7.dex 1,016 bytes larger than e0beb7b's, the APK the same size, versionCode 41, your data kept.
+
+### 13.4 The merge (2026-11-15)
+- Pull request #188 made ready and merged by you as be02246, 9 commits (steps 1 to 7 and the Deploy review). On main at be02246: CI (run 43695749887, 3m 50s, "Scale test retries": none), CodeQL (run 43695751286) and the screen tests (run 43695749891, 13m 28s; 136 test cases, 0 failures, counted in the result XML) green at the first attempt (gh, read only).
 
 ## 14. Departures from the plan
 - The approved draft said open item 58 closes in step 1. It closes with step 2, when the writer's safeguard is built and tested; step 1 records the reasoning in the item.
