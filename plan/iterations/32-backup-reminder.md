@@ -1,6 +1,6 @@
 # plan/iterations/32-backup-reminder.md
 
-Stage: Build. Status: approved 2026-11-15 (your A); decisions 1 to 3 settled the same day (section 11). Step 1 (documents) done; steps 2 to 6 not built. The phone check of the "due" banner waits until 2026-11-23 or later (decision 2).
+Stage: Build. Status: approved 2026-11-15 (your A); decisions 1 to 3 settled the same day (section 11). Steps 1 to 6 built on iter-32-backup-reminder (versionCode 42); not merged. The phone check's part A passed 2026-11-15 (13.2). Open: part B, the "due" banner, on or after 2026-11-23 (decision 2), the wording's approval (section 12), the screen tests' first run on the pull request.
 Source: plan.md section 4 (row 32); spec section 9 (Backup reminder), section 3 ("app holds data"), section 6 (view 1, the navigation outline), section 14 (K6, K9), D9, C15; wireframe 01 (state A, marker 1); intent "Backup reminder"; the 31 file (the export flow; open item 67).
 
 ## 1. Outcome
@@ -72,13 +72,53 @@ None.
 
 ## 12. Wording to approve (D9; proposed in step 4, approved on the phone)
 - The banner for "more than 7 days" and for "no backup yet"; the buttons "Back up now" and "Dismiss"; the result lines (31's, reused); TalkBack's reading of the banner.
-- Nothing proposed yet.
+- Proposed in step 4 (2026-11-15), not yet approved; strings.xml says so:
+  1. No backup yet (`backup_due_never`): "Back up your data: you have never backed up."
+  2. An old backup (`backup_due_old`): "Back up your data: the last backup was <date> <zone>, more than 7 days ago.", the date and zone as More's line shows them (C15), for example "2026-11-15 GMT+08:00".
+  3. The buttons: "Back up now" (31's `backup_now`) and "Dismiss" (`backup_due_dismiss`).
+  4. The line of an export started from the banner: 31's five lines, unchanged (the 31 file, section 12).
+  5. TalkBack reads the banner's sentence as written, then each button by its label; the export's line is read when it appears.
 
 ## 13. Status and notes
 - Draft 2026-11-15; approved the same day (your A).
 
 ### 13.1 Steps
-- Step 1 (2026-11-15): this file, plan.md (section 11's row for 32, the change log with #189's merge and main's runs). Only documents changed.
+- Step 1 (2026-11-15): this file, plan.md (section 11's row for 32, the change log with #189's merge and main's runs). Only documents changed. Commit 80547f7.
+- Steps 2 to 5 were built without a stop between them (your instruction, 2026-11-15), each step's state held for its own commit; committed together on your yes.
+- Step 2 (commit 12da2d1): `BackupReminder.due` and its `AFTER` (7 days) in core; BackupReminderTest, 8 tests, written before the rule. The full run green at the first try: 1,337 tests (1 skipped), lint's 6 listed findings (report 17:44:17), 136 screen tests compiled.
+- Step 3 (commit 4e40aa4): the state's `now` and `reminderDismissed`; `backupDue`, `backupReminderShown`; `onAppHidden`, `onAppShown`, `dismissBackupReminder`; `beginBackup` from Overall; the result kept only where it shows. BackupReminderFlowTest, 17 tests. The first run was red: spotlessCheck (one function's form) and two tests. One was the new test's own expectation (the file's first line is the header row, not the `format` row). The other was 31's `backUpNow_offTheScreen_orWithOneUnderWay_startsNothing`, which stood on Overall with no backup, where the reminder's button now starts an export on purpose: it now stands on Overall with a recent backup, on More and on Cash; nothing was removed from it. The second run green: 1,354 tests (1 skipped), lint's 6 (report 17:54:34); HoldingsScaleTest measured "11 history" again (pass on try 3).
+- Step 4 (commit e0e6403): `BackupDue`, `BackupReminderModel`, `Backups.reminder`; the banner in OverallScreen; `BackupStatusLine` shared with Backup and restore; AppContent passes Back up now to Overall; three strings. BackupReminderModelTest, 7 tests, and one wiring test. The first run was red on the wiring test's own expectation (the test zone `ZoneOffset.UTC` prints "Z", as in 31); the second green: 1,362 tests (1 skipped), lint's 6 (report 18:01:34); "11 history" passed on try 2.
+- Step 5 (commit 4b2039f): BackupReminderScreenTest, 9 tests (7 for TalkBack and the states, 1 at the largest font in landscape, 1 on MainActivity); 145 `@Test` lines. Every MainActivity test's path was read: none finds or taps Overall's items by position, and those that tap one scroll to it first. Two tests that draw Overall directly tapped without scrolling (AllocationTalkBackTest's cash row, NetWorthTalkBackTest's net worth); both now scroll first. The Gradle daemon crashed twice before the green run, each time in the JVM's JIT compiler (first `relocInfo_x86.cpp:110` in a C1 thread compiling an R8 method after 1 h 9 min of daemon life, then an access violation in a C2 thread compiling `URLClassLoader.findClass` 19 s into a new daemon); the logs were moved to the scratchpad. The third run of the same command green: 1,362 tests (1 skipped), lint's 6 (report 20:59:44); "11 history" passed on try 2. The screen tests are compiled only until the pull request runs them.
+- Step 6: versionCode 42; this file; plan.md.
+
+### 13.2 Phone check (versionCode 42 over 41, your data kept)
+Part A, now (the last backup is 2026-11-15, under 7 days old):
+1. AC-35: the app opens with your data as before, no unreadable-data screen. No database change in 32.
+2. Overall (after the unlock): no banner and no line under the title; net worth, the allocation and the portfolios as before.
+3. More: "Last backup: 2026-11-15 GMT+08:00" as before.
+4. More, Backup and restore, Back up now, then cancel the file screen: "Backup not saved. The last backup date is unchanged." on that screen, as in 31. Then the Overall tab: no line there.
+5. The home button, then the app again, unlock: Overall, still no banner.
+
+Part B, on or after 2026-11-23, the phone's clock unchanged (decision 2):
+6. Overall after the unlock: the banner under the title, "Back up your data: the last backup was 2026-11-15 GMT+08:00, more than 7 days ago.", with Back up now and Dismiss.
+7. Dismiss: the banner goes. The Cash tab and back: still gone. Turn the phone: still gone.
+8. The home button, then the app again, unlock: the banner is back. Dismiss again; close the app from recent apps and open it: the banner is back.
+9. Settings, Auto-lock: note your choice, then "every time you leave the app". Overall, Back up now on the banner: Android's file screen with backup-<today>.csv; cancel: back on Overall with no unlock asked (AC-57), the banner still there and "Backup not saved. The last backup date is unchanged." under it.
+10. A portfolio's row, then "<" back to Overall: the line is gone, the banner stays.
+11. Back up now, Save: back on Overall with no unlock asked; the banner gone and "Backup saved. Last backup: <today> GMT+08:00" in its place; More shows the same date. Back to Overall: the line is gone. Then Settings, Auto-lock: your own choice back.
+12. AC-39 to AC-42 need the banner, so before check 11 if wanted: the largest font in landscape (the banner's text, both buttons and the line reached by scrolling), TalkBack (the sentence, then each button), light and dark, airplane mode (Back up now, Save works offline).
+13. Logcat (spec section 9), as in 31's check 18, over one Back up now from the banner.
+
+Results:
+- Part A (2026-11-15, versionCode 42 installed over 41; before the install the APK's 10 dex files were compared with an earlier build and the names 32 added were found in them): checks 1 to 5 all as planned (your "1-5 ALL YES"): your data as before, no banner and no line on Overall, More's line unchanged, the cancelled export's line on Backup and restore only, and no banner after leaving and returning.
+- Part B: not yet run; on or after 2026-11-23.
 
 ## 14. Departures from the plan
-- None yet.
+- Step 3: a turn of the phone keeps the reminder dismissed. Section 4 reset the dismissal at each of MainActivity's onStart, which also runs after a turn. MainActivity's onStop now tells the ViewModel the app left (`onAppHidden`), a turn excepted, and `onAppShown` resets only after that.
+- Step 3: an unlock alone does not reset the dismissal or drop Overall's line. After an idle lock in view the reminder stays dismissed until the app is left and returned to, or restarted; section 4 said the same, and this records it as chosen. The line stays through an unlock because the file may have been written while the app was locked (31 decision 7).
+- Step 3: Dismiss also drops a result line under the banner (decision 1 did not say).
+- Step 3: the result is dropped in one place for every way of leaving: `KeptStateFlow` applies `withBackupResultWhereShown` to each state it is given, so the result lasts only on Backup and restore or on Overall. Section 5 named no change to KeptFields.kt.
+- Step 3: `now` is also set when the ViewModel is made, before the records load, so a state is never without it.
+- Step 4: the reminder has its own model, `BackupReminderModel` in BackupModel.kt, read as `AppState.backupReminder`; OverallModel is unchanged (section 5 named OverallModel.kt).
+- Step 4: while the file is written from Overall, the banner stays with both buttons inactive and "Writing the backup file…" under it.
+- Step 5: the banner shows in every Overall state that holds data and has no backup, also where a test draws Overall directly, not only in MainActivity tests (risk 1 named those only); two such tests were given a scroll before their tap.
