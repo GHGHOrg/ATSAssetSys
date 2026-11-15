@@ -219,6 +219,8 @@ class MainActivity : FragmentActivity() {
         // 21: leaving ends the screenshot window (spec 9), and so does any lock (decision 1); a turn of the phone that
         // keeps the app unlocked is no leaving, and the new activity goes on with it (onStart).
         if (!isChangingConfigurations || lock.state != LockState.Unlocked) screenshots.end()
+        // 32: the next onStart is an opening of the app, which shows a dismissed reminder again; a turn of the phone is not.
+        if (!isChangingConfigurations) viewModel.onAppHidden()
         if (screenshots.timeLeft(SystemClock.elapsedRealtime()) == null) {
             window.setFlags(WindowManager.LayoutParams.FLAG_SECURE, WindowManager.LayoutParams.FLAG_SECURE)
             viewModel.onScreenshotWindow(null)

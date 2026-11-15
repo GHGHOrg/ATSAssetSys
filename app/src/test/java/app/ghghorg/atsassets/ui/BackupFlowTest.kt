@@ -178,10 +178,17 @@ class BackupFlowTest {
         assertNull(vm.state.value.backupStage)
     }
 
+    // From 32 Overall's reminder starts an export too (BackupReminderFlowTest), so "off the screen" here is Overall with
+    // a recent backup, where no reminder shows, and a tab that never has one.
     @Test
     fun backUpNow_offTheScreen_orWithOneUnderWay_startsNothing() {
-        val elsewhere = started(store(), clock = clockAt(now))
+        val elsewhere = started(store(BackupState(lastBackup = Instant.parse(now).minusSeconds(60))), clock = clockAt(now))
         assertNull(elsewhere.beginBackup())
+        elsewhere.selectTab(Tab.MORE)
+        assertNull(elsewhere.beginBackup())
+        val noBackupYet = started(store(), clock = clockAt(now))
+        noBackupYet.selectTab(Tab.CASH)
+        assertNull(noBackupYet.beginBackup())
         val vm = onBackup()
         assertEquals("backup-2026-10-09.csv", vm.beginBackup())
         assertNull(vm.beginBackup())
