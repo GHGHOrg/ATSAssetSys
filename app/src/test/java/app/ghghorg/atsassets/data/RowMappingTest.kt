@@ -2,6 +2,7 @@ package app.ghghorg.atsassets.data
 
 import app.ghghorg.atsassets.core.AssetType
 import app.ghghorg.atsassets.core.AutoLock
+import app.ghghorg.atsassets.core.BackupState
 import app.ghghorg.atsassets.core.ClassList
 import app.ghghorg.atsassets.core.ClassLists
 import app.ghghorg.atsassets.core.ClassOverride
@@ -650,5 +651,54 @@ class RowMappingTest {
             val thrown = assertThrows(UnreadableDataException::class.java) { row.toPriceKey() }
             assertEquals("A stored setting could not be read.", thrown.message)
         }
+    }
+
+    // 31: the backup state, two columns of the settings row (spec 3: app state; decision 7's mark).
+    @Test
+    fun noSettingsRow_orNoBackupColumns_isNeverBackedUp_andNoMark() {
+        val none: SettingsRow? = null
+        assertEquals(BackupState(lastBackup = null, unfinished = false), none.toBackupState())
+        assertEquals(BackupState(), SettingsRow(autoLock = AutoLock.IDLE_1_MIN.name, priceKey = "abc123").toBackupState())
+        assertEquals(BackupState(), SettingsRow(autoLock = AutoLock.IDLE_1_MIN.name, backupUnfinished = false).toBackupState())
+    }
+
+    @Test
+    fun theMark_isSetBeforeAWrite_andKeepsTheLastBackupAndTheSettings() {
+        val moment = Instant.parse("2026-10-04T03:00:00Z")
+        val row = SettingsRow(autoLock = AutoLock.IDLE_5_MIN.name, tabOrder = "cash;more;portfolios;overall", priceKey = "abc123")
+        val backedUp = row.copy(lastBackupAt = moment.toEpochMilli())
+        assertEquals(backedUp.copy(backupUnfinished = true), backedUp.withBackupStarted())
+        assertEquals(BackupState(lastBackup = moment, unfinished = true), backedUp.withBackupStarted().toBackupState())
+        // The first save of all makes the row, with the default auto-lock choice.
+        assertEquals(SettingsRow(autoLock = AutoLock.EVERY_LEAVE.name, backupUnfinished = true), null.withBackupStarted())
+    }
+
+    @Test
+    fun aCompletedWrite_setsTheMoment_andRemovesTheMark_inOneRow() {
+        val earlier = Instant.parse("2026-10-04T03:00:00Z")
+        val now = Instant.parse("2026-10-09T12:34:56.789Z")
+        val writing = SettingsRow(autoLock = AutoLock.IDLE_5_MIN.name, priceKey = "abc123", lastBackupAt = earlier.toEpochMilli(), backupUnfinished = true)
+        val done = writing.withBackupEnded(now.toEpochMilli())
+        assertEquals(writing.copy(lastBackupAt = now.toEpochMilli(), backupUnfinished = null), done)
+        assertEquals(BackupState(lastBackup = now, unfinished = false), done.toBackupState())
+    }
+
+    @Test
+    fun aFailedWrite_removesTheMark_andKeepsTheLastBackup() {
+        val earlier = Instant.parse("2026-10-04T03:00:00Z")
+        val writing = SettingsRow(autoLock = AutoLock.EVERY_LEAVE.name, lastBackupAt = earlier.toEpochMilli(), backupUnfinished = true)
+        assertEquals(BackupState(lastBackup = earlier, unfinished = false), writing.withBackupEnded(null).toBackupState())
+        // Never backed up stays never backed up.
+        assertEquals(BackupState(), null.withBackupStarted().withBackupEnded(null).toBackupState())
+    }
+
+    @Test
+    fun theOtherSettingsSaves_keepTheBackupState() {
+        val moment = Instant.parse("2026-10-04T03:00:00Z")
+        val row = SettingsRow(autoLock = AutoLock.EVERY_LEAVE.name, lastBackupAt = moment.toEpochMilli(), backupUnfinished = true)
+        val state = BackupState(lastBackup = moment, unfinished = true)
+        assertEquals(state, row.withAutoLock(AutoLock.IDLE_1_MIN.name).toBackupState())
+        assertEquals(state, row.withTabOrder("overall;more;cash;portfolios").toBackupState())
+        assertEquals(state, row.withPriceKey("abc123").toBackupState())
     }
 }

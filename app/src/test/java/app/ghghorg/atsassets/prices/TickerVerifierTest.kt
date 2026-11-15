@@ -2,6 +2,7 @@ package app.ghghorg.atsassets.prices
 
 import app.ghghorg.atsassets.core.AssetType
 import app.ghghorg.atsassets.core.AutoLock
+import app.ghghorg.atsassets.core.BackupState
 import app.ghghorg.atsassets.core.CashEntry
 import app.ghghorg.atsassets.core.ClassList
 import app.ghghorg.atsassets.core.ClassLists
@@ -25,6 +26,7 @@ import app.ghghorg.atsassets.core.Transaction
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
 import org.junit.Test
+import java.time.Instant
 
 class TickerVerifierTest {
     private class Source(
@@ -42,6 +44,8 @@ class TickerVerifierTest {
         override suspend fun profile(ticker: String): ProfileAnswer = error("not used")
 
         override val name: String = "not used"
+
+        override val backupName: String = "not used"
 
         override fun useKey(key: String?) = error("not used")
 
@@ -131,6 +135,12 @@ class TickerVerifierTest {
         override suspend fun loadPriceKey(): String? = error("not used")
 
         override suspend fun savePriceKey(key: String?) = error("not used")
+
+        override suspend fun loadBackupState(): BackupState = error("not used")
+
+        override suspend fun saveBackupStarted() = error("not used")
+
+        override suspend fun saveBackupEnded(completedAt: Instant?) = error("not used")
 
         override suspend fun loadClassLists(): ClassLists = error("not used")
 

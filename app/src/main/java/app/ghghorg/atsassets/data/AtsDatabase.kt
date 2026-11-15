@@ -140,7 +140,10 @@ data class SourceTextRow(
  * The settings (spec section 3), one row with a column per setting (20 decision 3): the row's [id] is always
  * [ONLY_ID]. [autoLock] is an [app.ghghorg.atsassets.core.AutoLock] by name. [tabOrder] is spec 8's `tab_order` text
  * (22), null until an order is saved. [priceKey] is the price source's API key (30 decision 1), null while none is
- * saved; it is never logged and never part of a message. Each later setting adds a column.
+ * saved; it is never logged and never part of a message. Each later setting adds a column. The row also holds the
+ * backup state, which is app state, not a setting (spec 3; 31): [lastBackupAt] is the moment of the last completed
+ * export in milliseconds since 1970 UTC, null for never; [backupUnfinished] is true while a backup file is being
+ * written, null or false otherwise (decision 7).
  */
 @Entity(tableName = "settings")
 data class SettingsRow(
@@ -148,6 +151,8 @@ data class SettingsRow(
     val autoLock: String,
     val tabOrder: String? = null,
     val priceKey: String? = null,
+    val lastBackupAt: Long? = null,
+    val backupUnfinished: Boolean? = null,
 ) {
     companion object {
         const val ONLY_ID = 1
@@ -548,6 +553,18 @@ interface SettingsDao {
     suspend fun savePriceKey(priceKey: String?) {
         upsert(load().withPriceKey(priceKey))
     }
+
+    /** Sets the mark of a backup being written, making the row if there is none; the other columns are kept (31). */
+    @Transaction
+    suspend fun saveBackupStarted() {
+        upsert(load().withBackupStarted())
+    }
+
+    /** Removes the mark and, with [completedAt], sets the last backup's moment, in one write; the other columns are kept (31). */
+    @Transaction
+    suspend fun saveBackupEnded(completedAt: Long?) {
+        upsert(load().withBackupEnded(completedAt))
+    }
 }
 
 /**
@@ -556,7 +573,7 @@ interface SettingsDao {
  * hidden_holdings table, version 7 (16a) the three price columns of instruments, version 8 (20) the settings table,
  * version 9 (22) its tab order column, version 10 (23a) the three profile columns of instruments and the list_values
  * table, version 11 (24) the class_overrides table, version 12 (25) the source_texts table, version 13 (30) the
- * settings' key column; Room generates each step out of the schemas in app/schemas.
+ * settings' key column, version 14 (31) its two backup columns; Room generates each step out of the schemas in app/schemas.
  */
 // 29: ids per delete query, well under SQLite's limit on bound variables.
 internal const val DELETE_CHUNK = 500
@@ -574,7 +591,7 @@ internal const val DELETE_CHUNK = 500
         ClassOverrideRow::class,
         SourceTextRow::class,
     ],
-    version = 13,
+    version = 14,
     autoMigrations = [
         AutoMigration(from = 1, to = 2),
         AutoMigration(from = 2, to = 3),
@@ -588,6 +605,7 @@ internal const val DELETE_CHUNK = 500
         AutoMigration(from = 10, to = 11),
         AutoMigration(from = 11, to = 12),
         AutoMigration(from = 12, to = 13),
+        AutoMigration(from = 13, to = 14),
     ],
 )
 abstract class AtsDatabase : RoomDatabase() {

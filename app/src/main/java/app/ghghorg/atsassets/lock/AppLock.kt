@@ -26,6 +26,9 @@ class AppLock {
     private var autoLock: AutoLock? = null
     private var lastInteraction = 0L
 
+    // 31: set just before the app opens Android's file screen, and used up by the leaving that follows.
+    private var fileScreenOpening = false
+
     /** The choice applies from the next event on. */
     fun setAutoLock(choice: AutoLock) {
         autoLock = choice
@@ -67,14 +70,31 @@ class AppLock {
         lastInteraction = now
     }
 
+    /**
+     * The app is about to open Android's own file screen for a backup (31; spec section 9, AC-57): the next leaving is
+     * that screen coming up, which "every time you leave" does not count. Only that one leaving, and only that rule: the
+     * phone locking and the idle time lock as ever.
+     */
+    fun onFileScreenOpened() {
+        fileScreenOpening = true
+    }
+
+    /** The file screen gave its answer, a place or none: leaving the app locks as usual again. */
+    fun onFileScreenClosed() {
+        fileScreenOpening = false
+    }
+
     /** The app went out of view; [screenOff] when the phone was locked with the app in view. A showing prompt is forgotten. */
     fun onAppLeft(
         now: Long,
         screenOff: Boolean,
     ) {
         promptShowing = false
+        // 31: the app's own file screen coming up is not a leaving under "every time you leave"; the phone locking is.
+        val forFileScreen = fileScreenOpening && !screenOff
+        fileScreenOpening = false
         when (autoLock) {
-            null, AutoLock.EVERY_LEAVE -> lockIfUnlocked()
+            null, AutoLock.EVERY_LEAVE -> if (!forFileScreen) lockIfUnlocked()
             AutoLock.IDLE_1_MIN, AutoLock.IDLE_5_MIN -> onIdleCheck(now)
             AutoLock.PHONE_LOCK_OR_RESTART -> if (screenOff) lockIfUnlocked()
         }

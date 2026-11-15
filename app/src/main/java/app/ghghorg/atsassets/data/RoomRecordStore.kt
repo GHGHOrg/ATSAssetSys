@@ -2,6 +2,7 @@ package app.ghghorg.atsassets.data
 
 import app.ghghorg.atsassets.core.AssetType
 import app.ghghorg.atsassets.core.AutoLock
+import app.ghghorg.atsassets.core.BackupState
 import app.ghghorg.atsassets.core.CashEntry
 import app.ghghorg.atsassets.core.CashType
 import app.ghghorg.atsassets.core.ClassList
@@ -425,6 +426,39 @@ class RoomRecordStore(
             }
         }
         dao.savePriceKey(key)
+    }
+
+    override suspend fun loadBackupState(): BackupState = withContext(Dispatchers.IO) {
+        try {
+            database.settingsDao().load().toBackupState()
+        } catch (e: CancellationException) {
+            throw e
+        } catch (e: UnreadableDataException) {
+            throw e
+        } catch (e: Exception) {
+            throw UnreadableDataException("The stored data could not be read.", e)
+        }
+    }
+
+    override suspend fun saveBackupStarted() {
+        settingsDaoForSave().saveBackupStarted()
+    }
+
+    override suspend fun saveBackupEnded(completedAt: Instant?) {
+        settingsDaoForSave().saveBackupEnded(completedAt?.toEpochMilli())
+    }
+
+    // The settings DAO for a save, as the other settings' saves open it.
+    private suspend fun settingsDaoForSave(): SettingsDao = withContext(Dispatchers.IO) {
+        try {
+            database.settingsDao()
+        } catch (e: CancellationException) {
+            throw e
+        } catch (e: UnreadableDataException) {
+            throw e
+        } catch (e: Exception) {
+            throw UnreadableDataException("The stored data could not be opened.", e)
+        }
     }
 
     override suspend fun loadClassLists(): ClassLists = withContext(Dispatchers.IO) {
@@ -883,6 +917,27 @@ internal fun SettingsRow?.toPriceKey(): String? {
 internal fun SettingsRow?.withPriceKey(priceKey: String?): SettingsRow {
     if (this == null) return SettingsRow(autoLock = AutoLock.EVERY_LEAVE.name, priceKey = priceKey)
     return copy(priceKey = priceKey)
+}
+
+/** No settings row, or none with a backup column set, is "never backed up" and no mark (spec 9; 31). */
+internal fun SettingsRow?.toBackupState(): BackupState = BackupState(
+    lastBackup = this?.lastBackupAt?.let { Instant.ofEpochMilli(it) },
+    unfinished = this?.backupUnfinished == true,
+)
+
+/** The settings row with the mark of a backup being written, or a new row with it and the default auto-lock choice (31 decision 7). */
+internal fun SettingsRow?.withBackupStarted(): SettingsRow {
+    if (this == null) return SettingsRow(autoLock = AutoLock.EVERY_LEAVE.name, backupUnfinished = true)
+    return copy(backupUnfinished = true)
+}
+
+/**
+ * The settings row without the mark and, with [completedAt], with that moment as the last backup; with null the last
+ * backup stays as it was (spec 9: only a completed export sets it). A new row with the default auto-lock choice if none.
+ */
+internal fun SettingsRow?.withBackupEnded(completedAt: Long?): SettingsRow {
+    if (this == null) return SettingsRow(autoLock = AutoLock.EVERY_LEAVE.name, lastBackupAt = completedAt)
+    return copy(lastBackupAt = completedAt ?: lastBackupAt, backupUnfinished = null)
 }
 
 internal fun HiddenHolding.toRow() = HiddenHoldingRow(portfolioId = portfolioId, ticker = ticker)

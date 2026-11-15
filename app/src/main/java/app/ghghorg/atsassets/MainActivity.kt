@@ -1,5 +1,7 @@
 package app.ghghorg.atsassets
 
+import android.content.ActivityNotFoundException
+import android.content.Intent
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
@@ -34,6 +36,7 @@ import androidx.fragment.app.FragmentActivity
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.lifecycleScope
+import app.ghghorg.atsassets.backup.DocumentBackupTarget
 import app.ghghorg.atsassets.data.DatabaseKey
 import app.ghghorg.atsassets.data.RoomRecordStore
 import app.ghghorg.atsassets.data.SqlCipherOpener
@@ -55,6 +58,12 @@ import java.util.UUID
 
 // 20: how often the idle time is checked while the app is in view; a touch also checks it first.
 private const val IDLE_CHECK_MS = 1_000L
+
+// 31: the type asked of Android's file screen for the backup file (spec section 8: one CSV text file).
+private const val BACKUP_FILE_TYPE = "text/csv"
+
+// 31: this activity's one request to another screen; any number in the lower 16 bits will do.
+private const val BACKUP_FILE_REQUEST = 31
 
 class MainActivity : FragmentActivity() {
     // Kept across a re-creation by LockHolder; set first in onCreate.
@@ -154,6 +163,7 @@ class MainActivity : FragmentActivity() {
                                 viewModel = viewModel,
                                 modifier = Modifier.padding(innerPadding),
                                 screenshots = ScreenshotControls(::allowScreenshots, ::turnOffScreenshots),
+                                onBackUpNow = ::backUpNow,
                             )
                         } else {
                             CoverScreen(modifier = Modifier.padding(innerPadding))
@@ -186,6 +196,8 @@ class MainActivity : FragmentActivity() {
         // 20: the time away counts as idle (decision 1).
         lock.onAppReturned(SystemClock.elapsedRealtime())
         lockState = lock.state
+        // 31: the last backup is shown in the zone the phone is in now (C15).
+        viewModel.onAppShown()
         showPromptIfNeeded()
         idleHandler.postDelayed(idleCheck, IDLE_CHECK_MS)
         // 21: a window kept across a turn of the phone goes on in the new activity; otherwise it is off.
@@ -212,6 +224,49 @@ class MainActivity : FragmentActivity() {
             viewModel.onScreenshotWindow(null)
         }
         super.onStop()
+    }
+
+    /**
+     * Back up now (31; wireframe 10e marker 2): when the ViewModel starts an export, Android's file screen opens with
+     * the suggested name. That screen coming up is not a leaving under "every time you leave" (spec section 9, AC-57);
+     * the lock is told just before, and again when the answer comes. With no app to show the file screen, the export
+     * ends as a cancelled one.
+     *
+     * The file screen is asked for with startActivityForResult and answers in [onActivityResult], not with the newer
+     * result launcher: lint refuses the launcher while the Fragment library is below 1.3.0 (the biometric library brings
+     * 1.2.5), as that FragmentActivity does not take the launcher's request codes (31 file, section 14).
+     */
+    private fun backUpNow() {
+        if (lock.state != LockState.Unlocked) return
+        val suggestedName = viewModel.beginBackup() ?: return
+        val request =
+            Intent(Intent.ACTION_CREATE_DOCUMENT)
+                .addCategory(Intent.CATEGORY_OPENABLE)
+                .setType(BACKUP_FILE_TYPE)
+                .putExtra(Intent.EXTRA_TITLE, suggestedName)
+        lock.onFileScreenOpened()
+        try {
+            startActivityForResult(request, BACKUP_FILE_REQUEST)
+        } catch (e: ActivityNotFoundException) {
+            lock.onFileScreenClosed()
+            viewModel.onBackupPlace(null)
+        }
+    }
+
+    /**
+     * The file screen's answer (31): a place, or none when it was cancelled. It also reaches an activity that Android
+     * created again while the file screen was open. The ViewModel decides what is written, locked or not (decision 7).
+     */
+    override fun onActivityResult(
+        requestCode: Int,
+        resultCode: Int,
+        data: Intent?,
+    ) {
+        super.onActivityResult(requestCode, resultCode, data)
+        if (requestCode != BACKUP_FILE_REQUEST) return
+        lock.onFileScreenClosed()
+        val place = if (resultCode == RESULT_OK) data?.data else null
+        viewModel.onBackupPlace(place?.let { DocumentBackupTarget(applicationContext.contentResolver, it) })
     }
 
     /** Settings' "Allow screenshots for 3 minutes" (21): the check, only while unlocked and the window is off. */

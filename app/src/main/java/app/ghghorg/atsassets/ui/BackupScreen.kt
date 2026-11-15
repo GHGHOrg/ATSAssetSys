@@ -1,0 +1,132 @@
+package app.ghghorg.atsassets.ui
+
+import androidx.activity.compose.BackHandler
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.OutlinedCard
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.LiveRegionMode
+import androidx.compose.ui.semantics.liveRegion
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.unit.dp
+import app.ghghorg.atsassets.R
+
+/** The Backup and restore screen's callbacks, passed together. [onBackUpNow] is MainActivity's: it opens Android's file screen. */
+class BackupActions(
+    val onBack: () -> Unit,
+    val onBackUpNow: () -> Unit,
+)
+
+/**
+ * Backup and restore (section 6, Backup export and restore entry; wireframe 10e frames A and B; 31), drawn from its model
+ * (CR2): "<" and the title, the last backup line as on More, the line of an interrupted backup, Back up now and what it
+ * does, then one line for where the export stands: why the button is inactive, the indicator while the file is
+ * written, or how the last export ended. The Restore part of frame A comes with 33 (31 decision 2). No layer and no text
+ * field: everything is on the screen, which scrolls. Back returns to More.
+ */
+@Composable
+fun BackupScreen(
+    model: BackupModel,
+    actions: BackupActions,
+    modifier: Modifier = Modifier,
+) {
+    BackHandler(enabled = model.backEnabled, onBack = actions.onBack)
+    Column(
+        modifier = modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(16.dp),
+        verticalArrangement = Arrangement.spacedBy(12.dp),
+    ) {
+        TitleRow(stringResource(R.string.backup_title), actions.onBack, enabled = model.backEnabled)
+        OutlinedCard(modifier = Modifier.fillMaxWidth()) {
+            Column(modifier = Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                LastBackupLine(model.lastBackup)
+                if (model.interrupted) BackupInterruptedLine()
+                BackUpNowButton(model.canBackUp, actions.onBackUpNow)
+                Text(
+                    text = stringResource(R.string.backup_note),
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+                BackupStatusLine(model)
+            }
+        }
+    }
+}
+
+/** "Last backup: <date> <zone>" or "Last backup: never backed up" (section 9, C15), as on More; information only. */
+@Composable
+internal fun LastBackupLine(lastBackup: LastBackup?) {
+    Text(
+        text =
+        if (lastBackup == null) {
+            stringResource(R.string.last_backup_never)
+        } else {
+            stringResource(R.string.last_backup_on, lastBackup.date, lastBackup.zone)
+        },
+        style = MaterialTheme.typography.bodyLarge,
+    )
+}
+
+/** The warning after a backup whose write never ended (31 decision 7): plain text, no color alone. */
+@Composable
+internal fun BackupInterruptedLine() {
+    Text(
+        text = stringResource(R.string.backup_interrupted),
+        style = MaterialTheme.typography.bodyLarge,
+        color = MaterialTheme.colorScheme.error,
+    )
+}
+
+// Inactive as the app's other inactive controls: greyed by Material, read by TalkBack as unavailable, with a dashed
+// outline (wireframe 10e marker 4's form for an inactive control).
+@Composable
+private fun BackUpNowButton(
+    enabled: Boolean,
+    onBackUpNow: () -> Unit,
+) {
+    val shape = ButtonDefaults.outlinedShape
+    val dashed = MaterialTheme.colorScheme.outline
+    OutlinedButton(
+        onClick = onBackUpNow,
+        enabled = enabled,
+        shape = shape,
+        border = if (enabled) ButtonDefaults.outlinedButtonBorder(enabled = true) else null,
+        modifier = if (enabled) Modifier else Modifier.dashedOutline(shape, dashed),
+    ) {
+        Text(text = stringResource(R.string.backup_now))
+    }
+}
+
+// One line at most, read by TalkBack when it appears: the reason the button is inactive, the indicator while the file
+// is written, or the last export's result (frame B: plain text, one or the other).
+@Composable
+private fun BackupStatusLine(model: BackupModel) {
+    val last = model.lastBackup
+    val text =
+        when {
+            model.writing -> stringResource(R.string.backup_writing)
+            model.blocked == BackupBlocked.NO_DATA -> stringResource(R.string.backup_no_data)
+            model.outcome == BackupOutcome.SAVED && last != null -> stringResource(R.string.backup_saved, last.date, last.zone)
+            model.outcome == BackupOutcome.NOT_SAVED -> stringResource(R.string.backup_not_saved)
+            model.outcome == BackupOutcome.NOT_SAVED_FILE_MAY_REMAIN -> stringResource(R.string.backup_not_saved_file_remains)
+            model.outcome == BackupOutcome.SAVED_NOT_RECORDED -> stringResource(R.string.backup_saved_not_recorded)
+            else -> return
+        }
+    val failed = model.outcome != null && model.outcome != BackupOutcome.SAVED
+    Text(
+        text = text,
+        style = MaterialTheme.typography.bodyLarge,
+        color = if (failed) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurface,
+        modifier = Modifier.semantics { liveRegion = LiveRegionMode.Polite },
+    )
+}
