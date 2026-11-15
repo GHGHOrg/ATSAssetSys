@@ -1,5 +1,8 @@
 package app.ghghorg.atsassets.core
 
+import java.math.BigDecimal
+import java.time.LocalDate
+
 /**
  * Why a backup file, or one of its lines, cannot be restored (spec section 8, rejection reasons and the report; 33a).
  * Reasons only, with the figures the message needs; the wording is D9 and lives in the app (33b).
@@ -129,7 +132,210 @@ sealed interface RestoreReason {
     data object SettingValueUnknown : RestoreReason
 
     data object TabOrderNotEachOnce : RestoreReason
+
+    // Between rows and in the replay (33a step 4). A [line] names the other row.
+
+    /** The id is already used on [line], compared ignoring case (one id space, section 8). */
+    data class IdDuplicate(
+        val line: Int,
+    ) : RestoreReason
+
+    /** The name matches the portfolio on [line] (4.7, D7). */
+    data class PortfolioNameDuplicate(
+        val line: Int,
+    ) : RestoreReason
+
+    data object PortfolioNotFound : RestoreReason
+
+    /** The file as a whole: no opening balance row (4.2). Nothing is replayed without one. */
+    data object NoOpeningBalance : RestoreReason
+
+    /** The opening balance is already on [line]. */
+    data class SecondOpeningBalance(
+        val line: Int,
+    ) : RestoreReason
+
+    data object OpeningBalanceNotEarliest : RestoreReason
+
+    /** The pick's id, as written, is no row of the file. */
+    data class PickNotFound(
+        val id: String,
+    ) : RestoreReason
+
+    data class PickNotABuy(
+        val id: String,
+    ) : RestoreReason
+
+    data class PickOtherPortfolio(
+        val id: String,
+    ) : RestoreReason
+
+    /** A lot of another ticker (4.4's lot rules; not a reason of section 8's list). */
+    data class PickOtherTicker(
+        val id: String,
+    ) : RestoreReason
+
+    /** The lot is picked twice on one sell (4.4; not a reason of section 8's list). */
+    data class PickTwice(
+        val id: String,
+    ) : RestoreReason
+
+    data class LotBoughtAfterSell(
+        val id: String,
+    ) : RestoreReason
+
+    data class LotEnteredAfterSell(
+        val id: String,
+    ) : RestoreReason
+
+    /** The pick is above what the lot holds, [remainder] as the lot picker shows it (4.4, 4.10). */
+    data class PickOverLot(
+        val id: String,
+        val remainder: BigDecimal,
+    ) : RestoreReason
+
+    data class PicksDoNotAddUp(
+        val picked: BigDecimal,
+        val quantity: BigDecimal,
+    ) : RestoreReason
+
+    /** The reversal's target, as written, is no row of the file. */
+    data class ReversalTargetNotFound(
+        val id: String,
+    ) : RestoreReason
+
+    data object ReversalOfOpeningBalance : RestoreReason
+
+    /** The target is on [line], after the reversal (section 8: a reversal comes after the entry it reverses). */
+    data class ReversalTargetListedAfter(
+        val line: Int,
+    ) : RestoreReason
+
+    /** The target is already reversed on [line] (4.6: at most once). */
+    data class AlreadyReversed(
+        val line: Int,
+    ) : RestoreReason
+
+    data class ReversalBeforeOriginal(
+        val originalDate: LocalDate,
+    ) : RestoreReason
+
+    // State rows.
+
+    data object HiddenHoldingNotFound : RestoreReason
+
+    data object HiddenHoldingHasShares : RestoreReason
+
+    data object OverrideHoldingNotFound : RestoreReason
+
+    data object OverrideValueNotOnList : RestoreReason
+
+    data class DuplicateListValue(
+        val line: Int,
+    ) : RestoreReason
+
+    data class DuplicateRememberedText(
+        val line: Int,
+    ) : RestoreReason
+
+    data class DuplicateHidden(
+        val line: Int,
+    ) : RestoreReason
+
+    data class DuplicateOverride(
+        val line: Int,
+    ) : RestoreReason
+
+    /** The value matches the remembered text on [line] of its list (4.9). */
+    data class ListValueMatchesRememberedText(
+        val line: Int,
+    ) : RestoreReason
+
+    data object RememberedTextValueNotOnList : RestoreReason
+
+    data class SettingKeyTwice(
+        val line: Int,
+    ) : RestoreReason
+
+    // Rules (4.1 to 4.6), from K1.
+
+    /** Cash would be below 0 on [date] by [shortfallCents]. */
+    data class CashNegative(
+        val date: LocalDate,
+        val shortfallCents: Long,
+    ) : RestoreReason
+
+    /** A lot or a holding would be below 0 on [date]. */
+    data class SharesNegative(
+        val date: LocalDate,
+    ) : RestoreReason
+
+    /** The portfolio holds only [held] of the ticker on [date], as the lot picker shows it. */
+    data class SellMoreThanHeld(
+        val date: LocalDate,
+        val held: BigDecimal,
+    ) : RestoreReason
+
+    data class DatedBeforeOpeningBalance(
+        val openingDate: LocalDate,
+    ) : RestoreReason
+
+    /** A split of a ticker with no buy before it in that portfolio (4.5; not a reason of section 8's list). */
+    data object SplitTickerNotBought : RestoreReason
+
+    /** The cash balance would leave the exact cents the app can hold (33a decision 3; not a reason of section 8's list). */
+    data object BalanceTooLarge : RestoreReason
+
+    // Dependent (C7; 33a decision 2).
+
+    /** The row points to a failed row; [line] is the root cause's. It is not checked further. */
+    data class DependsOn(
+        val line: Int,
+    ) : RestoreReason
 }
+
+/**
+ * The step-5 summary of section 8 for a clean file: the file's portfolios, transactions (buys, sells, splits and their
+ * reversals) and cash entries (cash entries and their reversals; the rebuilt trade lines are not counted), the cash
+ * balance after the restore (every entry, as the Cash tab shows it) and the holdings with shares at the end of the file.
+ */
+data class RestoreSummary(
+    val portfolios: Int,
+    val transactions: Int,
+    val cashEntries: Int,
+    val cashBalanceCents: Long,
+    val holdingsWithShares: Int,
+)
+
+/** What a check gives (section 8, restore steps 2 and 5; 33a decision 1). Nothing is stored either way (C3). */
+sealed interface RestoreCheck {
+    /** Every error found. */
+    data class Failed(
+        val errors: List<RestoreError>,
+    ) : RestoreCheck
+
+    /**
+     * A clean file: the [records] K1 made in the replay with the app's own ids, ready to load (34); the tickers with
+     * shares at the end of the file, for the ticker check (33b); and the summary.
+     */
+    data class Passed(
+        val records: BackupRecords,
+        val heldTickers: List<String>,
+        val summary: RestoreSummary,
+    ) : RestoreCheck
+}
+
+/**
+ * What the check needs from the app: the ids K1 gives the records ([newId]); the price sources' words a file may name
+ * ([priceSources]) and the one a file without a `price_source` row gets ([defaultSource]); and the note of 4.6 for a cash
+ * reversal the file gives none ([reversalNote], the original's type and date; its wording is the app's, D9).
+ */
+class RestoreContext(
+    val newId: () -> String,
+    val priceSources: Set<String>,
+    val defaultSource: String,
+    val reversalNote: (CashType, LocalDate) -> String,
+)
 
 /**
  * One error of the report (section 8): its [line] as Notepad shows it (the header is line 1), null for the file as a whole;
