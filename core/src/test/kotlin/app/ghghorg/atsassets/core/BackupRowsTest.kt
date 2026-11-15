@@ -119,6 +119,8 @@ class BackupRowsTest {
         assertEquals(error("lot_picks", RestoreReason.CellNotUsed), errors(buy("lot_picks" to "L1:1")))
         // An id on a row that never has one.
         assertEquals(error("id", RestoreReason.CellNotUsed), errors(row("row_type" to "hidden", "id" to "H1", "portfolio" to "Main", "ticker" to "OLDCO")))
+        // A reversal has no id, so no reversal can be the target of another (section 8, reasons: "another reversal").
+        assertEquals(error("id", RestoreReason.CellNotUsed), errors(row("row_type" to "reversal", "id" to "R1", "reverses" to "L1", "date" to "2026-01-02")))
     }
 
     @Test
