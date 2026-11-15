@@ -42,6 +42,93 @@ sealed interface RestoreReason {
     ) : RestoreReason
 
     data object LineBreakInCell : RestoreReason
+
+    // Every row (33a step 3). The error's column names the cell.
+
+    data object RowTypeMissing : RestoreReason
+
+    data class RowTypeUnknown(
+        val rowType: String,
+    ) : RestoreReason
+
+    /** A `format` row that is not the first row after the header. */
+    data object FormatNotFirst : RestoreReason
+
+    /** A value the row type needs is empty. */
+    data object ValueMissing : RestoreReason
+
+    /** A cell in a column the row type does not use is not empty (it catches a comma that shifted cells). */
+    data object CellNotUsed : RestoreReason
+
+    // Dates and numbers.
+
+    /** Not YYYY-MM-DD. */
+    data object DateForm : RestoreReason
+
+    /** YYYY-MM-DD, but no real date. */
+    data object DateNotReal : RestoreReason
+
+    /** Not digits with an optional leading minus and an optional dot: a separator, a sign, a symbol or an exponent. */
+    data object NumberForm : RestoreReason
+
+    data object QuantityNotPositive : RestoreReason
+
+    data object QuantityTooManyDecimals : RestoreReason
+
+    data object AmountTooManyDecimals : RestoreReason
+
+    /** Beyond the exact cents the app can hold (33a decision 3; not a reason of section 8's list). */
+    data object AmountTooLarge : RestoreReason
+
+    data object WrongSign : RestoreReason
+
+    data object CashAmountZero : RestoreReason
+
+    data object BuyTotalZero : RestoreReason
+
+    // Ids and portfolios.
+
+    data object IdBadlyFormed : RestoreReason
+
+    data object PortfolioNameTooShort : RestoreReason
+
+    data object PortfolioNameNoLetter : RestoreReason
+
+    // Cash, tickers and splits.
+
+    data object CashTypeUnknown : RestoreReason
+
+    data object CashTypeTrade : RestoreReason
+
+    data object AdjustmentWithoutNote : RestoreReason
+
+    data object TickerBadCharacters : RestoreReason
+
+    data object SplitNumberNotWhole : RestoreReason
+
+    data object SplitNumbersEqual : RestoreReason
+
+    /** Above [Splits.MAX_RATIO] (33a decision 3; not a reason of section 8's list). */
+    data object SplitNumberTooLarge : RestoreReason
+
+    /** A re-entered buy's ratio too large to keep (14c decision 1; 33a decision 3; not a reason of section 8's list). */
+    data object BuyRatioTooLarge : RestoreReason
+
+    // Sells and picks.
+
+    data object PicksBadlyWritten : RestoreReason
+
+    // State rows and settings.
+
+    data object OverrideBothEmpty : RestoreReason
+
+    data object ListUnknown : RestoreReason
+
+    data object SettingKeyUnknown : RestoreReason
+
+    data object SettingValueUnknown : RestoreReason
+
+    data object TabOrderNotEachOnce : RestoreReason
 }
 
 /**
