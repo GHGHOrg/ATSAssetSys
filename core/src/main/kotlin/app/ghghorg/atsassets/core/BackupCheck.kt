@@ -203,7 +203,20 @@ private class Replay(
             kinds[line] = kind
             val key = id.lowercase(Locale.ROOT)
             val first = ids[key]
-            if (first != null) fail(line, "id", RestoreReason.IdDuplicate(first)) else ids[key] = line
+            if (first != null) duplicateId(line, first) else ids[key] = line
+        }
+    }
+
+    // A buy or sell that fails as a duplicate fails its holding too (decision 2; 33a Deploy finding 1).
+    private fun duplicateId(
+        line: Int,
+        first: Int,
+    ) {
+        fail(line, "id", RestoreReason.IdDuplicate(first))
+        when (val entry = entryByLine[line]) {
+            is BuyRecord -> holdingFailed(line, entry.portfolio, entry.ticker)
+            is SellRecord -> holdingFailed(line, entry.portfolio, entry.ticker)
+            else -> Unit
         }
     }
 

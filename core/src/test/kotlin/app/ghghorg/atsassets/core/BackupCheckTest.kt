@@ -494,6 +494,19 @@ class BackupCheckTest {
         )
     }
 
+    // A buy that fails as a duplicate id fails its holding too (decision 2; 33a Deploy finding 1).
+    @Test
+    fun aBuyWithADuplicateId_failsItsHolding() {
+        val errors = errors(opening, main, buy("L1", "2026-01-02", "1", "10.00", ticker = "MSFT"), buy("l1", "2026-01-02", "1", "10.00"), hidden("AAPL"))
+        assertEquals(
+            listOf(
+                error(6, "id", RestoreReason.IdDuplicate(5)),
+                error(7, "ticker", RestoreReason.DependsOn(6)),
+            ),
+            errors,
+        )
+    }
+
     // The replay is in date order, then file order (4.1): a file whose rows are out of date order replays the same.
     @Test
     fun theReplay_isInDateOrder_thenFileOrder() {

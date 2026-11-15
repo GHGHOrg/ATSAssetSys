@@ -1,6 +1,6 @@
 # plan/iterations/33a-restore-check-file.md
 
-Stage: Build. Status: approved 2026-11-16 (your A); decisions 1 to 5 settled the same day (section 11). Built 2026-11-16 (steps 1 to 6 on iter-33a-restore-check-file); not yet on a pull request.
+Stage: Build. Status: approved 2026-11-16 (your A); decisions 1 to 5 settled the same day (section 11). Built 2026-11-16 (steps 1 to 6 and one Deploy fix on iter-33a-restore-check-file); pull request #191, not merged.
 Source: plan.md section 4 (row 33, split into 33a and 33b, your A 2026-11-15); spec section 8 (file format, records, settings keys, restore steps 2 and 5, rejection reasons and the report), 4.1 to 4.7, 4.9, 4.10, C3, C7, C13; section 14 (K1, K6, K10); spec/example-backup.csv and spec/example-backup-expected.md; the 31 file (the writer; decision 3, the quoting; decision 5, the ids and the source's word).
 
 ## 1. Outcome
@@ -100,6 +100,17 @@ Each bullet of section 8's "Rejection reasons and the report", with the reason i
 - Rules (4.1 to 4.6): `CashNegative` with the date and the shortfall (Check cashWouldGoNegative…); `SharesNegative` (Check sharesWouldGoNegative); `SellMoreThanHeld` (Check aPickOfMoreThanTheLotHolds…); and `DatedBeforeOpeningBalance` (Check aRecordDatedBeforeTheOpeningBalance), `SplitTickerNotBought` (Check aSplitOfATickerWithNoBuy), `BalanceTooLarge` (decision 3) (Check aBalanceBeyondExactCents).
 - Dependent: `DependsOn` with the root cause's line (Check dependentRows_nameTheRootCause, aFailedPortfolio…, aSplitOrHiddenRow…).
 - The report's counts and order: Report theCounts…, theReport_isInLineOrder…, theFileAsAWhole_comesFirst.
+
+### 13.3 Deploy review (2026-11-16, by reading BackupReader, BackupRows and BackupCheck against section 8 and this file)
+No high or medium finding. Pull request #191's first run (CI, CodeQL, the screen tests 136 of 136) was green before the review.
+- Fixed (low, your A): 1. A buy or sell that failed as a duplicate id did not fail its holding, so a `hidden` or `override` row for that holding said "holding not found" instead of "depends on line N" (decision 2). Test first: BackupCheckTest aBuyWithADuplicateId_failsItsHolding failed with `HiddenHoldingNotFound`, then passed after `ids()` marks the holding failed.
+- Recorded (low):
+  2. A row with the wrong cell count or a line break in a cell shows only that error; its other form errors show after the fix (with departure 5).
+  3. A failed opening balance row stops the replay; its errors show in a second round (departure 3).
+  4. K1 refusals that the checks before K1 make unreachable are mapped to the nearest reason (`NotReversible` to `ReversalOfOpeningBalance`, `TypeNotAllowed` to `CashTypeUnknown`); if K1 changes, the wording may be wrong.
+  5. For 33b: the file is read whole into memory, with no size limit (section 8 sets none); 33b decides what Android's file screen may hand over.
+  6. For 33b: some reasons carry file ids, dates and figures; they go only to the report and Copy report, never to a log (section 9). Core logs nothing (no `println`, `Log.`, `System.out`, `System.err` or `printStackTrace` in core/src/main).
+- Checked, nothing found: each section 8 rule against the code; the replay order and the dependents; every `getValue` and cast in BackupCheck is reached only after the check that makes it safe; core stays pure Kotlin; cash and transactions only through K1.
 
 ## 14. Departures from the plan
 1. Two files beyond section 5's: `BackupRows.kt` (each row's own rules, step 3) and `RestoreReport.kt` (the reasons and the result types), so `BackupReader.kt` and `BackupCheck.kt` each keep one job. Two more test classes: BackupRowsTest and BackupReportTest.
