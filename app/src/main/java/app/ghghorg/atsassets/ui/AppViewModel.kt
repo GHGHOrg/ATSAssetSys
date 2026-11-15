@@ -104,6 +104,7 @@ import java.time.Clock
 import java.time.Instant
 import java.time.LocalDate
 import java.time.ZoneId
+import java.time.ZoneOffset
 import java.util.Locale
 
 /** The one screen shown at a time. TABS shows the selected tab under the bottom bar. */
@@ -711,6 +712,9 @@ data class AppState(
     val backupInterrupted: Boolean = false,
     val backupStage: BackupStage? = null,
     val backupOutcome: BackupOutcome? = null,
+    // The device's time zone as last read (at start, at each return to the app and at each unlock): the last backup is
+    // shown in it (C15).
+    val zone: ZoneId = ZoneOffset.UTC,
     // 15c: the kept fields, worked out in KeptFields.kt from the fields above, so reading one costs nothing. Every write
     // through the view model refreshes them; a state built directly gets them from these defaults.
     // As of today (4.8), by portfolio, then ticker.
@@ -920,7 +924,11 @@ data class AppState(
 
     /** More as the screen draws it (section 6; CR2, 17). */
     val more: MoreModel
-        get() = More.of()
+        get() = More.of(lastBackup, zone, backupInterrupted)
+
+    /** 31: Backup and restore as the screen draws it (wireframe 10e frames A and B; CR2). */
+    val backupScreen: BackupModel
+        get() = Backups.screen(lastBackup, zone, backupInterrupted, holdsData, backupStage, backupOutcome, saving)
 
     /** Settings as the screen draws it (section 6; CR2, 20). */
     val settings: SettingsModel
@@ -1201,7 +1209,7 @@ class AppViewModel(
     private val deviceZone: () -> ZoneId = { ZoneId.systemDefault() },
 ) : ViewModel() {
     private val marketDate = MarketDate(clock)
-    private val mutableState = KeptStateFlow(AppState(priceSourceName = priceSource.name))
+    private val mutableState = KeptStateFlow(AppState(priceSourceName = priceSource.name, zone = deviceZone()))
     val state: StateFlow<AppState> = mutableState.readOnly
     private var store: RecordStore? = null
     private var started = false
@@ -1375,10 +1383,20 @@ class AppViewModel(
     }
 
     /**
+     * The app came into view (MainActivity's onStart), and each unlock: the device's zone is read again, so the last
+     * backup shows in the zone the phone is in now (C15; 31).
+     */
+    fun onAppShown() {
+        val zone = deviceZone()
+        if (zone != mutableState.value.zone) mutableState.update { it.copy(zone = zone) }
+    }
+
+    /**
      * After unlock the app shows Overall, unless an entry screen or the New portfolio dialog is open, which stays
      * (02b decision 9). The Buy/Sell menu and its notice close. Prices refresh on every unlock (16a decision 2).
      */
     fun onUnlocked() {
+        onAppShown()
         refreshPrices()
         // View 1: "Allocation by" is not saved; each unlock starts on Asset type (18).
         // The choice layers close, as after 18; Settings' layers too (20, 21).

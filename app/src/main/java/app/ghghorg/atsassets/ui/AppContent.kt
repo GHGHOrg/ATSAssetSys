@@ -21,13 +21,15 @@ import app.ghghorg.atsassets.core.Tab
 
 /**
  * Shows the screen the ViewModel names. Only the unlocked branch of MainActivity calls this. [screenshots] are
- * MainActivity's Allow and Turn off for the screenshot window, which K8 owns (21).
+ * MainActivity's Allow and Turn off for the screenshot window, which K8 owns (21). [onBackUpNow] is MainActivity's too:
+ * it opens Android's file screen for a backup (31).
  */
 @Composable
 fun AppContent(
     viewModel: AppViewModel,
     modifier: Modifier = Modifier,
     screenshots: ScreenshotControls = ScreenshotControls({}, {}),
+    onBackUpNow: () -> Unit = {},
 ) {
     val state by viewModel.state.collectAsState()
     when (state.screen) {
@@ -49,7 +51,7 @@ fun AppContent(
             val under = if (dialogOpen) Modifier.clearAndSetSemantics { } else Modifier
             Column(modifier = Modifier.fillMaxSize().then(under)) {
                 Box(modifier = Modifier.weight(1f)) {
-                    BarContent(state, viewModel, screenshots)
+                    BarContent(state, viewModel, screenshots, onBackUpNow)
                 }
                 BottomBar(state.tabOrder.tabs, state.tab, viewModel::selectTab)
             }
@@ -127,6 +129,7 @@ private fun BarContent(
     state: AppState,
     viewModel: AppViewModel,
     screenshots: ScreenshotControls,
+    onBackUpNow: () -> Unit,
 ) {
     BackHandler(enabled = state.backGoesToOverall) { viewModel.selectTab(Tab.OVERALL) }
     when (state.screen) {
@@ -378,6 +381,11 @@ private fun BarContent(
             actions = TabOrderActions(onBack = viewModel::closeTabOrder, onUp = viewModel::moveTabUp, onDown = viewModel::moveTabDown),
         )
 
+        Screen.BACKUP -> BackupScreen(
+            model = state.backupScreen,
+            actions = BackupActions(onBack = viewModel::closeBackup, onBackUpNow = onBackUpNow),
+        )
+
         Screen.NET_WORTH -> NetWorthScreen(
             state = state,
             actions = NetWorthActions(onBack = viewModel::closeNetWorth, onRefresh = viewModel::onPullToRefresh),
@@ -482,6 +490,7 @@ private fun TabScreen(
             onOpenAllocation = viewModel::openAllocation,
             onOpenSettings = viewModel::openSettings,
             onOpenRealizedGains = viewModel::openRealizedGains,
+            onOpenBackup = viewModel::openBackup,
         )
     }
 }

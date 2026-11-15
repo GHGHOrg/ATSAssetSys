@@ -637,4 +637,17 @@
     <string name="key_clear_question">Clear the key? Prices will not refresh and new tickers cannot be checked until a key is saved.</string>
     <!-- Iteration 30 decision 3: in place of price_refresh_failed while no key is saved. -->
     <string name="price_refresh_no_key">No price source key. Showing last prices. Enter the key in Settings.</string>
+    <!-- Iteration 31: Backup and restore (wireframe 10e frames A and B). Proposed wording, not yet approved on the phone (D9). -->
+    <!-- The export moment's date in the device's time zone and the zone's abbreviation (C15): no "ET" here (AC-09). -->
+    <string name="last_backup_on">Last backup: %1$s %2$s</string>
+    <string name="backup_title">Backup and restore</string>
+    <string name="backup_interrupted">The last backup was interrupted. Its file may be unfinished: do not use it. Back up again.</string>
+    <string name="backup_now">Back up now</string>
+    <string name="backup_note">You choose where the file is saved. The file is not encrypted: keep it somewhere safe.</string>
+    <string name="backup_no_data">Nothing to back up yet. Set the opening balance first.</string>
+    <string name="backup_writing">Writing the backup file…</string>
+    <string name="backup_saved">Backup saved. Last backup: %1$s %2$s</string>
+    <string name="backup_not_saved">Backup not saved. The last backup date is unchanged.</string>
+    <string name="backup_not_saved_file_remains">Backup not saved. The last backup date is unchanged. An unfinished file may remain where you chose to save it: do not use it, and delete it.</string>
+    <string name="backup_saved_not_recorded">The backup file was written, but its date could not be saved, so the last backup date is unchanged. Back up again.</string>
 </resources>

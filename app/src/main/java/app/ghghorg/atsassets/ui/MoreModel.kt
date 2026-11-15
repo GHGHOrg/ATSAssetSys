@@ -1,11 +1,15 @@
 package app.ghghorg.atsassets.ui
 
+import java.time.Instant
+import java.time.ZoneId
+import java.time.ZoneOffset
+
 /*
- * More as the screen draws it (section 6, More; wireframe 10f; CR2, 17): the last backup line and the entries built so
- * far. Plain Kotlin: the screen picks the approved string for each.
+ * More as the screen draws it (section 6, More; wireframe 10f; CR2, 17): the last backup line and the four entries.
+ * Plain Kotlin: the screen picks the approved string for each.
  */
 
-/** The entries of More, in the order of wireframe 10f; only those built so far (17 decision 1). */
+/** The entries of More, in the order of wireframe 10f. */
 enum class MoreEntry {
     NET_WORTH,
 
@@ -14,14 +18,30 @@ enum class MoreEntry {
 
     // 26: view 5.
     REALIZED_GAINS,
+
+    // 31: Backup and restore (wireframe 10e).
+    BACKUP,
 }
 
-/** [lastBackup] is the last backup's time, null for "never backed up" (no backup until 31). */
+/**
+ * [lastBackup] is the last backup as shown, null for "never backed up" (section 9; 31); the line is information only
+ * (wireframe 10f marker 1). [backupInterrupted]: a backup's write never ended (31 decision 7).
+ */
 data class MoreModel(
-    val lastBackup: String?,
+    val lastBackup: LastBackup?,
+    val backupInterrupted: Boolean,
     val entries: List<MoreEntry>,
 )
 
 object More {
-    fun of(): MoreModel = MoreModel(lastBackup = null, entries = listOf(MoreEntry.NET_WORTH, MoreEntry.ALLOCATION, MoreEntry.REALIZED_GAINS))
+    /** More for a last backup at [lastBackup], shown in [zone] (C15: the device's zone when the line is shown). */
+    fun of(
+        lastBackup: Instant? = null,
+        zone: ZoneId = ZoneOffset.UTC,
+        backupInterrupted: Boolean = false,
+    ): MoreModel = MoreModel(
+        lastBackup = Backups.lastBackup(lastBackup, zone),
+        backupInterrupted = backupInterrupted,
+        entries = listOf(MoreEntry.NET_WORTH, MoreEntry.ALLOCATION, MoreEntry.REALIZED_GAINS, MoreEntry.BACKUP),
+    )
 }

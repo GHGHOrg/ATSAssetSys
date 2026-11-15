@@ -451,6 +451,67 @@ class BackupFlowTest {
         assertEquals(Screen.TABS, vm.state.value.screen)
     }
 
+    // CR2, the wiring: More's line and the screen's model follow the state, in the device's zone.
+    @Test
+    fun theModels_followTheExport_inTheDevicesZone() {
+        val newYork = ZoneId.of("America/New_York")
+        val vm = onBackup(zone = newYork)
+        assertEquals(More.of(null, newYork), vm.state.value.more)
+        assertTrue(vm.state.value.backupScreen.canBackUp)
+        vm.beginBackup()
+        assertFalse(vm.state.value.backupScreen.canBackUp)
+        vm.onBackupPlace(FakeTarget())
+        val state = vm.state.value
+        assertEquals(More.of(Instant.parse(now), newYork), state.more)
+        assertEquals(LastBackup("2026-10-09", "EDT"), state.more.lastBackup)
+        assertEquals(
+            BackupModel(
+                lastBackup = LastBackup("2026-10-09", "EDT"),
+                interrupted = false,
+                canBackUp = true,
+                blocked = null,
+                writing = false,
+                outcome = BackupOutcome.SAVED,
+                backEnabled = true,
+            ),
+            state.backupScreen,
+        )
+    }
+
+    @Test
+    fun theModels_withNoData_andAfterAnInterruptedBackup() {
+        val empty = started(FakeStore(), clock = clockAt(now))
+        assertEquals(BackupBlocked.NO_DATA, empty.state.value.backupScreen.blocked)
+        assertFalse(empty.state.value.backupScreen.canBackUp)
+        val stored = store(BackupState(lastBackup = earlier, unfinished = true))
+        val interrupted = started(stored, clock = clockAt(now), zone = ZoneId.of("UTC"))
+        assertTrue(interrupted.state.value.more.backupInterrupted)
+        assertTrue(interrupted.state.value.backupScreen.interrupted)
+        assertEquals(LastBackup("2026-10-04", "UTC"), interrupted.state.value.more.lastBackup)
+    }
+
+    // C15: no zone is stored; the line follows the zone the phone is in when the app is shown again.
+    @Test
+    fun theLastBackupLine_followsTheDevicesZone_whenTheAppIsShownAgain() {
+        var zone = ZoneId.of("America/New_York")
+        val vm =
+            AppViewModel(
+                storeProvider = { store(BackupState(lastBackup = Instant.parse(now))) },
+                clock = clockAt(now),
+                newId = { "x" },
+                priceSource = FakeSource(),
+                isOnline = { true },
+                deviceZone = { zone },
+            )
+        vm.start()
+        assertEquals("2026-10-09", vm.state.value.more.lastBackup!!.date)
+        zone = ZoneId.of("Asia/Tokyo")
+        assertEquals("2026-10-09", vm.state.value.more.lastBackup!!.date)
+        vm.onAppShown()
+        assertEquals("2026-10-10", vm.state.value.more.lastBackup!!.date)
+        assertEquals("2026-10-10", vm.state.value.backupScreen.lastBackup!!.date)
+    }
+
     // Spec section 9: nothing of the data reaches the state through the export; the state keeps a moment, a stage and a
     // reason only.
     @Test

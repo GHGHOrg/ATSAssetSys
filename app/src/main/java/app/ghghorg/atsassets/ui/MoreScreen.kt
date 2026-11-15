@@ -30,8 +30,9 @@ import app.ghghorg.atsassets.R
 
 /**
  * More (section 6, wireframe 10f), drawn from its model (CR2, 17): the title with the gear at the top right that opens
- * Settings (marker 2; 20), the last backup line, then the entries built so far, each a row that opens its screen (17
- * decision 1: Net Worth (Total); 19 decision 1: Allocation; 26: Realized gains). Backup/restore comes later (31).
+ * Settings (marker 2; 20), the last backup line (marker 1: information only; 31), the line of an interrupted backup (31
+ * decision 7), then the four entries, each a row that opens its screen (17 decision 1: Net Worth (Total); 19 decision 1:
+ * Allocation; 26: Realized gains; 31: Backup and restore).
  */
 @Composable
 fun MoreScreen(
@@ -41,6 +42,7 @@ fun MoreScreen(
     onOpenAllocation: () -> Unit = {},
     onOpenSettings: () -> Unit = {},
     onOpenRealizedGains: () -> Unit = {},
+    onOpenBackup: () -> Unit = {},
 ) {
     Column(
         modifier = modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(16.dp),
@@ -54,13 +56,8 @@ fun MoreScreen(
             )
             SettingsGear(onOpenSettings)
         }
-        // Always null until backups exist (31), which brings the "Last backup: <date> <zone>" line.
-        if (model.lastBackup == null) {
-            Text(
-                text = stringResource(R.string.last_backup_never),
-                style = MaterialTheme.typography.bodyLarge,
-            )
-        }
+        LastBackupLine(model.lastBackup)
+        if (model.backupInterrupted) BackupInterruptedLine()
         OutlinedCard(modifier = Modifier.fillMaxWidth()) {
             Column(modifier = Modifier.padding(vertical = 4.dp)) {
                 model.entries.forEachIndexed { index, entry ->
@@ -69,6 +66,7 @@ fun MoreScreen(
                         MoreEntry.NET_WORTH -> EntryRow(stringResource(R.string.net_worth_title), onOpenNetWorth)
                         MoreEntry.ALLOCATION -> EntryRow(stringResource(R.string.allocation_title), onOpenAllocation)
                         MoreEntry.REALIZED_GAINS -> EntryRow(stringResource(R.string.realized_gains_title), onOpenRealizedGains)
+                        MoreEntry.BACKUP -> EntryRow(stringResource(R.string.backup_title), onOpenBackup)
                     }
                 }
             }
