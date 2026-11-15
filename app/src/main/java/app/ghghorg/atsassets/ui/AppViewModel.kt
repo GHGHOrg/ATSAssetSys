@@ -3298,6 +3298,10 @@ class AppViewModel(
         val opened = store
         if (opened == null || current.backupStage != BackupStage.CHOOSING || current.saving) {
             if (target != null) viewModelScope.launch { target.delete() }
+            // Deploy finding 2: an export that was waiting for this answer ends here, so Back up now and "<" come back.
+            if (current.backupStage == BackupStage.CHOOSING) {
+                mutableState.update { it.copy(backupStage = null, backupOutcome = BackupOutcome.NOT_SAVED) }
+            }
             return
         }
         if (target == null) {
@@ -3367,6 +3371,9 @@ class AppViewModel(
         } catch (e: UnreadableDataException) {
             throw e
         } catch (e: Exception) {
+            // Deploy finding 1: the file is complete, so the mark goes even though its moment could not be stored; left,
+            // the next start would call this complete file unfinished. If the store refuses this too, the mark stays.
+            markRemoved(opened)
             BackupOutcome.SAVED_NOT_RECORDED to null
         }
     }

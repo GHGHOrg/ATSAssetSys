@@ -2004,6 +2004,9 @@ internal class FakeStore(
     var backupSaveError: Throwable? = null
     var backupEndError: Throwable? = null
 
+    // 31, Deploy finding 1: fails only the save that would make a moment the last backup, not the mark's removal.
+    var backupMomentError: Throwable? = null
+
     override suspend fun loadBackupState(): BackupState {
         loadError?.let { throw it }
         return storedBackupState
@@ -2017,6 +2020,7 @@ internal class FakeStore(
 
     override suspend fun saveBackupEnded(completedAt: Instant?) {
         (backupEndError ?: backupSaveError ?: saveError)?.let { throw it }
+        if (completedAt != null) backupMomentError?.let { throw it }
         backupSaves.add("ended" to completedAt)
         storedBackupState = BackupState(lastBackup = completedAt ?: storedBackupState.lastBackup, unfinished = false)
     }

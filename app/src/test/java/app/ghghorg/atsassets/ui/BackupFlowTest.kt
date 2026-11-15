@@ -362,6 +362,22 @@ class BackupFlowTest {
         assertNull(state.backupStage)
     }
 
+    // Deploy finding 1: the file is complete but its moment could not be stored. The mark is still removed, so the next
+    // start does not call that complete file unfinished; the last backup stays as it was.
+    @Test
+    fun aCompletedWrite_whoseMomentCannotBeStored_stillRemovesTheMark() {
+        val store = store(BackupState(lastBackup = earlier))
+        store.backupMomentError = IOException("disk")
+        val vm = onBackup(store)
+        vm.beginBackup()
+        vm.onBackupPlace(FakeTarget())
+        assertEquals(BackupOutcome.SAVED_NOT_RECORDED, vm.state.value.backupOutcome)
+        assertEquals(BackupState(lastBackup = earlier, unfinished = false), store.storedBackupState)
+        val next = started(store, clock = clockAt(now))
+        assertFalse(next.state.value.backupInterrupted)
+        assertEquals(earlier, next.state.value.lastBackup)
+    }
+
     // The mark cannot be stored: nothing is written, the empty file is deleted, and the result is "not saved".
     @Test
     fun whenTheMarkCannotBeStored_nothingIsWritten() {
