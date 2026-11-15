@@ -1,6 +1,6 @@
 # plan/iterations/32-backup-reminder.md
 
-Stage: Build. Status: approved 2026-11-15 (your A); decisions 1 to 3 settled the same day (section 11). Steps 1 to 6 built on iter-32-backup-reminder (versionCode 42); not merged. The phone check's part A passed 2026-11-15 (13.2). Open: part B, the "due" banner, on or after 2026-11-23 (decision 2), the wording's approval (section 12), the screen tests' first run on the pull request.
+Stage: Build. Status: approved 2026-11-15 (your A); decisions 1 to 3 settled the same day (section 11). Steps 1 to 6 built on iter-32-backup-reminder (versionCode 42); not merged. The phone check's part A passed 2026-11-15 (13.2). Pull request #190: its first run green, 145 of 145 screen tests; the Deploy review done, four low findings, three fixed (13.3). Open: part B, the "due" banner, on or after 2026-11-23 (decision 2), on a build with the fixes; the wording's approval (section 12).
 Source: plan.md section 4 (row 32); spec section 9 (Backup reminder), section 3 ("app holds data"), section 6 (view 1, the navigation outline), section 14 (K6, K9), D9, C15; wireframe 01 (state A, marker 1); intent "Backup reminder"; the 31 file (the export flow; open item 67).
 
 ## 1. Outcome
@@ -112,6 +112,18 @@ Part B, on or after 2026-11-23, the phone's clock unchanged (decision 2):
 Results:
 - Part A (2026-11-15, versionCode 42 installed over 41; before the install the APK's 10 dex files were compared with an earlier build and the names 32 added were found in them): checks 1 to 5 all as planned (your "1-5 ALL YES"): your data as before, no banner and no line on Overall, More's line unchanged, the cancelled export's line on Backup and restore only, and no banner after leaving and returning.
 - Part B: not yet run; on or after 2026-11-23.
+
+### 13.3 Pull request and Deploy review (2026-11-15)
+- Pull request #190 (six commits, 80547f7 to de8e6e7; reviewer msfsgh; not a draft). Its first run was green at the first attempt (gh, read only): CI (3 min 45 s; "Scale test retries": none), CodeQL and Analyze (actions), and the screen tests, 145 of 145 (11 min 40 s): the 9 new tests passed, and the 136 earlier ones passed with the banner present (risk 1 did not come about).
+- The Deploy review (Ruleset A rule 6), by reading the six commits against spec section 9, AC-18, AC-56, AC-57, wireframe 01 marker 1 and this file; nothing new was run. No high or medium finding; four low:
+  1. A result that arrived while the app was out of view (the app left during the write) was cleared at the return, unseen; for a failed export that loses "an unfinished file may remain". Fixed, the failing test first (`aResultThatArrivesWhileTheAppIsAway_isShownAtTheReturn_andGoesAtTheNext`, red with "expected NOT_SAVED_FILE_MAY_REMAIN but was null"): only a result that was showing when the app left goes at the return.
+  2. With a backup due and no data in the app, Dismiss was inactive with Back up now. Not reachable today (a backup needs data, and data cannot be removed; a restore resets the last backup). Fixed: the model has `canDismiss`, which needs no data.
+  3. plan.md's row 32 named "9, AC-18" only. Fixed: it also names AC-56's banner-button part and AC-57's file screen from the banner.
+  4. MainActivity's telling the ViewModel that the app left (`onAppHidden` in onStop, a turn excepted) has no automated test; part B's checks 7 and 8 prove it on the phone. No change.
+- What held: the 7-day rule only in core (K6); the dismissal reset at "each return to the app after leaving it, or a restart" and never stored; the banner's button on 31's export and lock exemption, not a copy; no new logging, permission or manifest change; the banner shows a date and a zone only.
+- For the wording's approval: wireframe 01 labels the button "Back up"; the app uses 31's "Back up now" on both screens.
+- CLAUDE.md gained two pitfalls: `ZoneOffset.UTC` prints "Z" in tests, and an element on every Overall also shows where a test draws Overall directly.
+- The phone has versionCode 42 without the two fixes until the next install; part B is run on a build that has them.
 
 ## 14. Departures from the plan
 - Step 3: a turn of the phone keeps the reminder dismissed. Section 4 reset the dismissal at each of MainActivity's onStart, which also runs after a turn. MainActivity's onStop now tells the ViewModel the app left (`onAppHidden`), a turn excepted, and `onAppShown` resets only after that.

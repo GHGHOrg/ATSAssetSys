@@ -1439,9 +1439,14 @@ class AppViewModel(
     // app. A turn of the phone is not one, so it keeps a dismissed reminder dismissed.
     private var away = true
 
+    // 32, Deploy finding 1: an export's result was showing when the app went out of view. Only such a result goes at the
+    // return; one that arrives while the app is away was never seen and stays for it.
+    private var resultSeenBeforeAway = false
+
     /** The app went out of view (MainActivity's onStop), a turn of the phone excepted (32). */
     fun onAppHidden() {
         away = true
+        resultSeenBeforeAway = mutableState.value.backupOutcome != null
     }
 
     /**
@@ -1449,15 +1454,18 @@ class AppViewModel(
      * zone the phone is in now (C15; 31), and the moment now, so a backup that came due while away shows (32 decision 3).
      *
      * When the app was out of view, this is an opening of the app (32; spec section 9): a dismissed reminder shows again
-     * while a backup is still due, and the result of an export from Overall goes (decision 1). A return from Android's
-     * file screen is such a return too, but its export is still under way, so its result is yet to come and stays.
+     * while a backup is still due, and the result of an export from Overall goes (decision 1), if it was showing when the
+     * app left. A return from Android's file screen is such a return too, but its export's result is yet to come; and a
+     * result that came while the app was away is shown first (Deploy finding 1).
      */
     fun onAppShown() {
         readClock()
         if (!away) return
         away = false
+        val seen = resultSeenBeforeAway
+        resultSeenBeforeAway = false
         mutableState.update {
-            it.copy(reminderDismissed = false, backupOutcome = if (it.onOverall && it.backupStage == null) null else it.backupOutcome)
+            it.copy(reminderDismissed = false, backupOutcome = if (it.onOverall && seen) null else it.backupOutcome)
         }
     }
 

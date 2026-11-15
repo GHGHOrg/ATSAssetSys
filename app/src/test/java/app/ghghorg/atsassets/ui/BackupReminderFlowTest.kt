@@ -302,6 +302,25 @@ class BackupReminderFlowTest {
         assertNull(vm.state.value.backupOutcome)
     }
 
+    // Deploy finding 1: a result that arrives while the app is out of view was never seen, so the return shows it; it
+    // goes at the return after that.
+    @Test
+    fun aResultThatArrivesWhileTheAppIsAway_isShownAtTheReturn_andGoesAtTheNext() {
+        val vm = opened()
+        val gate = CompletableDeferred<Unit>()
+        vm.beginBackup()
+        vm.leaveAndReturn()
+        vm.onBackupPlace(FakeTarget(writeError = IOException("full"), deletable = false, gate = gate))
+        assertEquals(BackupStage.WRITING, vm.state.value.backupStage)
+        vm.onAppHidden()
+        gate.complete(Unit)
+        vm.onAppShown()
+        assertEquals(BackupOutcome.NOT_SAVED_FILE_MAY_REMAIN, vm.state.value.backupOutcome)
+        assertTrue(vm.state.value.backupReminderShown)
+        vm.leaveAndReturn()
+        assertNull(vm.state.value.backupOutcome)
+    }
+
     // 31's screen keeps its result across a return to the app; only Overall's line goes then.
     @Test
     fun theResultOnBackupAndRestore_staysAtAReturnToTheApp() {
@@ -324,18 +343,17 @@ class BackupReminderFlowTest {
     fun theReminderModel_followsTheState() {
         val old = now.minus(Duration.ofDays(30))
         val vm = opened(store(BackupState(lastBackup = old)))
-        val banner = BackupReminderModel(BackupDue.OLD, LastBackup("2026-10-16", "UTC"), canAct = true, writing = false, outcome = null)
+        val banner =
+            BackupReminderModel(BackupDue.OLD, LastBackup("2026-10-16", "UTC"), canAct = true, canDismiss = true, writing = false, outcome = null)
         assertEquals(banner, vm.state.value.backupReminder)
         vm.beginBackup()
-        assertEquals(banner.copy(canAct = false), vm.state.value.backupReminder)
+        assertEquals(banner.copy(canAct = false, canDismiss = false), vm.state.value.backupReminder)
         vm.onBackupPlace(null)
         assertEquals(banner.copy(outcome = BackupOutcome.NOT_SAVED), vm.state.value.backupReminder)
         vm.beginBackup()
         vm.onBackupPlace(FakeTarget())
-        assertEquals(
-            BackupReminderModel(null, LastBackup("2026-11-15", "UTC"), canAct = true, writing = false, outcome = BackupOutcome.SAVED),
-            vm.state.value.backupReminder,
-        )
+        val saved = banner.copy(due = null, lastBackup = LastBackup("2026-11-15", "UTC"), outcome = BackupOutcome.SAVED)
+        assertEquals(saved, vm.state.value.backupReminder)
         vm.selectTab(Tab.CASH)
         vm.selectTab(Tab.OVERALL)
         assertNull(vm.state.value.backupReminder)

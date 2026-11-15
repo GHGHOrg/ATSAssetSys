@@ -118,7 +118,7 @@ private fun BackupReminderBanner(
                     Button(onClick = onBackUpNow, enabled = model.canAct) {
                         Text(text = stringResource(R.string.backup_now))
                     }
-                    OutlinedButton(onClick = onDismiss, enabled = model.canAct) {
+                    OutlinedButton(onClick = onDismiss, enabled = model.canDismiss) {
                         Text(text = stringResource(R.string.backup_due_dismiss))
                     }
                 }

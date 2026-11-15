@@ -51,13 +51,15 @@ enum class BackupDue {
 /**
  * Overall's backup reminder as the screen draws it (view 1, wireframe 01 marker 1; CR2, 32). [due] is why the banner
  * shows, null when it does not: no backup is due, or it was dismissed. [lastBackup] is for the [BackupDue.OLD] banner
- * and the saved line. [canAct]: Back up now and Dismiss are active. [writing] and [outcome] are the line of an export
- * started from the banner (decision 1): under the banner, or alone in its place once a backup is no longer due.
+ * and the saved line. [canAct]: Back up now is active. [canDismiss]: Dismiss is active; it needs no data in the app
+ * (Deploy finding 2). [writing] and [outcome] are the line of an export started from the banner (decision 1): under the
+ * banner, or alone in its place once a backup is no longer due.
  */
 data class BackupReminderModel(
     val due: BackupDue?,
     val lastBackup: LastBackup?,
     val canAct: Boolean,
+    val canDismiss: Boolean,
     val writing: Boolean,
     val outcome: BackupOutcome?,
 )
@@ -99,8 +101,8 @@ object Backups {
 
     /**
      * Overall's reminder (32), null when Overall shows nothing of it. [due] is K6's answer and [dismissed] the
-     * dismissal since the app was last opened. The buttons are active with data in the app, no export under way and no
-     * other save running. A result shows once the export has ended.
+     * dismissal since the app was last opened. Both buttons wait while an export is under way or another save runs; Back
+     * up now also needs data in the app. A result shows once the export has ended.
      */
     fun reminder(
         lastBackup: Instant?,
@@ -125,6 +127,7 @@ object Backups {
             due = reason,
             lastBackup = lastBackup(lastBackup, zone),
             canAct = holdsData && stage == null && !saving,
+            canDismiss = stage == null && !saving,
             writing = writing,
             outcome = ended,
         )

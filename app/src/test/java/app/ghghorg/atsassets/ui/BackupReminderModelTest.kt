@@ -26,7 +26,7 @@ class BackupReminderModelTest {
     @Test
     fun noBackupYet_isTheNeverBanner_withBothButtonsActive() {
         assertEquals(
-            BackupReminderModel(due = BackupDue.NEVER, lastBackup = null, canAct = true, writing = false, outcome = null),
+            BackupReminderModel(due = BackupDue.NEVER, lastBackup = null, canAct = true, canDismiss = true, writing = false, outcome = null),
             reminder(),
         )
     }
@@ -39,6 +39,7 @@ class BackupReminderModelTest {
                 due = BackupDue.OLD,
                 lastBackup = LastBackup("2026-11-01", "EST"),
                 canAct = true,
+                canDismiss = true,
                 writing = false,
                 outcome = null,
             ),
@@ -62,6 +63,7 @@ class BackupReminderModelTest {
                 due = null,
                 lastBackup = LastBackup("2026-11-01", "EST"),
                 canAct = true,
+                canDismiss = true,
                 writing = false,
                 outcome = BackupOutcome.SAVED,
             ),
@@ -84,17 +86,28 @@ class BackupReminderModelTest {
     fun whileAnExportIsUnderWay_theButtonsAreOff_andOnlyTheWritingShows() {
         val choosing = reminder(stage = BackupStage.CHOOSING, outcome = BackupOutcome.NOT_SAVED)!!
         assertFalse(choosing.canAct)
+        assertFalse(choosing.canDismiss)
         assertFalse(choosing.writing)
         assertNull(choosing.outcome)
         val writing = reminder(stage = BackupStage.WRITING, saving = true)!!
         assertFalse(writing.canAct)
+        assertFalse(writing.canDismiss)
         assertTrue(writing.writing)
         assertEquals(BackupDue.NEVER, writing.due)
     }
 
     @Test
-    fun whileAnotherSaveRuns_orWithNoData_theButtonsWait() {
-        assertFalse(reminder(saving = true)!!.canAct)
-        assertFalse(reminder(lastBackup = moment, holdsData = false)!!.canAct)
+    fun whileAnotherSaveRuns_bothButtonsWait() {
+        val model = reminder(saving = true)!!
+        assertFalse(model.canAct)
+        assertFalse(model.canDismiss)
+    }
+
+    // Deploy finding 2: with a backup due and no data in the app, Back up now is off (31 decision 6) but Dismiss works.
+    @Test
+    fun withNoData_backUpNowIsOff_andDismissStillWorks() {
+        val model = reminder(lastBackup = moment, holdsData = false)!!
+        assertFalse(model.canAct)
+        assertTrue(model.canDismiss)
     }
 }
