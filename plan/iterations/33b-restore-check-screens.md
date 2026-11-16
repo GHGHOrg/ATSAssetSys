@@ -1,6 +1,6 @@
 # plan/iterations/33b-restore-check-screens.md
 
-Stage: Build. Status: approved 2026-11-16 (your A); decisions 1 to 6 settled the same day (section 11). Steps 1 to 6 built and committed 2026-11-16 (714d7e5 to 1803339); step 7 (versionCode 43, the test files, the documents) built; not pushed. Open: the phone check (13.2), the wording's approval (section 12), the pull request and its screen tests (158), the Deploy review.
+Stage: Build. Status: approved 2026-11-16 (your A); decisions 1 to 6 settled the same day (section 11). Steps 1 to 6 built and committed 2026-11-16 (714d7e5 to 1803339); step 7 (versionCode 43, the test files, the documents) committed (b870717). The phone check passed 2026-11-16, checks 1 to 16 (13.2); the wording approved (section 12). Not pushed. Open: the pull request and its screen tests (158), the Deploy review.
 Source: plan.md section 4 (row 33b; the split of row 33, your A 2026-11-15); spec section 8 (restore steps 1 to 5, rejection reasons and the report), section 9 (Android's file screens do not lock the app; nothing leaves the phone), section 6 (Backup export and restore entry), C3, C7, C8, C16, D6, D9; section 14 (K4, K6, K9); wireframe 10e frames A, C, D, E (and F, decision 1); the 33a file (the check in core; 13.3's notes 5 and 6 for 33b); the 31 file (the file screen and its lock exemption); the 32 file (the Backup and restore screen as #190 leaves it).
 
 ## 1. Outcome
@@ -85,7 +85,7 @@ Each step ends with spotlessCheck, build, tests and lint, all with --rerun-tasks
 6. The wording of about 70 reasons and the phone (D9: decided on the phone): every reason seen on the phone: a set of synthetic test files, made-up data only (about 12 for the file-level reasons, which stop at the first, and 2 or 3 holding every row-level reason), made in step 7 from 33a's test cases and copied to the phone with adb; where they are kept is settled in step 7, outside the app (your A, 2026-11-16). Not chosen: (B) the sentences approved from section 12's list, with a sample seen on the phone, as a departure from D9.
 
 ## 12. Wording to approve (D9; proposed in step 5, approved on the phone)
-- Proposed 2026-11-16, not yet approved: the 134 `restore_` strings in app/src/main/res/values/strings.xml, under the 33b comment, one per sentence below; each reason is seen on the phone through the test files (decision 6; 13.2).
+- Approved 2026-11-16 (your A, after the phone check): the 134 `restore_` strings in app/src/main/res/values/strings.xml, under the 33b comment, one per sentence below; those seen on the phone as you saw them (decision 6; 13.2), and those the phone check could not show as written (the currency refusal, five of the source's six problems, the file problems "not read" and "could not check").
 - Backup and restore's Restore part: the line of frame A marker 3, Restore from backup file, the offline line (marker 4).
 - Step 1: "Step 1 of 5. Nothing is changed until step 5.", Choose file, the file's name line, Check file, the date format help and the date note of section 6.
 - Step 2: "Step 2 of 5. Nothing has been changed.", the two phases and their states, the ticker count, the source line, Cancel.
@@ -127,7 +127,10 @@ Before: the 13 test files and a 10.5 MB file (14-too-large.csv) copied to the ph
 16. Settings, Auto-lock: your own choice back.
 
 Results:
-- Not yet run.
+- 2026-11-16, versionCode 43 installed over 42 at 14:12:23 (before the install the APK, 44,463,018 bytes, and its dex files were checked: 33b's names in classes7 and classes8); the 14 files copied to Download/ATS-restore-check (sizes matching).
+- Checks 1 to 14: all okay (your "check 1 - 14 ALL OKAY"). Check 10: TCEHY was refused for its exchange: "cannot be verified: Finnhub reports the exchange OOTC, which the app does not take."; ZZZZQ and VFIAX as planned, AAPL not listed. The currency refusal (`restore_ticker_not_usd`) was not reached on the phone: no ticker in file 13 is quoted in another currency; its sentence is checked by RestoreModelTest only. Of decision 3's source problems only "offline" was seen (check 11); no key, no answer, a refused key, too many calls and an unreadable answer are checked by RestoreModelTest and RestoreFlowTest only. The file problems "not read" and "could not check" were not seen either.
+- Check 15: Logcat from 15:16:18 over the checks of file 11 (with Copy report) and your own file (6,056 lines): no id, ticker, amount, note, portfolio name or file name of either file; the app's own 47 lines are framework lines only (back callbacks, surfaces, the keyboard, BiometricPrompt). Android's ClipboardService refused clipboard access to eight other apps that were not in focus. The capture is in the session's scratchpad.
+- Check 16: Auto-lock back to your own choice (your "done").
 ## 14. Departures from the plan
 1. Steps 3 and 4: tests and code were written in one pass, not tests first (section 6 says "Tests first").
 2. Files beyond section 5's: backup/RestoreFile.kt (the chosen file behind ContentResolver, as 31's BackupTarget), ui/RestoreWizard.kt (the wizard's state types), prices/NetworkStatus.kt (a lost network), and BackupFlowTest.kt (31's whole-model test names the two new fields). KeptFields.kt was not changed: the wizard's state survives a turn of the phone in the ViewModel. RestoreScreenTest.kt holds the screen tests.

@@ -654,7 +654,7 @@
     <string name="backup_due_never">Back up your data: you have never backed up.</string>
     <string name="backup_due_old">Back up your data: the last backup was %1$s %2$s, more than 7 days ago.</string>
     <string name="backup_due_dismiss">Dismiss</string>
-    <!-- Iteration 33b: the restore check (wireframe 10e frames A, C to F; spec section 8). Wording proposed 2026-11-16, not yet approved (D9; 33b file, section 12): each sentence is approved on the phone (decision 6). -->
+    <!-- Iteration 33b: the restore check (wireframe 10e frames A, C to F; spec section 8). Wording approved 2026-11-16 after the phone check (D9; 33b file, section 12 and 13.2). -->
     <string name="restore_note">Restore replaces all data and settings in the app with the contents of a backup file. Needs internet.</string>
     <string name="restore_button">Restore from backup file</string>
     <string name="restore_offline">Restore needs internet. Connect and try again.</string>
