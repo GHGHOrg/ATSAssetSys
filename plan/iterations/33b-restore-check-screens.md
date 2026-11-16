@@ -1,0 +1,103 @@
+# plan/iterations/33b-restore-check-screens.md
+
+Stage: Build. Status: approved 2026-11-16 (your A); decisions 1 to 6 settled the same day (section 11).
+Source: plan.md section 4 (row 33b; the split of row 33, your A 2026-11-15); spec section 8 (restore steps 1 to 5, rejection reasons and the report), section 9 (Android's file screens do not lock the app; nothing leaves the phone), section 6 (Backup export and restore entry), C3, C7, C8, C16, D6, D9; section 14 (K4, K6, K9); wireframe 10e frames A, C, D, E (and F, decision 1); the 33a file (the check in core; 13.3's notes 5 and 6 for 33b); the 31 file (the file screen and its lock exemption); the 32 file (the Backup and restore screen as #190 leaves it).
+
+## 1. Outcome
+Backup and restore gains its Restore part: the line saying what a restore does, and Restore from backup file. Offline, the button is inactive and a line says why. The button opens the wizard's first steps:
+- Step 1: Choose file opens Android's file screen; the file's name shows; Check file starts step 2. The date format help sits beside it.
+- Step 2: the check. First the reading and the rules (33a's check in core); then, only if that found no errors, every ticker still held at the end of the file is verified with the price source selected now (D6). Cancel returns to step 1.
+- The error report: "N errors in M lines", then every error with its line, its column when one applies and its reason in plain words; Copy report copies exactly that text; Choose another file returns to step 1. "Nothing was changed."
+- A file that passes: step 3's summary, the file's counts, with Cancel and no Continue (decision 1).
+Nothing in the app changes at any point: the wizard ends before the confirmation (34). You can test a hand-made file against the app before 34 exists (section 8, "Test the first real file with the restore report before relying on it").
+
+## 2. Spec refs
+- Section 8, restore steps 1 (online only), 2 (read and check, every error collected; a file-level failure stops there), 3 (held tickers verified through K4 with the source selected before the restore; sold-out tickers not verified; a second round can name unverifiable tickers), 4 (any failure: nothing changes, the report with Copy report); step 5, the summary's figures (decision 1).
+- Section 8, rejection reasons and the report: every reason in plain words, the header as line 1, "depends on line N", "N errors in M lines"; the report stays on screen and only Copy report copies it. The reasons themselves are 33a's; 33b words them (33a decision 3, departure 2).
+- Section 9: Android's file screen for choosing a restore file does not apply the "every time you leave the app" lock; any other lock ends the wizard and it starts again from step 1 with nothing changed. Nothing leaves the phone but price requests; Copy report is the one exception (C16).
+- Section 6, Backup export and restore entry: the wizard's steps as one screen each; Restore inactive offline with a line why; the error report's Copy report and Choose another file.
+- C3 (a check changes nothing), C7 (cascading errors), C8 (online only; sold-out tickers not verified), C16 (Copy report, the only copy action), D6 (the source selected now), D9 (the wording).
+- Section 14: K4 verifies the tickers; K6 reads the file (33a); K9 shows the screens.
+- Criteria: AC-08 (offline cannot start; held tickers verified before anything is deleted, one failing blocks; the source selected before); AC-16 (the report screen and Copy report; no other copy); AC-56's restore parts up to the report (Restore inactive offline with a line why; a file with errors stops at the report; Copy report copies only that text; nothing changed), and the summary's figures (decision 1); AC-57's restore file screen; AC-61; the standing checks AC-09, AC-39 to AC-42 and AC-35.
+- Not met here: AC-56's confirmation, typed word, result and "never backed up" after a restore, and AC-57's "a lock during a restore returns to step 1" beyond the steps built here (34, 35).
+
+## 3. Out of scope
+- Step 4 (the export offer and the typed confirmation), step 5 (the result), the delete and load (34, 35).
+- The summary's "Now" column (35: it shows only when the app holds data, and 34 restores onto an empty app); in 33b the summary shows the file's counts only, with no Continue (decision 1).
+- The price key at a restore (open item 66, decided in 34).
+- Changing 33a's check, except where a test here finds a defect (then section 14 records it).
+
+## 4. Analysis (2026-11-16, by reading the code and the spec; nothing run)
+- Core is ready: `BackupCheck.check(bytes, RestoreContext)` gives `RestoreCheck.Failed(errors)` in report order, or the records, the held tickers and the summary (33a decision 1). Each error is a line, a column or none, and a `RestoreReason`; about 70 reasons in all (33a 13.2 and section 14).
+- The file screen: 31 opens `ACTION_CREATE_DOCUMENT` with `startActivityForResult` and the lock's `onFileScreenOpened`/`onFileScreenClosed` (MainActivity.kt:237 to 269). Choosing a file is the same with `ACTION_OPEN_DOCUMENT` and a second request code. The app reads only the file you pick, once, through the content resolver.
+- Size: 33a reads the whole file into memory with no limit (33a 13.3, note 5). The file screen can hand over any file (decision 4).
+- K4: `TickerVerifier.verify` passes a ticker already verified in the app at once, offline too, and stores each newly verified instrument (K4 writes instrument data). A restore check that stores instruments changes the app before step 5 (decision 2). Its refusals: the ticker's own (not found, mutual fund, exchange, currency) and the source's (no key, no answer, key refused, too many calls, unreadable) (decision 3).
+- Finnhub's free plan limits calls per minute; a file with many held tickers may meet "too many calls" (section 8, Known limits).
+- The check is about n² in the number of records: 3,000 transactions took 1 to 2.6 s on the PC (33a 13.1, step 5), slower on the phone; it runs off the main thread with the step 2 screen showing.
+- Lock: the wizard's state lives in the ViewModel. A lock other than the file screen's exemption ends the wizard (section 9); a turn of the phone keeps it (as 31's export).
+- Logging: the reasons carry file ids, dates and figures; they go only to the screen and Copy report, never to a log (spec section 9; 33a 13.3, note 6).
+- The clipboard: Android 13 and later show a preview of copied text; the app can mark a clip as sensitive to hide it (my reading, not checked; decision 5, section 10).
+- Open item 67 says 33 meets the same left-over file screen after a force stop and decides for it. For Choose file, a pick on that left-over screen answers no one: nothing is read and nothing is written, unlike the export's empty file. My reading: a known limit with no harm, recorded, no fix; checked on the phone if you want it (proposed after step 6).
+- Screen tests: no test can drive Android's file screen on the emulator; the tests hand the chosen file's bytes to the ViewModel directly, and the file screen is proven on the phone (AC-57).
+- No database change.
+
+## 5. Files
+- app/: ui: RestoreModel.kt (new: each step's model; the report's lines from each reason, CR2), RestoreScreen.kt (new: steps 1 and 2, the report, and the summary), AppViewModel.kt (the wizard's state, the check off the main thread, Cancel, the end at a lock), BackupModel.kt and BackupScreen.kt (the Restore part and the offline line), AppContent.kt, KeptFields.kt (if the wizard's state needs keeping across a turn), strings.xml; prices/TickerVerifier.kt (decision 2); MainActivity.kt (Choose file's file screen with the lock exemption; Copy report's clipboard); app/build.gradle.kts (versionCode 43).
+- Tests: RestoreModelTest (every reason to its sentence; the count line; the copied text equals the shown text), RestoreFlowTest (the wizard's steps, the ticker round with a fake source, Cancel, a lock, offline), RestoreScreenTest (androidTest, AC-61); PortfolioDeleteScreenTest.kt (open item 68, test support only).
+- Documents: this file; plan.md (rows 33b and 34: AC-56's summary figures move to 33b, decision 1; section 11; the change log); plan/open-items.md (item 68).
+
+## 6. Order of work
+Each step ends with spotlessCheck, build, tests and lint, all with --rerun-tasks, plus `:app:compileDebugAndroidTestKotlin`, and the report. Then I stop. Branch iter-33b-restore-check-screens, stacked on iter-32-backup-reminder at 39657e3 (32 with main and 33a merged in; your C, then A, 2026-11-16); one pull request.
+1. This file, plan.md's lines, and open item 68 in plan/open-items.md (written here rather than in 32's held record, as its fix is this iteration's).
+2. Open item 68 (test support only, no app change): `PortfolioDeleteKeyboardLandscapeTest.theDialog_reachesDownToTheKeyboard_andShowsTheNameField_inLandscape` waits until the landscape dialog is drawn before it measures. Read the failing runs' results first (43722810947 and 43790250224); the fix is checked on the pull request, as the screen tests run on GitHub only.
+3. The wizard's flow in the ViewModel: the steps; the file's bytes in (with decision 4's limit); the check off the main thread; the ticker round through K4 (decisions 2 and 3); Cancel; the end at a lock; Restore inactive offline. Tests first, with a fake source.
+4. The models: the report (the count line, each error's line, column and sentence; the copied text the same text), step 1, step 2's two phases, and the summary (decision 1); the Restore part of Backup and restore. Tests first: one per reason (risk 1). The wording proposed in section 12, not yet approved.
+5. The screens and MainActivity: steps 1 and 2, the report, the summary (decision 1), Choose file's file screen with the lock exemption, Copy report (decision 5); a wiring test per screen (CR2).
+6. The screen tests (AC-61): the largest font in landscape for each step and the report; TalkBack text for the report's errors and the summary's figures; Restore inactive offline; every existing test still green.
+7. Documents, versionCode 43, the phone check with test files (decision 6), the wording, the pull request draft, and the open item 33 reminder.
+
+## 7. Stubs
+- The summary has no Continue; Cancel returns to Backup and restore. 34 adds Continue (Restore on an empty app) (decision 1).
+
+## 8. Risks
+1. About 70 reasons each need a sentence and a test; one missed shows a wrong or empty line. RestoreModelTest has one test per reason, listed against 33a's 13.2 in step 7.
+2. Stacked on #190: a fix from 32's part B (on or after 2026-11-23) is carried into this branch by hand, and after #190 merges, main is merged in. The pull request targets main and shows 32's commits until #190 merges; it stays a draft until then (my reading of your C).
+3. The file screen and the clipboard are platform behaviour, unverified (sections 8 and 9, C16); proven on the phone only.
+4. Finnhub's call limit on a file with many held tickers (decision 3); your own file's count of held tickers is what the phone check meets.
+5. The check's time on the phone for a large file; the step 2 screen shows while it runs, and Cancel stops it.
+6. The local build's intermittent failures (open item 60): a failed run is re-run unchanged after reading its cause; before the install the APK and its dex files are compared.
+7. Open item 68 is a reading, not proven (the test measures before the dialog is drawn); step 2 reads the results before changing the test.
+
+## 9. Proof
+- Unit tests: steps 3 and 4 (every reason's sentence; the flow with a fake source, a lock, Cancel, offline).
+- Screen tests: step 6.
+- The phone check, over versionCode 42, your data kept (AC-35): Restore inactive in airplane mode with its line; Choose file opens Android's file screen and the return does not lock under "every time you leave the app" (AC-57); your own backup file from 31 checked clean (decision 1's screen), its held tickers verified with your key; the test files of decision 6 (synthetic data only) giving their reports; Copy report pasted into another app shows the same text; Cancel during step 2; Back through the steps; a lock during the wizard returns to step 1; the largest font in landscape, TalkBack, light and dark; Logcat over one check (no file content, id, ticker or figure in the log).
+
+## 10. Research
+- The clipboard's sensitive mark (decision 5): its constant and the API level it needs, checked with javap on the cached android.jar before use (CLAUDE.md: no security-relevant code from memory). No web search planned.
+
+## 11. Decisions (Build, settled by you 2026-11-16)
+1. A file that passes, in 33b: step 3's summary (portfolios, transactions, cash entries, the cash balance, the holdings with shares; the file's counts only), with Cancel and no Continue; 34 adds Continue. You can compare your real file's figures with real life now; row 33b gains AC-56's summary figures and row 34 loses them (your A, 2026-11-16). Not chosen: (B) one line, "No errors found", and Choose another file; the summary in 34.
+2. The ticker round and C3: the check stores nothing: K4's `verify` is split into a check and a store (the Buy path calls both, unchanged), the round calls the check only, and the results stay in memory for 34 to store with the load, so the app is unchanged until step 5 as wireframe 10e says (your A, 2026-11-16). A ticker already verified in the app passes without a call (4.3: verified once). Not chosen: (B) K4 as today, each newly verified instrument stored at once.
+3. A price source problem during the ticker round (no key, no answer, key refused, too many calls, an answer the app cannot read): the round stops with one line naming the problem, "Nothing was changed", and Try again (step 2 again, the same file); only the tickers the source refused (not found, mutual fund, exchange, currency) are listed as errors (your A, 2026-11-16). Not chosen: (B) every ticker not verified listed as an error with the problem as its reason.
+4. The file's size: a file above 10 MB is refused before it is read, with a reason of its own (an addition to section 8's list, as 33a decision 3, not a spec change; 10 MB is about 150,000 rows, far beyond a real file) (your A, 2026-11-16). Not chosen: (B) no limit, any file read whole into memory.
+5. Copy report and the clipboard: the copied text is marked sensitive, so Android hides its preview (section 10's check first); the copy still sits on the clipboard, where other apps can read it (C16) (your A, 2026-11-16). Not chosen: (B) a plain copy, the preview shown.
+6. The wording of about 70 reasons and the phone (D9: decided on the phone): every reason seen on the phone: a set of synthetic test files, made-up data only (about 12 for the file-level reasons, which stop at the first, and 2 or 3 holding every row-level reason), made in step 7 from 33a's test cases and copied to the phone with adb; where they are kept is settled in step 7, outside the app (your A, 2026-11-16). Not chosen: (B) the sentences approved from section 12's list, with a sample seen on the phone, as a departure from D9.
+
+## 12. Wording to approve (D9; proposed in step 4, approved on the phone)
+- Backup and restore's Restore part: the line of frame A marker 3, Restore from backup file, the offline line (marker 4).
+- Step 1: "Step 1 of 5. Nothing is changed until step 5.", Choose file, the file's name line, Check file, the date format help and the date note of section 6.
+- Step 2: "Step 2 of 5. Nothing has been changed.", the two phases and their states, the ticker count, the source line, Cancel.
+- The report: "N errors in M lines" (one error, one line), each error's line ("Line N", "Line N, <column>", "File"), each reason's sentence, the second round's ticker sentence, "Nothing was changed.", Copy report, Choose another file, the line after a copy; decision 3's line and Try again; decision 4's reason.
+- The summary (decision 1): the step line, the counts' labels, the cash balance and holdings lines, Cancel.
+- TalkBack's reading of each error and of the summary's figures.
+
+## 13. Status and notes
+- Draft 2026-11-16, on iter-33b-restore-check-screens at 39657e3; approved the same day (your A).
+
+### 13.1 Steps
+- Steps 1 to 6 are built without stops between them, each held as a tree when its full run is green and committed one per step after step 6 (your instruction, 2026-11-16).
+- Step 1 (2026-11-16): this file; plan.md (row 33b gains AC-56's summary figures and Restore offline, decision 1; section 11's row for 33b; the change log with #190's run on 39657e3); plan/open-items.md (item 68). Only documents changed.
+
+## 14. Departures from the plan
+- None yet.
