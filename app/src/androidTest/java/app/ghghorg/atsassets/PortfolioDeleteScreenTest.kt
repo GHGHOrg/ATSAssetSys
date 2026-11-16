@@ -1,5 +1,6 @@
 package app.ghghorg.atsassets
 
+import android.os.SystemClock
 import androidx.activity.ComponentActivity
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -7,6 +8,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.semantics.SemanticsProperties
 import androidx.compose.ui.test.SemanticsMatcher
 import androidx.compose.ui.test.assertIsDisplayed
@@ -297,8 +299,22 @@ class PortfolioDeleteKeyboardLandscapeTest {
         }
         composeRule.onNode(nameField()).performScrollTo().performClick()
         val keyboardTop = composeRule.keyboardTop()
-        composeRule.waitForIdle()
-        val dialogBottom = composeRule.onNode(SemanticsMatcher.keyIsDefined(SemanticsProperties.PaneTitle)).fetchSemanticsNode().boundsInWindow.bottom
+        // Open item 68 (33b step 2): twice the dialog read as bounds 0.0 here, then passed on a re-run. A node clipped away
+        // reads as zero bounds, as the layer does while its imePadding still follows the keyboard. Wait until the dialog has
+        // a height and the same bounds on two reads in a row; the check itself is unchanged.
+        val pane = SemanticsMatcher.keyIsDefined(SemanticsProperties.PaneTitle)
+        var last = Rect.Zero
+        val settled =
+            poll(10_000) {
+                composeRule.waitForIdle()
+                val now = composeRule.onNode(pane).fetchSemanticsNode().boundsInWindow
+                val same = now.height > 0f && now == last
+                last = now
+                if (!same) SystemClock.sleep(200)
+                same
+            }
+        if (!settled) fail("The dialog's bounds did not settle 10 s after the keyboard opened; last read $last")
+        val dialogBottom = last.bottom
         val (margin, tolerance) = with(composeRule.density) { 24.dp.toPx() to 4.dp.toPx() }
         val gap = keyboardTop - dialogBottom
         assertTrue(

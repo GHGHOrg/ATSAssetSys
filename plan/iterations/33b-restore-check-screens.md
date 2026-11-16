@@ -98,6 +98,7 @@ Each step ends with spotlessCheck, build, tests and lint, all with --rerun-tasks
 ### 13.1 Steps
 - Steps 1 to 6 are built without stops between them, each held as a tree when its full run is green and committed one per step after step 6 (your instruction, 2026-11-16).
 - Step 1 (2026-11-16): this file; plan.md (row 33b gains AC-56's summary figures and Restore offline, decision 1; section 11's row for 33b; the change log with #190's run on 39657e3); plan/open-items.md (item 68). Only documents changed.
+- Step 2 (2026-11-16): open item 68. The failed attempts' results could not be downloaded again (`gh run download` gets the newest attempt only; copies are in the previous session's scratchpad, outside the repo, not read). From the error text: the dialog read as bounds 0.0, which Compose gives a node clipped away entirely, as the layer is while its imePadding still follows the keyboard (my reading). PortfolioDeleteKeyboardLandscapeTest now waits, with `waitForIdle` in the loop, until the dialog has a height and the same bounds on two reads in a row (10 s at most) before it measures; the margin and tolerance are unchanged. Test support only; proven on the pull request's runs, as the screen tests run on GitHub only.
 
 ## 14. Departures from the plan
 - None yet.
