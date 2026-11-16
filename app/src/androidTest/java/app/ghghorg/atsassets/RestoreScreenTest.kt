@@ -144,7 +144,7 @@ class RestoreTalkBackTest {
     fun step1_choosesAFile_andChecksItOnceChosen() {
         show(RestoreWizard())
         composeRule.onNode(isHeading() and hasText(string(R.string.restore_title))).assertExists()
-        composeRule.onNodeWithText(string(R.string.restore_step1)).assertExists()
+        composeRule.onNodeWithText(restoreText(R.string.restore_step1, "5")).assertExists()
         composeRule.onNodeWithText(string(R.string.restore_no_file)).assertExists()
         composeRule.onNode(button(R.string.restore_check_file)).assertIsNotEnabled()
         composeRule.onNode(button(R.string.restore_choose_file)).assertIsEnabled().performClick()
@@ -167,7 +167,7 @@ class RestoreTalkBackTest {
     @Test
     fun step2_readsItsPhases_andCancelTakesItsTap() {
         show(RestoreWizard(step = RestoreStep.CHECKING, fileName = "b.csv", phase = CheckPhase.VERIFYING, verified = 1, toVerify = 3))
-        composeRule.onNodeWithText(string(R.string.restore_step2)).assertExists()
+        composeRule.onNodeWithText(restoreText(R.string.restore_step2, "5")).assertExists()
         composeRule.onNodeWithText(string(R.string.restore_reading_done)).assertExists()
         composeRule.onNodeWithText(restoreText(R.string.restore_verify_progress, "2", "3")).assertExists()
         composeRule.onNodeWithText(restoreText(R.string.restore_source_line, SOURCE)).assertExists()
@@ -229,7 +229,7 @@ class RestoreTalkBackTest {
     @Test
     fun theSummary_readsEachLabelWithItsFigure() {
         show(RestoreWizard(step = RestoreStep.SUMMARY, summary = EXAMPLE_SUMMARY))
-        composeRule.onNodeWithText(string(R.string.restore_step3)).assertExists()
+        composeRule.onNodeWithText(restoreText(R.string.restore_step3, "5")).assertExists()
         val rows =
             listOf(
                 R.string.restore_portfolios to "2",
@@ -364,7 +364,8 @@ class RestoreOpensFromBackupTest {
             composeRule.onNode(restore).performScrollTo().assertIsNotEnabled()
             return
         }
-        val step1 = hasText(string(R.string.restore_step1))
+        // 34: four steps on an app with no data, five on one that holds data; the emulator's app may be either.
+        val step1 = hasText(restoreText(R.string.restore_step1, "4")) or hasText(restoreText(R.string.restore_step1, "5"))
         composeRule.assertFocusHeld("Restore, step 1") {
             composeRule.onNode(restore).performScrollTo().performClick()
             composeRule.waitUntil(5_000) { composeRule.onAllNodes(step1).fetchSemanticsNodes().isNotEmpty() }

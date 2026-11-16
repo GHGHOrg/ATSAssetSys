@@ -163,6 +163,22 @@ class RestoreLoadFlowTest {
         assertNull(vm.restoreReady)
     }
 
+    // CR2: the state hands the wizard's screen its model through the restore: Restore offered on the summary of an app
+    // with no data, then the result with the counts loaded.
+    @Test
+    fun theState_wiresTheRestoresModel() {
+        val vm = vm(emptyStore())
+        vm.checked(fileOf(sourceStore()))
+        val summary = requireNotNull(vm.state.value.restoreScreen)
+        assertTrue(summary.canRestore)
+        assertEquals("4", summary.totalSteps)
+        vm.restoreNow()
+        val result = requireNotNull(vm.state.value.restoreScreen)
+        assertEquals(RestoreSummaryModel("1", "1", "1", "$9,000.00", "1"), result.loaded)
+        assertFalse(result.backEnabled)
+        assertEquals("4", result.totalSteps)
+    }
+
     // Wireframe 10e marker 18: Go to Overall opens the app as it now is; there is no way back into the wizard.
     @Test
     fun goToOverall_opensOverall_withTheReminder() {

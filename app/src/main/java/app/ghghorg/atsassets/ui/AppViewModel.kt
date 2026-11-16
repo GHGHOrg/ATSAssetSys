@@ -966,7 +966,7 @@ data class AppState(
 
     /** 33b: the restore wizard as the screen draws it (wireframe 10e frames C to F; CR2), null while it is closed. */
     val restoreScreen: RestoreModel?
-        get() = restore?.let { Restores.screen(it, priceSourceName) }
+        get() = restore?.let { Restores.screen(it, priceSourceName, holdsData) }
 
     /**
      * 34: Restore is offered: the summary of a file that passed, on an app that holds no data (section 3; decision 3: an

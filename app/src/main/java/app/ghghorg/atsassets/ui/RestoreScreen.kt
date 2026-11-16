@@ -33,7 +33,8 @@ import java.time.LocalDate
 /**
  * The wizard's callbacks, passed together. [onChooseFile] and [onCopyReport] are MainActivity's: Android's file screen
  * with the lock's exemption (AC-57), and the clipboard (C16). [onCheck] takes the note of 4.6 for a cash reversal the
- * file gives none, worded here (D9).
+ * file gives none, worded here (D9). 34: [onRestore] is the summary's Restore on an app with no data, and [onGoToOverall]
+ * the result's button.
  */
 class RestoreActions(
     val onBack: () -> Unit,
@@ -44,6 +45,8 @@ class RestoreActions(
     val onCopyReport: (String) -> Unit,
     val onChooseAnother: () -> Unit,
     val onClose: () -> Unit,
+    val onRestore: () -> Unit = {},
+    val onGoToOverall: () -> Unit = {},
 )
 
 /**
@@ -77,8 +80,10 @@ fun RestoreScreen(
             RestoreStep.CHOOSE -> ChooseStep(model, actions, reversalNote(resources))
             RestoreStep.CHECKING -> CheckingStep(model, sourceName, actions, resources)
             RestoreStep.REPORT -> Unit
-            RestoreStep.SUMMARY -> model.summary?.let { SummaryStep(it, actions) }
-            RestoreStep.RESTORING, RestoreStep.RESULT, RestoreStep.FAILED -> Unit
+            RestoreStep.SUMMARY -> model.summary?.let { SummaryStep(it, model, actions) }
+            RestoreStep.RESTORING -> RestoringStep()
+            RestoreStep.RESULT -> model.loaded?.let { ResultStep(it, actions) }
+            RestoreStep.FAILED -> FailedStep(actions)
         }
     }
 }
@@ -90,7 +95,7 @@ private fun ChooseStep(
     actions: RestoreActions,
     note: (CashType, LocalDate) -> String,
 ) {
-    BodyLine(stringResource(R.string.restore_step1))
+    BodyLine(stringResource(R.string.restore_step1, model.totalSteps))
     OutlinedButton(onClick = actions.onChooseFile, enabled = model.canChoose) {
         Text(text = stringResource(R.string.restore_choose_file))
     }
@@ -110,7 +115,7 @@ private fun CheckingStep(
     actions: RestoreActions,
     resources: Resources,
 ) {
-    BodyLine(stringResource(R.string.restore_step2))
+    BodyLine(stringResource(R.string.restore_step2, model.totalSteps))
     Text(
         text = stringResource(if (model.readingDone) R.string.restore_reading_done else R.string.restore_reading),
         style = MaterialTheme.typography.bodyLarge,
@@ -179,13 +184,15 @@ private fun ReportList(
     }
 }
 
-// Frame F, the file's column only (decision 1; frame F marker 15's fresh-install form), with no Continue until 34.
+// Frame F, the file's column only (33b decision 1; marker 15's fresh-install form). On an app with no data: Restore,
+// and what it does (34). On an app that holds data: the line that restoring over data comes later (34 decision 3; 35).
 @Composable
 private fun SummaryStep(
     summary: RestoreSummaryModel,
+    model: RestoreModel,
     actions: RestoreActions,
 ) {
-    BodyLine(stringResource(R.string.restore_step3))
+    BodyLine(stringResource(R.string.restore_step3, model.totalSteps))
     Text(
         text = stringResource(R.string.restore_in_file),
         style = MaterialTheme.typography.titleMedium,
@@ -196,9 +203,66 @@ private fun SummaryStep(
     SummaryRow(stringResource(R.string.restore_cash_entries), summary.cashEntries)
     SummaryRow(stringResource(R.string.restore_cash_after), summary.cashBalance)
     SummaryRow(stringResource(R.string.restore_holdings), summary.holdingsWithShares)
-    BodyLine(stringResource(R.string.restore_summary_note))
+    BodyLine(stringResource(if (model.restoreLater) R.string.restore_summary_note else R.string.restore_empty_note))
+    Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+        if (model.canRestore) {
+            Button(onClick = actions.onRestore) {
+                Text(text = stringResource(R.string.restore_now))
+            }
+        }
+        OutlinedButton(onClick = actions.onClose) {
+            Text(text = stringResource(R.string.cancel_button))
+        }
+    }
+}
+
+// The delete and load under way (section 8, step 7): one line, read by TalkBack when it appears; nothing to tap.
+@Composable
+private fun RestoringStep() {
+    Text(
+        text = stringResource(R.string.restore_restoring),
+        style = MaterialTheme.typography.bodyLarge,
+        modifier = Modifier.semantics { liveRegion = LiveRegionMode.Polite },
+    )
+}
+
+// Frame H, marker 18: what was loaded, the "no price" and "never backed up" notes, the key (34 decision 1), Go to Overall.
+@Composable
+private fun ResultStep(
+    loaded: RestoreSummaryModel,
+    actions: RestoreActions,
+) {
+    Text(
+        text = stringResource(R.string.restore_complete),
+        style = MaterialTheme.typography.titleMedium,
+        modifier = Modifier.semantics {
+            heading()
+            liveRegion = LiveRegionMode.Polite
+        },
+    )
+    BodyLine(stringResource(R.string.restore_loaded))
+    SummaryRow(stringResource(R.string.restore_portfolios), loaded.portfolios)
+    SummaryRow(stringResource(R.string.restore_transactions), loaded.transactions)
+    SummaryRow(stringResource(R.string.restore_cash_entries), loaded.cashEntries)
+    BodyLine(stringResource(R.string.restore_no_price_note))
+    BodyLine(stringResource(R.string.restore_never_backed_up_note))
+    BodyLine(stringResource(R.string.restore_key_note))
+    Button(onClick = actions.onGoToOverall) {
+        Text(text = stringResource(R.string.restore_go_overall))
+    }
+}
+
+// Frame H, marker 19: the write failed and nothing was changed; Close only.
+@Composable
+private fun FailedStep(actions: RestoreActions) {
+    Text(
+        text = stringResource(R.string.restore_failed),
+        style = MaterialTheme.typography.bodyLarge,
+        color = MaterialTheme.colorScheme.error,
+        modifier = Modifier.semantics { liveRegion = LiveRegionMode.Polite },
+    )
     OutlinedButton(onClick = actions.onClose) {
-        Text(text = stringResource(R.string.cancel_button))
+        Text(text = stringResource(R.string.restore_close))
     }
 }
 

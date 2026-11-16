@@ -186,7 +186,10 @@ data class RestoreSummaryModel(
  * The wizard's screen. [step] picks the frame. Step 1: [fileName], null with none chosen; [canChoose] and [canCheck].
  * Step 2: [readingDone] once the first phase passed; [progress] during the ticker round; [sourceProblem] when the source
  * could not answer (decision 3), with Try again. [report] on the report, [summary] on the summary. [backEnabled]: "<" and
- * Android Back act; not while Android's file screen is open.
+ * Android Back act; not while Android's file screen is open. 34: [totalSteps] is "4" on an app with no data (wireframe 10e
+ * marker 15: no step 4) and "5" on one that holds data; [canRestore]: the summary offers Restore (an app with no data);
+ * [restoreLater]: the summary says restoring over data comes later (34 decision 3); [loaded] on the result, the file's
+ * counts as loaded. Back does nothing while the restore is written or on its result.
  */
 data class RestoreModel(
     val step: RestoreStep,
@@ -199,13 +202,21 @@ data class RestoreModel(
     val report: RestoreReportModel?,
     val summary: RestoreSummaryModel?,
     val backEnabled: Boolean,
+    val totalSteps: String,
+    val canRestore: Boolean,
+    val restoreLater: Boolean,
+    val loaded: RestoreSummaryModel?,
 )
 
 object Restores {
-    /** The wizard as drawn; [sourceName] is the selected source's own name (K4), for the second round's sentences. */
+    /**
+     * The wizard as drawn; [sourceName] is the selected source's own name (K4), for the second round's sentences;
+     * [holdsData] is section 3's "app holds data" (34: an app with none restores in four steps; one with data waits for 35).
+     */
     fun screen(
         wizard: RestoreWizard,
         sourceName: String,
+        holdsData: Boolean = true,
     ): RestoreModel = RestoreModel(
         step = wizard.step,
         fileName = wizard.fileName,
@@ -222,8 +233,15 @@ object Restores {
         sourceProblem = wizard.sourceProblem?.let(::sourceProblem),
         report = if (wizard.step == RestoreStep.REPORT) report(wizard, sourceName) else null,
         summary = if (wizard.step == RestoreStep.SUMMARY) wizard.summary?.let(::summary) else null,
-        backEnabled = !wizard.choosing,
+        backEnabled = !wizard.choosing && wizard.step != RestoreStep.RESTORING && wizard.step != RestoreStep.RESULT,
+        totalSteps = if (holdsData && wizard.step !in AFTER_RESTORE) "5" else "4",
+        canRestore = wizard.step == RestoreStep.SUMMARY && !holdsData,
+        restoreLater = wizard.step == RestoreStep.SUMMARY && holdsData,
+        loaded = if (wizard.step == RestoreStep.RESULT) wizard.summary?.let(::summary) else null,
     )
+
+    // From Restore's tap on, the app holds the file's data, but the restore that led here had four steps.
+    private val AFTER_RESTORE = setOf(RestoreStep.RESTORING, RestoreStep.RESULT, RestoreStep.FAILED)
 
     /** The report: a file problem alone, or the second round's tickers, or the first round's errors. */
     fun report(

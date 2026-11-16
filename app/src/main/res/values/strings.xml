@@ -659,13 +659,14 @@
     <string name="restore_button">Restore from backup file</string>
     <string name="restore_offline">Restore needs internet. Connect and try again.</string>
     <string name="restore_title">Restore</string>
-    <string name="restore_step1">Step 1 of 5. Nothing is changed until step 5.</string>
+    <!-- 34: the step lines take the number of steps, 5 on an app that holds data (as approved in 33b) and 4 on one with none (wireframe 10e marker 15). -->
+    <string name="restore_step1">Step 1 of %1$s. Nothing is changed until step %1$s.</string>
     <string name="restore_choose_file">Choose file</string>
     <string name="restore_file_name">File: %1$s</string>
     <string name="restore_no_file">No file chosen yet.</string>
     <string name="restore_check_file">Check file</string>
     <string name="restore_date_help">Dates in the file are YYYY-MM-DD.</string>
-    <string name="restore_step2">Step 2 of 5. Nothing has been changed.</string>
+    <string name="restore_step2">Step 2 of %1$s. Nothing has been changed.</string>
     <string name="restore_reading">Reading the file and checking the rules…</string>
     <string name="restore_reading_done">Reading the file and checking the rules: done</string>
     <string name="restore_verify_waiting">Verifying held tickers: waits for the first part</string>
@@ -783,7 +784,7 @@
     <string name="restore_ticker_mutual_fund">cannot be verified: %1$s reports a mutual fund, which the app does not track.</string>
     <string name="restore_ticker_not_us_exchange">cannot be verified: %1$s reports the exchange %2$s, which the app does not take.</string>
     <string name="restore_ticker_not_usd">cannot be verified: %1$s reports it in %2$s, not US dollars.</string>
-    <string name="restore_step3">Step 3 of 5. Nothing has been changed.</string>
+    <string name="restore_step3">Step 3 of %1$s. Nothing has been changed.</string>
     <string name="restore_in_file">In the file</string>
     <string name="restore_portfolios">Portfolios</string>
     <string name="restore_transactions">Transactions</string>
@@ -791,4 +792,16 @@
     <string name="restore_cash_after">Cash balance after the restore</string>
     <string name="restore_holdings">Holdings with shares</string>
     <string name="restore_summary_note">The file passed every check. Restoring it comes in a later version of the app; for now, compare these figures with your records.</string>
+    <!-- Iteration 34: the restore onto an app with no data (wireframe 10e frame F marker 15, frame H). Wording proposed 2026-11-16, not yet approved (D9; 34 file, section 12). -->
+    <string name="restore_empty_note">The file passed every check. The app holds no data, so nothing is replaced: Restore loads this file. It cannot be undone except by restoring another backup.</string>
+    <string name="restore_now">Restore</string>
+    <string name="restore_restoring">Step 4 of 4. Restoring…</string>
+    <string name="restore_complete">Restore complete</string>
+    <string name="restore_loaded">Loaded from the file</string>
+    <string name="restore_no_price_note">Holdings show \"no price\" until the first price refresh.</string>
+    <string name="restore_never_backed_up_note">More shows \"never backed up\", so the backup reminder shows on Overall.</string>
+    <string name="restore_key_note">The price source key is not part of a backup file: enter it again in Settings.</string>
+    <string name="restore_go_overall">Go to Overall</string>
+    <string name="restore_failed">Not restored. Nothing was changed.</string>
+    <string name="restore_close">Close</string>
 </resources>

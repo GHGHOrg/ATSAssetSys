@@ -409,6 +409,8 @@ private fun BarContent(
                     onCopyReport = restore.onCopyReport,
                     onChooseAnother = viewModel::chooseAnotherRestoreFile,
                     onClose = viewModel::closeRestore,
+                    onRestore = viewModel::restoreNow,
+                    onGoToOverall = viewModel::finishRestore,
                 ),
             )
         }
