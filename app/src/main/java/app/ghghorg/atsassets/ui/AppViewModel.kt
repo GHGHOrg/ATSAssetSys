@@ -969,6 +969,12 @@ data class AppState(
         get() = restore?.let { Restores.screen(it, priceSourceName) }
 
     /**
+     * 34: Restore is offered: the summary of a file that passed, on an app that holds no data (section 3; decision 3: an
+     * app with data waits for 35's step 4), with no other save running.
+     */
+    val canRestore: Boolean get() = restore?.step == RestoreStep.SUMMARY && !holdsData && !saving
+
+    /**
      * 32: Overall's backup reminder as the screen draws it (view 1, wireframe 01 marker 1; CR2), null when Overall shows
      * nothing of it. An export's line is Overall's only while Overall is the screen shown (decision 1).
      */
@@ -1295,35 +1301,41 @@ class AppViewModel(
             try {
                 val opened = storeProvider()
                 store = opened
-                val entries = opened.loadCashEntries()
-                val portfolios = opened.loadPortfolios()
-                val transactions = opened.loadTransactions()
-                val instruments = opened.loadInstruments()
-                // The hidden holdings are checked against the transactions just read, not a second read (15c).
-                val hidden = opened.loadHidden(transactions)
-                // 20: the auto-lock choice comes with the records; until then the lock keeps its strictest rule.
-                val autoLock = opened.loadAutoLock()
-                // 22: the tab order too; until then the bar is not shown (LOADING).
-                val tabOrder = opened.loadTabOrder()
-                // 23a: the sector and geography lists, for the Classification tab; 24: the holdings' overrides.
-                val classLists = opened.loadClassLists()
-                val overrides = opened.loadOverrides()
-                // 30: the price source's key goes to the source before the first refresh; the state keeps its ending only.
-                val priceKey = opened.loadPriceKey()
-                priceSource.useKey(priceKey)
-                // 31: the last backup's moment, and whether a backup's write never ended (decision 7).
-                val backup = opened.loadBackupState()
-                // 32: and the moment now, against which a backup is due (decision 3).
-                mutableState.update {
-                    it.withKey(priceKey).copy(lastBackup = backup.lastBackup, backupInterrupted = backup.unfinished, now = clock.instant())
-                }
-                showLoaded(entries, portfolios, transactions, instruments, hidden, autoLock, tabOrder, classLists, overrides)
+                readAll(opened)
                 // The first unlock's refresh: onUnlocked came while the records were still loading (16a decision 2).
                 refreshPrices()
             } catch (e: UnreadableDataException) {
                 mutableState.update { it.copy(screen = Screen.UNREADABLE) }
             }
         }
+    }
+
+    // Everything the store holds, read into the state and shown on the tabs: at start, and again after a restore (34),
+    // so every view shows what is stored.
+    private suspend fun readAll(opened: RecordStore) {
+        val entries = opened.loadCashEntries()
+        val portfolios = opened.loadPortfolios()
+        val transactions = opened.loadTransactions()
+        val instruments = opened.loadInstruments()
+        // The hidden holdings are checked against the transactions just read, not a second read (15c).
+        val hidden = opened.loadHidden(transactions)
+        // 20: the auto-lock choice comes with the records; until then the lock keeps its strictest rule.
+        val autoLock = opened.loadAutoLock()
+        // 22: the tab order too; until then the bar is not shown (LOADING).
+        val tabOrder = opened.loadTabOrder()
+        // 23a: the sector and geography lists, for the Classification tab; 24: the holdings' overrides.
+        val classLists = opened.loadClassLists()
+        val overrides = opened.loadOverrides()
+        // 30: the price source's key goes to the source before the first refresh; the state keeps its ending only.
+        val priceKey = opened.loadPriceKey()
+        priceSource.useKey(priceKey)
+        // 31: the last backup's moment, and whether a backup's write never ended (decision 7).
+        val backup = opened.loadBackupState()
+        // 32: and the moment now, against which a backup is due (decision 3).
+        mutableState.update {
+            it.withKey(priceKey).copy(lastBackup = backup.lastBackup, backupInterrupted = backup.unfinished, now = clock.instant())
+        }
+        showLoaded(entries, portfolios, transactions, instruments, hidden, autoLock, tabOrder, classLists, overrides)
     }
 
     /**
@@ -1539,7 +1551,10 @@ class AppViewModel(
         }
         // 33b (spec section 9): a lock ends the restore wizard, which starts again from step 1 with nothing changed. The
         // file screen's own leaving does not lock (AC-57), so this is another lock: idle time, the phone, a restart.
-        if (mutableState.value.restore != null) {
+        // 34: not once Restore was tapped: the write is one action that ends by itself, and its result or failure stays to
+        // be seen after the unlock (as an export's result, 31 decision 7).
+        val wizardStep = mutableState.value.restore?.step
+        if (wizardStep != null && wizardStep !in RESTORE_END_STEPS) {
             endRestore()
             mutableState.update { it.copy(restore = RestoreWizard()) }
         }
@@ -3667,7 +3682,9 @@ class AppViewModel(
         val current = mutableState.value
         val wizard = current.restore ?: return
         if (current.screen != Screen.RESTORE || wizard.choosing) return
-        if (wizard.step == RestoreStep.CHOOSE) {
+        // 34: no way back while the restore is written or once it is done (wireframe 10e marker 18); a failure closes.
+        if (wizard.step == RestoreStep.RESTORING || wizard.step == RestoreStep.RESULT) return
+        if (wizard.step == RestoreStep.CHOOSE || wizard.step == RestoreStep.FAILED) {
             closeRestore()
             return
         }
@@ -3680,9 +3697,62 @@ class AppViewModel(
     /** Cancel on the summary, and Back from step 1: the wizard closes to Backup and restore; nothing was changed. */
     fun closeRestore() {
         val current = mutableState.value
+        val step = current.restore?.step
         if (current.screen != Screen.RESTORE || current.restore?.choosing == true) return
+        // 34: not while the restore is written, and not from its result, which leaves by Go to Overall.
+        if (step == RestoreStep.RESTORING || step == RestoreStep.RESULT) return
         endRestore()
         mutableState.update { it.copy(screen = Screen.BACKUP, restore = null) }
+    }
+
+    /**
+     * Restore on the summary (wireframe 10e frame F, marker 15; section 8, restore step 7; 34): on an app that holds no
+     * data, everything stored is deleted and the file's records are loaded as one action, with the held tickers'
+     * verified instruments (33b decision 2). The state is then read again from the store, the result shows, and the
+     * first price refresh runs. A failed write changes nothing and says so (marker 19). Ignored on an app that holds
+     * data (decision 3: 35 adds step 4), without a file that passed, and while another save runs.
+     */
+    fun restoreNow() {
+        val current = mutableState.value
+        val wizard = current.restore ?: return
+        val ready = restoreReady ?: return
+        val opened = store ?: return
+        if (current.screen != Screen.RESTORE || wizard.step != RestoreStep.SUMMARY || !current.canRestore) return
+        mutableState.update { it.copy(saving = true, restore = wizard.copy(step = RestoreStep.RESTORING)) }
+        viewModelScope.launch {
+            try {
+                opened.replaceAll(ready.records, ready.instruments)
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: UnreadableDataException) {
+                mutableState.update { it.copy(screen = Screen.UNREADABLE, saving = false, restore = null) }
+                return@launch
+            } catch (e: Exception) {
+                // All or nothing (C3): the store is as it was.
+                mutableState.update { it.copy(saving = false, restore = it.restore?.copy(step = RestoreStep.FAILED)) }
+                return@launch
+            }
+            endRestore()
+            try {
+                readAll(opened)
+                // readAll shows the tabs; the result stays on the wizard until Go to Overall.
+                mutableState.update {
+                    it.copy(screen = Screen.RESTORE, saving = false, reminderDismissed = false, restore = wizard.copy(step = RestoreStep.RESULT))
+                }
+                refreshPrices()
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: UnreadableDataException) {
+                mutableState.update { it.copy(screen = Screen.UNREADABLE, saving = false, restore = null) }
+            }
+        }
+    }
+
+    /** Go to Overall on the result (wireframe 10e marker 18): the app as it now is; no way back into the wizard. */
+    fun finishRestore() {
+        val current = mutableState.value
+        if (current.screen != Screen.RESTORE || current.restore?.step != RestoreStep.RESULT) return
+        mutableState.update { it.shownTab(Tab.OVERALL) }
     }
 
     // Step 2 from its start: the file read and checked, then the held tickers (section 8, restore steps 2 and 3).
@@ -4886,6 +4956,9 @@ class AppViewModel(
 
     private companion object {
         const val PROBE_ID = "check"
+
+        // 34: the wizard's steps from Restore's tap on: a lock no longer sends them back to step 1.
+        val RESTORE_END_STEPS = setOf(RestoreStep.RESTORING, RestoreStep.RESULT, RestoreStep.FAILED)
 
         // The types the form offers once the opening balance exists (03 decision 2).
         val ENTRY_TYPES = setOf(CashType.DEPOSIT, CashType.WITHDRAWAL, CashType.INTEREST_DIVIDEND, CashType.ADJUSTMENT)
