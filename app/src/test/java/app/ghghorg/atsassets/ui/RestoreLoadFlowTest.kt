@@ -290,10 +290,11 @@ class RestoreLoadFlowTest {
         assertTrue(store.replacements.isEmpty())
     }
 
-    // The write is one action: a lock while it runs does not end it, and its result shows after the unlock (as an
-    // export's, 31 decision 7); Back and a tab wait while it runs.
+    // Section 9, AC-57 (the Deploy review's departure 5, your B): a lock while the restore is written abandons it: the
+    // store's transaction rolls back, and after the unlock the wizard starts again from step 1, nothing changed. Back and
+    // a tab wait while it runs.
     @Test
-    fun aLockDuringTheWrite_keepsTheResult() {
+    fun aLockDuringTheWrite_rollsItBack_andReturnsToStep1() {
         val gate = CompletableDeferred<Unit>()
         val store = FakeStore(gate = gate)
         val vm = vm(store)
@@ -304,10 +305,44 @@ class RestoreLoadFlowTest {
         vm.restoreBack()
         vm.selectTab(Tab.CASH)
         assertEquals(RestoreStep.RESTORING, vm.wizard.step)
-        vm.onUnlocked()
+        vm.onLocked()
         gate.complete(Unit)
+        assertEquals(RestoreWizard(), vm.wizard)
+        assertFalse(vm.state.value.saving)
+        assertTrue(store.replacements.isEmpty())
+        assertTrue(store.stored.isEmpty())
+        assertNull(vm.restoreReady)
+        vm.onUnlocked()
+        assertEquals(RestoreWizard(), vm.wizard)
+        assertEquals(Screen.RESTORE, vm.state.value.screen)
+    }
+
+    // A lock once the restore was written does not undo it: the result shows after the unlock (the store says whether
+    // the write was kept, so the screen never says "nothing changed" when something did).
+    @Test
+    fun aLockAfterTheWrite_keepsTheResult() {
+        val store = emptyStore()
+        val vm = vm(store)
+        vm.checked(fileOf(sourceStore()))
+        vm.restoreNow()
+        assertEquals(RestoreStep.RESULT, vm.wizard.step)
+        vm.onLocked()
+        vm.onUnlocked()
         assertEquals(RestoreStep.RESULT, vm.wizard.step)
         assertEquals(1, store.replacements.size)
+    }
+
+    // A lock before Restore was tapped: as in 33b, step 1 after the unlock, and nothing written.
+    @Test
+    fun aLockOnTheSummary_returnsToStep1() {
+        val store = emptyStore()
+        val vm = vm(store)
+        vm.checked(fileOf(sourceStore()))
+        vm.onLocked()
+        vm.onUnlocked()
+        assertEquals(RestoreWizard(), vm.wizard)
+        vm.restoreNow()
+        assertTrue(store.replacements.isEmpty())
     }
 
     @Test

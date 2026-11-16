@@ -229,6 +229,8 @@ class MainActivity : FragmentActivity() {
         val screenOff = !getSystemService(PowerManager::class.java).isInteractive
         lock.onAppLeft(SystemClock.elapsedRealtime(), screenOff)
         lockState = lock.state
+        // 34: a restore being written is abandoned by a lock (section 9, AC-57).
+        if (lockState != LockState.Unlocked) viewModel.onLocked()
         // 21: leaving ends the screenshot window (spec 9), and so does any lock (decision 1); a turn of the phone that
         // keeps the app unlocked is no leaving, and the new activity goes on with it (onStart).
         if (!isChangingConfigurations || lock.state != LockState.Unlocked) screenshots.end()
@@ -375,6 +377,8 @@ class MainActivity : FragmentActivity() {
         if (lockState != LockState.Unlocked || lock.state == LockState.Unlocked) return false
         endScreenshotWindow()
         lockState = lock.state
+        // 34: a restore being written is abandoned by a lock (section 9, AC-57).
+        viewModel.onLocked()
         showPromptIfNeeded()
         return true
     }

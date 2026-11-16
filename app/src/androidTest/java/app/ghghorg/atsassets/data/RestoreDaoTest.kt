@@ -3,6 +3,7 @@ package app.ghghorg.atsassets.data
 import androidx.room3.Room
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
+import app.ghghorg.atsassets.core.RestoreAbandonedException
 import kotlinx.coroutines.runBlocking
 import net.zetetic.database.sqlcipher.driver.SQLCipherDriver
 import org.junit.After
@@ -123,6 +124,21 @@ class RestoreDaoTest {
         database.restoreDao().replaceAll(newRows)
         assertEquals(newRows.portfolios, database.portfolioDao().loadAll())
         assertEquals(newRows.settings, database.settingsDao().load())
+    }
+
+    // Section 9, AC-57 (34's review, departure 5, your B): a restore no longer wanted when its write would end (the app
+    // locked meanwhile) is rolled back: every table as it was, the old price key and backup moment too.
+    @Test
+    fun aRestoreNoLongerWanted_isRolledBack() = runBlocking {
+        fillOld()
+        val before = everything()
+        try {
+            database.restoreDao().replaceAll(newRows) { false }
+            fail("The restore did not throw")
+        } catch (e: RestoreAbandonedException) {
+            // Expected: the lock's answer.
+        }
+        assertEquals(before, everything())
     }
 
     // C3, all or nothing: two cash rows with one id fail the load after the delete; the transaction rolls back and every

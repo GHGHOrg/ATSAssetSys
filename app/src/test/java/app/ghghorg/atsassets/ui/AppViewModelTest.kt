@@ -26,6 +26,7 @@ import app.ghghorg.atsassets.core.PriceSource
 import app.ghghorg.atsassets.core.ProfileAnswer
 import app.ghghorg.atsassets.core.Quote
 import app.ghghorg.atsassets.core.RecordStore
+import app.ghghorg.atsassets.core.RestoreAbandonedException
 import app.ghghorg.atsassets.core.SourceProfile
 import app.ghghorg.atsassets.core.Tab
 import app.ghghorg.atsassets.core.TabOrder
@@ -1739,12 +1740,15 @@ internal class FakeStore(
     val replacements = mutableListOf<Pair<BackupRecords, List<Instrument>>>()
     var replaceError: Throwable? = null
 
+    // A restore no longer wanted when its write would end ([stillWanted] false) is rolled back, as the Room store's.
     override suspend fun replaceAll(
         records: BackupRecords,
         instruments: List<Instrument>,
+        stillWanted: () -> Boolean,
     ) {
         gate?.await()
         replaceError?.let { throw it }
+        if (!stillWanted()) throw RestoreAbandonedException()
         replacements.add(records to instruments)
         stored = records.cashEntries
         storedPortfolios = records.portfolios

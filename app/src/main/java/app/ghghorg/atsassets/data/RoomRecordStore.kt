@@ -51,6 +51,7 @@ class RoomRecordStore(
     override suspend fun replaceAll(
         records: BackupRecords,
         instruments: List<Instrument>,
+        stillWanted: () -> Boolean,
     ) {
         val rows = restoreRows(records, instruments)
         val dao = withContext(Dispatchers.IO) {
@@ -64,7 +65,7 @@ class RoomRecordStore(
                 throw UnreadableDataException("The stored data could not be opened.", e)
             }
         }
-        dao.replaceAll(rows)
+        dao.replaceAll(rows, stillWanted)
     }
 
     override suspend fun loadCashEntries(): List<CashEntry> = withContext(Dispatchers.IO) {

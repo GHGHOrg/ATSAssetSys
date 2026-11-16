@@ -7,6 +7,7 @@ import androidx.room3.Transaction
 import app.ghghorg.atsassets.core.BackupRecords
 import app.ghghorg.atsassets.core.ClassList
 import app.ghghorg.atsassets.core.Instrument
+import app.ghghorg.atsassets.core.RestoreAbandonedException
 
 /**
  * Every row a restore writes (section 8, restore step 7; 34): the whole store after it, nothing else (decision 4).
@@ -126,10 +127,14 @@ interface RestoreDao {
 
     /**
      * All or nothing (C3): a failure anywhere, such as two rows with one id, leaves every table as it was. Nothing of the
-     * rows is logged or put in a message (spec section 9).
+     * rows is logged or put in a message (spec section 9). [stillWanted] is asked last, inside the transaction: false
+     * throws [RestoreAbandonedException], and the transaction rolls back (section 9, AC-57: a lock during a restore).
      */
     @Transaction
-    suspend fun replaceAll(rows: RestoreRows) {
+    suspend fun replaceAll(
+        rows: RestoreRows,
+        stillWanted: () -> Boolean = { true },
+    ) {
         clearAllocations()
         clearCashEntries()
         clearTransactions()
@@ -150,5 +155,6 @@ interface RestoreDao {
         insertSourceTexts(rows.sourceTexts)
         insertOverrides(rows.overrides)
         insertSettings(rows.settings)
+        if (!stillWanted()) throw RestoreAbandonedException()
     }
 }

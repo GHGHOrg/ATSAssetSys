@@ -71,6 +71,7 @@ import app.ghghorg.atsassets.core.Reentries
 import app.ghghorg.atsassets.core.ReentryIds
 import app.ghghorg.atsassets.core.ReentryRefusal
 import app.ghghorg.atsassets.core.ReentryResult
+import app.ghghorg.atsassets.core.RestoreAbandonedException
 import app.ghghorg.atsassets.core.RestoreCheck
 import app.ghghorg.atsassets.core.RestoreContext
 import app.ghghorg.atsassets.core.ReversalEffect
@@ -1551,8 +1552,8 @@ class AppViewModel(
         }
         // 33b (spec section 9): a lock ends the restore wizard, which starts again from step 1 with nothing changed. The
         // file screen's own leaving does not lock (AC-57), so this is another lock: idle time, the phone, a restart.
-        // 34: not once Restore was tapped: the write is one action that ends by itself, and its result or failure stays to
-        // be seen after the unlock (as an export's result, 31 decision 7).
+        // 34: not once Restore was tapped: a write under way ends by itself ([onLocked] abandons it, and it rolls back to
+        // step 1 unless already kept), and a result or failure stays to be seen after the unlock.
         val wizardStep = mutableState.value.restore?.step
         if (wizardStep != null && wizardStep !in RESTORE_END_STEPS) {
             endRestore()
@@ -3718,12 +3719,19 @@ class AppViewModel(
         val ready = restoreReady ?: return
         val opened = store ?: return
         if (current.screen != Screen.RESTORE || wizard.step != RestoreStep.SUMMARY || !current.canRestore) return
+        restoreAbandoned = false
         mutableState.update { it.copy(saving = true, restore = wizard.copy(step = RestoreStep.RESTORING)) }
         viewModelScope.launch {
             try {
-                opened.replaceAll(ready.records, ready.instruments)
+                // The store asks this last, inside the write: a lock since then rolls it back (section 9, AC-57).
+                opened.replaceAll(ready.records, ready.instruments) { !restoreAbandoned }
             } catch (e: CancellationException) {
                 throw e
+            } catch (e: RestoreAbandonedException) {
+                // Rolled back: nothing was changed; the wizard starts again from step 1 (section 9).
+                endRestore()
+                mutableState.update { it.copy(saving = false, restore = RestoreWizard()) }
+                return@launch
             } catch (e: UnreadableDataException) {
                 mutableState.update { it.copy(screen = Screen.UNREADABLE, saving = false, restore = null) }
                 return@launch
@@ -3746,6 +3754,20 @@ class AppViewModel(
                 mutableState.update { it.copy(screen = Screen.UNREADABLE, saving = false, restore = null) }
             }
         }
+    }
+
+    // 34, the Deploy review's departure 5 (your B): the app locked while the restore was written. The store reads it as
+    // the write's last act, on its own thread.
+    @Volatile
+    private var restoreAbandoned = false
+
+    /**
+     * The app locked (MainActivity, at the moment it locks: leaving the app, the idle time, the phone locking). A restore
+     * being written is abandoned: unless its write was already kept, it rolls back and the wizard starts again from step
+     * 1 with nothing changed (section 9, AC-57). Before Restore, [onUnlocked] sends the wizard to step 1 as in 33b.
+     */
+    fun onLocked() {
+        if (mutableState.value.restore?.step == RestoreStep.RESTORING) restoreAbandoned = true
     }
 
     /** Go to Overall on the result (wireframe 10e marker 18): the app as it now is; no way back into the wizard. */

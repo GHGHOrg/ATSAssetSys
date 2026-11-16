@@ -64,6 +64,7 @@ class TickerVerifierTest {
         override suspend fun replaceAll(
             records: BackupRecords,
             instruments: List<Instrument>,
+            stillWanted: () -> Boolean,
         ) = error("not used")
 
         override suspend fun loadCashEntries(): List<CashEntry> = error("not used")
