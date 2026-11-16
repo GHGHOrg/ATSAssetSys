@@ -147,6 +147,7 @@ Results:
   6. (low) The second round was listed alphabetically by ticker, so lines 7, 6, 5, not in line order (33a decision 4). Fixed, your A, test first: RestoreFlowTest `theSecondRound_isReportedInLineOrder` was red ("expected [(MSFT, 8), (AMD, 9)] but was [(AMD, 9), (MSFT, 8)]"); the errors are now sorted by line, a ticker with no line known last.
   7. (info) Finnhub does not know VFIAX, so the mutual-fund sentence was not seen on the phone; check 10's record ("ZZZZQ and VFIAX as planned") is corrected by this: VFIAX was not shown as a mutual fund. Its sentence is checked by RestoreModelTest only.
   The fix of item 6 green (1,470 tests, 1 skipped; lint's 6, report 16:56:47) and installed at 16:57:38 (still versionCode 43): file 13's report in line order (5, 6, 7), file 11's report scrolling to its last error with Copy report working, and "Line N, ticker XYZ" approved (your "ALL CORRECT").
+- On 469ba89 (the order fix and this record): CI (4m 11s; "Scale test retries": none), CodeQL and Analyze (actions), and the screen tests, 159 of 159 (19m 30s), green at the first attempt (gh, read only). Open item 68's test has now passed three runs in a row (cb880ae, 0eabfff, 469ba89).
   5. (info) Open item 67 for Choose file: my reading that a pick on the left-over file screen after a force stop is harmless was not checked on the phone.
 ## 14. Departures from the plan
 1. Steps 3 and 4: tests and code were written in one pass, not tests first (section 6 says "Tests first").
