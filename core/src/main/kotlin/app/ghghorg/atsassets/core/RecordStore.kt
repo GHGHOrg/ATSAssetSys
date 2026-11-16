@@ -15,6 +15,18 @@ data class BackupState(
 
 /** K2: where records are kept. `core/` knows no database, key or Android class. */
 interface RecordStore {
+    /**
+     * A restore's delete and load as one all-or-nothing action (section 8, restore step 7; 34): everything stored is
+     * deleted (every record, the instruments and prices, the lists and remembered texts, hidden holdings, overrides and
+     * every setting, the price key and the backup moment and mark with them; decisions 1 and 4), and [records], the
+     * file's as K1 made them (33a decision 1), are stored with the held tickers' verified [instruments], without their
+     * prices ("no price" until the first refresh). A failure leaves the store as it was (C3).
+     */
+    suspend fun replaceAll(
+        records: BackupRecords,
+        instruments: List<Instrument>,
+    )
+
     /** Throws [UnreadableDataException] if stored data exists but cannot be read. */
     suspend fun loadCashEntries(): List<CashEntry>
 

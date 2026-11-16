@@ -618,4 +618,7 @@ abstract class AtsDatabase : RoomDatabase() {
     abstract fun instrumentDao(): InstrumentDao
 
     abstract fun settingsDao(): SettingsDao
+
+    // 34: the restore's delete and load, one transaction over every table.
+    abstract fun restoreDao(): RestoreDao
 }

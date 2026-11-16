@@ -2,6 +2,7 @@ package app.ghghorg.atsassets.prices
 
 import app.ghghorg.atsassets.core.AssetType
 import app.ghghorg.atsassets.core.AutoLock
+import app.ghghorg.atsassets.core.BackupRecords
 import app.ghghorg.atsassets.core.BackupState
 import app.ghghorg.atsassets.core.CashEntry
 import app.ghghorg.atsassets.core.ClassList
@@ -59,6 +60,11 @@ class TickerVerifierTest {
         override suspend fun saveInstrument(instrument: Instrument) {
             savedInstruments.add(instrument)
         }
+
+        override suspend fun replaceAll(
+            records: BackupRecords,
+            instruments: List<Instrument>,
+        ) = error("not used")
 
         override suspend fun loadCashEntries(): List<CashEntry> = error("not used")
 
