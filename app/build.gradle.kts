@@ -17,7 +17,7 @@ android {
         applicationId = "app.ghghorg.atsassets"
         minSdk = 33
         targetSdk = 37
-        versionCode = 43
+        versionCode = 44
         versionName = "1.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
@@ -29,6 +29,13 @@ android {
                 enable = true
                 packageScope = setOf("androidx.**", "kotlin.**", "kotlinx.**")
             }
+        }
+        // 34 decision 2: the debug app under another id and name ("ATS Check", app/src/check), for phone checks that
+        // must not touch your data, such as a restore. Built only when asked (assembleCheck); CI builds debug only.
+        create("check") {
+            initWith(getByName("debug"))
+            applicationIdSuffix = ".check"
+            versionNameSuffix = "-check"
         }
     }
     compileOptions {
