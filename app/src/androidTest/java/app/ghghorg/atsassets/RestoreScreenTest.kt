@@ -90,7 +90,11 @@ private val EXAMPLE_SUMMARY =
 // The report's count line for the three errors.
 private val REPORT_COUNT: String get() = restoreText(R.string.restore_errors_in_lines, "3", "3")
 
-private fun model(wizard: RestoreWizard): RestoreModel = Restores.screen(wizard, SOURCE)
+// [holdsData]: section 3's "app holds data"; 33b's frames are drawn as on an app that holds data (five steps).
+private fun model(
+    wizard: RestoreWizard,
+    holdsData: Boolean = true,
+): RestoreModel = Restores.screen(wizard, SOURCE, holdsData)
 
 // The report is a lazy list (the Deploy review's finding 2): an item out of view is not drawn until the list scrolls to it.
 private fun SemanticsNodeInteractionsProvider.reportItem(matcher: SemanticsMatcher): SemanticsNodeInteraction {
@@ -107,6 +111,8 @@ private class Asked {
     var retry = 0
     var another = 0
     var close = 0
+    var restore = 0
+    var overall = 0
     var copied: String? = null
 
     val actions =
@@ -119,7 +125,88 @@ private class Asked {
             onCopyReport = { copied = it },
             onChooseAnother = { another++ },
             onClose = { close++ },
+            onRestore = { restore++ },
+            onGoToOverall = { overall++ },
         )
+}
+
+/**
+ * 34: the restore onto an app with no data, for TalkBack (section 8, restore step 7; wireframe 10e frame F marker 15 and
+ * frame H; AC-56, AC-61 (d)): the summary's step line counts four steps and offers Restore with what it does; on an app
+ * that holds data there is no Restore; while the restore is written nothing can be tapped, Back included; the result is a
+ * heading, reads each count with its label, its notes, and Go to Overall; a failure says so, with Close.
+ */
+@RunWith(AndroidJUnit4::class)
+class RestoreLoadTalkBackTest {
+    @get:Rule
+    val composeRule = createComposeRule()
+
+    private val asked = Asked()
+
+    private fun show(
+        wizard: RestoreWizard,
+        holdsData: Boolean,
+    ) {
+        composeRule.setContent { ATSAssetSystemTheme { RestoreScreen(model(wizard, holdsData), SOURCE, asked.actions) } }
+    }
+
+    private val backButton = hasContentDescription(string(R.string.back_button)) and hasClickAction()
+
+    @Test
+    fun onAnAppWithNoData_theSummaryOffersRestore_inFourSteps() {
+        show(RestoreWizard(step = RestoreStep.SUMMARY, summary = EXAMPLE_SUMMARY), holdsData = false)
+        composeRule.onNodeWithText(restoreText(R.string.restore_step3, "4")).assertExists()
+        composeRule.onNode(hasText(string(R.string.restore_cash_after)) and hasText("$9,425.00")).assertExists()
+        composeRule.onNodeWithText(string(R.string.restore_empty_note)).performScrollTo().assertExists()
+        composeRule.onNodeWithText(string(R.string.restore_summary_note)).assertDoesNotExist()
+        composeRule.onNode(button(R.string.restore_now)).performScrollTo().assertIsEnabled().performClick()
+        assertEquals(1, asked.restore)
+        composeRule.onNode(button(R.string.cancel_button)).performScrollTo().performClick()
+        assertEquals(1, asked.close)
+    }
+
+    // Decision 3: an app that holds data keeps 33b's summary, with no Restore until 35.
+    @Test
+    fun onAnAppThatHoldsData_theSummaryHasNoRestore() {
+        show(RestoreWizard(step = RestoreStep.SUMMARY, summary = EXAMPLE_SUMMARY), holdsData = true)
+        composeRule.onNodeWithText(restoreText(R.string.restore_step3, "5")).assertExists()
+        composeRule.onNodeWithText(string(R.string.restore_summary_note)).performScrollTo().assertExists()
+        composeRule.onNode(button(R.string.restore_now)).assertDoesNotExist()
+    }
+
+    @Test
+    fun whileTheRestoreIsWritten_nothingCanBeTapped() {
+        show(RestoreWizard(step = RestoreStep.RESTORING, summary = EXAMPLE_SUMMARY), holdsData = false)
+        composeRule.onNodeWithText(string(R.string.restore_restoring)).assertExists()
+        composeRule.onNode(backButton).assertIsNotEnabled()
+        composeRule.onNode(button(R.string.restore_now)).assertDoesNotExist()
+        composeRule.onNode(button(R.string.cancel_button)).assertDoesNotExist()
+    }
+
+    // Frame H, marker 18: the app now holds the file's data; no way back into the wizard.
+    @Test
+    fun theResult_readsWhatWasLoaded_andGoesToOverall() {
+        show(RestoreWizard(step = RestoreStep.RESULT, summary = EXAMPLE_SUMMARY), holdsData = true)
+        composeRule.onNode(isHeading() and hasText(string(R.string.restore_complete))).assertExists()
+        val rows = listOf(R.string.restore_portfolios to "2", R.string.restore_transactions to "8", R.string.restore_cash_entries to "4")
+        for ((label, figure) in rows) composeRule.onNode(hasText(string(label)) and hasText(figure)).assertExists()
+        composeRule.onNodeWithText(string(R.string.restore_no_price_note)).performScrollTo().assertExists()
+        composeRule.onNodeWithText(string(R.string.restore_never_backed_up_note)).performScrollTo().assertExists()
+        composeRule.onNodeWithText(string(R.string.restore_key_note)).performScrollTo().assertExists()
+        composeRule.onNode(backButton).assertIsNotEnabled()
+        composeRule.onNode(button(R.string.restore_go_overall)).performScrollTo().performClick()
+        assertEquals(1, asked.overall)
+    }
+
+    // Frame H, marker 19.
+    @Test
+    fun aFailure_saysNothingWasChanged_withClose() {
+        show(RestoreWizard(step = RestoreStep.FAILED, summary = EXAMPLE_SUMMARY), holdsData = false)
+        composeRule.onNodeWithText(string(R.string.restore_failed)).assertExists()
+        composeRule.onNode(button(R.string.restore_go_overall)).assertDoesNotExist()
+        composeRule.onNode(button(R.string.restore_close)).performClick()
+        assertEquals(1, asked.close)
+    }
 }
 
 /**
@@ -285,13 +372,16 @@ class RestoreLargestFontLandscapeTest {
 
     private val asked = Asked()
 
-    private fun show(wizard: RestoreWizard) {
+    private fun show(
+        wizard: RestoreWizard,
+        holdsData: Boolean = true,
+    ) {
         composeRule.turn(landscape = true)
         composeRule.setContent {
             ATSAssetSystemTheme {
                 Surface {
                     Column(modifier = Modifier.fillMaxSize()) {
-                        Box(modifier = Modifier.weight(1f)) { RestoreScreen(model(wizard), SOURCE, asked.actions) }
+                        Box(modifier = Modifier.weight(1f)) { RestoreScreen(model(wizard, holdsData), SOURCE, asked.actions) }
                         BottomBar(DEFAULT_TAB_ORDER, Tab.MORE, {})
                     }
                 }
@@ -334,6 +424,32 @@ class RestoreLargestFontLandscapeTest {
         composeRule.onNode(button(R.string.cancel_button)).performScrollTo().assertIsDisplayed().performClick()
         composeRule.waitForIdle()
         assertEquals(1, asked.close)
+        composeRule.turn(landscape = false)
+    }
+
+    // 34: the summary on an app with no data: its note and Restore are reached and Restore takes its tap.
+    @Test
+    fun theSummaryWithRestore_everyPart_canBeReached() {
+        show(RestoreWizard(step = RestoreStep.SUMMARY, summary = EXAMPLE_SUMMARY), holdsData = false)
+        composeRule.onNodeWithText(restoreText(R.string.restore_step3, "4")).performScrollTo().assertIsDisplayed()
+        composeRule.onNodeWithText(string(R.string.restore_empty_note)).performScrollTo().assertIsDisplayed()
+        composeRule.onNode(button(R.string.restore_now)).performScrollTo().assertIsDisplayed().performClick()
+        composeRule.waitForIdle()
+        assertEquals(1, asked.restore)
+        composeRule.turn(landscape = false)
+    }
+
+    // 34, frame H: the result's heading, counts, notes and Go to Overall are reached and the button takes its tap.
+    @Test
+    fun theResult_everyPart_canBeReached() {
+        show(RestoreWizard(step = RestoreStep.RESULT, summary = EXAMPLE_SUMMARY))
+        composeRule.onNode(isHeading() and hasText(string(R.string.restore_complete))).performScrollTo().assertIsDisplayed()
+        composeRule.onNode(hasText(string(R.string.restore_cash_entries)) and hasText("4")).performScrollTo().assertIsDisplayed()
+        composeRule.onNodeWithText(string(R.string.restore_never_backed_up_note)).performScrollTo().assertIsDisplayed()
+        composeRule.onNodeWithText(string(R.string.restore_key_note)).performScrollTo().assertIsDisplayed()
+        composeRule.onNode(button(R.string.restore_go_overall)).performScrollTo().assertIsDisplayed().performClick()
+        composeRule.waitForIdle()
+        assertEquals(1, asked.overall)
         composeRule.turn(landscape = false)
     }
 }
