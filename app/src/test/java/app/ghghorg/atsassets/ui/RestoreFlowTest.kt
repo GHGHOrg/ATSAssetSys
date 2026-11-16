@@ -417,6 +417,27 @@ class RestoreFlowTest {
         assertEquals(RestoreStep.CHOOSE, vm.wizard.step)
     }
 
+    // CR2: the state hands the screens their models: Backup and restore's Restore part, and the wizard's summary.
+    @Test
+    fun theState_wiresTheModels() {
+        var online = false
+        val store = store()
+        val vm = vm(store, online = { online })
+        vm.onBackup()
+        assertTrue(vm.state.value.backupScreen.restoreOffline)
+        assertFalse(vm.state.value.backupScreen.canRestore)
+        assertNull(vm.state.value.restoreScreen)
+        online = true
+        vm.onOnline()
+        assertTrue(vm.state.value.backupScreen.canRestore)
+        vm.openRestore()
+        assertTrue(vm.beginRestoreChoice())
+        vm.onRestoreFile(FakeRestoreFile("b.csv", FileBytes.Read(fileOf(store))))
+        assertEquals("b.csv", vm.state.value.restoreScreen?.fileName)
+        vm.checkRestoreFile(note)
+        assertEquals(RestoreSummaryModel("1", "1", "1", "$9,000.00", "1"), vm.state.value.restoreScreen?.summary)
+    }
+
     @Test
     fun checkFile_needsAChosenFile() {
         val vm = vm()

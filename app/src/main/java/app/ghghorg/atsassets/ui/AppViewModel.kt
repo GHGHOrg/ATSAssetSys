@@ -962,7 +962,11 @@ data class AppState(
 
     /** 31: Backup and restore as the screen draws it (wireframe 10e frames A and B; CR2). */
     val backupScreen: BackupModel
-        get() = Backups.screen(lastBackup, zone, backupInterrupted, holdsData, backupStage, backupOutcome, saving)
+        get() = Backups.screen(lastBackup, zone, backupInterrupted, holdsData, backupStage, backupOutcome, saving, online)
+
+    /** 33b: the restore wizard as the screen draws it (wireframe 10e frames C to F; CR2), null while it is closed. */
+    val restoreScreen: RestoreModel?
+        get() = restore?.let { Restores.screen(it, priceSourceName) }
 
     /**
      * 32: Overall's backup reminder as the screen draws it (view 1, wireframe 01 marker 1; CR2), null when Overall shows

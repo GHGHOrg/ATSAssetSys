@@ -30,7 +30,8 @@ enum class BackupBlocked {
  * [lastBackup] is null for "never backed up". [interrupted]: a backup's write never ended, and its file may be
  * unfinished (decision 7). [canBackUp]: Back up now is active. [blocked]: why it is not, when a line says why.
  * [writing]: the file is being written (the indicator). [outcome]: how the last export on this screen ended, with none
- * under way. [backEnabled]: "<" and Android Back leave the screen.
+ * under way. [backEnabled]: "<" and Android Back leave the screen. 33b: [canRestore]: Restore from backup file is active;
+ * [restoreOffline]: it is not because the phone is offline, and a line says so (section 8, restore step 1; AC-08).
  */
 data class BackupModel(
     val lastBackup: LastBackup?,
@@ -40,6 +41,8 @@ data class BackupModel(
     val writing: Boolean,
     val outcome: BackupOutcome?,
     val backEnabled: Boolean,
+    val canRestore: Boolean,
+    val restoreOffline: Boolean,
 )
 
 /** Why a backup is due (spec section 9; 32): there is none yet ([NEVER]), or the last one is more than 7 days old ([OLD]). */
@@ -79,7 +82,9 @@ object Backups {
 
     /**
      * The screen. Back up now is active only with data in the app, no export under way and no other save running; the
-     * line saying why not is for no data only. A result shows once the export has ended.
+     * line saying why not is for no data only. A result shows once the export has ended. 33b: Restore from backup file is
+     * active online, with no export under way and no other save running; it needs no data in the app (a fresh install
+     * restores too); offline, a line says why.
      */
     fun screen(
         lastBackup: Instant?,
@@ -89,6 +94,7 @@ object Backups {
         stage: BackupStage?,
         outcome: BackupOutcome?,
         saving: Boolean,
+        online: Boolean = true,
     ): BackupModel = BackupModel(
         lastBackup = lastBackup(lastBackup, zone),
         interrupted = interrupted,
@@ -97,6 +103,8 @@ object Backups {
         writing = stage == BackupStage.WRITING,
         outcome = if (stage == null) outcome else null,
         backEnabled = stage == null && !saving,
+        canRestore = online && stage == null && !saving,
+        restoreOffline = !online,
     )
 
     /**
