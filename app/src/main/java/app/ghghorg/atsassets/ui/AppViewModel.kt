@@ -3,9 +3,12 @@ package app.ghghorg.atsassets.ui
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import app.ghghorg.atsassets.backup.BackupTarget
+import app.ghghorg.atsassets.backup.FileBytes
+import app.ghghorg.atsassets.backup.RestoreFile
 import app.ghghorg.atsassets.core.AmountError
 import app.ghghorg.atsassets.core.AmountResult
 import app.ghghorg.atsassets.core.AutoLock
+import app.ghghorg.atsassets.core.BackupCheck
 import app.ghghorg.atsassets.core.BackupFile
 import app.ghghorg.atsassets.core.BackupRecords
 import app.ghghorg.atsassets.core.BackupReminder
@@ -68,6 +71,8 @@ import app.ghghorg.atsassets.core.Reentries
 import app.ghghorg.atsassets.core.ReentryIds
 import app.ghghorg.atsassets.core.ReentryRefusal
 import app.ghghorg.atsassets.core.ReentryResult
+import app.ghghorg.atsassets.core.RestoreCheck
+import app.ghghorg.atsassets.core.RestoreContext
 import app.ghghorg.atsassets.core.ReversalEffect
 import app.ghghorg.atsassets.core.ReversalRefusal
 import app.ghghorg.atsassets.core.ReversalResult
@@ -98,8 +103,11 @@ import app.ghghorg.atsassets.prices.PriceRefresh
 import app.ghghorg.atsassets.prices.TickerVerifier
 import app.ghghorg.atsassets.prices.Verification
 import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import java.math.BigDecimal
 import java.time.Clock
 import java.time.Instant
@@ -107,6 +115,7 @@ import java.time.LocalDate
 import java.time.ZoneId
 import java.time.ZoneOffset
 import java.util.Locale
+import kotlin.coroutines.CoroutineContext
 
 /** The one screen shown at a time. TABS shows the selected tab under the bottom bar. */
 enum class Screen {
@@ -175,6 +184,9 @@ enum class Screen {
 
     // Backup and restore (wireframe 10e frame A, iteration 31), opened from More.
     BACKUP,
+
+    // The restore wizard (wireframe 10e frames C to F, iteration 33b), opened from Backup and restore.
+    RESTORE,
 }
 
 /** 31: where a backup export stands: Android's file screen is open, or the chosen file is being written. */
@@ -729,6 +741,11 @@ data class AppState(
     // (spec section 9).
     val now: Instant = Instant.EPOCH,
     val reminderDismissed: Boolean = false,
+    // 33b: the restore wizard while it is open (RESTORE), null otherwise; whether the phone was online when last read (on
+    // opening Backup and restore, at each return to the app, and when the network comes or goes): offline, Restore is
+    // inactive (section 8, restore step 1; AC-08).
+    val restore: RestoreWizard? = null,
+    val online: Boolean = true,
     // The device's time zone as last read (at start, at each return to the app and at each unlock): the last backup is
     // shown in it (C15).
     val zone: ZoneId = ZoneOffset.UTC,
@@ -1257,6 +1274,8 @@ class AppViewModel(
     private val isOnline: () -> Boolean,
     // 31: the device's time zone now, for the backup file's suggested name (C15).
     private val deviceZone: () -> ZoneId = { ZoneId.systemDefault() },
+    // 33b: where the restore check's reading and replay run, off the main thread (it can take seconds, 33a 13.1 step 5).
+    private val work: CoroutineContext = Dispatchers.Default,
 ) : ViewModel() {
     private val marketDate = MarketDate(clock)
     private val mutableState = KeptStateFlow(AppState(priceSourceName = priceSource.name, zone = deviceZone(), now = clock.instant()))
@@ -1310,6 +1329,8 @@ class AppViewModel(
     fun selectTab(tab: Tab) {
         val current = mutableState.value
         if (current.screen !in TAB_BAR_SCREENS || current.saving || current.checking) return
+        // 33b: a tab ends the restore wizard, its check too.
+        if (current.restore != null) endRestore()
         mutableState.update { it.shownTab(tab) }
     }
 
@@ -1338,6 +1359,8 @@ class AppViewModel(
         keyEntry = null,
         // 31: an export's result ends with Backup and restore.
         backupOutcome = null,
+        // 33b: the restore wizard ends with its screen; nothing was changed (C3).
+        restore = null,
         // 28: the Cash tab's Ticker menu closes; its filters stay (06 decision 4).
         cashTickerMenuOpen = false,
         autoLockRefusal = null,
@@ -1375,7 +1398,15 @@ class AppViewModel(
 
     /** The phone has a network again: a refresh that failed is run again (16a decision 2); otherwise nothing happens. */
     fun onOnline() {
+        // 33b: Restore is active again (AC-08).
+        if (!mutableState.value.online) mutableState.update { it.copy(online = true) }
         if (mutableState.value.refreshFailed) refreshPrices()
+    }
+
+    /** 33b: the phone lost a network: Restore is inactive while no other network offers internet (AC-08). */
+    fun onOffline() {
+        val online = isOnline()
+        if (online != mutableState.value.online) mutableState.update { it.copy(online = online) }
     }
 
     /**
@@ -1460,6 +1491,9 @@ class AppViewModel(
      */
     fun onAppShown() {
         readClock()
+        // 33b: whether Restore can start (AC-08), as the network may have changed while the app was away.
+        val online = isOnline()
+        if (online != mutableState.value.online) mutableState.update { it.copy(online = online) }
         if (!away) return
         away = false
         val seen = resultSeenBeforeAway
@@ -1498,6 +1532,12 @@ class AppViewModel(
                 // 30: the key entry too, with its typed text.
                 keyEntry = null,
             )
+        }
+        // 33b (spec section 9): a lock ends the restore wizard, which starts again from step 1 with nothing changed. The
+        // file screen's own leaving does not lock (AC-57), so this is another lock: idle time, the phone, a restart.
+        if (mutableState.value.restore != null) {
+            endRestore()
+            mutableState.update { it.copy(restore = RestoreWizard()) }
         }
         val current = mutableState.value
         if (current.screen != Screen.TABS || current.portfolioDialog != null) return
@@ -3349,7 +3389,8 @@ class AppViewModel(
     fun openBackup() {
         val current = mutableState.value
         if (current.screen != Screen.TABS || current.tab != Tab.MORE || current.saving) return
-        mutableState.update { it.copy(screen = Screen.BACKUP, backupOutcome = null) }
+        // 33b: and whether Restore can start (AC-08).
+        mutableState.update { it.copy(screen = Screen.BACKUP, backupOutcome = null, online = isOnline()) }
     }
 
     /** "<" or Android Back: back to More. Ignored while a save is running or an export is under way. */
@@ -3511,6 +3552,187 @@ class AppViewModel(
             tabOrder = opened.loadTabOrder(),
             priceSource = priceSource.backupName,
         )
+    }
+
+    // 33b: the restore wizard. The chosen file and the note maker for its check, kept while the wizard is open; the
+    // check under way; and a file that passed both rounds, in memory only (decision 2), for 34.
+    private var restoreFile: RestoreFile? = null
+    private var restoreNote: ((CashType, LocalDate) -> String)? = null
+    private var restoreJob: Job? = null
+    internal var restoreReady: RestoreReady? = null
+        private set
+
+    // Ends the wizard's work: the check stops, and the file and what passed are let go. Nothing was changed (C3).
+    private fun endRestore() {
+        restoreJob?.cancel()
+        restoreJob = null
+        restoreFile = null
+        restoreNote = null
+        restoreReady = null
+    }
+
+    /**
+     * Restore from backup file (wireframe 10e marker 3; 33b): opens the wizard at step 1. Offline it does not start
+     * (section 8, restore step 1; AC-08): Restore shows inactive with the line why. Ignored while a save runs or an export
+     * is under way.
+     */
+    fun openRestore() {
+        val current = mutableState.value
+        if (current.screen != Screen.BACKUP || store == null || current.saving || current.backupStage != null) return
+        if (!isOnline()) {
+            mutableState.update { it.copy(online = false) }
+            return
+        }
+        endRestore()
+        mutableState.update { it.copy(screen = Screen.RESTORE, restore = RestoreWizard(), online = true, backupOutcome = null) }
+    }
+
+    /**
+     * Choose file (wireframe 10e marker 7): true when Android's file screen may open for it, on step 1 with none open;
+     * MainActivity then opens it with the lock's exemption (AC-57).
+     */
+    fun beginRestoreChoice(): Boolean {
+        val current = mutableState.value
+        val wizard = current.restore ?: return false
+        if (current.screen != Screen.RESTORE || wizard.step != RestoreStep.CHOOSE || wizard.choosing) return false
+        mutableState.update { it.copy(restore = wizard.copy(choosing = true)) }
+        return true
+    }
+
+    /** Android's file screen gave its answer: [file] is the file chosen, null when it was cancelled (the last choice stays). */
+    fun onRestoreFile(file: RestoreFile?) {
+        val wizard = mutableState.value.restore
+        if (wizard == null || !wizard.choosing) return
+        if (file != null) restoreFile = file
+        mutableState.update { it.copy(restore = wizard.copy(choosing = false, fileName = file?.name ?: wizard.fileName)) }
+    }
+
+    /**
+     * Check file (wireframe 10e marker 7): step 2 on the chosen file. [reversalNote] is the note of 4.6 for a cash reversal
+     * the file gives none, worded by the screen (D9).
+     */
+    fun checkRestoreFile(reversalNote: (CashType, LocalDate) -> String) {
+        val current = mutableState.value
+        val wizard = current.restore ?: return
+        val file = restoreFile ?: return
+        if (current.screen != Screen.RESTORE || wizard.step != RestoreStep.CHOOSE || wizard.choosing) return
+        restoreNote = reversalNote
+        runRestoreCheck(file, reversalNote)
+    }
+
+    /** Try again after the price source could not answer (decision 3): the same file, checked again from the start. */
+    fun retryRestoreCheck() {
+        val wizard = mutableState.value.restore ?: return
+        if (wizard.step != RestoreStep.CHECKING || wizard.sourceProblem == null) return
+        runRestoreCheck(restoreFile ?: return, restoreNote ?: return)
+    }
+
+    /** Cancel on step 2 (wireframe 10e marker 9): the check stops and step 1 shows, the file still chosen. */
+    fun cancelRestoreCheck() {
+        if (mutableState.value.restore?.step != RestoreStep.CHECKING) return
+        restoreJob?.cancel()
+        restoreJob = null
+        mutableState.update { it.copy(restore = it.restore?.let { wizard -> RestoreWizard(fileName = wizard.fileName) }) }
+    }
+
+    /** Choose another file on the report (wireframe 10e marker 11): step 1, with no file chosen. */
+    fun chooseAnotherRestoreFile() {
+        if (mutableState.value.restore?.step != RestoreStep.REPORT) return
+        restoreFile = null
+        mutableState.update { it.copy(restore = RestoreWizard()) }
+    }
+
+    /**
+     * "<" or Android Back in the wizard (wireframe 10e): one step back, the file still chosen; from step 1 the wizard
+     * closes to Backup and restore. Ignored while Android's file screen is open.
+     */
+    fun restoreBack() {
+        val current = mutableState.value
+        val wizard = current.restore ?: return
+        if (current.screen != Screen.RESTORE || wizard.choosing) return
+        if (wizard.step == RestoreStep.CHOOSE) {
+            closeRestore()
+            return
+        }
+        restoreJob?.cancel()
+        restoreJob = null
+        restoreReady = null
+        mutableState.update { it.copy(restore = RestoreWizard(fileName = wizard.fileName)) }
+    }
+
+    /** Cancel on the summary, and Back from step 1: the wizard closes to Backup and restore; nothing was changed. */
+    fun closeRestore() {
+        val current = mutableState.value
+        if (current.screen != Screen.RESTORE || current.restore?.choosing == true) return
+        endRestore()
+        mutableState.update { it.copy(screen = Screen.BACKUP, restore = null) }
+    }
+
+    // Step 2 from its start: the file read and checked, then the held tickers (section 8, restore steps 2 and 3).
+    private fun runRestoreCheck(
+        file: RestoreFile,
+        reversalNote: (CashType, LocalDate) -> String,
+    ) {
+        restoreJob?.cancel()
+        restoreReady = null
+        mutableState.update { it.copy(restore = it.restore?.let { wizard -> RestoreWizard(step = RestoreStep.CHECKING, fileName = wizard.fileName) }) }
+        restoreJob =
+            viewModelScope.launch {
+                try {
+                    restoreCheck(file, reversalNote)
+                } catch (e: CancellationException) {
+                    throw e
+                } catch (e: Exception) {
+                    showRestore { it.copy(step = RestoreStep.REPORT, fileProblem = RestoreFileProblem.CHECK_FAILED) }
+                }
+            }
+    }
+
+    private suspend fun restoreCheck(
+        file: RestoreFile,
+        reversalNote: (CashType, LocalDate) -> String,
+    ) {
+        val bytes =
+            when (val read = file.read(RESTORE_FILE_LIMIT_BYTES)) {
+                is FileBytes.Read -> read.bytes
+                FileBytes.TooLarge -> return showRestore { it.copy(step = RestoreStep.REPORT, fileProblem = RestoreFileProblem.TOO_LARGE) }
+                FileBytes.Failed -> return showRestore { it.copy(step = RestoreStep.REPORT, fileProblem = RestoreFileProblem.NOT_READ) }
+            }
+        // The source in use now gives the file's word and the default (D6); the ids are the app's own (33a decision 1).
+        val context = RestoreContext(newId, setOf(priceSource.backupName), priceSource.backupName, reversalNote)
+        val passed =
+            when (val result = withContext(work) { BackupCheck.check(bytes, context) }) {
+                is RestoreCheck.Failed -> return showRestore { it.copy(step = RestoreStep.REPORT, errors = result.errors) }
+                is RestoreCheck.Passed -> result
+            }
+        // Section 8, restore step 3: only after a first round with no errors, each held ticker with the source selected now
+        // (D6); one the app already verified passes without a call (4.3). Nothing is stored (decision 2).
+        val held = passed.heldTickers
+        showRestore { it.copy(phase = CheckPhase.VERIFYING, toVerify = held.size) }
+        val instruments = mutableListOf<Instrument>()
+        val refused = mutableListOf<TickerError>()
+        for (ticker in held) {
+            when (val result = TickerVerifier.check(ticker, mutableState.value.instruments, isOnline(), priceSource)) {
+                is Verification.Verified -> instruments.add(result.instrument)
+
+                is Verification.Refused -> {
+                    val reason = result.reason
+                    // Decision 3: a problem of the source, not of the ticker, stops the round with Try again.
+                    if (reason !is CheckRefusal.Ticker) return showRestore { it.copy(sourceProblem = reason) }
+                    refused.add(TickerError(ticker, reason.reason))
+                }
+            }
+            showRestore { it.copy(verified = it.verified + 1) }
+        }
+        if (refused.isNotEmpty()) return showRestore { it.copy(step = RestoreStep.REPORT, tickerErrors = refused) }
+        restoreReady = RestoreReady(passed.records, instruments)
+        showRestore { it.copy(step = RestoreStep.SUMMARY, summary = passed.summary) }
+    }
+
+    // The check's progress reaches the wizard only while it is on step 2: a Cancel, a lock or leaving ends that.
+    private fun showRestore(change: (RestoreWizard) -> RestoreWizard) = mutableState.update { state ->
+        val wizard = state.restore
+        if (wizard == null || wizard.step != RestoreStep.CHECKING) state else state.copy(restore = change(wizard))
     }
 
     // What the state keeps of [key] (30 decision 4): that one is saved, and its last characters.
@@ -4681,6 +4903,7 @@ class AppViewModel(
                 Screen.REALIZED_GAINS,
                 Screen.TRANSACTION_HISTORY,
                 Screen.BACKUP,
+                Screen.RESTORE,
             )
     }
 }
