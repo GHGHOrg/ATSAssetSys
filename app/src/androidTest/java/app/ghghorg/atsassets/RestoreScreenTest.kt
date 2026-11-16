@@ -6,11 +6,15 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.Surface
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.test.SemanticsMatcher
+import androidx.compose.ui.test.SemanticsNodeInteraction
+import androidx.compose.ui.test.SemanticsNodeInteractionsProvider
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertIsEnabled
 import androidx.compose.ui.test.assertIsNotEnabled
 import androidx.compose.ui.test.hasClickAction
 import androidx.compose.ui.test.hasContentDescription
+import androidx.compose.ui.test.hasScrollToNodeAction
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.isHeading
 import androidx.compose.ui.test.isSelectable
@@ -19,6 +23,7 @@ import androidx.compose.ui.test.junit4.v2.createComposeRule
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
+import androidx.compose.ui.test.performScrollToNode
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
 import app.ghghorg.atsassets.core.RestoreError
@@ -86,6 +91,12 @@ private val EXAMPLE_SUMMARY =
 private val REPORT_COUNT: String get() = restoreText(R.string.restore_errors_in_lines, "3", "3")
 
 private fun model(wizard: RestoreWizard): RestoreModel = Restores.screen(wizard, SOURCE)
+
+// The report is a lazy list (the Deploy review's finding 2): an item out of view is not drawn until the list scrolls to it.
+private fun SemanticsNodeInteractionsProvider.reportItem(matcher: SemanticsMatcher): SemanticsNodeInteraction {
+    onNode(hasScrollToNodeAction()).performScrollToNode(matcher)
+    return onNode(matcher)
+}
 
 /** What the wizard's buttons were asked: each count, and the text Copy report gave. */
 private class Asked {
@@ -182,12 +193,26 @@ class RestoreTalkBackTest {
         show(RestoreWizard(step = RestoreStep.REPORT, fileName = "b.csv", errors = REPORT_ERRORS))
         val countLine = REPORT_COUNT
         composeRule.onNode(isHeading() and hasText(countLine)).assertExists()
-        for (line in REPORT_LINES) composeRule.onNodeWithText(line).assertExists()
-        composeRule.onNodeWithText(string(R.string.restore_nothing_changed)).assertExists()
-        composeRule.onNode(button(R.string.restore_copy_report)).performScrollTo().performClick()
+        for (line in REPORT_LINES) composeRule.reportItem(hasText(line)).assertExists()
+        composeRule.reportItem(hasText(string(R.string.restore_nothing_changed))).assertExists()
+        composeRule.reportItem(button(R.string.restore_copy_report)).performClick()
         assertEquals((listOf(countLine) + REPORT_LINES).joinToString("\n"), asked.copied)
-        composeRule.onNode(button(R.string.restore_choose_another)).performScrollTo().performClick()
+        composeRule.reportItem(button(R.string.restore_choose_another)).performClick()
         assertEquals(1, asked.another)
+    }
+
+    // The Deploy review's finding 2: a report of 2,000 errors is a lazy list; its last error is reached, and Copy report
+    // still copies every error, not only those drawn.
+    @Test
+    fun aReportOf2000Errors_reachesItsLastError_andCopiesThemAll() {
+        val errors = (2..2001).map { RestoreError(it, "date", RestoreReason.DateNotReal) }
+        show(RestoreWizard(step = RestoreStep.REPORT, errors = errors))
+        composeRule.onNode(isHeading() and hasText(restoreText(R.string.restore_errors_in_lines, "2,000", "2,000"))).assertExists()
+        val last = reportLine(restoreText(R.string.restore_place_line_column, "2,001", "date"), string(R.string.restore_date_not_real))
+        composeRule.reportItem(hasText(last)).assertIsDisplayed()
+        composeRule.reportItem(button(R.string.restore_copy_report)).performClick()
+        assertEquals(2_001, asked.copied?.lines()?.size)
+        assertEquals(last, asked.copied?.lines()?.last())
     }
 
     // Section 8, restore step 3; wireframe 10e marker 12: the second round names the ticker and the source.
@@ -289,10 +314,10 @@ class RestoreLargestFontLandscapeTest {
     @Test
     fun theReport_everyError_andBothButtons_canBeReached() {
         show(RestoreWizard(step = RestoreStep.REPORT, errors = REPORT_ERRORS))
-        composeRule.onNode(isHeading() and hasText(REPORT_COUNT)).performScrollTo().assertIsDisplayed()
-        for (line in REPORT_LINES) composeRule.onNodeWithText(line).performScrollTo().assertIsDisplayed()
-        composeRule.onNode(button(R.string.restore_copy_report)).performScrollTo().assertIsDisplayed().performClick()
-        composeRule.onNode(button(R.string.restore_choose_another)).performScrollTo().assertIsDisplayed().performClick()
+        composeRule.reportItem(isHeading() and hasText(REPORT_COUNT)).assertIsDisplayed()
+        for (line in REPORT_LINES) composeRule.reportItem(hasText(line)).assertIsDisplayed()
+        composeRule.reportItem(button(R.string.restore_copy_report)).assertIsDisplayed().performClick()
+        composeRule.reportItem(button(R.string.restore_choose_another)).assertIsDisplayed().performClick()
         composeRule.waitForIdle()
         assertEquals(1, asked.another)
         assertEquals((listOf(REPORT_COUNT) + REPORT_LINES).joinToString("\n"), asked.copied)

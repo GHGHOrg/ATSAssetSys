@@ -38,14 +38,23 @@ import java.math.BigDecimal
 import java.time.LocalDate
 import java.time.ZoneOffset
 
-/** A chosen file in memory: it gives [answer], and counts the reads and the limit asked; [gate] makes a read wait. */
+/**
+ * A chosen file in memory: it gives [answer], and counts the reads and the limit asked; [gate] makes a read wait, and
+ * [nameGate] makes its name wait, as a slow file provider would (the Deploy review's finding 1).
+ */
 internal class FakeRestoreFile(
-    override val name: String,
+    private val fileName: String,
     var answer: FileBytes,
     val gate: CompletableDeferred<Unit>? = null,
+    val nameGate: CompletableDeferred<Unit>? = null,
 ) : RestoreFile {
     var reads = 0
     var limit = 0
+
+    override suspend fun name(): String {
+        nameGate?.await()
+        return fileName
+    }
 
     override suspend fun read(maxBytes: Int): FileBytes {
         reads++
@@ -199,6 +208,32 @@ class RestoreFlowTest {
         vm.onRestoreFile(null)
         assertEquals("backup-2026-10-04.csv", vm.wizard.fileName)
         assertFalse(vm.wizard.choosing)
+    }
+
+    // The Deploy review's finding 1: the name is asked off the main thread; the file counts as chosen at once (Check file
+    // is active), and its name shows when it comes.
+    @Test
+    fun aFilesName_comesLater_andTheFileIsChosenAtOnce() {
+        val store = store()
+        val nameGate = CompletableDeferred<Unit>()
+        val vm = vm(store)
+        vm.chosen(FakeRestoreFile("slow.csv", FileBytes.Read(fileOf(store)), nameGate = nameGate))
+        assertEquals("", vm.wizard.fileName)
+        assertTrue(vm.state.value.restoreScreen?.canCheck == true)
+        nameGate.complete(Unit)
+        assertEquals("slow.csv", vm.wizard.fileName)
+    }
+
+    // A name that comes after another file was chosen is dropped: the line names the file Check file would read.
+    @Test
+    fun aLateName_ofAFileNoLongerChosen_isDropped() {
+        val nameGate = CompletableDeferred<Unit>()
+        val vm = vm()
+        vm.chosen(FakeRestoreFile("first.csv", FileBytes.Failed, nameGate = nameGate))
+        assertTrue(vm.beginRestoreChoice())
+        vm.onRestoreFile(FakeRestoreFile("second.csv", FileBytes.Failed))
+        nameGate.complete(Unit)
+        assertEquals("second.csv", vm.wizard.fileName)
     }
 
     @Test

@@ -4,10 +4,13 @@ import android.content.res.Resources
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
@@ -59,6 +62,12 @@ fun RestoreScreen(
     BackHandler(enabled = model.backEnabled, onBack = actions.onBack)
     // Configuration-aware, so the sentences follow a change of language or font while the screen shows (lint).
     val resources = LocalResources.current
+    // The report as a lazy list, so a file with thousands of errors draws only what shows (the Deploy review's finding 2).
+    val report = model.report
+    if (model.step == RestoreStep.REPORT && report != null) {
+        ReportList(report, model.backEnabled, actions, resources, modifier)
+        return
+    }
     Column(
         modifier = modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(16.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp),
@@ -67,7 +76,7 @@ fun RestoreScreen(
         when (model.step) {
             RestoreStep.CHOOSE -> ChooseStep(model, actions, reversalNote(resources))
             RestoreStep.CHECKING -> CheckingStep(model, sourceName, actions, resources)
-            RestoreStep.REPORT -> model.report?.let { ReportStep(it, actions, resources) }
+            RestoreStep.REPORT -> Unit
             RestoreStep.SUMMARY -> model.summary?.let { SummaryStep(it, actions) }
         }
     }
@@ -127,32 +136,44 @@ private fun CheckingStep(
     }
 }
 
-// Frame E: "N errors in M lines", then each error as "<place>: <reason>", the text Copy report copies (C16).
+// Frame E: the title, "N errors in M lines", then each error as "<place>: <reason>", the text Copy report copies (C16),
+// one lazy list that scrolls as one; only the errors in view are drawn.
 @Composable
-private fun ReportStep(
+private fun ReportList(
     report: RestoreReportModel,
+    backEnabled: Boolean,
     actions: RestoreActions,
     resources: Resources,
+    modifier: Modifier,
 ) {
     val say: (RestoreWords) -> String = { say(resources, it) }
-    Text(
-        text = say(report.count),
-        style = MaterialTheme.typography.titleMedium,
-        modifier = Modifier.semantics {
-            heading()
-            liveRegion = LiveRegionMode.Polite
-        },
-    )
-    for (line in report.lines) {
-        Text(text = Restores.lineText(line, say), style = MaterialTheme.typography.bodyLarge)
-    }
-    BodyLine(stringResource(R.string.restore_nothing_changed))
-    Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-        Button(onClick = { actions.onCopyReport(Restores.reportText(report, say)) }) {
-            Text(text = stringResource(R.string.restore_copy_report))
+    LazyColumn(
+        modifier = modifier.fillMaxSize(),
+        contentPadding = PaddingValues(16.dp),
+        verticalArrangement = Arrangement.spacedBy(12.dp),
+    ) {
+        item { TitleRow(stringResource(R.string.restore_title), actions.onBack, enabled = backEnabled) }
+        item {
+            Text(
+                text = say(report.count),
+                style = MaterialTheme.typography.titleMedium,
+                modifier = Modifier.semantics {
+                    heading()
+                    liveRegion = LiveRegionMode.Polite
+                },
+            )
         }
-        OutlinedButton(onClick = actions.onChooseAnother) {
-            Text(text = stringResource(R.string.restore_choose_another))
+        items(report.lines) { line -> Text(text = Restores.lineText(line, say), style = MaterialTheme.typography.bodyLarge) }
+        item { BodyLine(stringResource(R.string.restore_nothing_changed)) }
+        item {
+            Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                Button(onClick = { actions.onCopyReport(Restores.reportText(report, say)) }) {
+                    Text(text = stringResource(R.string.restore_copy_report))
+                }
+                OutlinedButton(onClick = actions.onChooseAnother) {
+                    Text(text = stringResource(R.string.restore_choose_another))
+                }
+            }
         }
     }
 }

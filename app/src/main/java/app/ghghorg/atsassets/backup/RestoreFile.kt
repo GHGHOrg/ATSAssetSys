@@ -23,8 +23,11 @@ sealed interface FileBytes {
  * knows only this; what the file is, and how Android reads it, stays behind it. The app reads only this file.
  */
 interface RestoreFile {
-    /** The file's name as the file screen gives it, for step 1's line; empty when it gives none. */
-    val name: String
+    /**
+     * The file's name as its provider gives it, for step 1's line; empty when it gives none. Asked off the main thread:
+     * a slow provider (a file on a cloud drive) may take a while (the Deploy review's finding 1). Never throws.
+     */
+    suspend fun name(): String
 
     /** Reads the whole file, at most [maxBytes]; a longer file is [FileBytes.TooLarge] and is not read on. Never throws. */
     suspend fun read(maxBytes: Int): FileBytes
@@ -37,8 +40,19 @@ interface RestoreFile {
 class DocumentRestoreFile(
     private val resolver: ContentResolver,
     private val document: Uri,
-    override val name: String,
 ) : RestoreFile {
+    override suspend fun name(): String = withContext(Dispatchers.IO) {
+        try {
+            resolver.query(document, arrayOf(OpenableColumns.DISPLAY_NAME), null, null, null)?.use { cursor ->
+                if (cursor.moveToFirst()) cursor.getString(0).orEmpty() else ""
+            } ?: ""
+        } catch (e: CancellationException) {
+            throw e
+        } catch (e: Exception) {
+            ""
+        }
+    }
+
     override suspend fun read(maxBytes: Int): FileBytes = withContext(Dispatchers.IO) {
         try {
             val stream = resolver.openInputStream(document) ?: return@withContext FileBytes.Failed
@@ -51,20 +65,6 @@ class DocumentRestoreFile(
             throw e
         } catch (e: Exception) {
             FileBytes.Failed
-        }
-    }
-
-    companion object {
-        /** The document's display name, or empty; never throws. */
-        fun nameOf(
-            resolver: ContentResolver,
-            document: Uri,
-        ): String = try {
-            resolver.query(document, arrayOf(OpenableColumns.DISPLAY_NAME), null, null, null)?.use { cursor ->
-                if (cursor.moveToFirst()) cursor.getString(0).orEmpty() else ""
-            } ?: ""
-        } catch (e: Exception) {
-            ""
         }
     }
 }

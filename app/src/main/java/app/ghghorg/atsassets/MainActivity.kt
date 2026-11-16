@@ -281,8 +281,8 @@ class MainActivity : FragmentActivity() {
         if (requestCode == RESTORE_FILE_REQUEST) {
             lock.onFileScreenClosed()
             val chosen = if (resultCode == RESULT_OK) data?.data else null
-            val resolver = applicationContext.contentResolver
-            viewModel.onRestoreFile(chosen?.let { DocumentRestoreFile(resolver, it, DocumentRestoreFile.nameOf(resolver, it)) })
+            // Its name is asked off the main thread by the ViewModel (the Deploy review's finding 1).
+            viewModel.onRestoreFile(chosen?.let { DocumentRestoreFile(applicationContext.contentResolver, it) })
             return
         }
         if (requestCode != BACKUP_FILE_REQUEST) return

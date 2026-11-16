@@ -3603,12 +3603,25 @@ class AppViewModel(
         return true
     }
 
-    /** Android's file screen gave its answer: [file] is the file chosen, null when it was cancelled (the last choice stays). */
+    /**
+     * Android's file screen gave its answer: [file] is the file chosen, null when it was cancelled (the last choice stays).
+     * The file is chosen at once, with an empty name; the name is asked off the main thread and shown when it comes, while
+     * the same file is still chosen (the Deploy review's finding 1).
+     */
     fun onRestoreFile(file: RestoreFile?) {
         val wizard = mutableState.value.restore
         if (wizard == null || !wizard.choosing) return
-        if (file != null) restoreFile = file
-        mutableState.update { it.copy(restore = wizard.copy(choosing = false, fileName = file?.name ?: wizard.fileName)) }
+        if (file == null) {
+            mutableState.update { it.copy(restore = wizard.copy(choosing = false)) }
+            return
+        }
+        restoreFile = file
+        mutableState.update { it.copy(restore = wizard.copy(choosing = false, fileName = "")) }
+        viewModelScope.launch {
+            val name = file.name()
+            if (restoreFile !== file) return@launch
+            mutableState.update { state -> state.copy(restore = state.restore?.let { if (it.fileName != null) it.copy(fileName = name) else it }) }
+        }
     }
 
     /**
