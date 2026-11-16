@@ -1,6 +1,6 @@
 # plan/iterations/34-restore-to-empty-app.md
 
-Stage: Build. Status: approved 2026-11-16 (your A); decisions 1 to 4 settled the same day (section 11).
+Stage: Build. Status: approved 2026-11-16 (your A); decisions 1 to 4 settled the same day (section 11). Steps 1 to 6 built and committed (1e8509c to 222b603); the phone check passed 2026-11-16 and 17, checks 1 to 15 (13.2); the wording approved (section 12). Not pushed. Open: the pull request and its screen tests (169), the Deploy review.
 Source: plan.md section 4 (row 34); spec section 8 (restore steps 5 and 7, App initialization, Known limits), section 9 (Restore, Last backup, Backup reminder), section 3 ("app holds data"), section 6 (Backup export and restore entry), C3, D6, D9; section 14 (K2, K4, K6, K9); wireframe 10e frames F (marker 15, the fresh-install form) and H (markers 18 and 19); the 33b file (the check, the summary, decisions 1 and 2: the records and instruments kept in memory for 34); open items 33 and 66.
 
 ## 1. Outcome
@@ -72,6 +72,7 @@ Each step ends with spotlessCheck, build, tests and lint, all with --rerun-tasks
 4. What "delete all settings and data" clears (section 8): every stored table and setting: records, instruments and prices, the lists and remembered texts, hidden holdings, overrides, auto-lock, tab order, the price key (decision 1), the backup moment and its mark; then the file's lists, settings and records are loaded with the instruments the check verified (33b decision 2). The restored app is exactly the file (your A, 2026-11-16). Not chosen: (B) the lists and remembered texts from price refreshes kept when the file has none.
 
 ## 12. Wording to approve (D9; proposed in step 4, approved on the phone)
+- Approved 2026-11-17 (your A, after the phone check): the 11 strings under strings.xml's 34 comment, and 33b's three step lines taking "of 4" or "of 5".
 - Frame F on a fresh install: the button "Restore", the step line ("Step 3 of 4"?), the line under it.
 - Frame H: "Restore complete", the counts loaded, the "no price" line, the "never backed up" line, Go to Overall.
 - The failure: "Not restored. Nothing was changed.", Close.
@@ -110,7 +111,12 @@ Before: your app (debug, 44) installed over 43; ATS Check installed new; copied 
 15. At the end: ATS Check may stay for 35, or be removed (your choice).
 
 Results:
-- Not yet run.
+- 2026-11-16, before: your app (debug, versionCode 44, APK 44,550,182 bytes; 34's names found in classes6 and classes7) installed over 43 at 20:45:03; ATS Check (app.ghghorg.atsassets.check, 44) installed new at 20:45:07; the three forms of example-backup.csv copied to Download/ATS-restore-check.
+- Checks 1 to 10: all okay (your "1-10 ALL OKAY"), open item 33's check 4 among them.
+- Check 11: after ATS Check's backup, I removed ATS Check alone with adb (`adb uninstall app.ghghorg.atsassets.check`) and installed it again (2026-11-17 00:20:03); your app was the same before and after (versionCode 44, first installed 2026-10-29). The restore of the saved file on the fresh ATS Check, and checks 12 and 13: all okay (your "check 11-13 ALL OKAY").
+- Check 14: Logcat from 01:16:12 to 01:23:23 (31,361 lines) over check 11's restore and check 12: no id, ticker, amount, portfolio name, note, file name or key (16 lines matched the search, all unrelated: the phone's audio driver's "Main AMP" and the launcher's "RESTORE_LIST"). ATS Check's own 402 lines: framework lines (back callbacks, the keyboard, BiometricPrompt), three `AssistStructure` lines with sizes only (open item 64, the key's field), and "A resource failed to call release" 25 times: an object let go unclosed, naming no data; not seen in 33b's capture of your app; for the Deploy review.
+- Check 15: ATS Check stays on the phone for 35's checks, holding only the example's made-up data (your A).
+- The wording: the 11 sentences approved as seen (your A, 2026-11-17); the failure's "Not restored. Nothing was changed." was not seen on the phone (RestoreLoadTalkBackTest draws it).
 
 ## 14. Departures from the plan
 1. Steps 2 and 3: step 2's tests ran red first; step 3's were written before the code but first run after it.

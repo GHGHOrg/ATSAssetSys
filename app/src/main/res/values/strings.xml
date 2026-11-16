@@ -792,7 +792,7 @@
     <string name="restore_cash_after">Cash balance after the restore</string>
     <string name="restore_holdings">Holdings with shares</string>
     <string name="restore_summary_note">The file passed every check. Restoring it comes in a later version of the app; for now, compare these figures with your records.</string>
-    <!-- Iteration 34: the restore onto an app with no data (wireframe 10e frame F marker 15, frame H). Wording proposed 2026-11-16, not yet approved (D9; 34 file, section 12). -->
+    <!-- Iteration 34: the restore onto an app with no data (wireframe 10e frame F marker 15, frame H). Wording approved 2026-11-17 after the phone check (D9; 34 file, section 12 and 13.2). -->
     <string name="restore_empty_note">The file passed every check. The app holds no data, so nothing is replaced: Restore loads this file. It cannot be undone except by restoring another backup.</string>
     <string name="restore_now">Restore</string>
     <string name="restore_restoring">Step 4 of 4. Restoring…</string>
