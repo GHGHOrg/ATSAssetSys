@@ -1,10 +1,14 @@
 package app.ghghorg.atsassets
 
 import android.content.ActivityNotFoundException
+import android.content.ClipData
+import android.content.ClipDescription
+import android.content.ClipboardManager
 import android.content.Intent
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
+import android.os.PersistableBundle
 import android.os.PowerManager
 import android.os.SystemClock
 import android.view.MotionEvent
@@ -37,6 +41,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.lifecycleScope
 import app.ghghorg.atsassets.backup.DocumentBackupTarget
+import app.ghghorg.atsassets.backup.DocumentRestoreFile
 import app.ghghorg.atsassets.data.DatabaseKey
 import app.ghghorg.atsassets.data.RoomRecordStore
 import app.ghghorg.atsassets.data.SqlCipherOpener
@@ -48,6 +53,7 @@ import app.ghghorg.atsassets.prices.NetworkStatus
 import app.ghghorg.atsassets.prices.finnhub.FinnhubSource
 import app.ghghorg.atsassets.ui.AppContent
 import app.ghghorg.atsassets.ui.AppViewModel
+import app.ghghorg.atsassets.ui.RestoreControls
 import app.ghghorg.atsassets.ui.ScreenshotControls
 import app.ghghorg.atsassets.ui.theme.ATSAssetSystemTheme
 import kotlinx.coroutines.flow.distinctUntilChanged
@@ -62,8 +68,12 @@ private const val IDLE_CHECK_MS = 1_000L
 // 31: the type asked of Android's file screen for the backup file (spec section 8: one CSV text file).
 private const val BACKUP_FILE_TYPE = "text/csv"
 
-// 31: this activity's one request to another screen; any number in the lower 16 bits will do.
+// 31: this activity's requests to another screen; any number in the lower 16 bits will do. 33b: the restore file's.
 private const val BACKUP_FILE_REQUEST = 31
+private const val RESTORE_FILE_REQUEST = 33
+
+// 33b: the restore file may be any file (section 8: its name and extension do not matter).
+private const val RESTORE_FILE_TYPE = "*/*"
 
 class MainActivity : FragmentActivity() {
     // Kept across a re-creation by LockHolder; set first in onCreate.
@@ -164,6 +174,7 @@ class MainActivity : FragmentActivity() {
                                 modifier = Modifier.padding(innerPadding),
                                 screenshots = ScreenshotControls(::allowScreenshots, ::turnOffScreenshots),
                                 onBackUpNow = ::backUpNow,
+                                restore = RestoreControls(onChooseFile = ::chooseRestoreFile, onCopyReport = ::copyReport),
                             )
                         } else {
                             CoverScreen(modifier = Modifier.padding(innerPadding))
@@ -203,7 +214,9 @@ class MainActivity : FragmentActivity() {
         // 21: a window kept across a turn of the phone goes on in the new activity; otherwise it is off.
         applyScreenshotWindow()
         // When the phone comes back online, a refresh that failed runs again (16a decision 2).
-        stopWatchingNetwork = NetworkStatus(applicationContext).watch(Handler(Looper.getMainLooper())) { viewModel.onOnline() }
+        // 33b: and when it goes offline, Restore is inactive (AC-08).
+        stopWatchingNetwork =
+            NetworkStatus(applicationContext).watch(Handler(Looper.getMainLooper()), onLost = { viewModel.onOffline() }) { viewModel.onOnline() }
     }
 
     override fun onStop() {
@@ -265,10 +278,48 @@ class MainActivity : FragmentActivity() {
         data: Intent?,
     ) {
         super.onActivityResult(requestCode, resultCode, data)
+        if (requestCode == RESTORE_FILE_REQUEST) {
+            lock.onFileScreenClosed()
+            val chosen = if (resultCode == RESULT_OK) data?.data else null
+            val resolver = applicationContext.contentResolver
+            viewModel.onRestoreFile(chosen?.let { DocumentRestoreFile(resolver, it, DocumentRestoreFile.nameOf(resolver, it)) })
+            return
+        }
         if (requestCode != BACKUP_FILE_REQUEST) return
         lock.onFileScreenClosed()
         val place = if (resultCode == RESULT_OK) data?.data else null
         viewModel.onBackupPlace(place?.let { DocumentBackupTarget(applicationContext.contentResolver, it) })
+    }
+
+    /**
+     * Choose file in the restore wizard (33b; wireframe 10e marker 7): Android's file screen opens on any file, as the
+     * file's name and type do not matter to the restore (section 8); the app reads only the file you pick. The screen
+     * coming up is not a leaving under "every time you leave" (spec section 9, AC-57), as for Back up now. With no app to
+     * show the file screen, the choice ends as a cancelled one.
+     */
+    private fun chooseRestoreFile() {
+        if (lock.state != LockState.Unlocked || !viewModel.beginRestoreChoice()) return
+        val request = Intent(Intent.ACTION_OPEN_DOCUMENT).addCategory(Intent.CATEGORY_OPENABLE).setType(RESTORE_FILE_TYPE)
+        lock.onFileScreenOpened()
+        try {
+            startActivityForResult(request, RESTORE_FILE_REQUEST)
+        } catch (e: ActivityNotFoundException) {
+            lock.onFileScreenClosed()
+            viewModel.onRestoreFile(null)
+        }
+    }
+
+    /**
+     * Copy report (C16; 33b decision 5): the report's text as shown, nothing else, marked sensitive so Android hides its
+     * preview of copied text (ClipDescription.EXTRA_IS_SENSITIVE, API 33, checked with javap on the SDK's android.jar).
+     * The clip stays on the clipboard, where other apps can read it (C16). Nothing of it is logged (spec section 9).
+     */
+    private fun copyReport(text: String) {
+        if (lock.state != LockState.Unlocked) return
+        val clipboard = getSystemService(ClipboardManager::class.java) ?: return
+        val clip = ClipData.newPlainText(getString(R.string.restore_report_label), text)
+        clip.description.extras = PersistableBundle().apply { putBoolean(ClipDescription.EXTRA_IS_SENSITIVE, true) }
+        clipboard.setPrimaryClip(clip)
     }
 
     /** Settings' "Allow screenshots for 3 minutes" (21): the check, only while unlocked and the window is off. */

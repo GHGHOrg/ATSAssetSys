@@ -21,10 +21,13 @@ class NetworkStatus(
 
     /**
      * Calls [onAvailable] on [handler]'s thread each time a network that offers internet becomes the default (16a
-     * decision 2: the phone comes back online). Returns the call that stops watching. Checked on the phone only.
+     * decision 2: the phone comes back online), and [onLost] each time the default network is lost (33b: Restore is
+     * inactive offline; the caller asks [isOnline] again, as another network may already be the default). Returns the
+     * call that stops watching. Checked on the phone only.
      */
     fun watch(
         handler: Handler,
+        onLost: () -> Unit = {},
         onAvailable: () -> Unit,
     ): () -> Unit {
         val manager = context.getSystemService(ConnectivityManager::class.java) ?: return {}
@@ -32,6 +35,10 @@ class NetworkStatus(
             object : ConnectivityManager.NetworkCallback() {
                 override fun onAvailable(network: Network) {
                     onAvailable()
+                }
+
+                override fun onLost(network: Network) {
+                    onLost()
                 }
             }
         manager.registerDefaultNetworkCallback(callback, handler)
