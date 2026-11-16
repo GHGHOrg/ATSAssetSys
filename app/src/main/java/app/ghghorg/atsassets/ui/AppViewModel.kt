@@ -3736,7 +3736,7 @@ class AppViewModel(
                     val reason = result.reason
                     // Decision 3: a problem of the source, not of the ticker, stops the round with Try again.
                     if (reason !is CheckRefusal.Ticker) return showRestore { it.copy(sourceProblem = reason) }
-                    refused.add(TickerError(ticker, reason.reason))
+                    refused.add(TickerError(ticker, reason.reason, passed.tickerLines[ticker]))
                 }
             }
             showRestore { it.copy(verified = it.verified + 1) }

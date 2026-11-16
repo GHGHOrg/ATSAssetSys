@@ -218,9 +218,10 @@ class RestoreTalkBackTest {
     // Section 8, restore step 3; wireframe 10e marker 12: the second round names the ticker and the source.
     @Test
     fun theSecondRound_namesTheTicker_andTheSource() {
-        show(RestoreWizard(step = RestoreStep.REPORT, tickerErrors = listOf(TickerError("XYZ", TickerRefusal.NotFound))))
+        show(RestoreWizard(step = RestoreStep.REPORT, tickerErrors = listOf(TickerError("XYZ", TickerRefusal.NotFound, line = 9))))
         composeRule.onNode(isHeading() and hasText(string(R.string.restore_ticker_error))).assertExists()
-        val line = reportLine(restoreText(R.string.restore_place_ticker, "XYZ"), restoreText(R.string.restore_ticker_not_found, SOURCE))
+        val place = restoreText(R.string.restore_place_line_ticker, "9", "XYZ")
+        val line = reportLine(place, restoreText(R.string.restore_ticker_not_found, SOURCE))
         composeRule.onNodeWithText(line).assertExists()
     }
 

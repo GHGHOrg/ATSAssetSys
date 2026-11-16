@@ -32,10 +32,14 @@ enum class RestoreFileProblem {
     CHECK_FAILED,
 }
 
-/** 33b: a held ticker the source refused in the second round (section 8, restore step 3): which, and why (4.3). */
+/**
+ * 33b: a held ticker the source refused in the second round (section 8, restore step 3): which, why (4.3), and the line
+ * of its first buy row in the file (section 8: every error with its line; departure 3, your B), null if none is known.
+ */
 data class TickerError(
     val ticker: String,
     val reason: TickerRefusal,
+    val line: Int? = null,
 )
 
 /**

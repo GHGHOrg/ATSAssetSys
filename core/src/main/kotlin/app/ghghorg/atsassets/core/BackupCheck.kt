@@ -112,7 +112,11 @@ private class Replay(
                 tabOrder = settings.tabOrder,
                 priceSource = settings.priceSource,
             )
-        return RestoreCheck.Passed(loaded, held.map { it.ticker }.distinct().sorted(), summary)
+        val heldTickers = held.map { it.ticker }.distinct().sorted()
+        // 33b departure 3: each held ticker's first buy row, in file order (the lines go up the file).
+        val firstBuys = records.filterIsInstance<BuyRecord>().sortedBy { it.line }.groupBy { it.ticker }.mapValues { it.value.first().line }
+        val tickerLines = heldTickers.mapNotNull { ticker -> firstBuys[ticker]?.let { ticker to it } }.toMap()
+        return RestoreCheck.Passed(loaded, heldTickers, summary, tickerLines)
     }
 
     private fun key(name: String): String = Portfolios.nameKey(name)

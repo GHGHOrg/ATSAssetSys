@@ -170,13 +170,14 @@ class RestoreModelTest {
         val wizard =
             RestoreWizard(
                 step = RestoreStep.REPORT,
-                tickerErrors = listOf(TickerError("XYZ", TickerRefusal.NotFound), TickerError("VFIAX", TickerRefusal.MutualFund)),
+                tickerErrors = listOf(TickerError("XYZ", TickerRefusal.NotFound, line = 9), TickerError("VFIAX", TickerRefusal.MutualFund)),
             )
         val report = Restores.report(wizard, "Finnhub")
         assertEquals(w(RestoreText.TICKER_ERRORS, "2"), report.count)
+        // Departure 3, your B: "Line 9, ticker XYZ" (wireframe 10e marker 12); a ticker with no line known says "Ticker".
         assertEquals(
             listOf(
-                RestoreReportLine(w(RestoreText.PLACE_TICKER, "XYZ"), w(RestoreText.TICKER_NOT_FOUND, "Finnhub")),
+                RestoreReportLine(w(RestoreText.PLACE_LINE_TICKER, "9", "XYZ"), w(RestoreText.TICKER_NOT_FOUND, "Finnhub")),
                 RestoreReportLine(w(RestoreText.PLACE_TICKER, "VFIAX"), w(RestoreText.TICKER_MUTUAL_FUND, "Finnhub")),
             ),
             report.lines,

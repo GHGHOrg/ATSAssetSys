@@ -35,6 +35,7 @@ enum class RestoreText {
     PLACE_LINE,
     PLACE_LINE_COLUMN,
     PLACE_TICKER,
+    PLACE_LINE_TICKER,
     REPORT_LINE,
 
     // The file as a whole (section 8, File).
@@ -235,10 +236,7 @@ object Restores {
         if (wizard.tickerErrors.isNotEmpty()) {
             val n = wizard.tickerErrors.size
             val countLine = if (n == 1) words(RestoreText.TICKER_ERROR) else words(RestoreText.TICKER_ERRORS, count(n))
-            val lines =
-                wizard.tickerErrors.map {
-                    RestoreReportLine(RestoreWords(RestoreText.PLACE_TICKER, listOf(it.ticker)), tickerReason(it.reason, sourceName))
-                }
+            val lines = wizard.tickerErrors.map { RestoreReportLine(tickerPlace(it), tickerReason(it.reason, sourceName)) }
             return RestoreReportModel(countLine, lines)
         }
         val errors = wizard.errors
@@ -409,6 +407,12 @@ object Restores {
     ): String = say(RestoreWords(RestoreText.REPORT_LINE, listOf(say(line.place), say(line.reason))))
 
     private fun file() = RestoreWords(RestoreText.PLACE_FILE)
+
+    // "Line 9, ticker XYZ" (wireframe 10e marker 12; departure 3, your B), or "Ticker XYZ" with no line known.
+    private fun tickerPlace(error: TickerError): RestoreWords {
+        val line = error.line ?: return words(RestoreText.PLACE_TICKER, error.ticker)
+        return words(RestoreText.PLACE_LINE_TICKER, count(line), error.ticker)
+    }
 
     // A column with no name is one whose cells are not all empty (section 8); one with a name the format does not have.
     private fun unknownColumn(column: String): RestoreWords {

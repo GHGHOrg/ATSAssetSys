@@ -291,7 +291,9 @@ class RestoreFlowTest {
         vm.chosen(FakeRestoreFile("b.csv", FileBytes.Read(fileOf(store))))
         vm.checkRestoreFile(note)
         assertEquals(RestoreStep.REPORT, vm.wizard.step)
-        assertEquals(listOf(TickerError("MSFT", TickerRefusal.NotFound)), vm.wizard.tickerErrors)
+        // Departure 3, your B: with the line of the ticker's first buy. The writer's file: the header (1), format (2), the
+        // three settings (3 to 5), the portfolio (6), the opening balance (7), the buy (8).
+        assertEquals(listOf(TickerError("MSFT", TickerRefusal.NotFound, line = 8)), vm.wizard.tickerErrors)
         assertTrue(vm.wizard.errors.isEmpty())
         assertNull(vm.restoreReady)
     }

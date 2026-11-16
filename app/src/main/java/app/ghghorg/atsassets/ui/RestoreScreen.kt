@@ -252,6 +252,7 @@ internal fun stringOf(text: RestoreText): Int = when (text) {
     RestoreText.PLACE_LINE -> R.string.restore_place_line
     RestoreText.PLACE_LINE_COLUMN -> R.string.restore_place_line_column
     RestoreText.PLACE_TICKER -> R.string.restore_place_ticker
+    RestoreText.PLACE_LINE_TICKER -> R.string.restore_place_line_ticker
     RestoreText.REPORT_LINE -> R.string.restore_report_line
     RestoreText.NOT_UTF8 -> R.string.restore_not_utf8
     RestoreText.NO_HEADER -> R.string.restore_no_header

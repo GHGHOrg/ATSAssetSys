@@ -38,6 +38,27 @@ class BackupCheckTest {
 
     private fun passed(vararg lines: String): RestoreCheck.Passed = check(*lines).let { it as? RestoreCheck.Passed ?: error("not passed: $it") }
 
+    // 33b departure 3, your B: each held ticker comes with the line of its first buy row in the file, for the second round's
+    // report (section 8: every error with its line); a ticker sold out is not held and has no line.
+    @Test
+    fun eachHeldTicker_hasTheLineOfItsFirstBuy() {
+        val passed =
+            passed(
+                opening,
+                main,
+                portfolio("Other"),
+                buy("B1", "2026-01-03", "1", "10.00", ticker = "MSFT", portfolio = "Other"),
+                buy("B2", "2026-01-02", "1", "10.00"),
+                buy("B3", "2026-01-02", "1", "10.00", ticker = "MSFT"),
+                buy("B4", "2026-01-02", "1", "10.00", ticker = "IBM"),
+                sell("2026-01-04", "1", "10.00", "B4:1", ticker = "IBM"),
+            )
+        assertEquals(listOf("AAPL", "MSFT"), passed.heldTickers)
+        assertEquals(mapOf("AAPL" to 7, "MSFT" to 6), passed.tickerLines)
+        val example = check(File("../spec/example-backup.csv").readBytes()) as RestoreCheck.Passed
+        assertEquals(mapOf("AAPL" to 13), example.tickerLines)
+    }
+
     // Building blocks: line 3 is the opening balance and line 4 the portfolio Main, unless a test says otherwise.
     private val opening = cash("opening_balance", "2026-01-01", "10000.00")
     private val main = portfolio("Main")
