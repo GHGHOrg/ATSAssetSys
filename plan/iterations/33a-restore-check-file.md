@@ -1,6 +1,6 @@
 # plan/iterations/33a-restore-check-file.md
 
-Stage: Build. Status: approved 2026-11-16 (your A); decisions 1 to 5 settled the same day (section 11). Built 2026-11-16 (steps 1 to 6 and one Deploy fix on iter-33a-restore-check-file); pull request #191, not merged.
+Stage: Build. Status: approved 2026-11-16 (your A); decisions 1 to 5 settled the same day (section 11). Steps 1 to 6 built 2026-11-16 (section 13.1): 1,394 tests; no app change, no phone check; every section 8 reason listed against its test (section 13.2); on draft #191 CI and the screen tests (136 of 136) green. Done: reviewed, no high or medium finding, one low fixed (1,395 tests) and five recorded (section 13.3); pull request #191 merged as 0a74f3b (section 13.4).
 Source: plan.md section 4 (row 33, split into 33a and 33b, your A 2026-11-15); spec section 8 (file format, records, settings keys, restore steps 2 and 5, rejection reasons and the report), 4.1 to 4.7, 4.9, 4.10, C3, C7, C13; section 14 (K1, K6, K10); spec/example-backup.csv and spec/example-backup-expected.md; the 31 file (the writer; decision 3, the quoting; decision 5, the ids and the source's word).
 
 ## 1. Outcome
@@ -111,6 +111,11 @@ No high or medium finding. Pull request #191's first run (CI, CodeQL, the screen
   5. For 33b: the file is read whole into memory, with no size limit (section 8 sets none); 33b decides what Android's file screen may hand over.
   6. For 33b: some reasons carry file ids, dates and figures; they go only to the report and Copy report, never to a log (section 9). Core logs nothing (no `println`, `Log.`, `System.out`, `System.err` or `printStackTrace` in core/src/main).
 - Checked, nothing found: each section 8 rule against the code; the replay order and the dependents; every `getValue` and cast in BackupCheck is reached only after the check that makes it safe; core stays pure Kotlin; cash and transactions only through K1.
+- On fa2d6c0, the fix: CI, CodeQL and the screen tests (136 of 136) green at the first attempt.
+
+### 13.4 Merge (2026-11-16)
+- Pull request #191 merged by you as 0a74f3b, 7 commits (e44adca to fa2d6c0). On main after the merge: CI (4m 7s), CodeQL and the screen tests (136 of 136, 15m 4s) green at the first attempt (gh, read only).
+- #190 (32) is still open; when it merges, plan.md's section 11 and change log meet these lines.
 
 ## 14. Departures from the plan
 1. Two files beyond section 5's: `BackupRows.kt` (each row's own rules, step 3) and `RestoreReport.kt` (the reasons and the result types), so `BackupReader.kt` and `BackupCheck.kt` each keep one job. Two more test classes: BackupRowsTest and BackupReportTest.
