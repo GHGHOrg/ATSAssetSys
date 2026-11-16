@@ -298,6 +298,17 @@ class RestoreFlowTest {
         assertNull(vm.restoreReady)
     }
 
+    // Section 8 (33a decision 4: the report in line order): the round checks the held tickers alphabetically, but the
+    // report lists them by line (phone check, 2026-11-16: file 13 showed lines 7, 6, 5).
+    @Test
+    fun theSecondRound_isReportedInLineOrder() {
+        val store = store(tickers = listOf("MSFT", "AMD"), verified = emptyList())
+        val vm = vm(store, FakeSource(answer = Lookup.NotFound))
+        vm.chosen(FakeRestoreFile("b.csv", FileBytes.Read(fileOf(store))))
+        vm.checkRestoreFile(note)
+        assertEquals(listOf("MSFT" to 8, "AMD" to 9), vm.wizard.tickerErrors.map { it.ticker to it.line })
+    }
+
     // Decision 3: a problem of the source stops the round on step 2 with Try again; the tickers are not reported.
     @Test
     fun aSourceProblem_stopsTheRound_andTryAgainChecksAgain() {

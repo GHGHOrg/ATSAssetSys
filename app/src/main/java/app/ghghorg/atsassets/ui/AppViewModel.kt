@@ -3741,7 +3741,9 @@ class AppViewModel(
             }
             showRestore { it.copy(verified = it.verified + 1) }
         }
-        if (refused.isNotEmpty()) return showRestore { it.copy(step = RestoreStep.REPORT, tickerErrors = refused) }
+        // In line order, as the rest of the report (33a decision 4); a ticker with no line known last, alphabetically.
+        val inLineOrder = refused.sortedWith(compareBy<TickerError>({ it.line ?: Int.MAX_VALUE }, { it.ticker }))
+        if (refused.isNotEmpty()) return showRestore { it.copy(step = RestoreStep.REPORT, tickerErrors = inLineOrder) }
         restoreReady = RestoreReady(passed.records, instruments)
         showRestore { it.copy(step = RestoreStep.SUMMARY, summary = passed.summary) }
     }

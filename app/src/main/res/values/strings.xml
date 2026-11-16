@@ -693,7 +693,7 @@
     <string name="restore_place_line">Line %1$s</string>
     <string name="restore_place_line_column">Line %1$s, %2$s</string>
     <string name="restore_place_ticker">Ticker %1$s</string>
-    <!-- 33b departure 3, your B (Deploy, 2026-11-16): proposed, not yet approved (D9). -->
+    <!-- 33b departure 3, your B (Deploy, 2026-11-16): approved on the phone the same day (D9). -->
     <string name="restore_place_line_ticker">Line %1$s, ticker %2$s</string>
     <string name="restore_report_line">%1$s: %2$s</string>
     <string name="restore_not_utf8">the file is not UTF-8 text. In Excel, save it as CSV UTF-8.</string>
