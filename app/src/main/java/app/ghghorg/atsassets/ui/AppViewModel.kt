@@ -307,7 +307,8 @@ private fun AppState.leftReplace(): AppState {
  * either screen drops the result, those added later too.
  */
 internal fun AppState.withBackupResultWhereShown(): AppState {
-    val shown = screen == Screen.BACKUP || onOverall
+    // 35: also on the restore's step 4, where its Back up now shows its result (wireframe 10e marker 16).
+    val shown = screen == Screen.BACKUP || onOverall || (screen == Screen.RESTORE && restore?.step == RestoreStep.CONFIRM)
     return if (backupOutcome == null || shown) this else copy(backupOutcome = null)
 }
 
@@ -971,10 +972,20 @@ data class AppState(
         get() = restore?.let { Restores.screen(it, priceSourceName, holdsData) }
 
     /**
-     * 34: Restore is offered: the summary of a file that passed, on an app that holds no data (section 3; decision 3: an
-     * app with data waits for 35's step 4), with no other save running.
+     * 34: Restore is offered: the summary of a file that passed, on an app that holds no data (section 3), with no other
+     * save running. 35: Replace all data, on step 4 of an app that holds data, once RESTORE is typed (decision 2), and
+     * not while step 4's export is under way.
      */
-    val canRestore: Boolean get() = restore?.step == RestoreStep.SUMMARY && !holdsData && !saving
+    val canRestore: Boolean
+        get() {
+            val wizard = restore ?: return false
+            if (saving || backupStage != null) return false
+            return when (wizard.step) {
+                RestoreStep.SUMMARY -> !holdsData
+                RestoreStep.CONFIRM -> wizard.now != null && RestoreWord.matches(wizard.typed)
+                else -> false
+            }
+        }
 
     /**
      * 32: Overall's backup reminder as the screen draws it (view 1, wireframe 01 marker 1; CR2), null when Overall shows
@@ -3427,12 +3438,14 @@ class AppViewModel(
      * export is under way, and while the app holds no data (decision 6: such a file could never be restored).
      *
      * From 32 the same export starts from Overall's reminder (navigation outline; AC-56), while it shows and no layer
-     * is open over Overall; its result then shows on Overall (decision 1).
+     * is open over Overall; its result then shows on Overall (decision 1). From 35 also from the restore's step 4
+     * (wireframe 10e marker 16; section 8, restore step 6), its result shown there.
      */
     fun beginBackup(): String? {
         val current = mutableState.value
         if (store == null || current.saving || current.backupStage != null) return null
-        if (current.screen != Screen.BACKUP && !current.reminderInReach) return null
+        val onStep4 = current.screen == Screen.RESTORE && current.restore?.step == RestoreStep.CONFIRM
+        if (current.screen != Screen.BACKUP && !current.reminderInReach && !onStep4) return null
         if (!current.holdsData) return null
         mutableState.update { it.copy(backupStage = BackupStage.CHOOSING, backupOutcome = null) }
         return BackupFile.fileName(clock.instant(), deviceZone())
@@ -3690,6 +3703,12 @@ class AppViewModel(
             closeRestore()
             return
         }
+        // 35: step 4 returns to the summary, its counts kept and the word cleared; not while its export is under way.
+        if (wizard.step == RestoreStep.CONFIRM) {
+            if (current.backupStage != null) return
+            mutableState.update { it.copy(restore = wizard.copy(step = RestoreStep.SUMMARY, typed = "")) }
+            return
+        }
         restoreJob?.cancel()
         restoreJob = null
         restoreReady = null
@@ -3703,23 +3722,46 @@ class AppViewModel(
         if (current.screen != Screen.RESTORE || current.restore?.choosing == true) return
         // 34: not while the restore is written, and not from its result, which leaves by Go to Overall.
         if (step == RestoreStep.RESTORING || step == RestoreStep.RESULT) return
+        // 35: not while step 4's export is under way.
+        if (current.backupStage != null) return
         endRestore()
         mutableState.update { it.copy(screen = Screen.BACKUP, restore = null) }
+    }
+
+    /**
+     * Continue on the summary (wireframe 10e frame F; section 8, restore step 6; 35): on an app that holds data, step 4,
+     * with nothing typed.
+     */
+    fun continueRestore() {
+        val current = mutableState.value
+        val wizard = current.restore ?: return
+        if (current.screen != Screen.RESTORE || wizard.step != RestoreStep.SUMMARY || current.saving) return
+        if (!current.holdsData || wizard.now == null || restoreReady == null) return
+        mutableState.update { it.copy(restore = wizard.copy(step = RestoreStep.CONFIRM, typed = "")) }
+    }
+
+    /** Step 4's field (wireframe 10e marker 17; 35): the word typed so far; Replace all data acts once it matches. */
+    fun typeRestoreWord(text: String) {
+        val current = mutableState.value
+        val wizard = current.restore ?: return
+        if (current.screen != Screen.RESTORE || wizard.step != RestoreStep.CONFIRM) return
+        mutableState.update { it.copy(restore = wizard.copy(typed = text)) }
     }
 
     /**
      * Restore on the summary (wireframe 10e frame F, marker 15; section 8, restore step 7; 34): on an app that holds no
      * data, everything stored is deleted and the file's records are loaded as one action, with the held tickers'
      * verified instruments (33b decision 2). The state is then read again from the store, the result shows, and the
-     * first price refresh runs. A failed write changes nothing and says so (marker 19). Ignored on an app that holds
-     * data (decision 3: 35 adds step 4), without a file that passed, and while another save runs.
+     * first price refresh runs. A failed write changes nothing and says so (marker 19). Ignored without a file that
+     * passed and while another save runs. 35: on an app that holds data, Replace all data on step 4 (frame G, marker 17),
+     * the same write, once RESTORE is typed and no export is under way ([AppState.canRestore]).
      */
     fun restoreNow() {
         val current = mutableState.value
         val wizard = current.restore ?: return
         val ready = restoreReady ?: return
         val opened = store ?: return
-        if (current.screen != Screen.RESTORE || wizard.step != RestoreStep.SUMMARY || !current.canRestore) return
+        if (current.screen != Screen.RESTORE || !current.canRestore) return
         restoreAbandoned = false
         mutableState.update { it.copy(saving = true, restore = wizard.copy(step = RestoreStep.RESTORING)) }
         viewModelScope.launch {

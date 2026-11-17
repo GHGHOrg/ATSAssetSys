@@ -81,6 +81,7 @@ fun RestoreScreen(
             RestoreStep.CHECKING -> CheckingStep(model, sourceName, actions, resources)
             RestoreStep.REPORT -> Unit
             RestoreStep.SUMMARY -> model.summary?.let { SummaryStep(it, model, actions) }
+            RestoreStep.CONFIRM -> Unit
             RestoreStep.RESTORING -> RestoringStep()
             RestoreStep.RESULT -> model.loaded?.let { ResultStep(it, actions) }
             RestoreStep.FAILED -> FailedStep(actions)

@@ -15,6 +15,9 @@ enum class RestoreStep {
     REPORT,
     SUMMARY,
 
+    // 35 (wireframe 10e frame G): step 4 on an app that holds data: the export offer and the typed word.
+    CONFIRM,
+
     // 34 (wireframe 10e frame H): the delete and load under way; the result (marker 18); a failed write (marker 19).
     RESTORING,
     RESULT,
@@ -55,7 +58,7 @@ data class TickerError(
  * REPORT: the first round's [errors] in report order, or the second round's [tickerErrors], or a [fileProblem]. On
  * SUMMARY: the file's [summary], and on an app that holds data the counts [now] (35; section 8, restore step 5), taken
  * when the summary shows; the wizard ends when its screen is left, so they cannot change meanwhile. A wizard with [now]
- * restores over data, in five steps.
+ * restores over data, in five steps. On CONFIRM (35): the word [typed] so far, empty on each arrival at step 4.
  */
 data class RestoreWizard(
     val step: RestoreStep = RestoreStep.CHOOSE,
@@ -70,7 +73,18 @@ data class RestoreWizard(
     val fileProblem: RestoreFileProblem? = null,
     val summary: RestoreSummary? = null,
     val now: RestoreCounts? = null,
+    val typed: String = "",
 )
+
+/**
+ * 35: step 4's typed confirmation (section 6, AC-56): RESTORE, "case and spaces ignored": every space anywhere (any
+ * whitespace) and any letter case (decision 2).
+ */
+object RestoreWord {
+    const val WORD = "RESTORE"
+
+    fun matches(typed: String): Boolean = typed.filterNot { it.isWhitespace() }.equals(WORD, ignoreCase = true)
+}
 
 /**
  * 33b decision 2: a file that passed both rounds, held in memory only, for 34 to store with the load: the records K1 made
