@@ -10,6 +10,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.semantics.SemanticsActions
 import androidx.compose.ui.test.SemanticsMatcher
 import androidx.compose.ui.test.SemanticsNodeInteraction
 import androidx.compose.ui.test.SemanticsNodeInteractionsProvider
@@ -31,6 +32,7 @@ import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.test.performScrollToNode
+import androidx.compose.ui.test.performSemanticsAction
 import androidx.compose.ui.test.performTextInput
 import androidx.compose.ui.unit.dp
 import androidx.test.ext.junit.runners.AndroidJUnit4
@@ -567,7 +569,9 @@ class RestoreLargestFontLandscapeTest {
     @Test
     fun theSummary_everyFigure_andCancel_canBeReached() {
         show(RestoreWizard(step = RestoreStep.SUMMARY, summary = EXAMPLE_SUMMARY, now = NOW_COUNTS))
-        composeRule.onNodeWithText(string(R.string.restore_now_column)).performScrollTo().assertIsDisplayed()
+        // The column heads are hidden from TalkBack (each row is read whole), so a row is found by what TalkBack reads.
+        val portfolios = restoreText(R.string.restore_count_row, string(R.string.restore_portfolios), "1", "2")
+        composeRule.onNode(hasContentDescription(portfolios)).performScrollTo().assertIsDisplayed()
         composeRule.onNode(hasText(string(R.string.restore_cash_after)) and hasText("$9,425.00")).performScrollTo().assertIsDisplayed()
         composeRule.onNode(hasText(string(R.string.restore_holdings)) and hasText("1")).performScrollTo().assertIsDisplayed()
         composeRule.onNodeWithText(string(R.string.restore_data_note)).performScrollTo().assertIsDisplayed()
@@ -642,21 +646,26 @@ class RestoreKeyboardTest {
         composeRule.waitForIdle()
         val field = composeRule.onNode(wordField).fetchSemanticsNode().boundsInWindow.bottom
         assertTrue("The word's field ends at $field px, below the keyboard's top at $keyboardTop px", field <= keyboardTop)
-        // Phone check 12 (decision 4): the screen's room ends at the keyboard's top, give or take 4 dp, not the bar's
-        // height above it. On the emulator the field fits either way; on the phone, with its higher keyboard, it did not.
-        val room = composeRule.onNode(hasScrollAction() and hasAnyDescendant(wordField)).fetchSemanticsNode().boundsInWindow.bottom
-        val slack = with(composeRule.density) { 4.dp.toPx() }
-        assertTrue(
-            "The screen's room ends at $room px, ${keyboardTop - room} px above the keyboard's top at $keyboardTop px",
-            abs(keyboardTop - room) <= slack,
-        )
         composeRule.onNode(wordField).performTextInput("restore")
         val replace = button(R.string.restore_replace)
         composeRule.onNode(replace).performScrollTo().assertIsEnabled()
+        // Phone check 12 (decision 4): the screen's room ends at the keyboard's top, not the bar's height above it. Scrolled
+        // to its end, its last row (Replace all data and Cancel) ends the screen's 16 dp padding above the keyboard's top,
+        // give or take 4 dp. On the emulator the field fits either way; on the phone, with its higher keyboard, it did not.
+        val screen = composeRule.onNode(hasScrollAction() and hasAnyDescendant(wordField))
+        screen.performSemanticsAction(SemanticsActions.ScrollBy) { it(0f, 100_000f) }
         val top = composeRule.keyboardTop()
         composeRule.waitForIdle()
-        val bottom = composeRule.onNode(replace).fetchSemanticsNode().boundsInWindow.bottom
+        val lastRow = listOf(replace, button(R.string.cancel_button))
+        val bottom = lastRow.maxOf { composeRule.onNode(it).fetchSemanticsNode().boundsInWindow.bottom }
         assertTrue("Replace all data ends at $bottom px, below the keyboard's top at $top px", bottom <= top)
+        val padding = with(composeRule.density) { 16.dp.toPx() }
+        val slack = with(composeRule.density) { 4.dp.toPx() }
+        assertTrue(
+            "Scrolled to its end, the screen ends at $bottom px, ${top - bottom} px above the keyboard's top at $top px; " +
+                "expected its padding, $padding px",
+            abs(top - padding - bottom) <= slack,
+        )
         composeRule.turn(landscape = false)
     }
 }
