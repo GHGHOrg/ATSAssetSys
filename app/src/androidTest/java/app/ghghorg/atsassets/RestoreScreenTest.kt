@@ -5,6 +5,10 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.Surface
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.test.SemanticsMatcher
 import androidx.compose.ui.test.SemanticsNodeInteraction
@@ -15,6 +19,7 @@ import androidx.compose.ui.test.assertIsNotEnabled
 import androidx.compose.ui.test.hasClickAction
 import androidx.compose.ui.test.hasContentDescription
 import androidx.compose.ui.test.hasScrollToNodeAction
+import androidx.compose.ui.test.hasSetTextAction
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.isHeading
 import androidx.compose.ui.test.isSelectable
@@ -24,6 +29,7 @@ import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.test.performScrollToNode
+import androidx.compose.ui.test.performTextInput
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
 import app.ghghorg.atsassets.core.RestoreCounts
@@ -34,7 +40,9 @@ import app.ghghorg.atsassets.core.Tab
 import app.ghghorg.atsassets.core.TickerRefusal
 import app.ghghorg.atsassets.prices.CheckRefusal
 import app.ghghorg.atsassets.ui.BackupActions
+import app.ghghorg.atsassets.ui.BackupOutcome
 import app.ghghorg.atsassets.ui.BackupScreen
+import app.ghghorg.atsassets.ui.BackupStage
 import app.ghghorg.atsassets.ui.Backups
 import app.ghghorg.atsassets.ui.BottomBar
 import app.ghghorg.atsassets.ui.CheckPhase
@@ -48,10 +56,12 @@ import app.ghghorg.atsassets.ui.Restores
 import app.ghghorg.atsassets.ui.TickerError
 import app.ghghorg.atsassets.ui.theme.ATSAssetSystemTheme
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
 import org.junit.rules.RuleChain
 import org.junit.runner.RunWith
+import java.time.Instant
 import java.time.LocalDate
 import java.time.ZoneId
 
@@ -99,6 +109,24 @@ private fun model(
     wizard: RestoreWizard,
     holdsData: Boolean = true,
 ): RestoreModel = Restores.screen(wizard, SOURCE, holdsData)
+
+// 35: step 4 on an app that holds data (wireframe 10e frame G), with the word [typed], an export at [stage] or ended with
+// [outcome], and the last backup at 2026-10-26 12:00 UTC.
+private fun step4Model(
+    typed: String,
+    stage: BackupStage? = null,
+    outcome: BackupOutcome? = null,
+): RestoreModel = Restores.screen(
+    RestoreWizard(step = RestoreStep.CONFIRM, summary = EXAMPLE_SUMMARY, now = NOW_COUNTS, typed = typed),
+    SOURCE,
+    holdsData = true,
+    stage = stage,
+    outcome = outcome,
+    lastBackup = Backups.lastBackup(Instant.parse("2026-10-26T12:00:00Z"), ZoneId.of("UTC")),
+)
+
+// Step 4's field for the word, found by its label.
+private val wordField: SemanticsMatcher get() = hasSetTextAction() and hasText(string(R.string.restore_type_word))
 
 // The report is a lazy list (the Deploy review's finding 2): an item out of view is not drawn until the list scrolls to it.
 private fun SemanticsNodeInteractionsProvider.reportItem(matcher: SemanticsMatcher): SemanticsNodeInteraction {
@@ -226,6 +254,82 @@ class RestoreLoadTalkBackTest {
         composeRule.onNode(button(R.string.restore_go_overall)).assertDoesNotExist()
         composeRule.onNode(button(R.string.restore_close)).performClick()
         assertEquals(1, asked.close)
+    }
+}
+
+/**
+ * 35: step 4 for TalkBack (wireframe 10e frame G; section 8, restore step 6; AC-17, AC-56, AC-61 (d); decision 2): its
+ * step line; the export offer as a heading with its note and Back up now; what Replace all data does; the field named
+ * by its label, whose text reaches the wizard; Replace all data unavailable until the word is typed; while an export is
+ * written, its line, and nothing to tap but the wait; its result line once it ends; and five steps to a restore's end.
+ */
+@RunWith(AndroidJUnit4::class)
+class RestoreOverDataTalkBackTest {
+    @get:Rule
+    val composeRule = createComposeRule()
+
+    private val asked = Asked()
+
+    private fun show(model: RestoreModel) {
+        composeRule.setContent { ATSAssetSystemTheme { RestoreScreen(model, SOURCE, asked.actions) } }
+    }
+
+    @Test
+    fun step4_readsTheExportOffer_andReplaceWaitsForTheWord() {
+        show(step4Model(""))
+        composeRule.onNodeWithText(restoreText(R.string.restore_step4, "5")).assertExists()
+        composeRule.onNode(isHeading() and hasText(string(R.string.restore_backup_first))).assertExists()
+        composeRule.onNodeWithText(string(R.string.restore_backup_first_note)).assertExists()
+        composeRule.onNode(button(R.string.backup_now)).performScrollTo().assertIsEnabled().performClick()
+        assertEquals(1, asked.backUps)
+        composeRule.onNodeWithText(string(R.string.restore_replace_note)).performScrollTo().assertExists()
+        composeRule.onNode(wordField).performScrollTo().assertExists()
+        composeRule.onNode(button(R.string.restore_replace)).performScrollTo().assertIsNotEnabled().performClick()
+        assertEquals(0, asked.restore)
+        composeRule.onNode(button(R.string.cancel_button)).performScrollTo().assertIsEnabled().performClick()
+        assertEquals(1, asked.close)
+    }
+
+    @Test
+    fun step4_typing_reachesTheWizard() {
+        show(step4Model(""))
+        composeRule.onNode(wordField).performScrollTo().performTextInput("RESTORE")
+        assertEquals("RESTORE", asked.typed)
+    }
+
+    // Decision 2: the word in any case, with spaces.
+    @Test
+    fun step4_withTheWordTyped_replacesAllData() {
+        show(step4Model(" Re store"))
+        composeRule.onNode(wordField and hasText(" Re store")).performScrollTo().assertExists()
+        composeRule.onNode(button(R.string.restore_replace)).performScrollTo().assertIsEnabled().performClick()
+        assertEquals(1, asked.restore)
+    }
+
+    // Wireframe 10e marker 16; 31's indicator: while the file is written nothing can be tapped, Back and Cancel included.
+    @Test
+    fun step4_whileTheExportIsWritten_nothingCanBeTapped() {
+        show(step4Model("RESTORE", stage = BackupStage.WRITING))
+        composeRule.onNodeWithText(string(R.string.backup_writing)).performScrollTo().assertExists()
+        composeRule.onNode(button(R.string.backup_now)).performScrollTo().assertIsNotEnabled()
+        composeRule.onNode(button(R.string.restore_replace)).performScrollTo().assertIsNotEnabled()
+        composeRule.onNode(button(R.string.cancel_button)).performScrollTo().assertIsNotEnabled()
+        composeRule.onNode(hasContentDescription(string(R.string.back_button)) and hasClickAction()).assertIsNotEnabled()
+    }
+
+    // Wireframe 10e marker 16: a completed export shows "Backup saved" on step 4, with the new last backup.
+    @Test
+    fun step4_afterTheExport_saysBackupSaved() {
+        show(step4Model("", outcome = BackupOutcome.SAVED))
+        composeRule.onNodeWithText(restoreText(R.string.backup_saved, "2026-10-26", "UTC")).performScrollTo().assertExists()
+        composeRule.onNode(button(R.string.backup_now)).performScrollTo().assertIsEnabled()
+    }
+
+    // A restore over data had five steps: its "Restoring…" line counts five.
+    @Test
+    fun restoringOverData_countsFiveSteps() {
+        show(Restores.screen(RestoreWizard(step = RestoreStep.RESTORING, summary = EXAMPLE_SUMMARY, now = NOW_COUNTS), SOURCE, holdsData = true))
+        composeRule.onNodeWithText(restoreText(R.string.restore_restoring, "5")).assertExists()
     }
 }
 
@@ -395,18 +499,38 @@ class RestoreLargestFontLandscapeTest {
     private fun show(
         wizard: RestoreWizard,
         holdsData: Boolean = true,
-    ) {
+    ) = show(model(wizard, holdsData))
+
+    private fun show(model: RestoreModel) {
         composeRule.turn(landscape = true)
         composeRule.setContent {
             ATSAssetSystemTheme {
                 Surface {
                     Column(modifier = Modifier.fillMaxSize()) {
-                        Box(modifier = Modifier.weight(1f)) { RestoreScreen(model(wizard, holdsData), SOURCE, asked.actions) }
+                        Box(modifier = Modifier.weight(1f)) { RestoreScreen(model, SOURCE, asked.actions) }
                         BottomBar(DEFAULT_TAB_ORDER, Tab.MORE, {})
                     }
                 }
             }
         }
+    }
+
+    // 35, frame G: step 4's line, the export offer, the field, Replace all data and Cancel are reached and take their taps.
+    @Test
+    fun step4_everyPart_canBeReached() {
+        show(step4Model("RESTORE"))
+        composeRule.onNodeWithText(restoreText(R.string.restore_step4, "5")).performScrollTo().assertIsDisplayed()
+        composeRule.onNode(isHeading() and hasText(string(R.string.restore_backup_first))).performScrollTo().assertIsDisplayed()
+        composeRule.onNode(button(R.string.backup_now)).performScrollTo().assertIsDisplayed().performClick()
+        composeRule.onNodeWithText(string(R.string.restore_replace_note)).performScrollTo().assertIsDisplayed()
+        composeRule.onNode(wordField).performScrollTo().assertIsDisplayed()
+        composeRule.onNode(button(R.string.restore_replace)).performScrollTo().assertIsDisplayed().performClick()
+        composeRule.onNode(button(R.string.cancel_button)).performScrollTo().assertIsDisplayed().performClick()
+        composeRule.waitForIdle()
+        assertEquals(1, asked.backUps)
+        assertEquals(1, asked.restore)
+        assertEquals(1, asked.close)
+        composeRule.turn(landscape = false)
     }
 
     @Test
@@ -473,6 +597,54 @@ class RestoreLargestFontLandscapeTest {
         composeRule.onNode(button(R.string.restore_go_overall)).performScrollTo().assertIsDisplayed().performClick()
         composeRule.waitForIdle()
         assertEquals(1, asked.overall)
+        composeRule.turn(landscape = false)
+    }
+}
+
+/**
+ * 35, AC-61 (c): step 4's field at the largest font in landscape, the screen drawn above the bottom bar as in the app: with
+ * the keyboard open, the field lies fully above it, and once the word is typed Replace all data can be scrolled to above
+ * it too (the screen's imePadding). Drawn alone, not on MainActivity: reaching step 4 there needs Android's file screen,
+ * which these tests do not drive. The phone check covers the phone's higher keyboard (CLAUDE.md pitfalls).
+ */
+@RunWith(AndroidJUnit4::class)
+class RestoreKeyboardTest {
+    private val composeRule = createAndroidComposeRule<ComponentActivity>()
+
+    @get:Rule
+    val rules: RuleChain =
+        RuleChain
+            .outerRule(DeviceUnlockedRule())
+            .around(DeviceSettingsRule(fontScale = 2.0f))
+            .around(composeRule)
+
+    @Test
+    fun step4_theWordsField_andReplace_stayAboveTheKeyboard() {
+        composeRule.turn(landscape = true)
+        composeRule.setContent {
+            var typed by remember { mutableStateOf("") }
+            val actions = RestoreActions({}, {}, {}, {}, {}, {}, {}, {}, onType = { typed = it })
+            ATSAssetSystemTheme {
+                Surface {
+                    Column(modifier = Modifier.fillMaxSize()) {
+                        Box(modifier = Modifier.weight(1f)) { RestoreScreen(step4Model(typed), SOURCE, actions) }
+                        BottomBar(DEFAULT_TAB_ORDER, Tab.MORE, {})
+                    }
+                }
+            }
+        }
+        composeRule.onNode(wordField).performScrollTo().performClick()
+        val keyboardTop = composeRule.keyboardTop()
+        composeRule.waitForIdle()
+        val field = composeRule.onNode(wordField).fetchSemanticsNode().boundsInWindow.bottom
+        assertTrue("The word's field ends at $field px, below the keyboard's top at $keyboardTop px", field <= keyboardTop)
+        composeRule.onNode(wordField).performTextInput("restore")
+        val replace = button(R.string.restore_replace)
+        composeRule.onNode(replace).performScrollTo().assertIsEnabled()
+        val top = composeRule.keyboardTop()
+        composeRule.waitForIdle()
+        val bottom = composeRule.onNode(replace).fetchSemanticsNode().boundsInWindow.bottom
+        assertTrue("Replace all data ends at $bottom px, below the keyboard's top at $top px", bottom <= top)
         composeRule.turn(landscape = false)
     }
 }
