@@ -803,7 +803,7 @@
     <string name="restore_go_overall">Go to Overall</string>
     <string name="restore_failed">Not restored. Nothing was changed.</string>
     <string name="restore_close">Close</string>
-    <!-- Iteration 35: the restore onto an app that holds data (wireframe 10e frames F and G). Proposed, not approved (D9; 35 file, section 12). restore_restoring above now takes the number of steps (5 over data). -->
+    <!-- Iteration 35: the restore onto an app that holds data (wireframe 10e frames F and G). Wording approved 2026-11-17 after the phone check (D9; 35 file, section 12 and 13.2). restore_restoring above now takes the number of steps (5 over data). -->
     <string name="restore_now_column">Now</string>
     <string name="restore_count_row">%1$s: %2$s now, %3$s in the file</string>
     <string name="restore_data_note">The file passed every check. Continue leads to the last step, where you confirm that the app\'s data is replaced.</string>
