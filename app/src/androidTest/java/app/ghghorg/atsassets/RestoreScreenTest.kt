@@ -16,8 +16,10 @@ import androidx.compose.ui.test.SemanticsNodeInteractionsProvider
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertIsEnabled
 import androidx.compose.ui.test.assertIsNotEnabled
+import androidx.compose.ui.test.hasAnyDescendant
 import androidx.compose.ui.test.hasClickAction
 import androidx.compose.ui.test.hasContentDescription
+import androidx.compose.ui.test.hasScrollAction
 import androidx.compose.ui.test.hasScrollToNodeAction
 import androidx.compose.ui.test.hasSetTextAction
 import androidx.compose.ui.test.hasText
@@ -30,6 +32,7 @@ import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.test.performScrollToNode
 import androidx.compose.ui.test.performTextInput
+import androidx.compose.ui.unit.dp
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
 import app.ghghorg.atsassets.core.RestoreCounts
@@ -64,6 +67,7 @@ import org.junit.runner.RunWith
 import java.time.Instant
 import java.time.LocalDate
 import java.time.ZoneId
+import kotlin.math.abs
 
 private fun restoreText(
     id: Int,
@@ -603,8 +607,8 @@ class RestoreLargestFontLandscapeTest {
 
 /**
  * 35, AC-61 (c): step 4's field at the largest font in landscape, the screen drawn above the bottom bar as in the app: with
- * the keyboard open, the field lies fully above it, and once the word is typed Replace all data can be scrolled to above
- * it too (the screen's imePadding). Drawn alone, not on MainActivity: reaching step 4 there needs Android's file screen,
+ * the keyboard open, the field lies fully above it, the screen's room ends at the keyboard's top (phone check 12,
+ * decision 4), and once the word is typed Replace all data can be scrolled to above it too. Drawn alone, not on MainActivity: reaching step 4 there needs Android's file screen,
  * which these tests do not drive. The phone check covers the phone's higher keyboard (CLAUDE.md pitfalls).
  */
 @RunWith(AndroidJUnit4::class)
@@ -638,6 +642,14 @@ class RestoreKeyboardTest {
         composeRule.waitForIdle()
         val field = composeRule.onNode(wordField).fetchSemanticsNode().boundsInWindow.bottom
         assertTrue("The word's field ends at $field px, below the keyboard's top at $keyboardTop px", field <= keyboardTop)
+        // Phone check 12 (decision 4): the screen's room ends at the keyboard's top, give or take 4 dp, not the bar's
+        // height above it. On the emulator the field fits either way; on the phone, with its higher keyboard, it did not.
+        val room = composeRule.onNode(hasScrollAction() and hasAnyDescendant(wordField)).fetchSemanticsNode().boundsInWindow.bottom
+        val slack = with(composeRule.density) { 4.dp.toPx() }
+        assertTrue(
+            "The screen's room ends at $room px, ${keyboardTop - room} px above the keyboard's top at $keyboardTop px",
+            abs(keyboardTop - room) <= slack,
+        )
         composeRule.onNode(wordField).performTextInput("restore")
         val replace = button(R.string.restore_replace)
         composeRule.onNode(replace).performScrollTo().assertIsEnabled()
