@@ -92,11 +92,13 @@ private class Replay(
         val settings = settings()
         if (errors.isNotEmpty()) return RestoreCheck.Failed(errors)
         val held = Holdings.holdings(transactions, LocalDate.MAX).filter { it.shares.signum() > 0 }
+        // 35: counted by the rule the summary's Now column uses too.
+        val counts = RestoreCounts.of(portfolios, transactions, cash)
         val summary =
             RestoreSummary(
-                portfolios = portfolios.size,
-                transactions = transactions.size,
-                cashEntries = cash.count { it.type != CashType.TRADE },
+                portfolios = counts.portfolios,
+                transactions = counts.transactions,
+                cashEntries = counts.cashEntries,
                 cashBalanceCents = CashAccount.balanceCents(cash),
                 holdingsWithShares = held.size,
             )

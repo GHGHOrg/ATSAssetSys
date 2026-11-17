@@ -3,6 +3,7 @@ package app.ghghorg.atsassets.ui
 import app.ghghorg.atsassets.core.BackupFile
 import app.ghghorg.atsassets.core.Money
 import app.ghghorg.atsassets.core.Quantity
+import app.ghghorg.atsassets.core.RestoreCounts
 import app.ghghorg.atsassets.core.RestoreError
 import app.ghghorg.atsassets.core.RestoreReason
 import app.ghghorg.atsassets.core.RestoreSummary
@@ -182,6 +183,13 @@ data class RestoreSummaryModel(
     val holdingsWithShares: String,
 )
 
+/** 35: the summary's Now column (wireframe 10e frame F, marker 13): what the app holds now, counted as the file is. */
+data class RestoreNowModel(
+    val portfolios: String,
+    val transactions: String,
+    val cashEntries: String,
+)
+
 /**
  * The wizard's screen. [step] picks the frame. Step 1: [fileName], null with none chosen; [canChoose] and [canCheck].
  * Step 2: [readingDone] once the first phase passed; [progress] during the ticker round; [sourceProblem] when the source
@@ -189,7 +197,8 @@ data class RestoreSummaryModel(
  * Android Back act; not while Android's file screen is open. 34: [totalSteps] is "4" on an app with no data (wireframe 10e
  * marker 15: no step 4) and "5" on one that holds data; [canRestore]: the summary offers Restore (an app with no data);
  * [restoreLater]: the summary says restoring over data comes later (34 decision 3); [loaded] on the result, the file's
- * counts as loaded. Back does nothing while the restore is written or on its result.
+ * counts as loaded. Back does nothing while the restore is written or on its result. 35: on the summary of an app that
+ * holds data, [now] (the Now column) and [canContinue] (Continue to step 4).
  */
 data class RestoreModel(
     val step: RestoreStep,
@@ -206,6 +215,8 @@ data class RestoreModel(
     val canRestore: Boolean,
     val restoreLater: Boolean,
     val loaded: RestoreSummaryModel?,
+    val now: RestoreNowModel? = null,
+    val canContinue: Boolean = false,
 )
 
 object Restores {
@@ -238,6 +249,15 @@ object Restores {
         canRestore = wizard.step == RestoreStep.SUMMARY && !holdsData,
         restoreLater = wizard.step == RestoreStep.SUMMARY && holdsData,
         loaded = if (wizard.step == RestoreStep.RESULT) wizard.summary?.let(::summary) else null,
+        now = if (wizard.step == RestoreStep.SUMMARY && holdsData) wizard.now?.let(::now) else null,
+        canContinue = wizard.step == RestoreStep.SUMMARY && holdsData && wizard.now != null,
+    )
+
+    /** The Now column (35): each count as the app shows whole numbers. */
+    fun now(counts: RestoreCounts): RestoreNowModel = RestoreNowModel(
+        portfolios = count(counts.portfolios),
+        transactions = count(counts.transactions),
+        cashEntries = count(counts.cashEntries),
     )
 
     // From Restore's tap on, the app holds the file's data, but the restore that led here had four steps.

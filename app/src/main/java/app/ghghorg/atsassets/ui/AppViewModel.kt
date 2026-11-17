@@ -74,6 +74,7 @@ import app.ghghorg.atsassets.core.ReentryResult
 import app.ghghorg.atsassets.core.RestoreAbandonedException
 import app.ghghorg.atsassets.core.RestoreCheck
 import app.ghghorg.atsassets.core.RestoreContext
+import app.ghghorg.atsassets.core.RestoreCounts
 import app.ghghorg.atsassets.core.ReversalEffect
 import app.ghghorg.atsassets.core.ReversalRefusal
 import app.ghghorg.atsassets.core.ReversalResult
@@ -3837,7 +3838,10 @@ class AppViewModel(
         val inLineOrder = refused.sortedWith(compareBy<TickerError>({ it.line ?: Int.MAX_VALUE }, { it.ticker }))
         if (refused.isNotEmpty()) return showRestore { it.copy(step = RestoreStep.REPORT, tickerErrors = inLineOrder) }
         restoreReady = RestoreReady(passed.records, instruments)
-        showRestore { it.copy(step = RestoreStep.SUMMARY, summary = passed.summary) }
+        // 35 (section 8, restore step 5): on an app that holds data, what it holds now, counted by the file's rule.
+        val state = mutableState.value
+        val now = if (state.holdsData) RestoreCounts.of(state.portfolios, state.transactions, state.entries) else null
+        showRestore { it.copy(step = RestoreStep.SUMMARY, summary = passed.summary, now = now) }
     }
 
     // The check's progress reaches the wizard only while it is on step 2: a Cancel, a lock or leaving ends that.

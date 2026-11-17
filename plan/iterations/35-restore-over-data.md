@@ -79,5 +79,10 @@ Each step ends with spotlessCheck, build, tests and lint, all with --rerun-tasks
 ## 13. Status and notes
 - Draft 2026-11-17, in the working tree on iter-34-restore-to-empty-app at 245350d; decisions 1 to 3 settled and the file approved the same day (your A each); the branch iter-35-restore-over-data is created with your yes before step 1's commit.
 
+### 13.1 Steps
+- Steps 1 to 5 are built without stops between them, each held as a tree when its full run is green and committed one per step after step 5 (your instruction, 2026-11-17).
+- Step 1 (2026-11-17): this file; plan.md (row 35's refs, section 11's row, the change log). Branch iter-35-restore-over-data created from 245350d (your A). The full run green: 1,489 tests (1 skipped), lint's 6 (report 09:57:33), 170 `@Test` lines compiled.
+- Step 2 (2026-11-17): core's `RestoreCounts.of(portfolios, transactions, cashEntries)` (section 8, step 5's three counts; the trade lines left out), now used by the check's summary too, so both columns follow one rule. The wizard's `now`, taken from the screen state when the summary shows on an app that holds data; the model's `RestoreNowModel` and `canContinue`. Tests first: BackupCheckTest `theCountsOfRecords_areTheSummarysCounts`, RestoreModelTest `theSummary_showsTheCountsNow_andContinue_onAnAppThatHoldsData`, and the new RestoreOverDataFlowTest (2) did not compile ("Unresolved reference 'RestoreCounts'", "No parameter with name 'now' found"). The full run green at the first try: 1,493 tests (1 skipped), lint's 6 (report 10:05:40); HoldingsScaleTest retried four checks once each (netWorth and lots ONE_HOLDING, realizedGains and history SPREAD), each passing at try 2 (24a decision 1).
+
 ## 14. Departures from the plan
 - None yet.

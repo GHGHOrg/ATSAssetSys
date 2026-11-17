@@ -1,5 +1,6 @@
 package app.ghghorg.atsassets.ui
 
+import app.ghghorg.atsassets.core.RestoreCounts
 import app.ghghorg.atsassets.core.RestoreError
 import app.ghghorg.atsassets.core.RestoreReason
 import app.ghghorg.atsassets.core.RestoreSummary
@@ -302,6 +303,25 @@ class RestoreModelTest {
         assertEquals("5", withData.totalSteps)
         assertEquals("4", Restores.screen(RestoreWizard(), "Finnhub", holdsData = false).totalSteps)
         assertEquals("5", Restores.screen(RestoreWizard(), "Finnhub", holdsData = true).totalSteps)
+    }
+
+    // 35 step 2 (section 8, restore step 5; wireframe 10e frame F, markers 13 and 15): on an app that holds data the
+    // summary shows the counts now beside the file's, and Continue; on an app with none, no Now column and no Continue.
+    @Test
+    fun theSummary_showsTheCountsNow_andContinue_onAnAppThatHoldsData() {
+        val summary = RestoreSummary(portfolios = 2, transactions = 8, cashEntries = 4, cashBalanceCents = 942_500L, holdingsWithShares = 1)
+        val now = RestoreCounts(portfolios = 1, transactions = 1_234, cashEntries = 3)
+        val withData = Restores.screen(RestoreWizard(step = RestoreStep.SUMMARY, summary = summary, now = now), "Finnhub", holdsData = true)
+        assertEquals(RestoreNowModel("1", "1,234", "3"), withData.now)
+        assertTrue(withData.canContinue)
+        assertFalse(withData.canRestore)
+        assertEquals("5", withData.totalSteps)
+        val empty = Restores.screen(RestoreWizard(step = RestoreStep.SUMMARY, summary = summary), "Finnhub", holdsData = false)
+        assertNull(empty.now)
+        assertFalse(empty.canContinue)
+        val checking = Restores.screen(RestoreWizard(step = RestoreStep.CHECKING, now = now), "Finnhub", holdsData = true)
+        assertNull(checking.now)
+        assertFalse(checking.canContinue)
     }
 
     // 34 (frame H): while the restore is written and on its result, Back does nothing; the result shows the counts
