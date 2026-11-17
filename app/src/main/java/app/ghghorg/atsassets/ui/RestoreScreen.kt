@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.consumeWindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.imePadding
@@ -24,8 +25,16 @@ import androidx.compose.material3.OutlinedCard
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.layout.boundsInWindow
+import androidx.compose.ui.layout.onGloballyPositioned
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalResources
+import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.LiveRegionMode
 import androidx.compose.ui.semantics.clearAndSetSemantics
@@ -70,8 +79,10 @@ class RestoreActions(
  * The restore wizard (section 6, Backup export and restore entry; section 8; wireframe 10e frames C to F; 33b), drawn
  * from its model (CR2): step 1, step 2, the report or the summary, one screen each. Everything is on the screen, which
  * scrolls; no part stays in place, and there is no layer. 35: step 4 (frame G) has the one text field, the typed word;
- * the screen keeps clear of the keyboard (imePadding), as the entry screens do, and scrolls the field into view. Back
- * returns one step, and leaves from step 1. Nothing is changed in the app before Restore or Replace all data (C3).
+ * the screen keeps clear of the keyboard and scrolls the field into view. It lies above the bottom bar and the navigation
+ * strip, which the keyboard covers too, so it first consumes that height and pads only by the rest of the keyboard: its
+ * room ends at the keyboard's top (phone check 12, decision 4; as 29 step 10's Delete dialog). Back returns one step, and
+ * leaves from step 1. Nothing is changed in the app before Restore or Replace all data (C3).
  */
 @Composable
 fun RestoreScreen(
@@ -89,8 +100,20 @@ fun RestoreScreen(
         ReportList(report, model.backEnabled, actions, resources, modifier)
         return
     }
+    // How far the screen's bottom lies above the window's: the bottom bar and the navigation strip (decision 4).
+    val window = LocalView.current.rootView
+    val density = LocalDensity.current
+    var below by remember { mutableStateOf(0.dp) }
     Column(
-        modifier = modifier.fillMaxSize().imePadding().verticalScroll(rememberScrollState()).padding(16.dp),
+        modifier =
+        modifier
+            .fillMaxSize()
+            .onGloballyPositioned { placed ->
+                below = with(density) { (window.height - placed.boundsInWindow().bottom).coerceAtLeast(0f).toDp() }
+            }.consumeWindowInsets(PaddingValues(bottom = below))
+            .imePadding()
+            .verticalScroll(rememberScrollState())
+            .padding(16.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
         TitleRow(stringResource(R.string.restore_title), actions.onBack, enabled = model.backEnabled)
