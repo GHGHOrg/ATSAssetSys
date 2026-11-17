@@ -6,25 +6,37 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.RowScope
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.OutlinedCard
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.LiveRegionMode
+import androidx.compose.ui.semantics.clearAndSetSemantics
+import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.liveRegion
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.text.input.KeyboardCapitalization
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import app.ghghorg.atsassets.R
 import app.ghghorg.atsassets.core.CashType
@@ -34,7 +46,9 @@ import java.time.LocalDate
  * The wizard's callbacks, passed together. [onChooseFile] and [onCopyReport] are MainActivity's: Android's file screen
  * with the lock's exemption (AC-57), and the clipboard (C16). [onCheck] takes the note of 4.6 for a cash reversal the
  * file gives none, worded here (D9). 34: [onRestore] is the summary's Restore on an app with no data, and [onGoToOverall]
- * the result's button.
+ * the result's button. 35: [onContinue] is the summary's Continue on an app that holds data; on step 4, [onType] takes
+ * the word as typed, [onBackUpNow] is MainActivity's export (Android's file screen with the lock's exemption, AC-57), and
+ * [onRestore] is Replace all data.
  */
 class RestoreActions(
     val onBack: () -> Unit,
@@ -47,13 +61,17 @@ class RestoreActions(
     val onClose: () -> Unit,
     val onRestore: () -> Unit = {},
     val onGoToOverall: () -> Unit = {},
+    val onContinue: () -> Unit = {},
+    val onType: (String) -> Unit = {},
+    val onBackUpNow: () -> Unit = {},
 )
 
 /**
  * The restore wizard (section 6, Backup export and restore entry; section 8; wireframe 10e frames C to F; 33b), drawn
  * from its model (CR2): step 1, step 2, the report or the summary, one screen each. Everything is on the screen, which
- * scrolls; no part stays in place, and there is no layer and no text field. Back returns one step, and leaves from step
- * 1. Nothing is changed in the app on any of these screens (C3).
+ * scrolls; no part stays in place, and there is no layer. 35: step 4 (frame G) has the one text field, the typed word;
+ * the screen keeps clear of the keyboard (imePadding), as the entry screens do, and scrolls the field into view. Back
+ * returns one step, and leaves from step 1. Nothing is changed in the app before Restore or Replace all data (C3).
  */
 @Composable
 fun RestoreScreen(
@@ -72,7 +90,7 @@ fun RestoreScreen(
         return
     }
     Column(
-        modifier = modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(16.dp),
+        modifier = modifier.fillMaxSize().imePadding().verticalScroll(rememberScrollState()).padding(16.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
         TitleRow(stringResource(R.string.restore_title), actions.onBack, enabled = model.backEnabled)
@@ -81,8 +99,8 @@ fun RestoreScreen(
             RestoreStep.CHECKING -> CheckingStep(model, sourceName, actions, resources)
             RestoreStep.REPORT -> Unit
             RestoreStep.SUMMARY -> model.summary?.let { SummaryStep(it, model, actions) }
-            RestoreStep.CONFIRM -> Unit
-            RestoreStep.RESTORING -> RestoringStep()
+            RestoreStep.CONFIRM -> model.confirm?.let { ConfirmStep(it, model, actions) }
+            RestoreStep.RESTORING -> RestoringStep(model.totalSteps)
             RestoreStep.RESULT -> model.loaded?.let { ResultStep(it, actions) }
             RestoreStep.FAILED -> FailedStep(actions)
         }
@@ -185,8 +203,9 @@ private fun ReportList(
     }
 }
 
-// Frame F, the file's column only (33b decision 1; marker 15's fresh-install form). On an app with no data: Restore,
-// and what it does (34). On an app that holds data: the line that restoring over data comes later (34 decision 3; 35).
+// Frame F. On an app with no data, the file's column only (marker 15's fresh-install form), Restore and what it does
+// (34). 35: on an app that holds data, the counts now beside the file's (marker 13), the balance and holdings of the file
+// (marker 14), and Continue to step 4.
 @Composable
 private fun SummaryStep(
     summary: RestoreSummaryModel,
@@ -194,21 +213,35 @@ private fun SummaryStep(
     actions: RestoreActions,
 ) {
     BodyLine(stringResource(R.string.restore_step3, model.totalSteps))
-    Text(
-        text = stringResource(R.string.restore_in_file),
-        style = MaterialTheme.typography.titleMedium,
-        modifier = Modifier.semantics { heading() },
-    )
-    SummaryRow(stringResource(R.string.restore_portfolios), summary.portfolios)
-    SummaryRow(stringResource(R.string.restore_transactions), summary.transactions)
-    SummaryRow(stringResource(R.string.restore_cash_entries), summary.cashEntries)
+    val now = model.now
+    if (now == null) {
+        Text(
+            text = stringResource(R.string.restore_in_file),
+            style = MaterialTheme.typography.titleMedium,
+            modifier = Modifier.semantics { heading() },
+        )
+        SummaryRow(stringResource(R.string.restore_portfolios), summary.portfolios)
+        SummaryRow(stringResource(R.string.restore_transactions), summary.transactions)
+        SummaryRow(stringResource(R.string.restore_cash_entries), summary.cashEntries)
+    } else {
+        CountsHeader()
+        CountsRow(stringResource(R.string.restore_portfolios), now.portfolios, summary.portfolios)
+        CountsRow(stringResource(R.string.restore_transactions), now.transactions, summary.transactions)
+        CountsRow(stringResource(R.string.restore_cash_entries), now.cashEntries, summary.cashEntries)
+    }
     SummaryRow(stringResource(R.string.restore_cash_after), summary.cashBalance)
     SummaryRow(stringResource(R.string.restore_holdings), summary.holdingsWithShares)
-    BodyLine(stringResource(if (model.restoreLater) R.string.restore_summary_note else R.string.restore_empty_note))
+    if (model.canRestore) BodyLine(stringResource(R.string.restore_empty_note))
+    if (model.canContinue) BodyLine(stringResource(R.string.restore_data_note))
     Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
         if (model.canRestore) {
             Button(onClick = actions.onRestore) {
                 Text(text = stringResource(R.string.restore_now))
+            }
+        }
+        if (model.canContinue) {
+            Button(onClick = actions.onContinue) {
+                Text(text = stringResource(R.string.restore_continue))
             }
         }
         OutlinedButton(onClick = actions.onClose) {
@@ -217,11 +250,95 @@ private fun SummaryStep(
     }
 }
 
-// The delete and load under way (section 8, step 7): one line, read by TalkBack when it appears; nothing to tap.
+// Marker 13's column heads, "Now" and "In the file", over the three counts; TalkBack reads each row whole instead.
 @Composable
-private fun RestoringStep() {
+private fun CountsHeader() {
+    Row(modifier = Modifier.fillMaxWidth().clearAndSetSemantics { }, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+        Spacer(modifier = Modifier.weight(COUNT_LABEL_WEIGHT))
+        CountCell(stringResource(R.string.restore_now_column), MaterialTheme.typography.titleSmall)
+        CountCell(stringResource(R.string.restore_in_file), MaterialTheme.typography.titleSmall)
+    }
+}
+
+// A count now and in the file, read by TalkBack as one: "Portfolios: 1 now, 2 in the file" (AC-61 (d)).
+@Composable
+private fun CountsRow(
+    label: String,
+    now: String,
+    inFile: String,
+) {
+    val spoken = stringResource(R.string.restore_count_row, label, now, inFile)
+    Row(
+        modifier = Modifier.fillMaxWidth().clearAndSetSemantics { contentDescription = spoken },
+        horizontalArrangement = Arrangement.spacedBy(8.dp),
+    ) {
+        Text(text = label, style = MaterialTheme.typography.bodyLarge, modifier = Modifier.weight(COUNT_LABEL_WEIGHT))
+        CountCell(now, MaterialTheme.typography.bodyLarge)
+        CountCell(inFile, MaterialTheme.typography.bodyLarge)
+    }
+}
+
+@Composable
+private fun RowScope.CountCell(
+    text: String,
+    style: TextStyle,
+) {
+    Text(text = text, style = style, textAlign = TextAlign.End, modifier = Modifier.weight(1f))
+}
+
+// The label column takes more room than each count, so a long label wraps before a count does.
+private const val COUNT_LABEL_WEIGHT = 1.6f
+
+// Frame G (step 4, an app that holds data): marker 16, the export offer with its result line (31's sentences); marker
+// 17, what Replace all data does, the field for the word, Replace all data (inactive until the word matches, dashed as
+// the app's other inactive controls) and Cancel.
+@Composable
+private fun ConfirmStep(
+    confirm: RestoreConfirmModel,
+    model: RestoreModel,
+    actions: RestoreActions,
+) {
+    BodyLine(stringResource(R.string.restore_step4, model.totalSteps))
+    OutlinedCard(modifier = Modifier.fillMaxWidth()) {
+        Column(modifier = Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+            Text(
+                text = stringResource(R.string.restore_backup_first),
+                style = MaterialTheme.typography.titleMedium,
+                modifier = Modifier.semantics { heading() },
+            )
+            BodyLine(stringResource(R.string.restore_backup_first_note))
+            InactiveDashedButton(stringResource(R.string.backup_now), confirm.canBackUp, actions.onBackUpNow)
+            BackupStatusLine(confirm.writing, noData = false, confirm.outcome, confirm.lastBackup)
+        }
+    }
+    OutlinedCard(modifier = Modifier.fillMaxWidth()) {
+        Column(modifier = Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+            BodyLine(stringResource(R.string.restore_replace_note))
+            OutlinedTextField(
+                value = confirm.typed,
+                onValueChange = actions.onType,
+                modifier = Modifier.fillMaxWidth(),
+                label = { Text(text = stringResource(R.string.restore_type_word)) },
+                keyboardOptions =
+                KeyboardOptions(capitalization = KeyboardCapitalization.Characters, autoCorrectEnabled = false, imeAction = ImeAction.Done),
+                singleLine = true,
+            )
+        }
+    }
+    Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+        InactiveDashedButton(stringResource(R.string.restore_replace), confirm.canReplace, actions.onRestore)
+        OutlinedButton(onClick = actions.onClose, enabled = model.backEnabled) {
+            Text(text = stringResource(R.string.cancel_button))
+        }
+    }
+}
+
+// The delete and load under way (section 8, step 7): one line, read by TalkBack when it appears; nothing to tap. 35:
+// the last of four steps onto an empty app, of five over data.
+@Composable
+private fun RestoringStep(totalSteps: String) {
     Text(
-        text = stringResource(R.string.restore_restoring),
+        text = stringResource(R.string.restore_restoring, totalSteps),
         style = MaterialTheme.typography.bodyLarge,
         modifier = Modifier.semantics { liveRegion = LiveRegionMode.Polite },
     )

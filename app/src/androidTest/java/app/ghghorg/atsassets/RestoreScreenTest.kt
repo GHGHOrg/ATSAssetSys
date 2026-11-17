@@ -26,6 +26,7 @@ import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.test.performScrollToNode
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
+import app.ghghorg.atsassets.core.RestoreCounts
 import app.ghghorg.atsassets.core.RestoreError
 import app.ghghorg.atsassets.core.RestoreReason
 import app.ghghorg.atsassets.core.RestoreSummary
@@ -87,6 +88,9 @@ private val REPORT_LINES =
 private val EXAMPLE_SUMMARY =
     RestoreSummary(portfolios = 2, transactions = 8, cashEntries = 4, cashBalanceCents = 942_500L, holdingsWithShares = 1)
 
+// 35: what an app that holds data holds now (wireframe 10e marker 13), with a count above 999 for its thousands comma.
+private val NOW_COUNTS = RestoreCounts(portfolios = 1, transactions = 1_234, cashEntries = 3)
+
 // The report's count line for the three errors.
 private val REPORT_COUNT: String get() = restoreText(R.string.restore_errors_in_lines, "3", "3")
 
@@ -113,6 +117,9 @@ private class Asked {
     var close = 0
     var restore = 0
     var overall = 0
+    var next = 0
+    var backUps = 0
+    var typed: String? = null
     var copied: String? = null
 
     val actions =
@@ -127,6 +134,9 @@ private class Asked {
             onClose = { close++ },
             onRestore = { restore++ },
             onGoToOverall = { overall++ },
+            onContinue = { next++ },
+            onType = { typed = it },
+            onBackUpNow = { backUps++ },
         )
 }
 
@@ -158,26 +168,36 @@ class RestoreLoadTalkBackTest {
         composeRule.onNodeWithText(restoreText(R.string.restore_step3, "4")).assertExists()
         composeRule.onNode(hasText(string(R.string.restore_cash_after)) and hasText("$9,425.00")).assertExists()
         composeRule.onNodeWithText(string(R.string.restore_empty_note)).performScrollTo().assertExists()
-        composeRule.onNodeWithText(string(R.string.restore_summary_note)).assertDoesNotExist()
+        composeRule.onNodeWithText(string(R.string.restore_data_note)).assertDoesNotExist()
+        composeRule.onNode(button(R.string.restore_continue)).assertDoesNotExist()
         composeRule.onNode(button(R.string.restore_now)).performScrollTo().assertIsEnabled().performClick()
         assertEquals(1, asked.restore)
         composeRule.onNode(button(R.string.cancel_button)).performScrollTo().performClick()
         assertEquals(1, asked.close)
     }
 
-    // Decision 3: an app that holds data keeps 33b's summary, with no Restore until 35.
+    // 35 (wireframe 10e frame F, marker 13; AC-61 (d)): on an app that holds data the summary reads each count now with
+    // the file's, offers Continue with its line, and no Restore (replacing 34 decision 3's line).
     @Test
-    fun onAnAppThatHoldsData_theSummaryHasNoRestore() {
-        show(RestoreWizard(step = RestoreStep.SUMMARY, summary = EXAMPLE_SUMMARY), holdsData = true)
+    fun onAnAppThatHoldsData_theSummaryReadsTheCountsNow_andOffersContinue() {
+        show(RestoreWizard(step = RestoreStep.SUMMARY, summary = EXAMPLE_SUMMARY, now = NOW_COUNTS), holdsData = true)
         composeRule.onNodeWithText(restoreText(R.string.restore_step3, "5")).assertExists()
-        composeRule.onNodeWithText(string(R.string.restore_summary_note)).performScrollTo().assertExists()
+        val rows = listOf(R.string.restore_portfolios to ("1" to "2"), R.string.restore_transactions to ("1,234" to "8"), R.string.restore_cash_entries to ("3" to "4"))
+        for ((label, counts) in rows) {
+            val spoken = restoreText(R.string.restore_count_row, string(label), counts.first, counts.second)
+            composeRule.onNode(hasContentDescription(spoken)).performScrollTo().assertExists()
+        }
+        composeRule.onNode(hasText(string(R.string.restore_cash_after)) and hasText("$9,425.00")).performScrollTo().assertExists()
+        composeRule.onNodeWithText(string(R.string.restore_data_note)).performScrollTo().assertExists()
         composeRule.onNode(button(R.string.restore_now)).assertDoesNotExist()
+        composeRule.onNode(button(R.string.restore_continue)).performScrollTo().assertIsEnabled().performClick()
+        assertEquals(1, asked.next)
     }
 
     @Test
     fun whileTheRestoreIsWritten_nothingCanBeTapped() {
         show(RestoreWizard(step = RestoreStep.RESTORING, summary = EXAMPLE_SUMMARY), holdsData = false)
-        composeRule.onNodeWithText(string(R.string.restore_restoring)).assertExists()
+        composeRule.onNodeWithText(restoreText(R.string.restore_restoring, "4")).assertExists()
         composeRule.onNode(backButton).assertIsNotEnabled()
         composeRule.onNode(button(R.string.restore_now)).assertDoesNotExist()
         composeRule.onNode(button(R.string.cancel_button)).assertDoesNotExist()
@@ -415,12 +435,15 @@ class RestoreLargestFontLandscapeTest {
         composeRule.turn(landscape = false)
     }
 
+    // 35: on an app that holds data, with the Now column, its line and Continue.
     @Test
     fun theSummary_everyFigure_andCancel_canBeReached() {
-        show(RestoreWizard(step = RestoreStep.SUMMARY, summary = EXAMPLE_SUMMARY))
+        show(RestoreWizard(step = RestoreStep.SUMMARY, summary = EXAMPLE_SUMMARY, now = NOW_COUNTS))
+        composeRule.onNodeWithText(string(R.string.restore_now_column)).performScrollTo().assertIsDisplayed()
         composeRule.onNode(hasText(string(R.string.restore_cash_after)) and hasText("$9,425.00")).performScrollTo().assertIsDisplayed()
         composeRule.onNode(hasText(string(R.string.restore_holdings)) and hasText("1")).performScrollTo().assertIsDisplayed()
-        composeRule.onNodeWithText(string(R.string.restore_summary_note)).performScrollTo().assertIsDisplayed()
+        composeRule.onNodeWithText(string(R.string.restore_data_note)).performScrollTo().assertIsDisplayed()
+        composeRule.onNode(button(R.string.restore_continue)).performScrollTo().assertIsDisplayed()
         composeRule.onNode(button(R.string.cancel_button)).performScrollTo().assertIsDisplayed().performClick()
         composeRule.waitForIdle()
         assertEquals(1, asked.close)

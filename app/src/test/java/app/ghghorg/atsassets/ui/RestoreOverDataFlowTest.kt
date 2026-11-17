@@ -253,6 +253,23 @@ class RestoreOverDataFlowTest {
         assertNull("the export's result went with step 4", vm.state.value.backupOutcome)
     }
 
+    // CR2: the state hands step 4 its model: the word as typed, Replace all data once it matches, and the export's
+    // result with the new last backup.
+    @Test
+    fun theState_wiresStep4sModel() {
+        val vm = vm(dataStore())
+        vm.onStep4()
+        assertEquals(RestoreConfirmModel("", false, true, false, null, null), vm.state.value.restoreScreen?.confirm)
+        vm.typeRestoreWord("restore")
+        assertEquals(true, vm.state.value.restoreScreen?.confirm?.canReplace)
+        vm.beginBackup()
+        vm.onBackupPlace(FakeTarget())
+        val confirm = requireNotNull(vm.state.value.restoreScreen?.confirm)
+        assertEquals(BackupOutcome.SAVED, confirm.outcome)
+        assertEquals(LastBackup("2026-10-26", "Z"), confirm.lastBackup)
+        assertTrue(confirm.canReplace)
+    }
+
     // 32 decision 1: an export's result lasts only where it shows; Back from step 4 drops it.
     @Test
     fun theExportsResult_goesWithStep4() {
