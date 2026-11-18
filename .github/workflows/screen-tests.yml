@@ -87,6 +87,23 @@ jobs:
       - name: Build the app and the tests
         run: ./gradlew :app:assembleDebug :app:assembleDebugAndroidTest
 
+      # plan/spikes/avd-memory.md section 8 (throw-away-avd-memory only): every 30 s, the runner's available memory and the
+      # guest's MemTotal and MemAvailable, from before the emulator starts to the end of the tests. Before the boot the guest's
+      # fields stay empty.
+      - name: Start the memory sampler
+        run: |
+          cat > "$RUNNER_TEMP/sample-memory.sh" <<'EOF'
+          adb="$ANDROID_HOME/platform-tools/adb"
+          while true; do
+            runner=$(free -m | awk '/^Mem:/ {print $7}')
+            guest=$("$adb" shell cat /proc/meminfo 2>/dev/null | tr -d '\r' | awk '/^MemTotal:/ {t=$2} /^MemAvailable:/ {a=$2} END {print "guest_total_kb=" t " guest_available_kb=" a}')
+            echo "$(date +%s) runner_available_mb=$runner $guest"
+            sleep 30
+          done
+          EOF
+          nohup bash "$RUNNER_TEMP/sample-memory.sh" > memory-samples.txt 2>&1 &
+          echo "SAMPLER_PID=$!" >> "$GITHUB_ENV"
+
       - name: Create the AVD and start it headless
         run: |
           # The same folder for avdmanager and the emulator (plan/spikes/screen-tests.md 11.6, run 1: the emulator found no AVD in $HOME/.android/avd).
@@ -139,8 +156,17 @@ jobs:
           "$adb" shell locksettings set-pin "$TEST_PIN"
           "$adb" shell locksettings verify --old "$TEST_PIN"
 
+      # plan/spikes/avd-memory.md section 5, L2 and L4 (throw-away-avd-memory only).
+      - name: Record the guest's RAM and the app heap limits
+        run: |
+          adb="$ANDROID_HOME/platform-tools/adb"
+          "$adb" shell cat /proc/meminfo | tr -d '\r' | grep -E '^(MemTotal|MemAvailable):'
+          echo "dalvik.vm.heapsize=$("$adb" shell getprop dalvik.vm.heapsize | tr -d '\r')"
+          echo "dalvik.vm.heapgrowthlimit=$("$adb" shell getprop dalvik.vm.heapgrowthlimit | tr -d '\r')"
+
       - name: Screen tests
         run: |
+          echo "TESTS_START=$(date +%s)" >> "$GITHUB_ENV"
           start=$SECONDS
           ./gradlew :app:connectedDebugAndroidTest
           echo "Tests took $((SECONDS - start)) s"
@@ -165,6 +191,27 @@ jobs:
           for f in $("$adb" shell 'ls /data/local/tmp/screen-test-*.png 2>/dev/null' | tr -d '\r'); do "$adb" pull "$f" unlock-screens/; done
           ls -l unlock-screens
 
+      # plan/spikes/avd-memory.md section 6, H2 and H3 (throw-away-avd-memory only): the lowest available memory, over the
+      # whole job and during the tests, and the guest's low-memory and kill events still in its events buffer.
+      - name: Memory summary
+        if: always()
+        run: |
+          kill "$SAMPLER_PID" 2>/dev/null || true
+          adb="$ANDROID_HOME/platform-tools/adb"
+          "$adb" logcat -b events -d 2>/dev/null | grep -E 'am_low_memory|am_kill' > memory-events.txt || true
+          echo "Samples: $(wc -l < memory-samples.txt)"
+          awk -v ts="${TESTS_START:-0}" '
+            { for (i = 2; i <= NF; i++) { split($i, kv, "="); v[kv[1]] = kv[2] } }
+            v["runner_available_mb"] != "" { r = v["runner_available_mb"] + 0; if (minr == "" || r < minr) minr = r; if (ts > 0 && $1 >= ts && (mint == "" || r < mint)) mint = r }
+            v["guest_available_kb"] != "" { g = v["guest_available_kb"] + 0; if (ming == "" || g < ming) ming = g; if (ts > 0 && $1 >= ts && (mingt == "" || g < mingt)) mingt = g }
+            { delete v }
+            END {
+              print "Runner available, lowest: " minr " MB (job), " mint " MB (tests)"
+              print "Guest available, lowest: " int(ming / 1024) " MB (job), " int(mingt / 1024) " MB (tests)"
+            }' memory-samples.txt
+          echo "am_low_memory events: $(grep -c am_low_memory memory-events.txt || true)"
+          echo "am_kill events: $(grep -c am_kill memory-events.txt || true)"
+
       - name: Keep the results and the emulator log
         if: always()
         uses: actions/upload-artifact@v7
@@ -175,4 +222,6 @@ jobs:
             app/build/reports/androidTests/connected/debug/
             emulator.log
             unlock-screens/
+            memory-samples.txt
+            memory-events.txt
           retention-days: 7
