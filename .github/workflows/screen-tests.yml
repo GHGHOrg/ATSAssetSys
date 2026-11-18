@@ -116,7 +116,7 @@ jobs:
           fi
           # 4 GB and 4 cores: with the profile's 2 GB, System UI stopped responding during the tests (plan/spikes/screen-tests.md 11.6, run 1 on 039611f).
           nohup "$ANDROID_HOME/emulator/emulator" -avd "$AVD" -no-window -no-audio -no-boot-anim -no-snapshot \
-            -gpu swiftshader_indirect -accel on -memory 4096 -cores 4 > emulator.log 2>&1 &
+            -gpu swiftshader_indirect -accel on -memory 8192 -cores 4 > emulator.log 2>&1 &
           echo "EMULATOR_PID=$!" >> "$GITHUB_ENV"
           echo "BOOT_START=$(date +%s)" >> "$GITHUB_ENV"
 
