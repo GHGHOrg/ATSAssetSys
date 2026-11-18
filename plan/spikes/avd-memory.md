@@ -147,4 +147,4 @@ Run 2026-11-18 on throw-away-avd-memory, draft pull request #197 (reviewer msfsg
 - Done 2026-11-18 with your yes: #197 closed unmerged; throw-away-avd-memory deleted locally and on GitHub (`gh pr close 197 --delete-branch` removed both). Its commits 161a322 and e6418ff are named in section 9; the runs' logs stay on GitHub.
 - M5's change: none (section 7).
 - Later, not in this spike (your A): time per test (L3's slowest tests; waits, turns, unlocks), sharding over two runners, the emulator's snapshot handling. Each would be its own note.
-- plan/plan.md section 2 does not list plan/spikes/screen-tests.md or this note; whether to list them is for the merge of this note.
+- Open, decided 2026-11-18: plan/plan.md section 2 does not list plan/spikes/screen-tests.md or this note. Add both lines once pull requests #190 and #193 to #196 are merged (or closed): each of them edits plan/plan.md and plan/open-items.md, so an edit now could conflict with them. Not recorded in plan/open-items.md for the same reason. Whoever merges the last of them adds the lines and then removes this point.
