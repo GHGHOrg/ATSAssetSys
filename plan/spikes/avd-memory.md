@@ -1,6 +1,6 @@
 # plan/spikes/avd-memory.md
 
-Stage: Build. Status: written 2026-11-18 on branch spike-avd-memory (from main at 9d952cb); approved by you 2026-11-18 as written, before the look-ups (section 5). Look-ups, decisions M1 to M4 and the run done 2026-11-18 (sections 5, 7, 9); M5: 4,096 MB kept, nothing adopted. Cleanup done 2026-11-18 (section 10). This note's pull request: #198.
+Stage: Build. Status: written 2026-11-18 on branch spike-avd-memory (from main at 9d952cb); approved by you 2026-11-18 as written, before the look-ups (section 5). Look-ups, decisions M1 to M4 and the run done 2026-11-18 (sections 5, 7, 9); M5: 4,096 MB kept, nothing adopted. Cleanup done 2026-11-18 (section 10). Merged: pull request #198 as 67fa0e8 (2026-11-18); main green on 67fa0e8 (CI, screen tests, CodeQL).
 Source: your request of 2026-11-18 (more emulator memory on GitHub's runner, to shorten the screen tests), your choice A (memory only, other levers listed for later), .github/workflows/screen-tests.yml (read 2026-11-18), plan/spikes/screen-tests.md sections 3 and 11.6, the last 10 screen-tests runs on main (read with gh, 2026-11-18).
 
 How sources are labelled in this note:
