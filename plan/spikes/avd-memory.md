@@ -31,7 +31,7 @@ Other levers (time spent per test in waits, turns and unlocks; sharding the test
 ## 2. Gate
 This is a decision note, not an iteration. It gives no app feature, changes no app code and no spec, and blocks no iteration.
 Branch: spike-avd-memory (from main at 9d952cb), one pull request with this note, merged by you.
-Trial changes to the workflow go only on a throw-away branch (CLAUDE.md section 4), throw-away-avd-memory, with a draft pull request that is closed unmerged. The name has no NN: a spike has no iteration number (my reading of the convention; decision M4 if you want another name).
+Trial changes to the workflow go only on a throw-away branch (CLAUDE.md section 4), throw-away-avd-memory, with a draft pull request that is closed unmerged. The name has no NN: a spike has no iteration number (decision M4).
 Order: the note's approval, the look-ups (section 5), decisions M1 to M4, the run (section 8), results (section 9), then M5.
 An adopted setting reaches main as one line in .github/workflows/screen-tests.yml. It changes no app behaviour and no spec, so it is not a change request (CLAUDE.md section 4, the test-support rule); M5 says how it lands.
 
@@ -82,6 +82,13 @@ None needs a web search or fetch. Each gh call is a shell command and asks first
 - L3 Which tests take the time? From the latest run's result XML, the 10 slowest tests and the total of the 136. This does not steer this spike; it feeds section 10.
 - L4 Does a larger guest RAM change the app's own heap limit (dalvik.vm.heapsize)? My reading: no, it comes from the image's properties, not from `-memory`. Read with `adb shell getprop dalvik.vm.heapsize` in each run.
 
+Answers (I read, 2026-11-18; the artifacts of runs 43793616953, the latest, and 43750869998, the slowest, in the scratchpad; 136 logcat files of about 108,000 lines each run):
+- L1 No sign of memory pressure in either run: no kill by lmkd, no "Low on memory", no "Not Responding" or "ANR in", no process "has died". The lmkd lines (21 and 7) are its settings being reloaded ("lmkd updated properties successfully"), my reading: when the tests change system settings such as the font scale. The onTrimMemory lines (3 and 4) are Google's TimedProcessReaper ending a background process "to refresh configuration", not a shortage. The "Waiting for a blocking GC" lines (9 and 13) are nearly all ProfileSaver in system apps, none in the app. The garbage-collection lines show heaps of 12 to 16 MB, about half free.
+- L1, the runner: the emulator warns in both runs "Suggested minimum system RAM to run avd 'ats-screen-tests-37' is 16384 MiB (available: 15700 MiB)" (15983 MiB in the other run). This is a check the emulator makes at its start, not a measured shortage: the runner has less RAM than the emulator's suggested minimum; whether it runs short during the tests is not measured (the sampler in section 8 measures it). Not checked: how the emulator works out 16384 MiB, and whether it rises with `-memory`.
+- L2 The guest has 4 GiB: emulator.log's "pc_memory_init: above 4g size: 40000000" is 1 GiB above the 4 GiB line, plus 3 GiB below it (my reading of the x86 layout). The emulator log has no other RAM line; config.ini was not read.
+- L3 The time is spread over the tests: the 136 tests' own times add up to 556.6 s (of a 590 s step) and 636.7 s (of 676 s). The 10 slowest are 10.9 to 24.7 s each, mostly largest-font landscape and keyboard tests; the slowest is TransactionHistoryLargestFontLandscapeTest.theFieldsChipsRowsAndLinks_canBeReached_andTapped (21.5 and 24.7 s). The slow run is slower in each of the top 10 classes, by about 10 to 40%, not in a few tests. My reading: the runner's speed differs between runs, not the memory.
+- L4 Not read: it needs a running emulator (section 8, step 1).
+
 ## 6. Criteria for the choice
 Hard rules: a setting that breaks one is out, whatever its time.
 - H1 Every run of the series green, every test run (the count check's "Tests run: N of N").
@@ -95,6 +102,9 @@ A setting counts as shorter only if its median is at least M1's margin below the
 
 ## 7. Decisions
 To settle after the note's approval and the look-ups, one question at a time.
+Settled 2026-11-18, after the look-ups (section 5) found no memory pressure: your B, a small check run. M2 is 3 runs per setting, M3 is A (4,096 MB) and C (8,192 MB) only; B (6,144 MB) is not run. With runs already about 160 s apart (section 3), 3 runs per setting can show only a large gain.
+M1 settled 2026-11-18, your B: as written in section 6 (the median of the test step at least 60 s below the control's, and the longest run not longer than the control's longest); H3's floor 1,024 MB. The stricter rule (every 8,192 MB run shorter than every 4,096 MB run) was not chosen.
+M4 settled 2026-11-18, your A: throw-away-avd-memory, without NN (section 2). M5 waits for the results.
 - M1 The margin for "shorter" and H3's floor. My leaning: 60 s off the median of the test step (about 10%), floor 1,024 MB.
 - M2 Runs per setting. My leaning: 5 (15 runs, about 3.5 hours of runner time at today's 14 minutes a run). 10 per setting as in plan/spikes/screen-tests.md 11.6 would be 30 runs and about 7 hours. Not checked: whether this repository's Actions minutes are free or counted.
 - M3 Which settings. My leaning: A, B and C as in section 4.
@@ -105,8 +115,8 @@ To settle after the note's approval and the look-ups, one question at a time.
 Each push by you; each run and re-run with your yes; I read each with gh.
 1. Branch throw-away-avd-memory from main. Commit 1 adds measuring only, with `-memory 4096`: a background sampler that writes the runner's `free -m` and the guest's /proc/meminfo every 30 s from the boot to the end of the tests; `adb shell getprop dalvik.vm.heapsize` after the boot; the sampler's file and the guest's `logcat -b events` (am_low_memory, am_kill lines) kept in the artifact. The test count, the tests and the app are unchanged.
 2. You push and open a draft pull request. Series A: M2 runs, as attempts of the same run (each attempt's artifact downloaded before the next, CLAUDE.md section 6).
-3. Commit 2 changes only `-memory 4096` to `-memory 6144`. Series B, the same way.
-4. Commit 3 changes it to `-memory 8192`. Series C.
+3. Commit 2 changes only `-memory 4096` to `-memory 8192`. Series C, the same way. (Series B, 6,144 MB, is not run: section 7.)
+4. Not used.
 5. A red run in a series is read for its cause before anything else (CLAUDE.md section 4); a red run caused by memory ends that setting's series and is H1's answer for it.
 All three series on the same day if the runner allows, so the runner's own speed changes as little as possible.
 
