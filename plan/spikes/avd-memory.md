@@ -1,6 +1,6 @@
 # plan/spikes/avd-memory.md
 
-Stage: Build. Status: written 2026-11-18 on branch spike-avd-memory (from main at 9d952cb); approved by you 2026-11-18 as written, before the look-ups (section 5). Nothing in it has run.
+Stage: Build. Status: written 2026-11-18 on branch spike-avd-memory (from main at 9d952cb); approved by you 2026-11-18 as written, before the look-ups (section 5). Look-ups, decisions M1 to M4 and the run done 2026-11-18 (sections 5, 7, 9); M5: 4,096 MB kept, nothing adopted. Cleanup (section 10) not yet done.
 Source: your request of 2026-11-18 (more emulator memory on GitHub's runner, to shorten the screen tests), your choice A (memory only, other levers listed for later), .github/workflows/screen-tests.yml (read 2026-11-18), plan/spikes/screen-tests.md sections 3 and 11.6, the last 10 screen-tests runs on main (read with gh, 2026-11-18).
 
 How sources are labelled in this note:
@@ -104,7 +104,8 @@ A setting counts as shorter only if its median is at least M1's margin below the
 To settle after the note's approval and the look-ups, one question at a time.
 Settled 2026-11-18, after the look-ups (section 5) found no memory pressure: your B, a small check run. M2 is 3 runs per setting, M3 is A (4,096 MB) and C (8,192 MB) only; B (6,144 MB) is not run. With runs already about 160 s apart (section 3), 3 runs per setting can show only a large gain.
 M1 settled 2026-11-18, your B: as written in section 6 (the median of the test step at least 60 s below the control's, and the longest run not longer than the control's longest); H3's floor 1,024 MB. The stricter rule (every 8,192 MB run shorter than every 4,096 MB run) was not chosen.
-M4 settled 2026-11-18, your A: throw-away-avd-memory, without NN (section 2). M5 waits for the results.
+M4 settled 2026-11-18, your A: throw-away-avd-memory, without NN (section 2).
+M5 settled 2026-11-18, your A, after the run (section 9): keep 4,096 MB; nothing is adopted and main's workflow does not change. You chose to finish series C (runs 2 and 3) after run 1 had already decided M1 against 8,192 MB.
 - M1 The margin for "shorter" and H3's floor. My leaning: 60 s off the median of the test step (about 10%), floor 1,024 MB.
 - M2 Runs per setting. My leaning: 5 (15 runs, about 3.5 hours of runner time at today's 14 minutes a run). 10 per setting as in plan/spikes/screen-tests.md 11.6 would be 30 runs and about 7 hours. Not checked: whether this repository's Actions minutes are free or counted.
 - M3 Which settings. My leaning: A, B and C as in section 4.
@@ -121,10 +122,29 @@ Each push by you; each run and re-run with your yes; I read each with gh.
 All three series on the same day if the runner allows, so the runner's own speed changes as little as possible.
 
 ## 9. Results
-Not run.
+Run 2026-11-18 on throw-away-avd-memory, draft pull request #197 (reviewer msfsgh). Series A: run 44233481245, attempts 1 to 3, on 161a322 (section 8, step 1: the measuring, `-memory 4096`). Series C: run 44240246621, attempts 1 to 3, on e6418ff (step 3: `-memory 8192`, nothing else changed). Each push and re-run with your yes; I read each with gh and downloaded each attempt's artifact before the next (kept in the scratchpad, not in the repo). Step times are the job's step times from the GitHub API; the memory figures are the workflow's own "Memory summary" step.
+
+| Run | Memory | Whole job | Build | Boot | Settle | Screen tests | Runner lowest available (tests) | Guest lowest available | am_low_memory | am_kill |
+|---|---|---|---|---|---|---|---|---|---|---|
+| A1 | 4,096 MB | 820 s | 74 s | 43 s | 11 s | 603 s | 5,623 MB | 1,891 MB | 0 | 2 |
+| A2 | 4,096 MB | 911 s | 105 s | 48 s | 12 s | 691 s | 5,877 MB | 1,796 MB | 0 | 2 |
+| A3 | 4,096 MB | 700 s | 69 s | 35 s | 10 s | 517 s | 5,770 MB | 1,771 MB | 0 | 2 |
+| C1 | 8,192 MB | 955 s | 105 s | 49 s | 11 s | 740 s | 2,588 MB | 5,680 MB | 0 | 3 |
+| C2 | 8,192 MB | 816 s | 79 s | 41 s | 10 s | 613 s | 2,613 MB | 5,576 MB | 0 | 2 |
+| C3 | 8,192 MB | 1,042 s | 95 s | 49 s | 10 s | 816 s | 2,562 MB | 5,661 MB | 0 | 3 |
+
+- All 6 runs green, 136 of 136 tests each; no "Not Responding" window, no low-memory event.
+- L2: the guest had what `-memory` asked for: MemTotal 4,006,172 to 4,006,188 kB at 4,096 MB and 8,128,796 to 8,128,800 kB at 8,192 MB; emulator.log "pc_memory_init: above 4g size" 40000000 and 140000000 (1 and 5 GiB above the 4 GiB line).
+- L4: dalvik.vm.heapsize=576m and dalvik.vm.heapgrowthlimit=192m in all 6 runs: the app's heap does not follow the guest's RAM.
+- The guest used about 2.1 to 2.5 GB in every run, at either setting: at 8,192 MB the extra 4 GB stayed free.
+- The runner's lowest available memory during the tests fell by about 3.1 GB at 8,192 MB (about 5.7 GB to about 2.6 GB), though the guest did not use the extra memory.
+- am_kill: two in every run are the end of the tests ("due to finished inst", and the test package removed). C1 and C3 also had com.android.externalstorage killed for "Sync transaction while in frozen state", not a memory event; its effect is not checked.
+- Section 6: H1 and H2 hold for both; H3 holds (lowest 2,562 MB, floor 1,024 MB). Ranked criterion 1, the test step's median: 603 s at 4,096 MB, 740 s at 8,192 MB, 137 s longer, where M1 asked for at least 60 s shorter. Criterion 2, the longest: 691 s against 816 s. 8,192 MB is not shorter; by M1 it is not adopted. Criterion 3, the whole job's median: 820 s against 955 s.
+- Whether 8,192 MB is really slower is not shown: runs on the same commit were 174 s apart (A) and 203 s apart (C), and 3 runs each cannot separate that from chance. My reading, not checked: the memory the emulator takes from the runner leaves less file cache for the build and the test driver.
+- The answer to section 1: more memory than 4,096 MB does not shorten the screen tests on GitHub's runner; memory is not what limits them (also section 5, L1).
 
 ## 10. Cleanup and follow-up
-- Close the draft pull request unmerged; delete throw-away-avd-memory with your yes.
-- M5's change, if any.
+- Close the draft pull request #197 unmerged; delete throw-away-avd-memory (local and on GitHub) with your yes. Not done yet.
+- M5's change: none (section 7).
 - Later, not in this spike (your A): time per test (L3's slowest tests; waits, turns, unlocks), sharding over two runners, the emulator's snapshot handling. Each would be its own note.
 - plan/plan.md section 2 does not list plan/spikes/screen-tests.md or this note; whether to list them is for the merge of this note.
