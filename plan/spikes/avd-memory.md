@@ -1,6 +1,6 @@
 # plan/spikes/avd-memory.md
 
-Stage: Build. Status: written 2026-11-18 on branch spike-avd-memory (from main at 9d952cb); approved by you 2026-11-18 as written, before the look-ups (section 5). Look-ups, decisions M1 to M4 and the run done 2026-11-18 (sections 5, 7, 9); M5: 4,096 MB kept, nothing adopted. Cleanup (section 10) not yet done.
+Stage: Build. Status: written 2026-11-18 on branch spike-avd-memory (from main at 9d952cb); approved by you 2026-11-18 as written, before the look-ups (section 5). Look-ups, decisions M1 to M4 and the run done 2026-11-18 (sections 5, 7, 9); M5: 4,096 MB kept, nothing adopted. Cleanup done 2026-11-18 (section 10). This note's pull request: #198.
 Source: your request of 2026-11-18 (more emulator memory on GitHub's runner, to shorten the screen tests), your choice A (memory only, other levers listed for later), .github/workflows/screen-tests.yml (read 2026-11-18), plan/spikes/screen-tests.md sections 3 and 11.6, the last 10 screen-tests runs on main (read with gh, 2026-11-18).
 
 How sources are labelled in this note:
@@ -144,7 +144,7 @@ Run 2026-11-18 on throw-away-avd-memory, draft pull request #197 (reviewer msfsg
 - The answer to section 1: more memory than 4,096 MB does not shorten the screen tests on GitHub's runner; memory is not what limits them (also section 5, L1).
 
 ## 10. Cleanup and follow-up
-- Close the draft pull request #197 unmerged; delete throw-away-avd-memory (local and on GitHub) with your yes. Not done yet.
+- Done 2026-11-18 with your yes: #197 closed unmerged; throw-away-avd-memory deleted locally and on GitHub (`gh pr close 197 --delete-branch` removed both). Its commits 161a322 and e6418ff are named in section 9; the runs' logs stay on GitHub.
 - M5's change: none (section 7).
 - Later, not in this spike (your A): time per test (L3's slowest tests; waits, turns, unlocks), sharding over two runners, the emulator's snapshot handling. Each would be its own note.
 - plan/plan.md section 2 does not list plan/spikes/screen-tests.md or this note; whether to list them is for the merge of this note.
