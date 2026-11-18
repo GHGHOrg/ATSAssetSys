@@ -1,6 +1,6 @@
 # plan/spikes/dependabot-findings.md
 
-Stage: Build. Status: written 2026-11-18 from main at d182dfb (the merge of #200), after your interview of 2026-11-18, on branch spike-dependabot-findings (from main at d182dfb); approved by you 2026-11-18 as written, before the look-ups (section 5). Look-ups L1 to L10 and decisions D1 to D5 done 2026-11-18 (D4: no phone; D5: KSP 2.3.14 in place of #125's 2.3.13). Not yet run.
+Stage: Build. Status: written 2026-11-18 from main at d182dfb (the merge of #200), after your interview of 2026-11-18, on branch spike-dependabot-findings (from main at d182dfb); approved by you 2026-11-18 as written, before the look-ups (section 5). Look-ups L1 to L10 and decisions D1 to D5 done 2026-11-18 (D4: no phone; D5: KSP 2.3.14 in place of #125's 2.3.13). Baseline run 2026-11-18 (section 9.1); all bumps green locally 2026-11-18 (section 9.2); CI, screen tests and CodeQL green on draft pull request #201 (section 9.3); verdicts in section 9.4. Cleanup done 2026-11-18 (section 10): #201 closed unmerged, the throw-away branch deleted. This note's pull request not yet opened.
 Source: your interview of 2026-11-18 (starting commit main d182dfb; scope every open Dependabot pull request; outcome a verdict only, the Dependabot pull requests untouched; order of work your B, all bumps at once and split on failure), the open Dependabot pull requests and alerts (I read with gh, 2026-11-18), gradle/libs.versions.toml and gradle/wrapper/gradle-wrapper.properties (I read, 2026-11-18), plan/open-items.md items 31, 43 and 60, CLAUDE.md section 6 (lint findings, the incomplete-APK pitfall), plan/spikes/dependency-upgrade.md and plan/spikes/avd-memory.md (layout and branch names).
 
 How sources are labelled in this note:
@@ -129,10 +129,68 @@ Each push by you; each run and re-run of a workflow with your yes; I read each w
 6. Results into section 9.
 
 ## 9. Results
-Not run yet.
+Run on this PC by me; the output was shown in the chat as each command ran.
+
+### 9.1 Baseline (section 8 step 2, D3), 2026-11-18
+On spike-dependabot-findings at 549deb0, whose code is d182dfb's (the commit adds only this note). git status clean before the run. Every command with --rerun-tasks.
+| Check | Result |
+|---|---|
+| spotlessCheck | BUILD SUCCESSFUL in 24s, 4 tasks executed |
+| :core:assemble :app:assembleDebug | BUILD SUCCESSFUL in 1m 10s, 39 tasks executed |
+| :core:test :app:testDebugUnitTest | BUILD SUCCESSFUL in 1m 17s, 32 tasks executed. Added up from the result files (39 in core, 59 in app): 1,395 tests, 0 failures, 0 errors, 1 skipped |
+| :app:lintDebug | BUILD SUCCESSFUL in 1m 48s, 32 tasks executed; report written 18:14:24. 6 findings, as CLAUDE.md section 6 lists: AndroidGradlePluginVersion (libs.versions.toml:2, 9.5.1), NewerVersionAvailable for spotless (:12, 8.11.0), sqlcipher-android (:15, 4.20.0), kotlinx-coroutines-test (:17, 1.11.0), kotlinx-serialization-json (:18, 1.13.0), TypographyDashes (strings.xml:86) |
+| Debug APK | 44,205,294 bytes (18:09:47); copy kept in the scratchpad (baseline\app-debug-baseline.apk), not in the repo |
+| classesN.dex sizes | classes.dex 17,676,928; classes2 612,808; classes3 203,720; classes4 7,068; classes5 35,828; classes6 386,148; classes7 2,551,948; classes8 56,964; classes9 43,560; classes10 13,519,180 |
+The test run printed "Problems report is available at build/reports/problems/problems-report.html"; its contents were not read.
+
+### 9.2 All bumps at once (section 8 step 3; D2, D5), 2026-11-18
+Branch throw-away-dependabot-findings from 549deb0. The four Dependabot heads were fetched (each head equal to the commit L1 read) and merged with --no-ff, all signed (G):
+| Commit | What |
+|---|---|
+| 104ac5e | merge #165 (c940f56), Gradle wrapper 9.9.1: jar, properties, gradlew, gradlew.bat. The first try timed out at GPG signing and was finished with git commit after you were ready |
+| cb182f5 | merge #164 (b0fae1d), Spotless 8.11.0 |
+| 7dd8de3 | merge #124 (2083814), kotlinx-coroutines-test 1.11.0 |
+| 177722b | merge #123 (396ec05), sqlcipher-android 4.20.0 |
+| 962f345 | ksp 2.3.12 to 2.3.14 by hand in gradle/libs.versions.toml (D5); the file keeps CRLF (52 CR, 52 LF) |
+No conflict. After the merges, `git ls-files --eol` shows gradlew i/lf w/lf (mode kept) and gradlew.bat i/crlf w/crlf against its attribute eol=crlf (stored LF on main): git then lists gradlew.bat as modified in the working tree, a diff of 112 lines in and out that is empty when CR is ignored. Left as #165 brought it, not staged.
+
+The Gradle daemon was stopped first (`--stop`); `--version` then showed Gradle 9.9.1, Kotlin 2.4.21, launcher JVM 25.0.3 (JetBrains). Every command with --rerun-tasks:
+| Check | Result | Against the baseline (9.1) |
+|---|---|---|
+| spotlessCheck | BUILD SUCCESSFUL in 39s, 4 tasks executed | same; printed a deprecation notice |
+| build (with --warning-mode all) | BUILD SUCCESSFUL in 1m 14s, 39 tasks executed | same task count |
+| tests (with --warning-mode all) | BUILD SUCCESSFUL in 57s, 32 tasks executed; 39 + 59 result files: 1,395 tests, 0 failures, 0 errors, 1 skipped | equal |
+| lint | BUILD SUCCESSFUL in 1m 49s, 32 tasks executed; report written 19:02:56. 3 findings: AndroidGradlePluginVersion (:2, 9.5.1), NewerVersionAvailable kotlinx-serialization-json (:18, 1.13.0), TypographyDashes (strings.xml:86) | the 3 notices for spotless, sqlcipher-android and coroutines-test are gone; no new finding; KSP had none |
+| Debug APK | 44,239,182 bytes | +33,888 bytes. My reading: SQLCipher's native libraries (SQLite 3.54.1); not checked file by file |
+| classesN.dex | classes.dex 17,676,968 (+40); classes2 to classes10 equal to the byte | |
+| Names in the dex | AtsDatabase_Impl (Room's generated database, from KSP) in classes6.dex; net/zetetic/database/sqlcipher/SQLiteDatabase in classes.dex and classes6.dex | classes6.dex, which holds Room's generated code, is the same size as with KSP 2.3.12 |
+- Deprecation: the only warning shown with --warning-mode all, in the build and in the tests: "The Configuration.setVisible(boolean) method has been deprecated. This is scheduled to be removed in Gradle 11." Our build scripts do not call it (no isVisible or setVisible in any .gradle.kts), so a plugin does (not checked which). Whether Gradle 9.6.0 showed it too was not checked: the baseline ran without --warning-mode all. The KGP attribute deprecation L2 expected did not appear.
+- Open item 60 did not show: no KSP or testFixtures failure in these runs (one run each).
+
+### 9.3 CI and screen tests (section 8 step 4), 2026-11-18
+throw-away-dependabot-findings pushed once by me at your request (962f345), and draft pull request #201 created by me at your request ("Create this draft PR once, add a reviewer"): base main, reviewer msfsgh (as for #197). Runs started: build (CI) 44291538447, screen-tests 44291538782, Analyze (actions) 44291532685.
+Results (I read with gh, 2026-11-18; one run each, on 962f345):
+| Check | Result |
+|---|---|
+| CI (build), run 44291538447 | success, 4m 3s. "Welcome to Gradle 9.9.1!". Style check 39 s, Build 1m 23s, Unit tests 44 s, Lint 1m 5s, each BUILD SUCCESSFUL. "Scale test retries": "Checks measured again (24a decision 1), every try: none". Each Gradle step printed "Deprecated Gradle features were used in this build, making it incompatible with Gradle 10" (my reading: the setVisible deprecation seen locally in 9.2; not read with --warning-mode all on CI) |
+| Screen tests, run 44291538782 | success, 15m 21s. "Tests run: 136 of 136". Emulator and image restored from the cache. Build the app and the tests 148 s, Wait for the boot 42 s, Let the system settle 11 s, Screen tests 646 s |
+| Analyze (actions) 44291532685 and CodeQL | pass (38 s and 5 s) |
+Against main's last 10 runs (plan/spikes/avd-memory.md section 3): the screen-tests step (646 s) is inside their 518 to 676 s; the whole job (921 s) is 19 s above their longest (902 s), from the build step (148 s against 70 to 111 s). My reading, not checked: Gradle 9.9.1 and the new versions were not in the runner's Gradle cache yet. One run cannot show a change in speed.
+
+### 9.4 Verdicts (section 6), 2026-11-18
+| PR | Verdict | V1 local | V2 CI, screen tests, CodeQL | V3 phone | Notes for the iteration that takes it up |
+|---|---|---|---|---|---|
+| #165 Gradle wrapper 9.9.1 | pass | green | green | not needed (build tool) | Jar and distribution checksums equal Gradle's published 9.9.1 values (L6); 9.9.1 fixes three security advisories (L2). gradlew.bat arrives stored as CRLF against .gitattributes: store it as LF (L1, 9.2). One new deprecation from a plugin, Configuration.setVisible, removed in Gradle 11 (9.2) |
+| #164 Spotless 8.11.0 | pass | green | green | not needed | Clears its lint notice; only google-java-format changed (L4) |
+| #124 kotlinx-coroutines-test 1.11.0 | pass | green | green | not needed (tests only) | Clears its lint notice; no use of the APIs 1.11.0 made errors or removed (L10) |
+| #123 sqlcipher-android 4.20.0 | pass, phone not run | green | green | not run (D4) | Clears its lint notice (open item 43). APK +33,888 bytes. Format and defaults not stated by its release notes (L4, L7): the phone check (install over the previous build, data opens, a write works) is still owed |
+| #125 KSP 2.3.13 | fail: superseded by 2.3.14 (L9) | not tried (D5) | not tried | not run | 2.3.13 has the concurrent-execution regression google/ksp#3286, fixed in 2.3.14. KSP 2.3.14 in its place: green locally and on CI and the screen tests; Room's generated code the same size (9.2); phone not run (D4) |
+No departure beyond D5 was needed (V4). Lint after all bumps: 3 findings, against 6 (9.2).
+The Dependabot pull requests after the run (I read with gh, 2026-11-18): #165, #164, #125, #124 and #123 all OPEN, not draft, each head the same commit L1 read (c940f56, b0fae1d, d9c1740, 2083814, 396ec05). D2's reading held: merging their commits into the throw-away branch and pushing it did not change them.
 
 ## 10. Cleanup and follow-up
-- After the results, with your yes: the draft pull request closed unmerged and throw-away-dependabot-findings deleted locally and on GitHub. Its commits are named in section 9.
+- Done 2026-11-18 with your yes: #201 closed unmerged at 11:47:31 UTC, with a comment pointing to this note; throw-away-dependabot-findings deleted locally and on GitHub (`gh pr close 201 --delete-branch`; `git branch --list` and `git ls-remote --heads` then found none). Its commits are named in section 9.2; the runs' logs stay on GitHub.
+- On the way back: `git checkout -- gradlew.bat` did not clear the line-ending difference (git kept listing it as modified, and refused to switch branches). This note was copied to the scratchpad, the branch switched with `git checkout -f spike-dependabot-findings`, and the note copied back; its SHA-256 was the same before and after (7588D408…). The iteration that takes up #165 meets the same thing until gradlew.bat is stored as LF.
 - The 5 Dependabot pull requests stay open and unchanged (section 1). The iteration that takes them up reads section 9.
 - Out of scope, for that iteration or a later note: AGP 9.5.1 (open item 31) and kotlinx-serialization-json 1.13.0, which have lint findings but no Dependabot pull request.
 - plan/plan.md section 2 does not list spikes yet while #190 and #193 to #196 are open (plan/spikes/avd-memory.md section 10). This note is added with the others then.
