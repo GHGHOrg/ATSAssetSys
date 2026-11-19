@@ -9,10 +9,12 @@
 - [5. How an iteration runs](#5-how-an-iteration-runs)
   - [Iteration file template](#iteration-file-template)
 - [6. Why this order (my reading of spec.md)](#6-why-this-order-my-reading-of-specmd)
-- [7. Spike: price source (plan/spikes/price-source.md)](#7-spike-price-source-planspikesprice-sourcemd)
-  - [Exchange table (spec 4.3; price-source spike decision 4)](#exchange-table-spec-43-price-source-spike-decision-4)
+- [7. Spikes](#7-spikes)
+  - [Spike: price source (plan/spikes/price-source.md)](#spike-price-source-planspikesprice-sourcemd)
+    - [Exchange table (spec 4.3; price-source spike decision 4)](#exchange-table-spec-43-price-source-spike-decision-4)
   - [Spike: dependency upgrade (plan/spikes/dependency-upgrade.md)](#spike-dependency-upgrade-planspikesdependency-upgrademd)
   - [Spike: Claude Code in VS Code (plan/spikes/vscode-claude-code.md)](#spike-claude-code-in-vs-code-planspikesvscode-claude-codemd)
+  - [Spike: Figma workflow (plan/spikes/figma-workflow.md)](#spike-figma-workflow-planspikesfigma-workflowmd)
 - [8. Cross-cutting risks](#8-cross-cutting-risks)
 - [9. Definition of done (one for every iteration)](#9-definition-of-done-one-for-every-iteration)
 - [10. CLAUDE.md](#10-claudemd)
@@ -44,6 +46,7 @@ plan/
   spikes/price-source.md       decision note, run 2026-10-30 (summary in its section 11); finished: pull request #98 merged as 5cc77da, before 09
   spikes/dependency-upgrade.md decision note, run after iteration 01 (results in its section 9); finished: pull request 73 merged as 7df2049, before 02
   spikes/vscode-claude-code.md decision note, run after iteration 02a and before 02b (results in its section 9); finished: pull request #81 merged as 0c2b49e
+  spikes/figma-workflow.md     decision note, three approaches, one chosen at its end; written 2026-11-17, approved 2026-11-18 before its look-ups
   open-items.md                one list of what is still open; updated when an item closes (spike vscode-claude-code, D4)
   iterations/01-... to 35-...  one file per iteration (section 4)
 CLAUDE.md                      repo root, created by setup.md
@@ -182,7 +185,9 @@ starts, not after.
 - Backup and restore are last: section 8 rejects unknown row types, so every record type
   must exist, and the restore verifies held tickers through K4.
 
-## 7. Spike: price source (plan/spikes/price-source.md)
+## 7. Spikes
+
+### Spike: price source (plan/spikes/price-source.md)
 Not an iteration, because it gives you no feature. It is a decision note, and iteration 09
 cannot start until it is finished. It must answer, with checks done on the day, not from memory:
 - which free source, its limits and terms;
@@ -197,7 +202,7 @@ cannot start until it is finished. It must answer, with checks done on the day, 
 If the source does not supply sector and geography, iteration 23 is reduced to
 "Unclassified" plus the override path, and the change is recorded here.
 
-### Exchange table (spec 4.3; price-source spike decision 4)
+#### Exchange table (spec 4.3; price-source spike decision 4)
 The exchanges the ticker check accepts: the 29 national securities exchanges registered under Section 6(a),
 as the SEC page listed them on 2026-10-30 (price-source note 10.1), with their former names from that page
 and the MIC codes Finnhub reports (note 10.3). A name is matched ignoring case and spaces as in 4.9. Any other
@@ -273,6 +278,15 @@ Its proof includes an inventory of everything that lives only in the Project or 
 Run 2026-10-28. The results and what was not verified are in the note's section 9. In short (your reports): checks 1 to 20 passed; the allow rules work only after Claude Code's own trust dialog is accepted for the folder.
 Merged as 0c2b49e (pull request #81); CI on main reported green by you.
 
+### Spike: Figma workflow (plan/spikes/figma-workflow.md)
+Added 2026-11-17. Not an iteration; it blocks nothing in 32 to 35. Reason: you want a UI workflow in which design is done in Figma and used by this repo, VS Code with Claude Code stays the IDE, and the handoff between them is as automated as possible. How far Figma reaches is decided by the spike (your C). It proposes three approaches and ends with your choice of one (its decision F5):
+1. A token file in the repo: Figma Variables exported to a JSON file, a generator writes the theme. The wireframes stay.
+2. A live Figma link for the visual layer: Claude Code reads Variables and components through Figma's MCP server. The wireframes stay.
+3. Figma as the screen source: frames replace the wireframes; this needs a change request and a spec.md section 6 edit (Design gate).
+Their scope nests (1 inside 2 inside 3); the MCP link is shared only by 2 and 3, so approach 2's tokens can come live through MCP or from approach 1's file. The choice is a level, and the trials build on each other (your A). A rule for all three (yours): what Figma gives is for Android native UI (Material 3, dp and sp, Jetpack Compose only).
+A discovery on 2026-11-17 (the note's section 0: the repo's history and outside practice of equal weight, and your answers) set its outcome and criteria: Figma is the one source of truth, and a fix found on the phone is made in Figma by Claude Code, approved by you there, and brought to code by one prompt; each screen has normal, largest-font, landscape and keyboard-up frames; hard rules first, then fidelity first among the ranked criteria. From four practices you pasted: screenshot tests as the playground, a frame for every state the spec names, frames named and annotated with their spec refs, and contrast, token-contract and accessibility gates in CI; these hold at every level.
+It must answer, with look-ups done on the day (each asked first): Figma's MCP server (Windows, plan and seat, tools), its Android code output, the Variables export, Code Connect for Compose, the Figma for VS Code extension, code to Figma, security (spec section 9) and costs. Its run tries each approach on a Figma test file with no real data and measures the round trip from one changed Figma value to the phone. The Figma part of open item 18 moves to it. setup.md's design-source decision and CLAUDE.md are changed only after F5.
+
 ## 8. Cross-cutting risks
 - Real data is unprotected until iteration 31: you can enter real data from 09, but there is
   no backup until 31 and no way to load a prepared file until 34. This is a risk, not a spec change.
@@ -324,6 +338,7 @@ when it adds a command, a convention or a pitfall.
 | spikes/dependency-upgrade.md | run 2026-10-21 to 2026-10-22 on branch spike-dependency-upgrade; pull request 73 merged as 7df2049, CI green on main (your report). Results in the note's section 9. Dependabot group unverified until it has run once |
 | spikes/screen-tests.md | written 2026-11-04 (pull request #126, merged as c489ec9); decisions S1 to S6 settled and the note approved 2026-11-04 (pull request #127, merged as 56ddf2a); step 1 run (repo public); steps 2 to 4 complete; S7 changed to GitHub's runner with fallback D (amendment A2, approved 2026-11-04); A1 withdrawn; pull request #128 merged as 8531e6d; steps 5, 8 and 9 run 2026-11-04 to 2026-11-05 (amendment A3: no fingerprint); step 10 not needed. Results in the note's section 11: 10, 08, 07b and TB's reversal card caught locally and on GitHub's runner, 07a locally only; GitHub's runner 10 of 10 on 2fed892 (4m 16s to 5m 45s); local runs not steady on this PC (emulator stack). Cleanup done 2026-11-06 after 15b's merge: both spike branches deleted locally and on origin, the AVD and the API 37 google_apis image deleted (the note's section 8) |
 | spikes/vscode-claude-code.md | run 2026-10-28, checks 1 to 20 passed; pull request #81 merged as 0c2b49e, CI green on main (run 40663927506, your report). Results in the note's section 9 |
+| spikes/figma-workflow.md | written 2026-11-17 on branch spike-figma-workflow; discovery done (its section 0); approved 2026-11-18 before the look-ups; look-ups Q1 to Q14 done 2026-11-18 (Q12's versions and Q14 open); decisions F1 to F4 and F6 settled (Professional, one Full seat, monthly; the remote MCP server at user scope; read tools allowed, writes asked, in user settings; throw-away-figma-1 to -3; Ready for dev plus a named version); sections 4 and 8 corrected and approved 2026-11-18; nothing run; F5 at the end |
 | Iteration 01 | done: built and checked on the phone 2026-10-19 (check 8 on 2026-10-20); pull request #70 merged as 8a5703e, CI green on main (your report); not-run items are listed in its file |
 | Iteration 02a | done: built 2026-10-24 to 2026-10-28 (commits A to M plus the file update a1b9a2c); local run: spotlessCheck, debug build, 74 tests and lint as listed in its file; phone checks done by you 2026-10-27 and 2026-10-28; AC-37, TalkBack and check 8 deferred by you (see change log); pull request #79 merged as 68c9015 on 2026-10-28, CI green on the pull request and on main (your reports) |
 | Iteration 02b | done: built 2026-10-28 (steps 1 to 6); phone checks 2026-10-28 to 2026-10-29 all yes; 98 tests; pull request #83 merged as 0a20873, CI green on the pull request and on main (2m 24s) (your reports) |
@@ -608,6 +623,9 @@ Each departure from this plan is recorded here with its date and the reason.
 - 2026-11-16: iteration 33a steps 2 to 5 built without stops between them and committed one per step after step 5 (your instruction; 6eefc5e to 9a2724e): K6's reading half in core, the reader, each row's rules, the replay through K1 with the dependent errors, the report's order and counts. 65 new tests, 1,394 in all; every section 8 reason listed against its test (the 33a file, 13.2), one assertion added in step 6 for a reversal row with an id. 3,000 transactions checked in about 1 to 2.6 s on this PC; the timing test's bound is 5 s (your A). Nine departures (the 33a file, section 14). No app change, no phone check.
 - 2026-11-16: pull request #191 (iteration 33a; draft created by me on your word, reviewer msfsgh). CI, CodeQL and the screen tests (136 of 136) green at the first attempt. Reviewed (the 33a file, 13.3): no high or medium finding; fixed, test first: a buy or sell failing as a duplicate id now fails its holding, so its hidden or override rows say "depends on line N" (low; 1,395 tests); recorded: a shifted row shows one error, a failed opening balance stops the replay, unreachable K1 refusals mapped to the nearest reason, and for 33b the file's size and keeping the reasons' figures out of logs.
 - 2026-11-16: #191 green again on fa2d6c0; made ready and merged by you as 0a74f3b, 7 commits; on main after the merge CI (4m 7s), CodeQL and the screen tests (136 of 136) green at the first attempt (gh, read only). Merge record on docs/iter-33a-merged.
+- 2026-11-17: added the spike plan/spikes/figma-workflow.md (section 7), on branch spike-figma-workflow from main (your A). Reason: your request for a UI workflow with design in Figma, VS Code with Claude Code as the IDE, and a handoff as automated as possible. How far Figma reaches is decided by the spike (your C): three approaches (a token file in the repo; a live Figma link for the visual layer; Figma as the screen source), one chosen at its end. The Figma part of open item 18 moves to it. setup.md, CLAUDE.md, spec.md and the app are unchanged until that choice.
+- 2026-11-18: the figma-workflow note approved by you as written after its discovery (its section 0: the repo's history, five searches, four practices you pasted, your answers D1 to D9), before its look-ups Q1 to Q14, which may still correct its sections 4, 5 and 8. Section 7 renamed "Spikes" so that every spike is a subsection at the same level (your finding): the price-source spike moved under it, its exchange table one level down; the section's number is unchanged, so references to "plan.md section 7" still hold.
+- 2026-11-18: the figma-workflow spike's look-ups (eleven searches, each approved, and your pastes of Figma's pricing page and a forum reply) and decisions F1 to F4 and F6 (the note's sections 5 and 7). You have no Figma account; the spike uses Professional with one Full seat, billed monthly. Figma's MCP server answers React unless its language preference is Android > Compose; React-shaped context fails the Android native rule (your B). The Variables REST API and branching are not on Professional, so approval is Ready for dev plus a named version. The note's sections 4 and 8 corrected and approved by you the same day.
 
 ## 13. Out of scope for this plan
 Performance over time, per-holding dividends, ETF look-through, the next intent.md items,
