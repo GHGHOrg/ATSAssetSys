@@ -17,9 +17,9 @@ env:
   # It unlocks only this emulator, never a phone.
   TEST_PIN: "135790"
   # plan/spikes/two-emulators.md section 8 (throw-away-two-emulators only): the emulators' serials, one per port (5554, 5556),
-  # and the cores each emulator gets. Series A: one emulator with 4 cores.
-  SERIALS: emulator-5554
-  CORES: "4"
+  # and the cores each emulator gets. Series B: two emulators with 2 cores each.
+  SERIALS: emulator-5554 emulator-5556
+  CORES: "2"
 
 jobs:
   screen-tests:
@@ -181,14 +181,34 @@ jobs:
             "$adb" -s "$s" shell locksettings verify --old "$TEST_PIN"
           done
 
+      # plan/spikes/two-emulators.md section 7, T2 (throw-away-two-emulators only): one Gradle run per emulator, all at once,
+      # each on the emulator ANDROID_SERIAL names and with its own half of the tests (numShards, shardIndex). Each run's
+      # output goes to gradle-<serial>.log; its last lines are printed here.
       - name: Screen tests
         run: |
           echo "TESTS_START=$(date +%s)" >> "$GITHUB_ENV"
           start=$SECONDS
-          ./gradlew :app:connectedDebugAndroidTest
+          n=$(echo $SERIALS | wc -w); i=0; pids=""
+          for s in $SERIALS; do
+            (
+              t0=$(date +%s)
+              rc=0
+              ANDROID_SERIAL="$s" ./gradlew :app:connectedDebugAndroidTest \
+                -Pandroid.testInstrumentationRunnerArguments.numShards="$n" \
+                -Pandroid.testInstrumentationRunnerArguments.shardIndex="$i" > "gradle-$s.log" 2>&1 || rc=$?
+              echo "half $i ($s): exit $rc, ran from $((t0 - BOOT_START)) s to $(($(date +%s) - BOOT_START)) s after the emulators' start"
+              exit $rc
+            ) &
+            pids="$pids $!"
+            i=$((i + 1))
+          done
+          rc=0
+          for p in $pids; do wait "$p" || rc=1; done
+          for s in $SERIALS; do echo "--- gradle-$s.log, last 30 lines"; tail -30 "gradle-$s.log"; done
           echo "Tests took $((SECONDS - start)) s"
           # plan/spikes/two-emulators.md section 6, criterion 1.
           echo "Emulators' start to tests done: $(($(date +%s) - BOOT_START)) s"
+          exit $rc
 
       # Gradle once passed with no test run (plan/spikes/screen-tests.md 11.4, series 1, run 20). The expected count is the number of @Test lines in
       # the screen tests' sources, so it needs no update when tests are added; a stray @Test makes the run red, never green.
@@ -201,6 +221,11 @@ jobs:
           echo "Tests run: $count of $expected"
           if [ "$expected" -eq 0 ]; then echo "::error::no @Test found in app/src/androidTest"; exit 1; fi
           if [ "$count" -lt "$expected" ]; then echo "::error::$count tests ran, expected $expected"; exit 1; fi
+          # plan/spikes/two-emulators.md section 6, H1 (throw-away-two-emulators only): each half's file, and no test in two halves.
+          find "$dir" -name 'TEST-*.xml' | while read -r f; do echo "$(basename "$f"): $(grep -o '<testcase ' "$f" | wc -l) tests"; done
+          twice=$(find "$dir" -name 'TEST-*.xml' -exec grep -ho '<testcase name="[^"]*" classname="[^"]*"' {} + | sort | uniq -d | wc -l)
+          echo "Tests in more than one half: $twice"
+          if [ "$twice" -gt 0 ]; then echo "::error::$twice tests ran in more than one half"; exit 1; fi
 
       - name: Pull the screenshots of failed unlocks
         if: always()
@@ -247,4 +272,5 @@ jobs:
             unlock-screens/
             memory-samples.txt
             memory-events-*.txt
+            gradle-*.log
           retention-days: 7
