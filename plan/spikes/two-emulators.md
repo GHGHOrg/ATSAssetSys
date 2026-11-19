@@ -1,6 +1,6 @@
 # plan/spikes/two-emulators.md
 
-Stage: Build. Status: written 2026-11-19 on branch spike-two-emulators (from main at 6d26199); approved by you 2026-11-19 as written, before the look-ups (section 5). Look-ups L1 and L5 done 2026-11-19, L3 worked out before the run; L2, L4, L6 and L7 answered by the run. The research's open questions settled 2026-11-19 (section 11.5). Decisions T1 to T5 settled 2026-11-19 (section 7). The run done 2026-11-19 (section 9): series A 3 of 3 green, B1 and C1 red; T6: one emulator kept, nothing adopted. Cleanup waits for your yes (section 10).
+Stage: Build. Status: written 2026-11-19 on branch spike-two-emulators (from main at 6d26199); approved by you 2026-11-19 as written, before the look-ups (section 5). Look-ups L1 and L5 done 2026-11-19, L3 worked out before the run; L2, L4, L6 and L7 answered by the run. The research's open questions settled 2026-11-19 (section 11.5). Decisions T1 to T5 settled 2026-11-19 (section 7). The run done 2026-11-19 (section 9): series A 3 of 3 green, B1 and C1 red; T6: one emulator kept, nothing adopted. Cleanup done 2026-11-19 (section 10).
 Source: your request of 2026-11-19 (two emulators on one GitHub runner, to shorten the screen tests; tried on a throw-away branch), the research report "Screen test runtime on GitHub" (2026-11-19; its findings and sources are in section 11, as the report itself stays in my scratchpad, which can be cleared), .github/workflows/screen-tests.yml (read 2026-11-19), plan/spikes/avd-memory.md sections 3, 5 and 9, the step times of runs 44314279343, 44309994483, 44299031081 and 44273292455 (read with gh, 2026-11-19), and your statement of 2026-11-19 that the repository is public on GitHub's Free plan.
 
 How sources are labelled in this note:
@@ -137,7 +137,7 @@ Run 2026-11-19 on throw-away-two-emulators, draft pull request #204. Series A: r
 - The answer to section 1: two emulators on one GitHub runner (4 CPUs, 16 GB) do not finish the screen tests sooner than one; they make them longer and red. More memory per emulator does not change that.
 
 ## 10. Cleanup and follow-up
-- After the run, with your yes: the draft pull request #204 closed unmerged and throw-away-two-emulators deleted locally and on GitHub; its commits 4eafe4b, 16f387e and eb98fb7 are named in section 9. Not done yet.
+- Done 2026-11-19 with your yes: #204 closed unmerged; throw-away-two-emulators deleted locally and on GitHub (`gh pr close 204 --delete-branch` removed both). Its commits 4eafe4b, 16f387e and eb98fb7 are named in section 9; the runs' logs stay on GitHub.
 - T6's change: none (section 7).
 - What the run adds for the later notes: series A's three runs on one commit spread over 227 s (criterion 1, 652 to 879 s), larger than the 160 to 200 s seen before. Sharding over separate runners (section 11.2, approach 3) avoids the CPU sharing that failed here, but each runner repeats about 3.5 minutes of setup.
 - Later, not in this spike: sharding over two or three runners, skipping the screen tests on docs-only changes (a detection job and a gate job, not a workflow-level paths filter), cancelling superseded pull-request runs, and the deprecated `-gpu swiftshader_indirect` (deprecated since emulator 36.4.9, research, section 11.4; not checked in the emulator's own notes). Each would be its own note; section 11 holds what the research found for each.
