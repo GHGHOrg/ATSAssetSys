@@ -16,11 +16,19 @@ env:
   # The fixed throwaway test PIN (spec section 9; plan/spikes/screen-tests.md 11.3, S10), the same as TEST_PIN in ScreenTestSupport.kt.
   # It unlocks only this emulator, never a phone.
   TEST_PIN: "135790"
+  # plan/spikes/two-emulators.md section 4, D (throw-away-runner-shards only): the tests split over separate runners, one
+  # emulator each, by the test runner's numShards and shardIndex (T8: 2 shards; T9).
+  NUM_SHARDS: "2"
 
 jobs:
-  screen-tests:
+  shard:
+    name: screen-tests shard ${{ matrix.shard }}
     runs-on: ubuntu-26.04
     timeout-minutes: 45
+    strategy:
+      fail-fast: false
+      matrix:
+        shard: [0, 1]
     steps:
       - uses: actions/checkout@v7
       - uses: actions/setup-java@v6
@@ -87,6 +95,23 @@ jobs:
       - name: Build the app and the tests
         run: ./gradlew :app:assembleDebug :app:assembleDebugAndroidTest
 
+      # plan/spikes/two-emulators.md section 8, step 6 (throw-away-runner-shards only; taken from plan/spikes/avd-memory.md,
+      # commit 161a322): every 30 s, the runner's available memory and the guest's MemAvailable, from before the emulator
+      # starts to the end of the tests. Before the boot the guest's field stays empty.
+      - name: Start the memory sampler
+        run: |
+          cat > "$RUNNER_TEMP/sample-memory.sh" <<'EOF'
+          adb="$ANDROID_HOME/platform-tools/adb"
+          while true; do
+            runner=$(free -m | awk '/^Mem:/ {print $7}')
+            guest=$("$adb" shell cat /proc/meminfo 2>/dev/null | tr -d '\r' | awk '/^MemAvailable:/ {print $2}')
+            echo "$(date +%s) runner_available_mb=$runner guest_available_kb=$guest"
+            sleep 30
+          done
+          EOF
+          nohup bash "$RUNNER_TEMP/sample-memory.sh" > memory-samples.txt 2>&1 &
+          echo "SAMPLER_PID=$!" >> "$GITHUB_ENV"
+
       - name: Create the AVD and start it headless
         run: |
           # The same folder for avdmanager and the emulator (plan/spikes/screen-tests.md 11.6, run 1: the emulator found no AVD in $HOME/.android/avd).
@@ -141,21 +166,22 @@ jobs:
 
       - name: Screen tests
         run: |
+          echo "TESTS_START=$(date +%s)" >> "$GITHUB_ENV"
           start=$SECONDS
-          ./gradlew :app:connectedDebugAndroidTest
-          echo "Tests took $((SECONDS - start)) s"
+          ./gradlew :app:connectedDebugAndroidTest \
+            -Pandroid.testInstrumentationRunnerArguments.numShards="$NUM_SHARDS" \
+            -Pandroid.testInstrumentationRunnerArguments.shardIndex="${{ matrix.shard }}"
+          echo "Shard ${{ matrix.shard }} of $NUM_SHARDS: tests took $((SECONDS - start)) s"
 
-      # Gradle once passed with no test run (plan/spikes/screen-tests.md 11.4, series 1, run 20). The expected count is the number of @Test lines in
-      # the screen tests' sources, so it needs no update when tests are added; a stray @Test makes the run red, never green.
-      - name: Check the test count
+      # Gradle once passed with no test run (plan/spikes/screen-tests.md 11.4, series 1, run 20). Each shard runs only its share,
+      # so here a shard only must have run some tests; the job named screen-tests checks the total (T10).
+      - name: Check the shard ran tests
         if: always()
         run: |
-          expected=$(grep -rhE '^[[:space:]]*@Test\b' app/src/androidTest | wc -l)
           dir=app/build/outputs/androidTest-results/connected/debug
           count=$(find "$dir" -name 'TEST-*.xml' -exec grep -ho '<testcase ' {} + 2>/dev/null | wc -l)
-          echo "Tests run: $count of $expected"
-          if [ "$expected" -eq 0 ]; then echo "::error::no @Test found in app/src/androidTest"; exit 1; fi
-          if [ "$count" -lt "$expected" ]; then echo "::error::$count tests ran, expected $expected"; exit 1; fi
+          echo "Shard ${{ matrix.shard }}: $count tests run"
+          if [ "$count" -eq 0 ]; then echo "::error::shard ${{ matrix.shard }} ran no tests"; exit 1; fi
 
       - name: Pull the screenshots of failed unlocks
         if: always()
@@ -165,14 +191,69 @@ jobs:
           for f in $("$adb" shell 'ls /data/local/tmp/screen-test-*.png 2>/dev/null' | tr -d '\r'); do "$adb" pull "$f" unlock-screens/; done
           ls -l unlock-screens
 
+      # plan/spikes/two-emulators.md section 6, H2 and H3 (throw-away-runner-shards only; taken from commit 161a322).
+      - name: Memory summary
+        if: always()
+        run: |
+          kill "$SAMPLER_PID" 2>/dev/null || true
+          adb="$ANDROID_HOME/platform-tools/adb"
+          "$adb" logcat -b events -d 2>/dev/null | grep -E 'am_low_memory|am_kill' > memory-events.txt || true
+          echo "Samples: $(wc -l < memory-samples.txt)"
+          awk -v ts="${TESTS_START:-0}" '
+            { for (i = 2; i <= NF; i++) {
+                n = index($i, "="); k = substr($i, 1, n - 1); x = substr($i, n + 1)
+                if (x == "") continue
+                x += 0
+                if (!(k in lowjob) || x < lowjob[k]) lowjob[k] = x
+                if (ts > 0 && $1 >= ts && (!(k in lowtests) || x < lowtests[k])) lowtests[k] = x
+            } }
+            END { for (k in lowjob) print k ", lowest: " lowjob[k] " (job), " ((k in lowtests) ? lowtests[k] : "-") " (tests)" }' memory-samples.txt
+          echo "am_low_memory events $(grep -c am_low_memory memory-events.txt || true), am_kill events $(grep -c am_kill memory-events.txt || true)"
+
       - name: Keep the results and the emulator log
         if: always()
         uses: actions/upload-artifact@v7
         with:
-          name: screen-tests-attempt-${{ github.run_attempt }}
+          name: screen-tests-shard-${{ matrix.shard }}-attempt-${{ github.run_attempt }}
           path: |
             app/build/outputs/androidTest-results/connected/debug/
             app/build/reports/androidTests/connected/debug/
             emulator.log
             unlock-screens/
+            memory-samples.txt
+            memory-events.txt
           retention-days: 7
+
+  # plan/spikes/two-emulators.md section 7, T10 (throw-away-runner-shards only): named like today's required check. It waits
+  # for every shard, is red unless all are green, and checks their results together: each shard's file, the total against
+  # the @Test count, and no test in two shards.
+  screen-tests:
+    needs: shard
+    if: always()
+    runs-on: ubuntu-26.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Download every shard's results
+        uses: actions/download-artifact@v8
+        with:
+          pattern: screen-tests-shard-*-attempt-${{ github.run_attempt }}
+          path: shards
+
+      # Gradle once passed with no test run (plan/spikes/screen-tests.md 11.4, series 1, run 20). The expected count is the number of @Test lines in
+      # the screen tests' sources, so it needs no update when tests are added; a stray @Test makes the run red, never green.
+      - name: Check the test count
+        env:
+          SHARDS_RESULT: ${{ needs.shard.result }}
+        run: |
+          echo "Shard jobs: $SHARDS_RESULT"
+          expected=$(grep -rhE '^[[:space:]]*@Test\b' app/src/androidTest | wc -l)
+          find shards -name 'TEST-*.xml' | sort | while read -r f; do echo "$f: $(grep -o '<testcase ' "$f" | wc -l) tests"; done
+          count=$(find shards -name 'TEST-*.xml' -exec grep -ho '<testcase ' {} + 2>/dev/null | wc -l)
+          twice=$(find shards -name 'TEST-*.xml' -exec grep -ho '<testcase name="[^"]*" classname="[^"]*"' {} + 2>/dev/null | sort | uniq -d | wc -l)
+          echo "Tests run: $count of $expected; in more than one shard: $twice"
+          if [ "$expected" -eq 0 ]; then echo "::error::no @Test found in app/src/androidTest"; exit 1; fi
+          if [ "$count" -lt "$expected" ]; then echo "::error::$count tests ran, expected $expected"; exit 1; fi
+          if [ "$twice" -gt 0 ]; then echo "::error::$twice tests ran in more than one shard"; exit 1; fi
+          if [ "$SHARDS_RESULT" != "success" ]; then echo "::error::a shard job ended $SHARDS_RESULT"; exit 1; fi
