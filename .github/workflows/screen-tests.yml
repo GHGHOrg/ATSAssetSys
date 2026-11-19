@@ -17,8 +17,8 @@ env:
   # It unlocks only this emulator, never a phone.
   TEST_PIN: "135790"
   # plan/spikes/two-emulators.md section 4, D (throw-away-runner-shards only): the tests split over separate runners, one
-  # emulator each, by the test runner's numShards and shardIndex (T8: 2 shards; T9).
-  NUM_SHARDS: "2"
+  # emulator each, by the test runner's numShards and shardIndex (T9). Series E (your request after series D): 3 shards.
+  NUM_SHARDS: "3"
 
 jobs:
   shard:
@@ -28,7 +28,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        shard: [0, 1]
+        shard: [0, 1, 2]
     steps:
       - uses: actions/checkout@v7
       - uses: actions/setup-java@v6
