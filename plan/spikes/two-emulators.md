@@ -1,6 +1,6 @@
 # plan/spikes/two-emulators.md
 
-Stage: Build. Status: written 2026-11-19 on branch spike-two-emulators (from main at 6d26199); approved by you 2026-11-19 as written, before the look-ups (section 5). Look-ups L1 and L5 done 2026-11-19, L3 worked out before the run; L2, L4, L6 and L7 wait for the run. The research's open questions settled 2026-11-19 (section 11.5). Decisions T1 to T5 settled 2026-11-19 (section 7); T6 after the run.
+Stage: Build. Status: written 2026-11-19 on branch spike-two-emulators (from main at 6d26199); approved by you 2026-11-19 as written, before the look-ups (section 5). Look-ups L1 and L5 done 2026-11-19, L3 worked out before the run; L2, L4, L6 and L7 answered by the run. The research's open questions settled 2026-11-19 (section 11.5). Decisions T1 to T5 settled 2026-11-19 (section 7). The run done 2026-11-19 (section 9): series A 3 of 3 green, B1 and C1 red; T6: one emulator kept, nothing adopted. Cleanup waits for your yes (section 10).
 Source: your request of 2026-11-19 (two emulators on one GitHub runner, to shorten the screen tests; tried on a throw-away branch), the research report "Screen test runtime on GitHub" (2026-11-19; its findings and sources are in section 11, as the report itself stays in my scratchpad, which can be cleared), .github/workflows/screen-tests.yml (read 2026-11-19), plan/spikes/avd-memory.md sections 3, 5 and 9, the step times of runs 44314279343, 44309994483, 44299031081 and 44273292455 (read with gh, 2026-11-19), and your statement of 2026-11-19 that the repository is public on GitHub's Free plan.
 
 How sources are labelled in this note:
@@ -75,8 +75,11 @@ None needs a web search or fetch. Each gh call is a shell command and asks first
 
 Answers (I read, 2026-11-19):
 - L1 app/build.gradle.kts: applicationId app.ghghorg.atsassets (line 17), testInstrumentationRunner androidx.test.runner.AndroidJUnitRunner (line 23), no testApplicationId. My reading: the test package is then app.ghghorg.atsassets.test, so the target is `app.ghghorg.atsassets.test/androidx.test.runner.AndroidJUnitRunner`; run A1 checks it with `adb shell pm list instrumentation`.
-- L2 and L4 are answered by the run (A1 and B1).
-- L3, before the run (section 11.5, the sharding filter and the time per class): runner 1.7.0 splits test by test by `Math.abs(description.hashCode()) % numShards`. Worked out with that rule on run 44314279343's 136 tests (my reading of the hash, not run): shard 0 would get 76 tests and 337.5 s, shard 1 60 tests and 318.7 s, about 51 to 49 by time. Run B1 records the real split.
+- L1 and L2 were needed only for starting the tests with `am instrument` (T2's A); with T2 settled as Gradle they are not used. Gradle uninstalls the APKs after the tests, so `pm list instrumentation` could not have been read after them.
+- L4 (run B1): yes. `-port 5556` gave the serial emulator-5556; both emulators booted and took their tests (section 9).
+- L3, before the run (section 11.5, the sharding filter and the time per class): runner 1.7.0 splits test by test by `Math.abs(description.hashCode()) % numShards`. Worked out with that rule on run 44314279343's 136 tests (my reading of the hash, not run): shard 0 would get 76 tests and 337.5 s, shard 1 60 tests and 318.7 s, about 51 to 49 by time. Run B1 records the real split. Answered by B1 and C1: 76 and 60 tests, as worked out.
+- L6 (runs B1 and C1): yes. Each Gradle run printed "Running tests on devices:" with its own emulator only, and each half's result file names one device.
+- L7 (runs B1 and C1): yes. Both Gradle runs started 156 s (B1) and 124 s (C1) after the emulators' start and ran at the same time, with no lock wait seen in the logs; each wrote its own result file (`TEST-ats-screen-tests-37-5554(AVD) - 17.xml` and `...-5556...`), and the count check added up both: 136 of 136, no test in both halves.
 - L5 Reachable: 161a322 (2026-11-18, "Spike avd-memory, run commit 1: memory sampler, guest RAM and heap limits, memory summary ...") adds 49 lines to .github/workflows/screen-tests.yml and nothing else. Commit 1 (section 8) takes its sampler and summary from there.
 
 ## 6. Criteria for the choice
@@ -97,6 +100,8 @@ T2 settled 2026-11-19, your B (my leaning was A): the tests start through Gradle
 T3 settled 2026-11-19, your A: 4,096 MB for each emulator in B; a series at 3,072 MB only if B breaks H3.
 T4 settled 2026-11-19, your A: 3 runs per setting (6 runs); only a large difference can show.
 T5 settled 2026-11-19, your A: as written in section 6, with a margin of 60 s off criterion 1's median, as plan/spikes/avd-memory.md, M1.
+T3's follow-up settled 2026-11-19, your B (my leaning was to end the trial): after run B1 broke H3, a series C at 3,072 MB per emulator, everything else as B. Run C1 was red as well (section 9), which ended series C.
+T6 settled 2026-11-19, your A, after the run (section 9): keep one emulator; nothing is adopted and main's workflow does not change.
 - T1 The throw-away branch's name. My leaning: throw-away-two-emulators (section 2).
 - T2 How the tests start. A: `adb -s <serial> shell am instrument -w -r` on each emulator, both halves at once in the background, for the control too, so A and B differ only in the emulators; the APKs are installed with `adb -s <serial> install`; the result is the raw output, kept in the artifact. B: Gradle's connectedDebugAndroidTest with `ANDROID_SERIAL` and the shard arguments, one Gradle run per emulator at once. My reading: two Gradle runs in one project at once clash on the build folder and write the same results folder, and Gradle without ANDROID_SERIAL runs every test on every device rather than splitting them. My leaning: A. The control then differs from today's runs in how it starts, so section 3's times are for reference only.
 - T3 Memory per emulator in B. My leaning: 4,096 MB (the size every green run so far had); 3,072 MB only if B breaks H3.
@@ -113,11 +118,28 @@ Each push by you; each run and re-run with your yes; I read each with gh.
 Both series on the same day if the runner allows.
 
 ## 9. Results
-Not run yet.
+Run 2026-11-19 on throw-away-two-emulators, draft pull request #204. Series A: run 44457933505, attempts 1 to 3, on 4eafe4b (section 8, step 1: one emulator, 4 cores, 4,096 MB, measuring added). Series B: run 44463954382 on 16f387e (step 3: two emulators, 2 cores and 4,096 MB each, one Gradle run and one half per emulator). Series C: run 44467392105 on eb98fb7 (T3's follow-up: as B with 3,072 MB each). Each push and re-run with your yes; I read each with gh and downloaded each attempt's artifact before the next (kept in my scratchpad, not in the repo). Step times are the job's from the GitHub API; boot and settle are the times the workflow printed; criterion 1 is "Emulators' start to tests done".
+
+| Run | Result | Whole job | Build | Boot | Settle | Animations and PIN | Screen tests | Criterion 1 | Tests | Runner lowest available | Guest lowest available | Unlock screenshots |
+|---|---|---|---|---|---|---|---|---|---|---|---|---|
+| A1 | green | 1,035 s | 91 s | 51 s | 11 s | 5 s | 812 s | 879 s | 136 of 136 | 5,716 MB | 1,855 MB | 0 |
+| A2 | green | 841 s | 85 s | 41 s | 11 s | 5 s | 631 s | 688 s | 136 of 136 | 5,912 MB | 1,796 MB | 0 |
+| A3 | green | 778 s | 73 s | 42 s | 11 s | 2 s | 596 s | 652 s | 136 of 136 | 5,910 MB | 1,877 MB | 0 |
+| B1 | red | 1,436 s | 108 s | 91 and 97 s | 12 s | 47 s | 1,109 s | 1,265 s | 76 + 60, 15 failed | 946 MB | 1,973 and 1,954 MB | 13 |
+| C1 | red | 1,067 s | 64 s | 74 and 74 s | 11 s | 39 s | 821 s | 945 s | 76 + 60, 11 failed | 1,245 MB | 1,952 and 1,948 MB | 10 |
+
+- Series A: criterion 1 median 688 s, longest 879 s; test step median 631 s; whole job median 841 s. No "Not Responding" window, no low-memory event; the kill events were the end of the tests ("finished inst", the test package removed), and in A1 com.android.externalstorage "Sync transaction while in frozen state", as in plan/spikes/avd-memory.md section 9.
+- B1: half 0 (emulator-5554, 76 tests) failed 15, half 1 (emulator-5556, 60 tests) none. Half 1 ran from 156 s to 855 s after the emulators' start, half 0 from 156 s to 1,265 s. Failures: 13 tests "Timed out after 15000 ms waiting for the lock prompt's PIN pad (com.android.systemui:id/key_enter)", 2 AppStartTimingTest runs "Overall's net worth did not show within 120000 ms". The runner's available memory fell to 946 MB.
+- C1: half 0 failed 1 test, half 1 failed 10: 10 PIN-pad timeouts as in B1 and 1 AppStartTimingTest timeout. Half 0 ended 723 s, half 1 945 s after the emulators' start. The runner kept 1,245 MB.
+- Time per test against series A (I read, the result files, the same test names summed): B1's half 0 took 994.0 s for tests that took 288.0 to 396.2 s in A (about 2.5 to 3.5 times), half 1 579.2 s against 273.6 to 369.0 s (about 1.6 to 2.1 times); C1's half 0 520.1 s against 288.0 to 396.2 s (about 1.3 to 1.8 times), half 1 759.6 s against 273.6 to 369.0 s (about 2.1 to 2.8 times). Two halves each running about twice as slowly cannot finish sooner than one emulator running both.
+- The guests never ran short: each had about 1.9 GB available at its lowest, at 4,096 or 3,072 MB. The cause of the failures, my reading: the four CPUs shared by two guests, two swiftshader renderers and two Gradle runs leave SystemUI too slow to draw the PIN pad within the tests' 15 s, at random on either emulator (B1 mostly 5554, C1 mostly 5556).
+- Section 6: B and C break H1 (both red) and H2 (13 and 10 unlock retries); B breaks H3 (946 MB, floor 1,024 MB), C holds it (1,245 MB). Criterion 1: 1,265 s and 945 s against the control's median 688 s, where T5 asked for 628 s or less. Neither is shorter; by section 8, step 4, each red run ended its series (B2, B3, C2 and C3 not run).
+- The answer to section 1: two emulators on one GitHub runner (4 CPUs, 16 GB) do not finish the screen tests sooner than one; they make them longer and red. More memory per emulator does not change that.
 
 ## 10. Cleanup and follow-up
-- After the run, with your yes: the draft pull request closed unmerged and throw-away-two-emulators deleted locally and on GitHub; its commits named in section 9.
-- T6's change: to be settled.
+- After the run, with your yes: the draft pull request #204 closed unmerged and throw-away-two-emulators deleted locally and on GitHub; its commits 4eafe4b, 16f387e and eb98fb7 are named in section 9. Not done yet.
+- T6's change: none (section 7).
+- What the run adds for the later notes: series A's three runs on one commit spread over 227 s (criterion 1, 652 to 879 s), larger than the 160 to 200 s seen before. Sharding over separate runners (section 11.2, approach 3) avoids the CPU sharing that failed here, but each runner repeats about 3.5 minutes of setup.
 - Later, not in this spike: sharding over two or three runners, skipping the screen tests on docs-only changes (a detection job and a gate job, not a workflow-level paths filter), cancelling superseded pull-request runs, and the deprecated `-gpu swiftshader_indirect` (deprecated since emulator 36.4.9, research, section 11.4; not checked in the emulator's own notes). Each would be its own note; section 11 holds what the research found for each.
 - Open, from plan/spikes/avd-memory.md section 10: plan/plan.md section 2 does not list the spike notes. This note joins that point.
 
