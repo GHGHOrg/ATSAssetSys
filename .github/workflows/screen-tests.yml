@@ -16,6 +16,10 @@ env:
   # The fixed throwaway test PIN (spec section 9; plan/spikes/screen-tests.md 11.3, S10), the same as TEST_PIN in ScreenTestSupport.kt.
   # It unlocks only this emulator, never a phone.
   TEST_PIN: "135790"
+  # plan/spikes/two-emulators.md section 8 (throw-away-two-emulators only): the emulators' serials, one per port (5554, 5556),
+  # and the cores each emulator gets. Series A: one emulator with 4 cores.
+  SERIALS: emulator-5554
+  CORES: "4"
 
 jobs:
   screen-tests:
@@ -87,45 +91,81 @@ jobs:
       - name: Build the app and the tests
         run: ./gradlew :app:assembleDebug :app:assembleDebugAndroidTest
 
-      - name: Create the AVD and start it headless
+      # plan/spikes/two-emulators.md section 8, step 1 (throw-away-two-emulators only; taken from plan/spikes/avd-memory.md,
+      # commit 161a322): every 30 s, the runner's available memory and each guest's MemAvailable, from before the emulators
+      # start to the end of the tests. Before a guest boots its field stays empty.
+      - name: Start the memory sampler
+        run: |
+          cat > "$RUNNER_TEMP/sample-memory.sh" <<'EOF'
+          adb="$ANDROID_HOME/platform-tools/adb"
+          while true; do
+            line="$(date +%s) runner_available_mb=$(free -m | awk '/^Mem:/ {print $7}')"
+            for s in $SERIALS; do
+              a=$("$adb" -s "$s" shell cat /proc/meminfo 2>/dev/null | tr -d '\r' | awk '/^MemAvailable:/ {print $2}')
+              line="$line guest_available_kb@$s=$a"
+            done
+            echo "$line"
+            sleep 30
+          done
+          EOF
+          nohup bash "$RUNNER_TEMP/sample-memory.sh" > memory-samples.txt 2>&1 &
+          echo "SAMPLER_PID=$!" >> "$GITHUB_ENV"
+
+      # One AVD per serial: two emulators cannot run from one AVD at once (my reading). All start together; BOOT_START is
+      # the start of the first (plan/spikes/two-emulators.md section 6, criterion 1).
+      - name: Create the AVDs and start them headless
         run: |
           # The same folder for avdmanager and the emulator (plan/spikes/screen-tests.md 11.6, run 1: the emulator found no AVD in $HOME/.android/avd).
           export ANDROID_AVD_HOME="$HOME/.android/avd"
           mkdir -p "$ANDROID_AVD_HOME"
           echo "ANDROID_AVD_HOME=$ANDROID_AVD_HOME" >> "$GITHUB_ENV"
-          echo no | "$ANDROID_HOME/cmdline-tools/latest/bin/avdmanager" create avd -n "$AVD" -k "$IMAGE" -d pixel_9_pro_xl
-          if [ ! -f "$ANDROID_AVD_HOME/$AVD.ini" ]; then
-            echo "::error::avdmanager made no $AVD.ini in $ANDROID_AVD_HOME"; find "$HOME" -name "$AVD.ini" 2>/dev/null; exit 1
-          fi
-          # 4 GB and 4 cores: with the profile's 2 GB, System UI stopped responding during the tests (plan/spikes/screen-tests.md 11.6, run 1 on 039611f).
-          nohup "$ANDROID_HOME/emulator/emulator" -avd "$AVD" -no-window -no-audio -no-boot-anim -no-snapshot \
-            -gpu swiftshader_indirect -accel on -memory 4096 -cores 4 > emulator.log 2>&1 &
-          echo "EMULATOR_PID=$!" >> "$GITHUB_ENV"
           echo "BOOT_START=$(date +%s)" >> "$GITHUB_ENV"
+          pids=""
+          for s in $SERIALS; do
+            port=${s#emulator-}; avd="$AVD-$port"
+            echo no | "$ANDROID_HOME/cmdline-tools/latest/bin/avdmanager" create avd -n "$avd" -k "$IMAGE" -d pixel_9_pro_xl
+            if [ ! -f "$ANDROID_AVD_HOME/$avd.ini" ]; then
+              echo "::error::avdmanager made no $avd.ini in $ANDROID_AVD_HOME"; find "$HOME" -name "$avd.ini" 2>/dev/null; exit 1
+            fi
+            # 4 GB: with the profile's 2 GB, System UI stopped responding during the tests (plan/spikes/screen-tests.md 11.6, run 1 on 039611f).
+            nohup "$ANDROID_HOME/emulator/emulator" -avd "$avd" -port "$port" -no-window -no-audio -no-boot-anim -no-snapshot \
+              -gpu swiftshader_indirect -accel on -memory 4096 -cores "$CORES" > "emulator-$port.log" 2>&1 &
+            pids="$pids $!"
+            echo "Started $s ($avd) with $CORES cores"
+          done
+          echo "EMULATOR_PIDS=$pids" >> "$GITHUB_ENV"
 
       - name: Wait for the boot
         run: |
           adb="$ANDROID_HOME/platform-tools/adb"
-          until [ "$("$adb" shell getprop sys.boot_completed 2>/dev/null | tr -d '\r')" = "1" ]; do
-            if ! kill -0 "$EMULATOR_PID" 2>/dev/null; then echo "::error::the emulator exited"; cat emulator.log; exit 1; fi
-            if [ $(($(date +%s) - BOOT_START)) -gt 600 ]; then echo "::error::no boot in 600 s"; tail -50 emulator.log; exit 1; fi
-            sleep 2
+          for s in $SERIALS; do
+            until [ "$("$adb" -s "$s" shell getprop sys.boot_completed 2>/dev/null | tr -d '\r')" = "1" ]; do
+              for p in $EMULATOR_PIDS; do
+                if ! kill -0 "$p" 2>/dev/null; then echo "::error::an emulator exited"; tail -50 emulator-*.log; exit 1; fi
+              done
+              if [ $(($(date +%s) - BOOT_START)) -gt 600 ]; then echo "::error::$s did not boot in 600 s"; tail -50 emulator-*.log; exit 1; fi
+              sleep 2
+            done
+            echo "$s booted $(($(date +%s) - BOOT_START)) s after the emulators' start"
           done
-          echo "Boot took $(($(date +%s) - BOOT_START)) s from the emulator's start"
 
       - name: Let the system settle
         run: |
-          # Waits until no "Not Responding" window has been seen for 10 s (up to 120 s). Back closes such a dialog
-          # as Wait would (my reading).
+          # Waits until no "Not Responding" window has been seen on any emulator for 10 s (up to 120 s). Back closes such a
+          # dialog as Wait would (my reading).
           adb="$ANDROID_HOME/platform-tools/adb"
           start=$(date +%s); quiet_since=$start
           while [ $(($(date +%s) - quiet_since)) -lt 10 ]; do
             if [ $(($(date +%s) - start)) -gt 120 ]; then
-              echo "::error::the system did not settle in 120 s"; "$adb" shell dumpsys window | grep -E 'mCurrentFocus|Not Responding'; exit 1
+              echo "::error::the system did not settle in 120 s"
+              for s in $SERIALS; do echo "$s:"; "$adb" -s "$s" shell dumpsys window | grep -E 'mCurrentFocus|Not Responding'; done
+              exit 1
             fi
-            if "$adb" shell dumpsys window | grep -q 'Not Responding'; then
-              echo "Not Responding window at $(($(date +%s) - start)) s"; "$adb" shell input keyevent KEYCODE_BACK; quiet_since=$(date +%s)
-            fi
+            for s in $SERIALS; do
+              if "$adb" -s "$s" shell dumpsys window | grep -q 'Not Responding'; then
+                echo "$s: Not Responding window at $(($(date +%s) - start)) s"; "$adb" -s "$s" shell input keyevent KEYCODE_BACK; quiet_since=$(date +%s)
+              fi
+            done
             sleep 2
           done
           echo "Settled after $(($(date +%s) - start)) s"
@@ -133,17 +173,22 @@ jobs:
       - name: Animations off and the test PIN set
         run: |
           adb="$ANDROID_HOME/platform-tools/adb"
-          "$adb" shell settings put global window_animation_scale 0
-          "$adb" shell settings put global transition_animation_scale 0
-          "$adb" shell settings put global animator_duration_scale 0
-          "$adb" shell locksettings set-pin "$TEST_PIN"
-          "$adb" shell locksettings verify --old "$TEST_PIN"
+          for s in $SERIALS; do
+            "$adb" -s "$s" shell settings put global window_animation_scale 0
+            "$adb" -s "$s" shell settings put global transition_animation_scale 0
+            "$adb" -s "$s" shell settings put global animator_duration_scale 0
+            "$adb" -s "$s" shell locksettings set-pin "$TEST_PIN"
+            "$adb" -s "$s" shell locksettings verify --old "$TEST_PIN"
+          done
 
       - name: Screen tests
         run: |
+          echo "TESTS_START=$(date +%s)" >> "$GITHUB_ENV"
           start=$SECONDS
           ./gradlew :app:connectedDebugAndroidTest
           echo "Tests took $((SECONDS - start)) s"
+          # plan/spikes/two-emulators.md section 6, criterion 1.
+          echo "Emulators' start to tests done: $(($(date +%s) - BOOT_START)) s"
 
       # Gradle once passed with no test run (plan/spikes/screen-tests.md 11.4, series 1, run 20). The expected count is the number of @Test lines in
       # the screen tests' sources, so it needs no update when tests are added; a stray @Test makes the run red, never green.
@@ -161,9 +206,34 @@ jobs:
         if: always()
         run: |
           adb="$ANDROID_HOME/platform-tools/adb"
-          mkdir -p unlock-screens
-          for f in $("$adb" shell 'ls /data/local/tmp/screen-test-*.png 2>/dev/null' | tr -d '\r'); do "$adb" pull "$f" unlock-screens/; done
-          ls -l unlock-screens
+          for s in $SERIALS; do
+            mkdir -p "unlock-screens/$s"
+            for f in $("$adb" -s "$s" shell 'ls /data/local/tmp/screen-test-*.png 2>/dev/null' | tr -d '\r'); do "$adb" -s "$s" pull "$f" "unlock-screens/$s/"; done
+          done
+          ls -lR unlock-screens
+
+      # plan/spikes/two-emulators.md section 6, H2 and H3 (throw-away-two-emulators only; taken from plan/spikes/avd-memory.md,
+      # commit 161a322): the lowest of each sampled figure, over the whole job and during the tests, and each guest's
+      # low-memory and kill events still in its events buffer.
+      - name: Memory summary
+        if: always()
+        run: |
+          kill "$SAMPLER_PID" 2>/dev/null || true
+          adb="$ANDROID_HOME/platform-tools/adb"
+          echo "Samples: $(wc -l < memory-samples.txt)"
+          awk -v ts="${TESTS_START:-0}" '
+            { for (i = 2; i <= NF; i++) {
+                n = index($i, "="); k = substr($i, 1, n - 1); x = substr($i, n + 1)
+                if (x == "") continue
+                x += 0
+                if (!(k in lowjob) || x < lowjob[k]) lowjob[k] = x
+                if (ts > 0 && $1 >= ts && (!(k in lowtests) || x < lowtests[k])) lowtests[k] = x
+            } }
+            END { for (k in lowjob) print k ", lowest: " lowjob[k] " (job), " ((k in lowtests) ? lowtests[k] : "-") " (tests)" }' memory-samples.txt
+          for s in $SERIALS; do
+            "$adb" -s "$s" logcat -b events -d 2>/dev/null | grep -E 'am_low_memory|am_kill' > "memory-events-$s.txt" || true
+            echo "$s: am_low_memory events $(grep -c am_low_memory "memory-events-$s.txt" || true), am_kill events $(grep -c am_kill "memory-events-$s.txt" || true)"
+          done
 
       - name: Keep the results and the emulator log
         if: always()
@@ -173,6 +243,8 @@ jobs:
           path: |
             app/build/outputs/androidTest-results/connected/debug/
             app/build/reports/androidTests/connected/debug/
-            emulator.log
+            emulator-*.log
             unlock-screens/
+            memory-samples.txt
+            memory-events-*.txt
           retention-days: 7
