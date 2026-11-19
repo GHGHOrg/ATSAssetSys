@@ -17,9 +17,11 @@ env:
   # It unlocks only this emulator, never a phone.
   TEST_PIN: "135790"
   # plan/spikes/two-emulators.md section 8 (throw-away-two-emulators only): the emulators' serials, one per port (5554, 5556),
-  # and the cores each emulator gets. Series B: two emulators with 2 cores each.
+  # and the cores and memory each emulator gets. Series C (T3's follow-up after run B1 broke H3): two emulators with 2 cores
+  # and 3,072 MB each.
   SERIALS: emulator-5554 emulator-5556
   CORES: "2"
+  MEMORY: "3072"
 
 jobs:
   screen-tests:
@@ -129,9 +131,9 @@ jobs:
             fi
             # 4 GB: with the profile's 2 GB, System UI stopped responding during the tests (plan/spikes/screen-tests.md 11.6, run 1 on 039611f).
             nohup "$ANDROID_HOME/emulator/emulator" -avd "$avd" -port "$port" -no-window -no-audio -no-boot-anim -no-snapshot \
-              -gpu swiftshader_indirect -accel on -memory 4096 -cores "$CORES" > "emulator-$port.log" 2>&1 &
+              -gpu swiftshader_indirect -accel on -memory "$MEMORY" -cores "$CORES" > "emulator-$port.log" 2>&1 &
             pids="$pids $!"
-            echo "Started $s ($avd) with $CORES cores"
+            echo "Started $s ($avd) with $CORES cores and $MEMORY MB"
           done
           echo "EMULATOR_PIDS=$pids" >> "$GITHUB_ENV"
 
