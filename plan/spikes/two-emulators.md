@@ -1,6 +1,6 @@
 # plan/spikes/two-emulators.md
 
-Stage: Build. Status: written 2026-11-19 on branch spike-two-emulators (from main at 6d26199); approved by you 2026-11-19 as written, before the look-ups (section 5). Look-ups L1 and L5 done 2026-11-19, L3 worked out before the run; L2, L4, L6 and L7 answered by the run. The research's open questions settled 2026-11-19 (section 11.5). Decisions T1 to T5 settled 2026-11-19 (section 7). The run done 2026-11-19 (section 9): series A 3 of 3 green, B1 and C1 red; T6: one emulator kept, nothing adopted. Cleanup done 2026-11-19 (section 10).
+Stage: Build. Status: written 2026-11-19 on branch spike-two-emulators (from main at 6d26199); approved by you 2026-11-19 as written, before the look-ups (section 5). Look-ups L1 and L5 done 2026-11-19, L3 worked out before the run; L2, L4, L6 and L7 answered by the run. The research's open questions settled 2026-11-19 (section 11.5). Decisions T1 to T5 settled 2026-11-19 (section 7). The run done 2026-11-19 (section 9): series A 3 of 3 green, B1 and C1 red; T6: one emulator kept, nothing adopted. Cleanup done 2026-11-19 (section 10). Extended 2026-11-19 at your request, while pull request #205 was open: series D, the tests split over separate runners (sections 1, 2, 4, 6, 7 and 8); the extension approved and T7 to T10 settled 2026-11-19 (section 7); D's run next, then T11.
 Source: your request of 2026-11-19 (two emulators on one GitHub runner, to shorten the screen tests; tried on a throw-away branch), the research report "Screen test runtime on GitHub" (2026-11-19; its findings and sources are in section 11, as the report itself stays in my scratchpad, which can be cleared), .github/workflows/screen-tests.yml (read 2026-11-19), plan/spikes/avd-memory.md sections 3, 5 and 9, the step times of runs 44314279343, 44309994483, 44299031081 and 44273292455 (read with gh, 2026-11-19), and your statement of 2026-11-19 that the repository is public on GitHub's Free plan.
 
 How sources are labelled in this note:
@@ -28,13 +28,17 @@ A measured answer to one question: do two emulators on one GitHub runner, each r
 2. Each run records its step times, each emulator's test count and time, the total test count against the @Test count of the day, and the runner's free memory while the tests run.
 3. Section 9 says, by section 6, whether B is shorter, and by how much, or that it is not.
 4. You choose to adopt B, or not (decision T6).
-Skipping docs-only changes, cancelling superseded runs and sharding over two or three runners (the research's approaches 1 to 3, section 11.2) are not measured here (section 10).
+A second question, added 2026-11-19 at your request: does splitting the tests over separate runners (a job matrix, one emulator per runner, the research's approach 3, section 11.2) finish the screen tests sooner than one runner, with every run still green? It passes when:
+5. Series D (section 4) has a counted series, judged against series A (run the same day) by section 6's rules for D.
+6. Each run records each shard job's step times, test count and time, the total test count against the @Test count of the day, the wall time from the first shard job's start to the end of the last job, and the runner minutes of all jobs together.
+7. Section 9 says, by section 6, whether D is shorter, and by how much, or that it is not; you choose to adopt D, or not (decision T11).
+Skipping docs-only changes and cancelling superseded runs (the research's approaches 1 and 2) are not measured here (section 10).
 
 ## 2. Gate
 This is a decision note, not an iteration. It gives no app feature, changes no app code and no spec, and blocks no iteration.
 Branch: spike-two-emulators (from main at 6d26199), one pull request with this note, merged by you.
 Trial changes to the workflow go only on a throw-away branch (CLAUDE.md section 4), throw-away-two-emulators, with a draft pull request that is closed unmerged. No NN: a spike has no iteration number (as plan/spikes/avd-memory.md, decision M4).
-Order: the note's approval, the look-ups (section 5), decisions T1 to T5, the run (section 8), results (section 9), then T6.
+Order: the note's approval, the look-ups (section 5), decisions T1 to T5, the run (section 8), results (section 9), then T6. For series D: the extension's approval, decisions T7 to T10, the run (section 8, steps 6 to 9), results (section 9), then T11. D's trial goes on its own throw-away branch (T7).
 An adopted setting changes only .github/workflows/screen-tests.yml. It changes no app behaviour and no spec, so it is not a change request (CLAUDE.md section 4, the test-support rule); T6 says how it lands.
 
 ## 3. Where things stand
@@ -61,6 +65,9 @@ All my reading, to be corrected by section 5.
 Why B could help (my reading): a test spends part of its time waiting (idling, the lock prompt, settle loops), and a second emulator can use the CPU while the first waits. Why it may not: the runner's 4 CPUs are shared by both guests and by swiftshader, which draws on the runner's CPUs outside `-cores`; if the CPUs are the limit, each half runs about twice as slowly and the total stays the same or grows. Two boots at once also share the CPUs, and a busy system was where "Not Responding" windows came from (plan/spikes/screen-tests.md 11.6).
 Memory for B (my reading, from section 3): two guests at 4,096 MB leave the runner about 1.5 to 2 GB during the tests, near H3's floor. If H3 fails, a follow-up series at `-memory 3072` each is possible (T3), as the guest used at most about 2.5 GB.
 My expectation, before the run: B is not shorter by T5's margin. The research reached the same view (section 11.3); this spike measures it.
+- D (added 2026-11-19): the screen-tests job becomes a matrix of N jobs (T8), each on its own runner with one emulator as today (`-cores 4 -memory 4096`), each building the APKs, booting, settling, setting the PIN and running its share of the tests through Gradle with `numShards N` and its `shardIndex`. A last job, named `screen-tests` like today's required check, waits for the shard jobs, downloads their result files and checks the count (T10).
+Why D could help (my reading): each shard has a whole runner's 4 CPUs, so a test runs at series A's speed, which B and C lacked (section 9: each half 2 to 3 times slower). Why it may not: each job repeats about 3.5 minutes of setup (section 3: build, boot, settle), the halves are not equal (B1 and C1: 76 and 60 tests; series A's times for them about 288 to 396 s and 274 to 369 s), and a job may wait for a free runner.
+My estimate, before the run: with two shards, about 210 s of setup plus the larger half's 290 to 400 s of tests, so about 9 to 11 minutes per shard job against series A's whole job of 778 to 1,035 s (median 841 s); runner minutes about 1.3 times series A's. Not measured; the run decides.
 
 ## 5. Questions to look up
 None needs a web search or fetch. Each gh call is a shell command and asks first (CLAUDE.md section 8).
@@ -92,6 +99,11 @@ Then, ranked:
 2. The longest of the same against the control's longest.
 3. The whole job's median.
 B counts as shorter only if its median is at least T5's margin below the control's and its longest run is not longer than the control's longest.
+For D (added 2026-11-19), the same hard rules for every shard job (H1: every job green and the shards' counts adding up to the @Test count with no test in two shards; H2; H3 on each runner), then, ranked:
+1. The median of D's wall time, from the first shard job's start to the end of the last job (the count job), against series A's whole job (median 841 s, longest 1,035 s; section 9). Series A's whole job is the fair match: both take in checkout, build, boot, settle and tests.
+2. The longest of the same against series A's longest.
+3. The runner minutes per run (all jobs' times added), reported, not ranked: free for this public repository.
+D counts as shorter only if its median is at least T5's 60 s below 841 s (so 781 s or less) and its longest run is not longer than 1,035 s.
 
 ## 7. Decisions
 To settle after the note's approval and the look-ups, one question at a time.
@@ -102,6 +114,13 @@ T4 settled 2026-11-19, your A: 3 runs per setting (6 runs); only a large differe
 T5 settled 2026-11-19, your A: as written in section 6, with a margin of 60 s off criterion 1's median, as plan/spikes/avd-memory.md, M1.
 T3's follow-up settled 2026-11-19, your B (my leaning was to end the trial): after run B1 broke H3, a series C at 3,072 MB per emulator, everything else as B. Run C1 was red as well (section 9), which ended series C.
 T6 settled 2026-11-19, your A, after the run (section 9): keep one emulator; nothing is adopted and main's workflow does not change.
+For series D (added 2026-11-19), to settle after the extension's approval, one question at a time.
+The extension approved by you 2026-11-19 as written. T7 to T10 settled 2026-11-19, each your A: T7 throw-away-runner-shards; T8 2 shards; T9 the runner's `numShards` and `shardIndex`; T10 series A as the control, with a count job named `screen-tests`. T11 after the run.
+- T7 D's throw-away branch. My leaning: throw-away-runner-shards, from main, with its own draft pull request closed unmerged.
+- T8 How many shard jobs. My leaning: 2. Section 4's estimate gives 3 shards about 1.5 minutes more off the wall time, for about 3.5 minutes more runner time per run and a third emulator boot that can fail.
+- T9 How the tests are split. A: the runner's `numShards` and `shardIndex` (76 and 60 tests, about 51 to 49 by time, section 11.5), no list to keep up to date. B: class lists balanced by series A's times, passed with the runner's `class` argument; better balanced, but a new test class must be added to a list, and one that is left out does not run (the count check catches it). My leaning: A.
+- T10 The control and the count. My leaning: series A of 2026-11-19 is the control (same day, same main); the count job named `screen-tests` downloads every shard's result files, checks each shard's file, the total against the @Test count and that no test ran in two shards, and is the job the ruleset's required check would then name. Each shard job's artifact carries its shard number.
+- T11 After the results: adopt D, or keep one runner. If D is adopted, my leaning: record it as an open item and change the workflow as a step of the next iteration (CLAUDE.md section 4, the test-support rule).
 - T1 The throw-away branch's name. My leaning: throw-away-two-emulators (section 2).
 - T2 How the tests start. A: `adb -s <serial> shell am instrument -w -r` on each emulator, both halves at once in the background, for the control too, so A and B differ only in the emulators; the APKs are installed with `adb -s <serial> install`; the result is the raw output, kept in the artifact. B: Gradle's connectedDebugAndroidTest with `ANDROID_SERIAL` and the shard arguments, one Gradle run per emulator at once. My reading: two Gradle runs in one project at once clash on the build folder and write the same results folder, and Gradle without ANDROID_SERIAL runs every test on every device rather than splitting them. My leaning: A. The control then differs from today's runs in how it starts, so section 3's times are for reference only.
 - T3 Memory per emulator in B. My leaning: 4,096 MB (the size every green run so far had); 3,072 MB only if B breaks H3.
@@ -116,6 +135,11 @@ Each push by you; each run and re-run with your yes; I read each with gh.
 3. Commit 2 (B): a second emulator on port 5556, `-cores 2` on both, both started together after the build; the boot wait, settle, animations and PIN steps run for each; each emulator runs one half through its own Gradle run, both at once (T2), each printing its own start and end time; the count check checks that each half's XML is there and that the halves add up; both emulators' logs and screenshots kept in the artifact. Series B, the same way.
 4. A red run in a series is read for its cause before anything else (CLAUDE.md section 4); a red run caused by the second emulator ends B's series and is H1's or H2's answer for it.
 Both series on the same day if the runner allows.
+Series D (added 2026-11-19), after T7 to T10:
+6. Branch from main (T7). Commit D1: the screen-tests job becomes a matrix of T8's shard jobs, each with today's steps and one emulator, running its share (T9) through `:app:connectedDebugAndroidTest` with the shard arguments; each job prints its own times and keeps its artifact with its shard number; the count job (T10) follows; the memory sampler and summary from step 1 stay in each shard job.
+7. You push and open a draft pull request. Series D: T4's 3 runs, as attempts of the same run (each attempt's artifacts downloaded before the next).
+8. A red run is read for its cause before anything else (CLAUDE.md section 4); a red run caused by the split ends D's series.
+9. After the run: results in section 9, T11, then the throw-away branch's cleanup with your yes (section 10).
 
 ## 9. Results
 Run 2026-11-19 on throw-away-two-emulators, draft pull request #204. Series A: run 44457933505, attempts 1 to 3, on 4eafe4b (section 8, step 1: one emulator, 4 cores, 4,096 MB, measuring added). Series B: run 44463954382 on 16f387e (step 3: two emulators, 2 cores and 4,096 MB each, one Gradle run and one half per emulator). Series C: run 44467392105 on eb98fb7 (T3's follow-up: as B with 3,072 MB each). Each push and re-run with your yes; I read each with gh and downloaded each attempt's artifact before the next (kept in my scratchpad, not in the repo). Step times are the job's from the GitHub API; boot and settle are the times the workflow printed; criterion 1 is "Emulators' start to tests done".
@@ -140,7 +164,7 @@ Run 2026-11-19 on throw-away-two-emulators, draft pull request #204. Series A: r
 - Done 2026-11-19 with your yes: #204 closed unmerged; throw-away-two-emulators deleted locally and on GitHub (`gh pr close 204 --delete-branch` removed both). Its commits 4eafe4b, 16f387e and eb98fb7 are named in section 9; the runs' logs stay on GitHub.
 - T6's change: none (section 7).
 - What the run adds for the later notes: series A's three runs on one commit spread over 227 s (criterion 1, 652 to 879 s), larger than the 160 to 200 s seen before. Sharding over separate runners (section 11.2, approach 3) avoids the CPU sharing that failed here, but each runner repeats about 3.5 minutes of setup.
-- Later, not in this spike: sharding over two or three runners, skipping the screen tests on docs-only changes (a detection job and a gate job, not a workflow-level paths filter), cancelling superseded pull-request runs, and the deprecated `-gpu swiftshader_indirect` (deprecated since emulator 36.4.9, research, section 11.4; not checked in the emulator's own notes). Each would be its own note; section 11 holds what the research found for each.
+- Later, not in this spike: skipping the screen tests on docs-only changes (a detection job and a gate job, not a workflow-level paths filter), cancelling superseded pull-request runs, and the deprecated `-gpu swiftshader_indirect` (deprecated since emulator 36.4.9, research, section 11.4; not checked in the emulator's own notes). Each would be its own note; section 11 holds what the research found for each.
 - Open, from plan/spikes/avd-memory.md section 10: plan/plan.md section 2 does not list the spike notes. This note joins that point.
 
 ## 11. Research findings
