@@ -42,6 +42,7 @@ import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.lifecycleScope
 import app.ghghorg.atsassets.backup.DocumentBackupTarget
 import app.ghghorg.atsassets.backup.DocumentRestoreFile
+import app.ghghorg.atsassets.core.BackupReminder
 import app.ghghorg.atsassets.data.DatabaseKey
 import app.ghghorg.atsassets.data.RoomRecordStore
 import app.ghghorg.atsassets.data.SqlCipherOpener
@@ -402,6 +403,8 @@ class MainActivity : FragmentActivity() {
                 // 30: no key at start; the ViewModel gives the source the stored key once the records are loaded.
                 priceSource = FinnhubSource(),
                 isOnline = NetworkStatus(appContext)::isOnline,
+                // 36: 0 (the 7 days) in every build but the check build (decisions 1 and 2).
+                backupDueAfter = BackupReminder.after(BuildConfig.BACKUP_DUE_AFTER_MINUTES),
             )
             return modelClass.cast(appViewModel)!!
         }

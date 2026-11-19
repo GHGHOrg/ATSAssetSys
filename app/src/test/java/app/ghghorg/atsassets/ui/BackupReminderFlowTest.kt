@@ -99,6 +99,24 @@ class BackupReminderFlowTest {
         assertFalse(opened(store(BackupState(lastBackup = now.minusSeconds(60)))).state.value.backupDue)
     }
 
+    // 36 (decisions 1 and 2): a ViewModel given a shorter time, as the check build's is, uses it in place of the 7 days,
+    // read at the same moments (32 decision 3).
+    @Test
+    fun aShorterTimeGiven_isUsedInPlaceOf7Days() {
+        val tenMinutes = Duration.ofMinutes(10)
+        val clock = MovingClock(now)
+        val vm = started(store(BackupState(lastBackup = now)), clock = clock, zone = ZoneId.of("UTC"), backupDueAfter = tenMinutes)
+        vm.onAppShown()
+        vm.onUnlocked()
+        assertFalse(vm.state.value.backupDue)
+        clock.moment = now.plus(tenMinutes)
+        vm.leaveAndReturn()
+        assertFalse(vm.state.value.backupDue)
+        clock.moment = now.plus(tenMinutes).plusMillis(1)
+        vm.leaveAndReturn()
+        assertTrue(vm.state.value.backupReminderShown)
+    }
+
     // Decision 3: the moment is read at each return to the app and at each unlock, not while the app stays in view.
     @Test
     fun aBackupThatComesDue_showsAtTheNextReturnOrUnlock_notBefore() {

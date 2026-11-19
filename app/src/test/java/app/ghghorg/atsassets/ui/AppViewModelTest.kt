@@ -3,6 +3,7 @@ package app.ghghorg.atsassets.ui
 import app.ghghorg.atsassets.core.AmountError
 import app.ghghorg.atsassets.core.AutoLock
 import app.ghghorg.atsassets.core.BackupRecords
+import app.ghghorg.atsassets.core.BackupReminder
 import app.ghghorg.atsassets.core.BackupState
 import app.ghghorg.atsassets.core.CashDirection
 import app.ghghorg.atsassets.core.CashEntry
@@ -45,6 +46,7 @@ import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
 import java.time.Clock
+import java.time.Duration
 import java.time.Instant
 import java.time.LocalDate
 import java.time.ZoneId
@@ -1595,6 +1597,7 @@ internal fun started(
     online: () -> Boolean = { true },
     newId: () -> String = { "c1" },
     zone: ZoneId = ZoneOffset.UTC,
+    backupDueAfter: Duration = BackupReminder.AFTER,
 ): AppViewModel {
     val vm =
         AppViewModel(
@@ -1604,6 +1607,7 @@ internal fun started(
             priceSource = source,
             isOnline = online,
             deviceZone = { zone },
+            backupDueAfter = backupDueAfter,
         )
     vm.start()
     return vm
