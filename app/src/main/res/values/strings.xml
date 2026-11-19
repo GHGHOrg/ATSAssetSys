@@ -650,7 +650,7 @@
     <string name="backup_not_saved">Backup not saved. The last backup date is unchanged.</string>
     <string name="backup_not_saved_file_remains">Backup not saved. The last backup date is unchanged. An unfinished file may remain where you chose to save it: do not use it, and delete it.</string>
     <string name="backup_saved_not_recorded">The backup file was written, but its date could not be saved, so the last backup date is unchanged. Back up again.</string>
-    <!-- Iteration 32: Overall's backup reminder (wireframe 01 marker 1). Wording proposed 2026-11-15, not yet approved (D9; 32 file, section 12). Its button and result lines are iteration 31's. -->
+    <!-- Iteration 32: Overall's backup reminder (wireframe 01 marker 1). Wording approved 2026-11-20 (D9; 32 file, section 12). Its button and result lines are iteration 31's. -->
     <string name="backup_due_never">Back up your data: you have never backed up.</string>
     <string name="backup_due_old">Back up your data: the last backup was %1$s %2$s, more than 7 days ago.</string>
     <string name="backup_due_dismiss">Dismiss</string>
