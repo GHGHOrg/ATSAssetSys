@@ -1,6 +1,6 @@
 # plan/spikes/two-emulators.md
 
-Stage: Build. Status: written 2026-11-19 on branch spike-two-emulators (from main at 6d26199); approved by you 2026-11-19 as written, before the look-ups (section 5). Look-ups L1 and L5 done 2026-11-19, L3 worked out before the run; L2, L4, L6 and L7 answered by the run. The research's open questions settled 2026-11-19 (section 11.5). Decisions T1 to T5 settled 2026-11-19 (section 7). The run done 2026-11-19 (section 9): series A 3 of 3 green, B1 and C1 red; T6: one emulator kept, nothing adopted. Cleanup done 2026-11-19 (section 10). Extended 2026-11-19 at your request, while pull request #205 was open: series D, the tests split over separate runners (sections 1, 2, 4, 6, 7 and 8); the extension approved and T7 to T10 settled 2026-11-19 (section 7); D's run next, then T11.
+Stage: Build. Status: written 2026-11-19 on branch spike-two-emulators (from main at 6d26199); approved by you 2026-11-19 as written, before the look-ups (section 5). Look-ups L1 and L5 done 2026-11-19, L3 worked out before the run; L2, L4, L6 and L7 answered by the run. The research's open questions settled 2026-11-19 (section 11.5). Decisions T1 to T5 settled 2026-11-19 (section 7). The run done 2026-11-19 (section 9): series A 3 of 3 green, B1 and C1 red; T6: one emulator kept, nothing adopted. Cleanup done 2026-11-19 (section 10). Extended 2026-11-19 at your request, while pull request #205 was open: series D, the tests split over separate runners (sections 1, 2, 4, 6, 7 and 8); the extension approved and T7 to T10 settled 2026-11-19 (section 7). Series D (2 runners) and, at your request after it, series E (3 runners) run 2026-11-19 (section 9); T11: 3 runners adopted, to land as an open item fixed in a step of the next iteration (section 10). Cleanup of throw-away-runner-shards waits for your yes (section 10).
 Source: your request of 2026-11-19 (two emulators on one GitHub runner, to shorten the screen tests; tried on a throw-away branch), the research report "Screen test runtime on GitHub" (2026-11-19; its findings and sources are in section 11, as the report itself stays in my scratchpad, which can be cleared), .github/workflows/screen-tests.yml (read 2026-11-19), plan/spikes/avd-memory.md sections 3, 5 and 9, the step times of runs 44314279343, 44309994483, 44299031081 and 44273292455 (read with gh, 2026-11-19), and your statement of 2026-11-19 that the repository is public on GitHub's Free plan.
 
 How sources are labelled in this note:
@@ -115,7 +115,9 @@ T5 settled 2026-11-19, your A: as written in section 6, with a margin of 60 s of
 T3's follow-up settled 2026-11-19, your B (my leaning was to end the trial): after run B1 broke H3, a series C at 3,072 MB per emulator, everything else as B. Run C1 was red as well (section 9), which ended series C.
 T6 settled 2026-11-19, your A, after the run (section 9): keep one emulator; nothing is adopted and main's workflow does not change.
 For series D (added 2026-11-19), to settle after the extension's approval, one question at a time.
-The extension approved by you 2026-11-19 as written. T7 to T10 settled 2026-11-19, each your A: T7 throw-away-runner-shards; T8 2 shards; T9 the runner's `numShards` and `shardIndex`; T10 series A as the control, with a count job named `screen-tests`. T11 after the run.
+The extension approved by you 2026-11-19 as written. T7 to T10 settled 2026-11-19, each your A: T7 throw-away-runner-shards; T8 2 shards; T9 the runner's `numShards` and `shardIndex`; T10 series A as the control, with a count job named `screen-tests`.
+After series D (2026-11-19), asked T11, you chose to run 3 shards first: series E, the same as D with `NUM_SHARDS: "3"` and the matrix `[0, 1, 2]` (commit 407503c), judged by the same rules. After D2 was red from the known keyboard-landscape flake (section 9), your A: D2 recorded but not counted, D3 and D4 run, so D is judged on 3 green runs.
+T11 settled 2026-11-19, your A, after series E (section 9): adopt 3 runners. It lands as an open item fixed in a step of the next iteration (CLAUDE.md section 4, the test-support rule); section 10 holds the item.
 - T7 D's throw-away branch. My leaning: throw-away-runner-shards, from main, with its own draft pull request closed unmerged.
 - T8 How many shard jobs. My leaning: 2. Section 4's estimate gives 3 shards about 1.5 minutes more off the wall time, for about 3.5 minutes more runner time per run and a third emulator boot that can fail.
 - T9 How the tests are split. A: the runner's `numShards` and `shardIndex` (76 and 60 tests, about 51 to 49 by time, section 11.5), no list to keep up to date. B: class lists balanced by series A's times, passed with the runner's `class` argument; better balanced, but a new test class must be added to a list, and one that is left out does not run (the count check catches it). My leaning: A.
@@ -160,11 +162,40 @@ Run 2026-11-19 on throw-away-two-emulators, draft pull request #204. Series A: r
 - Section 6: B and C break H1 (both red) and H2 (13 and 10 unlock retries); B breaks H3 (946 MB, floor 1,024 MB), C holds it (1,245 MB). Criterion 1: 1,265 s and 945 s against the control's median 688 s, where T5 asked for 628 s or less. Neither is shorter; by section 8, step 4, each red run ended its series (B2, B3, C2 and C3 not run).
 - The answer to section 1: two emulators on one GitHub runner (4 CPUs, 16 GB) do not finish the screen tests sooner than one; they make them longer and red. More memory per emulator does not change that.
 
+Series D and E (2026-11-19, throw-away-runner-shards, draft pull request #206): series D, run 44477659527, attempts 1 to 4, on a0585be (section 8, step 6: 2 shard jobs and a count job); series E, run 44484486343, attempts 1 to 3, on 407503c (3 shard jobs). Each push and re-run with your yes; each attempt's artifacts downloaded before the next (kept in my scratchpad). Wall time is from the first shard job's start to the count job's end (section 6, D criterion 1); runner minutes are all jobs' times added up.
+
+| Run | Result | Wall time | Shard jobs | Shard test steps | Tests per shard | Runner minutes | Runner lowest available |
+|---|---|---|---|---|---|---|---|
+| D1 | green | 612 s | 604 / 519 s | 394 / 323 s | 76 / 60 | 18.8 | 5,928 / 5,777 MB |
+| D2 | red (known flake, not counted) | 760 s | 512 / 748 s | 312 / 501 s | 76 (1 failed) / 60 | 21.1 | 5,970 / 6,043 MB |
+| D3 | green | 708 s | 696 / 605 s | 459 / 385 s | 76 / 60 | 21.8 | 5,836 / 6,097 MB |
+| D4 | green | 590 s | 582 / 555 s | 359 / 341 s | 76 / 60 | 19.1 | 5,958 / 6,013 MB |
+| E1 | green | 556 s | 548 / 499 / 461 s | 311 / 272 / 263 s | 44 / 40 / 52 | 25.2 | 5,859 / 6,170 / 6,143 MB |
+| E2 | green | 614 s | 605 / 500 / 478 s | 321 / 277 / 273 s | 44 / 40 / 52 | 26.5 | 6,082 / 6,221 / 5,952 MB |
+| E3 | green | 554 s | 545 / 514 / 380 s | 317 / 276 / 192 s | 44 / 40 / 52 | 24.1 | 6,152 / 5,957 / 6,128 MB |
+
+| | A (one runner) | D (2 runners: D1, D3, D4) | E (3 runners) |
+|---|---|---|---|
+| Median | 841 s (whole job) | 612 s | 556 s |
+| Longest | 1,035 s | 708 s | 614 s |
+| Spread | 257 s | 118 s | 60 s |
+| Runner minutes, median | 14.0 | 19.1 | 25.2 |
+
+- Every counted run: green, 136 of 136 tests, none in two shards, no unlock screenshot, no "Not Responding" window, no low-memory event, the runner's available memory never below 5,777 MB. Kill events were the end of the tests and system apps stopped by "change" or "frozen state" shortly after boot (up to 10 on one shard), none a memory event.
+- The split: as worked out in section 5, L3 (76 and 60 tests for 2 shards; 44, 40 and 52 for 3, section 11.5's rule applied to run 44314279343). Each shard's tests ran at series A's speed (for example D4's shard 0: 325.0 s for tests that took 288.0 to 396.2 s in A); the shard with the most test time (shard 0) ended last in every run but D2.
+- Setup per shard job: build 71 to 135 s, boot 35 to 58 s, settle 10 to 13 s, so about 3 minutes before the tests in every job; with 3 shards it is about half of each job. A fourth shard would save less again (my reading, not run).
+- D2: shard 0's PriceKeyKeyboardLandscapeTest.theEntry_reachesDownToTheKeyboard_andShowsItsField_inLandscape failed, "The key entry ends at 0.0 px, 216.0 px above the keyboard's top at 216.0 px; expected its margin, 72.0 px" (PriceKeyScreenTest.kt:329), with shard 0's tests at normal speed (281.9 s). The same signature as the flake plan/spikes/dependabot-findings.md recorded on the one-runner workflow (run 44299031081, attempt 1, PortfolioDeleteKeyboardLandscapeTest): not caused by the split.
+- Section 6 for D and E: H1 to H3 hold for every counted run. D: median 612 s (T5 asks 781 s or less) and longest 708 s (not over 1,035 s): shorter, by 229 s on the median. E: median 556 s and longest 614 s: shorter, by 285 s, about a third, and the steadiest of the three.
+- The answer to section 1's second question: splitting the tests over separate runners finishes the screen tests sooner, about 27% with 2 runners and 34% with 3, all green, for about 1.4 and 1.8 times the runner minutes (free for this public repository).
+
 ## 10. Cleanup and follow-up
 - Done 2026-11-19 with your yes: #204 closed unmerged; throw-away-two-emulators deleted locally and on GitHub (`gh pr close 204 --delete-branch` removed both). Its commits 4eafe4b, 16f387e and eb98fb7 are named in section 9; the runs' logs stay on GitHub.
 - T6's change: none (section 7).
+- Series D and E: draft pull request #206 to be closed unmerged and throw-away-runner-shards deleted, with your yes. Its commits a0585be (D) and 407503c (E) are named in section 9.
+- T11's change, an open item to add to plan/open-items.md (not added now: pull requests #193 to #196 edit that file too; it moves there with the plan.md lines below): "Screen tests on 3 runners (plan/spikes/two-emulators.md, T11): split .github/workflows/screen-tests.yml into a matrix of 3 shard jobs (`fail-fast: false`, the runner's `numShards` and `shardIndex`, each with today's steps and its own artifact named by shard and attempt) and a count job named `screen-tests` that downloads every shard's results and checks each shard's file, the total against the @Test count, that no test ran in two shards and that every shard job succeeded. Take the shape from commit 407503c without its memory sampler and summary. The ruleset's required check `screen-tests` then names the count job. Measured: median 556 s against 841 s." A step of the next iteration (CLAUDE.md section 4, the test-support rule).
+- The keyboard-landscape flake ("ends at 0.0 px") came back in D2 (section 9), on PriceKeyKeyboardLandscapeTest this time: a second record for the point plan/spikes/dependabot-findings.md keeps for plan/open-items.md.
 - What the run adds for the later notes: series A's three runs on one commit spread over 227 s (criterion 1, 652 to 879 s), larger than the 160 to 200 s seen before. Sharding over separate runners (section 11.2, approach 3) avoids the CPU sharing that failed here, but each runner repeats about 3.5 minutes of setup.
-- Later, not in this spike: skipping the screen tests on docs-only changes (a detection job and a gate job, not a workflow-level paths filter), cancelling superseded pull-request runs, and the deprecated `-gpu swiftshader_indirect` (deprecated since emulator 36.4.9, research, section 11.4; not checked in the emulator's own notes). Each would be its own note; section 11 holds what the research found for each.
+- Later, not in this spike: a fourth shard (not run; setup is already about half of each job with 3), skipping the screen tests on docs-only changes (a detection job and a gate job, not a workflow-level paths filter), cancelling superseded pull-request runs, and the deprecated `-gpu swiftshader_indirect` (deprecated since emulator 36.4.9, research, section 11.4; not checked in the emulator's own notes). Each would be its own note; section 11 holds what the research found for each.
 - Open, from plan/spikes/avd-memory.md section 10: plan/plan.md section 2 does not list the spike notes. This note joins that point.
 
 ## 11. Research findings
