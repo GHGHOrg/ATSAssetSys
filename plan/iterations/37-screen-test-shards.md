@@ -1,6 +1,6 @@
 # plan/iterations/37-screen-test-shards.md
 
-Stage: Build. Status: approved 2026-11-20 (your A); decisions 1 and 2 settled the same day (your A each; section 11). Steps 1 to 4 built (275ef42, 8093c8f and the documents); draft pull request #214 green on 8093c8f, 178 of 178 over 3 shards in 666 s, and a re-run of one shard counted 178 from two attempts (13.1); the Deploy review done, no high, medium or low finding (13.2). Not merged. Branch iter-37-screen-test-shards from main (8a605c9); not created yet.
+Stage: Build. Status: approved 2026-11-20 (your A); decisions 1 and 2 settled the same day (your A each; section 11). Steps 1 to 4 built (275ef42, 8093c8f and the documents); draft pull request #214 green on 8093c8f, 178 of 178 over 3 shards in 666 s, and a re-run of one shard counted 178 from two attempts (13.1); the Deploy review done, no high, medium or low finding (13.2). Done: pull request #214 merged as 919e7c4, main green on 3 shards (13.3). Branch iter-37-screen-test-shards from main (8a605c9); not created yet.
 Source: plan/spikes/two-emulators.md, decision T11 (adopt 3 runners) and section 10 (its open item's text); series E's trial workflow, commit 407503c (closed pull request #206, read 2026-11-20 through refs/pull/206/head); CLAUDE.md section 4 (the test-support rule); your choice of 2026-11-20 (build T11 now, your A).
 
 ## 1. Outcome
@@ -77,6 +77,10 @@ None (no app text).
 - The Deploy review (Ruleset A rule 6), by reading the workflow against this file, AC-61, plan.md section 3 and the ruleset. No high, medium or low finding. What held: the run is red when fewer tests ran than there are `@Test` lines (the total over every shard's newest attempt) and a shard refuses zero tests; the required check `screen-tests` is red unless every shard job ended `success`, which after a re-run reflects the re-run (attempt 2); a test in two shards or a shard with no results makes it red; a shard whose re-run uploaded nothing cannot pass on old results, because its job result is not `success`; permissions stay `contents: read` and only the constant `matrix.shard` and `github.run_attempt` reach the scripts; the ruleset (build, CodeQL, screen-tests) unchanged.
 - Notes (info, no change; your A): 1. `NUM_SHARDS` and the matrix list change together (a comment says so). 2. A cancelled run ends with `screen-tests` red, not cancelled (`if: always()`); a cancelled run is not merged either. 3. Runner minutes about 1.5 to 2 times today's; free for a public repository.
 - CLAUDE.md (your A): section 4's convention on red runs names the shard artifacts and the re-run of one shard; section 6's `gh run download` pitfall corrected: it fetches every attempt's artifacts in their own folders (this session's downloads after a re-run held both attempts).
+
+### 13.3 Merge (2026-11-20)
+- Step 4's record (39d6f0e) pushed; #214 green on it at the first attempt: shards 0 to 2 (10m 13s, 8m 23s, 11m 9s), the count job 178 of 178, the whole Screen tests run 11m 22s; CI (4m 46s; "Scale test retries": none), CodeQL and Analyze (actions) (gh, read only).
+- Pull request #214 made ready and merged by you as 919e7c4, 3 commits (275ef42, 8093c8f, 39d6f0e). On main after the merge, the first sharded run: the Screen tests (run 44736865587) 10m 22s, shards of 53, 59 and 66 tests, the count job 178 of 178, none twice; CI (5m 0s; "Scale test retries": none) and CodeQL green, all at the first attempt (gh, read only). Merge record on docs/iter-37-merged.
 
 ## 14. Departures from the plan
 None yet.
