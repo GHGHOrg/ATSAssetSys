@@ -5,6 +5,7 @@ import androidx.compose.ui.test.hasContentDescription
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.junit4.v2.createComposeRule
 import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.performScrollTo
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
 import app.ghghorg.atsassets.core.AssetType
@@ -166,7 +167,8 @@ class NetWorthTalkBackTest {
         composeRule.setContent { ATSAssetSystemTheme { OverallScreen(state, {}, {}, onOpenNetWorth = { opened++ }) } }
         val age = text(R.string.portfolio_prices_as_of_spoken, "2026-10-29 16:00")
         val netWorth = text(R.string.net_worth_prices_spoken, text(R.string.net_worth_spoken, "10,880.00"), age)
-        composeRule.onNode(hasContentDescription(netWorth) and hasClickAction()).performClick()
+        // 32: the backup reminder shows above (this state never backed up), so net worth is scrolled to before its tap.
+        composeRule.onNode(hasContentDescription(netWorth) and hasClickAction()).performScrollTo().performClick()
         assertEquals("Opened from Overall", 1, opened)
     }
 

@@ -344,20 +344,23 @@ internal fun AppState.refreshed(): AppState {
 
 /**
  * The screen state's only way in (15c): every write is [refreshed], so no action can leave a kept field stale. Its
- * members have MutableStateFlow's names, so the actions read as before.
+ * members have MutableStateFlow's names, so the actions read as before. Every write also drops an export's result once
+ * the screen that shows it is left ([withBackupResultWhereShown]; 32 decision 1).
  */
 internal class KeptStateFlow(
     initial: AppState,
 ) {
-    private val flow = MutableStateFlow(initial.refreshed())
+    private val flow = MutableStateFlow(initial.settled())
 
     val readOnly: StateFlow<AppState> = flow.asStateFlow()
 
     var value: AppState
         get() = flow.value
         set(next) {
-            flow.value = next.refreshed()
+            flow.value = next.settled()
         }
 
-    fun update(transform: (AppState) -> AppState) = flow.update { transform(it).refreshed() }
+    fun update(transform: (AppState) -> AppState) = flow.update { transform(it).settled() }
+
+    private fun AppState.settled(): AppState = withBackupResultWhereShown().refreshed()
 }

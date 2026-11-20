@@ -14,6 +14,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedCard
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -38,7 +39,8 @@ import app.ghghorg.atsassets.ui.theme.gainLossColor
  * "updating" line (marker 2; decision 1), each portfolio with its value and gain/loss (marker 4), and the refresh-failed
  * line under them (marker 5); or the guided steps when the app holds no data. With cash and no portfolio it offers
  * Create a portfolio (criterion 24, part; 07 decision 2). Pulling down refreshes the prices (decision 2). Tapping net
- * worth opens Net Worth (Total) (navigation outline; 17), and so does the allocation under it (marker 3; 18).
+ * worth opens Net Worth (Total) (navigation outline; 17), and so does the allocation under it (marker 3; 18). Under the
+ * title, the backup reminder when a backup is due (marker 1; 32).
  */
 @Composable
 fun OverallScreen(
@@ -50,6 +52,8 @@ fun OverallScreen(
     onRefresh: () -> Unit = {},
     onOpenNetWorth: () -> Unit = {},
     onOpenAllocationChoice: () -> Unit = {},
+    onBackUpNow: () -> Unit = {},
+    onDismissReminder: () -> Unit = {},
 ) {
     PricePullToRefresh(state.refreshing, onRefresh, modifier.fillMaxSize()) {
         Column(
@@ -60,6 +64,7 @@ fun OverallScreen(
                 text = stringResource(R.string.overall_title),
                 style = MaterialTheme.typography.titleLarge,
             )
+            state.backupReminder?.let { BackupReminderBanner(it, onBackUpNow, onDismissReminder) }
             if (state.holdsData) {
                 val overall = state.overall
                 NetWorthCard(
@@ -80,6 +85,45 @@ fun OverallScreen(
             } else {
                 GuidedSteps(onSetOpeningBalance)
             }
+        }
+    }
+}
+
+/**
+ * The backup reminder (view 1, wireframe 01 marker 1; spec section 9; 32), drawn from its model (CR2), under the title
+ * and scrolling with the screen: a banner that says in words why a backup is due, with Back up now, which opens
+ * Android's file screen as on Backup and restore, and Dismiss, which hides the banner until the app is next opened. The
+ * buttons wrap at a large font. Under it, or alone in its place once the backup is made, the line of an export started
+ * here (decision 1), read by TalkBack when it appears. An in-app banner, not an Android notification.
+ */
+@OptIn(ExperimentalLayoutApi::class)
+@Composable
+private fun BackupReminderBanner(
+    model: BackupReminderModel,
+    onBackUpNow: () -> Unit,
+    onDismiss: () -> Unit,
+) {
+    OutlinedCard(modifier = Modifier.fillMaxWidth()) {
+        Column(modifier = Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            val last = model.lastBackup
+            when {
+                model.due == BackupDue.NEVER ->
+                    Text(text = stringResource(R.string.backup_due_never), style = MaterialTheme.typography.bodyLarge)
+
+                model.due == BackupDue.OLD && last != null ->
+                    Text(text = stringResource(R.string.backup_due_old, last.date, last.zone), style = MaterialTheme.typography.bodyLarge)
+            }
+            if (model.due != null) {
+                FlowRow(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                    Button(onClick = onBackUpNow, enabled = model.canAct) {
+                        Text(text = stringResource(R.string.backup_now))
+                    }
+                    OutlinedButton(onClick = onDismiss, enabled = model.canDismiss) {
+                        Text(text = stringResource(R.string.backup_due_dismiss))
+                    }
+                }
+            }
+            BackupStatusLine(model.writing, noData = false, model.outcome, last)
         }
     }
 }

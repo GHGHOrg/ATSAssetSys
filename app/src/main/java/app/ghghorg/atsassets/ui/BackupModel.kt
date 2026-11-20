@@ -42,6 +42,28 @@ data class BackupModel(
     val backEnabled: Boolean,
 )
 
+/** Why a backup is due (spec section 9; 32): there is none yet ([NEVER]), or the last one is more than 7 days old ([OLD]). */
+enum class BackupDue {
+    NEVER,
+    OLD,
+}
+
+/**
+ * Overall's backup reminder as the screen draws it (view 1, wireframe 01 marker 1; CR2, 32). [due] is why the banner
+ * shows, null when it does not: no backup is due, or it was dismissed. [lastBackup] is for the [BackupDue.OLD] banner
+ * and the saved line. [canAct]: Back up now is active. [canDismiss]: Dismiss is active; it needs no data in the app
+ * (Deploy finding 2). [writing] and [outcome] are the line of an export started from the banner (decision 1): under the
+ * banner, or alone in its place once a backup is no longer due.
+ */
+data class BackupReminderModel(
+    val due: BackupDue?,
+    val lastBackup: LastBackup?,
+    val canAct: Boolean,
+    val canDismiss: Boolean,
+    val writing: Boolean,
+    val outcome: BackupOutcome?,
+)
+
 object Backups {
     // The zone's short name, or its offset where it has none; fixed English, whatever the phone's language.
     private val ZONE_NAME: DateTimeFormatter = DateTimeFormatter.ofPattern("zzz", Locale.US)
@@ -76,4 +98,38 @@ object Backups {
         outcome = if (stage == null) outcome else null,
         backEnabled = stage == null && !saving,
     )
+
+    /**
+     * Overall's reminder (32), null when Overall shows nothing of it. [due] is K6's answer and [dismissed] the
+     * dismissal since the app was last opened. Both buttons wait while an export is under way or another save runs; Back
+     * up now also needs data in the app. A result shows once the export has ended.
+     */
+    fun reminder(
+        lastBackup: Instant?,
+        zone: ZoneId,
+        due: Boolean,
+        dismissed: Boolean,
+        holdsData: Boolean,
+        stage: BackupStage?,
+        outcome: BackupOutcome?,
+        saving: Boolean,
+    ): BackupReminderModel? {
+        val reason =
+            when {
+                !due || dismissed -> null
+                lastBackup == null -> BackupDue.NEVER
+                else -> BackupDue.OLD
+            }
+        val writing = stage == BackupStage.WRITING
+        val ended = if (stage == null) outcome else null
+        if (reason == null && !writing && ended == null) return null
+        return BackupReminderModel(
+            due = reason,
+            lastBackup = lastBackup(lastBackup, zone),
+            canAct = holdsData && stage == null && !saving,
+            canDismiss = stage == null && !saving,
+            writing = writing,
+            outcome = ended,
+        )
+    }
 }

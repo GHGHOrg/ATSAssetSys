@@ -240,7 +240,11 @@ class AllocationTalkBackTest {
         composeRule.onNode(hasContentDescription(row(text(R.string.allocation_etfs), "0.00", "0.0")) and hasClickAction()).assertExists()
         // Where a percentage shows (in the row only under 5%) is not visible here: the row replaces its texts with its
         // TalkBack sentence. AllocationModelTest checks it (percentInRow) (18, your A after #150).
-        composeRule.onNode(hasContentDescription(row(text(R.string.net_worth_composition_cash), "9,600.00", "88.2")) and hasClickAction()).performClick()
+        // 32: the backup reminder shows above (this state never backed up), so the row is scrolled to before its tap.
+        composeRule
+            .onNode(hasContentDescription(row(text(R.string.net_worth_composition_cash), "9,600.00", "88.2")) and hasClickAction())
+            .performScrollTo()
+            .performClick()
         assertEquals("Opened from a row", 1, opened)
     }
 

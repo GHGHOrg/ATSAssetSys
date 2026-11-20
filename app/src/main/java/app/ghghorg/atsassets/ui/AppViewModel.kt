@@ -8,6 +8,7 @@ import app.ghghorg.atsassets.core.AmountResult
 import app.ghghorg.atsassets.core.AutoLock
 import app.ghghorg.atsassets.core.BackupFile
 import app.ghghorg.atsassets.core.BackupRecords
+import app.ghghorg.atsassets.core.BackupReminder
 import app.ghghorg.atsassets.core.BackupResult
 import app.ghghorg.atsassets.core.BuyRefusal
 import app.ghghorg.atsassets.core.BuyResult
@@ -284,6 +285,16 @@ private fun AppState.leftReplace(): AppState {
         splitForm = if (kind == TransactionType.SPLIT) SplitForm() else splitForm,
         form = if (replacingCashId != null) FormState() else form,
     ).withPair(null)
+}
+
+/**
+ * An export's result lasts only on the screen that shows it (31; 32 decision 1): Backup and restore, or Overall for an
+ * export started from its reminder. Applied to every state the view model sets (KeptStateFlow), so each way of leaving
+ * either screen drops the result, those added later too.
+ */
+internal fun AppState.withBackupResultWhereShown(): AppState {
+    val shown = screen == Screen.BACKUP || onOverall
+    return if (backupOutcome == null || shown) this else copy(backupOutcome = null)
 }
 
 /** Why a transaction's reversal was refused, reasons only (D9): the date field, K1's rule, or the save. */
@@ -707,11 +718,17 @@ data class AppState(
     val historyTickerMenuOpen: Boolean = false,
     // 31: the moment of the last completed backup export, null for never (spec 9; no zone is kept, C15); a start found the
     // mark of a backup whose write never ended (decision 7), until a backup completes; where an export stands, null with
-    // none under way; how the last one ended, until Backup and restore is left or the next one starts.
+    // none under way; how the last one ended, until the screen that shows it is left or the next one starts: Backup and
+    // restore, or Overall for an export started from its reminder (32 decision 1).
     val lastBackup: Instant? = null,
     val backupInterrupted: Boolean = false,
     val backupStage: BackupStage? = null,
     val backupOutcome: BackupOutcome? = null,
+    // 32: the moment as last read: at start, at each return to the app, at each unlock and after an export (decision 3);
+    // a backup is due against it, with no timer. The reminder was dismissed since the app was last opened: never stored
+    // (spec section 9).
+    val now: Instant = Instant.EPOCH,
+    val reminderDismissed: Boolean = false,
     // The device's time zone as last read (at start, at each return to the app and at each unlock): the last backup is
     // shown in it (C15).
     val zone: ZoneId = ZoneOffset.UTC,
@@ -930,6 +947,23 @@ data class AppState(
     val backupScreen: BackupModel
         get() = Backups.screen(lastBackup, zone, backupInterrupted, holdsData, backupStage, backupOutcome, saving)
 
+    /**
+     * 32: Overall's backup reminder as the screen draws it (view 1, wireframe 01 marker 1; CR2), null when Overall shows
+     * nothing of it. An export's line is Overall's only while Overall is the screen shown (decision 1).
+     */
+    val backupReminder: BackupReminderModel?
+        get() =
+            Backups.reminder(
+                lastBackup = lastBackup,
+                zone = zone,
+                due = backupDue,
+                dismissed = reminderDismissed,
+                holdsData = holdsData,
+                stage = backupStage.takeIf { onOverall },
+                outcome = backupOutcome.takeIf { onOverall },
+                saving = saving,
+            )
+
     /** Settings as the screen draws it (section 6; CR2, 20). */
     val settings: SettingsModel
         get() {
@@ -1120,6 +1154,22 @@ data class AppState(
 
     val holdsData: Boolean get() = CashRules.appHoldsData(entries)
 
+    /** 32: a backup is due by K6's rule (spec section 9), against the moment last read. */
+    val backupDue: Boolean get() = BackupReminder.due(lastBackup, now, holdsData)
+
+    /** 32: Overall shows the reminder: a backup is due and the reminder was not dismissed since the app was last opened. */
+    val backupReminderShown: Boolean get() = backupDue && !reminderDismissed
+
+    /** Overall is the screen shown, with or without a layer over it. */
+    internal val onOverall: Boolean get() = screen == Screen.TABS && tab == Tab.OVERALL
+
+    /** 32: the reminder shows on Overall and no layer is open over it, so its buttons can be reached. */
+    internal val reminderInReach: Boolean
+        get() {
+            val layerOpen = buySellMenuOpen || buyNotice != null || allocationMenuOpen || portfolioDialog != null
+            return onOverall && backupReminderShown && !layerOpen
+        }
+
     val detailEntry: CashEntry? get() = entries.firstOrNull { it.id == detailId }
 
     /** The reversal of the shown entry, if it has one (spec 4.6: at most one). */
@@ -1209,7 +1259,7 @@ class AppViewModel(
     private val deviceZone: () -> ZoneId = { ZoneId.systemDefault() },
 ) : ViewModel() {
     private val marketDate = MarketDate(clock)
-    private val mutableState = KeptStateFlow(AppState(priceSourceName = priceSource.name, zone = deviceZone()))
+    private val mutableState = KeptStateFlow(AppState(priceSourceName = priceSource.name, zone = deviceZone(), now = clock.instant()))
     val state: StateFlow<AppState> = mutableState.readOnly
     private var store: RecordStore? = null
     private var started = false
@@ -1240,7 +1290,10 @@ class AppViewModel(
                 priceSource.useKey(priceKey)
                 // 31: the last backup's moment, and whether a backup's write never ended (decision 7).
                 val backup = opened.loadBackupState()
-                mutableState.update { it.withKey(priceKey).copy(lastBackup = backup.lastBackup, backupInterrupted = backup.unfinished) }
+                // 32: and the moment now, against which a backup is due (decision 3).
+                mutableState.update {
+                    it.withKey(priceKey).copy(lastBackup = backup.lastBackup, backupInterrupted = backup.unfinished, now = clock.instant())
+                }
                 showLoaded(entries, portfolios, transactions, instruments, hidden, autoLock, tabOrder, classLists, overrides)
                 // The first unlock's refresh: onUnlocked came while the records were still loading (16a decision 2).
                 refreshPrices()
@@ -1382,21 +1435,56 @@ class AppViewModel(
         if (mutableState.value.refreshing) refreshAfterKey = true else refreshPrices()
     }
 
+    // 32: the app went out of view since it was last shown (or was never shown): the next showing is an opening of the
+    // app. A turn of the phone is not one, so it keeps a dismissed reminder dismissed.
+    private var away = true
+
+    // 32, Deploy finding 1: an export's result was showing when the app went out of view. Only such a result goes at the
+    // return; one that arrives while the app is away was never seen and stays for it.
+    private var resultSeenBeforeAway = false
+
+    /** The app went out of view (MainActivity's onStop), a turn of the phone excepted (32). */
+    fun onAppHidden() {
+        away = true
+        resultSeenBeforeAway = mutableState.value.backupOutcome != null
+    }
+
     /**
-     * The app came into view (MainActivity's onStart), and each unlock: the device's zone is read again, so the last
-     * backup shows in the zone the phone is in now (C15; 31).
+     * The app came into view (MainActivity's onStart): the device's zone is read again, so the last backup shows in the
+     * zone the phone is in now (C15; 31), and the moment now, so a backup that came due while away shows (32 decision 3).
+     *
+     * When the app was out of view, this is an opening of the app (32; spec section 9): a dismissed reminder shows again
+     * while a backup is still due, and the result of an export from Overall goes (decision 1), if it was showing when the
+     * app left. A return from Android's file screen is such a return too, but its export's result is yet to come; and a
+     * result that came while the app was away is shown first (Deploy finding 1).
      */
     fun onAppShown() {
+        readClock()
+        if (!away) return
+        away = false
+        val seen = resultSeenBeforeAway
+        resultSeenBeforeAway = false
+        mutableState.update {
+            it.copy(reminderDismissed = false, backupOutcome = if (it.onOverall && seen) null else it.backupOutcome)
+        }
+    }
+
+    // The device's zone and the moment now, read again (31; 32 decision 3).
+    private fun readClock() {
         val zone = deviceZone()
-        if (zone != mutableState.value.zone) mutableState.update { it.copy(zone = zone) }
+        val now = clock.instant()
+        val current = mutableState.value
+        if (zone != current.zone || now != current.now) mutableState.update { it.copy(zone = zone, now = now) }
     }
 
     /**
      * After unlock the app shows Overall, unless an entry screen or the New portfolio dialog is open, which stays
-     * (02b decision 9). The Buy/Sell menu and its notice close. Prices refresh on every unlock (16a decision 2).
+     * (02b decision 9). The Buy/Sell menu and its notice close. Prices refresh on every unlock (16a decision 2). The zone
+     * and the moment now are read again (31; 32 decision 3); a dismissed reminder stays dismissed, and an export's
+     * result stays, as the file may have been written while the app was locked (31 decision 7).
      */
     fun onUnlocked() {
-        onAppShown()
+        readClock()
         refreshPrices()
         // View 1: "Allocation by" is not saved; each unlock starts on Asset type (18).
         // The choice layers close, as after 18; Settings' layers too (20, 21).
@@ -3275,13 +3363,28 @@ class AppViewModel(
      * Back up now (wireframe 10e marker 2): the suggested file name for Android's file screen, backup-YYYY-MM-DD.csv in
      * the device's zone, when an export starts; null when none does: off Backup and restore, while a save runs or an
      * export is under way, and while the app holds no data (decision 6: such a file could never be restored).
+     *
+     * From 32 the same export starts from Overall's reminder (navigation outline; AC-56), while it shows and no layer
+     * is open over Overall; its result then shows on Overall (decision 1).
      */
     fun beginBackup(): String? {
         val current = mutableState.value
-        if (store == null || current.screen != Screen.BACKUP || current.saving || current.backupStage != null) return null
+        if (store == null || current.saving || current.backupStage != null) return null
+        if (current.screen != Screen.BACKUP && !current.reminderInReach) return null
         if (!current.holdsData) return null
         mutableState.update { it.copy(backupStage = BackupStage.CHOOSING, backupOutcome = null) }
         return BackupFile.fileName(clock.instant(), deviceZone())
+    }
+
+    /**
+     * Dismiss on Overall's reminder (32; spec section 9): the reminder is hidden until the app is next opened
+     * ([onAppShown]); nothing is stored. A result line under it goes with it. Ignored while the reminder is out of reach
+     * and while a save runs or an export is under way.
+     */
+    fun dismissBackupReminder() {
+        val current = mutableState.value
+        if (!current.reminderInReach || current.saving || current.backupStage != null) return
+        mutableState.update { it.copy(reminderDismissed = true, backupOutcome = null) }
     }
 
     /**
@@ -3319,6 +3422,8 @@ class AppViewModel(
                         backupOutcome = outcome,
                         lastBackup = completedAt ?: it.lastBackup,
                         backupInterrupted = it.backupInterrupted && outcome != BackupOutcome.SAVED,
+                        // 32 decision 3: the moment is read after an export, so a completed one is no longer due.
+                        now = clock.instant(),
                     )
                 }
             } catch (e: CancellationException) {
