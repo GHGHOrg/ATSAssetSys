@@ -1,6 +1,6 @@
 # plan/iterations/32-backup-reminder.md
 
-Stage: Build. Status: approved 2026-11-15 (your A); decisions 1 to 3 settled the same day (section 11). Steps 1 to 6 built on iter-32-backup-reminder (versionCode 42); not merged. The phone check's part A passed 2026-11-15 (13.2). Pull request #190: its first run green, 145 of 145 screen tests; the Deploy review done, four low findings, three fixed (13.3). Open: part B, the "due" banner, on or after 2026-11-23 (decision 2), on a build with the fixes; the wording's approval (section 12).
+Stage: Build. Status: approved 2026-11-15 (your A); decisions 1 to 3 settled the same day (section 11). Steps 1 to 6 built on iter-32-backup-reminder (versionCode 42); not merged. The phone check's part A passed 2026-11-15 (13.2). Pull request #190: its first run green, 145 of 145 screen tests; the Deploy review done, four low findings, three fixed (13.3). Part B passed 2026-11-20 on ATS Check through iteration 36 (decision 4, replacing decision 2's date; 13.2); the wording approved the same day (section 12). Done: pull request #190 merged as 0034aa5, main green (13.4).
 Source: plan.md section 4 (row 32); spec section 9 (Backup reminder), section 3 ("app holds data"), section 6 (view 1, the navigation outline), section 14 (K6, K9), D9, C15; wireframe 01 (state A, marker 1); intent "Backup reminder"; the 31 file (the export flow; open item 67).
 
 ## 1. Outcome
@@ -65,14 +65,15 @@ None.
 ## 10. Research
 - None expected: the Android calls are 31's, reused.
 
-## 11. Decisions (Build, settled by you 2026-11-15)
+## 11. Decisions (Build, settled by you 2026-11-15; decision 4 on 2026-11-20)
 1. The result of the banner's Back up now shows on Overall: under the banner while a backup is still due (a cancel or a failure), or in its place once the banner is gone (a completed backup); the line goes when you leave Overall (a tab, a portfolio) or return to the app (your A). Not chosen: (B) Backup and restore opens and shows it there.
-2. The phone check of the "due" banner is done on or after 2026-11-23, the phone's clock unchanged; the code, tests and pull request go ahead now, and 32 is done only after that check (your B). Not chosen: (A) the phone's date moved forward 8 days for the check, Dismiss only; (C) no phone check of the due banner.
+2. The phone check of the "due" banner is done on or after 2026-11-23, the phone's clock unchanged; the code, tests and pull request go ahead now, and 32 is done only after that check (your B). Not chosen: (A) the phone's date moved forward 8 days for the check, Dismiss only; (C) no phone check of the due banner. Its date is replaced by decision 4.
 3. "Now" is read at start, at each return to the app, at each unlock and after an export, as the zone in 31; no timer (your A). Not chosen: (B) also every minute while the app is in view.
+4. Part B runs now on ATS Check, not on or after 2026-11-23 on your app: iteration 36 (plan/iterations/36-check-reminder-override.md) makes the check build alone treat a backup as due after 10 minutes, your app keeping section 9's 7 days; the phone's clock unchanged (2026-11-20, 36 decisions; your B). Part B on ATS Check also shows the "never backed up" banner, which your phone could not (section 9). Not chosen: (A) wait until 2026-11-23; (C) a user setting for the days, a change request; (D) the phone's date moved forward.
 
 ## 12. Wording to approve (D9; proposed in step 4, approved on the phone)
 - The banner for "more than 7 days" and for "no backup yet"; the buttons "Back up now" and "Dismiss"; the result lines (31's, reused); TalkBack's reading of the banner.
-- Proposed in step 4 (2026-11-15), not yet approved; strings.xml says so:
+- Proposed in step 4 (2026-11-15); approved as written on the phone 2026-11-20, on ATS Check in part B (your A; the sentence of item 2 said "more than 7 days ago" there after 10 minutes, as expected of the check build):
   1. No backup yet (`backup_due_never`): "Back up your data: you have never backed up."
   2. An old backup (`backup_due_old`): "Back up your data: the last backup was <date> <zone>, more than 7 days ago.", the date and zone as More's line shows them (C15), for example "2026-11-15 GMT+08:00".
   3. The buttons: "Back up now" (31's `backup_now`) and "Dismiss" (`backup_due_dismiss`).
@@ -99,7 +100,7 @@ Part A, now (the last backup is 2026-11-15, under 7 days old):
 4. More, Backup and restore, Back up now, then cancel the file screen: "Backup not saved. The last backup date is unchanged." on that screen, as in 31. Then the Overall tab: no line there.
 5. The home button, then the app again, unlock: Overall, still no banner.
 
-Part B, on or after 2026-11-23, the phone's clock unchanged (decision 2):
+Part B, on or after 2026-11-23, the phone's clock unchanged (decision 2; run instead on ATS Check on 2026-11-20, decision 4, as the 36 file's 13.2 orders them):
 6. Overall after the unlock: the banner under the title, "Back up your data: the last backup was 2026-11-15 GMT+08:00, more than 7 days ago.", with Back up now and Dismiss.
 7. Dismiss: the banner goes. The Cash tab and back: still gone. Turn the phone: still gone.
 8. The home button, then the app again, unlock: the banner is back. Dismiss again; close the app from recent apps and open it: the banner is back.
@@ -111,7 +112,7 @@ Part B, on or after 2026-11-23, the phone's clock unchanged (decision 2):
 
 Results:
 - Part A (2026-11-15, versionCode 42 installed over 41; before the install the APK's 10 dex files were compared with an earlier build and the names 32 added were found in them): checks 1 to 5 all as planned (your "1-5 ALL YES"): your data as before, no banner and no line on Overall, More's line unchanged, the cancelled export's line on Backup and restore only, and no banner after leaving and returning.
-- Part B: not yet run; on or after 2026-11-23.
+- Part B (2026-11-20, on ATS Check versionCode 46 from iter-36-check-reminder-override, ececeee, installed over its 45; your app untouched at 45; decision 4): all okay (your "1-10 ALL OKAY" and "12 ALL OKAY"; the 36 file, 13.2). In place of check 6, ATS Check (no backup since its restore in 35) showed "you have never backed up"; after Back up now and Save, no banner at once, and the "more than 7 days ago" sentence with today's date at the first return more than 10 minutes later. Checks 7 to 10 and 12 as written (ATS Check's auto-lock already "every time you leave the app"); 11 and 13: the save from the banner with no unlock asked, the banner gone, the line, More's date; Logcat clean of data (no ticker, portfolio name, note, amount, key or file name in ATS Check's lines or any other).
 
 ### 13.3 Pull request and Deploy review (2026-11-15)
 - Pull request #190 (six commits, 80547f7 to de8e6e7; reviewer msfsgh; not a draft). Its first run was green at the first attempt (gh, read only): CI (3 min 45 s; "Scale test retries": none), CodeQL and Analyze (actions), and the screen tests, 145 of 145 (11 min 40 s): the 9 new tests passed, and the 136 earlier ones passed with the banner present (risk 1 did not come about).
@@ -123,7 +124,12 @@ Results:
 - What held: the 7-day rule only in core (K6); the dismissal reset at "each return to the app after leaving it, or a restart" and never stored; the banner's button on 31's export and lock exemption, not a copy; no new logging, permission or manifest change; the banner shows a date and a zone only.
 - For the wording's approval: wireframe 01 labels the button "Back up"; the app uses 31's "Back up now" on both screens.
 - CLAUDE.md gained two pitfalls: `ZoneOffset.UTC` prints "Z" in tests, and an element on every Overall also shows where a test draws Overall directly.
-- The phone has versionCode 42 without the two fixes until the next install; part B is run on a build that has them.
+- The phone had versionCode 42 without the two fixes until the next install (since 2026-11-17 your app has 45, from 35, with both); part B ran on ATS Check 46, which has them.
+- #190's second run (run 43722810947, on 55de165): the screen tests red on one test, `PortfolioDeleteKeyboardLandscapeTest.theDialog_reachesDownToTheKeyboard_andShowsTheNameField_inLandscape` ("The dialog ends at 0.0 px …"), green on a re-run; a test-timing defect with no app change, recorded as open item 68 and fixed in 33b step 2 (on iter-33b, so not on this branch).
+
+### 13.4 Merge (2026-11-20)
+- The record of part B (885b55d) pushed; #190 green on it (CI "Scale test retries": none; the screen tests 145 of 145). GitHub then reported the branch out of date with main (1fff5e4, the avd-memory, dependabot-findings and two-emulators spike records, documents only; no conflict): you pressed "Update branch" (your B), GitHub's merge commit 0394bf0, signed by GitHub. #190 green again on 0394bf0 (CI 4m 37s, "Scale test retries": none; CodeQL; the screen tests 145 of 145, 16m 50s).
+- Pull request #190 merged by you as 0034aa5, 10 commits (80547f7 to 0394bf0). On main after the merge: CI (3m 6s, "Scale test retries": none), CodeQL and the screen tests (145 of 145, 17m 24s) green (gh, read only). Merge record on docs/iter-32-merged, with CLAUDE.md's edits (open item 33's reminder dropped, the lint list at 10, seven pitfalls from 33b and 35).
 
 ## 14. Departures from the plan
 - Step 3: a turn of the phone keeps the reminder dismissed. Section 4 reset the dismissal at each of MainActivity's onStart, which also runs after a turn. MainActivity's onStop now tells the ViewModel the app left (`onAppHidden`), a turn excepted, and `onAppShown` resets only after that.
