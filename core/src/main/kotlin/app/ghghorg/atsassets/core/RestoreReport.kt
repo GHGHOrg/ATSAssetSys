@@ -325,12 +325,15 @@ sealed interface RestoreCheck {
 
     /**
      * A clean file: the [records] K1 made in the replay with the app's own ids, ready to load (34); the tickers with
-     * shares at the end of the file, for the ticker check (33b); and the summary.
+     * shares at the end of the file, for the ticker check (33b); and the summary. [tickerLines]: each held ticker's
+     * first buy row in the file, the line the second round's report names (section 8: every error with its line; 33b
+     * departure 3, your B).
      */
     data class Passed(
         val records: BackupRecords,
         val heldTickers: List<String>,
         val summary: RestoreSummary,
+        val tickerLines: Map<String, Int> = emptyMap(),
     ) : RestoreCheck
 }
 

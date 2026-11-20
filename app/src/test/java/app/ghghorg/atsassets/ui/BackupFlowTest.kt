@@ -496,6 +496,9 @@ class BackupFlowTest {
                 writing = false,
                 outcome = BackupOutcome.SAVED,
                 backEnabled = true,
+                // 33b: Restore is active online.
+                canRestore = true,
+                restoreOffline = false,
             ),
             state.backupScreen,
         )

@@ -22,7 +22,8 @@ import app.ghghorg.atsassets.core.Tab
 /**
  * Shows the screen the ViewModel names. Only the unlocked branch of MainActivity calls this. [screenshots] are
  * MainActivity's Allow and Turn off for the screenshot window, which K8 owns (21). [onBackUpNow] is MainActivity's too:
- * it opens Android's file screen for a backup (31), from Backup and restore and from Overall's reminder (32).
+ * it opens Android's file screen for a backup (31), from Backup and restore and from Overall's reminder (32). [restore]
+ * holds MainActivity's two actions for the restore wizard (33b): Choose file's file screen, and Copy report's clipboard.
  */
 @Composable
 fun AppContent(
@@ -30,6 +31,7 @@ fun AppContent(
     modifier: Modifier = Modifier,
     screenshots: ScreenshotControls = ScreenshotControls({}, {}),
     onBackUpNow: () -> Unit = {},
+    restore: RestoreControls = RestoreControls({}, {}),
 ) {
     val state by viewModel.state.collectAsState()
     when (state.screen) {
@@ -51,7 +53,7 @@ fun AppContent(
             val under = if (dialogOpen) Modifier.clearAndSetSemantics { } else Modifier
             Column(modifier = Modifier.fillMaxSize().then(under)) {
                 Box(modifier = Modifier.weight(1f)) {
-                    BarContent(state, viewModel, screenshots, onBackUpNow)
+                    BarContent(state, viewModel, screenshots, onBackUpNow, restore)
                 }
                 BottomBar(state.tabOrder.tabs, state.tab, viewModel::selectTab)
             }
@@ -124,12 +126,19 @@ class ScreenshotControls(
     val onTurnOff: () -> Unit,
 )
 
+/** The restore wizard's two actions from MainActivity (33b): Choose file's file screen (AC-57), Copy report (C16). */
+class RestoreControls(
+    val onChooseFile: () -> Unit,
+    val onCopyReport: (String) -> Unit,
+)
+
 @Composable
 private fun BarContent(
     state: AppState,
     viewModel: AppViewModel,
     screenshots: ScreenshotControls,
     onBackUpNow: () -> Unit,
+    restore: RestoreControls,
 ) {
     BackHandler(enabled = state.backGoesToOverall) { viewModel.selectTab(Tab.OVERALL) }
     when (state.screen) {
@@ -383,8 +392,26 @@ private fun BarContent(
 
         Screen.BACKUP -> BackupScreen(
             model = state.backupScreen,
-            actions = BackupActions(onBack = viewModel::closeBackup, onBackUpNow = onBackUpNow),
+            actions = BackupActions(onBack = viewModel::closeBackup, onBackUpNow = onBackUpNow, onRestore = viewModel::openRestore),
         )
+
+        Screen.RESTORE -> state.restoreScreen?.let { model ->
+            RestoreScreen(
+                model = model,
+                sourceName = state.priceSourceName,
+                actions =
+                RestoreActions(
+                    onBack = viewModel::restoreBack,
+                    onChooseFile = restore.onChooseFile,
+                    onCheck = viewModel::checkRestoreFile,
+                    onCancelCheck = viewModel::cancelRestoreCheck,
+                    onRetry = viewModel::retryRestoreCheck,
+                    onCopyReport = restore.onCopyReport,
+                    onChooseAnother = viewModel::chooseAnotherRestoreFile,
+                    onClose = viewModel::closeRestore,
+                ),
+            )
+        }
 
         Screen.NET_WORTH -> NetWorthScreen(
             state = state,

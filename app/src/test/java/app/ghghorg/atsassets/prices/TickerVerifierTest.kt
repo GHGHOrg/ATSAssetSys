@@ -251,4 +251,20 @@ class TickerVerifierTest {
             assertEquals(emptyList<Instrument>(), store.savedInstruments)
         }
     }
+
+    // 33b decision 2: the restore check's form answers as verify does and stores nothing.
+    @Test
+    fun check_answersAsVerify_andTakesNoStore() = runTest {
+        val source = Source(Lookup.Found(aapl))
+        val result = TickerVerifier.check("AAPL", emptyList(), online = true, source = source)
+        assertEquals(Verification.Verified(Instrument("AAPL", AssetType.STOCK, verified = true)), result)
+        assertEquals(listOf("AAPL"), source.asked)
+        val known = Instrument("MSFT", AssetType.STOCK, verified = true)
+        assertEquals(Verification.Verified(known), TickerVerifier.check("MSFT", listOf(known), online = false, source = source))
+        assertEquals(listOf("AAPL"), source.asked)
+        assertEquals(
+            Verification.Refused(CheckRefusal.Ticker(TickerRefusal.NotFound)),
+            TickerVerifier.check("ZZZZ", emptyList(), online = true, source = Source(Lookup.NotFound)),
+        )
+    }
 }

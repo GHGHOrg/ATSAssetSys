@@ -22,18 +22,23 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import app.ghghorg.atsassets.R
 
-/** The Backup and restore screen's callbacks, passed together. [onBackUpNow] is MainActivity's: it opens Android's file screen. */
+/**
+ * The Backup and restore screen's callbacks, passed together. [onBackUpNow] is MainActivity's: it opens Android's file
+ * screen. [onRestore] opens the restore wizard (33b).
+ */
 class BackupActions(
     val onBack: () -> Unit,
     val onBackUpNow: () -> Unit,
+    val onRestore: () -> Unit = {},
 )
 
 /**
  * Backup and restore (section 6, Backup export and restore entry; wireframe 10e frames A and B; 31), drawn from its model
  * (CR2): "<" and the title, the last backup line as on More, the line of an interrupted backup, Back up now and what it
  * does, then one line for where the export stands: why the button is inactive, the indicator while the file is
- * written, or how the last export ended. The Restore part of frame A comes with 33 (31 decision 2). No layer and no text
- * field: everything is on the screen, which scrolls. Back returns to More.
+ * written, or how the last export ended. Then the Restore part of frame A (33b): what a restore does, and Restore from
+ * backup file, inactive offline with the line why (marker 4; AC-08). No layer and no text field: everything is on the
+ * screen, which scrolls. Back returns to More.
  */
 @Composable
 fun BackupScreen(
@@ -60,6 +65,38 @@ fun BackupScreen(
                 BackupStatusLine(model.writing, noData = model.blocked == BackupBlocked.NO_DATA, model.outcome, model.lastBackup)
             }
         }
+        OutlinedCard(modifier = Modifier.fillMaxWidth()) {
+            Column(modifier = Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                Text(text = stringResource(R.string.restore_note), style = MaterialTheme.typography.bodyLarge)
+                if (model.restoreOffline) {
+                    Text(
+                        text = stringResource(R.string.restore_offline),
+                        style = MaterialTheme.typography.bodyLarge,
+                        modifier = Modifier.semantics { liveRegion = LiveRegionMode.Polite },
+                    )
+                }
+                InactiveDashedButton(stringResource(R.string.restore_button), model.canRestore, actions.onRestore)
+            }
+        }
+    }
+}
+
+// Restore from backup file: inactive as Back up now is, dashed and read by TalkBack as unavailable (marker 4).
+@Composable
+private fun InactiveDashedButton(
+    label: String,
+    enabled: Boolean,
+    onClick: () -> Unit,
+) {
+    val shape = ButtonDefaults.outlinedShape
+    OutlinedButton(
+        onClick = onClick,
+        enabled = enabled,
+        shape = shape,
+        border = if (enabled) ButtonDefaults.outlinedButtonBorder(enabled = true) else null,
+        modifier = if (enabled) Modifier else Modifier.dashedOutline(shape, MaterialTheme.colorScheme.outline),
+    ) {
+        Text(text = label)
     }
 }
 
@@ -93,19 +130,7 @@ internal fun BackupInterruptedLine() {
 private fun BackUpNowButton(
     enabled: Boolean,
     onBackUpNow: () -> Unit,
-) {
-    val shape = ButtonDefaults.outlinedShape
-    val dashed = MaterialTheme.colorScheme.outline
-    OutlinedButton(
-        onClick = onBackUpNow,
-        enabled = enabled,
-        shape = shape,
-        border = if (enabled) ButtonDefaults.outlinedButtonBorder(enabled = true) else null,
-        modifier = if (enabled) Modifier else Modifier.dashedOutline(shape, dashed),
-    ) {
-        Text(text = stringResource(R.string.backup_now))
-    }
-}
+) = InactiveDashedButton(stringResource(R.string.backup_now), enabled, onBackUpNow)
 
 // One line at most, read by TalkBack when it appears: the reason the button is inactive, the indicator while the file
 // is written, or the last export's result (frame B: plain text, one or the other). Overall's reminder shows the same

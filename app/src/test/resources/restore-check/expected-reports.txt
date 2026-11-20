@@ -1,0 +1,102 @@
+== 01-not-utf8.csv
+null null NotUtf8
+== 02-no-header.csv
+null null NoHeader
+== 03-missing-column.csv
+1 null MissingColumn(column=ticker)
+== 04-unknown-column.csv
+1 null UnknownColumn(column=price)
+== 05-unnamed-column.csv
+1 null UnknownColumn(column=)
+== 06-repeated-column.csv
+1 null RepeatedColumn(column=date)
+== 07-no-format-row.csv
+2 row_type NoFormatRow
+== 08-version-not-whole.csv
+2 value VersionNotWhole
+== 09-version-unknown.csv
+2 value VersionUnknown(version=2)
+== 10-no-opening-balance.csv
+null null NoOpeningBalance
+== 11-rows.csv
+10 row_type RowTypeMissing
+11 row_type RowTypeUnknown(rowType=dividend)
+12 row_type FormatNotFirst
+13 ticker ValueMissing
+14 ticker CellNotUsed
+15 date DateForm
+16 date DateNotReal
+17 amount NumberForm
+18 quantity QuantityNotPositive
+19 quantity QuantityTooManyDecimals
+20 amount AmountTooManyDecimals
+21 amount AmountTooLarge
+22 amount WrongSign
+23 amount CashAmountZero
+24 amount BuyTotalZero
+25 id IdBadlyFormed
+26 id IdDuplicate(line=6)
+27 portfolio PortfolioNameTooShort
+28 portfolio PortfolioNameNoLetter
+29 portfolio PortfolioNameDuplicate(line=3)
+30 portfolio PortfolioNotFound
+31 cash_type CashTypeUnknown
+32 cash_type CashTypeTrade
+33 note AdjustmentWithoutNote
+34 cash_type SecondOpeningBalance(line=5)
+35 ticker TickerBadCharacters
+36 split_to SplitNumberNotWhole
+37 split_from SplitNumbersEqual
+38 split_to SplitNumberTooLarge
+39 split_to BuyRatioTooLarge
+40 lot_picks PicksBadlyWritten
+41 lot_picks PickNotFound(id=Z9)
+42 lot_picks PickNotABuy(id=D1)
+43 lot_picks PickOtherPortfolio(id=T2)
+44 lot_picks PickOtherTicker(id=M1)
+45 lot_picks PickTwice(id=T1)
+46 lot_picks LotBoughtAfterSell(id=T3)
+48 lot_picks LotEnteredAfterSell(id=T4)
+50 quantity SellMoreThanHeld(date=2026-01-11, held=12)
+51 lot_picks PicksDoNotAddUp(picked=1, quantity=2)
+52 lot_picks ValueMissing
+53 reverses ReversalTargetNotFound(id=Z8)
+54 reverses ReversalOfOpeningBalance
+55 reverses ReversalTargetListedAfter(line=56)
+58 reverses AlreadyReversed(line=57)
+60 date ReversalBeforeOriginal(originalDate=2026-01-20)
+61 null CashNegative(date=2026-01-14, shortfallCents=4321500)
+62 date DatedBeforeOpeningBalance(openingDate=2026-01-01)
+63 ticker SplitTickerNotBought
+64 null BalanceTooLarge
+65 null BalanceTooLarge
+66 quantity QuantityNotPositive
+67 lot_picks DependsOn(line=66)
+68 null CellCount(found=20, expected=19)
+69 null CellCount(found=12, expected=19)
+69 note LineBreakInCell
+73 lot_picks PickOverLot(id=N1, remainder=5)
+76 null SharesNegative(date=2026-01-19)
+78 ticker HiddenHoldingHasShares
+79 sector OverrideValueNotOnList
+81 value DuplicateListValue(line=80)
+82 list ListUnknown
+84 source_text DuplicateRememberedText(line=83)
+85 value ListValueMatchesRememberedText(line=83)
+86 value RememberedTextValueNotOnList
+87 ticker HiddenHoldingNotFound
+88 ticker DependsOn(line=18)
+92 ticker DuplicateHidden(line=91)
+93 ticker OverrideHoldingNotFound
+94 null OverrideBothEmpty
+95 ticker DependsOn(line=52)
+97 ticker DuplicateOverride(line=96)
+98 key SettingKeyUnknown
+99 value SettingValueUnknown
+100 value TabOrderNotEachOnce
+102 key SettingKeyTwice(line=101)
+== 12-opening-balance-not-earliest.csv
+4 date DatedBeforeOpeningBalance(openingDate=2026-01-01)
+5 date OpeningBalanceNotEarliest
+== 13-held-tickers.csv
+PASSED RestoreSummary(portfolios=1, transactions=4, cashEntries=1, cashBalanceCents=996000, holdingsWithShares=4)

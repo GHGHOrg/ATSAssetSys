@@ -61,6 +61,23 @@ object TickerVerifier {
         source: PriceSource,
         store: RecordStore,
     ): Verification {
+        val result = check(ticker, instruments, online, source)
+        if (result is Verification.Verified && instruments.none { it.ticker == ticker && it.verified }) {
+            store.saveInstrument(result.instrument)
+        }
+        return result
+    }
+
+    /**
+     * As [verify], but nothing is stored: a newly verified ticker comes back as an instrument only. The restore check uses
+     * it, so the app is unchanged until the restore itself (33b decision 2; C3).
+     */
+    suspend fun check(
+        ticker: String,
+        instruments: List<Instrument>,
+        online: Boolean,
+        source: PriceSource,
+    ): Verification {
         instruments.firstOrNull { it.ticker == ticker && it.verified }?.let { return Verification.Verified(it) }
         if (!online) return Verification.Refused(CheckRefusal.Offline)
         val refusal =
@@ -68,9 +85,7 @@ object TickerVerifier {
                 is Lookup.Found -> {
                     when (val verdict = TickerCheck.verdict(lookup.listing)) {
                         is TickerVerdict.Accepted -> {
-                            val instrument = Instrument(ticker = ticker, assetType = verdict.assetType, verified = true)
-                            store.saveInstrument(instrument)
-                            return Verification.Verified(instrument)
+                            return Verification.Verified(Instrument(ticker = ticker, assetType = verdict.assetType, verified = true))
                         }
 
                         is TickerVerdict.Refused -> CheckRefusal.Ticker(verdict.reason)
