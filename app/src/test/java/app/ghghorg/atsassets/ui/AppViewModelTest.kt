@@ -2,6 +2,7 @@ package app.ghghorg.atsassets.ui
 
 import app.ghghorg.atsassets.core.AmountError
 import app.ghghorg.atsassets.core.AutoLock
+import app.ghghorg.atsassets.core.BackupRecords
 import app.ghghorg.atsassets.core.BackupState
 import app.ghghorg.atsassets.core.CashDirection
 import app.ghghorg.atsassets.core.CashEntry
@@ -25,6 +26,7 @@ import app.ghghorg.atsassets.core.PriceSource
 import app.ghghorg.atsassets.core.ProfileAnswer
 import app.ghghorg.atsassets.core.Quote
 import app.ghghorg.atsassets.core.RecordStore
+import app.ghghorg.atsassets.core.RestoreAbandonedException
 import app.ghghorg.atsassets.core.SourceProfile
 import app.ghghorg.atsassets.core.Tab
 import app.ghghorg.atsassets.core.TabOrder
@@ -1731,6 +1733,34 @@ internal class FakeStore(
         loadCalls++
         loadError?.let { throw it }
         return stored
+    }
+
+    // 34: each restore as given, and an error that fails one. All or nothing, as the Room store: a failure changes
+    // nothing; a success leaves exactly the file's records, the instruments without prices, no key and no backup.
+    val replacements = mutableListOf<Pair<BackupRecords, List<Instrument>>>()
+    var replaceError: Throwable? = null
+
+    // A restore no longer wanted when its write would end ([stillWanted] false) is rolled back, as the Room store's.
+    override suspend fun replaceAll(
+        records: BackupRecords,
+        instruments: List<Instrument>,
+        stillWanted: () -> Boolean,
+    ) {
+        gate?.await()
+        replaceError?.let { throw it }
+        if (!stillWanted()) throw RestoreAbandonedException()
+        replacements.add(records to instruments)
+        stored = records.cashEntries
+        storedPortfolios = records.portfolios
+        storedTransactions = records.transactions
+        storedHidden = records.hidden
+        storedOverrides = records.overrides
+        storedClassLists = records.lists
+        storedAutoLock = records.autoLock
+        storedTabOrder = records.tabOrder
+        storedInstruments = instruments.map { Instrument(it.ticker, it.assetType, verified = true) }
+        storedPriceKey = null
+        storedBackupState = BackupState()
     }
 
     override suspend fun saveCashEntries(entries: List<CashEntry>) {

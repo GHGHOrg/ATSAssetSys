@@ -286,6 +286,44 @@ class RestoreModelTest {
         assertNull(model.report)
     }
 
+    // 34 (wireframe 10e frame F marker 15, frame H; decision 3): an app with no data restores in four steps and its
+    // summary offers Restore; an app that holds data keeps five steps and the line that restoring over data comes later.
+    @Test
+    fun theSummary_offersRestore_onlyOnAnAppWithNoData() {
+        val summary = RestoreSummary(portfolios = 2, transactions = 8, cashEntries = 4, cashBalanceCents = 942_500L, holdingsWithShares = 1)
+        val wizard = RestoreWizard(step = RestoreStep.SUMMARY, summary = summary)
+        val empty = Restores.screen(wizard, "Finnhub", holdsData = false)
+        assertTrue(empty.canRestore)
+        assertFalse(empty.restoreLater)
+        assertEquals("4", empty.totalSteps)
+        val withData = Restores.screen(wizard, "Finnhub", holdsData = true)
+        assertFalse(withData.canRestore)
+        assertTrue(withData.restoreLater)
+        assertEquals("5", withData.totalSteps)
+        assertEquals("4", Restores.screen(RestoreWizard(), "Finnhub", holdsData = false).totalSteps)
+        assertEquals("5", Restores.screen(RestoreWizard(), "Finnhub", holdsData = true).totalSteps)
+    }
+
+    // 34 (frame H): while the restore is written and on its result, Back does nothing; the result shows the counts
+    // loaded; the step count stays four though the app now holds the file's data.
+    @Test
+    fun theRestore_itsResult_andItsFailure() {
+        val summary = RestoreSummary(portfolios = 2, transactions = 8, cashEntries = 4, cashBalanceCents = 942_500L, holdingsWithShares = 1)
+        val writing = Restores.screen(RestoreWizard(step = RestoreStep.RESTORING, summary = summary), "Finnhub", holdsData = false)
+        assertFalse(writing.backEnabled)
+        assertFalse(writing.canRestore)
+        assertNull(writing.loaded)
+        val result = Restores.screen(RestoreWizard(step = RestoreStep.RESULT, summary = summary), "Finnhub", holdsData = true)
+        assertFalse(result.backEnabled)
+        assertEquals(RestoreSummaryModel("2", "8", "4", "$9,425.00", "1"), result.loaded)
+        assertNull(result.summary)
+        assertEquals("4", result.totalSteps)
+        val failed = Restores.screen(RestoreWizard(step = RestoreStep.FAILED, summary = summary), "Finnhub", holdsData = false)
+        assertTrue(failed.backEnabled)
+        assertNull(failed.loaded)
+        assertFalse(failed.canRestore)
+    }
+
     // Wireframe 10e frame A, marker 4; AC-08: offline, Restore is inactive and a line says why; it needs no data.
     @Test
     fun restoreOnBackupAndRestore() {

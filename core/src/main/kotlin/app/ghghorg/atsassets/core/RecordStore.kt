@@ -13,8 +13,28 @@ data class BackupState(
     val unfinished: Boolean = false,
 )
 
+/** A restore no longer wanted when its write would end (the app locked meanwhile): nothing was changed (34). */
+class RestoreAbandonedException : Exception("The restore was abandoned; nothing was changed.")
+
 /** K2: where records are kept. `core/` knows no database, key or Android class. */
 interface RecordStore {
+    /**
+     * A restore's delete and load as one all-or-nothing action (section 8, restore step 7; 34): everything stored is
+     * deleted (every record, the instruments and prices, the lists and remembered texts, hidden holdings, overrides and
+     * every setting, the price key and the backup moment and mark with them; decisions 1 and 4), and [records], the
+     * file's as K1 made them (33a decision 1), are stored with the held tickers' verified [instruments], without their
+     * prices ("no price" until the first refresh). A failure leaves the store as it was (C3).
+     *
+     * [stillWanted] is asked as the write's last act, inside it, just before it is kept: false (the app locked
+     * meanwhile; section 9, AC-57) rolls everything back and throws [RestoreAbandonedException]. Returning normally
+     * means the write was kept.
+     */
+    suspend fun replaceAll(
+        records: BackupRecords,
+        instruments: List<Instrument>,
+        stillWanted: () -> Boolean = { true },
+    )
+
     /** Throws [UnreadableDataException] if stored data exists but cannot be read. */
     suspend fun loadCashEntries(): List<CashEntry>
 

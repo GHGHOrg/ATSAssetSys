@@ -2,6 +2,7 @@ package app.ghghorg.atsassets.data
 
 import app.ghghorg.atsassets.core.AssetType
 import app.ghghorg.atsassets.core.AutoLock
+import app.ghghorg.atsassets.core.BackupRecords
 import app.ghghorg.atsassets.core.BackupState
 import app.ghghorg.atsassets.core.CashEntry
 import app.ghghorg.atsassets.core.CashType
@@ -44,6 +45,27 @@ class RoomRecordStore(
 ) : RecordStore {
     private val database: AtsDatabase by lazy {
         open(key.loadOrCreatePassphrase(), key.databaseFile)
+    }
+
+    // 34: the rows are worked out first, so a file's record that cannot be written fails before anything is deleted.
+    override suspend fun replaceAll(
+        records: BackupRecords,
+        instruments: List<Instrument>,
+        stillWanted: () -> Boolean,
+    ) {
+        val rows = restoreRows(records, instruments)
+        val dao = withContext(Dispatchers.IO) {
+            try {
+                database.restoreDao()
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: UnreadableDataException) {
+                throw e
+            } catch (e: Exception) {
+                throw UnreadableDataException("The stored data could not be opened.", e)
+            }
+        }
+        dao.replaceAll(rows, stillWanted)
     }
 
     override suspend fun loadCashEntries(): List<CashEntry> = withContext(Dispatchers.IO) {
@@ -850,11 +872,11 @@ internal fun ClassOverride.toRow(values: List<ListValueRow>): ClassOverrideRow? 
     return ClassOverrideRow(portfolioId, ticker, list.name, ofList.first { it.value == value }.seq)
 }
 
-private fun Portfolio.toRow() = PortfolioRow(id = id, name = name, createdSeq = createdSeq)
+internal fun Portfolio.toRow() = PortfolioRow(id = id, name = name, createdSeq = createdSeq)
 
 private fun PortfolioRow.toPortfolio() = Portfolio(id = id, name = name, createdSeq = createdSeq)
 
-private fun CashEntry.toRow() = CashEntryRow(
+internal fun CashEntry.toRow() = CashEntryRow(
     id = id,
     date = date.toString(),
     amountCents = amountCents,

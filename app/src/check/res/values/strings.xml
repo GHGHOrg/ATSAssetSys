@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- 34 decision 2: the check build's own name, so its icon and screens are not taken for your app. Not shown to anyone else. -->
+    <string name="app_name">ATS Check</string>
+</resources>

@@ -13,6 +13,11 @@ enum class RestoreStep {
     CHECKING,
     REPORT,
     SUMMARY,
+
+    // 34 (wireframe 10e frame H): the delete and load under way; the result (marker 18); a failed write (marker 19).
+    RESTORING,
+    RESULT,
+    FAILED,
 }
 
 /** 33b: step 2's two phases (wireframe 10e frame D, marker 9): reading and the rules, then the held tickers. */
