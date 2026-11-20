@@ -1,6 +1,6 @@
 # plan/iterations/32-backup-reminder.md
 
-Stage: Build. Status: approved 2026-11-15 (your A); decisions 1 to 3 settled the same day (section 11). Steps 1 to 6 built on iter-32-backup-reminder (versionCode 42); not merged. The phone check's part A passed 2026-11-15 (13.2). Pull request #190: its first run green, 145 of 145 screen tests; the Deploy review done, four low findings, three fixed (13.3). Part B passed 2026-11-20 on ATS Check through iteration 36 (decision 4, replacing decision 2's date; 13.2); the wording approved the same day (section 12). Open: #190's merge.
+Stage: Build. Status: approved 2026-11-15 (your A); decisions 1 to 3 settled the same day (section 11). Steps 1 to 6 built on iter-32-backup-reminder (versionCode 42); not merged. The phone check's part A passed 2026-11-15 (13.2). Pull request #190: its first run green, 145 of 145 screen tests; the Deploy review done, four low findings, three fixed (13.3). Part B passed 2026-11-20 on ATS Check through iteration 36 (decision 4, replacing decision 2's date; 13.2); the wording approved the same day (section 12). Done: pull request #190 merged as 0034aa5, main green (13.4).
 Source: plan.md section 4 (row 32); spec section 9 (Backup reminder), section 3 ("app holds data"), section 6 (view 1, the navigation outline), section 14 (K6, K9), D9, C15; wireframe 01 (state A, marker 1); intent "Backup reminder"; the 31 file (the export flow; open item 67).
 
 ## 1. Outcome
@@ -126,6 +126,10 @@ Results:
 - CLAUDE.md gained two pitfalls: `ZoneOffset.UTC` prints "Z" in tests, and an element on every Overall also shows where a test draws Overall directly.
 - The phone had versionCode 42 without the two fixes until the next install (since 2026-11-17 your app has 45, from 35, with both); part B ran on ATS Check 46, which has them.
 - #190's second run (run 43722810947, on 55de165): the screen tests red on one test, `PortfolioDeleteKeyboardLandscapeTest.theDialog_reachesDownToTheKeyboard_andShowsTheNameField_inLandscape` ("The dialog ends at 0.0 px …"), green on a re-run; a test-timing defect with no app change, recorded as open item 68 and fixed in 33b step 2 (on iter-33b, so not on this branch).
+
+### 13.4 Merge (2026-11-20)
+- The record of part B (885b55d) pushed; #190 green on it (CI "Scale test retries": none; the screen tests 145 of 145). GitHub then reported the branch out of date with main (1fff5e4, the avd-memory, dependabot-findings and two-emulators spike records, documents only; no conflict): you pressed "Update branch" (your B), GitHub's merge commit 0394bf0, signed by GitHub. #190 green again on 0394bf0 (CI 4m 37s, "Scale test retries": none; CodeQL; the screen tests 145 of 145, 16m 50s).
+- Pull request #190 merged by you as 0034aa5, 10 commits (80547f7 to 0394bf0). On main after the merge: CI (3m 6s, "Scale test retries": none), CodeQL and the screen tests (145 of 145, 17m 24s) green (gh, read only). Merge record on docs/iter-32-merged, with CLAUDE.md's edits (open item 33's reminder dropped, the lint list at 10, seven pitfalls from 33b and 35).
 
 ## 14. Departures from the plan
 - Step 3: a turn of the phone keeps the reminder dismissed. Section 4 reset the dismissal at each of MainActivity's onStart, which also runs after a turn. MainActivity's onStop now tells the ViewModel the app left (`onAppHidden`), a turn excepted, and `onAppShown` resets only after that.
