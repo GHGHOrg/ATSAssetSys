@@ -12,13 +12,20 @@ object BackupReminder {
     val AFTER: Duration = Duration.ofDays(7)
 
     /**
-     * True when the last backup is more than 7 days before [now], or there is none while the app holds data
-     * ([holdsData]; spec section 3). Exactly 7 days is not due. A last backup after [now], the phone's clock having been
-     * moved back, is not due.
+     * True when the last backup is more than [after] (7 days unless given) before [now], or there is none while the app
+     * holds data ([holdsData]; spec section 3). Exactly [after] is not due. A last backup after [now], the phone's clock
+     * having been moved back, is not due. Only the check build passes another time (iteration 36).
      */
     fun due(
         lastBackup: Instant?,
         now: Instant,
         holdsData: Boolean,
-    ): Boolean = if (lastBackup == null) holdsData else Duration.between(lastBackup, now) > AFTER
+        after: Duration = AFTER,
+    ): Boolean = if (lastBackup == null) holdsData else Duration.between(lastBackup, now) > after
+
+    /** The time a build sets in minutes (iteration 36, decision 1): 0 means the 7 days; below 0 is refused. */
+    fun after(minutes: Long): Duration {
+        require(minutes >= 0) { "minutes must not be below 0" }
+        return if (minutes == 0L) AFTER else Duration.ofMinutes(minutes)
+    }
 }

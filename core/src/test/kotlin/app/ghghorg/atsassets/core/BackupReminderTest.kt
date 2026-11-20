@@ -57,4 +57,30 @@ class BackupReminderTest {
         assertFalse(BackupReminder.due(last, last.plus(Duration.ofDays(7)).minusSeconds(1), holdsData = true))
         assertEquals(Duration.ofHours(168), BackupReminder.AFTER)
     }
+
+    // 36: the check build alone passes a shorter time (decisions 1 and 2); the rule is the same, only the time differs.
+    @Test
+    fun `with a time given, exactly that time is not due and one millisecond more is`() {
+        val tenMinutes = Duration.ofMinutes(10)
+        assertFalse(BackupReminder.due(last, last.plus(tenMinutes), holdsData = true, after = tenMinutes))
+        assertTrue(BackupReminder.due(last, last.plus(tenMinutes).plusMillis(1), holdsData = true, after = tenMinutes))
+    }
+
+    @Test
+    fun `with a time given, no backup is still due only while the app holds data`() {
+        val tenMinutes = Duration.ofMinutes(10)
+        assertTrue(BackupReminder.due(null, last, holdsData = true, after = tenMinutes))
+        assertFalse(BackupReminder.due(null, last, holdsData = false, after = tenMinutes))
+    }
+
+    @Test
+    fun `a time of 0 minutes means the 7 days`() {
+        assertEquals(BackupReminder.AFTER, BackupReminder.after(minutes = 0))
+        assertEquals(Duration.ofMinutes(10), BackupReminder.after(minutes = 10))
+    }
+
+    @Test(expected = IllegalArgumentException::class)
+    fun `a time below 0 minutes is refused`() {
+        BackupReminder.after(minutes = -1)
+    }
 }

@@ -112,6 +112,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.math.BigDecimal
 import java.time.Clock
+import java.time.Duration
 import java.time.Instant
 import java.time.LocalDate
 import java.time.ZoneId
@@ -744,6 +745,8 @@ data class AppState(
     // (spec section 9).
     val now: Instant = Instant.EPOCH,
     val reminderDismissed: Boolean = false,
+    // 36: after how long a backup is due: spec section 9's 7 days, shorter only in the check build (decisions 1 and 2).
+    val backupDueAfter: Duration = BackupReminder.AFTER,
     // 33b: the restore wizard while it is open (RESTORE), null otherwise; whether the phone was online when last read (on
     // opening Backup and restore, at each return to the app, and when the network comes or goes): offline, Restore is
     // inactive (section 8, restore step 1; AC-08).
@@ -1195,7 +1198,7 @@ data class AppState(
     val holdsData: Boolean get() = CashRules.appHoldsData(entries)
 
     /** 32: a backup is due by K6's rule (spec section 9), against the moment last read. */
-    val backupDue: Boolean get() = BackupReminder.due(lastBackup, now, holdsData)
+    val backupDue: Boolean get() = BackupReminder.due(lastBackup, now, holdsData, backupDueAfter)
 
     /** 32: Overall shows the reminder: a backup is due and the reminder was not dismissed since the app was last opened. */
     val backupReminderShown: Boolean get() = backupDue && !reminderDismissed
@@ -1299,9 +1302,14 @@ class AppViewModel(
     private val deviceZone: () -> ZoneId = { ZoneId.systemDefault() },
     // 33b: where the restore check's reading and replay run, off the main thread (it can take seconds, 33a 13.1 step 5).
     private val work: CoroutineContext = Dispatchers.Default,
+    // 36: after how long a backup is due; MainActivity passes the build's time (the check build's is shorter).
+    backupDueAfter: Duration = BackupReminder.AFTER,
 ) : ViewModel() {
     private val marketDate = MarketDate(clock)
-    private val mutableState = KeptStateFlow(AppState(priceSourceName = priceSource.name, zone = deviceZone(), now = clock.instant()))
+    private val mutableState =
+        KeptStateFlow(
+            AppState(priceSourceName = priceSource.name, zone = deviceZone(), now = clock.instant(), backupDueAfter = backupDueAfter),
+        )
     val state: StateFlow<AppState> = mutableState.readOnly
     private var store: RecordStore? = null
     private var started = false

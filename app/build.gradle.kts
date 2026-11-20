@@ -17,10 +17,14 @@ android {
         applicationId = "app.ghghorg.atsassets"
         minSdk = 33
         targetSdk = 37
-        versionCode = 45
+        versionCode = 46
         versionName = "1.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+
+        // 36 decision 1: after how many minutes a backup is due; 0 means spec section 9's 7 days (core's BackupReminder).
+        // Only the check build sets another time (decision 2); a unit test checks the debug build's is 0.
+        buildConfigField("long", "BACKUP_DUE_AFTER_MINUTES", "0L")
     }
 
     buildTypes {
@@ -36,6 +40,8 @@ android {
             initWith(getByName("debug"))
             applicationIdSuffix = ".check"
             versionNameSuffix = "-check"
+            // 36 decision 2: ATS Check treats a backup as due after 10 minutes, for 32's phone check part B.
+            buildConfigField("long", "BACKUP_DUE_AFTER_MINUTES", "10L")
         }
     }
     compileOptions {
@@ -44,6 +50,8 @@ android {
     }
     buildFeatures {
         compose = true
+        // 36 decision 1: for BACKUP_DUE_AFTER_MINUTES.
+        buildConfig = true
     }
 }
 
