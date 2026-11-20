@@ -1,6 +1,6 @@
 # plan/iterations/35-restore-over-data.md
 
-Stage: Build. Status: approved 2026-11-17 (your A); decisions 1 to 4 settled the same day (your A each; section 11). Steps 1 to 7 built and committed (c148f88 to 748439d); the phone check passed 2026-11-17, checks 1 to 15, check 12 after step 7's fix (13.2); the wording approved (section 12). Draft pull request #195 (stacked on #194, #193 and #190) green on 748439d. The Deploy review done: no high or medium finding, one low recorded (13.3, your A). Open: #190's, #193's and #194's merges, then main merged in, #195 made ready and merged, and the merge record.
+Stage: Build. Status: approved 2026-11-17 (your A); decisions 1 to 4 settled the same day (your A each; section 11). Steps 1 to 7 built and committed (c148f88 to 748439d); the phone check passed 2026-11-17, checks 1 to 15, check 12 after step 7's fix (13.2); the wording approved (section 12). Draft pull request #195 (stacked on #194, #193 and #190) green on 748439d. The Deploy review done: no high or medium finding, one low recorded (13.3, your A). Done: main merged in after #190's, #193's and #194's merges, pull request #195 merged as 98f58b9, main green (13.4).
 Source: plan.md section 4 (row 35); spec section 8 (restore steps 5, 6 and 7, App initialization, Known limits), section 9 (Restore, Backup, Last backup, Android's file screens, the lock during a restore), section 3 ("app holds data"), section 6 (Backup export and restore entry), C3, D9; section 14 (K2, K6, K9); wireframe 10e frames F (markers 13 and 14, the Now column), G (markers 16 and 17) and H; the 34 file (the delete-and-load, the result, decision 3's stub, 13.3's lock rollback); the 31 file (the export and its results); the 32 file (decision 1: an export's result lasts only where it shows).
 
 ## 1. Outcome
@@ -140,6 +140,10 @@ Results:
   4. (info) RestoreKeyboardTest repeats the screen's 16 dp padding as a number; a change of the padding fails the test until both change.
   5. (info) Open item 69: the other entry screens above the bar keep check 12's cause (decision 4).
 - Decided: finding 1 recorded, not fixed (your A, 2026-11-17): rare (the write takes about a second), the backup itself completes and its date shows on Backup and restore. With no high or medium finding, 35 is ready for its merge path: #190's, #193's and #194's merges, then main merged in, #195 made ready and merged.
+
+### 13.4 Merge (2026-11-20)
+- After #194's merge (e1731f5) and its record (#210, d0f5721), main merged into iter-35-restore-over-data (9b49786): only plan.md conflicted (section 11's rows 33b and 34 taken from main, row 35 kept; the change log's sides kept in date order); the full run green (1,505 tests, 1 skipped; 178 screen tests compiled; lint's 10). Pushed with bb8c842 and 672176f; #195 green on 9b49786 at the first attempt: CI (4m 53s; "Scale test retries": none), CodeQL and Analyze (actions), the screen tests 178 of 178 (15m 41s) (gh, read only).
+- Pull request #195 made ready and merged by you as 98f58b9, 12 commits (c148f88 to 9b49786). On main after the merge: CI (4m 12s; "Scale test retries": none) and CodeQL green; the screen tests (run 44690476652) green at attempt 2, 178 of 178 (17m 33s), after attempt 1 failed on PriceKeyKeyboardLandscapeTest ("ends at 0.0 px", as on #194's attempt 1), re-run with your yes (gh, read only). Merge record on docs/iter-35-merged.
 
 ## 14. Departures from the plan
 1. Step 4: the summary on an app that holds data has a line the wireframe does not show (frame F has none): that the file passed every check and that Continue leads to the confirmation, as 34's summary on an empty app has its own line. Proposed for your approval (section 12).
