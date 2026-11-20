@@ -69,7 +69,8 @@ None (no app text).
 
 ### 13.1 Steps
 - Steps 1 and 2 built without a stop between them (your instruction, 2026-11-20), each step's state held for its own commit.
-- Step 1 (2026-11-20): this file; plan.md (section 2's spike notes and file range, row 37, section 11's row, the change log); open item 70 (T11's text from plan/spikes/two-emulators.md section 10). Only documents changed.
+- Step 1 (2026-11-20): this file; plan.md (section 2's spike notes and file range, row 37, section 11's row, the change log); open item 70 (T11's text from plan/spikes/two-emulators.md section 10). Only documents changed. The full run green: 1,511 tests (1 skipped), 178 screen tests compiled, lint's 10 (report 18:21:22); "11 history" passed on try 3.
+- Step 2 (2026-11-20): .github/workflows/screen-tests.yml, 233 lines: the job `shard` (named `screen-tests shard K`, `fail-fast: false`, shards 0 to 2, `NUM_SHARDS: "3"` in the workflow's env), each with today's steps, the test runner's `numShards` and `shardIndex`, a check that the shard ran tests, and its artifact `screen-tests-shard-K-attempt-N`; the job `screen-tests` (`needs: shard`, `if: always()`) downloads every `screen-tests-shard-*` artifact of the run and, per shard, uses the highest attempt (decision 1), then checks the total against the `@Test` lines, no test in two shards, and that the shard jobs succeeded. Against 407503c: 25 lines in, 51 out (the memory sampler, its summary and their files). The ruleset (gh, read only): "default branch protection", active, requires build, CodeQL and screen-tests, so it is unchanged. Open item 70 closed. The workflow is not run locally; the local full run shows only that the app and the tests still build; the proof is step 3. Not checked before the push: the YAML's validity (no local linter; GitHub rejects an invalid workflow at the push).
 
 ## 14. Departures from the plan
 None yet.

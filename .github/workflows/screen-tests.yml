@@ -2,6 +2,9 @@ name: Screen tests
 
 # AC-61 (CR3, iteration 15b; measured in plan/spikes/screen-tests.md, section 11): the screen tests on an Android 17 emulator,
 # on every pull request and on main after each merge. A red run is not merged.
+# Iteration 37 (plan/spikes/two-emulators.md, T11; open item 70): the tests are split over 3 runners, one emulator each, by
+# the test runner's numShards and shardIndex. The job named screen-tests, the ruleset's required check, waits for every shard
+# and checks their results together.
 on:
   pull_request:
   push:
@@ -16,11 +19,18 @@ env:
   # The fixed throwaway test PIN (spec section 9; plan/spikes/screen-tests.md 11.3, S10), the same as TEST_PIN in ScreenTestSupport.kt.
   # It unlocks only this emulator, never a phone.
   TEST_PIN: "135790"
+  # The number of shards; the shard job's matrix below lists 0 to NUM_SHARDS - 1 and must change with it.
+  NUM_SHARDS: "3"
 
 jobs:
-  screen-tests:
+  shard:
+    name: screen-tests shard ${{ matrix.shard }}
     runs-on: ubuntu-26.04
     timeout-minutes: 45
+    strategy:
+      fail-fast: false
+      matrix:
+        shard: [0, 1, 2]
     steps:
       - uses: actions/checkout@v7
       - uses: actions/setup-java@v6
@@ -142,20 +152,20 @@ jobs:
       - name: Screen tests
         run: |
           start=$SECONDS
-          ./gradlew :app:connectedDebugAndroidTest
-          echo "Tests took $((SECONDS - start)) s"
+          ./gradlew :app:connectedDebugAndroidTest \
+            -Pandroid.testInstrumentationRunnerArguments.numShards="$NUM_SHARDS" \
+            -Pandroid.testInstrumentationRunnerArguments.shardIndex="${{ matrix.shard }}"
+          echo "Shard ${{ matrix.shard }} of $NUM_SHARDS: tests took $((SECONDS - start)) s"
 
-      # Gradle once passed with no test run (plan/spikes/screen-tests.md 11.4, series 1, run 20). The expected count is the number of @Test lines in
-      # the screen tests' sources, so it needs no update when tests are added; a stray @Test makes the run red, never green.
-      - name: Check the test count
+      # Gradle once passed with no test run (plan/spikes/screen-tests.md 11.4, series 1, run 20). A shard runs only its share,
+      # so here it only must have run some tests; the job named screen-tests checks the total.
+      - name: Check the shard ran tests
         if: always()
         run: |
-          expected=$(grep -rhE '^[[:space:]]*@Test\b' app/src/androidTest | wc -l)
           dir=app/build/outputs/androidTest-results/connected/debug
           count=$(find "$dir" -name 'TEST-*.xml' -exec grep -ho '<testcase ' {} + 2>/dev/null | wc -l)
-          echo "Tests run: $count of $expected"
-          if [ "$expected" -eq 0 ]; then echo "::error::no @Test found in app/src/androidTest"; exit 1; fi
-          if [ "$count" -lt "$expected" ]; then echo "::error::$count tests ran, expected $expected"; exit 1; fi
+          echo "Shard ${{ matrix.shard }}: $count tests run"
+          if [ "$count" -eq 0 ]; then echo "::error::shard ${{ matrix.shard }} ran no tests"; exit 1; fi
 
       - name: Pull the screenshots of failed unlocks
         if: always()
@@ -169,10 +179,55 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v7
         with:
-          name: screen-tests-attempt-${{ github.run_attempt }}
+          name: screen-tests-shard-${{ matrix.shard }}-attempt-${{ github.run_attempt }}
           path: |
             app/build/outputs/androidTest-results/connected/debug/
             app/build/reports/androidTests/connected/debug/
             emulator.log
             unlock-screens/
           retention-days: 7
+
+  # The ruleset's required check (plan/spikes/two-emulators.md, T10). It waits for every shard, is red unless all are green,
+  # and checks their results together: each shard's file, the total against the @Test count, and no test in two shards.
+  # 37 decision 1: a re-run of only a failed shard is a new attempt in which the green shards do not run again, so each
+  # shard's newest attempt is used, not only this attempt's artifacts.
+  screen-tests:
+    needs: shard
+    if: always()
+    runs-on: ubuntu-26.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Download every shard's results, every attempt
+        uses: actions/download-artifact@v8
+        with:
+          pattern: screen-tests-shard-*
+          path: shards
+
+      # Gradle once passed with no test run (plan/spikes/screen-tests.md 11.4, series 1, run 20). The expected count is the number of @Test lines in
+      # the screen tests' sources, so it needs no update when tests are added; a stray @Test makes the run red, never green.
+      - name: Check the test count
+        env:
+          SHARDS_RESULT: ${{ needs.shard.result }}
+        run: |
+          echo "Shard jobs: $SHARDS_RESULT"
+          ls -1 shards
+          expected=$(grep -rhE '^[[:space:]]*@Test\b' app/src/androidTest | wc -l)
+          count=0
+          : > names.txt
+          for k in $(seq 0 $((NUM_SHARDS - 1))); do
+            latest=$(ls -d shards/screen-tests-shard-"$k"-attempt-* 2>/dev/null | sed 's/.*-attempt-//' | sort -n | tail -1)
+            if [ -z "$latest" ]; then echo "::error::no results for shard $k"; exit 1; fi
+            dir="shards/screen-tests-shard-$k-attempt-$latest"
+            n=$(find "$dir" -name 'TEST-*.xml' -exec grep -ho '<testcase ' {} + 2>/dev/null | wc -l)
+            find "$dir" -name 'TEST-*.xml' -exec grep -ho '<testcase name="[^"]*" classname="[^"]*"' {} + >> names.txt 2>/dev/null || true
+            echo "Shard $k: attempt $latest, $n tests"
+            count=$((count + n))
+          done
+          twice=$(sort names.txt | uniq -d | wc -l)
+          echo "Tests run: $count of $expected; in more than one shard: $twice"
+          if [ "$expected" -eq 0 ]; then echo "::error::no @Test found in app/src/androidTest"; exit 1; fi
+          if [ "$count" -lt "$expected" ]; then echo "::error::$count tests ran, expected $expected"; exit 1; fi
+          if [ "$twice" -gt 0 ]; then echo "::error::$twice tests ran in more than one shard"; exit 1; fi
+          if [ "$SHARDS_RESULT" != "success" ]; then echo "::error::a shard job ended $SHARDS_RESULT"; exit 1; fi
