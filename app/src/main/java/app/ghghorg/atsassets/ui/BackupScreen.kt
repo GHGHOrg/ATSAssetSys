@@ -81,9 +81,10 @@ fun BackupScreen(
     }
 }
 
-// Restore from backup file: inactive as Back up now is, dashed and read by TalkBack as unavailable (marker 4).
+// Restore from backup file: inactive as Back up now is, dashed and read by TalkBack as unavailable (marker 4). 35: also
+// step 4's Back up now and Replace all data (wireframe 10e frame G).
 @Composable
-private fun InactiveDashedButton(
+internal fun InactiveDashedButton(
     label: String,
     enabled: Boolean,
     onClick: () -> Unit,

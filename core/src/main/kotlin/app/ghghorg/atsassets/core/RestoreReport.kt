@@ -307,6 +307,25 @@ data class RestoreSummary(
     val holdingsWithShares: Int,
 )
 
+/**
+ * Section 8, restore step 5's three counts, one rule for the file and for the app now (35): the portfolios; the
+ * transactions (buys, sells, splits and their reversals); the cash entries and their reversals, the rebuilt trade lines
+ * left out.
+ */
+data class RestoreCounts(
+    val portfolios: Int,
+    val transactions: Int,
+    val cashEntries: Int,
+) {
+    companion object {
+        fun of(
+            portfolios: List<Portfolio>,
+            transactions: List<Transaction>,
+            cashEntries: List<CashEntry>,
+        ): RestoreCounts = RestoreCounts(portfolios.size, transactions.size, cashEntries.count { it.type != CashType.TRADE })
+    }
+}
+
 /** What a check gives (section 8, restore steps 2 and 5; 33a decision 1). Nothing is stored either way (C3). */
 sealed interface RestoreCheck {
     /**

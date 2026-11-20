@@ -411,6 +411,9 @@ private fun BarContent(
                     onClose = viewModel::closeRestore,
                     onRestore = viewModel::restoreNow,
                     onGoToOverall = viewModel::finishRestore,
+                    onContinue = viewModel::continueRestore,
+                    onType = viewModel::typeRestoreWord,
+                    onBackUpNow = onBackUpNow,
                 ),
             )
         }

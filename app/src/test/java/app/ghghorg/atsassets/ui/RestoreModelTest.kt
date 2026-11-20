@@ -1,5 +1,6 @@
 package app.ghghorg.atsassets.ui
 
+import app.ghghorg.atsassets.core.RestoreCounts
 import app.ghghorg.atsassets.core.RestoreError
 import app.ghghorg.atsassets.core.RestoreReason
 import app.ghghorg.atsassets.core.RestoreSummary
@@ -294,14 +295,86 @@ class RestoreModelTest {
         val wizard = RestoreWizard(step = RestoreStep.SUMMARY, summary = summary)
         val empty = Restores.screen(wizard, "Finnhub", holdsData = false)
         assertTrue(empty.canRestore)
-        assertFalse(empty.restoreLater)
         assertEquals("4", empty.totalSteps)
         val withData = Restores.screen(wizard, "Finnhub", holdsData = true)
         assertFalse(withData.canRestore)
-        assertTrue(withData.restoreLater)
         assertEquals("5", withData.totalSteps)
         assertEquals("4", Restores.screen(RestoreWizard(), "Finnhub", holdsData = false).totalSteps)
         assertEquals("5", Restores.screen(RestoreWizard(), "Finnhub", holdsData = true).totalSteps)
+    }
+
+    // 35 step 2 (section 8, restore step 5; wireframe 10e frame F, markers 13 and 15): on an app that holds data the
+    // summary shows the counts now beside the file's, and Continue; on an app with none, no Now column and no Continue.
+    @Test
+    fun theSummary_showsTheCountsNow_andContinue_onAnAppThatHoldsData() {
+        val summary = RestoreSummary(portfolios = 2, transactions = 8, cashEntries = 4, cashBalanceCents = 942_500L, holdingsWithShares = 1)
+        val now = RestoreCounts(portfolios = 1, transactions = 1_234, cashEntries = 3)
+        val withData = Restores.screen(RestoreWizard(step = RestoreStep.SUMMARY, summary = summary, now = now), "Finnhub", holdsData = true)
+        assertEquals(RestoreNowModel("1", "1,234", "3"), withData.now)
+        assertTrue(withData.canContinue)
+        assertFalse(withData.canRestore)
+        assertEquals("5", withData.totalSteps)
+        val empty = Restores.screen(RestoreWizard(step = RestoreStep.SUMMARY, summary = summary), "Finnhub", holdsData = false)
+        assertNull(empty.now)
+        assertFalse(empty.canContinue)
+        val checking = Restores.screen(RestoreWizard(step = RestoreStep.CHECKING, now = now), "Finnhub", holdsData = true)
+        assertNull(checking.now)
+        assertFalse(checking.canContinue)
+    }
+
+    // 35 step 4 (wireframe 10e frame G, markers 16 and 17; decision 2): step 4 shows the word typed; Replace all data is
+    // active once RESTORE is typed, never while an export is under way or a save runs; Back up now waits for an export
+    // under way, the indicator shows while the file is written, and the export's result shows once it ends; Back waits
+    // for the export.
+    @Test
+    fun step4_theExportOffer_andTheTypedWord() {
+        val now = RestoreCounts(1, 1, 1)
+        val last = Instant.parse("2026-10-26T12:00:00Z")
+        fun step4(
+            typed: String,
+            stage: BackupStage? = null,
+            outcome: BackupOutcome? = null,
+            saving: Boolean = false,
+        ) = Restores.screen(
+            RestoreWizard(step = RestoreStep.CONFIRM, now = now, typed = typed),
+            "Finnhub",
+            holdsData = true,
+            stage = stage,
+            outcome = outcome,
+            lastBackup = Backups.lastBackup(last, ZoneOffset.UTC),
+            saving = saving,
+        )
+        val empty = step4("")
+        val confirm = requireNotNull(empty.confirm)
+        assertEquals(RestoreConfirmModel("", canReplace = false, canBackUp = true, writing = false, outcome = null, lastBackup = LastBackup("2026-10-26", "Z")), confirm)
+        assertEquals("5", empty.totalSteps)
+        assertTrue(empty.backEnabled)
+        assertNull(empty.summary)
+        assertFalse(empty.canContinue)
+        assertTrue(requireNotNull(step4(" Re Store ").confirm).canReplace)
+        assertFalse(requireNotNull(step4("RESTOR").confirm).canReplace)
+        val choosing = step4("RESTORE", stage = BackupStage.CHOOSING)
+        assertFalse(requireNotNull(choosing.confirm).canReplace)
+        assertFalse(requireNotNull(choosing.confirm).canBackUp)
+        assertFalse(choosing.backEnabled)
+        assertTrue(requireNotNull(step4("RESTORE", stage = BackupStage.WRITING).confirm).writing)
+        assertNull("no result while one is under way", step4("", stage = BackupStage.WRITING, outcome = BackupOutcome.SAVED).confirm?.outcome)
+        assertEquals(BackupOutcome.SAVED, step4("", outcome = BackupOutcome.SAVED).confirm?.outcome)
+        val saving = requireNotNull(step4("RESTORE", saving = true).confirm)
+        assertFalse(saving.canReplace)
+        assertFalse(saving.canBackUp)
+        assertNull("step 4 only", Restores.screen(RestoreWizard(step = RestoreStep.SUMMARY, now = now), "Finnhub").confirm)
+    }
+
+    // 35: a restore over data had five steps, so its "Restoring…" line counts five, while a restore onto an empty app
+    // counts four (34), though either app now holds the file's data.
+    @Test
+    fun aRestoreOverData_countsFiveSteps_toItsEnd() {
+        val now = RestoreCounts(1, 1, 1)
+        for (step in listOf(RestoreStep.RESTORING, RestoreStep.RESULT, RestoreStep.FAILED)) {
+            assertEquals("5", Restores.screen(RestoreWizard(step = step, now = now), "Finnhub", holdsData = true).totalSteps)
+            assertEquals("4", Restores.screen(RestoreWizard(step = step), "Finnhub", holdsData = true).totalSteps)
+        }
     }
 
     // 34 (frame H): while the restore is written and on its result, Back does nothing; the result shows the counts

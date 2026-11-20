@@ -3,6 +3,7 @@ package app.ghghorg.atsassets.ui
 import app.ghghorg.atsassets.core.BackupFile
 import app.ghghorg.atsassets.core.Money
 import app.ghghorg.atsassets.core.Quantity
+import app.ghghorg.atsassets.core.RestoreCounts
 import app.ghghorg.atsassets.core.RestoreError
 import app.ghghorg.atsassets.core.RestoreReason
 import app.ghghorg.atsassets.core.RestoreSummary
@@ -182,14 +183,36 @@ data class RestoreSummaryModel(
     val holdingsWithShares: String,
 )
 
+/** 35: the summary's Now column (wireframe 10e frame F, marker 13): what the app holds now, counted as the file is. */
+data class RestoreNowModel(
+    val portfolios: String,
+    val transactions: String,
+    val cashEntries: String,
+)
+
+/**
+ * 35: step 4 (wireframe 10e frame G). [typed]: the word as typed. [canReplace]: Replace all data is active (RESTORE
+ * typed, decision 2; no export under way, no save running). Marker 16's export offer: [canBackUp], Back up now active;
+ * [writing], the file is being written; [outcome], how the export ended, with [lastBackup] for "Backup saved".
+ */
+data class RestoreConfirmModel(
+    val typed: String,
+    val canReplace: Boolean,
+    val canBackUp: Boolean,
+    val writing: Boolean,
+    val outcome: BackupOutcome?,
+    val lastBackup: LastBackup?,
+)
+
 /**
  * The wizard's screen. [step] picks the frame. Step 1: [fileName], null with none chosen; [canChoose] and [canCheck].
  * Step 2: [readingDone] once the first phase passed; [progress] during the ticker round; [sourceProblem] when the source
  * could not answer (decision 3), with Try again. [report] on the report, [summary] on the summary. [backEnabled]: "<" and
  * Android Back act; not while Android's file screen is open. 34: [totalSteps] is "4" on an app with no data (wireframe 10e
- * marker 15: no step 4) and "5" on one that holds data; [canRestore]: the summary offers Restore (an app with no data);
- * [restoreLater]: the summary says restoring over data comes later (34 decision 3); [loaded] on the result, the file's
- * counts as loaded. Back does nothing while the restore is written or on its result.
+ * marker 15: no step 4) and "5" on one that holds data, to the restore's end; [canRestore]: the summary offers Restore
+ * (an app with no data); [loaded] on the result, the file's counts as loaded. Back does nothing while the restore is
+ * written or on its result. 35: on the summary of an app that holds data, [now] (the Now column) and [canContinue]
+ * (Continue to step 4); on step 4, [confirm].
  */
 data class RestoreModel(
     val step: RestoreStep,
@@ -204,19 +227,27 @@ data class RestoreModel(
     val backEnabled: Boolean,
     val totalSteps: String,
     val canRestore: Boolean,
-    val restoreLater: Boolean,
     val loaded: RestoreSummaryModel?,
+    val now: RestoreNowModel? = null,
+    val canContinue: Boolean = false,
+    val confirm: RestoreConfirmModel? = null,
 )
 
 object Restores {
     /**
      * The wizard as drawn; [sourceName] is the selected source's own name (K4), for the second round's sentences;
-     * [holdsData] is section 3's "app holds data" (34: an app with none restores in four steps; one with data waits for 35).
+     * [holdsData] is section 3's "app holds data" (34: an app with none restores in four steps; 35: one with data in
+     * five). For step 4's export offer (35): the export's [stage] and [outcome] (31), the [lastBackup] as shown, and
+     * whether another save is running ([saving]).
      */
     fun screen(
         wizard: RestoreWizard,
         sourceName: String,
         holdsData: Boolean = true,
+        stage: BackupStage? = null,
+        outcome: BackupOutcome? = null,
+        lastBackup: LastBackup? = null,
+        saving: Boolean = false,
     ): RestoreModel = RestoreModel(
         step = wizard.step,
         fileName = wizard.fileName,
@@ -233,14 +264,48 @@ object Restores {
         sourceProblem = wizard.sourceProblem?.let(::sourceProblem),
         report = if (wizard.step == RestoreStep.REPORT) report(wizard, sourceName) else null,
         summary = if (wizard.step == RestoreStep.SUMMARY) wizard.summary?.let(::summary) else null,
-        backEnabled = !wizard.choosing && wizard.step != RestoreStep.RESTORING && wizard.step != RestoreStep.RESULT,
-        totalSteps = if (holdsData && wizard.step !in AFTER_RESTORE) "5" else "4",
+        backEnabled =
+        !wizard.choosing &&
+            wizard.step != RestoreStep.RESTORING &&
+            wizard.step != RestoreStep.RESULT &&
+            !(wizard.step == RestoreStep.CONFIRM && stage != null),
+        totalSteps = totalSteps(wizard, holdsData),
         canRestore = wizard.step == RestoreStep.SUMMARY && !holdsData,
-        restoreLater = wizard.step == RestoreStep.SUMMARY && holdsData,
         loaded = if (wizard.step == RestoreStep.RESULT) wizard.summary?.let(::summary) else null,
+        now = if (wizard.step == RestoreStep.SUMMARY && holdsData) wizard.now?.let(::now) else null,
+        canContinue = wizard.step == RestoreStep.SUMMARY && holdsData && wizard.now != null,
+        confirm =
+        if (wizard.step == RestoreStep.CONFIRM) {
+            RestoreConfirmModel(
+                typed = wizard.typed,
+                canReplace = wizard.now != null && RestoreWord.matches(wizard.typed) && stage == null && !saving,
+                canBackUp = stage == null && !saving,
+                writing = stage == BackupStage.WRITING,
+                outcome = if (stage == null) outcome else null,
+                lastBackup = lastBackup,
+            )
+        } else {
+            null
+        },
     )
 
-    // From Restore's tap on, the app holds the file's data, but the restore that led here had four steps.
+    // From the restore's write on, the app holds the file's data, but the count stays that of the restore that led here:
+    // five over data (the wizard counted what the app held), four onto an empty app.
+    private fun totalSteps(
+        wizard: RestoreWizard,
+        holdsData: Boolean,
+    ): String {
+        val overData = if (wizard.step in AFTER_RESTORE) wizard.now != null else holdsData
+        return if (overData) "5" else "4"
+    }
+
+    /** The Now column (35): each count as the app shows whole numbers. */
+    fun now(counts: RestoreCounts): RestoreNowModel = RestoreNowModel(
+        portfolios = count(counts.portfolios),
+        transactions = count(counts.transactions),
+        cashEntries = count(counts.cashEntries),
+    )
+
     private val AFTER_RESTORE = setOf(RestoreStep.RESTORING, RestoreStep.RESULT, RestoreStep.FAILED)
 
     /** The report: a file problem alone, or the second round's tickers, or the first round's errors. */

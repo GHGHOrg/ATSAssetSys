@@ -155,6 +155,27 @@ class BackupCheckTest {
 
     private fun dollars(cents: Long): Fraction = Fraction.ofCents(cents)
 
+    // 35 step 2 (section 8, restore step 5): the counts now and the file's follow one rule. Records counted by
+    // RestoreCounts give the summary's counts; the trade lines the app rebuilds are left out, reversals are counted.
+    @Test
+    fun theCountsOfRecords_areTheSummarysCounts() {
+        val example = check(File("../spec/example-backup.csv").readBytes()) as RestoreCheck.Passed
+        val records = example.records
+        assertEquals(RestoreCounts(portfolios = 2, transactions = 8, cashEntries = 4), RestoreCounts.of(records.portfolios, records.transactions, records.cashEntries))
+        val passed =
+            passed(
+                opening,
+                main,
+                cash("deposit", "2026-01-05", "100.00", id = "D1"),
+                reversal("D1", "2026-01-06"),
+                buy("B1", "2026-01-05", "1", "10.00"),
+                reversal("B1", "2026-01-06"),
+            )
+        val counted = RestoreCounts.of(passed.records.portfolios, passed.records.transactions, passed.records.cashEntries)
+        assertEquals(RestoreCounts(portfolios = 1, transactions = 2, cashEntries = 3), counted)
+        assertEquals(listOf(1, 2, 3), listOf(passed.summary.portfolios, passed.summary.transactions, passed.summary.cashEntries))
+    }
+
     // spec/example-backup.csv against spec/example-backup-expected.md (section 8, step 5; AC-25's reading part).
     @Test
     fun theSampleFile_passes_withTheExpectedFigures() {

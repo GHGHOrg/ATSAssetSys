@@ -287,13 +287,16 @@ internal fun MainRule.openNewPortfolioLayer() {
     waitUntil(5_000) { onAllNodes(nameField()).fetchSemanticsNodes().isNotEmpty() }
 }
 
-private fun MainRule.imeBottom(): Int = runOnUiThread {
+private fun <A : ComponentActivity> AndroidComposeTestRule<ActivityScenarioRule<A>, A>.imeBottom(): Int = runOnUiThread {
     val insets = ViewCompat.getRootWindowInsets(activity.window.decorView)
     if (insets?.isVisible(WindowInsetsCompat.Type.ime()) == true) insets.getInsets(WindowInsetsCompat.Type.ime()).bottom else 0
 }
 
-/** The keyboard's top edge in window pixels, once it is open and has stopped moving. */
-internal fun MainRule.keyboardTop(): Float {
+/**
+ * The keyboard's top edge in window pixels, once it is open and has stopped moving. Any activity's rule, MainActivity's
+ * included (35: a screen drawn alone, as the wizard's step 4).
+ */
+internal fun <A : ComponentActivity> AndroidComposeTestRule<ActivityScenarioRule<A>, A>.keyboardTop(): Float {
     var previous = -1
     waitFor("the soft keyboard to open and stop moving") {
         val current = imeBottom()
