@@ -3,7 +3,7 @@ name: Release
 # 38b decisions 2 and 4 (AC-63, the CI part; C23): on a v* tag, the tag must equal v<versionName> and versionCode
 # must be higher than the newest earlier release's; then the unsigned release APK is built and kept, with mapping.txt,
 # as the run's artifact. CI never receives the release key: signing is on your PC (38c).
-# 38b decision 4a: a pull request that changes this file or its check script runs it as a dry run (the check made as
+# 38b decision 4a: a pull request that changes this file or its check scripts runs it as a dry run (the check made as
 # for v<versionName>), because a manual run (workflow_dispatch) starts only once this file is on main. A manual run
 # on a branch is a dry run too; on a tag it checks that tag.
 on:
@@ -13,6 +13,7 @@ on:
     paths:
       - .github/workflows/release.yml
       - .github/scripts/release-version-check.sh
+      - .github/scripts/release-class-check.sh
   workflow_dispatch:
 
 permissions:
@@ -37,6 +38,9 @@ jobs:
         run: bash .github/scripts/release-version-check.sh "$TAG"
       - name: Release build
         run: ./gradlew :app:assembleRelease
+      # 38b decision 6 (open item 72): no class in the R8 build extends a hidden class in another package.
+      - name: Release class check
+        run: bash .github/scripts/release-class-check.sh app/build/outputs/apk/release/app-release-unsigned.apk
       - uses: actions/upload-artifact@v7
         with:
           name: release-${{ github.ref_type == 'tag' && github.ref_name || 'dry-run' }}
