@@ -1,6 +1,6 @@
 # plan/iterations/38a-development-app.md
 
-Stage: Deploy. Status: built 2026-11-21 (steps 1 to 4, phone checks 1 to 9 passed); Deploy review done (section 13.2), no High or Medium finding; waits for its pull request. Approved 2026-11-21; decisions 0 to 2d and the name settled the same day (sections 11 and 12). Branch iter-38a-development-app, from cr-04-release-process (fc92763).
+Stage: Deploy. Status: Done: pull request #216 merged as 9247e00, main green (13.3). Built 2026-11-21 (steps 1 to 4, phone checks 1 to 9 passed); Deploy review done (section 13.2), no High or Medium finding. Approved 2026-11-21; decisions 0 to 2d and the name settled the same day (sections 11 and 12). Branch iter-38a-development-app, from cr-04-release-process (fc92763).
 Source: intent/intent-cr-04-release-process.md (CR4, final); spec/spec.md v7 (AC-65, section 9's last bullet). CR4 is split into 38a (this file), 38b (the release build proven) and 38c (the first release); see plan.md section 4 and decision 0.
 
 ## 1. Outcome
@@ -115,6 +115,10 @@ Against sections 1 to 3, AC-65 (spec.md:470) and section 9: the code diff from m
 5. Info: the development app is debuggable and may hold a copy of the price key (CR4 accepts it); your daily app is itself the debuggable debug build 45 until 38c (risk 1).
 6. Info: with decision 1a's property, a plain `gradlew test` also runs every release unit test (my reading, not run); CLAUDE.md and CI name their tasks.
 7. Info: check 9 did not search for the test data's own terms.
+
+### 13.3 Pull request and merge (2026-11-21)
+- Pull request #216 (iter-38a-development-app at 974fda9, pushed once and created with your yes; reviewer msfsgh), green at the first attempt: build 4m 33s with "Release build tests" 26 s; the screen tests 178 under the new id over 3 shards (8m 1s, 8m 54s, 9m 28s) and the count job; CodeQL and Analyze (actions). Finding 1 of 13.2 closed.
+- Merged by you as 9247e00 (07:56:27 UTC). Main green on 9247e00 (gh, read only): CI 44882534206 in 5m 9s, "Release build tests" 28 s; Screen tests 44882534137 in 10m 41s (shards 8m 28s, 10m 29s, 8m 42s, the count job green); Push on main 44882533769. CodeQL on main not read.
 
 ## 14. Departures from the plan
 - Step 2: gradle.properties gains `android.onlyEnableUnitTestForTheTestedBuildType=false`, not listed in section 5: AGP 9.4.1 makes unit tests only for the tested build type, so the release build had no `testReleaseUnitTest` (decision 1a, 2026-11-21, your A: the name verified in the cached AGP jar first).
