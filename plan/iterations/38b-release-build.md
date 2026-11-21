@@ -1,6 +1,6 @@
 # plan/iterations/38b-release-build.md
 
-Stage: Build. Status: approved 2026-11-21; decisions 0 to 4 settled the same day, decision 5 in step 2, replaced by decision 5a after step 5 (section 11). You asked for steps 1 to 6 in one go, one commit per step. Branch iter-38b-release-build, from main (30c354b).
+Stage: Build. Status: Done: pull request #218 merged as 7fb4709, main green (13.3). Approved 2026-11-21; decisions 0 to 4 settled the same day, decision 5 in step 2, replaced by decision 5a after step 5 (section 11). You asked for steps 1 to 6 in one go, one commit per step. Branch iter-38b-release-build, from main (30c354b).
 Source: intent/intent-cr-04-release-process.md (CR4, final); spec/spec.md v7. CR4 is split into 38a (done), 38b (this file) and 38c (the first release); plan.md section 4 and 38a's decision 0.
 
 ## 1. Outcome
@@ -148,6 +148,12 @@ Reviewed against spec.md v7 (C21 to C23, section 8, AC-63's CI part, AC-66) and 
 7. Info, on the phone: the backups exported from ATS Probe (test data, no key) remain in the phone's storage; delete them there if not wanted.
 
 Full run after the review: the first failed after 48s in `:core:compileTestFixturesKotlin` (ScaleHistories.kt: "Unresolved reference 'Portfolio'" and others; open item 60, only documents changed). The same command re-run unchanged: green in 2m 32s; 1,512 unit tests (1 skipped), 178 screen tests compiled, lint the same 10 (report 00:19:38).
+
+### 13.3 Pull request and merge
+- Pull request #218 (iter-38b-release-build, head 33fd74b, 9 commits), pushed and created once at your request, reviewer msfsgh. All checks green at the first attempt (gh, read only): CI build 7m 6s ("Release build" 108 s, "Release class check" 1 s); Release, the dry run of decision 4a, 3m 37s; the screen tests' shards 9m 13s, 9m 34s and 7m 3s, the count job green; CodeQL and Analyze (actions) green.
+- On the runner: `dexdump` at /usr/local/lib/android/sdk/build-tools/37.0.0/dexdump; the class check read 6,320 classes, 3,037 in the root package, 0 that cannot load, as on this PC. The version check: "Dry run: checking as for tag v0.38.0", "Tag v0.38.0 equals v<versionName>; versionCode 48", no earlier release tag.
+- The dry run's artifact `release-dry-run` (9,489,606 bytes, kept until 2027-02-19), downloaded with your yes: apk/release/app-release-unsigned.apk, 14,475,110 bytes, `app.ghghorg.atsassets`, versionCode 48, versionName 0.38.0, "ATS Asset System", not debuggable (aapt2); mapping/release/mapping.txt, 37,071,368 bytes, `CollectionsKt__MutableCollectionsJVMKt` under its own name. Both sizes equal the local build's. Deploy finding 3 is closed but for `fetch-depth: 0` and the earlier tags, first needed at the second release.
+- Merged by you as 7fb4709 (2026-11-21 16:40 UTC). On main after the merge, at the first attempt: CI 7m 43s ("Release build" 119 s, "Release class check" 1 s), the screen tests 10m 6s, CodeQL green.
 
 ## 14. Departures from the plan
 - Step 2: R8 is off in the release build (decision 5), not kept as planned; open item 72. Decision 4's mapping.txt artifact has nothing to keep while R8 is off; step 3 keeps the APK only. Undone after step 5 by decision 5a: R8 on with a keep rule (app/src/main/keepRules/rules.keep, which section 5 named app/proguard-rules.pro), mapping.txt kept again; step 2 reopened and run a second time on the phone. Section 4's "No proguard-rules.pro" corrected (rules.keep exists). AGP's `packageScope` was read in its DSL documentation, not in the jar (section 10).
