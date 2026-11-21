@@ -24,6 +24,9 @@ jobs:
         run: ./gradlew :core:assemble :app:assembleDebug
       - name: Unit tests
         run: ./gradlew :core:test :app:testDebugUnitTest
+      # 38a decision 1 (AC-65): the release build, your daily app, keeps the 7-day backup reminder.
+      - name: Release build tests
+        run: ./gradlew :app:testReleaseUnitTest --tests "*BackupDueReleaseTest"
       # 24a: every check HoldingsScaleTest measured again, each try, also when the tests pass.
       - name: Scale test retries
         if: always()

@@ -42,14 +42,16 @@ Rules:
 Environment (user variables, set once): JAVA_HOME = Android Studio's jbr folder; ANDROID_HOME = the Android SDK folder.
 There is no local.properties file on purpose (see pitfalls).
 - Build:  .\gradlew.bat :core:assemble :app:assembleDebug
-- Test:   .\gradlew.bat :core:test :app:testDebugUnitTest
+- Test:   .\gradlew.bat :core:test :app:testDebugUnitTest :app:testReleaseUnitTest --tests "*BackupDueReleaseTest"
+  (the filter runs only the release build's own test, so the shared unit tests don't run twice; 38a decision 1. The release build's unit tests exist through `android.onlyEnableUnitTestForTheTestedBuildType=false` in gradle.properties; 38a decision 1a.)
 - Lint:   .\gradlew.bat :app:lintDebug
 - Style:  .\gradlew.bat spotlessCheck (read-only; CI runs it first). .\gradlew.bat spotlessApply rewrites files: run it only when asked, and show the diff first.
 - All three, forced fresh: add --rerun-tasks (use it for lint too, see pitfalls)
 - Install on the phone: & "$env:ANDROID_HOME\platform-tools\adb.exe" install -r app\build\outputs\apk\debug\app-debug.apk
   (adb is not on PATH on this machine. The APK path is confirmed. The install has been run on the phone:
   setup proof item 4 (2026-10-18), iteration 01 (2026-10-19) and the dependency-upgrade spike (2026-10-22).)
-CI (.github/workflows/ci.yml) runs the style check and then the same three steps on ubuntu-26.04 with Java 25 (Temurin). After the unit tests, also when they fail, its step "Scale test retries" prints every check HoldingsScaleTest measured again, each try, or "none" (24a).
+  Since 38a the debug APK is the development app "ATS Dev" (`app.ghghorg.atsassets.debug`, test data only; AC-65). It installs next to your daily app (`app.ghghorg.atsassets`), never over it. Your app is updated only by a signed release (38b, 38c).
+CI (.github/workflows/ci.yml) runs the style check and then the same three steps on ubuntu-26.04 with Java 25 (Temurin); the release build's test (38a) is its own step after the unit tests. After the unit tests, also when they fail, its step "Scale test retries" prints every check HoldingsScaleTest measured again, each try, or "none" (24a).
 
 ## 4. Conventions
 - One branch per iteration: iter-NN-name. One pull request per iteration.
@@ -67,9 +69,14 @@ CI (.github/workflows/ci.yml) runs the style check and then the same three steps
 - Refer to a record by its file and section, not by a shorthand name: "plan/spikes/screen-tests.md 11.4, series 3", not "spike F, series 3", and the same for decisions and runs. A shorthand like "spike F" or "your B" means nothing to a later reader (15b step 3).
 - When you edit a document that has a table of contents at the top (spec.md, plan.md, CLAUDE.md), update the table too: add, rename or remove the entry for each heading you add, rename or remove, and check each link against its heading's anchor.
 - The merge record rewrites the status, not only appends to it: the iteration file's status (line 3) says "Done" and its plan.md section 11 row starts with "done", and both name the pull request and its merge commit. Before proposing the commit, list every iteration file's line 3 and every section 11 row and compare them (found 2026-11-10: 11 said "not built"; 12, 13a, 13b and 15a did not name their merge; 16c to 21 kept "built").
+- Versions are MAJOR.MINOR.PATCH (plan/iterations/38a-development-app.md, decisions 2, 2a, 2b, 2c and 2d). A tag equals the release's versionName. The first release (38c) is 0.38.0, tag v0.38.0. Until 1.0.0 (when you call the app productive), the rules below move down one place: a milestone or a breaking change raises MINOR (0.38.0 to 0.39.0), a feature or a fix raises PATCH (0.38.0 to 0.38.1). From 1.0.0 on they apply as written.
+  - MAJOR: a big milestone (for example performance over time), or a breaking change: (a) the previous release cannot read the new backups (the backup format version rises, spec section 8); (b) keeping your data needs more than `adb install -r` (a new signing key, C21, or a change of encryption); (c) your existing records show different figures, a figure shown at another precision included (4 places instead of 8, cents dropped); (d) an Android version the app ran on is dropped (minSdk raised); (e) a feature you use is removed or replaced.
+  - MINOR: a new feature, a database schema change the app migrates, a change of style only (a thousands separator, a date format).
+  - PATCH: a fix.
+  - The development app shows `x.y.z-dev.n`, n its versionCode (`0.38.0-dev.47`); your app shows `x.y.z`. No `-test` or `-rc` labels.
 
 ## 5. Where things are
-- intent/intent.md (v52, final) and one file per change request (intent/intent-cr-NN-short-name.md; CR1 is intent-cr-01-tiny-remainders.md, CR2 intent-cr-02-screen-models.md, CR3 intent-cr-03-screen-tests.md), spec/spec.md (v6, final, one file; acceptance criteria tagged AC-NN, code comments may still say "criterion NN"), spec/wireframes/, plan/plan.md, plan/setup.md.
+- intent/intent.md (v52, final) and one file per change request (intent/intent-cr-NN-short-name.md; CR1 is intent-cr-01-tiny-remainders.md, CR2 intent-cr-02-screen-models.md, CR3 intent-cr-03-screen-tests.md, CR4 intent-cr-04-release-process.md), spec/spec.md (v7, final, one file; acceptance criteria tagged AC-NN, code comments may still say "criterion NN"), spec/wireframes/, plan/plan.md, plan/setup.md.
 - Spec sections: find them by heading, for example "## 4. Business rules".
   Sections 2 (concerns, C-numbers), 3 (domain), 4 (rules), 6 (views), 7 (prices), 8 (backup file), 9 (security), 11 (criteria), 14 (components, K-numbers).
 - Each iteration file in plan/iterations/ lists its own spec sections, criteria and examples.
@@ -81,7 +88,7 @@ CI (.github/workflows/ci.yml) runs the style check and then the same three steps
 - A buy's exact quantity is boughtQuantity (quantity × quantityRatio), not quantity: a buy re-entered with its quantity left as filled in stores the original's quantity and a ratio in the split columns (CR1). Use boughtQuantity wherever a buy's shares, cost or price are worked out or shown (14c, section 14, item 1).
 - Never log or send amounts, tickers, quantities, notes or portfolio names (spec section 9). Never log the price-source key either: no HTTP logging, not even in debug builds; the key goes in the X-Finnhub-Token header only, never in a URL (price-source note, decision 5).
 - The price-source key is entered in Settings and stored in the encrypted database's settings row; no key is built into the app and the build reads none (30 decision 0, replacing the price-source note's decision 5). A saved key is never shown, logged or put in a message or a model: only its last 4 characters (`PriceKey.ending`); the screen state holds a key only as the text being typed in the key entry. Only letters and digits are a key (`PriceKey.isKey`), so nothing else reaches the header.
-- `FINNHUB_API_KEY` may still be set as a user variable on this PC for trial calls to Finnhub. Never print it or anything derived from it, not even its length: test only `-not [string]::IsNullOrEmpty($env:FINNHUB_API_KEY)` (True/False) (16a).
+- `FINNHUB_API_KEY` was removed as a user variable on this PC (2026-11-21); nothing in the build or CI reads it (30). If one is set again for a trial call to Finnhub, never print it or anything derived from it, not even its length: test only `-not [string]::IsNullOrEmpty($env:FINNHUB_API_KEY)` (True/False) (16a).
 - No analytics or crash-reporting library.
 - Docs in this repo use CRLF. Keep line endings, do not retype files.
 - Claude Code's Write tool makes new files with LF. Its Edit tool kept CRLF on existing files, including multi-line inserts (02b). spotlessCheck rejects an LF Kotlin file in this working copy, so convert a new file's line breaks to CRLF right after Write. Git stores these files with LF (git ls-files --eol shows i/lf w/crlf), so git diff --check cannot see line-ending damage. After every document edit, count the raw CR and LF bytes as well (the report in section 8) and run git diff --stat.
@@ -122,7 +129,7 @@ CI (.github/workflows/ci.yml) runs the style check and then the same three steps
 - Tag a question Design only when every option changes spec.md. If one option stays within the spec, the question is Build, and that option comes first (price-source spike, decision 5).
 - PowerShell's HttpWebRequest and Invoke-WebRequest follow redirects by default. When measuring an API the app calls, turn that off (AllowAutoRedirect = $false, or -MaximumRedirection 0), or a redirect goes unseen (09: Finnhub's US list, phone check 3).
 - Finnhub answers /stock/symbol?exchange=US with a 302 to a signed link on static2.finnhub.io. FinnhubSource follows that one redirect, only over https to *.finnhub.io and without the key. Keep it that way: Android's HTTP stack would forward the X-Finnhub-Token header on its own redirect (my reading, not checked).
-- The app's uid for a Logcat check: adb shell pm list packages -U app.ghghorg.atsassets (uid:10454). dumpsys package has no userId line on Android 17 (09 check 9).
+- The app's uid for a Logcat check: adb shell pm list packages -U app.ghghorg.atsassets (uid:10454, your app). The development app has its own uid: read it the same way with app.ghghorg.atsassets.debug (not yet installed; 38a step 4). The plain name also matches the .debug id, so read the uid on the line of the exact id. dumpsys package has no userId line on Android 17 (09 check 9).
 - Before a Logcat capture, run `adb devices` and check the phone is listed. A capture started with no phone connected waits ("- waiting for device -") and records nothing (27, check 19, first capture).
 - A part of a screen that stays in place (a header over a list) must give way at the largest font and in landscape. Holding detail keeps its header fixed only while it takes at most half the screen's height, and otherwise scrolls as one (10, phone check 6a). Unit tests cannot catch it; only the phone shows it. Later screens with a fixed part, such as the sell screen's header (11), should do the same.
 - Phone-check instructions: name the screen each check starts on and the exact control to tap (the Buy/Sell menu's Sell and a holding's Sell return to different places), and write each check from where the previous one leaves the phone and the data it changed (11, check 3).
@@ -165,7 +172,7 @@ CI (.github/workflows/ci.yml) runs the style check and then the same three steps
 - A row read by TalkBack as one sentence (`clearAndSetSemantics { contentDescription = … }`) hides its children's texts, column heads included: a screen test finds such a row by `hasContentDescription`, not by a child's text (35 step 7, run 44015745369).
 
 ## 7. Standing checks for every iteration's screens
-AC-09, AC-39 to AC-42, and the install-over-previous-build check (AC-35).
+AC-09, AC-39 to AC-42, and the install-over-previous-build check (AC-35), all on the development app "ATS Dev" with test data (AC-65; 38a). Your daily app gets AC-35 and the smoke check (AC-64) at each release.
 
 ## 8. Working model in Claude Code (decided 2026-10-28; plan/spikes/vscode-claude-code.md section 5)
 These are instructions, not enforced rules. The only technical guards are the permission rules in .claude/settings.json and my user settings. Do not change either without asking.

@@ -17,13 +17,15 @@ android {
         applicationId = "app.ghghorg.atsassets"
         minSdk = 33
         targetSdk = 37
-        versionCode = 46
-        versionName = "1.0"
+        // 38a decisions 2 and 2d: MAJOR.MINOR.PATCH; the first release (38c) is 0.38.0. versionCode rises with every
+        // build that is installed.
+        versionCode = 47
+        versionName = "0.38.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
 
         // 36 decision 1: after how many minutes a backup is due; 0 means spec section 9's 7 days (core's BackupReminder).
-        // Only the check build sets another time (decision 2); a unit test checks the debug build's is 0.
+        // The release build, your daily app, keeps 0 (BackupDueReleaseTest, run in CI; 38a decision 1).
         buildConfigField("long", "BACKUP_DUE_AFTER_MINUTES", "0L")
     }
 
@@ -34,13 +36,13 @@ android {
                 packageScope = setOf("androidx.**", "kotlin.**", "kotlinx.**")
             }
         }
-        // 34 decision 2: the debug app under another id and name ("ATS Check", app/src/check), for phone checks that
-        // must not touch your data, such as a restore. Built only when asked (assembleCheck); CI builds debug only.
-        create("check") {
-            initWith(getByName("debug"))
-            applicationIdSuffix = ".check"
-            versionNameSuffix = "-check"
-            // 36 decision 2: ATS Check treats a backup as due after 10 minutes, for 32's phone check part B.
+        // AC-65 (CR4, 38a): the debug build is the development app, "ATS Dev" (app/src/debug), under its own id next
+        // to your app, with test data only. It replaces the check build ("ATS Check", 34 and 36) and keeps its
+        // 10 minutes for the backup reminder (BackupDueDebugTest).
+        debug {
+            applicationIdSuffix = ".debug"
+            // 38a decision 2a: the development app shows x.y.z-dev.n, n its versionCode (0.38.0-dev.47).
+            versionNameSuffix = "-dev.${defaultConfig.versionCode}"
             buildConfigField("long", "BACKUP_DUE_AFTER_MINUTES", "10L")
         }
     }
