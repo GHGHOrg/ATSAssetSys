@@ -115,6 +115,15 @@ None.
   - .claude/settings.json (your yes): `hooks.PreToolUse`, matcher `Bash|PowerShell`, command `bash "${CLAUDE_PROJECT_DIR}/.claude/hooks/release-ask.sh"`.
   - Proof, each answered No by you: `adb install does-not-exist.apk`, `git tag --list`, `gh release list`, `.\gradlew.bat :app:assembleRelease --dry-run`, and `.\gradlew.bat :core:assemble :app:assembleDebug :app:assembleRelease --dry-run`, which an allow rule matches; each prompt showed "Release command (38b hook)" (your A). The control, the same allowed line without the release task (`--dry-run`), ran without a prompt, so the allow rules are active and the hook's "ask" beat the allow rule. Risk 2 did not occur.
   - From this step on, a full run that includes `assembleRelease` asks.
+- Step 5 (2026-11-21), the rollback rehearsal (AC-66) on ATS Dev, your app (uid 10454) not touched; each adb command asked through the hook:
+  - The 47 APK kept in the scratchpad (`0.38.0-dev.47`, 44,619,614 bytes, aapt2); your figures noted and a backup saved on ATS Dev 47.
+  - versionCode 48 (app/build.gradle.kts; it stays 48, a number once installed is not reused): ATS Dev 48 built (`0.38.0-dev.48`, 44,619,618 bytes, every dex the same size as 47's), installed over 47 with `adb install -r`: Success.
+  - On 48 a cash deposit of 12.34, "rehearsal 48"; the balance rose by 12.34.
+  - `adb install -r` of 47 over 48: `INSTALL_FAILED_VERSION_DOWNGRADE: Downgrade detected: Update version code 47 is older than current 48`; 48 stayed. C22's [UNVERIFIED] downgrade refusal seen on the phone.
+  - `adb uninstall app.ghghorg.atsassets.debug`, `adb install` of 47: both Success; ATS Dev's uid is now 10448 (was 10446).
+  - On 47 the backup restored: the Cash balance and each portfolio's cost matched, the rehearsal entry gone. AC-66 passed.
+  - plan/release.md (new): CR4's nine steps with the commands, section 8's rule, the rollback as a list run one command at a time (as rehearsed), the release notes template, the rehearsal record. The apksigner commands are left to 38c, from apksigner's help on the day.
+  - Found while writing it: decision 5 conflicts with spec C23 ("R8 shrinks and renames code in the release build") and AC-63 ("the SHA-256 … of mapping.txt"); with R8 off there is no mapping.txt. release.md marks the line as pending; the spec change is your decision (Design).
 
 ## 14. Departures from the plan
 - Step 2: R8 is off in the release build (decision 5), not kept as planned; open item 72. Decision 4's mapping.txt artifact has nothing to keep while R8 is off; step 3 keeps the APK only. Section 4's "No proguard-rules.pro" corrected (rules.keep exists). AGP's `packageScope` was read in its DSL documentation, not in the jar (section 10).
