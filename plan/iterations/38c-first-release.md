@@ -101,4 +101,4 @@ None.
   - Full run: the first failed after 49s in `:core:compileTestFixturesKotlin` and Room's KSP ("references a type that is not present"; open item 60, only documents changed). The same command re-run unchanged: green in 2m 32s; 1,512 unit tests (1 skipped), 178 screen tests compiled, lint the same 10 (report 02:24:47).
 
 ## 14. Departures from the plan
-None yet.
+- After step 3 (your A, 2026-11-22): 38c has two pull requests, not one (CLAUDE.md section 4, "One pull request per iteration"). AC-63 puts the tag "on a commit of main", and versionCode 49 must be on main before it: pull request 1 holds steps 1 to 3; the tag goes on its merge commit; pull request 2 holds the records of steps 4 to 9. Not chosen: (B) tag the branch's commit (against AC-63); (C) split into 38c and 38d.
