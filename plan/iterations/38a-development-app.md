@@ -1,6 +1,6 @@
 # plan/iterations/38a-development-app.md
 
-Stage: Build. Status: approved 2026-11-21; decisions 0 and 1 (your A each) and the name (your A) settled the same day (sections 11 and 12). Not built. Branch iter-38a-development-app, from cr-04-release-process (fc92763); not created yet.
+Stage: Deploy. Status: built 2026-11-21 (steps 1 to 4, phone checks 1 to 9 passed); Deploy review done (section 13.2), no High or Medium finding; waits for its pull request. Approved 2026-11-21; decisions 0 to 2d and the name settled the same day (sections 11 and 12). Branch iter-38a-development-app, from cr-04-release-process (fc92763).
 Source: intent/intent-cr-04-release-process.md (CR4, final); spec/spec.md v7 (AC-65, section 9's last bullet). CR4 is split into 38a (this file), 38b (the release build proven) and 38c (the first release); see plan.md section 4 and decision 0.
 
 ## 1. Outcome
@@ -105,6 +105,16 @@ None.
   7. AC-09 and AC-39 to AC-42 on ATS Dev: all okay.
   8. ATS Check uninstalled; your app and ATS Dev both open.
   9. Logcat of uid 10446 during checks 4 and 5 (264 lines, 15:13:58 to 15:17:36, processes 13788 and 14719): only Android's and libraries' tags, no line from the app's code; none of finnhub, token, http, key, ticker, portfolio, amount, note, quantity, symbol, backup, restore, password ("api" only in Android's hiddenapi notice, "sqlcipher" only the library load). Not searched for the test data's own tickers, names and notes (not known to me). Seen, for the Deploy review: W/System "A resource failed to call release" 13 times at 15:15:29 (during check 4; the log does not name the resource) and E/BiometricPromptCompat "Unable to cancel authentication. BiometricFragment not found." twice.
+
+### 13.2 Deploy review (step 5, 2026-11-21)
+Against sections 1 to 3, AC-65 (spec.md:470) and section 9: the code diff from main read; no workflow, screen test or manifest names the app id; BuildConfig read only at MainActivity.kt:407; backup, restore and Finnhub streams closed with `use`; `allowBackup="false"`. AC-65 met in every part and checked on the phone (that ATS Check is gone rests on your report, not on adb). No High or Medium finding; nothing needs your approval as risky.
+1. Low: the 178 screen tests have not run under the new id, and CI's "Release build tests" step has not run on GitHub (32 s locally). Both run on the pull request; merge only when it is green, and its time is recorded.
+2. Low: "A resource failed to call release" 13 times during check 4's restore; the source is not named. Older than 38a (no code that opens anything changed). Open item 71.
+3. Low: this file's status line still said "Not built"; rewritten (your yes).
+4. Info: E/BiometricPromptCompat "Unable to cancel authentication" twice, a library message when a cancel finds no prompt; no effect seen.
+5. Info: the development app is debuggable and may hold a copy of the price key (CR4 accepts it); your daily app is itself the debuggable debug build 45 until 38c (risk 1).
+6. Info: with decision 1a's property, a plain `gradlew test` also runs every release unit test (my reading, not run); CLAUDE.md and CI name their tasks.
+7. Info: check 9 did not search for the test data's own terms.
 
 ## 14. Departures from the plan
 - Step 2: gradle.properties gains `android.onlyEnableUnitTestForTheTestedBuildType=false`, not listed in section 5: AGP 9.4.1 makes unit tests only for the tested build type, so the release build had no `testReleaseUnitTest` (decision 1a, 2026-11-21, your A: the name verified in the cached AGP jar first).
