@@ -31,14 +31,14 @@ Each command is run one at a time, in PowerShell at the repo root unless named o
    - `git tag -s v0.38.0 -m "<the tag message Claude drafted>"`;
    - `git tag -v v0.38.0` (the signature checks);
    - `git push origin v0.38.0`.
-4. **CI** (.github/workflows/release.yml) runs on the tag: the version check (tag equals `v<versionName>`, versionCode higher than the newest earlier `v*` tag's), the unsigned release APK built and kept as artifact `release-v0.38.0` for 90 days.
+4. **CI** (.github/workflows/release.yml) runs on the tag: the version check (tag equals `v<versionName>`, versionCode higher than the newest earlier `v*` tag's), the unsigned release APK built and kept, with R8's mapping.txt, as artifact `release-v0.38.0` for 90 days. Then mapping.txt's SHA-256.
    - `gh run list --workflow release.yml --limit 3`, then `gh run download <run id> -n release-v0.38.0 -D <a folder outside the repo>`.
    - A red run stops the release; the tag stays and the fix is a new version.
 5. **Sign and verify**, by you, on this PC, with the release key (never in the repo). The exact apksigner commands, and whether zipalign is needed first, are written in 38c from apksigner's own help on the day, not from memory. Then the signed APK's SHA-256 (`Get-FileHash -Algorithm SHA256`).
 6. **Backup** on the phone with the build now installed: More, Back up now, Save. Note the Cash balance and each portfolio's cost on Overall. With a schema or format raise (section 3), keep this backup until the next release.
 7. **Install** over the previous release: `& "$env:ANDROID_HOME\platform-tools\adb.exe" install -r <signed APK>` (C17, AC-35). A refusal stops here; nothing is uninstalled to make it fit.
 8. **Smoke check** (AC-64), on the phone, no data entered: unlock; the Cash balance and each portfolio's cost equal the figures of step 6; one holding opens; a price update completes; a backup export completes.
-9. **Record**, by you: a GitHub Release on the tag with the notes of section 5 (`gh release create v0.38.0 --title "0.38.0" --notes-file <notes file>`, or in the browser). The signed APK (and mapping.txt, when one exists) are kept outside the repo, next to the key's backups.
+9. **Record**, by you: a GitHub Release on the tag with the notes of section 5 (`gh release create v0.38.0 --title "0.38.0" --notes-file <notes file>`, or in the browser). The signed APK and mapping.txt are kept outside the repo, next to the key's backups (mapping.txt turns a release's renamed classes in a crash back into their names).
 
 The first release (38c) adds the move of your data from the debug build once: backup, uninstall debug, install the release, restore (AC-36); its steps are in the 38c file.
 
@@ -72,7 +72,7 @@ Not a rollback: `adb install -r` of the older APK over the newer one. Android re
 - Schema version: <n> (<changed from m / unchanged>)
 - Backup format version: <n> (<changed from m / unchanged>)
 - Signed APK SHA-256: <hash>
-- mapping.txt SHA-256: <hash, or "none: R8 is off (open item 72)"; pending the spec decision on AC-63>
+- mapping.txt SHA-256: <hash>
 - Smoke check (AC-64): <unlock / figures / holding / price update / backup export: each passed or not>
 - Rollback target: <previous tag and versionCode, or "none: the first release; the debug build's backup of <date>">
 ```

@@ -31,12 +31,12 @@ android {
 
     buildTypes {
         release {
-            // 38b decision 5: R8 is off. Under R8 the release build crashed at start (IllegalAccessError: R8 moved
-            // kotlin.collections.CollectionsKt__MutableCollectionsJVMKt to the root package, away from its
-            // package-private parent), and R8 had moved 3,651 library classes the same way. The release runs the same
-            // unshrunk code as the development app; bringing R8 back is an open item.
+            // R8 on the libraries only, not the app's own code (open item 3). 38b decision 5a: Kotlin's part classes
+            // keep their names (src/main/keepRules/rules.keep), after R8 moved one away from its package-private parent
+            // and the release crashed at start (open item 72).
             optimization {
-                enable = false
+                enable = true
+                packageScope = setOf("androidx.**", "kotlin.**", "kotlinx.**")
             }
         }
         // AC-65 (CR4, 38a): the debug build is the development app, "ATS Dev" (app/src/debug), under its own id next

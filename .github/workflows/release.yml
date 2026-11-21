@@ -1,8 +1,8 @@
 name: Release
 
 # 38b decisions 2 and 4 (AC-63, the CI part; C23): on a v* tag, the tag must equal v<versionName> and versionCode
-# must be higher than the newest earlier release's; then the unsigned release APK is built and kept as the run's
-# artifact. CI never receives the release key: signing is on your PC (38c).
+# must be higher than the newest earlier release's; then the unsigned release APK is built and kept, with mapping.txt,
+# as the run's artifact. CI never receives the release key: signing is on your PC (38c).
 # 38b decision 4a: a pull request that changes this file or its check script runs it as a dry run (the check made as
 # for v<versionName>), because a manual run (workflow_dispatch) starts only once this file is on main. A manual run
 # on a branch is a dry run too; on a tag it checks that tag.
@@ -40,6 +40,9 @@ jobs:
       - uses: actions/upload-artifact@v7
         with:
           name: release-${{ github.ref_type == 'tag' && github.ref_name || 'dry-run' }}
-          path: app/build/outputs/apk/release/app-release-unsigned.apk
+          # The APK and R8's mapping.txt, which turns a release's renamed classes back into their names (AC-63).
+          path: |
+            app/build/outputs/apk/release/app-release-unsigned.apk
+            app/build/outputs/mapping/release/mapping.txt
           if-no-files-found: error
           retention-days: 90
