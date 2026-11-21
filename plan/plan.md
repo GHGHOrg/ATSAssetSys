@@ -49,7 +49,7 @@ plan/
   spikes/dependabot-findings.md decision note, run 2026-11-18 (verdicts in its section 9.4, for the dependency-upgrade iteration); finished: pull request #202 merged as 05fd72f
   spikes/two-emulators.md      decision note, run 2026-11-19 (results in its section 9; T11: 3 runners adopted, built in 37); finished: pull request #205 merged as b236484
   open-items.md                one list of what is still open; updated when an item closes (spike vscode-claude-code, D4)
-  iterations/01-... to 37-...  one file per iteration (section 4)
+  iterations/01-... to 38a-... one file per iteration (section 4)
 CLAUDE.md                      repo root, created by setup.md
 ```
 
@@ -129,6 +129,9 @@ Rules for the list:
 | 35 | restore-over-data | Restore onto an app that holds data | 34 | 8, 9, AC-17, AC-56 (the Now column, step 4, the typed word), AC-57 (step 4's file screen, a lock on step 4) |
 | 36 | check-reminder-override | ATS Check (the `check` build) shows the backup reminder after 10 minutes instead of 7 days, so 32's phone check part B runs before 2026-11-23; your app unchanged (your B, 2026-11-20) | 35 (the `check` build type, 34) | none changed; 9 (Backup reminder) and AC-18, AC-56 (the banner's button), AC-57 through 32's part B |
 | 37 | screen-test-shards | The screen tests run on 3 runners at once, about 5 minutes sooner per pull request and main run (plan/spikes/two-emulators.md, T11; test support, no app change; your A, 2026-11-20) | 36 | none changed; AC-61 (the count over the 3 shards together) |
+| 38a | development-app | A development app ("ATS Dev", id `.debug`) with test data and a 10-minute backup reminder, next to your app; ATS Check gone ([CR4](../intent/intent-cr-04-release-process.md); split by 38a decision 0) | 37 | 9 (last bullet), AC-65; AC-35 for the development app |
+| 38b | release-build | The release build runs: open items 3 and 4 settled, CI builds the unsigned release APK on a `v*` tag and checks the version, the release hook asks before release commands, rollback rehearsed on the development app ([CR4](../intent/intent-cr-04-release-process.md); not drafted) | 38a | C21 to C23, 8 (Releases and the format version), AC-63 (the CI part), AC-66 |
+| 38c | first-release | Your data in the signed release build: key created, tag `v*`, GitHub Release as the record, backup, uninstall debug, install release, restore, smoke check ([CR4](../intent/intent-cr-04-release-process.md); not drafted) | 38b | C17, C21, AC-35, AC-36, AC-63, AC-64 |
 
 ### Examples as automated tests (K1, AC-02; my reading)
 A in 11, B in 12, C in 09 (it needs a buy), D and F in 13, G in 14a, H and I in 14c, E in 29. AC-59
@@ -284,8 +287,8 @@ Merged as 0c2b49e (pull request #81); CI on main reported green by you.
   no backup until 31 and no way to load a prepared file until 34. This is a risk, not a spec change.
 - Iterations 02, 09, 16 and 33 to 35 are the heaviest. Each is split before starting if
   its file shows more than one capability. 02 was split into 02a and 02b, and 16 into 16a, 16b and 16c (2026-11-07), and 33 into 33a and 33b (2026-11-15).
-- Install route (C17): the route is chosen later. Re-check Google's pages then.
-  The release signing key stays outside the repo and is backed up (setup.md section 6).
+- Install route (C17): ADB, chosen in CR4 (spec v7). Re-check Google's pages before 38c.
+  The release signing key stays outside the repo and is backed up (setup.md section 6; C21).
 - Keystore (C18): key survival across updates, reinstall and Android upgrades, and the
   lost-key case, are phone tests in iteration 02 and later (AC-35, AC-36).
 - Backup and device-transfer exclusions (AC-37): iteration 02 tightens the generic rules
@@ -381,6 +384,9 @@ when it adds a command, a convention or a pitfall.
 | Iteration 35 | done ([its file](iterations/35-restore-over-data.md)): approved 2026-11-17; decisions 1 to 3 settled the same day (your A each); steps 1 to 5 built on iter-35-restore-over-data, stacked on iter-34-restore-to-empty-app (245350d); 1,505 tests; 8 new screen tests (178 compiled); no database change; versionCode 45 installed on your app and ATS Check; phone checks 1 to 15 all okay 2026-11-17 on ATS Check, your data untouched, logcat clean of data; check 12 first found step 4's field hidden by the keyboard at the largest font in landscape (decision 4: fixed in the restore screen only, step 7, failing test first, shown red on GitHub); wording approved; open item 69 recorded; draft pull request #195 green on 748439d (178 of 178 screen tests); reviewed against the spec refs, no high or medium finding, one low recorded (your A); main merged in after #190's, #193's and #194's merges; pull request #195 merged as 98f58b9, main green (its screen tests at attempt 2) (gh, read only) |
 | Iteration 36 | done ([its file](iterations/36-check-reminder-override.md)): approved 2026-11-20; decisions 1 (a BuildConfig field, your A) and 2 (10 minutes, your B) settled the same day; on iter-36-check-reminder-override, stacked on iter-35-restore-over-data (672176f); steps 1 to 3 built (versionCode 46); 1,511 tests; no database change; ATS Check 46 installed over 45, your app untouched; 32's part B on ATS Check, checks 1 to 12 all okay 2026-11-20, logcat clean of data; 32's wording approved; main merged in after 32 to 35 merged (aebe800); reviewed against the spec refs, no high, medium or low finding, three notes; pull request #212: CI and the screen tests (178 of 178) green; merged as a287cb2, main green (gh, read only) |
 | Iteration 37 | done ([its file](iterations/37-screen-test-shards.md)): approved 2026-11-20; decisions 1 (the count job takes each shard's newest attempt) and 2 (one deliberate re-run on the pull request) settled the same day (your A each); on iter-37-screen-test-shards from main (8a605c9); steps 1 to 4 built (the workflow: 3 shard jobs and the count job `screen-tests`; open item 70 closed); draft pull request #214 green, 178 of 178 over 3 shards in 666 s, a re-run of one shard counted from two attempts; reviewed, no high, medium or low finding; CLAUDE.md's re-run convention and `gh run download` pitfall updated; pull request #214 merged as 919e7c4, main green on 3 shards (gh, read only) |
+| Iteration 38a | approved ([its file](iterations/38a-development-app.md)) 2026-11-21; decisions 0 (CR4 split into 38a to 38c) and 1 (a release-build test in CI), and the name "ATS Dev", your A each; not built |
+| Iteration 38b | not drafted |
+| Iteration 38c | not drafted |
 
 ## 12. Change log
 Each departure from this plan is recorded here with its date and the reason.
@@ -645,7 +651,8 @@ Each departure from this plan is recorded here with its date and the reason.
 - 2026-11-20: iteration 37's file drafted and approved (your A): the screen tests on 3 runners (plan/spikes/two-emulators.md, T11), a test-support iteration with no app change; decisions 1 (the count job takes each shard's newest attempt, so a re-run of one shard counts all 178; series E's trial counted only the current attempt) and 2 (one deliberate re-run on the pull request to prove it) your A each. T11's open item added as 70. Section 2 lists the spike notes screen-tests, avd-memory, dependabot-findings and two-emulators (open since plan/spikes/avd-memory.md section 10).
 - 2026-11-20: iteration 37 steps 1 to 4: steps 1 and 2 committed (275ef42, 8093c8f; a first try timed out at the GPG pinentry); draft pull request #214 green on 8093c8f: 3 shards of 53, 59 and 66 tests, the count job 178 of 178, the whole Screen tests run 666 s against 941 to 1,266 s for one runner the same day; with your yes, shard 1 re-run alone (attempt 2): the count job used attempt 2 for shard 1 and attempt 1 for the others, 178 of 178 (decisions 1 and 2; L1 answered). Deploy review: no high, medium or low finding, three notes. CLAUDE.md (your A): the re-run convention names the shard artifacts; the `gh run download` pitfall corrected (it fetches every attempt).
 - 2026-11-20: #214 green again on 39d6f0e; made ready and merged by you as 919e7c4, 3 commits; main's first sharded run: the Screen tests 10m 22s (178 of 178 over 3 shards), CI (5m 0s) and CodeQL green at the first attempt (gh, read only). Merge record on docs/iter-37-merged.
+- 2026-11-21: CR4 (intent/intent-cr-04-release-process.md, final; spec.md v7: C17, C21 to C23, section 8, section 9, AC-35, AC-63 to AC-66) on branch cr-04-release-process. Rows 38a to 38c added: the split settled in 38a's decision 0 (your A); 38a's file drafted and approved the same day, with decision 1 (the release build's 7 days tested in CI) and the name "ATS Dev" (your A each). Section 8's install-route risk updated (ADB chosen). Section 13: the install route and release signing move into 38a to 38c.
 
 ## 13. Out of scope for this plan
 Performance over time, per-holding dividends, ETF look-through, the next intent.md items,
-and the Deploy stage (review, install route, release signing), which follow Ruleset A rule 6. Deploy also carries the Licences screen (section 12).
+and the rest of the Deploy stage (Ruleset A rule 6): the install route and release signing are in 38a to 38c (CR4); the Licences screen (section 12) stays out.
