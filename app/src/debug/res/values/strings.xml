@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- AC-65 (CR4, 38a): the development app's name on the phone, approved 2026-11-21 (D9). -->
+    <string name="app_name">ATS Dev</string>
+</resources>
