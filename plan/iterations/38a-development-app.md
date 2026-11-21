@@ -4,7 +4,7 @@ Stage: Build. Status: approved 2026-11-21; decisions 0 and 1 (your A each) and t
 Source: intent/intent-cr-04-release-process.md (CR4, final); spec/spec.md v7 (AC-65, section 9's last bullet). CR4 is split into 38a (this file), 38b (the release build proven) and 38c (the first release); see plan.md section 4 and decision 0.
 
 ## 1. Outcome
-The debug build becomes the development app: its own id (`app.ghghorg.atsassets.debug`), its own name on the phone, test data only, the backup reminder due after 10 minutes, installed next to your app. ATS Check and the `check` build go. Your app (the debug build of 46 under the base id, with your data) is not touched in 38a; your data moves to the release build in 38c.
+The debug build becomes the development app: its own id (`app.ghghorg.atsassets.debug`), its own name on the phone, test data only, the backup reminder due after 10 minutes, installed next to your app. ATS Check and the `check` build go. Your app (the debug build of 45 under the base id, with your data) is not touched in 38a; your data moves to the release build in 38c.
 
 ## 2. Spec refs
 - AC-65 (the development app), section 9 (the last bullet: real data only in the release build, phone checks on the development app).
@@ -24,7 +24,7 @@ The debug build becomes the development app: its own id (`app.ghghorg.atsassets.
 - BackupReminderScreenTest draws Overall from a state, not from BuildConfig, so the debug build's 10 minutes should not reach it; checked in step 2 by reading how its state gets its time.
 - No workflow, test or manifest names the app id (only package declarations; searched 2026-11-21). The screen tests run `connectedDebugAndroidTest`, which installs whatever id the debug build has.
 - No database change. Each app id has its own Keystore entries and its own encrypted database, so the development app starts empty.
-- After 38a a debug build installs as the development app, not over your app. Your app stays at versionCode 46 until 38c (risk 1).
+- After 38a a debug build installs as the development app, not over your app. Your app stays at versionCode 45 until 38c (risk 1; 46 was ATS Check, read over adb in step 4).
 
 ## 5. Files
 - app/build.gradle.kts: `debug { applicationIdSuffix = ".debug"; versionNameSuffix = "-dev"; BACKUP_DUE_AFTER_MINUTES 10L }`; `defaultConfig` keeps 0 for release; the `check` build type removed; versionCode 47 and versionName "0.38.0" (decisions 2 and 2d).
@@ -46,7 +46,7 @@ Each step ends with spotlessCheck, build, tests and lint, all with --rerun-tasks
 None.
 
 ## 8. Risks
-1. Your app is frozen at 46 from 38a until 38c: a debug build no longer installs over it. A fix you need in that time waits for the first release. Keep 38a to 38c close together.
+1. Your app is frozen at 45 from 38a until 38c: a debug build no longer installs over it. A fix you need in that time waits for the first release. Keep 38a to 38c close together.
 2. The 7 days reaching only the release build: debug now sets 10. Without decision 1's test, nothing run checks the release build's value.
 3. Test data: the development app starts empty and needs a price key and internet for a restore (AC-08). ATS Check's data goes in by a backup from ATS Check and a restore into the development app, before ATS Check is uninstalled.
 4. A second price key copy: the development app holds one if you enter it (CR4 accepts this; ATS Check's copy goes with it).
@@ -56,9 +56,9 @@ None.
 - Unit tests: step 2 (decision 1).
 - Screen tests: none new; the 178 run on the pull request under the new id.
 - The phone check (step 4), your app untouched:
-  1. Before: your app shows versionCode 46 (Settings, Apps) and ATS Check is installed.
+  1. Before: your app is at versionCode 45 and ATS Check at 46 (read over adb, `dumpsys package`; Settings, Apps shows only the versionName "1.0").
   2. ATS Check: More, Back up now, Save (a file for the development app).
-  3. Install the development app (47). The home screen shows it next to your app and ATS Check, with its name (section 12). Your app still 46, opens with your data.
+  3. Install the development app (47). The home screen shows it next to your app and ATS Check, with its name (section 12). Your app still 45, opens with your data.
   4. The development app: the lock set up, Overall's three steps (empty). Settings, Prices: the key entered (your choice). More, Restore, the file of check 2: the summary and the result as on ATS Check.
   5. The development app over itself (47 again, `adb install -r`): opens with its data (AC-35 for the development app).
   6. The backup reminder: Back up now, then more than 10 minutes later a return and unlock shows the "more than 7 days ago" banner (the string is unchanged, as in 36).
@@ -95,6 +95,16 @@ None.
 - Step 1 (2026-11-21): this file; plan.md (section 2's file list, rows 38a to 38c, section 8's install-route risk, section 11's rows, the change log, section 13). Only documents changed. The full run with --rerun-tasks green in 2m 39s: 1,511 unit tests (1 skipped), 178 screen tests compiled, lint the same 10 findings as CLAUDE.md lists (report 09:35:03).
 - Step 2 (2026-11-21): tests first: BackupDueDebugTest (app/src/testDebug, 10 minutes) shown red (`AssertionError at BackupDueDebugTest.kt:13`, the debug build still 0); BackupDueReleaseTest (app/src/testRelease, 0 = the 7 days) could not run: AGP 9.4.1 made no `testReleaseUnitTest` (decision 1a, your A). With `android.onlyEnableUnitTestForTheTestedBuildType=false` in gradle.properties (the name found in gradle-9.4.1.jar's BooleanOption class), the release test ran and passed (a guard for a value already right). Then app/build.gradle.kts (debug: `.debug`, `-dev`, 10L; `check` removed), app/src/debug's name "ATS Dev", ci.yml's step "Release build tests"; BackupDueBuildTest and app/src/check removed (asked). BackupReminderScreenTest draws from an AppState whose time defaults to the 7 days (AppViewModel.kt:749), so the debug build's 10 minutes reach only MainActivity (MainActivity.kt:407). The full run with --rerun-tasks green in 1m 45s: 1,511 unit tests (1 skipped; BackupDueBuildTest out, BackupDueDebugTest in), 178 screen tests compiled, lint the same 10 (report 09:46:06); the release test alone, forced, 32 s locally (1 test, passed). The debug APK: package app.ghghorg.atsassets.debug, versionName 1.0-dev, label "ATS Dev".
 - Step 3 (2026-11-21): CLAUDE.md (section 3: the test command with the release test, the install line and CI line naming the development app; section 4: the versioning convention, decisions 2 to 2c; section 5: CR4's intent file and spec.md v7; section 6: the uid line for both ids; section 7: the standing checks on the development app) and plan.md section 9 item 4. No heading changed, so neither table of contents did. CLAUDE.md named ATS Check nowhere. Only documents changed. The first full run failed in `:app:kspDebugKotlin` (FileNotFoundException on the generated AtsDatabase_AutoMigration_1_2_Impl.kt; open item 60); the same command re-run unchanged was green in 1m 57s: 1,512 unit tests (1 skipped; the 1,511 plus the release test, now in the run), 178 screen tests compiled, lint the same 10 (report 12:24:12).
+- Step 4 (2026-11-21): app/build.gradle.kts: versionCode 47, versionName "0.38.0" (decisions 2 and 2d), debug suffix `-dev.${defaultConfig.versionCode}` (decision 2a). The full run with --rerun-tasks green in 3m 1s: 1,512 unit tests (1 skipped), 178 screen tests compiled, lint the same 10 (report 14:57:01). The APK: aapt2 reads package app.ghghorg.atsassets.debug, versionCode 47, versionName 0.38.0-dev.47, label "ATS Dev"; 44,619,614 bytes against 46's 44,619,606; every classesN.dex the same size as 46's but classes8.dex (61,968 against 61,964), which holds `0.38.0-dev.47`; no dex holds `1.0-dev`. Phone checks, all passed (your reports):
+  1. Over adb: your app versionCode 45 (1.0), ATS Check 46 (1.0-check), no `.debug`. The file had said 46 for your app; corrected to 45 in sections 1, 4, 8 and 9 (46 was ATS Check).
+  2. ATS Check backed up. Saving shows only "Backup saved. Last backup: …", not a summary (my instruction was wrong); you noted the Cash balance and each portfolio's cost instead.
+  3. `adb install -r`: Success; ATS Dev 47 (`0.38.0-dev.47`, uid 10446) next to your app (45, uid 10454) and ATS Check (46, uid 10444), both unchanged; ATS Dev on the home screen; your app opens with your data.
+  4. ATS Dev: lock set up, Overall's three steps, the key entered, Restore of check 2's file; the Cash balance and each portfolio's cost match ATS Check's.
+  5. ATS Dev over itself (`adb install -r`, 47; firstInstallTime 15:12:02, lastUpdateTime 15:17:07): opens with its data (AC-35 for the development app).
+  6. Back up now, then more than 10 minutes later the "more than 7 days ago" banner (10L reaches the development app).
+  7. AC-09 and AC-39 to AC-42 on ATS Dev: all okay.
+  8. ATS Check uninstalled; your app and ATS Dev both open.
+  9. Logcat of uid 10446 during checks 4 and 5 (264 lines, 15:13:58 to 15:17:36, processes 13788 and 14719): only Android's and libraries' tags, no line from the app's code; none of finnhub, token, http, key, ticker, portfolio, amount, note, quantity, symbol, backup, restore, password ("api" only in Android's hiddenapi notice, "sqlcipher" only the library load). Not searched for the test data's own tickers, names and notes (not known to me). Seen, for the Deploy review: W/System "A resource failed to call release" 13 times at 15:15:29 (during check 4; the log does not name the resource) and E/BiometricPromptCompat "Unable to cancel authentication. BiometricFragment not found." twice.
 
 ## 14. Departures from the plan
 - Step 2: gradle.properties gains `android.onlyEnableUnitTestForTheTestedBuildType=false`, not listed in section 5: AGP 9.4.1 makes unit tests only for the tested build type, so the release build had no `testReleaseUnitTest` (decision 1a, 2026-11-21, your A: the name verified in the cached AGP jar first).
