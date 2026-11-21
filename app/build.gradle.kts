@@ -19,7 +19,7 @@ android {
         targetSdk = 37
         // 38a decisions 2 and 2d: MAJOR.MINOR.PATCH; the first release (38c) is 0.38.0. versionCode rises with every
         // build that is installed.
-        versionCode = 47
+        versionCode = 48
         versionName = "0.38.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
@@ -31,6 +31,9 @@ android {
 
     buildTypes {
         release {
+            // R8 on the libraries only, not the app's own code (open item 3). 38b decision 5a: Kotlin's part classes
+            // keep their names (src/main/keepRules/rules.keep), after R8 moved one away from its package-private parent
+            // and the release crashed at start (open item 72).
             optimization {
                 enable = true
                 packageScope = setOf("androidx.**", "kotlin.**", "kotlinx.**")
@@ -41,7 +44,7 @@ android {
         // 10 minutes for the backup reminder (BackupDueDebugTest).
         debug {
             applicationIdSuffix = ".debug"
-            // 38a decision 2a: the development app shows x.y.z-dev.n, n its versionCode (0.38.0-dev.47).
+            // 38a decision 2a: the development app shows x.y.z-dev.n, n its versionCode (0.38.0-dev.48).
             versionNameSuffix = "-dev.${defaultConfig.versionCode}"
             buildConfigField("long", "BACKUP_DUE_AFTER_MINUTES", "10L")
         }

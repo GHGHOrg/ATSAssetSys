@@ -34,3 +34,10 @@ jobs:
           sed -n '/^Checks measured again/,$p' core/build/scale/holdings-scale-after.txt 2>/dev/null || echo "No scale table: HoldingsScaleTest did not run."
       - name: Lint
         run: ./gradlew :app:lintDebug
+      # 38b decision 2 (C23): the unsigned release build on every pull request and push to main, so a break of the
+      # release build turns the run red before a release needs it.
+      - name: Release build
+        run: ./gradlew :app:assembleRelease
+      # 38b decision 6 (open item 72): no class in the R8 build extends a hidden class in another package.
+      - name: Release class check
+        run: bash .github/scripts/release-class-check.sh app/build/outputs/apk/release/app-release-unsigned.apk

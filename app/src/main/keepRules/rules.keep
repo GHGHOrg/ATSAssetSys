@@ -10,3 +10,8 @@
 #-keepclassmembers class fqcn.of.javascript.interface.for.webview {
 #   public *;
 #}
+
+# 38b (open item 72): R8 moved kotlin.collections.CollectionsKt__MutableCollectionsJVMKt to the root package, away
+# from its package-private parent CollectionsKt__IterablesKt, and the release crashed at start (IllegalAccessError).
+# Keeping the names of Kotlin's multifile part classes keeps them in their package; they can still be shrunk.
+-keepnames class kotlin.**Kt__*
