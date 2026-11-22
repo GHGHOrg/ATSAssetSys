@@ -1,6 +1,6 @@
 # plan/iterations/38c-first-release.md
 
-Stage: Build. Status: released 2026-11-22: v0.38.0 published, your data in the release (13.1, steps 4 to 8); part 1 merged as #220 (7ac20e2), part 2 on docs/iter-38c-released. Approved 2026-11-22; decisions 0 to 4 settled the same day (your A, A, A, B, A), decision 5 in step 2 (your A; section 11). Branch iter-38c-first-release, from main (26b93cd).
+Stage: Build. Status: Done: v0.38.0 released 2026-11-22, your data in the release (13.1, steps 4 to 8); pull requests #220 merged as 7ac20e2 and #221 merged as 82a3d64, main green (13.3). Approved 2026-11-22; decisions 0 to 4 settled the same day (your A, A, A, B, A), decision 5 in step 2 (your A; section 11). Branch iter-38c-first-release, from main (26b93cd).
 Source: intent/intent-cr-04-release-process.md (CR4, final); spec/spec.md v7. CR4's third part, after 38a (the development app) and 38b (the release path); plan.md section 4.
 
 ## 1. Outcome
@@ -124,6 +124,11 @@ Reviewed against spec.md v7 (C17, C21 to C23, section 8, AC-35, AC-36, AC-63, AC
 6. Info, your app's uid is 10455 since the install (10454 before); CLAUDE.md's uid line updated.
 
 Full run for part 2 (only documents changed): the first failed after 41s in `:core:compileKotlin`: "Failed to create MD5 hash for file: …\core\build\kotlin\compileKotlin\cacheable\caches-jvm\inputs\source-to-output.tab.values.s (The system cannot find the path specified)", after "Detected multiple Kotlin daemon sessions"; it came after a break of the Claude Code session. `.\gradlew.bat --stop` ("2 Daemons stopped"), then the same command unchanged: green in 2m 41s; 1,512 unit tests (1 skipped), 178 screen tests compiled, lint the same 10 (report 15:33:32).
+
+### 13.3 Pull requests and merges
+- #220 (part 1, steps 1 to 3): merged by you as 7ac20e2 (2026-11-21 19:05 UTC), its checks and shard 1's re-run in 13.1; main green on 7ac20e2. The tag v0.38.0 is on it.
+- #221 (part 2, docs/iter-38c-released, head f1bfc6e; the records of steps 4 to 8, 13.2, open item 73, CLAUDE.md), pushed and created once at your request, reviewer msfsgh. All checks green at the first attempt (gh, read only): CI build 6m 54s; the screen tests' shards 7m 34s, 9m 18s and 8m 12s, the count job green; CodeQL and Analyze (actions) green. Shard 1, where open item 73's tests failed once on #220, passed.
+- Merged by you as 82a3d64 (2026-11-22 07:50 UTC). On main at the first attempt: CI 4m 43s, the screen tests 9m 30s, CodeQL green.
 
 ## 14. Departures from the plan
 - After step 3 (your A, 2026-11-22): 38c has two pull requests, not one (CLAUDE.md section 4, "One pull request per iteration"). AC-63 puts the tag "on a commit of main", and versionCode 49 must be on main before it: pull request 1 holds steps 1 to 3; the tag goes on its merge commit; pull request 2 holds the records of steps 4 to 9. Not chosen: (B) tag the branch's commit (against AC-63); (C) split into 38c and 38d.
