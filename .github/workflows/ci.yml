@@ -1,0 +1,43 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-26.04
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: 25
+      - uses: gradle/actions/setup-gradle@v6
+      - name: Style check
+        run: ./gradlew spotlessCheck
+      - name: Build
+        run: ./gradlew :core:assemble :app:assembleDebug
+      - name: Unit tests
+        run: ./gradlew :core:test :app:testDebugUnitTest
+      # 38a decision 1 (AC-65): the release build, your daily app, keeps the 7-day backup reminder.
+      - name: Release build tests
+        run: ./gradlew :app:testReleaseUnitTest --tests "*BackupDueReleaseTest"
+      # 24a: every check HoldingsScaleTest measured again, each try, also when the tests pass.
+      - name: Scale test retries
+        if: always()
+        run: |
+          sed -n '/^Checks measured again/,$p' core/build/scale/holdings-scale-after.txt 2>/dev/null || echo "No scale table: HoldingsScaleTest did not run."
+      - name: Lint
+        run: ./gradlew :app:lintDebug
+      # 38b decision 2 (C23): the unsigned release build on every pull request and push to main, so a break of the
+      # release build turns the run red before a release needs it.
+      - name: Release build
+        run: ./gradlew :app:assembleRelease
+      # 38b decision 6 (open item 72): no class in the R8 build extends a hidden class in another package.
+      - name: Release class check
+        run: bash .github/scripts/release-class-check.sh app/build/outputs/apk/release/app-release-unsigned.apk

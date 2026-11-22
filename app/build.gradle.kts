@@ -1,0 +1,98 @@
+plugins {
+    alias(libs.plugins.android.application)
+    alias(libs.plugins.kotlin.compose)
+    alias(libs.plugins.ksp)
+    alias(libs.plugins.room3)
+}
+
+// No price source key is built into the app (30 decision 0): the key is entered in Settings and kept in the encrypted
+// database. The build reads no key, so every build, CI's included, is the same app.
+android {
+    namespace = "app.ghghorg.atsassets"
+    compileSdk {
+        version = release(37)
+    }
+
+    defaultConfig {
+        applicationId = "app.ghghorg.atsassets"
+        minSdk = 33
+        targetSdk = 37
+        // 38a decisions 2 and 2d: MAJOR.MINOR.PATCH; the first release (38c) is 0.38.0. versionCode rises with every
+        // build that is installed.
+        versionCode = 49
+        versionName = "0.38.0"
+
+        testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+
+        // 36 decision 1: after how many minutes a backup is due; 0 means spec section 9's 7 days (core's BackupReminder).
+        // The release build, your daily app, keeps 0 (BackupDueReleaseTest, run in CI; 38a decision 1).
+        buildConfigField("long", "BACKUP_DUE_AFTER_MINUTES", "0L")
+    }
+
+    buildTypes {
+        release {
+            // R8 on the libraries only, not the app's own code (open item 3). 38b decision 5a: Kotlin's part classes
+            // keep their names (src/main/keepRules/rules.keep), after R8 moved one away from its package-private parent
+            // and the release crashed at start (open item 72).
+            optimization {
+                enable = true
+                packageScope = setOf("androidx.**", "kotlin.**", "kotlinx.**")
+            }
+        }
+        // AC-65 (CR4, 38a): the debug build is the development app, "ATS Dev" (app/src/debug), under its own id next
+        // to your app, with test data only. It replaces the check build ("ATS Check", 34 and 36) and keeps its
+        // 10 minutes for the backup reminder (BackupDueDebugTest).
+        debug {
+            applicationIdSuffix = ".debug"
+            // 38a decision 2a: the development app shows x.y.z-dev.n, n its versionCode (0.38.0-dev.49).
+            versionNameSuffix = "-dev.${defaultConfig.versionCode}"
+            buildConfigField("long", "BACKUP_DUE_AFTER_MINUTES", "10L")
+        }
+    }
+    compileOptions {
+        sourceCompatibility = JavaVersion.VERSION_11
+        targetCompatibility = JavaVersion.VERSION_11
+    }
+    buildFeatures {
+        compose = true
+        // 36 decision 1: for BACKUP_DUE_AFTER_MINUTES.
+        buildConfig = true
+    }
+}
+
+room3 {
+    schemaDirectory("$projectDir/schemas")
+}
+
+dependencies {
+    implementation(project(":core"))
+    implementation(platform(libs.androidx.compose.bom))
+    implementation(libs.androidx.activity.compose)
+    implementation(libs.androidx.biometric)
+    implementation(libs.androidx.compose.material3)
+    implementation(libs.androidx.compose.ui)
+    implementation(libs.androidx.compose.ui.graphics)
+    implementation(libs.androidx.compose.ui.tooling.preview)
+    implementation(libs.androidx.core.ktx)
+    implementation(libs.androidx.lifecycle.runtime.ktx)
+    implementation(libs.androidx.lifecycle.viewmodel.compose)
+    implementation(libs.androidx.room3.runtime)
+    ksp(libs.androidx.room3.compiler)
+    implementation(libs.sqlcipher.android) {
+        artifact {
+            name = "sqlcipher-android"
+            type = "aar"
+        }
+    }
+    implementation(libs.androidx.sqlite)
+    implementation(libs.kotlinx.serialization.json)
+    testImplementation(libs.junit)
+    testImplementation(libs.kotlinx.coroutines.test)
+    androidTestImplementation(platform(libs.androidx.compose.bom))
+    androidTestImplementation(libs.androidx.compose.ui.test.junit4)
+    androidTestImplementation(libs.androidx.espresso.core)
+    androidTestImplementation(libs.androidx.junit)
+    androidTestImplementation(testFixtures(project(":core")))
+    debugImplementation(libs.androidx.compose.ui.test.manifest)
+    debugImplementation(libs.androidx.compose.ui.tooling)
+}

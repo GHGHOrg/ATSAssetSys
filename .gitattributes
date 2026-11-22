@@ -1,0 +1,7 @@
+gradlew text eol=lf
+# 38b step 3: shell scripts run by bash (CI and Git Bash) keep LF.
+*.sh text eol=lf
+*.bat text eol=crlf
+gradle/wrapper/gradle-wrapper.jar binary
+# 33b decision 6: the restore check's test files are kept byte for byte (LF, one not UTF-8 on purpose), as checked.
+app/src/test/resources/restore-check/** -text

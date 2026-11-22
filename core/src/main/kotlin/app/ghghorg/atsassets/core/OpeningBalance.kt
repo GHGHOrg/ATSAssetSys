@@ -1,0 +1,95 @@
+package app.ghghorg.atsassets.core
+
+import java.time.LocalDate
+
+enum class OpeningBalanceError {
+    ALREADY_EXISTS,
+    AMOUNT_NOT_POSITIVE,
+    NOTE_HAS_LINE_BREAK,
+}
+
+sealed interface OpeningBalanceResult {
+    data class Created(
+        val entry: CashEntry,
+    ) : OpeningBalanceResult
+
+    data class Refused(
+        val reason: OpeningBalanceError,
+    ) : OpeningBalanceResult
+}
+
+/** The opening balance rule of spec 4.2 (K1). Any date is allowed, including a future one. */
+object OpeningBalance {
+    /** The first rule that fails decides the reason: already exists, amount, note. */
+    fun create(
+        existing: List<CashEntry>,
+        id: String,
+        date: LocalDate,
+        amountCents: Long,
+        note: String,
+    ): OpeningBalanceResult {
+        if (existing.any { it.type == CashType.OPENING_BALANCE }) {
+            return OpeningBalanceResult.Refused(OpeningBalanceError.ALREADY_EXISTS)
+        }
+        if (amountCents <= 0L) {
+            return OpeningBalanceResult.Refused(OpeningBalanceError.AMOUNT_NOT_POSITIVE)
+        }
+        if (note.any { it == '\n' || it == '\r' }) {
+            return OpeningBalanceResult.Refused(OpeningBalanceError.NOTE_HAS_LINE_BREAK)
+        }
+        val nextSeq = CashRules.nextSeq(existing)
+        val entry =
+            CashEntry(
+                id = id,
+                date = date,
+                amountCents = amountCents,
+                type = CashType.OPENING_BALANCE,
+                note = note,
+                enteredSeq = nextSeq,
+            )
+        return OpeningBalanceResult.Created(entry)
+    }
+}
+
+/** Balance rules of spec section 3. */
+object CashRules {
+    /** The sum of the entries dated on or before [date]. Throws ArithmeticException instead of wrapping (4.10). */
+    fun balanceOn(
+        entries: List<CashEntry>,
+        date: LocalDate,
+    ): Long = sumExact(entries.filter { !it.date.isAfter(date) })
+
+    /** The exact sum of the amounts. Throws ArithmeticException if it would leave the range of Long (4.10). */
+    fun sumExact(entries: List<CashEntry>): Long = entries.fold(0L) { sum, entry -> Math.addExact(sum, entry.amountCents) }
+
+    /** The entered_seq for a new entry: the highest so far plus one (4.1 order of entry). */
+    fun nextSeq(entries: List<CashEntry>): Long = (entries.maxOfOrNull { it.enteredSeq } ?: 0L) + 1L
+
+    /** "App holds data" (spec section 3); in 02a that means any cash entry exists. */
+    fun appHoldsData(entries: List<CashEntry>): Boolean = entries.isNotEmpty()
+
+    /**
+     * Replays the cash balance in the 4.1 order (date, then entered_seq) and judges it after every entry
+     * dated [from] or later (03 decision 5). Null when every entry passes; only NegativeCash or TooLarge otherwise.
+     * Used by cash entries (03 to 05) and buys (09). An entry whose id is in [notJudged] is judged with the next one:
+     * a Reverse and re-enter pair on one date is one point (14a decision 6).
+     */
+    internal fun replay(
+        entries: List<CashEntry>,
+        from: LocalDate,
+        notJudged: Set<String> = emptySet(),
+    ): CashEntryRefusal? {
+        var balance = 0L
+        try {
+            for (entry in entries.sortedWith(compareBy<CashEntry>({ it.date }, { it.enteredSeq }))) {
+                balance = Math.addExact(balance, entry.amountCents)
+                if (entry.id !in notJudged && !entry.date.isBefore(from) && balance < 0L) {
+                    return CashEntryRefusal.NegativeCash(entry.date, -balance)
+                }
+            }
+        } catch (e: ArithmeticException) {
+            return CashEntryRefusal.TooLarge
+        }
+        return null
+    }
+}

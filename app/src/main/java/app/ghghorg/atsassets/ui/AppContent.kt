@@ -1,0 +1,557 @@
+package app.ghghorg.atsassets.ui
+
+import androidx.activity.compose.BackHandler
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.padding
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.clearAndSetSemantics
+import androidx.compose.ui.unit.dp
+import app.ghghorg.atsassets.R
+import app.ghghorg.atsassets.core.Tab
+
+/**
+ * Shows the screen the ViewModel names. Only the unlocked branch of MainActivity calls this. [screenshots] are
+ * MainActivity's Allow and Turn off for the screenshot window, which K8 owns (21). [onBackUpNow] is MainActivity's too:
+ * it opens Android's file screen for a backup (31), from Backup and restore and from Overall's reminder (32). [restore]
+ * holds MainActivity's two actions for the restore wizard (33b): Choose file's file screen, and Copy report's clipboard.
+ */
+@Composable
+fun AppContent(
+    viewModel: AppViewModel,
+    modifier: Modifier = Modifier,
+    screenshots: ScreenshotControls = ScreenshotControls({}, {}),
+    onBackUpNow: () -> Unit = {},
+    restore: RestoreControls = RestoreControls({}, {}),
+) {
+    val state by viewModel.state.collectAsState()
+    when (state.screen) {
+        Screen.LOADING -> MessageScreen(stringResource(R.string.loading), null, modifier)
+
+        Screen.UNREADABLE -> MessageScreen(
+            stringResource(R.string.unreadable_title),
+            stringResource(R.string.unreadable_body),
+            modifier,
+        )
+
+        // The bar shows on every screen after loading (spec 6: always visible; 02b decision 1).
+        else -> Box(
+            modifier = modifier.fillMaxSize(),
+        ) {
+            val deleteOpen = state.deleteDialog != null || state.deleteBlocked != null
+            val dialogOpen = state.portfolioDialog != null || state.renameDialog != null || deleteOpen || state.keyEntry != null
+            // While a dialog is open, TalkBack reads only the dialog, not the screen or the bar under it.
+            val under = if (dialogOpen) Modifier.clearAndSetSemantics { } else Modifier
+            Column(modifier = Modifier.fillMaxSize().then(under)) {
+                Box(modifier = Modifier.weight(1f)) {
+                    BarContent(state, viewModel, screenshots, onBackUpNow, restore)
+                }
+                BottomBar(state.tabOrder.tabs, state.tab, viewModel::selectTab)
+            }
+            PortfolioDialogs(state, viewModel)
+            // 29 step 10: the Delete dialog and the blocked message over the bar too, drawn last so their Back comes first.
+            PortfolioDeleteLayers(
+                dialog = state.deleteDialogModel,
+                blocked = state.deleteBlockedModel,
+                actions = DeleteDialogActions(viewModel::onDeleteNameChange, viewModel::confirmDelete, viewModel::cancelDelete),
+                onCloseBlocked = viewModel::closeDeleteBlocked,
+            )
+            // 30: the price source's key entry, over the bar as the Delete dialog, its field above the keyboard.
+            KeyEntryLayer(
+                model = state.keyEntryModel,
+                actions =
+                KeyEntryActions(
+                    onTextChange = viewModel::onKeyTextChange,
+                    onSave = viewModel::saveKey,
+                    onCancel = viewModel::cancelKeyEntry,
+                    onAskClear = viewModel::askClearKey,
+                    onCancelClear = viewModel::cancelClearKey,
+                    onConfirmClear = viewModel::confirmClearKey,
+                ),
+            )
+        }
+    }
+}
+
+// New portfolio over Portfolios or Overall, Rename portfolio over a portfolio, both over the dimmed bar (wireframe 10d).
+@Composable
+private fun PortfolioDialogs(
+    state: AppState,
+    viewModel: AppViewModel,
+) {
+    state.portfolioDialog?.let {
+        PortfolioNameDialog(
+            wording =
+            PortfolioNameWording(
+                title = stringResource(R.string.new_portfolio),
+                helper = stringResource(R.string.portfolio_name_helper),
+                confirm = stringResource(R.string.create_button),
+            ),
+            dialog = it,
+            saving = state.saving,
+            onNameChange = viewModel::onPortfolioNameChange,
+            onConfirm = viewModel::createPortfolio,
+            onCancel = viewModel::cancelPortfolioDialog,
+        )
+    }
+    state.renameDialog?.let {
+        PortfolioNameDialog(
+            wording =
+            PortfolioNameWording(
+                title = stringResource(R.string.rename_portfolio),
+                helper = stringResource(R.string.rename_helper),
+                confirm = stringResource(R.string.save_button),
+            ),
+            dialog = it,
+            saving = state.saving,
+            onNameChange = viewModel::onRenameNameChange,
+            onConfirm = viewModel::saveRename,
+            onCancel = viewModel::cancelRename,
+        )
+    }
+}
+
+/** The screenshot window's two actions, from MainActivity (21). */
+class ScreenshotControls(
+    val onAllow: () -> Unit,
+    val onTurnOff: () -> Unit,
+)
+
+/** The restore wizard's two actions from MainActivity (33b): Choose file's file screen (AC-57), Copy report (C16). */
+class RestoreControls(
+    val onChooseFile: () -> Unit,
+    val onCopyReport: (String) -> Unit,
+)
+
+@Composable
+private fun BarContent(
+    state: AppState,
+    viewModel: AppViewModel,
+    screenshots: ScreenshotControls,
+    onBackUpNow: () -> Unit,
+    restore: RestoreControls,
+) {
+    BackHandler(enabled = state.backGoesToOverall) { viewModel.selectTab(Tab.OVERALL) }
+    when (state.screen) {
+        Screen.FORM -> CashEntryForm(
+            state = state,
+            onTypeChange = viewModel::onTypeChange,
+            onDirectionChange = viewModel::onDirectionChange,
+            onDateChange = viewModel::onDateChange,
+            onAmountChange = viewModel::onAmountChange,
+            onNoteChange = viewModel::onNoteChange,
+            onReview = viewModel::review,
+            onBack = viewModel::closeForm,
+        )
+
+        Screen.REVIEW -> CashEntryReview(state, viewModel::confirm, viewModel::backToEdit)
+
+        Screen.DETAIL -> CashEntryDetail(
+            state = state,
+            onOpenEntry = viewModel::openDetail,
+            onOpenTransaction = viewModel::openLinkedTransaction,
+            onReverse = viewModel::openReversal,
+            onBack = viewModel::closeDetail,
+            onReenter = viewModel::openReenterCash,
+        )
+
+        Screen.REVERSAL -> CashReversal(
+            state = state,
+            onDateChange = viewModel::onReversalDateChange,
+            onNoteChange = viewModel::onReversalNoteChange,
+            onConfirm = viewModel::confirmReversal,
+            onCancel = viewModel::cancelReversal,
+        )
+
+        Screen.PORTFOLIO -> PortfolioScreen(
+            state = state,
+            actions =
+            PortfolioScreenActions(
+                onBack = viewModel::closePortfolio,
+                onOpenMenu = viewModel::openPortfolioMenu,
+                onCloseMenu = viewModel::closePortfolioMenu,
+                onRename = viewModel::openRename,
+                onOpenHolding = viewModel::openHolding,
+                onOpenHidden = viewModel::openHiddenHoldings,
+                onRefresh = viewModel::onPullToRefresh,
+                onOpenAllocation = viewModel::openAllocation,
+                onOpenHistory = viewModel::openTransactionHistory,
+                onDelete = viewModel::openDelete,
+            ),
+        )
+
+        Screen.HOLDING -> HoldingDetailScreen(
+            state = state,
+            actions =
+            HoldingActions(
+                onBack = viewModel::closeHolding,
+                onTab = viewModel::selectHoldingTab,
+                onBuy = viewModel::buyFromHolding,
+                onSell = viewModel::sellFromHolding,
+                onSplit = viewModel::splitFromHolding,
+                onOpenTransaction = viewModel::openTransaction,
+                onHide = viewModel::hide,
+                onRefresh = viewModel::onPullToRefresh,
+                onEditClass = viewModel::openClassPicker,
+                onClearClass = viewModel::clearClassOverride,
+            ),
+        )
+
+        Screen.CLASS_PICKER -> ClassPickerScreen(
+            state = state,
+            actions =
+            ClassPickerActions(
+                onCancel = viewModel::cancelClassPicker,
+                onChoose = viewModel::chooseClassValue,
+                onSave = viewModel::saveClassOverride,
+            ),
+        )
+
+        Screen.CLASS_LIST -> ClassListScreen(
+            state = state,
+            actions =
+            ClassListActions(
+                onBack = viewModel::closeClassList,
+                onAdd = viewModel::openAddClassValue,
+                onRename = viewModel::openRenameClassValue,
+                onDelete = viewModel::deleteClassValue,
+                onNameChange = viewModel::typeClassValueName,
+                onNameSave = viewModel::saveClassValueName,
+                onNameCancel = viewModel::cancelClassValueName,
+            ),
+        )
+
+        Screen.REALIZED_GAINS -> RealizedGainsScreen(
+            model = state.realizedGainsScreen,
+            actions =
+            RealizedGainsActions(
+                onBack = viewModel::closeRealizedGains,
+                onFromChange = viewModel::onGainsFromChange,
+                onToChange = viewModel::onGainsToChange,
+                onClearDates = viewModel::clearGainsDates,
+                onToggleHolding = viewModel::toggleGainsHolding,
+                onOpenSale = viewModel::openGainsSale,
+            ),
+        )
+
+        Screen.TRANSACTION_HISTORY -> TransactionHistoryScreen(
+            model = state.transactionHistoryScreen,
+            actions =
+            TransactionHistoryActions(
+                onBack = viewModel::closeTransactionHistory,
+                onFromChange = viewModel::onHistoryFromChange,
+                onToChange = viewModel::onHistoryToChange,
+                onChip = viewModel::selectHistoryChip,
+                onOpenTickerMenu = viewModel::openHistoryTickerMenu,
+                onCloseTickerMenu = viewModel::closeHistoryTickerMenu,
+                onPickTicker = viewModel::pickHistoryTicker,
+                onOpenTransaction = viewModel::openTransaction,
+                onOpenCashLine = viewModel::openHistoryCashLine,
+            ),
+        )
+
+        Screen.HIDDEN_HOLDINGS -> HiddenHoldingsScreen(
+            state = state,
+            actions =
+            HiddenHoldingsActions(
+                onBack = viewModel::closeHiddenHoldings,
+                onOpenHolding = viewModel::openHiddenHolding,
+                onUnhide = viewModel::unhide,
+            ),
+        )
+
+        Screen.TRANSACTION -> TransactionDetailScreen(
+            state = state,
+            actions =
+            TransactionActions(
+                onBack = viewModel::closeTransaction,
+                onOpenCashLine = viewModel::openCashLine,
+                onReverse = viewModel::openTransactionReversal,
+                onOpenLink = viewModel::openTransactionLink,
+                onReenter = viewModel::openReenter,
+            ),
+        )
+
+        Screen.REPLACE_REVIEW -> ReplaceReviewScreen(
+            state = state,
+            actions =
+            ReplaceReviewActions(
+                onChangeDate = viewModel::changeReplaceDate,
+                onDateChange = viewModel::onReplaceDateChange,
+                onConfirm = viewModel::confirmReplace,
+                onBack = viewModel::backToReplaceEntry,
+            ),
+        )
+
+        Screen.REVERSE_TRANSACTION -> TransactionReversalScreen(
+            state = state,
+            actions =
+            ReversalActions(
+                onDateChange = viewModel::onTransactionReversalDateChange,
+                onConfirm = viewModel::confirmTransactionReversal,
+                onCancel = viewModel::cancelTransactionReversal,
+            ),
+        )
+
+        Screen.BUY -> BuyEntryScreen(
+            state = state,
+            actions =
+            BuyActions(
+                onPortfolioChange = viewModel::onBuyPortfolioChange,
+                onTickerChange = viewModel::onBuyTickerChange,
+                onDateChange = viewModel::onBuyDateChange,
+                onQuantityChange = viewModel::onBuyQuantityChange,
+                onTotalChange = viewModel::onBuyTotalChange,
+                onReview = viewModel::reviewBuy,
+                onBack = viewModel::closeBuy,
+            ),
+        )
+
+        Screen.BUY_REVIEW -> BuyReviewScreen(state, viewModel::confirmBuy, viewModel::backToBuy)
+
+        Screen.SELL -> SellEntryScreen(
+            state = state,
+            actions =
+            SellActions(
+                onPortfolioChange = viewModel::onSellPortfolioChange,
+                onTickerChange = viewModel::onSellTickerChange,
+                onDateChange = viewModel::onSellDateChange,
+                onQuantityChange = viewModel::onSellQuantityChange,
+                onTotalChange = viewModel::onSellTotalChange,
+                onToggleLot = viewModel::toggleLot,
+                onPickChange = viewModel::onPickChange,
+                onSellAll = viewModel::sellAll,
+                onReview = viewModel::reviewSell,
+                onBack = viewModel::closeSell,
+            ),
+        )
+
+        Screen.SELL_REVIEW -> SellReviewScreen(state, viewModel::confirmSell, viewModel::backToSell)
+
+        Screen.SPLIT -> SplitEntryScreen(
+            state = state,
+            actions =
+            SplitActions(
+                onPortfolioChange = viewModel::onSplitPortfolioChange,
+                onTickerChange = viewModel::onSplitTickerChange,
+                onDateChange = viewModel::onSplitDateChange,
+                onToChange = viewModel::onSplitToChange,
+                onFromChange = viewModel::onSplitFromChange,
+                onReview = viewModel::reviewSplit,
+                onBack = viewModel::closeSplit,
+            ),
+        )
+
+        Screen.SPLIT_REVIEW -> SplitReviewScreen(state, viewModel::confirmSplit, viewModel::backToSplit)
+
+        Screen.ALLOCATION -> PortfolioAllocationScreen(
+            state = state,
+            actions =
+            PortfolioAllocationActions(
+                onBack = viewModel::closeAllocation,
+                onRefresh = viewModel::onPullToRefresh,
+                onOpenChoice = viewModel::openPortfolioChoice,
+                onCloseChoice = viewModel::closePortfolioChoice,
+                onChoose = viewModel::choosePortfolio,
+                onCreatePortfolio = viewModel::openPortfolioDialog,
+                onSetOpeningBalance = viewModel::openForm,
+            ),
+        )
+
+        Screen.SETTINGS -> SettingsScreen(
+            state = state,
+            actions =
+            SettingsActions(
+                onBack = viewModel::closeSettings,
+                onOpenChoice = viewModel::openAutoLockChoice,
+                onCloseChoice = viewModel::closeAutoLockChoice,
+                onChoose = viewModel::chooseAutoLock,
+                onOpenScreenshots = viewModel::openScreenshotLayer,
+                onCloseScreenshots = viewModel::closeScreenshotLayer,
+                onAllowScreenshots = screenshots.onAllow,
+                onTurnOffScreenshots = screenshots.onTurnOff,
+                onOpenTabOrder = viewModel::openTabOrder,
+                onOpenList = viewModel::openClassList,
+                onOpenPriceSource = viewModel::openKeyEntry,
+            ),
+        )
+
+        Screen.TAB_ORDER -> TabOrderScreen(
+            state = state,
+            actions = TabOrderActions(onBack = viewModel::closeTabOrder, onUp = viewModel::moveTabUp, onDown = viewModel::moveTabDown),
+        )
+
+        Screen.BACKUP -> BackupScreen(
+            model = state.backupScreen,
+            actions = BackupActions(onBack = viewModel::closeBackup, onBackUpNow = onBackUpNow, onRestore = viewModel::openRestore),
+        )
+
+        Screen.RESTORE -> state.restoreScreen?.let { model ->
+            RestoreScreen(
+                model = model,
+                sourceName = state.priceSourceName,
+                actions =
+                RestoreActions(
+                    onBack = viewModel::restoreBack,
+                    onChooseFile = restore.onChooseFile,
+                    onCheck = viewModel::checkRestoreFile,
+                    onCancelCheck = viewModel::cancelRestoreCheck,
+                    onRetry = viewModel::retryRestoreCheck,
+                    onCopyReport = restore.onCopyReport,
+                    onChooseAnother = viewModel::chooseAnotherRestoreFile,
+                    onClose = viewModel::closeRestore,
+                    onRestore = viewModel::restoreNow,
+                    onGoToOverall = viewModel::finishRestore,
+                    onContinue = viewModel::continueRestore,
+                    onType = viewModel::typeRestoreWord,
+                    onBackUpNow = onBackUpNow,
+                ),
+            )
+        }
+
+        Screen.NET_WORTH -> NetWorthScreen(
+            state = state,
+            actions = NetWorthActions(onBack = viewModel::closeNetWorth, onRefresh = viewModel::onPullToRefresh),
+        )
+
+        else -> TabContent(state, viewModel, onBackUpNow)
+    }
+}
+
+/**
+ * The selected tab. Overall, Portfolios and Cash carry the Buy/Sell button under their content, and its menu or
+ * notice over it (navigation outline; 09 decision 2). While the layer is open, TalkBack reads only the layer.
+ * [onBackUpNow] is for Overall's backup reminder (32).
+ */
+@Composable
+private fun TabContent(
+    state: AppState,
+    viewModel: AppViewModel,
+    onBackUpNow: () -> Unit,
+) {
+    if (state.tab == Tab.MORE) {
+        TabScreen(state, viewModel, onBackUpNow)
+        return
+    }
+    val layerOpen = state.buySellMenuOpen || state.buyNotice != null || state.allocationMenuOpen
+    Box(modifier = Modifier.fillMaxSize()) {
+        val under = if (layerOpen) Modifier.clearAndSetSemantics { } else Modifier
+        Column(modifier = Modifier.fillMaxSize().then(under)) {
+            Box(modifier = Modifier.weight(1f)) {
+                TabScreen(state, viewModel, onBackUpNow)
+            }
+            BuySellButton(
+                onOpen = viewModel::openBuySellMenu,
+                modifier = Modifier.align(Alignment.End).padding(horizontal = 16.dp, vertical = 8.dp),
+            )
+        }
+        if (state.allocationMenuOpen) {
+            AllocationChoiceLayer(state.allocationBy, viewModel::chooseAllocation, viewModel::closeAllocationMenu)
+        } else if (layerOpen) {
+            BuySellLayer(
+                state = state,
+                actions =
+                BuySellActions(
+                    onOpen = viewModel::openBuySellMenu,
+                    onClose = viewModel::closeBuySellMenu,
+                    onBuy = viewModel::chooseBuy,
+                    onSell = viewModel::chooseSell,
+                    onDismissNotice = viewModel::dismissBuyNotice,
+                    onSetOpeningBalance = viewModel::openForm,
+                    onCreatePortfolio = viewModel::createPortfolioForBuy,
+                ),
+            )
+        }
+    }
+}
+
+@Composable
+private fun TabScreen(
+    state: AppState,
+    viewModel: AppViewModel,
+    onBackUpNow: () -> Unit,
+) {
+    when (state.tab) {
+        Tab.OVERALL ->
+            OverallScreen(
+                state,
+                viewModel::openForm,
+                viewModel::openPortfolioDialog,
+                onOpenPortfolio = viewModel::openPortfolio,
+                onRefresh = viewModel::onPullToRefresh,
+                onOpenNetWorth = viewModel::openNetWorth,
+                onOpenAllocationChoice = viewModel::openAllocationMenu,
+                onBackUpNow = onBackUpNow,
+                onDismissReminder = viewModel::dismissBackupReminder,
+            )
+
+        Tab.CASH -> CashScreen(
+            state = state,
+            onCashEntry = viewModel::openForm,
+            onOpenEntry = viewModel::openDetail,
+            onOpenTransaction = viewModel::openTransaction,
+            filterActions =
+            CashFilterActions(
+                onFromChange = viewModel::onFilterFromChange,
+                onToChange = viewModel::onFilterToChange,
+                onTypeChange = viewModel::onFilterTypeChange,
+                onClear = viewModel::clearFilters,
+                onTradeChange = viewModel::onFilterTradeChange,
+                onOpenTickerMenu = viewModel::openCashTickerMenu,
+                onPickTicker = viewModel::pickCashTicker,
+                onCloseTickerMenu = viewModel::closeCashTickerMenu,
+            ),
+        )
+
+        Tab.PORTFOLIOS ->
+            PortfoliosScreen(
+                state,
+                viewModel::openPortfolio,
+                viewModel::openPortfolioDialog,
+                viewModel::openForm,
+                onRefresh = viewModel::onPullToRefresh,
+            )
+
+        Tab.MORE -> MoreScreen(
+            state.more,
+            viewModel::openNetWorth,
+            onOpenAllocation = viewModel::openAllocation,
+            onOpenSettings = viewModel::openSettings,
+            onOpenRealizedGains = viewModel::openRealizedGains,
+            onOpenBackup = viewModel::openBackup,
+        )
+    }
+}
+
+@Composable
+private fun MessageScreen(
+    title: String,
+    body: String?,
+    modifier: Modifier = Modifier,
+) {
+    Column(
+        modifier = modifier.fillMaxSize().padding(24.dp),
+        verticalArrangement = Arrangement.Center,
+    ) {
+        Text(
+            text = title,
+            style = MaterialTheme.typography.headlineSmall,
+        )
+        body?.let {
+            Text(
+                text = it,
+                style = MaterialTheme.typography.bodyLarge,
+                modifier = Modifier.padding(top = 12.dp),
+            )
+        }
+    }
+}

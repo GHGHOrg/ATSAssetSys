@@ -1,0 +1,5 @@
+row_type,id,portfolio,date,ticker,quantity,amount,lot_picks,split_to,split_from,cash_type,note,reverses,sector,geography,list,key,value,source_text
+format,,,,,,,,,,,,,,,,,1,
+portfolio,,Main,,,,,,,,,,,,,,,,
+cash,,,2025-12-31,,,5.00,,,,deposit,,,,,,,,
+cash,O1,,2026-01-01,,,10000.00,,,,opening_balance,,,,,,,,
