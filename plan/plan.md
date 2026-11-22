@@ -49,7 +49,7 @@ plan/
   spikes/dependabot-findings.md decision note, run 2026-11-18 (verdicts in its section 9.4, for the dependency-upgrade iteration); finished: pull request #202 merged as 05fd72f
   spikes/two-emulators.md      decision note, run 2026-11-19 (results in its section 9; T11: 3 runners adopted, built in 37); finished: pull request #205 merged as b236484
   open-items.md                one list of what is still open; updated when an item closes (spike vscode-claude-code, D4)
-  iterations/01-... to 38c-... one file per iteration (section 4)
+  iterations/01-... to 39-...  one file per iteration (section 4)
 CLAUDE.md                      repo root, created by setup.md
 ```
 
@@ -132,6 +132,7 @@ Rules for the list:
 | 38a | development-app | A development app ("ATS Dev", id `.debug`) with test data and a 10-minute backup reminder, next to your app; ATS Check gone ([CR4](../intent/intent-cr-04-release-process.md); split by 38a decision 0) | 37 | 9 (last bullet), AC-65; AC-35 for the development app |
 | 38b | release-build | The release build runs: open items 3 and 4 settled, CI builds the unsigned release APK on a `v*` tag and checks the version, the release hook asks before release commands, rollback rehearsed on the development app ([CR4](../intent/intent-cr-04-release-process.md); [its file](iterations/38b-release-build.md), done) | 38a | C21 to C23, 8 (Releases and the format version), AC-63 (the CI part), AC-66 |
 | 38c | first-release | Your data in the signed release build `0.38.0`: key created, tag `v0.38.0`, GitHub Release as the record, backup, uninstall debug, install release, restore, smoke check ([CR4](../intent/intent-cr-04-release-process.md); [its file](iterations/38c-first-release.md), released as v0.38.0) | 38b | C17, C21, AC-35, AC-36, AC-63, AC-64 |
+| 39 | dependency-updates | The build on Gradle 9.9.1, Spotless 8.11.0, KSP 2.3.14 and kotlinx-coroutines-test 1.11.0 (Dependabot #165, #164, #125, #124; plan/spikes/dependabot-findings.md); open item 73's wait fixed; no app change, no release (your A, 2026-11-22; [its file](iterations/39-dependency-updates.md)) | 38c | none changed; AC-35 (development app), AC-61, AC-63 |
 
 ### Examples as automated tests (K1, AC-02; my reading)
 A in 11, B in 12, C in 09 (it needs a buy), D and F in 13, G in 14a, H and I in 14c, E in 29. AC-59
@@ -388,6 +389,7 @@ when it adds a command, a convention or a pitfall.
 | Iteration 38a | done ([its file](iterations/38a-development-app.md)): approved 2026-11-21; decisions 0 (CR4 split into 38a to 38c) and 1 (a release-build test in CI), and the name "ATS Dev", your A each; decisions 1a and 2 to 2d settled while building; built 2026-11-21 (steps 1 to 4, phone checks 1 to 9 passed); Deploy review done (no High or Medium; open item 71); pull request #216 green at the first attempt (the release build step 26 s, 178 screen tests under the new id); pull request #216 merged as 9247e00, main green (gh, read only) |
 | Iteration 38b | done ([its file](iterations/38b-release-build.md)): approved 2026-11-21; decisions 0 (one iteration), 1 (a probe build, removed after), 2 (the release build in CI on every pull request), 3 (plan/release.md, the rollback as a list) and 4 (release.yml proven by a manual dry run) settled the same day (your A, B, A, A, A); decision 5 (R8 off in the release build, after the probe crashed at start under R8; open item 72) in step 2, my A at your request, replaced after step 5 by decision 5a (your A: R8 back on with one keep rule, proven by a dex check and the probe on the phone; open item 72 closed), and decision 6 (your A: that class check in CI on every release build); decision 4a (release.yml's dry run on 38b's pull request) in step 3; built (steps 1 to 6 green; AC-66 rehearsed 2026-11-21; plan/release.md); Deploy review 2026-11-22, no High or Medium finding (its file, 13.2); pull request #218 green at the first attempt (the release dry run 3m 37s, CI's release steps 109 s); pull request #218 merged as 7fb4709, main green (gh, read only) |
 | Iteration 38c | done ([its file](iterations/38c-first-release.md)): v0.38.0 released 2026-11-22, your data in the signed release (versionCode 49; AC-35, AC-36, AC-63, AC-64 passed); Deploy review, no High or Medium finding; pull requests #220 merged as 7ac20e2 and #221 merged as 82a3d64, main green (gh, read only); approved 2026-11-22; decisions 0 (keytool, your terminal), 1 (CI's APK signed), 2 (you run the password commands), 3 (the way back: a rebuild of 45's commit 748439d) and 4 (AC-36: run-as refused) settled the same day (your A, A, A, B, A); not built |
+| Iteration 39 | building ([its file](iterations/39-dependency-updates.md)): approved 2026-11-22 (your A); no intent file, SQLCipher left out, open item 73 in, no release (your A each); on iter-39-dependency-updates from main (eb5c5a9) |
 
 ## 12. Change log
 Each departure from this plan is recorded here with its date and the reason.
@@ -658,6 +660,7 @@ Each departure from this plan is recorded here with its date and the reason.
 - 2026-11-22: 38b's record merged (#219 as 26b93cd; main green). 38c's file drafted on iter-38c-first-release; section 2's list and row 38c point to it; decisions 0 to 4 settled (your A, A, A, B, A).
 - 2026-11-22: 38c part 1 merged (#220 as 7ac20e2; shard 1 green on its re-run; open item 73). The first release: the key created (you), the tag v0.38.0 on 7ac20e2 (you), release.yml green on it, the APK signed (you, certificate CN=ATS Asset System, RSA 4096), your data moved from the debug build 45 to the release (backup, uninstall, install, restore; the smoke check passed; run-as refused), the GitHub Release v0.38.0 published (you).
 - 2026-11-22: 38c part 2 merged (#221 as 82a3d64, every check green at the first attempt; main green: CI 4m 43s, screen tests 9m 30s). 38c done; CR4 complete (38a, 38b, 38c). Your daily app is the signed release 0.38.0.
+- 2026-11-22: row 39 added (dependency-updates): the four open Dependabot pull requests (#165, #164, #125 as KSP 2.3.14, #124) with plan/spikes/dependabot-findings.md's verdicts, and open item 73's wait, as a test-support step; no intent file, SQLCipher 4.20.0 left out (#123 closed by Dependabot 2026-11-21; open item 43 stays open), no release (your A each). Its file approved the same day; on iter-39-dependency-updates.
 
 ## 13. Out of scope for this plan
 Performance over time, per-holding dividends, ETF look-through, the next intent.md items,
