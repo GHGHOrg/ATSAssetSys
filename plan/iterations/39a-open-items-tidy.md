@@ -1,6 +1,6 @@
 # plan/iterations/39a-open-items-tidy.md
 
-Stage: Build. Status: Approved 2026-11-23 (your yes); step 1 built (documents and baseline, 13.1); step 2 built (item 65); step 3 built (item 56, 1,513 tests); step 4: draft pull request #227 green at the first attempt (CI, the screen tests 178 of 178, CodeQL); the Deploy review done, no High, Medium or Low finding (13.2). Branch iter-39a-open-items-tidy from main (ba28308), created on your word.
+Stage: Build. Status: Done: pull request #227 merged as bf102bc, main green (13.3). Approved 2026-11-23 (your yes); step 1 built (documents and baseline, 13.1); step 2 built (item 65); step 3 built (item 56, 1,513 tests); step 4: draft pull request #227 green at the first attempt (CI, the screen tests 178 of 178, CodeQL); the Deploy review done, no High, Medium or Low finding (13.2). Branch iter-39a-open-items-tidy from main (ba28308), created on your word.
 Source: plan/open-items.md items 21, 56 and 65 (the three with the least work, chosen 2026-11-23); the hand-off of 2026-11-23, items 1 to 3; your answer of 2026-11-23 ("Yes draft").
 
 ## 1. Outcome
@@ -82,6 +82,8 @@ Notes (info, no change):
 2. The stub check showed the test red through `refreshFailed`. That the prices stay as they were follows from the save failing before `applied` runs; no second stub was tried for it.
 3. Open items 60 and 74 did not show in this iteration's four local full runs.
 
-### 13.3 Merge
+### 13.3 Merge (2026-11-23)
+- Step 4's record (7bd6f33) pushed once by me at your request. On it, all at the first attempt (gh, read only): CI run 45103055849 green (`build` 6m 40s); Screen tests run 45103055915 green, the count job "Tests run: 178 of 178; in more than one shard: 0"; CodeQL run 45103051488 green.
+- Pull request #227 made ready and merged by you as bf102bc (2026-11-23 03:11:36 UTC), 4 commits (66b01d4, 819992a, 8f0995d, 7bd6f33); the branch iter-39a-open-items-tidy deleted by you, locally and on GitHub. On main after the merge, all at the first attempt: CI run 45104510618 green (`build` 5m 45s); Screen tests run 45104510637 green, shards of 529, 489 and 500 s, "Tests run: 178 of 178; in more than one shard: 0"; CodeQL run 45104510567 green. Open items 56 and 65 closed. Merge record on docs/iter-39a-merged.
 
 ## 14. Departures from the plan
