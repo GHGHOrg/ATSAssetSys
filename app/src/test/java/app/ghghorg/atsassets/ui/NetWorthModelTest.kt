@@ -76,7 +76,7 @@ class NetWorthModelTest {
         val model = of(100L, holdings, listOf(portfolioP, portfolioQ), prices)
         assertEquals("$1.01", model.netWorth)
         assertEquals("$1.00", model.composition!!.cash)
-        assertEquals(listOf("$0.01", "$0.00"), model.composition!!.portfolios.map { it.amount })
+        assertEquals(listOf("$0.01", "$0.00"), model.composition.portfolios.map { it.amount })
         assertEquals("$0.01", PortfolioFigures.of(holdings.drop(1), prices).value)
     }
 

@@ -137,7 +137,7 @@ class HoldingDetailModelTest {
         val one = Holding("p1", "AABB", dollars(1), dollars(1))
         val model = header(holding = one, price = price("0.0089"))
         assertEquals("$0.0089", model.price!!.perShare)
-        assertEquals("0.0089", model.price!!.spokenPerShare)
+        assertEquals("0.0089", model.price.spokenPerShare)
         assertEquals(true, model.oneShare)
     }
 
