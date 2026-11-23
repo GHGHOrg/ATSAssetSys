@@ -181,6 +181,20 @@ class PriceRefreshFlowTest {
     }
 
     @Test
+    fun anOrdinaryFailureOfThePriceSave_keepsThePricesAsTheyWere_andSaysTheRefreshFailed() {
+        // 39a (open item 56): a save that fails without unreadable data; AppViewModel's refreshPrices since 16a.
+        val store = store().apply { pricesSaveError = IllegalStateException("disk") }
+        val vm = started(store, source = FakeSource().apply { quotes = mapOf("AAPL" to Quote.Priced(BigDecimal("160"), at)) })
+        val state = vm.state.value
+        assertEquals(emptyList<Pair<Map<String, Price>, Collection<String>>>(), store.savedPrices)
+        assertEquals(old, state.instruments.single { it.ticker == "AAPL" }.price)
+        assertEquals(dollars(10_800), state.netWorth)
+        assertTrue(state.refreshFailed)
+        assertFalse(state.refreshing)
+        assertTrue(state.screen != Screen.UNREADABLE)
+    }
+
+    @Test
     fun aSourceFailure_keepsTheLastPriceStale_andSaysTheRefreshFailed() {
         val source = FakeSource().apply { quotes = mapOf("AAPL" to Quote.TooManyCalls) }
         val vm = started(store(), source = source)
