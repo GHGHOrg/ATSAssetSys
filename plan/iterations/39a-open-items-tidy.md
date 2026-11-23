@@ -1,6 +1,6 @@
 # plan/iterations/39a-open-items-tidy.md
 
-Stage: Build. Status: Approved 2026-11-23 (your yes); step 1 built (documents and baseline, 13.1); step 2 built (item 65); step 3 built (item 56, 1,513 tests); step 4 (the pull request) next. Branch iter-39a-open-items-tidy from main (ba28308), created on your word.
+Stage: Build. Status: Approved 2026-11-23 (your yes); step 1 built (documents and baseline, 13.1); step 2 built (item 65); step 3 built (item 56, 1,513 tests); step 4: draft pull request #227 green at the first attempt (CI, the screen tests 178 of 178, CodeQL); the Deploy review done, no High, Medium or Low finding (13.2). Branch iter-39a-open-items-tidy from main (ba28308), created on your word.
 Source: plan/open-items.md items 21, 56 and 65 (the three with the least work, chosen 2026-11-23); the hand-off of 2026-11-23, items 1 to 3; your answer of 2026-11-23 ("Yes draft").
 
 ## 1. Outcome
@@ -67,8 +67,20 @@ None (no app text). The text of open item 74 and of item 60's addition is shown 
 - Step 1 committed with your yes: 66b01d4 (signed). Your instruction (2026-11-23): work on to the step before the pull request, each step's state held for its own commit; commit only when the pull request is needed.
 - Step 2 (2026-11-23): item 65, the second `!!` removed at HoldingDetailModelTest.kt:140 (`model.price.spokenPerShare`) and NetWorthModelTest.kt:79 (`model.composition.portfolios`); line 139's and line 78's `!!` kept. The full run, daemons stopped first, every command with --rerun-tasks: `:app:compileDebugUnitTestKotlin` green (1m) with no warning; spotlessCheck green (19 s); build green (39 s); tests green (52 s): 109 result files, 1,512 tests, 0 failures, 0 errors, 1 skipped, as step 1; lint green (1m 17s; report 10:23:56): 7 findings, as step 1; `:app:compileDebugAndroidTestKotlin` green (28 s). No failure of open item 60's kind.
 - Step 3 (2026-11-23): item 56, `PriceRefreshFlowTest.anOrdinaryFailureOfThePriceSave_keepsThePricesAsTheyWere_andSaysTheRefreshFailed`: the store's `pricesSaveError = IllegalStateException("disk")`, the source quoting AAPL at 160. It checks that no price was saved, AAPL keeps its stored price (150, not marked stale), net worth stays $10,800, `refreshFailed` is true, `refreshing` false, and the screen is not the unreadable one. Shown red against a stub first: `refreshPrices`'s `catch (e: Exception)` set to `refreshFailed = false` in the working copy, `:app:testDebugUnitTest --tests "*PriceRefreshFlowTest"`: 17 tests, 1 failed, the new one at line 192 (`assertTrue(state.refreshFailed)`); the stub undone, and `git diff` then showed no file under app/src/main or core/. The full run, daemons stopped first, every command with --rerun-tasks: spotlessCheck green (23 s); build green (59 s); tests green (58 s): 109 result files, 1,513 tests (step 2's plus 1), 0 failures, 0 errors, 1 skipped; PriceRefreshFlowTest 17 of 17; lint green (1m 19s; report 10:29:31): 7 findings, as step 1; `:app:compileDebugAndroidTestKotlin` green (28 s). No failure of open item 60's kind. The app's code already behaved as the item asked, so no defect and no intent file.
+- Steps 2 and 3 committed with your yes, each from its held tree and signed: 819992a (step 2, 4 files) and 8f0995d (step 3, 3 files); each step's staged files matched its report; HEAD's tree equals step 3's (93fc732); `git status` clean.
+- Step 4 (2026-11-23). Pushed once by me and draft pull request #227 created by me at your request ("push once. Create this PR once, add a reviewer"), reviewer msfsgh. On 8f0995d, all at the first attempt (gh, read only; watched in the background): CI run 45100917330 green, `build` 6m 41s, the release class check "classes read: 6320, in the root package: 3037, that cannot load: 0"; Screen tests run 45100917279 green, shards 0, 1 and 2 with 53, 59 and 66 tests (9m 28s, 8m 55s, 7m 39s), the count job "Tests run: 178 of 178; in more than one shard: 0" (no screen test added, so 178 as before); CodeQL run 45100914830, Analyze (actions) and CodeQL pass. Open item 73 did not show. Open items 56 and 65 fixed by steps 3 and 2; they close when #227 merges.
 
-### 13.2 Deploy review
+### 13.2 Deploy review (2026-11-23)
+The Deploy review (Ruleset A rule 6), by reading the branch's whole change against main (`git diff ba28308 8f0995d`: 3 unit-test files, 18 lines; 3 documents) against this file, plan.md and spec 7 and AC-41. No High, Medium or Low finding.
+What held:
+- No file under app/src/main, core/, the build files or the workflows changed, so K1 to K10's boundaries, logging (spec section 9), exact arithmetic (4.10) and the release path cannot have changed; CI's release build and class check gave the same counts as 39 (6,320 classes, 0 that cannot load).
+- Item 65: only the second, unneeded `!!` of each pair removed; the first stays and still fails the test with a clear error if the model is null. No assertion weakened (Ruleset A rule 5).
+- Item 56: the test asserts the behaviour 16a built (AppViewModel.kt:1486 to 1488), was shown red against a stub before it went green, and adds no change to `FakeStore`.
+- Checks: CI, the screen tests (178 of 178) and CodeQL green at the first attempt.
+Notes (info, no change):
+1. `assertTrue(state.screen != Screen.UNREADABLE)` names no values when it fails; `assertNotEquals` would. Readability only.
+2. The stub check showed the test red through `refreshFailed`. That the prices stay as they were follows from the save failing before `applied` runs; no second stub was tried for it.
+3. Open items 60 and 74 did not show in this iteration's four local full runs.
 
 ### 13.3 Merge
 
