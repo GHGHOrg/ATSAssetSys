@@ -51,12 +51,16 @@ object FinnhubList {
     private fun JsonObject.text(name: String): String? = (this[name] as? JsonPrimitive)?.contentOrNull
 }
 
-/** Reads Finnhub's /quote answer (price-source note 10.2): the price c and its time t in Unix seconds (16a). */
+/**
+ * Reads Finnhub's /quote answer (price-source note 10.2): the price c and its time t in Unix seconds (16a), and from CR5
+ * (41) the previous close pc.
+ */
 object FinnhubQuote {
     /**
      * Priced when c and t are above 0; NoQuote when either is 0, as Finnhub answers a ticker it does not price
      * (2026-11-08). The price is kept exactly as sent, never as a double (4.10). Anything else is Unreadable: not a
-     * JSON object, c or t missing, null, text or below 0, or t not whole seconds.
+     * JSON object, c or t missing, null, text or below 0, or t not whole seconds. CR5 (41): pc, exact as sent, is the
+     * previous close when it is a number above 0; otherwise there is none (C24), and the price is still read.
      */
     fun read(body: String): Quote {
         val fields =
@@ -75,7 +79,7 @@ object FinnhubQuote {
         return when {
             price.signum() < 0 || seconds < 0 -> Quote.Unreadable
             price.signum() == 0 || seconds == 0L -> Quote.NoQuote
-            else -> Quote.Priced(price, Instant.ofEpochSecond(seconds))
+            else -> Quote.Priced(price, Instant.ofEpochSecond(seconds), fields.number("pc")?.takeIf { it.signum() > 0 })
         }
     }
 

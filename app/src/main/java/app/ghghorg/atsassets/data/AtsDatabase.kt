@@ -92,10 +92,20 @@ data class InstrumentRow(
     val price: String? = null,
     val priceTime: Long? = null,
     @ColumnInfo(defaultValue = "0") val priceStale: Boolean = false,
+    // CR5 (41): the previous close that came with the price, exact as text (4.10); null when the source gave none, and
+    // in every row migrated from version 14 until its first refresh (AC-71).
+    val pricePreviousClose: String? = null,
     // 23a: the source profile, asked once (decision 3); the two texts are null when the source gave none.
     val sourceSector: String? = null,
     val sourceGeography: String? = null,
     @ColumnInfo(defaultValue = "0") val profileAsked: Boolean = false,
+)
+
+/** A fresh price as the instruments table keeps it (16a; CR5, 41): exact texts and the time in Unix seconds. */
+data class StoredPrice(
+    val price: String,
+    val time: Long,
+    val previousClose: String?,
 )
 
 /**
@@ -393,11 +403,13 @@ interface InstrumentDao {
         upsert(row.withStoredOf(find(row.ticker)))
     }
 
-    @Query("UPDATE instruments SET price = :price, priceTime = :time, priceStale = 0 WHERE ticker = :ticker")
+    // CR5 (41): the previous close is replaced with the price, never kept from an older quote (section 7).
+    @Query("UPDATE instruments SET price = :price, priceTime = :time, pricePreviousClose = :previousClose, priceStale = 0 WHERE ticker = :ticker")
     suspend fun setPrice(
         ticker: String,
         price: String,
         time: Long,
+        previousClose: String?,
     )
 
     /** A ticker without a stored price keeps none: there is nothing to mark stale (4.8). */
@@ -446,12 +458,12 @@ interface InstrumentDao {
      */
     @Transaction
     suspend fun savePrices(
-        fresh: Map<String, Pair<String, Long>>,
+        fresh: Map<String, StoredPrice>,
         failed: Collection<String>,
         profiles: Map<String, SourceProfile>,
         held: Collection<String>,
     ) {
-        for ((ticker, price) in fresh) setPrice(ticker, price.first, price.second)
+        for ((ticker, price) in fresh) setPrice(ticker, price.price, price.time, price.previousClose)
         for (ticker in failed) markStale(ticker)
         if (profiles.isEmpty() && held.isEmpty()) return
         val saved = profiles.filter { (ticker, profile) -> setProfile(ticker, profile.sector, profile.geography) > 0 }
@@ -573,7 +585,8 @@ interface SettingsDao {
  * hidden_holdings table, version 7 (16a) the three price columns of instruments, version 8 (20) the settings table,
  * version 9 (22) its tab order column, version 10 (23a) the three profile columns of instruments and the list_values
  * table, version 11 (24) the class_overrides table, version 12 (25) the source_texts table, version 13 (30) the
- * settings' key column, version 14 (31) its two backup columns; Room generates each step out of the schemas in app/schemas.
+ * settings' key column, version 14 (31) its two backup columns, version 15 (41, CR5) the previous close column of
+ * instruments; Room generates each step out of the schemas in app/schemas.
  */
 // 29: ids per delete query, well under SQLite's limit on bound variables.
 internal const val DELETE_CHUNK = 500
@@ -591,7 +604,7 @@ internal const val DELETE_CHUNK = 500
         ClassOverrideRow::class,
         SourceTextRow::class,
     ],
-    version = 14,
+    version = 15,
     autoMigrations = [
         AutoMigration(from = 1, to = 2),
         AutoMigration(from = 2, to = 3),
@@ -606,6 +619,7 @@ internal const val DELETE_CHUNK = 500
         AutoMigration(from = 11, to = 12),
         AutoMigration(from = 12, to = 13),
         AutoMigration(from = 13, to = 14),
+        AutoMigration(from = 14, to = 15),
     ],
 )
 abstract class AtsDatabase : RoomDatabase() {

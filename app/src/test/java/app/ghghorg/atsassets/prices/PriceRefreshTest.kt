@@ -89,6 +89,22 @@ class PriceRefreshTest {
         assertEquals(emptyList<String>(), PriceRefresh.tickers(emptyList(), emptyList()))
     }
 
+    // CR5 (41), section 7: a quote's previous close goes into the fresh price with it; a quote without one gives none.
+    @Test
+    fun run_carriesEachQuotesPreviousClose_intoItsFreshPrice() = runTest {
+        val source =
+            Source(
+                mapOf(
+                    "AAPL" to Quote.Priced(BigDecimal("348.91"), at, BigDecimal("343.83")),
+                    "MSFT" to Quote.Priced(BigDecimal("400"), at),
+                ),
+                emptyMap(),
+            )
+        val outcome = PriceRefresh.run(listOf("AAPL", "MSFT"), online = true, source = source)
+        assertEquals(BigDecimal("343.83"), outcome.fresh.getValue("AAPL").previousClose)
+        assertEquals(null, outcome.fresh.getValue("MSFT").previousClose)
+    }
+
     // 23a: the profile, asked once per instrument after the quotes (decision 3).
     private val tech = SourceProfile("Technology", "US")
 

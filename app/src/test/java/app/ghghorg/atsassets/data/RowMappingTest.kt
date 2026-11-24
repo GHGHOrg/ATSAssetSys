@@ -107,6 +107,43 @@ class RowMappingTest {
         }
     }
 
+    // CR5 (41), AC-71: the previous close is stored as exact text with its price and read back unchanged; a stale price
+    // keeps its own; with none, the column stays empty, as in every row migrated from version 14.
+    @Test
+    fun aPreviousClose_isStoredAsExactText_withItsPrice_andReadBackUnchanged() {
+        val withClose = stalePrice.copy(previousClose = BigDecimal("343.8300"))
+        val row = spy.copy(price = withClose).toRow()
+        assertEquals("343.8300", row.pricePreviousClose)
+        assertEquals(spy.copy(price = withClose), row.toInstrument())
+        assertEquals(4, row.toInstrument().price!!.previousClose!!.scale())
+        assertEquals(null, spy.copy(price = stalePrice).toRow().pricePreviousClose)
+        assertEquals(null, spy.copy(price = stalePrice).toRow().toInstrument().price!!.previousClose)
+    }
+
+    // CR5 (41): a previous close without a price, or one that is not a decimal above 0, is unreadable; no value named.
+    @Test
+    fun aDamagedPreviousClose_isUnreadable_withNoValueInTheMessage() {
+        val priced = spy.copy(price = stalePrice).toRow()
+        val damaged =
+            listOf(
+                spy.toRow().copy(pricePreviousClose = "343.83"),
+                priced.copy(pricePreviousClose = "abc"),
+                priced.copy(pricePreviousClose = "0"),
+                priced.copy(pricePreviousClose = "-343.83"),
+            )
+        for (row in damaged) {
+            val error = assertThrows(row.toString(), UnreadableDataException::class.java) { row.toInstrument() }
+            assertFalse(row.toString(), error.message!!.contains("SPY") || error.message!!.contains("343"))
+        }
+    }
+
+    @Test
+    fun savingAnInstrumentAgain_keepsItsStoredPreviousClose() {
+        val stored = spy.copy(price = stalePrice.copy(previousClose = BigDecimal("343.83"))).toRow()
+        val again = spy.copy(assetType = AssetType.STOCK).toRow()
+        assertEquals("343.83", again.withStoredOf(stored).pricePreviousClose)
+    }
+
     @Test
     fun savingAnInstrumentAgain_keepsItsStoredPrice() {
         val stored = spy.copy(price = stalePrice).toRow()

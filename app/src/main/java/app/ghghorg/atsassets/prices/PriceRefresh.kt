@@ -65,7 +65,7 @@ object PriceRefresh {
         for (ticker in tickers) {
             val quote = source.quote(ticker)
             when (quote) {
-                is Quote.Priced -> fresh[ticker] = Price(quote.price, quote.time)
+                is Quote.Priced -> fresh[ticker] = Price(quote.price, quote.time, previousClose = quote.previousClose)
                 Quote.NoQuote -> Unit
                 Quote.Unreadable, is Quote.NoAnswer, Quote.NoKey, is Quote.KeyRefused, Quote.TooManyCalls -> failedAnswer = true
             }

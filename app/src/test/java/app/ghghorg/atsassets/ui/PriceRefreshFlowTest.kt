@@ -87,6 +87,22 @@ class PriceRefreshFlowTest {
         assertKeptFieldsFresh(state, "after a refresh")
     }
 
+    // CR5 (41), section 7, AC-71: a refresh keeps the quote's previous close with the price, and a failed one after it
+    // keeps both, marked stale.
+    @Test
+    fun aRefresh_keepsThePreviousClose_andAFailedOneAfterItKeepsBothStale() {
+        val store = store()
+        val source = FakeSource().apply { quotes = mapOf("AAPL" to Quote.Priced(BigDecimal("160"), at, BigDecimal("158"))) }
+        var online = true
+        val vm = started(store, source = source, online = { online })
+        val fresh = Price(BigDecimal("160"), at, previousClose = BigDecimal("158"))
+        assertEquals(mapOf("AAPL" to fresh), store.savedPrices.single().first)
+        assertEquals(fresh, vm.state.value.instruments.single { it.ticker == "AAPL" }.price)
+        online = false
+        vm.onPullToRefresh()
+        assertEquals(fresh.copy(stale = true), vm.state.value.instruments.single { it.ticker == "AAPL" }.price)
+    }
+
     @Test
     fun theLoad_offline_asksNothing_keepsTheLastPricesMarkedStale_andSaysTheRefreshFailed() {
         val store = store()

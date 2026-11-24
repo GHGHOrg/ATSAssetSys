@@ -58,6 +58,11 @@ android {
         // 36 decision 1: for BACKUP_DUE_AFTER_MINUTES.
         buildConfig = true
     }
+    // 41 step 5 (AC-71, plan/release.md section 3): the schemas Room writes are the screen tests' assets, so
+    // MigrationFrom14Test builds 1.0.0's database from 14.json.
+    sourceSets {
+        getByName("androidTest").assets.directories.add("$projectDir/schemas")
+    }
 }
 
 room3 {
