@@ -226,6 +226,8 @@ private fun SummaryCard(
                 atCost = figures.allAtCost,
                 amountColor = gainLossColor(sign(figures.gain)),
             )
+            // CR5 (41), wireframe 03 marker 4: the 1-day line, indented and smaller, under the gain/loss.
+            figures.day?.let { DaySummaryLine(it) }
             figures.prices?.let { PricesAsOfLine(it) }
             PriceRefreshLines(refresh.refreshing, refresh.failed, refresh.noKey)
         }
@@ -305,7 +307,7 @@ private fun HoldingRow(
             gain is GainModel.Figure -> stringResource(R.string.holding_row_gain_spoken, holding.ticker, shares, holding.spokenValue, spoken(gain.spoken))
 
             else -> stringResource(R.string.holding_row_spoken, holding.ticker, shares, holding.spokenValue)
-        }
+        }.let { daySpoken(it, holding.day) }
     FlowRow(
         modifier =
         Modifier
@@ -362,6 +364,8 @@ private fun HoldingRow(
                         )
                 }
             }
+            // CR5 (41), wireframe 03 marker 5: the 1-day line under the gain/loss.
+            holding.day?.let { DayRowText(it) }
             if (staleAsOf != null) {
                 Text(
                     text = stringResource(R.string.holding_row_stale, staleAsOf),

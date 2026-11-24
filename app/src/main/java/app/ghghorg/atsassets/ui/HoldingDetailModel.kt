@@ -1,6 +1,7 @@
 package app.ghghorg.atsassets.ui
 
 import app.ghghorg.atsassets.core.ClassList
+import app.ghghorg.atsassets.core.DayChange
 import app.ghghorg.atsassets.core.EffectiveClass
 import app.ghghorg.atsassets.core.Fraction
 import app.ghghorg.atsassets.core.Holding
@@ -61,6 +62,8 @@ data class HoldingHeaderModel(
     val refreshFailed: Boolean,
     // 30 decision 3: it failed because no price source key is saved, so the line names the missing key.
     val refreshNoKey: Boolean = false,
+    // CR5 (41): the holding's 1-day line, null for none (4.8, C24).
+    val day: DayLineModel? = null,
 )
 
 /**
@@ -143,6 +146,7 @@ object HoldingDetail {
         refreshing: Boolean,
         refreshFailed: Boolean,
         refreshNoKey: Boolean = false,
+        day: DayChange? = null,
     ): HoldingHeaderModel {
         val valued = Valuation.valued(holding, price)
         val shares = Quantity.format(holding.shares)
@@ -161,6 +165,8 @@ object HoldingDetail {
             refreshing = refreshing,
             refreshFailed = refreshFailed,
             refreshNoKey = refreshNoKey,
+            // Wireframe 03 marker 5, as on its row: a fully sold holding shows no day line.
+            day = if (soldOut) null else DayLine.of(day),
         )
     }
 

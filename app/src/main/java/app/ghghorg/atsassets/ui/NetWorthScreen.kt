@@ -61,6 +61,7 @@ fun NetWorthScreen(
                 prices = model.prices,
                 refresh = model.refresh,
                 failedLineHere = true,
+                day = model.day,
             )
             val composition = model.composition
             if (composition == null) {

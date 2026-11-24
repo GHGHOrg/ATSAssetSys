@@ -1,5 +1,6 @@
 package app.ghghorg.atsassets.ui
 
+import app.ghghorg.atsassets.core.DayChange
 import app.ghghorg.atsassets.core.Fraction
 import app.ghghorg.atsassets.core.Holding
 import app.ghghorg.atsassets.core.Price
@@ -31,6 +32,25 @@ class PortfolioFiguresTest {
     private val oldco = Holding("p1", "OLDCO", Fraction.ZERO, Fraction.ZERO)
 
     private val zero = GainModel.Figure("$0.00", SpokenFigure("0.00", FigureSign.NONE))
+
+    // CR5 (41), AC-67: the portfolio's day line is the sum over its holdings that have a figure; one without adds nothing,
+    // and with none at all there is no line. Each holding row carries its own; a fully sold one none (wireframe 03 marker 5).
+    @Test
+    fun theDayLine_sumsTheHoldingsThatHaveOne_andEachRowCarriesItsOwn() {
+        val days =
+            mapOf(
+                ("p1" to "AAPL") to DayChange(dollars(16), dollars(1_264)),
+                ("p1" to "MSFT") to null,
+                ("p1" to "OLDCO") to DayChange(Fraction.ZERO, Fraction.ZERO),
+            )
+        val prices = mapOf("AAPL" to price("160"))
+        val figures = PortfolioFigures.of(listOf(aapl, msft, oldco), prices, days)
+        assertEquals(DayLineModel("+$16.00", SpokenFigure("16.00", FigureSign.PLUS), "+1.27%", SpokenFigure("1.27", FigureSign.PLUS)), figures.day)
+        val rows = PortfolioFigures.rows(listOf(aapl, msft, oldco), prices, days)
+        assertEquals(listOf("+$16.00", null, null), rows.map { it.day?.text })
+        assertEquals(null, PortfolioFigures.of(listOf(msft), prices, days).day)
+        assertEquals(null, PortfolioFigures.of(listOf(aapl), prices).day)
+    }
 
     @Test
     fun exampleA_at160_isWorth1280_withAGainOf80() {

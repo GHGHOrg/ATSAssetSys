@@ -1,5 +1,7 @@
 package app.ghghorg.atsassets.ui
 
+import app.ghghorg.atsassets.core.DayChange
+import app.ghghorg.atsassets.core.DayChanges
 import app.ghghorg.atsassets.core.Fraction
 import app.ghghorg.atsassets.core.Holding
 import app.ghghorg.atsassets.core.Money
@@ -35,6 +37,8 @@ data class PortfolioFiguresModel(
     val gain: GainModel.Figure,
     val allAtCost: Boolean,
     val prices: PricesAsOfModel?,
+    // CR5 (41): the portfolio's 1-day line, the sum over its holdings that have one; null for none (4.8).
+    val day: DayLineModel? = null,
 )
 
 /**
@@ -51,6 +55,8 @@ data class PortfolioHoldingRowModel(
     val gain: GainModel,
     val soldOut: Boolean,
     val staleAsOf: String?,
+    // CR5 (41): its 1-day line under the gain/loss; null for none (4.8, C24).
+    val day: DayLineModel? = null,
 )
 
 /**
@@ -64,10 +70,14 @@ data class PriceRefreshModel(
 )
 
 object PortfolioFigures {
-    /** [holdings] of one portfolio, each at its price in [prices] (by ticker) or at cost. */
+    /**
+     * [holdings] of one portfolio, each at its price in [prices] (by ticker) or at cost. CR5 (41): with the 1-day figures
+     * in [days] (by portfolio id and ticker), the portfolio's 1-day line.
+     */
     fun of(
         holdings: List<Holding>,
         prices: Map<String, Price>,
+        days: Map<Pair<String, String>, DayChange?> = emptyMap(),
     ): PortfolioFiguresModel {
         val valued = holdings.map { Valuation.valued(it, prices[it.ticker]) }
         val value = valued.fold(Fraction.ZERO) { sum, it -> sum + it.value }
@@ -82,13 +92,21 @@ object PortfolioFigures {
             gain = HoldingDetail.gainOf(gain) as GainModel.Figure,
             allAtCost = withShares.isNotEmpty() && withShares.none { prices[it.ticker] != null },
             prices = pricesAsOf(holdings, prices),
+            day = dayOf(holdings, days),
         )
     }
 
-    /** One row per holding, in the order given. */
+    /** CR5 (41): the 1-day line of [holdings] together: the sum of their figures in [days], null when none has one (4.8). */
+    fun dayOf(
+        holdings: List<Holding>,
+        days: Map<Pair<String, String>, DayChange?>,
+    ): DayLineModel? = DayLine.of(DayChanges.total(holdings.map { days[it.portfolioId to it.ticker] }))
+
+    /** One row per holding, in the order given; from CR5 (41) with its 1-day line from [days]. */
     fun rows(
         holdings: List<Holding>,
         prices: Map<String, Price>,
+        days: Map<Pair<String, String>, DayChange?> = emptyMap(),
     ): List<PortfolioHoldingRowModel> = holdings.map { holding ->
         val valued = Valuation.valued(holding, prices[holding.ticker])
         val shares = Quantity.format(holding.shares)
@@ -102,6 +120,8 @@ object PortfolioFigures {
             gain = if (soldOut) HoldingDetail.gainOf(Fraction.ZERO) else HoldingDetail.gainOf(valued.gain),
             soldOut = soldOut,
             staleAsOf = prices[holding.ticker]?.takeIf { it.stale && !soldOut }?.let { HoldingDetail.asOf(it.time) },
+            // Wireframe 03 marker 5: a fully sold holding shows no day line.
+            day = if (soldOut) null else DayLine.of(days[holding.portfolioId to holding.ticker]),
         )
     }
 

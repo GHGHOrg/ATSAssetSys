@@ -43,6 +43,24 @@ object DayChanges {
         }
     }
 
+    /**
+     * Every one of [holdings]' 1-day figures, by (portfolio id, ticker), each at its ticker's price in [prices]: one
+     * ledger for all their lots as of [today], not one per holding (15c).
+     */
+    fun byHolding(
+        transactions: List<Transaction>,
+        holdings: List<Holding>,
+        prices: Map<String, Price>,
+        today: LocalDate,
+    ): Map<Pair<String, String>, DayChange?> {
+        val lots = Holdings.lots(transactions, today).filter { it.remainingQuantity.signum() > 0 }.groupBy { it.portfolioId to it.ticker }
+        val ofHolding = transactions.groupBy { it.portfolioId to it.ticker }
+        return holdings.associate { holding ->
+            val key = holding.portfolioId to holding.ticker
+            key to ofHolding(lots[key].orEmpty(), ofHolding[key].orEmpty(), prices[holding.ticker])
+        }
+    }
+
     /** A total's 1-day figure: the sum over the figures there are; null when none has one (the line is left out, 4.8). */
     fun total(figures: List<DayChange?>): DayChange? = figures.filterNotNull().takeIf { it.isNotEmpty() }?.reduce { sum, figure -> sum + figure }
 

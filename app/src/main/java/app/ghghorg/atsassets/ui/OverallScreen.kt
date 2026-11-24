@@ -76,6 +76,7 @@ fun OverallScreen(
                     refresh = overall.refresh,
                     failedLineHere = false,
                     onOpen = onOpenNetWorth,
+                    day = overall.day,
                 )
                 AllocationSummary(state, onOpenAllocationChoice, onOpenNetWorth)
                 if (state.portfolios.isEmpty()) {
@@ -148,13 +149,18 @@ internal fun NetWorthCard(
     refresh: PriceRefreshModel,
     failedLineHere: Boolean,
     onOpen: (() -> Unit)? = null,
+    day: DayLineModel? = null,
 ) {
-    // CR5 (41), AC-68: the sentence still starts "Net worth" (AppStartTimingTest), then reads Investments.
+    // CR5 (41), AC-68: the sentence still starts "Net worth" (AppStartTimingTest), then reads Investments, then the 1-day
+    // line when there is one (AC-67).
     val base =
-        stringResource(
-            R.string.net_worth_investments_spoken,
-            stringResource(R.string.net_worth_spoken, spokenNetWorth),
-            spokenInvestments,
+        daySpoken(
+            stringResource(
+                R.string.net_worth_investments_spoken,
+                stringResource(R.string.net_worth_spoken, spokenNetWorth),
+                spokenInvestments,
+            ),
+            day,
         )
     val spoken =
         if (prices == null) {
@@ -202,6 +208,8 @@ internal fun NetWorthCard(
                     Text(text = stringResource(R.string.net_worth_investments), style = MaterialTheme.typography.bodyMedium)
                     Text(text = investments, style = MaterialTheme.typography.bodyMedium)
                 }
+                // CR5 (41), wireframe 01 marker 2: the 1-day line, indented and smaller, under Investments.
+                day?.let { DayLineRow(it, indented = true) }
                 if (prices != null) {
                     Text(
                         text =
@@ -274,7 +282,8 @@ private fun PortfolioRow(
 ) {
     val figures = row.figures
     val base = stringResource(R.string.overall_portfolio_row_spoken, row.name, figures.spokenValue, spoken(figures.gain.spoken))
-    val spoken = if (figures.allAtCost) stringResource(R.string.portfolio_row_at_cost_spoken, base) else base
+    // CR5 (41), AC-67: the row reads its 1-day line after its gain/loss.
+    val spoken = daySpoken(if (figures.allAtCost) stringResource(R.string.portfolio_row_at_cost_spoken, base) else base, figures.day)
     Row(
         modifier =
         Modifier
@@ -304,6 +313,7 @@ private fun PortfolioRow(
                 color = gainLossColor(sign(figures.gain)),
                 textAlign = TextAlign.End,
             )
+            figures.day?.let { DayRowText(it) }
         }
         Text(text = ">", style = MaterialTheme.typography.bodyLarge)
     }

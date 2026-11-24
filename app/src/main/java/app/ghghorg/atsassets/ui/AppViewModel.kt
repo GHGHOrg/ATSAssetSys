@@ -31,6 +31,7 @@ import app.ghghorg.atsassets.core.ClassList
 import app.ghghorg.atsassets.core.ClassLists
 import app.ghghorg.atsassets.core.ClassOverride
 import app.ghghorg.atsassets.core.Classification
+import app.ghghorg.atsassets.core.DayChange
 import app.ghghorg.atsassets.core.DeletionCheck
 import app.ghghorg.atsassets.core.DeletionSummary
 import app.ghghorg.atsassets.core.Fraction
@@ -768,6 +769,8 @@ data class AppState(
     val holdings: List<Holding> = KeptFields.holdings(transactions, today),
     // Cash as of today plus every holding at its latest price, or at cost without one, as of today (4.8; 16a).
     val netWorth: Fraction = KeptFields.netWorth(entries, holdings, instruments, today),
+    // CR5 (41): every holding's 1-day figure, by (portfolio id, ticker), null for none (4.8, C24, C25); from one ledger.
+    val dayChanges: Map<Pair<String, String>, DayChange?> = KeptFields.dayChanges(transactions, holdings, instruments, today),
     // The shown holding's lots with shares as of today, oldest first (view 6, 4.4).
     val holdingLots: List<Lot> = KeptFields.holdingLots(transactions, portfolioId, holdingTicker, today),
     // Hide on the shown holding (15 decision 1).
@@ -879,7 +882,15 @@ data class AppState(
     val holdingHeader: HoldingHeaderModel?
         get() {
             val holding = shownHolding ?: return null
-            return HoldingDetail.header(holding, shownPortfolio?.name.orEmpty(), shownPrice, refreshing, refreshFailed, refreshNoKey)
+            return HoldingDetail.header(
+                holding,
+                shownPortfolio?.name.orEmpty(),
+                shownPrice,
+                refreshing,
+                refreshFailed,
+                refreshNoKey,
+                dayChanges[holding.portfolioId to holding.ticker],
+            )
         }
 
     /** Its Lots tab's rows, with each lot's gain at the latest price (view 6; CR2, 16a step 6). */
@@ -911,7 +922,7 @@ data class AppState(
     }
 
     /** A portfolio's value, cost and gain/loss as the Portfolios list and its screen draw them (view 3; CR2, 16a). */
-    fun portfolioFigures(portfolioId: String): PortfolioFiguresModel = PortfolioFigures.of(holdingsOf(portfolioId), KeptFields.prices(instruments))
+    fun portfolioFigures(portfolioId: String): PortfolioFiguresModel = PortfolioFigures.of(holdingsOf(portfolioId), KeptFields.prices(instruments), dayChanges)
 
     /** The price refresh as the Portfolios list and a portfolio's screen draw it (16b), Overall and the sell screen (16c). */
     val priceRefresh: PriceRefreshModel
@@ -919,12 +930,20 @@ data class AppState(
 
     /** Overall as the screen draws it (view 1; CR2, 16c). */
     val overall: OverallModel
-        get() = Overall.of(netWorth, holdings, portfolios, ::holdingsOf, KeptFields.prices(instruments), priceRefresh)
+        get() = Overall.of(netWorth, holdings, portfolios, ::holdingsOf, KeptFields.prices(instruments), priceRefresh, dayChanges)
 
     /** Net Worth (Total) as the screen draws it (view 2; CR2, 17): cash as of today and each portfolio's value (4.8). */
     val netWorthTotal: NetWorthModel
         get() =
-            NetWorthTotal.of(CashRules.balanceOn(entries, today), holdings, portfolios, ::holdingsOf, KeptFields.prices(instruments), priceRefresh)
+            NetWorthTotal.of(
+                CashRules.balanceOn(entries, today),
+                holdings,
+                portfolios,
+                ::holdingsOf,
+                KeptFields.prices(instruments),
+                priceRefresh,
+                dayChanges,
+            )
 
     /**
      * A breakdown of net worth (view 1, view 2; CR2, 18): cash as of today and each holding at its price or at cost, null
@@ -1089,7 +1108,7 @@ data class AppState(
         }
 
     /** A portfolio's holding rows as its screen draws them (view 3; CR2, 16a). */
-    fun portfolioHoldingRows(portfolioId: String): List<PortfolioHoldingRowModel> = PortfolioFigures.rows(holdingsOf(portfolioId), KeptFields.prices(instruments))
+    fun portfolioHoldingRows(portfolioId: String): List<PortfolioHoldingRowModel> = PortfolioFigures.rows(holdingsOf(portfolioId), KeptFields.prices(instruments), dayChanges)
 
     /** The derived price per share (4.3), shown as the fields change; null until quantity and total are both valid. */
     val buyPricePerShare: Fraction?

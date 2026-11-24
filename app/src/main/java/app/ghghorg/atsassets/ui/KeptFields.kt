@@ -1,6 +1,8 @@
 package app.ghghorg.atsassets.ui
 
 import app.ghghorg.atsassets.core.CashEntry
+import app.ghghorg.atsassets.core.DayChange
+import app.ghghorg.atsassets.core.DayChanges
 import app.ghghorg.atsassets.core.Fraction
 import app.ghghorg.atsassets.core.HiddenHolding
 import app.ghghorg.atsassets.core.Hiding
@@ -70,6 +72,14 @@ internal object KeptFields {
         instruments: List<Instrument>,
         today: LocalDate,
     ): Fraction = Valuation.netWorthOf(entries, holdings, prices(instruments), today)
+
+    /** CR5 (41): every one of [holdings]' 1-day figures at its instrument's latest price (4.8), from one ledger (15c). */
+    fun dayChanges(
+        transactions: List<Transaction>,
+        holdings: List<Holding>,
+        instruments: List<Instrument>,
+        today: LocalDate,
+    ): Map<Pair<String, String>, DayChange?> = DayChanges.byHolding(transactions, holdings, prices(instruments), today)
 
     /** The latest price of each instrument that has one, by ticker (16a). */
     fun prices(instruments: List<Instrument>): Map<String, Price> = instruments
@@ -264,6 +274,12 @@ internal fun AppState.refreshed(): AppState {
             KeptFields.netWorth(entries, holdings, instruments, today)
         } else {
             netWorth
+        },
+        dayChanges =
+        if (holdingsChanged || changed({ it.instruments })) {
+            KeptFields.dayChanges(transactions, holdings, instruments, today)
+        } else {
+            dayChanges
         },
         holdingLots =
         if (changed({ it.transactions }, { it.portfolioId }, { it.holdingTicker }, { it.today })) {

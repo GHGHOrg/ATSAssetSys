@@ -831,4 +831,12 @@
     <string name="about_row_open">expanded</string>
     <string name="licence_apache_2_0">Apache 2.0</string>
     <string name="licence_sqlcipher">BSD-style</string>
+    <!-- Iteration 41 (CR5): the 1-day line (spec section 6; proposed, 41 file section 12; approval on the phone in step 9). %1$s of the spoken forms is the card's or row's own sentence; the figures are read with spoken_plus or spoken_minus. -->
+    <string name="day_label">1-day gain/loss</string>
+    <string name="day_figures">%1$s (%2$s)</string>
+    <string name="day_row">1-day %1$s</string>
+    <string name="day_spoken">%1$s, 1-day gain/loss %2$s dollars, %3$s percent</string>
+    <string name="day_spoken_no_percent">%1$s, 1-day gain/loss %2$s dollars</string>
+    <string name="day_line_spoken">1-day gain/loss %1$s dollars, %2$s percent</string>
+    <string name="day_line_spoken_no_percent">1-day gain/loss %1$s dollars</string>
 </resources>

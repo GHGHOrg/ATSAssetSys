@@ -160,6 +160,32 @@ class DayChangeTest {
         assertEquals(fraction(1, 10_000), day.percent)
     }
 
+    // 15c: every holding's figure from one ledger equals each one worked out alone; a holding without a price has none.
+    @Test
+    fun byHolding_givesEachHoldingsFigure_asItsOwnWouldBe() {
+        val msft =
+            Transaction(
+                id = "m1",
+                portfolioId = "p2",
+                ticker = "MSFT",
+                type = TransactionType.BUY,
+                date = LocalDate.parse("2026-03-02"),
+                enteredSeq = 9L,
+                quantity = BigDecimal("1"),
+                totalCents = 40_000L,
+            )
+        val ko = trade("k1", TransactionType.BUY, "2026-01-05", "5", 5_000L, 8L).copy(ticker = "KO")
+        val all = exampleA + msft + ko
+        val today = LocalDate.of(2026, 3, 2)
+        val prices = mapOf("AAPL" to price(), "MSFT" to price("410", "405"))
+        val byHolding = DayChanges.byHolding(all, Holdings.holdings(all, today), prices, today)
+        assertEquals(DayChange(dollars(16), dollars(1_264)), byHolding["p1" to "AAPL"])
+        // MSFT bought on the day for $400.00: from its buy price, +$10.00.
+        assertEquals(DayChange(dollars(10), dollars(400)), byHolding["p2" to "MSFT"])
+        assertEquals(null, byHolding["p1" to "KO"])
+        assertEquals(setOf("p1" to "AAPL", "p2" to "MSFT", "p1" to "KO"), byHolding.keys)
+    }
+
     // 4.8: a total sums the figures there are; a holding without one adds nothing; with none at all, no line.
     @Test
     fun aTotal_sumsTheFiguresThereAre_andWithNoneHasNoFigure() {

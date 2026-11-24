@@ -103,6 +103,38 @@ class PriceRefreshFlowTest {
         assertEquals(fresh.copy(stale = true), vm.state.value.instruments.single { it.ticker == "AAPL" }.price)
     }
 
+    // CR5 (41), AC-67: after a refresh with a previous close, every screen with a gain/loss has the same day line:
+    // 8 × ($160 − $158) = +$16.00, +1.27% (the lot of Feb 1 was held before the price's day, Oct 29).
+    @Test
+    fun aRefreshWithAPreviousClose_givesEveryScreenTheDayLine() {
+        val store = store().apply { storedPortfolios = listOf(Portfolio("p1", "Portfolio P", 1L)) }
+        val source = FakeSource().apply { quotes = mapOf("AAPL" to Quote.Priced(BigDecimal("160"), at, BigDecimal("158"))) }
+        val vm = started(store, source = source)
+        val expected = DayLineModel("+$16.00", SpokenFigure("16.00", FigureSign.PLUS), "+1.27%", SpokenFigure("1.27", FigureSign.PLUS))
+        val state = vm.state.value
+        assertEquals(expected, state.overall.day)
+        assertEquals(expected, state.overall.portfolios.single().figures.day)
+        assertEquals(expected, state.netWorthTotal.day)
+        assertEquals(expected, state.portfolioFigures("p1").day)
+        assertEquals(expected, state.portfolioHoldingRows("p1").single().day)
+        vm.openPortfolio("p1")
+        vm.openHolding("AAPL")
+        assertEquals(expected, vm.state.value.holdingHeader!!.day)
+        assertKeptFieldsFresh(vm.state.value, "after a refresh with a previous close")
+    }
+
+    // CR5 (41), AC-71: without a previous close (the first load after the upgrade), no screen has a day line.
+    @Test
+    fun withoutAPreviousClose_noScreenHasADayLine() {
+        val store = store().apply { storedPortfolios = listOf(Portfolio("p1", "Portfolio P", 1L)) }
+        val source = FakeSource().apply { quotes = mapOf("AAPL" to Quote.Priced(BigDecimal("160"), at)) }
+        val state = started(store, source = source).state.value
+        assertEquals(null, state.overall.day)
+        assertEquals(null, state.netWorthTotal.day)
+        assertEquals(null, state.portfolioFigures("p1").day)
+        assertEquals(null, state.portfolioHoldingRows("p1").single().day)
+    }
+
     @Test
     fun theLoad_offline_asksNothing_keepsTheLastPricesMarkedStale_andSaysTheRefreshFailed() {
         val store = store()

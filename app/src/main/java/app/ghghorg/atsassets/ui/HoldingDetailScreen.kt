@@ -423,7 +423,7 @@ private fun Header(header: HoldingHeaderModel) {
                 )
 
             else -> stringResource(R.string.holding_header_spoken, header.ticker, header.portfolio, header.spokenValue, shares, header.spokenCost)
-        }
+        }.let { daySpoken(it, header.day) }
     OutlinedCard(modifier = Modifier.fillMaxWidth().clearAndSetSemantics { contentDescription = spoken }) {
         Column(
             modifier = Modifier.fillMaxWidth().padding(12.dp),
@@ -441,6 +441,8 @@ private fun Header(header: HoldingHeaderModel) {
                 is GainModel.Figure -> HeaderLine(stringResource(R.string.portfolio_unrealized_label), gain.text, gainLossColor(sign(gain)))
                 GainModel.NoPrice -> HeaderLine(stringResource(R.string.portfolio_unrealized_label), stringResource(R.string.holding_no_price))
             }
+            // CR5 (41), wireframe 06 marker 1: the 1-day line, indented and smaller, under the gain/loss.
+            header.day?.let { DayLineRow(it, indented = true) }
             if (price != null) {
                 Text(
                     text =

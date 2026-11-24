@@ -1,5 +1,6 @@
 package app.ghghorg.atsassets.ui
 
+import app.ghghorg.atsassets.core.DayChange
 import app.ghghorg.atsassets.core.Fraction
 import app.ghghorg.atsassets.core.Holding
 import app.ghghorg.atsassets.core.Money
@@ -32,6 +33,8 @@ data class OverallModel(
     val prices: PricesAsOfModel?,
     val refresh: PriceRefreshModel,
     val portfolios: List<OverallPortfolioRowModel>,
+    // CR5 (41): net worth's 1-day line, the sum over every holding that has one; null for none (4.8).
+    val day: DayLineModel? = null,
 )
 
 /**
@@ -56,6 +59,7 @@ object Overall {
         holdingsOf: (String) -> List<Holding>,
         prices: Map<String, Price>,
         refresh: PriceRefreshModel,
+        days: Map<Pair<String, String>, DayChange?> = emptyMap(),
     ): OverallModel {
         val shown = Money.format(netWorth)
         val investments = Money.format(Investments.of(portfolios, holdingsOf, prices))
@@ -66,7 +70,8 @@ object Overall {
             spokenInvestments = investments.substringAfter('$'),
             prices = PortfolioFigures.pricesAsOf(holdings, prices),
             refresh = refresh,
-            portfolios = portfolios.map { OverallPortfolioRowModel(it.id, it.name, PortfolioFigures.of(holdingsOf(it.id), prices)) },
+            portfolios = portfolios.map { OverallPortfolioRowModel(it.id, it.name, PortfolioFigures.of(holdingsOf(it.id), prices, days)) },
+            day = PortfolioFigures.dayOf(holdings, days),
         )
     }
 }

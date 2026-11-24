@@ -1,5 +1,6 @@
 package app.ghghorg.atsassets.ui
 
+import app.ghghorg.atsassets.core.DayChange
 import app.ghghorg.atsassets.core.Fraction
 import app.ghghorg.atsassets.core.Holding
 import app.ghghorg.atsassets.core.Holdings
@@ -140,6 +141,23 @@ class HoldingDetailModelTest {
         assertEquals("$0.0089", model.price!!.perShare)
         assertEquals("0.0089", model.price.spokenPerShare)
         assertEquals(true, model.oneShare)
+    }
+
+    // CR5 (41), AC-67: the header carries the holding's day line; with no figure it has none.
+    @Test
+    fun theHeader_carriesTheHoldingsDayLine_orNone() {
+        val withDay =
+            HoldingDetail.header(
+                Holdings.holdings(exampleA, today).single(),
+                "Portfolio P",
+                price("160"),
+                refreshing = false,
+                refreshFailed = false,
+                day = DayChange(dollars(16), dollars(1_264)),
+            )
+        assertEquals("+$16.00", withDay.day!!.text)
+        assertEquals("+1.27%", withDay.day.percent)
+        assertEquals(null, header().day)
     }
 
     @Test

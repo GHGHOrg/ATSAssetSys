@@ -1,5 +1,6 @@
 package app.ghghorg.atsassets.ui
 
+import app.ghghorg.atsassets.core.DayChange
 import app.ghghorg.atsassets.core.Fraction
 import app.ghghorg.atsassets.core.Holding
 import app.ghghorg.atsassets.core.Money
@@ -44,6 +45,8 @@ data class NetWorthModel(
     val prices: PricesAsOfModel?,
     val refresh: PriceRefreshModel,
     val composition: CompositionModel?,
+    // CR5 (41): net worth's 1-day line in the shared card, as on Overall; null for none (4.8).
+    val day: DayLineModel? = null,
 )
 
 object NetWorthTotal {
@@ -58,6 +61,7 @@ object NetWorthTotal {
         holdingsOf: (String) -> List<Holding>,
         prices: Map<String, Price>,
         refresh: PriceRefreshModel,
+        days: Map<Pair<String, String>, DayChange?> = emptyMap(),
     ): NetWorthModel {
         val cash = Fraction.ofCents(cashCents)
         val values =
@@ -76,6 +80,7 @@ object NetWorthTotal {
             prices = PortfolioFigures.pricesAsOf(holdings, prices),
             refresh = refresh,
             composition = if (netWorth.rounded(2).signum() == 0) null else composition(cash, values, portfolios),
+            day = PortfolioFigures.dayOf(holdings, days),
         )
     }
 
