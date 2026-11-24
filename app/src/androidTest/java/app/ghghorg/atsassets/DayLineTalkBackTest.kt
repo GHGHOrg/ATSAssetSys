@@ -17,6 +17,9 @@ import app.ghghorg.atsassets.core.Tab
 import app.ghghorg.atsassets.core.Transaction
 import app.ghghorg.atsassets.core.TransactionType
 import app.ghghorg.atsassets.ui.AppState
+import app.ghghorg.atsassets.ui.DayLineModel
+import app.ghghorg.atsassets.ui.DayRowText
+import app.ghghorg.atsassets.ui.FigureSign
 import app.ghghorg.atsassets.ui.HoldingActions
 import app.ghghorg.atsassets.ui.HoldingDetailScreen
 import app.ghghorg.atsassets.ui.OverallScreen
@@ -24,6 +27,7 @@ import app.ghghorg.atsassets.ui.PortfolioScreen
 import app.ghghorg.atsassets.ui.PortfolioScreenActions
 import app.ghghorg.atsassets.ui.PortfoliosScreen
 import app.ghghorg.atsassets.ui.Screen
+import app.ghghorg.atsassets.ui.SpokenFigure
 import app.ghghorg.atsassets.ui.theme.ATSAssetSystemTheme
 import org.junit.Assert.assertEquals
 import org.junit.Rule
@@ -141,6 +145,16 @@ class DayLineTalkBackTest {
             ATSAssetSystemTheme { HoldingDetailScreen(state(Screen.HOLDING, Tab.PORTFOLIOS, "158"), HoldingActions({}, {}, {}, {}, {}, {}, {})) }
         }
         assertEquals("the header", 1, readsTheDay())
+    }
+
+    // Your phone check 2026-11-25: in a row, "1-day" is a text of its own in the plain color and only the figures are
+    // colored. Drawn alone, since a row's own sentence hides its texts; the color itself is checked on the phone.
+    @Test
+    fun aRowsDayLine_hasTheWord1DayApart_fromTheColoredFigures() {
+        val day = DayLineModel("+$16.00", SpokenFigure("16.00", FigureSign.PLUS), "+1.27%", SpokenFigure("1.27", FigureSign.PLUS))
+        composeRule.setContent { ATSAssetSystemTheme { DayRowText(day) } }
+        composeRule.onNode(hasText(text(R.string.day_row))).assertExists()
+        composeRule.onNode(hasText(text(R.string.day_figures, "+$16.00", "+1.27%"))).assertExists()
     }
 
     // AC-71: no previous close (before the first refresh after the upgrade), no day line anywhere.

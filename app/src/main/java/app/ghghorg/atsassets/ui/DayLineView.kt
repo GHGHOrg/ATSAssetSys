@@ -60,15 +60,24 @@ internal fun DaySummaryLine(day: DayLineModel) {
     DayLineRow(day, indented = true, modifier = Modifier.clearAndSetSemantics { contentDescription = spoken })
 }
 
-/** In a row, under its gain/loss: "1-day +$16.00 (+1.27%)", small and colored by the dollar figure's sign. */
+/**
+ * In a row, under its gain/loss: "1-day" in the plain text color, then "+$16.00 (+1.27%)" colored by the dollar figure's
+ * sign (section 6; wireframes 01 and 03; your phone check 2026-11-25: only the figures carry the color).
+ */
 @Composable
 internal fun DayRowText(day: DayLineModel) {
-    Text(
-        text = stringResource(R.string.day_row, dayFigures(day)),
-        style = MaterialTheme.typography.bodySmall,
-        color = gainLossColor(daySign(day)),
-        textAlign = TextAlign.End,
-    )
+    Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+        Text(
+            text = stringResource(R.string.day_row),
+            style = MaterialTheme.typography.bodySmall,
+        )
+        Text(
+            text = dayFigures(day),
+            style = MaterialTheme.typography.bodySmall,
+            color = gainLossColor(daySign(day)),
+            textAlign = TextAlign.End,
+        )
+    }
 }
 
 /** "+$16.00 (+1.27%)", or "+$16.00" with no percentage. */

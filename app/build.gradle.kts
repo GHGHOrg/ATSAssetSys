@@ -19,7 +19,7 @@ android {
         targetSdk = 37
         // 38a decisions 2 and 2d: MAJOR.MINOR.PATCH; the first release (38c) is 0.38.0, the first productive one (40)
         // 1.0.0. versionCode rises with every build that is installed.
-        versionCode = 50
+        versionCode = 51
         versionName = "1.0.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"

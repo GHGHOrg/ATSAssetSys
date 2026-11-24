@@ -183,7 +183,7 @@
     <string name="holding_transaction_spoken">%1$s Eastern Time, buy, %2$s, %3$s dollars</string>
     <string name="holding_lot_left">%1$s left, %2$s per share</string>
     <string name="holding_lot_no_price">no price</string>
-    <!-- Iteration 41 (CR5): a lot's value added to the three lot sentences, and the cost moved under the quantity (proposed, 41 file section 12; approval on the phone in step 9). -->
+    <!-- Iteration 41 (CR5): a lot's value added to the three lot sentences, and the cost moved under the quantity (approved on the phone 2026-11-25, 41 file section 12). -->
     <string name="holding_lot_spoken">Lot of %1$s Eastern Time, %2$s left, %3$s dollars per share, cost %4$s dollars, value %5$s dollars, no price</string>
     <string name="holding_lot_cost">Cost %1$s</string>
     <string name="holding_no_lots">No lots with shares</string>
@@ -816,10 +816,10 @@
     <string name="restore_replace_note">Everything in the app, data and settings, is deleted and replaced by the file. Only a backup restore brings it back.</string>
     <string name="restore_type_word">Type RESTORE to confirm (case and spaces ignored)</string>
     <string name="restore_replace">Replace all data</string>
-    <!-- Iteration 41 (CR5): Investments in the net worth card on Overall and Net Worth (Total) (wireframe 01 marker 2; proposed, 41 file section 12; approval on the phone in step 9). %1$s is net_worth_spoken. -->
+    <!-- Iteration 41 (CR5): Investments in the net worth card on Overall and Net Worth (Total) (wireframe 01 marker 2; approved on the phone 2026-11-25, 41 file section 12). %1$s is net_worth_spoken. -->
     <string name="net_worth_investments">Investments</string>
     <string name="net_worth_investments_spoken">%1$s, investments, %2$s dollars</string>
-    <!-- Iteration 41 (CR5): About (wireframe 11; proposed, 41 file section 12; approval on the phone in step 9). The app's name is app_name (ATS Dev in the development app). -->
+    <!-- Iteration 41 (CR5): About (wireframe 11; approved on the phone 2026-11-25, 41 file section 12). The app's name is app_name (ATS Dev in the development app). -->
     <string name="about_title">About</string>
     <string name="about_version">Version %1$s</string>
     <string name="about_card_spoken">%1$s, %2$s</string>
@@ -831,10 +831,10 @@
     <string name="about_row_open">expanded</string>
     <string name="licence_apache_2_0">Apache 2.0</string>
     <string name="licence_sqlcipher">BSD-style</string>
-    <!-- Iteration 41 (CR5): the 1-day line (spec section 6; proposed, 41 file section 12; approval on the phone in step 9). %1$s of the spoken forms is the card's or row's own sentence; the figures are read with spoken_plus or spoken_minus. -->
+    <!-- Iteration 41 (CR5): the 1-day line (spec section 6; approved on the phone 2026-11-25, 41 file section 12). %1$s of the spoken forms is the card's or row's own sentence; the figures are read with spoken_plus or spoken_minus. -->
     <string name="day_label">1-day gain/loss</string>
     <string name="day_figures">%1$s (%2$s)</string>
-    <string name="day_row">1-day %1$s</string>
+    <string name="day_row">1-day</string>
     <string name="day_spoken">%1$s, 1-day gain/loss %2$s dollars, %3$s percent</string>
     <string name="day_spoken_no_percent">%1$s, 1-day gain/loss %2$s dollars</string>
     <string name="day_line_spoken">1-day gain/loss %1$s dollars, %2$s percent</string>
