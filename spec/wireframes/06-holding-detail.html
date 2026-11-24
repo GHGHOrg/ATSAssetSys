@@ -45,10 +45,10 @@ p,li{font-size:15px}
 <body>
 <main>
 <h1>Wireframe 6: Holding detail (view 6)</h1>
-<p class="note">Status: approved. Companion to spec.md section 6, view 6. All wording is placeholder (D9, decided in Build). Colors are placeholders; the real ones are chosen in Build for both themes. Index of all wireframes: README.md in this folder. Figures are Example A at an AAPL price of $160 (AAPL in Portfolio P), except frame D (OLDCO from the sample backup file). The header stays in place; only the tab content scrolls.</p>
+<p class="note">Status: approved; CR5 changes (markers 1, 3 and 5, frames A and B swapped) approved 2026-11-24. The 1-day figure assumes a previous close of $158 (8 × $2.00 = +$16.00; ÷ $1,264.00 = +1.27%; dollars and percent, 2 decimals, 4.8). Companion to spec.md section 6, view 6. All wording is placeholder (D9, decided in Build). Colors are placeholders; the real ones are chosen in Build for both themes. Index of all wireframes: README.md in this folder. Figures are Example A at an AAPL price of $160 (AAPL in Portfolio P), except frame D (OLDCO from the sample backup file). The header stays in place; only the tab content scrolls.</p>
 <div class="pair">
 <div>
-<p class="cap">Frame A: Transactions tab (opens here)</p>
+<p class="cap">Frame A: Lots tab (opens here, CR5)</p>
 <div class="ph">
 <p class="title">&lt; AAPL</p>
 <div class="bx"><span class="n">1</span>
@@ -57,10 +57,23 @@ p,li{font-size:15px}
 <p class="row" style="margin-top:4px"><span>Shares</span><span>8</span></p>
 <p class="row"><span>Cost</span><span>$1,200.00</span></p>
 <p class="row"><span>Unrealized gain/loss</span><span class="good">+$80.00</span></p>
+<p class="row" style="font-size:12px;padding-left:16px"><span>1-day gain/loss</span><span class="good">+$16.00 (+1.27%)</span></p>
 <p class="lb" style="margin-top:2px">Prices updated 2 min ago</p>
 <p class="lb" style="margin-top:2px">Price refresh failed. Showing last prices.</p></div>
 <div style="position:relative"><span class="btn">Buy</span> <span class="btn">Sell</span> <span class="btn">Split</span><span class="n" style="top:-10px;right:auto;left:150px">2</span></div>
-<div class="tabs"><span class="on">Transactions</span><span>Lots</span><span>Classification</span><span class="n" style="top:-10px;right:-6px">3</span></div>
+<div class="tabs"><span class="on">Lots</span><span>Transactions</span><span>Classification</span><span class="n" style="top:-10px;right:-6px">3</span></div>
+<div class="bx"><span class="n">5</span>
+<div class="two"><div><p style="font-size:13px;font-weight:500;margin:0">2026-02-01 ET</p><p class="lb">8 left, $150.00 per share</p><p class="lb">Cost $1,200.00</p></div>
+<div class="r"><p style="font-size:13px;margin:0">$1,280.00</p><p class="lb good">+$80.00</p></div></div></div>
+<div style="flex:1"></div>
+<div class="bar"><span>More</span><span>Cash</span><span>Portfolios</span><span>Overall</span></div>
+</div></div>
+<div>
+<p class="cap">Frame B: Transactions tab</p>
+<div class="ph">
+<p class="title">&lt; AAPL</p>
+<div class="bx"><p class="lb" style="margin:0">Header as in frame A</p></div>
+<div class="tabs"><span>Lots</span><span class="on">Transactions</span><span>Classification</span></div>
 <div class="bx"><span class="n">4</span>
 <div class="it"><div class="two"><div><p style="font-size:13px;font-weight:500;margin:0">Sell, 2026-03-01 ET</p><p class="lb">12 shares</p></div><div class="r"><p style="font-size:13px;margin:0">$2,100.00</p><p class="lb">&gt;</p></div></div></div>
 <div class="it"><div class="two"><div><p style="font-size:13px;font-weight:500;margin:0">Buy, 2026-02-01 ET</p><p class="lb">10 shares</p></div><div class="r"><p style="font-size:13px;margin:0">$1,500.00</p><p class="lb">&gt;</p></div></div></div>
@@ -69,23 +82,11 @@ p,li{font-size:15px}
 <div class="bar"><span>More</span><span>Cash</span><span>Portfolios</span><span>Overall</span></div>
 </div></div>
 <div>
-<p class="cap">Frame B: Lots tab</p>
-<div class="ph">
-<p class="title">&lt; AAPL</p>
-<div class="bx"><p class="lb" style="margin:0">Header as in frame A</p></div>
-<div class="tabs"><span>Transactions</span><span class="on">Lots</span><span>Classification</span></div>
-<div class="bx"><span class="n">5</span>
-<div class="two"><div><p style="font-size:13px;font-weight:500;margin:0">2026-02-01 ET</p><p class="lb">8 left, $150.00 per share</p></div>
-<div class="r"><p style="font-size:13px;margin:0">$1,200.00</p><p class="lb good">+$80.00</p></div></div></div>
-<div style="flex:1"></div>
-<div class="bar"><span>More</span><span>Cash</span><span>Portfolios</span><span>Overall</span></div>
-</div></div>
-<div>
 <p class="cap">Frame C: Classification tab (sector, geography, splits)</p>
 <div class="ph">
 <p class="title">&lt; AAPL</p>
 <div class="bx"><p class="lb" style="margin:0">Header as in frame A</p></div>
-<div class="tabs"><span>Transactions</span><span>Lots</span><span class="on">Classification</span></div>
+<div class="tabs"><span>Lots</span><span>Transactions</span><span class="on">Classification</span></div>
 <div class="bx"><span class="n">6</span>
 <p class="row"><span>Sector</span><span>Technology</span></p><p class="lb">From the source</p>
 <p class="row"><span>Geography</span><span>United States</span></p><p class="lb">From the source</p>
@@ -103,17 +104,17 @@ p,li{font-size:15px}
 <p class="row" style="margin-top:4px"><span>Shares</span><span>0</span></p>
 <p class="row"><span>Cost</span><span>$0.00</span></p>
 <div style="margin-top:4px;position:relative"><span class="btn">Hide</span><span class="n" style="top:-10px;right:auto;left:50px">9</span></div></div>
-<div class="tabs"><span>Transactions</span><span class="on">Lots</span><span>Classification</span></div>
+<div class="tabs"><span class="on">Lots</span><span>Transactions</span><span>Classification</span></div>
 <div class="bx"><span class="n">10</span><p class="row mut"><span>No lots with shares</span></p></div>
 </div></div>
 </div>
 <h2>Markers</h2>
 <ol>
-<li>Header, always visible: portfolio name, value, shares, cost, "Unrealized gain/loss" (4.8) and the price age line; a stale price or "no price, at cost" shows its flag, as on view 3. One quiet line shows under the age line only when a refresh failed, with no pop-up. It is one holding, a ticker within one portfolio. A back arrow returns to where you came from.</li>
+<li>Header, always visible: portfolio name, value, shares, cost, "Unrealized gain/loss" (4.8), CR5: the 1-day gain/loss (4.8; indented and in a smaller font, as on Overall; left out when the holding has none, C24), and the price age line; a stale price or "no price, at cost" shows its flag, as on view 3. One quiet line shows under the age line only when a refresh failed, with no pop-up. It is one holding, a ticker within one portfolio. A back arrow returns to where you came from.</li>
 <li>Buy and Sell open the entry with the ticker already filled in; Split starts a split entry for this ticker and portfolio (navigation outline). Whether the buttons are offered at 0 shares is left to the entry rules (4.4).</li>
-<li>Three tabs, left to right: Transactions, Lots, Classification. It opens on Transactions (the first tab); the tab is not saved.</li>
+<li>Three tabs, left to right: Lots, Transactions, Classification (CR5). It opens on Lots (the first tab); the tab is not saved.</li>
 <li>Transactions tab: this holding's buys, sells and splits, newest first, each with type, date and "ET", quantity and amount. A reversal shows as such and links to its original. Tapping a row opens the transaction, where Reverse and Reverse and re-enter start (4.6).</li>
-<li>Lots tab: each lot that still has shares, oldest first, with purchase date and "ET", quantity left, cost per share, lot cost and unrealized gain/loss (green or red with sign, "no price" instead when unpriced; a stale price keeps its gain/loss with the stale marker and its age). Quantities and cost per share include splits recorded so far (4.4). Sold-out lots are not listed; they show in Transactions.</li>
+<li>Lots tab: each lot that still has shares, oldest first, with purchase date and "ET", quantity left, cost per share, lot cost, current value (CR5: quantity left × latest price, the larger figure on the right, like a holding row's value; at cost with "no price" when unpriced, with the stale marker when stale) and unrealized gain/loss (green or red with sign, "no price" instead when unpriced; a stale price keeps its gain/loss with the stale marker and its age). Quantities and cost per share include splits recorded so far (4.4). Sold-out lots are not listed; they show in Transactions.</li>
 <li>Classification tab: effective sector and geography, each labelled "From the source", "Override" or "Unclassified" (4.9). Edit picks a value from the matching list (the picker is drawn in wireframe 10f, frame H). Clear override returns to the source value, or "Unclassified".</li>
 <li>Split history: every split recorded for this holding, so a forgotten split is easier to spot (C9). With none, one plain line.</li>
 <li>Format only: a split row, shown as date and ratio (2 for 1).</li>
