@@ -1,6 +1,6 @@
 # plan/iterations/37-screen-test-shards.md
 
-Stage: Build. Status: approved 2026-11-20 (your A); decisions 1 and 2 settled the same day (your A each; section 11). Steps 1 to 4 built (275ef42, 8093c8f and the documents); draft pull request #214 green on 8093c8f, 178 of 178 over 3 shards in 666 s, and a re-run of one shard counted 178 from two attempts (13.1); the Deploy review done, no high, medium or low finding (13.2). Done: pull request #214 merged as 919e7c4, main green on 3 shards (13.3). Branch iter-37-screen-test-shards from main (8a605c9); not created yet.
+Stage: Build. Status: approved 2026-11-20 (your A); decisions 1 and 2 settled the same day (your A each; section 11). Steps 1 to 4 built (275ef42, 8093c8f and the documents); draft pull request #214 green on 8093c8f, 178 of 178 over 3 shards in 666 s, and a re-run of one shard counted 178 from two attempts (13.1); the Deploy review done, no high, medium or low finding (13.2). Done: pull request #214 merged as 919e7c4, main green on 3 shards (13.3). Branch iter-37-screen-test-shards from main (8a605c9).
 Source: plan/spikes/two-emulators.md, decision T11 (adopt 3 runners) and section 10 (its open item's text); series E's trial workflow, commit 407503c (closed pull request #206, read 2026-11-20 through refs/pull/206/head); CLAUDE.md section 4 (the test-support rule); your choice of 2026-11-20 (build T11 now, your A).
 
 ## 1. Outcome

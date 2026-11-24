@@ -1,6 +1,6 @@
 # plan/iterations/36-check-reminder-override.md
 
-Stage: Build. Status: approved 2026-11-20 (your A); decisions 1 (your A) and 2 (your B, 10 minutes) settled the same day (section 11). Steps 1 to 3 built (versionCode 46); ATS Check 46 installed over 45, your app untouched at 45; 32's part B on ATS Check checks 1 to 12 all okay, logcat clean of data, 32's wording approved (13.2). Main merged in after 32 to 35 merged (aebe800). The Deploy review done: no high, medium or low finding, three notes (13.3). Done: pull request #212 merged as a287cb2, main green (13.4). Branch iter-36-check-reminder-override, stacked on iter-35-restore-over-data (672176f); not created yet.
+Stage: Build. Status: approved 2026-11-20 (your A); decisions 1 (your A) and 2 (your B, 10 minutes) settled the same day (section 11). Steps 1 to 3 built (versionCode 46); ATS Check 46 installed over 45, your app untouched at 45; 32's part B on ATS Check checks 1 to 12 all okay, logcat clean of data, 32's wording approved (13.2). Main merged in after 32 to 35 merged (aebe800). The Deploy review done: no high, medium or low finding, three notes (13.3). Done: pull request #212 merged as a287cb2, main green (13.4). Branch iter-36-check-reminder-override, stacked on iter-35-restore-over-data (672176f).
 Source: the 32 file, decision 2 and phone check part B (13.2, checks 6 to 13); the 34 file, decision 2 (the `check` build type, "ATS Check"); your choices of 2026-11-20 (the override in the check build only, your B; its own iteration, your B).
 
 ## 1. Outcome
