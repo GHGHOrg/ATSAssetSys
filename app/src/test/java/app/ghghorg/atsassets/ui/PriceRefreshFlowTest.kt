@@ -279,6 +279,9 @@ class PriceRefreshFlowTest {
         )
         assertEquals(state.priceRefresh, total.refresh)
         assertEquals(More.of(), state.more)
+        // CR5 (41), AC-68: both cards show the same Investments, net worth − cash.
+        assertEquals("$1,280.00", state.overall.investments)
+        assertEquals(state.overall.investments, total.investments)
     }
 
     @Test

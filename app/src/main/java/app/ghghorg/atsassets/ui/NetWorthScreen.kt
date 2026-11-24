@@ -56,6 +56,8 @@ fun NetWorthScreen(
             NetWorthCard(
                 netWorth = model.netWorth,
                 spokenNetWorth = model.spokenNetWorth,
+                investments = model.investments,
+                spokenInvestments = model.spokenInvestments,
                 prices = model.prices,
                 refresh = model.refresh,
                 failedLineHere = true,

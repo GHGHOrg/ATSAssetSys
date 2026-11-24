@@ -34,10 +34,13 @@ data class CompositionModel(
 /**
  * Net worth (marker 1) and its digits for TalkBack, the age of the oldest price used with "some stale" (4.8), null when
  * no price is used; the refresh state; and the composition, null while net worth shows as $0.00 (marker 6; decision 4).
+ * CR5 (41): [investments], the sum of every portfolio's value, exact and rounded once (4.8, 4.10).
  */
 data class NetWorthModel(
     val netWorth: String,
     val spokenNetWorth: String,
+    val investments: String,
+    val spokenInvestments: String,
     val prices: PricesAsOfModel?,
     val refresh: PriceRefreshModel,
     val composition: CompositionModel?,
@@ -63,9 +66,13 @@ object NetWorthTotal {
             }
         val netWorth = values.fold(cash) { sum, value -> sum + value }
         val shown = Money.format(netWorth)
+        // CR5 (41): the same sum as Overall's (Investments.of), exact, rounded once.
+        val investments = Money.format(values.fold(Fraction.ZERO) { sum, value -> sum + value })
         return NetWorthModel(
             netWorth = shown,
             spokenNetWorth = shown.substringAfter('$'),
+            investments = investments,
+            spokenInvestments = investments.substringAfter('$'),
             prices = PortfolioFigures.pricesAsOf(holdings, prices),
             refresh = refresh,
             composition = if (netWorth.rounded(2).signum() == 0) null else composition(cash, values, portfolios),

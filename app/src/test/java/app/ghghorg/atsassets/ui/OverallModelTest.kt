@@ -45,6 +45,9 @@ class OverallModelTest {
             OverallModel(
                 netWorth = "$10,880.00",
                 spokenNetWorth = "10,880.00",
+                // CR5 (41), AC-68: Portfolio P $1,280.00 plus Portfolio Q $400.00.
+                investments = "$1,680.00",
+                spokenInvestments = "1,680.00",
                 prices = PricesAsOfModel("2026-10-28 16:00", someStale = false),
                 refresh = refresh,
                 portfolios =
@@ -74,6 +77,8 @@ class OverallModelTest {
         assertEquals(null, model.prices)
         assertEquals(true, model.portfolios.single().figures.allAtCost)
         assertEquals("$1,200.00", model.portfolios.single().figures.value)
+        // CR5 (41), 4.8: a holding with no price counts at its cost in Investments too.
+        assertEquals("$1,200.00", model.investments)
     }
 
     @Test
@@ -82,5 +87,8 @@ class OverallModelTest {
         assertEquals(emptyList<OverallPortfolioRowModel>(), model.portfolios)
         assertEquals("$9,600.00", model.netWorth)
         assertEquals(null, model.prices)
+        // CR5 (41), AC-68: with no portfolio, Investments is $0.00.
+        assertEquals("$0.00", model.investments)
+        assertEquals("0.00", model.spokenInvestments)
     }
 }

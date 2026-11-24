@@ -124,11 +124,17 @@ class NetWorthTalkBackTest {
         amount: String,
     ): String = text(R.string.net_worth_composition_row_spoken, name, amount)
 
+    // CR5 (41), AC-68: the card reads net worth, then Investments.
+    private fun card(
+        netWorth: String,
+        investments: String,
+    ): String = text(R.string.net_worth_investments_spoken, text(R.string.net_worth_spoken, netWorth), investments)
+
     @Test
     fun atAFreshPrice_readsNetWorthWithItsAgeLine_andTheCompositionAddingUpToIt() {
         showNetWorth(state(Price(BigDecimal("160"), close)))
         val age = text(R.string.portfolio_prices_as_of_spoken, "2026-10-29 16:00")
-        val netWorth = text(R.string.net_worth_prices_spoken, text(R.string.net_worth_spoken, "10,880.00"), age)
+        val netWorth = text(R.string.net_worth_prices_spoken, card("10,880.00", "1,280.00"), age)
         composeRule.onNode(hasContentDescription(netWorth)).assertExists()
         composeRule.onNode(hasContentDescription(row(text(R.string.net_worth_composition_cash), "9,600.00"))).assertExists()
         composeRule.onNode(hasContentDescription(row("Portfolio P", "1,280.00"))).assertExists()
@@ -142,7 +148,7 @@ class NetWorthTalkBackTest {
         showNetWorth(state(Price(BigDecimal("140"), close, stale = true), refreshing = true, refreshFailed = true))
         // $9,600.00 cash and 8 × $140.00.
         val age = text(R.string.portfolio_prices_as_of_some_stale_spoken, "2026-10-29 16:00")
-        val netWorth = text(R.string.net_worth_prices_spoken, text(R.string.net_worth_spoken, "10,720.00"), age)
+        val netWorth = text(R.string.net_worth_prices_spoken, card("10,720.00", "1,120.00"), age)
         composeRule.onNode(hasContentDescription(netWorth)).assertExists()
         composeRule.onNode(hasContentDescription(row("Portfolio P", "1,120.00"))).assertExists()
         composeRule.onNode(hasContentDescription(row(text(R.string.net_worth_label), "10,720.00"))).assertExists()
@@ -154,7 +160,7 @@ class NetWorthTalkBackTest {
     @Test
     fun atZero_showsOnePlainLine_andNoComposition() {
         showNetWorth(AppState(screen = Screen.NET_WORTH, tab = Tab.MORE, today = LocalDate.of(2026, 6, 1)))
-        composeRule.onNode(hasContentDescription(text(R.string.net_worth_spoken, "0.00"))).assertExists()
+        composeRule.onNode(hasContentDescription(card("0.00", "0.00"))).assertExists()
         assertEquals("The $0.00 line shown", true, shown(R.string.net_worth_zero))
         assertEquals("The composition shown", false, shown(R.string.net_worth_composition_heading))
     }
@@ -166,7 +172,7 @@ class NetWorthTalkBackTest {
         val state = state(Price(BigDecimal("160"), close)).copy(screen = Screen.TABS)
         composeRule.setContent { ATSAssetSystemTheme { OverallScreen(state, {}, {}, onOpenNetWorth = { opened++ }) } }
         val age = text(R.string.portfolio_prices_as_of_spoken, "2026-10-29 16:00")
-        val netWorth = text(R.string.net_worth_prices_spoken, text(R.string.net_worth_spoken, "10,880.00"), age)
+        val netWorth = text(R.string.net_worth_prices_spoken, card("10,880.00", "1,280.00"), age)
         // 32: the backup reminder shows above (this state never backed up), so net worth is scrolled to before its tap.
         composeRule.onNode(hasContentDescription(netWorth) and hasClickAction()).performScrollTo().performClick()
         assertEquals("Opened from Overall", 1, opened)

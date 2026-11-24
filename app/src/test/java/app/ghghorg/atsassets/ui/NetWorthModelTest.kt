@@ -45,6 +45,9 @@ class NetWorthModelTest {
             NetWorthModel(
                 netWorth = "$10,880.00",
                 spokenNetWorth = "10,880.00",
+                // CR5 (41), AC-68: net worth $10,880.00 − cash $9,600.00.
+                investments = "$1,280.00",
+                spokenInvestments = "1,280.00",
                 prices = PricesAsOfModel("2026-10-29 16:00", someStale = false),
                 refresh = refresh,
                 composition =
@@ -77,6 +80,8 @@ class NetWorthModelTest {
         assertEquals("$1.01", model.netWorth)
         assertEquals("$1.00", model.composition!!.cash)
         assertEquals(listOf("$0.01", "$0.00"), model.composition.portfolios.map { it.amount })
+        // CR5 (41), 4.10: Investments is the exact sum, $0.01, rounded once; not each portfolio rounded alone ($0.02).
+        assertEquals("$0.01", model.investments)
         assertEquals("$0.01", PortfolioFigures.of(holdings.drop(1), prices).value)
     }
 

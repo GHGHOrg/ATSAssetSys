@@ -816,4 +816,7 @@
     <string name="restore_replace_note">Everything in the app, data and settings, is deleted and replaced by the file. Only a backup restore brings it back.</string>
     <string name="restore_type_word">Type RESTORE to confirm (case and spaces ignored)</string>
     <string name="restore_replace">Replace all data</string>
+    <!-- Iteration 41 (CR5): Investments in the net worth card on Overall and Net Worth (Total) (wireframe 01 marker 2; proposed, 41 file section 12; approval on the phone in step 9). %1$s is net_worth_spoken. -->
+    <string name="net_worth_investments">Investments</string>
+    <string name="net_worth_investments_spoken">%1$s, investments, %2$s dollars</string>
 </resources>

@@ -70,6 +70,8 @@ fun OverallScreen(
                 NetWorthCard(
                     netWorth = overall.netWorth,
                     spokenNetWorth = overall.spokenNetWorth,
+                    investments = overall.investments,
+                    spokenInvestments = overall.spokenInvestments,
                     prices = overall.prices,
                     refresh = overall.refresh,
                     failedLineHere = false,
@@ -140,12 +142,20 @@ private fun BackupReminderBanner(
 internal fun NetWorthCard(
     netWorth: String,
     spokenNetWorth: String,
+    investments: String,
+    spokenInvestments: String,
     prices: PricesAsOfModel?,
     refresh: PriceRefreshModel,
     failedLineHere: Boolean,
     onOpen: (() -> Unit)? = null,
 ) {
-    val base = stringResource(R.string.net_worth_spoken, spokenNetWorth)
+    // CR5 (41), AC-68: the sentence still starts "Net worth" (AppStartTimingTest), then reads Investments.
+    val base =
+        stringResource(
+            R.string.net_worth_investments_spoken,
+            stringResource(R.string.net_worth_spoken, spokenNetWorth),
+            spokenInvestments,
+        )
     val spoken =
         if (prices == null) {
             base
@@ -187,6 +197,11 @@ internal fun NetWorthCard(
                     text = netWorth,
                     style = MaterialTheme.typography.headlineSmall,
                 )
+                // CR5 (41), wireframe 01 marker 2: Investments under net worth, not colored.
+                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                    Text(text = stringResource(R.string.net_worth_investments), style = MaterialTheme.typography.bodyMedium)
+                    Text(text = investments, style = MaterialTheme.typography.bodyMedium)
+                }
                 if (prices != null) {
                     Text(
                         text =
