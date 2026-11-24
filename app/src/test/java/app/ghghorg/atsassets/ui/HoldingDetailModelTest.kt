@@ -3,6 +3,7 @@ package app.ghghorg.atsassets.ui
 import app.ghghorg.atsassets.core.Fraction
 import app.ghghorg.atsassets.core.Holding
 import app.ghghorg.atsassets.core.Holdings
+import app.ghghorg.atsassets.core.Lot
 import app.ghghorg.atsassets.core.Price
 import app.ghghorg.atsassets.core.SellAllocation
 import app.ghghorg.atsassets.core.Transaction
@@ -165,6 +166,8 @@ class HoldingDetailModelTest {
                     spokenPerShare = "150.00",
                     cost = "$1,200.00",
                     spokenCost = "1,200.00",
+                    value = "$1,280.00",
+                    spokenValue = "1,280.00",
                     gain = GainModel.Figure("+$80.00", SpokenFigure("80.00", FigureSign.PLUS)),
                     stale = false,
                 ),
@@ -179,5 +182,47 @@ class HoldingDetailModelTest {
         val unpriced = HoldingDetail.lots(lots, null).single()
         assertEquals(GainModel.NoPrice, unpriced.gain)
         assertEquals(false, unpriced.stale)
+    }
+
+    // CR5 (41), AC-69: a stale price still gives the lot's value at that price, with the stale mark.
+    @Test
+    fun aLotsValue_atAStalePrice_isAtThatPrice() {
+        val stale = HoldingDetail.lots(lots, price("140", stale = true)).single()
+        assertEquals("$1,120.00", stale.value)
+        assertEquals("1,120.00", stale.spokenValue)
+        assertEquals(true, stale.stale)
+    }
+
+    // CR5 (41), AC-69: a lot without a price is valued at its cost (4.8), and its gain says "no price".
+    @Test
+    fun aLotsValue_withNoPrice_isItsCost() {
+        val unpriced = HoldingDetail.lots(lots, null).single()
+        assertEquals("$1,200.00", unpriced.value)
+        assertEquals("1,200.00", unpriced.spokenValue)
+        assertEquals(GainModel.NoPrice, unpriced.gain)
+    }
+
+    // CR5 (41), 4.10: the value is the exact product, rounded once; a remainder that rounds up and one that rounds down.
+    @Test
+    fun aLotsValue_isRoundedOnce_upAndDown() {
+        // A lot of 1 share for $100.00 after a 1 for 3 split: exactly 1/3 share left (Example I's shape).
+        val oneThird = Fraction.of(BigInteger.ONE, BigInteger.valueOf(3))
+        val third =
+            Lot(
+                buyId = "b9",
+                portfolioId = "p1",
+                ticker = "AAPL",
+                buyDate = LocalDate.parse("2026-02-01"),
+                enteredSeq = 9L,
+                originalQuantity = BigDecimal.ONE,
+                remainingQuantity = oneThird,
+                cost = Fraction.ofCents(10_000),
+                originalCost = Fraction.ofCents(10_000),
+                splitFactor = oneThird,
+            )
+        // 1/3 × $100.005 = $33.335 → $33.34 (half away from zero, 4.10).
+        assertEquals("$33.34", HoldingDetail.lots(listOf(third), price("100.005")).single().value)
+        // 1/3 × $100.00 = $33.333… → $33.33.
+        assertEquals("$33.33", HoldingDetail.lots(listOf(third), price("100")).single().value)
     }
 }

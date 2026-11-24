@@ -21,6 +21,7 @@ import app.ghghorg.atsassets.core.TransactionType
 import app.ghghorg.atsassets.ui.AppState
 import app.ghghorg.atsassets.ui.HoldingActions
 import app.ghghorg.atsassets.ui.HoldingDetailScreen
+import app.ghghorg.atsassets.ui.HoldingTab
 import app.ghghorg.atsassets.ui.Screen
 import app.ghghorg.atsassets.ui.theme.ATSAssetSystemTheme
 import org.junit.Assert.assertEquals
@@ -103,6 +104,8 @@ private fun holdingState(): AppState {
         portfolios = listOf(Portfolio(id = "p1", name = "Tests", createdSeq = 1)),
         portfolioId = "p1",
         holdingTicker = TICKER,
+        // CR5 (41): the screen opens on Lots now; this test keeps its Transactions list.
+        holdingTab = HoldingTab.TRANSACTIONS,
         instruments = listOf(Instrument(TICKER, AssetType.STOCK, verified = true, price = stalePrice)),
         refreshing = true,
         refreshFailed = true,

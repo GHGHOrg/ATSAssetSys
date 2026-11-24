@@ -336,7 +336,7 @@ data class HiddenRow(
     val lastTransaction: LocalDate?,
 )
 
-/** Holding detail's tabs (view 6). Classification joins in 23 (10 decision 1). Never saved. */
+/** Holding detail's tabs (view 6). Classification joins in 23 (10 decision 1). Never saved. Shown Lots first (CR5). */
 enum class HoldingTab {
     TRANSACTIONS,
     LOTS,
@@ -606,9 +606,9 @@ data class AppState(
     val checking: Boolean = false,
     // Create a portfolio was tapped from the Buy notice: after the portfolio is created, Buy opens (criterion 24).
     val buyAfterPortfolio: Boolean = false,
-    // The holding on HOLDING: this ticker in the portfolio of portfolioId (iteration 10), and its tab.
+    // The holding on HOLDING: this ticker in the portfolio of portfolioId (iteration 10), and its tab (Lots first, CR5).
     val holdingTicker: String? = null,
-    val holdingTab: HoldingTab = HoldingTab.TRANSACTIONS,
+    val holdingTab: HoldingTab = HoldingTab.LOTS,
     // 15: the hidden holdings as stored; HOLDING was opened from Hidden holdings, so Back returns there (decision 3);
     // why a Hide or Unhide was not saved.
     val hidden: List<HiddenHolding> = emptyList(),
@@ -3109,7 +3109,7 @@ class AppViewModel(
     /** [state] as of today in New York, with its holdings and net worth for its records (4.8). */
     private fun valued(state: AppState): AppState = state.copy(today = marketDate.today()).refreshed()
 
-    /** Opens a holding from its row on the portfolio's screen (view 6). Unknown tickers are ignored. */
+    /** Opens a holding from its row on the portfolio's screen (view 6), on its Lots tab (CR5). Unknown tickers are ignored. */
     fun openHolding(ticker: String) {
         val current = mutableState.value
         val id = current.portfolioId ?: return
@@ -3118,7 +3118,7 @@ class AppViewModel(
             it.copy(
                 screen = Screen.HOLDING,
                 holdingTicker = ticker,
-                holdingTab = HoldingTab.TRANSACTIONS,
+                holdingTab = HoldingTab.LOTS,
                 portfolioMenuOpen = false,
                 overrideRefusal = null,
             )
@@ -3184,7 +3184,7 @@ class AppViewModel(
         val id = current.portfolioId ?: return
         if (current.screen != Screen.HIDDEN_HOLDINGS || HiddenHolding(id, ticker) !in current.hidden) return
         mutableState.update {
-            it.copy(screen = Screen.HOLDING, holdingTicker = ticker, holdingTab = HoldingTab.TRANSACTIONS, holdingFromHidden = true, hideRefusal = null)
+            it.copy(screen = Screen.HOLDING, holdingTicker = ticker, holdingTab = HoldingTab.LOTS, holdingFromHidden = true, hideRefusal = null)
         }
     }
 

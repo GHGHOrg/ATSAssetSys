@@ -12,6 +12,7 @@ import app.ghghorg.atsassets.core.TransactionType
 import app.ghghorg.atsassets.ui.AppState
 import app.ghghorg.atsassets.ui.HoldingActions
 import app.ghghorg.atsassets.ui.HoldingDetailScreen
+import app.ghghorg.atsassets.ui.HoldingTab
 import app.ghghorg.atsassets.ui.ReversalActions
 import app.ghghorg.atsassets.ui.Screen
 import app.ghghorg.atsassets.ui.TransactionReversalScreen
@@ -58,6 +59,8 @@ class TalkBackLabelTest {
                 portfolios = portfolios,
                 portfolioId = "p1",
                 holdingTicker = "SPKE",
+                // CR5 (41): the screen opens on Lots now; this test reads the Transactions row.
+                holdingTab = HoldingTab.TRANSACTIONS,
             )
         composeRule.setContent {
             ATSAssetSystemTheme { HoldingDetailScreen(state, HoldingActions({}, {}, {}, {}, {}, {}, {})) }

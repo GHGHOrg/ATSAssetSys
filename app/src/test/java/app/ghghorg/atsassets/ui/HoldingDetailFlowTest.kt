@@ -87,12 +87,13 @@ class HoldingDetailFlowTest {
     }
 
     @Test
-    fun aHoldingRow_opensItsDetail_onTransactions_withItsTransactionsAndLots() {
+    fun aHoldingRow_opensItsDetail_onLots_withItsTransactionsAndLots() {
         val state = onAapl().state.value
         assertEquals(Screen.HOLDING, state.screen)
         assertEquals("p1", state.portfolioId)
         assertEquals("AAPL", state.holdingTicker)
-        assertEquals(HoldingTab.TRANSACTIONS, state.holdingTab)
+        // CR5 (41), AC-69: it opens on Lots.
+        assertEquals(HoldingTab.LOTS, state.holdingTab)
         assertEquals("AAPL", state.shownHolding?.ticker)
         assertEquals(listOf("b1"), state.holdingTransactions.map { it.id })
         assertEquals(listOf("b1"), state.holdingLots.map { it.buyId })
@@ -130,13 +131,14 @@ class HoldingDetailFlowTest {
     }
 
     @Test
-    fun theTab_canBeChanged_andStartsOnTransactionsEachTime() {
+    fun theTab_canBeChanged_andStartsOnLotsEachTime() {
+        // CR5 (41), AC-69: Lots first; another tab chosen is not saved.
         val vm = onAapl()
-        vm.selectHoldingTab(HoldingTab.LOTS)
-        assertEquals(HoldingTab.LOTS, vm.state.value.holdingTab)
+        vm.selectHoldingTab(HoldingTab.TRANSACTIONS)
+        assertEquals(HoldingTab.TRANSACTIONS, vm.state.value.holdingTab)
         vm.closeHolding()
         vm.openHolding("AAPL")
-        assertEquals(HoldingTab.TRANSACTIONS, vm.state.value.holdingTab)
+        assertEquals(HoldingTab.LOTS, vm.state.value.holdingTab)
     }
 
     @Test
