@@ -29,7 +29,6 @@ import java.io.File
 @RunWith(AndroidJUnit4::class)
 class MigrationFrom14Test {
     private val context = InstrumentationRegistry.getInstrumentation().targetContext
-    private val passphrase = ByteArray(32) { 7 }
     private lateinit var file: File
 
     @Before
@@ -74,17 +73,10 @@ class MigrationFrom14Test {
     fun aVersion14Database_opensAsVersion15_withEveryRowKept_andNoPreviousCloseYet() {
         val schema = schema14()
         assertEquals(14, schema.getValue("version").jsonPrimitive.content.toInt())
-        SQLCipherDriver(passphrase, null, null).open(file.absolutePath).let { connection ->
+        SQLCipherDriver(Migration14Rows.PASSPHRASE, null, null).open(file.absolutePath).let { connection ->
             try {
                 connection.createVersion14(schema)
-                connection.execSQL(
-                    "INSERT INTO cash_entries (id, date, amountCents, type, note, enteredSeq, reversesId, transactionId) " +
-                        "VALUES ('o1', '2026-01-01', 960000, 'OPENING_BALANCE', '', 1, NULL, NULL)",
-                )
-                connection.execSQL(
-                    "INSERT INTO instruments (ticker, assetType, verified, price, priceTime, priceStale, sourceSector, " +
-                        "sourceGeography, profileAsked) VALUES ('AAPL', 'STOCK', 1, '348.9100', 1793304000, 1, 'Technology', 'US', 1)",
-                )
+                Migration14Rows.insert(connection)
             } finally {
                 connection.close()
             }
@@ -92,32 +84,15 @@ class MigrationFrom14Test {
         val database =
             Room
                 .databaseBuilder<AtsDatabase>(context, file.absolutePath)
-                .setDriver(SQLCipherDriver(passphrase, null, null))
+                .setDriver(SQLCipherDriver(Migration14Rows.PASSPHRASE, null, null))
                 .build()
         try {
             runBlocking {
-                assertEquals(
-                    listOf(CashEntryRow("o1", "2026-01-01", 960_000L, "OPENING_BALANCE", "", 1L, null, null)),
-                    database.cashEntryDao().loadAll(),
-                )
-                val instrument = database.instrumentDao().loadAll().single()
-                assertEquals(
-                    InstrumentRow(
-                        ticker = "AAPL",
-                        assetType = "STOCK",
-                        verified = true,
-                        price = "348.9100",
-                        priceTime = 1_793_304_000L,
-                        priceStale = true,
-                        pricePreviousClose = null,
-                        sourceSector = "Technology",
-                        sourceGeography = "US",
-                        profileAsked = true,
-                    ),
-                    instrument,
-                )
+                assertEquals(Migration14Rows.CASH, database.cashEntryDao().loadAll())
+                val instruments = database.instrumentDao().loadAll()
+                assertEquals(Migration14Rows.INSTRUMENTS, instruments)
                 // The stored price reads as it did in 1.0.0, with no previous close until the first refresh (AC-71).
-                assertEquals(null, instrument.toInstrument().price!!.previousClose)
+                assertEquals(null, instruments.single().toInstrument().price!!.previousClose)
             }
         } finally {
             database.close()

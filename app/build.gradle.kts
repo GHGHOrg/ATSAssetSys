@@ -161,6 +161,9 @@ dependencies {
     androidTestImplementation(libs.androidx.espresso.core)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(testFixtures(project(":core")))
+    // 41 step 5 (your A, 2026-11-24): Room's MigrationTestHelper, a second check of the migration from 14 beside
+    // MigrationFrom14Test's file built by hand; screen tests only, not in the app.
+    androidTestImplementation(libs.androidx.room3.testing)
     debugImplementation(libs.androidx.compose.ui.test.manifest)
     debugImplementation(libs.androidx.compose.ui.tooling)
 }
