@@ -31,8 +31,8 @@ import app.ghghorg.atsassets.R
 /**
  * More (section 6, wireframe 10f), drawn from its model (CR2, 17): the title with the gear at the top right that opens
  * Settings (marker 2; 20), the last backup line (marker 1: information only; 31), the line of an interrupted backup (31
- * decision 7), then the four entries, each a row that opens its screen (17 decision 1: Net Worth (Total); 19 decision 1:
- * Allocation; 26: Realized gains; 31: Backup and restore).
+ * decision 7), then the five entries, each a row that opens its screen (17 decision 1: Net Worth (Total); 19 decision 1:
+ * Allocation; 26: Realized gains; 31: Backup and restore; CR5, 41: About).
  */
 @Composable
 fun MoreScreen(
@@ -43,6 +43,7 @@ fun MoreScreen(
     onOpenSettings: () -> Unit = {},
     onOpenRealizedGains: () -> Unit = {},
     onOpenBackup: () -> Unit = {},
+    onOpenAbout: () -> Unit = {},
 ) {
     Column(
         modifier = modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(16.dp),
@@ -67,6 +68,7 @@ fun MoreScreen(
                         MoreEntry.ALLOCATION -> EntryRow(stringResource(R.string.allocation_title), onOpenAllocation)
                         MoreEntry.REALIZED_GAINS -> EntryRow(stringResource(R.string.realized_gains_title), onOpenRealizedGains)
                         MoreEntry.BACKUP -> EntryRow(stringResource(R.string.backup_title), onOpenBackup)
+                        MoreEntry.ABOUT -> EntryRow(stringResource(R.string.about_title), onOpenAbout)
                     }
                 }
             }

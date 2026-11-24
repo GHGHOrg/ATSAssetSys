@@ -2,6 +2,7 @@ package app.ghghorg.atsassets.ui
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import app.ghghorg.atsassets.BuildConfig
 import app.ghghorg.atsassets.backup.BackupTarget
 import app.ghghorg.atsassets.backup.FileBytes
 import app.ghghorg.atsassets.backup.RestoreFile
@@ -187,6 +188,9 @@ enum class Screen {
 
     // Backup and restore (wireframe 10e frame A, iteration 31), opened from More.
     BACKUP,
+
+    // About (wireframe 11, CR5, iteration 41), opened from More.
+    ABOUT,
 
     // The restore wizard (wireframe 10e frames C to F, iteration 33b), opened from Backup and restore.
     RESTORE,
@@ -609,6 +613,9 @@ data class AppState(
     // The holding on HOLDING: this ticker in the portfolio of portfolioId (iteration 10), and its tab (Lots first, CR5).
     val holdingTicker: String? = null,
     val holdingTab: HoldingTab = HoldingTab.LOTS,
+    // CR5 (41): About's licence rows opened on this visit (all closed when it opens), and the version the app reports.
+    val aboutOpen: Set<String> = emptySet(),
+    val versionName: String = BuildConfig.VERSION_NAME,
     // 15: the hidden holdings as stored; HOLDING was opened from Hidden holdings, so Back returns there (decision 3);
     // why a Hide or Unhide was not saved.
     val hidden: List<HiddenHolding> = emptyList(),
@@ -965,6 +972,10 @@ data class AppState(
     /** More as the screen draws it (section 6; CR2, 17). */
     val more: MoreModel
         get() = More.of(lastBackup, zone, backupInterrupted)
+
+    /** CR5 (41): About as the screen draws it (wireframe 11; CR2). */
+    val about: AboutModel
+        get() = About.of(versionName, aboutOpen)
 
     /** 31: Backup and restore as the screen draws it (wireframe 10e frames A and B; CR2). */
     val backupScreen: BackupModel
@@ -1983,6 +1994,26 @@ class AppViewModel(
         val current = mutableState.value
         if (current.screen != Screen.TABS || current.tab != Tab.MORE || current.saving) return
         mutableState.update { it.copy(screen = Screen.REALIZED_GAINS).leftGains() }
+    }
+
+    /** CR5 (41): About, from More (wireframe 11 marker 1); every licence row starts closed. */
+    fun openAbout() {
+        val current = mutableState.value
+        if (current.screen != Screen.TABS || current.tab != Tab.MORE || current.saving) return
+        mutableState.update { it.copy(screen = Screen.ABOUT, aboutOpen = emptySet()) }
+    }
+
+    /** "<" or Android Back: back to More. */
+    fun closeAbout() {
+        if (mutableState.value.screen != Screen.ABOUT) return
+        mutableState.update { it.copy(screen = Screen.TABS, aboutOpen = emptySet()) }
+    }
+
+    /** A licence row opens in place, or closes (wireframe 11 marker 3); unknown names are ignored. */
+    fun toggleAboutRow(name: String) {
+        val current = mutableState.value
+        if (current.screen != Screen.ABOUT || Licences.ALL.none { it.name == name }) return
+        mutableState.update { it.copy(aboutOpen = if (name in it.aboutOpen) it.aboutOpen - name else it.aboutOpen + name) }
     }
 
     /** "<" or Android Back: back to More; the dates and the expanded holdings end with the screen (decision 2). */
@@ -5072,6 +5103,7 @@ class AppViewModel(
                 Screen.TRANSACTION_HISTORY,
                 Screen.BACKUP,
                 Screen.RESTORE,
+                Screen.ABOUT,
             )
     }
 }

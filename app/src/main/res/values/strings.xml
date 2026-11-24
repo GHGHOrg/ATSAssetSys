@@ -819,4 +819,16 @@
     <!-- Iteration 41 (CR5): Investments in the net worth card on Overall and Net Worth (Total) (wireframe 01 marker 2; proposed, 41 file section 12; approval on the phone in step 9). %1$s is net_worth_spoken. -->
     <string name="net_worth_investments">Investments</string>
     <string name="net_worth_investments_spoken">%1$s, investments, %2$s dollars</string>
+    <!-- Iteration 41 (CR5): About (wireframe 11; proposed, 41 file section 12; approval on the phone in step 9). The app's name is app_name (ATS Dev in the development app). -->
+    <string name="about_title">About</string>
+    <string name="about_version">Version %1$s</string>
+    <string name="about_card_spoken">%1$s, %2$s</string>
+    <string name="about_licences">Open-source licences</string>
+    <string name="about_licence_closed">%1$s ▾</string>
+    <string name="about_licence_open">%1$s ▴</string>
+    <string name="about_row_spoken">%1$s, %2$s licence</string>
+    <string name="about_row_closed">collapsed</string>
+    <string name="about_row_open">expanded</string>
+    <string name="licence_apache_2_0">Apache 2.0</string>
+    <string name="licence_sqlcipher">BSD-style</string>
 </resources>

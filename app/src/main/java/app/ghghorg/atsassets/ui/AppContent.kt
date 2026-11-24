@@ -423,6 +423,11 @@ private fun BarContent(
             actions = NetWorthActions(onBack = viewModel::closeNetWorth, onRefresh = viewModel::onPullToRefresh),
         )
 
+        Screen.ABOUT -> AboutScreen(
+            model = state.about,
+            actions = AboutActions(onBack = viewModel::closeAbout, onToggle = viewModel::toggleAboutRow),
+        )
+
         else -> TabContent(state, viewModel, onBackUpNow)
     }
 }
@@ -528,6 +533,7 @@ private fun TabScreen(
             onOpenSettings = viewModel::openSettings,
             onOpenRealizedGains = viewModel::openRealizedGains,
             onOpenBackup = viewModel::openBackup,
+            onOpenAbout = viewModel::openAbout,
         )
     }
 }

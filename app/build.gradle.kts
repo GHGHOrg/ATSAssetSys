@@ -64,6 +64,69 @@ room3 {
     schemaDirectory("$projectDir/schemas")
 }
 
+// 41 decision 1 (CR5, AC-70): the release build's runtime library groups, written for LicenceListTest, which compares
+// them with About's list (ui/Licences.kt), so a library added or removed without the list turns the build red. A platform
+// (a BOM) ships no code and is left out; the app's own modules are not libraries.
+abstract class RuntimeGroups : DefaultTask() {
+    @get:Input
+    abstract val groups: SetProperty<String>
+
+    @get:OutputFile
+    abstract val output: RegularFileProperty
+
+    @TaskAction
+    fun write() {
+        output.get().asFile.writeText(groups.get().sorted().joinToString("\n", postfix = "\n"))
+    }
+}
+
+object LibraryGroups {
+    private val PLATFORMS = setOf("platform", "enforced-platform")
+
+    fun of(root: ResolvedComponentResult): Set<String> {
+        val seen = mutableSetOf<ComponentIdentifier>()
+        val groups = sortedSetOf<String>()
+        val pending = ArrayDeque(listOf(root))
+        while (pending.isNotEmpty()) {
+            val component = pending.removeFirst()
+            if (!seen.add(component.id)) continue
+            val id = component.id
+            if (id is ModuleComponentIdentifier && !isPlatform(component)) groups.add(id.group)
+            component.dependencies.filterIsInstance<ResolvedDependencyResult>().forEach { pending.add(it.selected) }
+        }
+        return groups
+    }
+
+    private fun isPlatform(component: ResolvedComponentResult): Boolean =
+        component.variants.any { variant ->
+            val category = variant.attributes.keySet().firstOrNull { it.name == "org.gradle.category" }
+            category != null && variant.attributes.getAttribute(category).toString() in PLATFORMS
+        }
+}
+
+class RuntimeGroupsArgument(
+    @get:Internal val file: Provider<RegularFile>,
+) : CommandLineArgumentProvider {
+    override fun asArguments(): List<String> = listOf("-Datsassets.runtimeGroups=${file.get().asFile.absolutePath}")
+}
+
+val runtimeGroups =
+    tasks.register<RuntimeGroups>("runtimeGroups") {
+        groups.set(
+            configurations.named("releaseRuntimeClasspath").flatMap { classpath ->
+                classpath.incoming.resolutionResult.rootComponent
+                    .map { root -> LibraryGroups.of(root) }
+            },
+        )
+        output.set(layout.buildDirectory.file("licences/runtime-groups.txt"))
+    }
+
+tasks.withType<Test>().configureEach {
+    val groupsFile = runtimeGroups.flatMap { it.output }
+    inputs.file(groupsFile).withPropertyName("runtimeGroups").withPathSensitivity(PathSensitivity.NONE)
+    jvmArgumentProviders.add(RuntimeGroupsArgument(groupsFile))
+}
+
 dependencies {
     implementation(project(":core"))
     implementation(platform(libs.androidx.compose.bom))
