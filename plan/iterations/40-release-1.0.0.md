@@ -1,6 +1,6 @@
 # plan/iterations/40-release-1.0.0.md
 
-Stage: Build. Status: Released: v1.0.0 published 2026-11-24 as Latest, your app 1.0.0 (versionCode 50) installed over 0.38.0 with the smoke check passed (13.1, steps 4 to 8); pull request #230 merged as 362f33f, main green (13.4); the Deploy review of 40, no High, Medium or Low finding (13.3); part 2 (the records) on docs/iter-40-released, not yet merged. Approved 2026-11-24 (your yes); decisions 0 to 4 settled the same day (your A, B, A, A, A; section 11). Branch iter-40-release-1.0.0, from main (e5253a2).
+Stage: Build. Status: Done: v1.0.0 released 2026-11-24 and Latest, your app 1.0.0 (versionCode 50) installed over 0.38.0 with the smoke check passed (13.1, steps 4 to 8); pull requests #230 merged as 362f33f and #231 merged as 4ffddab, main green (13.4); the Deploy review of 40, no High, Medium or Low finding (13.3). Approved 2026-11-24 (your yes); decisions 0 to 4 settled the same day (your A, B, A, A, A; section 11). Branch iter-40-release-1.0.0, from main (e5253a2).
 Source: intent/intent-cr-04-release-process.md (CR4, final); spec/spec.md v7; plan/release.md (a release's steps); CLAUDE.md section 4 (version rules; 38a decision 2d: "1.0.0 comes when you call the app productive"). No intent file: the app's code does not change (your decision 2026-11-24, after the About screen was dropped).
 
 ## 1. Outcome
@@ -128,7 +128,8 @@ Notes (info, no change):
 ### 13.4 Pull requests and merges
 - #230 (part 1, steps 1 to 3; iter-40-release-1.0.0, head 1450c4e, 3 commits), pushed and created once at your request, draft, reviewer msfsgh. All checks green at the first attempt (gh, read only): CI 431 s (the release build 1m 57s, the class check 6,320 classes, 0 that cannot load); the screen tests' shards 705, 562 and 584 s, the count job "Tests run: 178 of 178; in more than one shard: 0"; CodeQL Analyze (actions) 41 s.
 - Merged by you as 362f33f (2026-11-24 04:12:39 UTC). On main at the first attempt: CI 437 s (the class check 6,320 classes, 0 that cannot load), the screen tests (shards 580, 600 and 578 s; 178 of 178), CodeQL 45 s. The tag v1.0.0 is on it.
-- Part 2 (the records of steps 4 to 9; docs/iter-40-released from 362f33f): not yet pushed.
+- #231 (part 2, the records of steps 4 to 9; docs/iter-40-released from 362f33f, head 1c1c91c, 1 commit), pushed and created once at your request, draft, reviewer msfsgh; its checks green (`gh pr checks 231`: CI build 4m 21s, the screen tests' three shards and the count job, 178 of 178; CodeQL and Analyze (actions)).
+- Merged by you as 4ffddab (2026-11-24 06:19:09 UTC). On main at the first attempt: CI 348 s (the class check 6,320 classes, 0 that cannot load), the screen tests (shards 572, 506 and 602 s; 178 of 178), CodeQL 41 s. Merge record on docs/iter-40-merged.
 
 ## 14. Departures from the plan
 - After step 7 (your A, 2026-11-24): ATS Dev updated to `1.0.0-dev.50` (debug build of 362f33f, `adb install -r` over dev.49, checked on the phone), against section 3's "it stays `0.38.0-dev.49`". Both apps now run the same code. Not chosen: (B) left at dev.49 until the next iteration that changes app code.
