@@ -17,10 +17,10 @@ android {
         applicationId = "app.ghghorg.atsassets"
         minSdk = 33
         targetSdk = 37
-        // 38a decisions 2 and 2d: MAJOR.MINOR.PATCH; the first release (38c) is 0.38.0. versionCode rises with every
-        // build that is installed.
-        versionCode = 49
-        versionName = "0.38.0"
+        // 38a decisions 2 and 2d: MAJOR.MINOR.PATCH; the first release (38c) is 0.38.0, the first productive one (40)
+        // 1.0.0. versionCode rises with every build that is installed.
+        versionCode = 50
+        versionName = "1.0.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
 
@@ -44,7 +44,7 @@ android {
         // 10 minutes for the backup reminder (BackupDueDebugTest).
         debug {
             applicationIdSuffix = ".debug"
-            // 38a decision 2a: the development app shows x.y.z-dev.n, n its versionCode (0.38.0-dev.49).
+            // 38a decision 2a: the development app shows x.y.z-dev.n, n its versionCode (1.0.0-dev.50).
             versionNameSuffix = "-dev.${defaultConfig.versionCode}"
             buildConfigField("long", "BACKUP_DUE_AFTER_MINUTES", "10L")
         }

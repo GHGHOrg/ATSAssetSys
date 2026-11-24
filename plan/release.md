@@ -23,7 +23,7 @@ Each command is run one at a time, in PowerShell at the repo root unless named o
 
 1. **Deploy review** of everything since the last release (the iteration files' Deploy findings and the commits since the previous `v*` tag), findings by severity, each with how it was handled.
 2. **Version raise**, in app/build.gradle.kts, on a branch and pull request like any change:
-   - versionName by CLAUDE.md section 4 (until 1.0.0: a milestone or breaking change raises MINOR, a feature or fix raises PATCH);
+   - versionName by CLAUDE.md section 4 (from 1.0.0 on, iteration 40: a milestone or breaking change raises MAJOR, a feature MINOR, a fix PATCH; before 1.0.0 each moved down one place);
    - versionCode higher than every build installed so far, the development app's included.
    - If the release raises the schema version or the backup format version: section 3 below first.
 3. **Tag**, by you, on main's merge commit, annotated and GPG-signed, equal to `v<versionName>`:
@@ -44,7 +44,7 @@ Each command is run one at a time, in PowerShell at the repo root unless named o
 6. **Backup** on the phone with the build now installed: More, Back up now, Save. Note the Cash balance and each portfolio's cost on Overall. With a schema or format raise (section 3), keep this backup until the next release.
 7. **Install** over the previous release: `& "$env:ANDROID_HOME\platform-tools\adb.exe" install -r <signed APK>` (C17, AC-35). A refusal stops here; nothing is uninstalled to make it fit.
 8. **Smoke check** (AC-64), on the phone, no data entered: unlock; the Cash balance and each portfolio's cost equal the figures of step 6; one holding opens; a price update completes; a backup export completes.
-9. **Record**, by you: a GitHub Release on the tag with the notes of section 5 (`gh release create v0.38.0 --title "0.38.0" --notes-file <notes file>`, or in the browser). The signed APK and mapping.txt are kept outside the repo, next to the key's backups (mapping.txt turns a release's renamed classes in a crash back into their names).
+9. **Record**, by you: a GitHub Release on the tag with the notes of section 5 (`gh release create v0.38.0 --verify-tag --title "0.38.0" --notes-file <notes file>`, or in the browser). `--verify-tag` stops the command when the tag is not on GitHub; without it, gh would create an unsigned tag on main (40 Deploy review, finding 1). The signed APK and mapping.txt are kept outside the repo, next to the key's backups (mapping.txt turns a release's renamed classes in a crash back into their names).
 
 The first release (38c) adds the move of your data from the debug build once: backup, uninstall debug, install the release, restore (AC-36); its steps are in the 38c file.
 
