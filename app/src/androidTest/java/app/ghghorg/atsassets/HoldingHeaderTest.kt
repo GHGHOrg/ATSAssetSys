@@ -77,11 +77,12 @@ class HoldingHeaderNormalFontPortraitTest {
 
 private const val TICKER = "SPKE"
 
-// Thirty buys, so the Transactions list is longer than the screen. A stale price, and a refresh running after one that
-// failed, so every line the header can have shows (16a).
+// Thirty buys, so the Transactions list is longer than the screen. A stale price with a previous close, and a refresh
+// running after one that failed, so every line the header can have shows (16a; the 1-day line from CR5, 41).
 private fun holdingState(): AppState {
     val today = LocalDate.of(2026, 11, 4)
-    val stalePrice = Price(BigDecimal("98.76"), Instant.parse("2026-11-03T21:00:00Z"), stale = true)
+    // CR5 (41): with a previous close, so the header has its 1-day line too, the tallest it can be (plan risk 4).
+    val stalePrice = Price(BigDecimal("98.76"), Instant.parse("2026-11-03T21:00:00Z"), stale = true, previousClose = BigDecimal("97.50"))
     val transactions =
         (1..30).map { day ->
             Transaction(
