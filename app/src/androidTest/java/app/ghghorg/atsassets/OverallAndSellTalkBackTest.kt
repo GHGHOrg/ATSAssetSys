@@ -124,7 +124,9 @@ class OverallAndSellTalkBackTest {
         val state = state(Screen.TABS, Price(BigDecimal("160"), close))
         composeRule.setContent { ATSAssetSystemTheme { OverallScreen(state, {}, {}) } }
         val age = text(R.string.portfolio_prices_as_of_spoken, "2026-10-29 16:00")
-        val netWorth = text(R.string.net_worth_prices_spoken, text(R.string.net_worth_spoken, "10,880.00"), age)
+        // CR5 (41), AC-68: net worth, then Investments, then the age line.
+        val card = text(R.string.net_worth_investments_spoken, text(R.string.net_worth_spoken, "10,880.00"), "1,280.00")
+        val netWorth = text(R.string.net_worth_prices_spoken, card, age)
         val row = text(R.string.overall_portfolio_row_spoken, "Portfolio P", "1,280.00", text(R.string.spoken_plus, "80.00"))
         composeRule.onNode(hasContentDescription(netWorth)).assertExists()
         composeRule.onNode(hasContentDescription(row)).assertExists()
@@ -137,7 +139,8 @@ class OverallAndSellTalkBackTest {
         composeRule.setContent { ATSAssetSystemTheme { OverallScreen(state, {}, {}) } }
         // $9,600.00 cash and 8 × $140.00.
         val age = text(R.string.portfolio_prices_as_of_some_stale_spoken, "2026-10-29 16:00")
-        val netWorth = text(R.string.net_worth_prices_spoken, text(R.string.net_worth_spoken, "10,720.00"), age)
+        val card = text(R.string.net_worth_investments_spoken, text(R.string.net_worth_spoken, "10,720.00"), "1,120.00")
+        val netWorth = text(R.string.net_worth_prices_spoken, card, age)
         val row = text(R.string.overall_portfolio_row_spoken, "Portfolio P", "1,120.00", text(R.string.spoken_minus, "80.00"))
         composeRule.onNode(hasContentDescription(netWorth)).assertExists()
         composeRule.onNode(hasContentDescription(row)).assertExists()

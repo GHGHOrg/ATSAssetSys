@@ -185,7 +185,8 @@ private fun FixedPart(
                 )
             }
         }
-        val tabs = listOf(HoldingTab.TRANSACTIONS, HoldingTab.LOTS, HoldingTab.CLASSIFICATION)
+        // CR5 (41): Lots first, then Transactions and Classification (view 6, wireframe 06 marker 3).
+        val tabs = listOf(HoldingTab.LOTS, HoldingTab.TRANSACTIONS, HoldingTab.CLASSIFICATION)
         PrimaryTabRow(selectedTabIndex = tabs.indexOf(state.holdingTab)) {
             tabs.forEach { tab ->
                 Tab(
@@ -422,7 +423,7 @@ private fun Header(header: HoldingHeaderModel) {
                 )
 
             else -> stringResource(R.string.holding_header_spoken, header.ticker, header.portfolio, header.spokenValue, shares, header.spokenCost)
-        }
+        }.let { daySpoken(it, header.day) }
     OutlinedCard(modifier = Modifier.fillMaxWidth().clearAndSetSemantics { contentDescription = spoken }) {
         Column(
             modifier = Modifier.fillMaxWidth().padding(12.dp),
@@ -440,6 +441,8 @@ private fun Header(header: HoldingHeaderModel) {
                 is GainModel.Figure -> HeaderLine(stringResource(R.string.portfolio_unrealized_label), gain.text, gainLossColor(sign(gain)))
                 GainModel.NoPrice -> HeaderLine(stringResource(R.string.portfolio_unrealized_label), stringResource(R.string.holding_no_price))
             }
+            // CR5 (41), wireframe 06 marker 1: the 1-day line, indented and smaller, under the gain/loss.
+            header.day?.let { DayLineRow(it, indented = true) }
             if (price != null) {
                 Text(
                     text =
@@ -617,9 +620,9 @@ private fun SplitRow(
 }
 
 /**
- * A lot (wireframe 06 frame B, wording 2), drawn from its model (CR2, 16a): the purchase date with "ET" and "10 left,
- * $150.00 per share", the lot cost and its unrealized gain/loss in green or red with its sign, "stale" beside it when
- * the price is stale, or "no price" (4.8).
+ * A lot (wireframe 06 frame A, marker 5; CR5), drawn from its model (CR2, 16a): the purchase date with "ET", "10 left,
+ * $150.00 per share" and "Cost $1,200.00" on the left; its current value on the right, with its unrealized gain/loss in
+ * green or red with its sign under it, "stale" beside it when the price is stale, or "no price" (4.8).
  */
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
@@ -627,7 +630,6 @@ private fun LotRow(lot: LotRowModel) {
     val date = lot.date
     val left = lot.left
     val perShare = lot.perShare
-    val cost = lot.cost
     val gain = lot.gain
     val spoken =
         when (gain) {
@@ -638,10 +640,12 @@ private fun LotRow(lot: LotRowModel) {
                     left,
                     lot.spokenPerShare,
                     lot.spokenCost,
+                    lot.spokenValue,
                     spoken(gain.spoken),
                 )
 
-            GainModel.NoPrice -> stringResource(R.string.holding_lot_spoken, date, left, lot.spokenPerShare, lot.spokenCost)
+            GainModel.NoPrice ->
+                stringResource(R.string.holding_lot_spoken, date, left, lot.spokenPerShare, lot.spokenCost, lot.spokenValue)
         }
     FlowRow(
         modifier = Modifier.fillMaxWidth().clearAndSetSemantics { contentDescription = spoken },
@@ -655,12 +659,17 @@ private fun LotRow(lot: LotRowModel) {
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
+            Text(
+                text = stringResource(R.string.holding_lot_cost, lot.cost),
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
         }
         Column(
             modifier = Modifier.weight(1f),
             horizontalAlignment = Alignment.End,
         ) {
-            Text(text = cost, style = MaterialTheme.typography.bodyLarge, textAlign = TextAlign.End)
+            Text(text = lot.value, style = MaterialTheme.typography.bodyLarge, textAlign = TextAlign.End)
             when (gain) {
                 is GainModel.Figure -> {
                     // The figure carries its color; "stale" beside it is plain text, so it never rests on color (section 6).

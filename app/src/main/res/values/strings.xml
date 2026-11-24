@@ -183,7 +183,9 @@
     <string name="holding_transaction_spoken">%1$s Eastern Time, buy, %2$s, %3$s dollars</string>
     <string name="holding_lot_left">%1$s left, %2$s per share</string>
     <string name="holding_lot_no_price">no price</string>
-    <string name="holding_lot_spoken">Lot of %1$s Eastern Time, %2$s left, %3$s dollars per share, cost %4$s dollars, no price</string>
+    <!-- Iteration 41 (CR5): a lot's value added to the three lot sentences, and the cost moved under the quantity (approved on the phone 2026-11-25, 41 file section 12). -->
+    <string name="holding_lot_spoken">Lot of %1$s Eastern Time, %2$s left, %3$s dollars per share, cost %4$s dollars, value %5$s dollars, no price</string>
+    <string name="holding_lot_cost">Cost %1$s</string>
     <string name="holding_no_lots">No lots with shares</string>
     <!-- Iteration 11: sell (wording approved 2026-10-31, 11 file section 11). -->
     <string name="sell_ticker_label">Ticker (held)</string>
@@ -371,8 +373,8 @@
     <string name="price_refresh_failed">Price refresh failed. Showing last prices.</string>
     <string name="price_stale">stale</string>
     <string name="holding_row_gain_spoken">%1$s, %2$s, %3$s dollars, unrealized gain/loss %4$s dollars</string>
-    <string name="holding_lot_gain_spoken">Lot of %1$s Eastern Time, %2$s left, %3$s dollars per share, cost %4$s dollars, unrealized gain/loss %5$s dollars</string>
-    <string name="holding_lot_gain_stale_spoken">Lot of %1$s Eastern Time, %2$s left, %3$s dollars per share, cost %4$s dollars, unrealized gain/loss %5$s dollars, stale price</string>
+    <string name="holding_lot_gain_spoken">Lot of %1$s Eastern Time, %2$s left, %3$s dollars per share, cost %4$s dollars, value %5$s dollars, unrealized gain/loss %6$s dollars</string>
+    <string name="holding_lot_gain_stale_spoken">Lot of %1$s Eastern Time, %2$s left, %3$s dollars per share, cost %4$s dollars, value %5$s dollars, unrealized gain/loss %6$s dollars, stale price</string>
     <!-- Iteration 16b: prices on the portfolio screens (approved on the phone 2026-11-08, 16b file section 12). -->
     <string name="portfolio_prices_as_of">Prices as of %1$s ET</string>
     <string name="portfolio_prices_as_of_some_stale">Prices as of %1$s ET, some stale</string>
@@ -814,4 +816,27 @@
     <string name="restore_replace_note">Everything in the app, data and settings, is deleted and replaced by the file. Only a backup restore brings it back.</string>
     <string name="restore_type_word">Type RESTORE to confirm (case and spaces ignored)</string>
     <string name="restore_replace">Replace all data</string>
+    <!-- Iteration 41 (CR5): Investments in the net worth card on Overall and Net Worth (Total) (wireframe 01 marker 2; approved on the phone 2026-11-25, 41 file section 12). %1$s is net_worth_spoken. -->
+    <string name="net_worth_investments">Investments</string>
+    <string name="net_worth_investments_spoken">%1$s, investments, %2$s dollars</string>
+    <!-- Iteration 41 (CR5): About (wireframe 11; approved on the phone 2026-11-25, 41 file section 12). The app's name is app_name (ATS Dev in the development app). -->
+    <string name="about_title">About</string>
+    <string name="about_version">Version %1$s</string>
+    <string name="about_card_spoken">%1$s, %2$s</string>
+    <string name="about_licences">Open-source licences</string>
+    <string name="about_licence_closed">%1$s ▾</string>
+    <string name="about_licence_open">%1$s ▴</string>
+    <string name="about_row_spoken">%1$s, %2$s licence</string>
+    <string name="about_row_closed">collapsed</string>
+    <string name="about_row_open">expanded</string>
+    <string name="licence_apache_2_0">Apache 2.0</string>
+    <string name="licence_sqlcipher">BSD-style</string>
+    <!-- Iteration 41 (CR5): the 1-day line (spec section 6; approved on the phone 2026-11-25, 41 file section 12). %1$s of the spoken forms is the card's or row's own sentence; the figures are read with spoken_plus or spoken_minus. -->
+    <string name="day_label">1-day gain/loss</string>
+    <string name="day_figures">%1$s (%2$s)</string>
+    <string name="day_row">1-day</string>
+    <string name="day_spoken">%1$s, 1-day gain/loss %2$s dollars, %3$s percent</string>
+    <string name="day_spoken_no_percent">%1$s, 1-day gain/loss %2$s dollars</string>
+    <string name="day_line_spoken">1-day gain/loss %1$s dollars, %2$s percent</string>
+    <string name="day_line_spoken_no_percent">1-day gain/loss %1$s dollars</string>
 </resources>

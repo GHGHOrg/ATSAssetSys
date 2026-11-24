@@ -43,7 +43,7 @@ import java.time.LocalDate
 /**
  * Holding detail's Classification tab (23a, AC-61 (d), AC-12): a source value reads with "from the source", a missing
  * one reads "unclassified"; each split reads its date and ratio, a reversed one says "reversed"; no split reads the plain
- * line; and the tab is the third, after Transactions and Lots, and opens. From 24: an override reads "override", each row
+ * line; and the tab is the third, after Lots and Transactions (CR5), and opens. From 24: an override reads "override", each row
  * has its own Edit and only an overridden one Clear override, each naming its list (decision 2), and each calls its list.
  */
 @RunWith(AndroidJUnit4::class)
@@ -142,15 +142,16 @@ class ClassificationTalkBackTest {
 
     @Test
     fun theThirdTab_isClassification_andOpens() {
-        var shown by mutableStateOf(state(listOf(buy), HoldingTab.TRANSACTIONS))
+        var shown by mutableStateOf(state(listOf(buy), HoldingTab.LOTS))
         composeRule.setContent {
             ATSAssetSystemTheme {
                 HoldingDetailScreen(shown, HoldingActions({}, { shown = shown.copy(holdingTab = it) }, {}, {}, {}, {}, {}))
             }
         }
-        val labels = listOf(R.string.holding_tab_transactions, R.string.holding_tab_lots, R.string.holding_tab_classification)
+        // CR5 (41), AC-69: Lots, Transactions, Classification from left to right.
+        val labels = listOf(R.string.holding_tab_lots, R.string.holding_tab_transactions, R.string.holding_tab_classification)
         val lefts = labels.map { composeRule.onNode(isSelectable() and hasText(text(it))).fetchSemanticsNode().boundsInRoot.left }
-        assertTrue("Transactions, Lots, Classification from left to right: $lefts", lefts[0] < lefts[1] && lefts[1] < lefts[2])
+        assertTrue("Lots, Transactions, Classification from left to right: $lefts", lefts[0] < lefts[1] && lefts[1] < lefts[2])
         val classification = composeRule.onNode(isSelectable() and hasText(text(R.string.holding_tab_classification)))
         classification.performClick()
         classification.assertIsSelected()

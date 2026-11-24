@@ -35,10 +35,14 @@ sealed interface Lookup {
 
 /** What a quote of one ticker at the price source gave (16a). Every kind but [Priced] leaves the last price, stale (4.8). */
 sealed interface Quote {
-    /** The latest [price] per share, exact as sent (4.10), and its own [time] at the source (16a decision 4). */
+    /**
+     * The latest [price] per share, exact as sent (4.10), and its own [time] at the source (16a decision 4). CR5 (41):
+     * the [previousClose] the source gave with it, exact as sent, or null when it gave none (C24, section 7).
+     */
     data class Priced(
         val price: BigDecimal,
         val time: Instant,
+        val previousClose: BigDecimal? = null,
     ) : Quote
 
     /** The source answered and has no price for the ticker: Finnhub sends c = 0 and t = 0 (16a, checked 2026-11-08). */

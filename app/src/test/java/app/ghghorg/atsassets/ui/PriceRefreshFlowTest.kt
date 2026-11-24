@@ -87,6 +87,54 @@ class PriceRefreshFlowTest {
         assertKeptFieldsFresh(state, "after a refresh")
     }
 
+    // CR5 (41), section 7, AC-71: a refresh keeps the quote's previous close with the price, and a failed one after it
+    // keeps both, marked stale.
+    @Test
+    fun aRefresh_keepsThePreviousClose_andAFailedOneAfterItKeepsBothStale() {
+        val store = store()
+        val source = FakeSource().apply { quotes = mapOf("AAPL" to Quote.Priced(BigDecimal("160"), at, BigDecimal("158"))) }
+        var online = true
+        val vm = started(store, source = source, online = { online })
+        val fresh = Price(BigDecimal("160"), at, previousClose = BigDecimal("158"))
+        assertEquals(mapOf("AAPL" to fresh), store.savedPrices.single().first)
+        assertEquals(fresh, vm.state.value.instruments.single { it.ticker == "AAPL" }.price)
+        online = false
+        vm.onPullToRefresh()
+        assertEquals(fresh.copy(stale = true), vm.state.value.instruments.single { it.ticker == "AAPL" }.price)
+    }
+
+    // CR5 (41), AC-67: after a refresh with a previous close, every screen with a gain/loss has the same day line:
+    // 8 × ($160 − $158) = +$16.00, +1.27% (the lot of Feb 1 was held before the price's day, Oct 29).
+    @Test
+    fun aRefreshWithAPreviousClose_givesEveryScreenTheDayLine() {
+        val store = store().apply { storedPortfolios = listOf(Portfolio("p1", "Portfolio P", 1L)) }
+        val source = FakeSource().apply { quotes = mapOf("AAPL" to Quote.Priced(BigDecimal("160"), at, BigDecimal("158"))) }
+        val vm = started(store, source = source)
+        val expected = DayLineModel("+$16.00", SpokenFigure("16.00", FigureSign.PLUS), "+1.27%", SpokenFigure("1.27", FigureSign.PLUS))
+        val state = vm.state.value
+        assertEquals(expected, state.overall.day)
+        assertEquals(expected, state.overall.portfolios.single().figures.day)
+        assertEquals(expected, state.netWorthTotal.day)
+        assertEquals(expected, state.portfolioFigures("p1").day)
+        assertEquals(expected, state.portfolioHoldingRows("p1").single().day)
+        vm.openPortfolio("p1")
+        vm.openHolding("AAPL")
+        assertEquals(expected, vm.state.value.holdingHeader!!.day)
+        assertKeptFieldsFresh(vm.state.value, "after a refresh with a previous close")
+    }
+
+    // CR5 (41), AC-71: without a previous close (the first load after the upgrade), no screen has a day line.
+    @Test
+    fun withoutAPreviousClose_noScreenHasADayLine() {
+        val store = store().apply { storedPortfolios = listOf(Portfolio("p1", "Portfolio P", 1L)) }
+        val source = FakeSource().apply { quotes = mapOf("AAPL" to Quote.Priced(BigDecimal("160"), at)) }
+        val state = started(store, source = source).state.value
+        assertEquals(null, state.overall.day)
+        assertEquals(null, state.netWorthTotal.day)
+        assertEquals(null, state.portfolioFigures("p1").day)
+        assertEquals(null, state.portfolioHoldingRows("p1").single().day)
+    }
+
     @Test
     fun theLoad_offline_asksNothing_keepsTheLastPricesMarkedStale_andSaysTheRefreshFailed() {
         val store = store()
@@ -279,6 +327,9 @@ class PriceRefreshFlowTest {
         )
         assertEquals(state.priceRefresh, total.refresh)
         assertEquals(More.of(), state.more)
+        // CR5 (41), AC-68: both cards show the same Investments, net worth − cash.
+        assertEquals("$1,280.00", state.overall.investments)
+        assertEquals(state.overall.investments, total.investments)
     }
 
     @Test

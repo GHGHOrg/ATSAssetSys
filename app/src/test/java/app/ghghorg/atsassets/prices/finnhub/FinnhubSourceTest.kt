@@ -233,7 +233,11 @@ class FinnhubSourceTest {
     @Test
     fun quote_priced_readsThePriceAndItsTime_andSendsTheKeyInTheHeaderOnly() = runTest {
         val (source, connection) = quoting(200, AAPL_QUOTE)
-        assertEquals(Quote.Priced(BigDecimal("348.91"), Instant.ofEpochSecond(1_793_304_000)), source.quote("AAPL"))
+        // CR5 (41): with the previous close pc of the same answer (price-source note 10.2).
+        assertEquals(
+            Quote.Priced(BigDecimal("348.91"), Instant.ofEpochSecond(1_793_304_000), BigDecimal("343.83")),
+            source.quote("AAPL"),
+        )
         assertEquals("https://finnhub.io/api/v1/quote?symbol=AAPL", connection.opened.toString())
         assertEquals("testkey1", connection.getRequestProperty("X-Finnhub-Token"))
         assertFalse(connection.opened.toString().contains("testkey1"))
@@ -250,6 +254,26 @@ class FinnhubSourceTest {
         for (price in listOf("0.1", "0.0089", "541.9612", "12345.67")) {
             val body = """{"c":$price,"d":0,"dp":0,"h":0,"l":0,"o":0,"pc":0,"t":1793304000}"""
             assertEquals(price, Quote.Priced(BigDecimal(price), Instant.ofEpochSecond(1_793_304_000)), quoting(200, body).first.quote("X"))
+        }
+    }
+
+    // CR5 (41), C24: the previous close is kept exactly as sent, never as a double (4.10).
+    @Test
+    fun quote_keepsThePreviousCloseExactlyAsSent() = runTest {
+        for (close in listOf("0.1", "0.0089", "343.8300")) {
+            val body = """{"c":348.91,"pc":$close,"t":1793304000}"""
+            val quote = quoting(200, body).first.quote("X") as Quote.Priced
+            assertEquals(close, BigDecimal(close), quote.previousClose)
+            assertEquals(close, BigDecimal(close).scale(), quote.previousClose!!.scale())
+        }
+    }
+
+    // CR5 (41), C24: no usable pc (missing, null, text, 0 or below) means no previous close; the price is still read.
+    @Test
+    fun quote_withoutAUsablePreviousClose_isPriced_withNone() = runTest {
+        for (pc in listOf("", ""","pc":null""", ""","pc":"343.83"""", ""","pc":0""", ""","pc":-1""")) {
+            val body = """{"c":348.91,"t":1793304000$pc}"""
+            assertEquals(body, Quote.Priced(BigDecimal("348.91"), Instant.ofEpochSecond(1_793_304_000), null), quoting(200, body).first.quote("X"))
         }
     }
 

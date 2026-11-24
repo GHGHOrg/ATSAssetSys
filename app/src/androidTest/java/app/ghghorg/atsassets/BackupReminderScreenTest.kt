@@ -74,6 +74,9 @@ private fun overallState(
     saving = stage == BackupStage.WRITING,
 )
 
+// The net worth card's sentence for [overallState]: cash only, so Investments is $0.00 (CR5, 41).
+private fun overallNetWorthSpoken(): String = reminderText(R.string.net_worth_investments_spoken, reminderText(R.string.net_worth_spoken, "10,000.00"), "0.00")
+
 /**
  * Overall's backup reminder for TalkBack (32; spec section 9; AC-18, AC-56, AC-61 (d)): the banner says in words why a
  * backup is due, with the last backup's date and zone when there is one; Back up now and Dismiss are buttons, unavailable
@@ -103,7 +106,7 @@ class BackupReminderTalkBackTest {
         assertEquals("Back up now took its tap", 1, backUps)
         assertEquals("Dismiss took its tap", 1, dismissals)
         // Overall itself stays under the banner.
-        composeRule.onNode(hasContentDescription(reminderText(R.string.net_worth_spoken, "10,000.00"))).assertExists()
+        composeRule.onNode(hasContentDescription(overallNetWorthSpoken())).assertExists()
     }
 
     @Test
@@ -120,7 +123,7 @@ class BackupReminderTalkBackTest {
         show(overallState(lastBackup = REMINDER_NOW.minus(Duration.ofDays(7))))
         composeRule.onNode(button(R.string.backup_now)).assertDoesNotExist()
         composeRule.onNode(button(R.string.backup_due_dismiss)).assertDoesNotExist()
-        composeRule.onNode(hasContentDescription(reminderText(R.string.net_worth_spoken, "10,000.00"))).assertExists()
+        composeRule.onNode(hasContentDescription(overallNetWorthSpoken())).assertExists()
     }
 
     @Test
@@ -204,7 +207,7 @@ class BackupReminderLargestFontLandscapeTest {
         assertEquals("Dismiss took its tap", 1, dismissals)
         composeRule.onNodeWithText(string(R.string.backup_not_saved_file_remains)).performScrollTo().assertIsDisplayed()
         composeRule
-            .onNode(hasContentDescription(reminderText(R.string.net_worth_spoken, "10,000.00")))
+            .onNode(hasContentDescription(overallNetWorthSpoken()))
             .performScrollTo()
             .assertIsDisplayed()
         // Upright again before the next test (18, #150).

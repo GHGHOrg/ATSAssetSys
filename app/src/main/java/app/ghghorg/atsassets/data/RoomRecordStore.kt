@@ -343,7 +343,14 @@ class RoomRecordStore(
                 throw UnreadableDataException("The stored data could not be opened.", e)
             }
         }
-        dao.savePrices(fresh.mapValues { (_, price) -> price.perShare.toPlainString() to price.time.epochSecond }, failed, profiles, held)
+        dao.savePrices(
+            fresh.mapValues { (_, price) ->
+                StoredPrice(price.perShare.toPlainString(), price.time.epochSecond, price.previousClose?.toPlainString())
+            },
+            failed,
+            profiles,
+            held,
+        )
     }
 
     override suspend fun loadHidden(): List<HiddenHolding> = loadHidden(loadTransactions())
@@ -697,6 +704,7 @@ internal fun Instrument.toRow() = InstrumentRow(
     price = price?.perShare?.toPlainString(),
     priceTime = price?.time?.epochSecond,
     priceStale = price?.stale ?: false,
+    pricePreviousClose = price?.previousClose?.toPlainString(),
     sourceSector = profile?.sector,
     sourceGeography = profile?.geography,
     profileAsked = profile != null,
@@ -704,13 +712,15 @@ internal fun Instrument.toRow() = InstrumentRow(
 
 /**
  * Throws [UnreadableDataException] for a stored price that is not a decimal above 0, a price without its time or the
- * other way round, a time not above 0, or a stale flag without a price (16a). The messages name no value (spec 9).
+ * other way round, a time not above 0, or a stale flag without a price (16a); from CR5 (41), also for a previous close
+ * without a price, or one that is not a decimal above 0. The messages name no value (spec 9).
  */
 internal fun InstrumentRow.toInstrument(): Instrument {
     val stored =
         when {
             price == null && priceTime == null -> {
                 if (priceStale) throw UnreadableDataException("A stored instrument is stale without a price.")
+                if (pricePreviousClose != null) throw UnreadableDataException("A stored previous close has no price.")
                 null
             }
 
@@ -721,7 +731,12 @@ internal fun InstrumentRow.toInstrument(): Instrument {
                 if (perShare == null || perShare.signum() <= 0 || priceTime <= 0) {
                     throw UnreadableDataException("A stored price is damaged.")
                 }
-                Price(perShare, Instant.ofEpochSecond(priceTime), priceStale)
+                val previousClose =
+                    pricePreviousClose?.let { text ->
+                        text.toBigDecimalOrNull()?.takeIf { it.signum() > 0 }
+                            ?: throw UnreadableDataException("A stored previous close is damaged.")
+                    }
+                Price(perShare, Instant.ofEpochSecond(priceTime), priceStale, previousClose)
             }
         }
     return Instrument(ticker = ticker, assetType = AssetType.valueOf(assetType), verified = verified, price = stored, profile = toProfile())
@@ -738,13 +753,14 @@ internal fun InstrumentRow.toProfile(): SourceProfile? {
 }
 
 /**
- * This row with the price columns (16a) and the profile columns (23a) of [stored]: saving an instrument again keeps
- * both, since only a refresh sets them.
+ * This row with the price columns (16a; the previous close from CR5, 41) and the profile columns (23a) of [stored]:
+ * saving an instrument again keeps both, since only a refresh sets them.
  */
 internal fun InstrumentRow.withStoredOf(stored: InstrumentRow?): InstrumentRow = copy(
     price = stored?.price,
     priceTime = stored?.priceTime,
     priceStale = stored?.priceStale ?: false,
+    pricePreviousClose = stored?.pricePreviousClose,
     sourceSector = stored?.sourceSector,
     sourceGeography = stored?.sourceGeography,
     profileAsked = stored?.profileAsked ?: false,

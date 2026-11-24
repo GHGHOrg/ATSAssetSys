@@ -19,7 +19,7 @@ android {
         targetSdk = 37
         // 38a decisions 2 and 2d: MAJOR.MINOR.PATCH; the first release (38c) is 0.38.0, the first productive one (40)
         // 1.0.0. versionCode rises with every build that is installed.
-        versionCode = 50
+        versionCode = 51
         versionName = "1.0.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
@@ -58,10 +58,78 @@ android {
         // 36 decision 1: for BACKUP_DUE_AFTER_MINUTES.
         buildConfig = true
     }
+    // 41 step 5 (AC-71, plan/release.md section 3): the schemas Room writes are the screen tests' assets, so
+    // MigrationFrom14Test builds 1.0.0's database from 14.json.
+    sourceSets {
+        getByName("androidTest").assets.directories.add("$projectDir/schemas")
+    }
 }
 
 room3 {
     schemaDirectory("$projectDir/schemas")
+}
+
+// 41 decision 1 (CR5, AC-70): the release build's runtime library groups, written for LicenceListTest, which compares
+// them with About's list (ui/Licences.kt), so a library added or removed without the list turns the build red. A platform
+// (a BOM) ships no code and is left out; the app's own modules are not libraries.
+abstract class RuntimeGroups : DefaultTask() {
+    @get:Input
+    abstract val groups: SetProperty<String>
+
+    @get:OutputFile
+    abstract val output: RegularFileProperty
+
+    @TaskAction
+    fun write() {
+        output.get().asFile.writeText(groups.get().sorted().joinToString("\n", postfix = "\n"))
+    }
+}
+
+object LibraryGroups {
+    private val PLATFORMS = setOf("platform", "enforced-platform")
+
+    fun of(root: ResolvedComponentResult): Set<String> {
+        val seen = mutableSetOf<ComponentIdentifier>()
+        val groups = sortedSetOf<String>()
+        val pending = ArrayDeque(listOf(root))
+        while (pending.isNotEmpty()) {
+            val component = pending.removeFirst()
+            if (!seen.add(component.id)) continue
+            val id = component.id
+            if (id is ModuleComponentIdentifier && !isPlatform(component)) groups.add(id.group)
+            component.dependencies.filterIsInstance<ResolvedDependencyResult>().forEach { pending.add(it.selected) }
+        }
+        return groups
+    }
+
+    private fun isPlatform(component: ResolvedComponentResult): Boolean =
+        component.variants.any { variant ->
+            val category = variant.attributes.keySet().firstOrNull { it.name == "org.gradle.category" }
+            category != null && variant.attributes.getAttribute(category).toString() in PLATFORMS
+        }
+}
+
+class RuntimeGroupsArgument(
+    @get:Internal val file: Provider<RegularFile>,
+) : CommandLineArgumentProvider {
+    override fun asArguments(): List<String> = listOf("-Datsassets.runtimeGroups=${file.get().asFile.absolutePath}")
+}
+
+val runtimeGroups =
+    tasks.register<RuntimeGroups>("runtimeGroups") {
+        groups.set(
+            configurations.named("releaseRuntimeClasspath").flatMap { classpath ->
+                classpath.incoming.resolutionResult.rootComponent
+                    .map { root -> LibraryGroups.of(root) }
+            },
+        )
+        output.set(layout.buildDirectory.file("licences/runtime-groups.txt"))
+    }
+
+tasks.withType<Test>().configureEach {
+    val groupsFile = runtimeGroups.flatMap { it.output }
+    inputs.file(groupsFile).withPropertyName("runtimeGroups").withPathSensitivity(PathSensitivity.NONE)
+    jvmArgumentProviders.add(RuntimeGroupsArgument(groupsFile))
 }
 
 dependencies {
@@ -93,6 +161,9 @@ dependencies {
     androidTestImplementation(libs.androidx.espresso.core)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(testFixtures(project(":core")))
+    // 41 step 5 (your A, 2026-11-24): Room's MigrationTestHelper, a second check of the migration from 14 beside
+    // MigrationFrom14Test's file built by hand; screen tests only, not in the app.
+    androidTestImplementation(libs.androidx.room3.testing)
     debugImplementation(libs.androidx.compose.ui.test.manifest)
     debugImplementation(libs.androidx.compose.ui.tooling)
 }

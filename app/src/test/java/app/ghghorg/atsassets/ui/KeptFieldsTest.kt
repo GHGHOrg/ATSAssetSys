@@ -4,6 +4,7 @@ import app.ghghorg.atsassets.core.AssetType
 import app.ghghorg.atsassets.core.CashEntry
 import app.ghghorg.atsassets.core.CashType
 import app.ghghorg.atsassets.core.ClassList
+import app.ghghorg.atsassets.core.DayChanges
 import app.ghghorg.atsassets.core.Fraction
 import app.ghghorg.atsassets.core.HiddenHolding
 import app.ghghorg.atsassets.core.Holdings
@@ -35,6 +36,8 @@ internal fun assertKeptFieldsFresh(
     // 16a: at each instrument's latest price, or at cost without one.
     val prices = instruments.mapNotNull { instrument -> instrument.price?.let { instrument.ticker to it } }.toMap()
     assertEquals("$case: net worth", Valuation.netWorthOf(entries, Holdings.holdings(transactions, today), prices, today), netWorth)
+    // CR5 (41): every holding's 1-day figure, as worked out from nothing.
+    assertEquals("$case: day changes", DayChanges.byHolding(transactions, Holdings.holdings(transactions, today), prices, today), dayChanges)
     assertEquals("$case: holding lots", KeptFields.holdingLots(transactions, portfolioId, holdingTicker, today), holdingLots)
     assertEquals("$case: hide offered", KeptFields.hideOffered(transactions, hidden, portfolioId, holdingTicker), hideOffered)
     assertEquals(

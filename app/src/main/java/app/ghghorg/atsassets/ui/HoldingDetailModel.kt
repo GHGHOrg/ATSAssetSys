@@ -1,6 +1,7 @@
 package app.ghghorg.atsassets.ui
 
 import app.ghghorg.atsassets.core.ClassList
+import app.ghghorg.atsassets.core.DayChange
 import app.ghghorg.atsassets.core.EffectiveClass
 import app.ghghorg.atsassets.core.Fraction
 import app.ghghorg.atsassets.core.Holding
@@ -61,9 +62,14 @@ data class HoldingHeaderModel(
     val refreshFailed: Boolean,
     // 30 decision 3: it failed because no price source key is saved, so the line names the missing key.
     val refreshNoKey: Boolean = false,
+    // CR5 (41): the holding's 1-day line, null for none (4.8, C24).
+    val day: DayLineModel? = null,
 )
 
-/** One lot on the Lots tab (wireframe 06 marker 5); [stale] when its gain comes from a stale price. */
+/**
+ * One lot on the Lots tab (wireframe 06 marker 5); [stale] when its gain comes from a stale price. CR5 (41): [value] is
+ * the lot's current value, remaining quantity × the price, or its cost with "no price" (4.8).
+ */
 data class LotRowModel(
     val key: String,
     // YYYY-MM-DD; the screen adds "ET".
@@ -73,6 +79,8 @@ data class LotRowModel(
     val spokenPerShare: String,
     val cost: String,
     val spokenCost: String,
+    val value: String,
+    val spokenValue: String,
     val gain: GainModel,
     val stale: Boolean,
 )
@@ -138,6 +146,7 @@ object HoldingDetail {
         refreshing: Boolean,
         refreshFailed: Boolean,
         refreshNoKey: Boolean = false,
+        day: DayChange? = null,
     ): HoldingHeaderModel {
         val valued = Valuation.valued(holding, price)
         val shares = Quantity.format(holding.shares)
@@ -156,16 +165,22 @@ object HoldingDetail {
             refreshing = refreshing,
             refreshFailed = refreshFailed,
             refreshNoKey = refreshNoKey,
+            // Wireframe 03 marker 5, as on its row: a fully sold holding shows no day line.
+            day = if (soldOut) null else DayLine.of(day),
         )
     }
 
-    /** Each lot with its gain at [price], in the order given (oldest first, 4.4). */
+    /**
+     * Each lot with its gain at [price], in the order given (oldest first, 4.4). CR5 (41): its current value, remaining
+     * quantity × [price] exactly, rounded once (4.10), or its cost when there is no price (4.8).
+     */
     fun lots(
         lots: List<Lot>,
         price: Price?,
     ): List<LotRowModel> = lots.map { lot ->
         val perShare = Money.formatPerShare(lot.costPerShare)
         val cost = Money.format(lot.cost)
+        val value = Money.format(price?.let { lot.remainingQuantity * Fraction.of(it.perShare) } ?: lot.cost)
         LotRowModel(
             key = lot.buyId,
             date = lot.buyDate.toString(),
@@ -174,6 +189,8 @@ object HoldingDetail {
             spokenPerShare = digits(perShare),
             cost = cost,
             spokenCost = digits(cost),
+            value = value,
+            spokenValue = digits(value),
             gain = gainOf(Valuation.lotGain(lot, price)),
             stale = price?.stale ?: false,
         )

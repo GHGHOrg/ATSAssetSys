@@ -5,7 +5,8 @@ import java.time.ZoneId
 import java.time.ZoneOffset
 
 /*
- * More as the screen draws it (section 6, More; wireframe 10f; CR2, 17): the last backup line and the four entries.
+ * More as the screen draws it (section 6, More; wireframe 10f; CR2, 17): the last backup line and the five entries
+ * (About from CR5, 41).
  * Plain Kotlin: the screen picks the approved string for each.
  */
 
@@ -21,6 +22,9 @@ enum class MoreEntry {
 
     // 31: Backup and restore (wireframe 10e).
     BACKUP,
+
+    // CR5 (41): About (wireframe 11 marker 1), the fifth entry.
+    ABOUT,
 }
 
 /**
@@ -42,6 +46,6 @@ object More {
     ): MoreModel = MoreModel(
         lastBackup = Backups.lastBackup(lastBackup, zone),
         backupInterrupted = backupInterrupted,
-        entries = listOf(MoreEntry.NET_WORTH, MoreEntry.ALLOCATION, MoreEntry.REALIZED_GAINS, MoreEntry.BACKUP),
+        entries = listOf(MoreEntry.NET_WORTH, MoreEntry.ALLOCATION, MoreEntry.REALIZED_GAINS, MoreEntry.BACKUP, MoreEntry.ABOUT),
     )
 }

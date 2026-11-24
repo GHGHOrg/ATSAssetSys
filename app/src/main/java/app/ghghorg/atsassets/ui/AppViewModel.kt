@@ -2,6 +2,7 @@ package app.ghghorg.atsassets.ui
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import app.ghghorg.atsassets.BuildConfig
 import app.ghghorg.atsassets.backup.BackupTarget
 import app.ghghorg.atsassets.backup.FileBytes
 import app.ghghorg.atsassets.backup.RestoreFile
@@ -30,6 +31,7 @@ import app.ghghorg.atsassets.core.ClassList
 import app.ghghorg.atsassets.core.ClassLists
 import app.ghghorg.atsassets.core.ClassOverride
 import app.ghghorg.atsassets.core.Classification
+import app.ghghorg.atsassets.core.DayChange
 import app.ghghorg.atsassets.core.DeletionCheck
 import app.ghghorg.atsassets.core.DeletionSummary
 import app.ghghorg.atsassets.core.Fraction
@@ -188,6 +190,9 @@ enum class Screen {
     // Backup and restore (wireframe 10e frame A, iteration 31), opened from More.
     BACKUP,
 
+    // About (wireframe 11, CR5, iteration 41), opened from More.
+    ABOUT,
+
     // The restore wizard (wireframe 10e frames C to F, iteration 33b), opened from Backup and restore.
     RESTORE,
 }
@@ -336,7 +341,7 @@ data class HiddenRow(
     val lastTransaction: LocalDate?,
 )
 
-/** Holding detail's tabs (view 6). Classification joins in 23 (10 decision 1). Never saved. */
+/** Holding detail's tabs (view 6). Classification joins in 23 (10 decision 1). Never saved. Shown Lots first (CR5). */
 enum class HoldingTab {
     TRANSACTIONS,
     LOTS,
@@ -606,9 +611,12 @@ data class AppState(
     val checking: Boolean = false,
     // Create a portfolio was tapped from the Buy notice: after the portfolio is created, Buy opens (criterion 24).
     val buyAfterPortfolio: Boolean = false,
-    // The holding on HOLDING: this ticker in the portfolio of portfolioId (iteration 10), and its tab.
+    // The holding on HOLDING: this ticker in the portfolio of portfolioId (iteration 10), and its tab (Lots first, CR5).
     val holdingTicker: String? = null,
-    val holdingTab: HoldingTab = HoldingTab.TRANSACTIONS,
+    val holdingTab: HoldingTab = HoldingTab.LOTS,
+    // CR5 (41): About's licence rows opened on this visit (all closed when it opens), and the version the app reports.
+    val aboutOpen: Set<String> = emptySet(),
+    val versionName: String = BuildConfig.VERSION_NAME,
     // 15: the hidden holdings as stored; HOLDING was opened from Hidden holdings, so Back returns there (decision 3);
     // why a Hide or Unhide was not saved.
     val hidden: List<HiddenHolding> = emptyList(),
@@ -761,6 +769,8 @@ data class AppState(
     val holdings: List<Holding> = KeptFields.holdings(transactions, today),
     // Cash as of today plus every holding at its latest price, or at cost without one, as of today (4.8; 16a).
     val netWorth: Fraction = KeptFields.netWorth(entries, holdings, instruments, today),
+    // CR5 (41): every holding's 1-day figure, by (portfolio id, ticker), null for none (4.8, C24, C25); from one ledger.
+    val dayChanges: Map<Pair<String, String>, DayChange?> = KeptFields.dayChanges(transactions, holdings, instruments, today),
     // The shown holding's lots with shares as of today, oldest first (view 6, 4.4).
     val holdingLots: List<Lot> = KeptFields.holdingLots(transactions, portfolioId, holdingTicker, today),
     // Hide on the shown holding (15 decision 1).
@@ -872,7 +882,15 @@ data class AppState(
     val holdingHeader: HoldingHeaderModel?
         get() {
             val holding = shownHolding ?: return null
-            return HoldingDetail.header(holding, shownPortfolio?.name.orEmpty(), shownPrice, refreshing, refreshFailed, refreshNoKey)
+            return HoldingDetail.header(
+                holding,
+                shownPortfolio?.name.orEmpty(),
+                shownPrice,
+                refreshing,
+                refreshFailed,
+                refreshNoKey,
+                dayChanges[holding.portfolioId to holding.ticker],
+            )
         }
 
     /** Its Lots tab's rows, with each lot's gain at the latest price (view 6; CR2, 16a step 6). */
@@ -904,7 +922,7 @@ data class AppState(
     }
 
     /** A portfolio's value, cost and gain/loss as the Portfolios list and its screen draw them (view 3; CR2, 16a). */
-    fun portfolioFigures(portfolioId: String): PortfolioFiguresModel = PortfolioFigures.of(holdingsOf(portfolioId), KeptFields.prices(instruments))
+    fun portfolioFigures(portfolioId: String): PortfolioFiguresModel = PortfolioFigures.of(holdingsOf(portfolioId), KeptFields.prices(instruments), dayChanges)
 
     /** The price refresh as the Portfolios list and a portfolio's screen draw it (16b), Overall and the sell screen (16c). */
     val priceRefresh: PriceRefreshModel
@@ -912,12 +930,20 @@ data class AppState(
 
     /** Overall as the screen draws it (view 1; CR2, 16c). */
     val overall: OverallModel
-        get() = Overall.of(netWorth, holdings, portfolios, ::holdingsOf, KeptFields.prices(instruments), priceRefresh)
+        get() = Overall.of(netWorth, holdings, portfolios, ::holdingsOf, KeptFields.prices(instruments), priceRefresh, dayChanges)
 
     /** Net Worth (Total) as the screen draws it (view 2; CR2, 17): cash as of today and each portfolio's value (4.8). */
     val netWorthTotal: NetWorthModel
         get() =
-            NetWorthTotal.of(CashRules.balanceOn(entries, today), holdings, portfolios, ::holdingsOf, KeptFields.prices(instruments), priceRefresh)
+            NetWorthTotal.of(
+                CashRules.balanceOn(entries, today),
+                holdings,
+                portfolios,
+                ::holdingsOf,
+                KeptFields.prices(instruments),
+                priceRefresh,
+                dayChanges,
+            )
 
     /**
      * A breakdown of net worth (view 1, view 2; CR2, 18): cash as of today and each holding at its price or at cost, null
@@ -965,6 +991,10 @@ data class AppState(
     /** More as the screen draws it (section 6; CR2, 17). */
     val more: MoreModel
         get() = More.of(lastBackup, zone, backupInterrupted)
+
+    /** CR5 (41): About as the screen draws it (wireframe 11; CR2). */
+    val about: AboutModel
+        get() = About.of(versionName, aboutOpen)
 
     /** 31: Backup and restore as the screen draws it (wireframe 10e frames A and B; CR2). */
     val backupScreen: BackupModel
@@ -1078,7 +1108,7 @@ data class AppState(
         }
 
     /** A portfolio's holding rows as its screen draws them (view 3; CR2, 16a). */
-    fun portfolioHoldingRows(portfolioId: String): List<PortfolioHoldingRowModel> = PortfolioFigures.rows(holdingsOf(portfolioId), KeptFields.prices(instruments))
+    fun portfolioHoldingRows(portfolioId: String): List<PortfolioHoldingRowModel> = PortfolioFigures.rows(holdingsOf(portfolioId), KeptFields.prices(instruments), dayChanges)
 
     /** The derived price per share (4.3), shown as the fields change; null until quantity and total are both valid. */
     val buyPricePerShare: Fraction?
@@ -1983,6 +2013,26 @@ class AppViewModel(
         val current = mutableState.value
         if (current.screen != Screen.TABS || current.tab != Tab.MORE || current.saving) return
         mutableState.update { it.copy(screen = Screen.REALIZED_GAINS).leftGains() }
+    }
+
+    /** CR5 (41): About, from More (wireframe 11 marker 1); every licence row starts closed. */
+    fun openAbout() {
+        val current = mutableState.value
+        if (current.screen != Screen.TABS || current.tab != Tab.MORE || current.saving) return
+        mutableState.update { it.copy(screen = Screen.ABOUT, aboutOpen = emptySet()) }
+    }
+
+    /** "<" or Android Back: back to More. */
+    fun closeAbout() {
+        if (mutableState.value.screen != Screen.ABOUT) return
+        mutableState.update { it.copy(screen = Screen.TABS, aboutOpen = emptySet()) }
+    }
+
+    /** A licence row opens in place, or closes (wireframe 11 marker 3); unknown names are ignored. */
+    fun toggleAboutRow(name: String) {
+        val current = mutableState.value
+        if (current.screen != Screen.ABOUT || Licences.ALL.none { it.name == name }) return
+        mutableState.update { it.copy(aboutOpen = if (name in it.aboutOpen) it.aboutOpen - name else it.aboutOpen + name) }
     }
 
     /** "<" or Android Back: back to More; the dates and the expanded holdings end with the screen (decision 2). */
@@ -3109,7 +3159,7 @@ class AppViewModel(
     /** [state] as of today in New York, with its holdings and net worth for its records (4.8). */
     private fun valued(state: AppState): AppState = state.copy(today = marketDate.today()).refreshed()
 
-    /** Opens a holding from its row on the portfolio's screen (view 6). Unknown tickers are ignored. */
+    /** Opens a holding from its row on the portfolio's screen (view 6), on its Lots tab (CR5). Unknown tickers are ignored. */
     fun openHolding(ticker: String) {
         val current = mutableState.value
         val id = current.portfolioId ?: return
@@ -3118,7 +3168,7 @@ class AppViewModel(
             it.copy(
                 screen = Screen.HOLDING,
                 holdingTicker = ticker,
-                holdingTab = HoldingTab.TRANSACTIONS,
+                holdingTab = HoldingTab.LOTS,
                 portfolioMenuOpen = false,
                 overrideRefusal = null,
             )
@@ -3184,7 +3234,7 @@ class AppViewModel(
         val id = current.portfolioId ?: return
         if (current.screen != Screen.HIDDEN_HOLDINGS || HiddenHolding(id, ticker) !in current.hidden) return
         mutableState.update {
-            it.copy(screen = Screen.HOLDING, holdingTicker = ticker, holdingTab = HoldingTab.TRANSACTIONS, holdingFromHidden = true, hideRefusal = null)
+            it.copy(screen = Screen.HOLDING, holdingTicker = ticker, holdingTab = HoldingTab.LOTS, holdingFromHidden = true, hideRefusal = null)
         }
     }
 
@@ -5072,6 +5122,7 @@ class AppViewModel(
                 Screen.TRANSACTION_HISTORY,
                 Screen.BACKUP,
                 Screen.RESTORE,
+                Screen.ABOUT,
             )
     }
 }

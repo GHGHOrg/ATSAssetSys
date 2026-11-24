@@ -135,7 +135,8 @@ private fun PortfolioRow(
             stringResource(R.string.portfolio_row_empty_spoken, portfolio.name, count, dollars)
         } else {
             val base = stringResource(R.string.portfolio_row_spoken, portfolio.name, count, dollars, spoken(figures.gain.spoken))
-            if (atCost) stringResource(R.string.portfolio_row_at_cost_spoken, base) else base
+            // CR5 (41), AC-67: then its 1-day line.
+            daySpoken(if (atCost) stringResource(R.string.portfolio_row_at_cost_spoken, base) else base, figures.day)
         }
     OutlinedCard(modifier = Modifier.fillMaxWidth()) {
         Column(
@@ -172,6 +173,8 @@ private fun PortfolioRow(
                     style = MaterialTheme.typography.bodyMedium,
                     color = gainLossColor(sign(figures.gain)),
                 )
+                // CR5 (41), wireframe 03 marker 1: the 1-day line under the gain/loss.
+                figures.day?.let { DayRowText(it) }
             }
         }
     }

@@ -34,12 +34,15 @@ data class SourceProfile(
 
 /**
  * The latest price of an instrument (spec 3, 4.8): [perShare] exact as the source sent it (4.10), its own [time] at the
- * source (16a decision 4), and [stale] when the last refresh did not give a fresh quote for it.
+ * source (16a decision 4), and [stale] when the last refresh did not give a fresh quote for it. CR5 (41): the
+ * [previousClose] that came with it (spec 3, section 7), null when the source gave none or before the first refresh
+ * after the upgrade (AC-71); a stale price keeps its own.
  */
 data class Price(
     val perShare: BigDecimal,
     val time: Instant,
     val stale: Boolean = false,
+    val previousClose: BigDecimal? = null,
 )
 
 /** What the price source says about a ticker. Null means the source does not state it (4.3: then accepted). */

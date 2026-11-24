@@ -111,7 +111,8 @@ class HoldingTalkBackTest {
                     text(R.string.spoken_plus, "80.00"),
                     text(R.string.holding_price_spoken, "160.00", "2026-10-29 16:00"),
                 ),
-                text(R.string.holding_lot_gain_spoken, "2026-02-01", "8", "150.00", "1,200.00", text(R.string.spoken_plus, "80.00")),
+                // CR5 (41), AC-69: the lot also reads its value.
+                text(R.string.holding_lot_gain_spoken, "2026-02-01", "8", "150.00", "1,200.00", "1,280.00", text(R.string.spoken_plus, "80.00")),
             )
         expected.forEach { composeRule.onNode(hasContentDescription(it)).assertExists() }
     }
@@ -131,7 +132,15 @@ class HoldingTalkBackTest {
                     text(R.string.spoken_minus, "80.00"),
                     text(R.string.holding_price_stale_spoken, "140.00", "2026-10-29 16:00"),
                 ),
-                text(R.string.holding_lot_gain_stale_spoken, "2026-02-01", "8", "150.00", "1,200.00", text(R.string.spoken_minus, "80.00")),
+                text(
+                    R.string.holding_lot_gain_stale_spoken,
+                    "2026-02-01",
+                    "8",
+                    "150.00",
+                    "1,200.00",
+                    "1,120.00",
+                    text(R.string.spoken_minus, "80.00"),
+                ),
             )
         expected.forEach { composeRule.onNode(hasContentDescription(it)).assertExists() }
     }

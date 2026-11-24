@@ -5,14 +5,14 @@ import org.junit.Test
 import java.time.Instant
 import java.time.ZoneId
 
-// 17, 19, 26 and 31: More as the screen draws it (section 6, More; wireframe 10f; CR2).
+// 17, 19, 26, 31 and 41 (CR5): More as the screen draws it (section 6, More; wireframes 10f and 11; CR2).
 class MoreModelTest {
-    private val entries = listOf(MoreEntry.NET_WORTH, MoreEntry.ALLOCATION, MoreEntry.REALIZED_GAINS, MoreEntry.BACKUP)
+    private val entries = listOf(MoreEntry.NET_WORTH, MoreEntry.ALLOCATION, MoreEntry.REALIZED_GAINS, MoreEntry.BACKUP, MoreEntry.ABOUT)
 
-    // Wireframe 10f's order (AC-58): Net Worth (Total), Allocation, Realized gains, Backup and restore; with no backup
-    // yet, "never backed up".
+    // Wireframe 10f's order (AC-58): Net Worth (Total), Allocation, Realized gains, Backup and restore, and from CR5 About
+    // as the fifth (wireframe 11 marker 1, AC-70); with no backup yet, "never backed up".
     @Test
-    fun more_withNoBackup_isNeverBackedUp_withTheFourEntriesInOrder() {
+    fun more_withNoBackup_isNeverBackedUp_withTheFiveEntriesInOrder() {
         assertEquals(MoreModel(lastBackup = null, backupInterrupted = false, entries = entries), More.of())
     }
 
