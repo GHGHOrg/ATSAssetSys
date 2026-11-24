@@ -1,6 +1,6 @@
 # plan/iterations/40-release-1.0.0.md
 
-Stage: Build. Status: Approved 2026-11-24 (your yes); step 1 built. Decisions 0 to 4 settled the same day (your A, B, A, A, A; section 11). Branch iter-40-release-1.0.0, from main (e5253a2).
+Stage: Build. Status: Approved 2026-11-24 (your yes); step 1 built; step 2 (the Deploy review since v0.38.0) done, no High or Medium finding (13.2). Decisions 0 to 4 settled the same day (your A, B, A, A, A; section 11). Branch iter-40-release-1.0.0, from main (e5253a2).
 Source: intent/intent-cr-04-release-process.md (CR4, final); spec/spec.md v7; plan/release.md (a release's steps); CLAUDE.md section 4 (version rules; 38a decision 2d: "1.0.0 comes when you call the app productive"). No intent file: the app's code does not change (your decision 2026-11-24, after the About screen was dropped).
 
 ## 1. Outcome
@@ -42,12 +42,12 @@ Your app is the signed release `1.0.0` (versionCode 50), installed over `0.38.0`
 Each step that changes files ends with spotlessCheck, build, tests and lint, with --rerun-tasks, and the report. Then I stop. Steps 4 to 8 are on your PC and phone, and each command asks.
 1. This file, plan.md's lines.
 2. The Deploy review since v0.38.0 (plan/release.md step 1): 39's and 39a's Deploy findings, the commits `v0.38.0..main`, the schema and backup format versions in the code, release.yml's checkout, `gh release create --help`. Findings by severity, each with how it is handled. Written into section 13.
-3. Version raise: versionName `1.0.0`, versionCode 50; plan/release.md's version rule; the version check as a dry run in Git Bash (`bash .github/scripts/release-version-check.sh`, expecting "versionCode 50 is higher than v0.38.0's 49"). Pull request 1 and its merge (you, or once at your word).
+3. Version raise: versionName `1.0.0`, versionCode 50; plan/release.md's version rule and step 9's `--verify-tag` (13.2, finding 1); the version check as a dry run in Git Bash (`bash .github/scripts/release-version-check.sh`, expecting "versionCode 50 is higher than v0.38.0's 49"). Pull request 1 and its merge (you, or once at your word).
 4. The tag, by you, on main's merge commit of step 3 (plan/release.md step 3), with decision 3's message: `git tag -s v1.0.0 <merge commit> -m "…"`, `git tag -v v1.0.0`, `git push origin v1.0.0`. release.yml runs; I watch it, download `release-v1.0.0` to the scratchpad and you copy it to your own folder (as 38c); I record both SHA-256.
 5. Signing, by you, in your terminal (plan/release.md step 5); then I run `apksigner verify --print-certs -Werr`, `zipalign -c`, aapt2 and `Get-FileHash` (no password). The certificate SHA-256 must equal 8115d618…cb01; otherwise the step stops.
 6. Backup on the phone with 0.38.0 (plan/release.md step 6): you note the Cash balance and each portfolio's cost on Overall; More, Back up now, Save. This backup is the rollback's and is kept until the next release.
 7. Install and smoke check: `adb devices`; `adb install -r` of the signed APK (AC-35); `dumpsys` (versionCode 50, `1.0.0`, uid 10455 kept, no DEBUGGABLE); on the phone the smoke check (AC-64: unlock; the figures of step 6; a holding opens; a price update; a backup export); a Logcat capture by uid during it, read for crashes and for any amount, ticker, key or URL (spec section 9).
-8. The record (AC-63): the notes from plan/release.md section 5 with decision 1's milestone line and summary, shown to you first (section 12); `gh release create v1.0.0 --title "1.0.0" --notes-file <file> --draft --latest`, by you or once at your word; you read the draft on GitHub and publish it (decision 4).
+8. The record (AC-63): the notes from plan/release.md section 5 with decision 1's milestone line and summary, shown to you first (section 12); `gh release create v1.0.0 --verify-tag --title "1.0.0" --notes-file <file> --draft --latest` (13.2, finding 1), by you or once at your word; you read the draft on GitHub and publish it (decision 4).
 9. The Deploy review of 40, findings by severity; CLAUDE.md section 4; pull request 2 with the records of steps 4 to 9 (CLAUDE.md: a release needs two pull requests).
 
 ## 7. Stubs
@@ -85,7 +85,20 @@ None.
 - Draft 2026-11-24; your B on "use with real data starts" added to decision 0 the same day; approved the same day (your yes).
 
 ### 13.1 Steps
-- Step 1 (2026-11-24): this file; plan.md (section 2's list, rows 40 in sections 4 and 11, the change log). Only documents changed. Both apps' versions read from the phone (`dumpsys`, read only; section 4).
+- Step 1 (2026-11-24): this file; plan.md (section 2's list, rows 40 in sections 4 and 11, the change log). Only documents changed. Both apps' versions read from the phone (`dumpsys`, read only; section 4). Full run green in 2m 29s at the first try; 1,513 unit tests (1 skipped), 178 screen tests compiled, lint the same 7 (report 11:34:16). Committed as e9d88e5.
+- Step 2 (2026-11-24): the Deploy review since v0.38.0, by reading (13.2). `git log --first-parent v0.38.0..main`: 9 merges, #221 to #229. `git diff v0.38.0 main`: 15 files; none under app/src/main, core/src/main, the module build files or the keep rules. AtsDatabase.kt:594 `version = 14`; BackupFile.kt:45 `FORMAT_VERSION = 1`. release.yml: `actions/checkout@v6` with `fetch-depth: 0` ("The earlier release tags, for the versionCode check"). gh 2.103.3, `gh release create --help`: `-d, --draft` "Save the release as a draft instead of publishing it"; `--latest` "Mark this release as "Latest" (default [automatic based on date and version])"; `--verify-tag` "Abort in case the git tag doesn't already exist in the remote repository"; `--target` "for the automatic tag creation" (default the main branch).
+
+### 13.2 Deploy review since v0.38.0 (step 2, 2026-11-24)
+The Deploy review of everything since the last release (plan/release.md step 1; Ruleset A rule 6): the commits `v0.38.0..main` (#221 to #229), 39's and 39a's Deploy reviews (each: no High, Medium or Low finding), against spec.md v7 (C21 to C23, section 8, section 9, AC-35, AC-63, AC-64) and plan/release.md. No High or Medium finding.
+What held:
+- No app code changed since v0.38.0: no file under app/src/main, core/src/main, app/build.gradle.kts, core/build.gradle.kts or the keep rules. K1 to K10's boundaries, logging (spec section 9) and exact arithmetic (4.10) are as released. The changes: the build tools (39: Gradle 9.6.0 to 9.9.2 with the wrapper's checksums checked against Gradle's published values, Spotless 8.10.4 to 8.12.0, KSP 2.3.12 to 2.3.14; 39 found the debug and release dex the same byte for byte), kotlinx-coroutines-test 1.9.0 to 1.11.0 (tests only), three unit-test files (39a), the README and documents.
+- Schema version 14 and backup format version 1, both unchanged: no migration test and no format note (plan/release.md section 3); step 6's backup restores into 0.38.0 if a rollback is needed.
+- release.yml checks out with `fetch-depth: 0`, so the tag run should see v0.38.0 for the versionCode comparison (risk 2; my reading of actions/checkout, not looked up; step 4's log is the proof).
+Findings:
+1. Low, plan/release.md step 9's command has no `--verify-tag`. If `v1.0.0` were not on GitHub when the command runs (a push forgotten or failed), `gh release create` would create the tag itself on the main branch (`--target`'s "automatic tag creation"), unsigned, and the release would rest on it, against AC-63's signed tag. Handled (2026-11-24, your A): `--verify-tag` added to step 8's command now, and to plan/release.md step 9 in step 3; with it the command stops and creates nothing when the tag is not on GitHub. Not chosen: (B) no flag, `git ls-remote --tags origin v1.0.0` shown before step 8; (C) left as it is, step 4's push and watch being the check.
+2. Info, `--latest` on a draft: the help does not say whether a draft keeps the "Latest" choice until it is published. GitHub's publish page shows its own "Set as the latest release" choice; step 8 checks it there, and reads the releases list after publishing.
+3. Info, a stronger check that the code is the same: mapping.txt is R8's map of the release code. If `release-v1.0.0`'s mapping.txt has the same SHA-256 as v0.38.0's (D796D74DCC1E349F851C5960746F5A78DC6BCB56BD11118EE9F42DA9833B9436, 38c step 5), the release code is renamed the same way as 0.38.0's. Added to step 4's record, not a gate: a different hash is read, not taken as a failure.
+4. Info, open items 60 and 73 (local build, screen tests) may need re-runs unchanged; open item 71's "A resource failed to call release" lines are expected in step 7's Logcat (38c step 7d saw 25).
 
 ## 14. Departures from the plan
 None yet.
