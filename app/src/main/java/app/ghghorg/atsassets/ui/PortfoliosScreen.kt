@@ -126,7 +126,8 @@ private fun PortfolioRow(
             pluralStringResource(R.plurals.portfolio_holding_count, holdings.size, holdings.size)
         }
     val value = figures.value
-    val gain = figures.gain.text
+    // CR6 (43): with its percentage; all at cost has none (no priced cost, 4.8).
+    val gain = gainFigures(figures.gain)
     val atCost = figures.allAtCost
     val dollars = figures.spokenValue
     // Wireframe 3 shows no gain/loss line on a portfolio with no holdings ("Retirement").
@@ -134,7 +135,7 @@ private fun PortfolioRow(
         if (holdings.isEmpty()) {
             stringResource(R.string.portfolio_row_empty_spoken, portfolio.name, count, dollars)
         } else {
-            val base = stringResource(R.string.portfolio_row_spoken, portfolio.name, count, dollars, spoken(figures.gain.spoken))
+            val base = stringResource(R.string.portfolio_row_spoken, portfolio.name, count, dollars, gainSpoken(figures.gain))
             // CR5 (41), AC-67: then its 1-day line.
             daySpoken(if (atCost) stringResource(R.string.portfolio_row_at_cost_spoken, base) else base, figures.day)
         }

@@ -220,8 +220,10 @@ private fun SummaryCard(
             SummaryLine(stringResource(R.string.portfolio_cost_label), figures.cost, figures.spokenCost, MaterialTheme.typography.bodyLarge)
             SummaryLine(
                 label = stringResource(R.string.portfolio_unrealized_label),
-                amount = figures.gain.text,
+                // CR6 (43): with its percentage, read in full.
+                amount = gainFigures(figures.gain),
                 spokenAmount = spoken(figures.gain.spoken),
+                spokenPercent = figures.gain.percent?.let { spoken(it.spoken) },
                 amountStyle = MaterialTheme.typography.bodyLarge,
                 atCost = figures.allAtCost,
                 amountColor = gainLossColor(sign(figures.gain)),
@@ -259,8 +261,11 @@ private fun SummaryLine(
     amountStyle: TextStyle,
     atCost: Boolean = false,
     amountColor: Color = Color.Unspecified,
+    spokenPercent: String? = null,
 ) {
-    val base = stringResource(R.string.spoken_label_dollars, label, spokenAmount)
+    val base =
+        spokenPercent?.let { stringResource(R.string.spoken_label_dollars_percent, label, spokenAmount, it) }
+            ?: stringResource(R.string.spoken_label_dollars, label, spokenAmount)
     val spoken = if (atCost) stringResource(R.string.portfolio_row_at_cost_spoken, base) else base
     Column(modifier = Modifier.clearAndSetSemantics { contentDescription = spoken }) {
         Text(
@@ -302,9 +307,9 @@ private fun HoldingRow(
             soldOut -> stringResource(R.string.holding_row_sold_out_spoken, holding.ticker, shares, holding.spokenValue)
 
             gain is GainModel.Figure && staleAsOf != null ->
-                stringResource(R.string.holding_row_gain_stale_spoken, holding.ticker, shares, holding.spokenValue, spoken(gain.spoken), staleAsOf)
+                stringResource(R.string.holding_row_gain_stale_spoken, holding.ticker, shares, holding.spokenValue, gainSpoken(gain), staleAsOf)
 
-            gain is GainModel.Figure -> stringResource(R.string.holding_row_gain_spoken, holding.ticker, shares, holding.spokenValue, spoken(gain.spoken))
+            gain is GainModel.Figure -> stringResource(R.string.holding_row_gain_spoken, holding.ticker, shares, holding.spokenValue, gainSpoken(gain))
 
             else -> stringResource(R.string.holding_row_spoken, holding.ticker, shares, holding.spokenValue)
         }.let { daySpoken(it, holding.day) }
@@ -349,7 +354,7 @@ private fun HoldingRow(
                 when (gain) {
                     is GainModel.Figure ->
                         Text(
-                            text = gain.text,
+                            text = gainFigures(gain),
                             style = MaterialTheme.typography.bodyMedium,
                             color = gainLossColor(sign(gain)),
                             textAlign = TextAlign.End,

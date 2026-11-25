@@ -289,9 +289,9 @@ private fun LotPickRow(
     val spoken =
         when {
             gain is GainModel.Figure && staleAsOf != null ->
-                stringResource(R.string.sell_lot_gain_stale_spoken, date, left, row.spokenPerShare, spoken(gain.spoken), staleAsOf, state)
+                stringResource(R.string.sell_lot_gain_stale_spoken, date, left, row.spokenPerShare, gainSpoken(gain), staleAsOf, state)
 
-            gain is GainModel.Figure -> stringResource(R.string.sell_lot_gain_spoken, date, left, row.spokenPerShare, spoken(gain.spoken), state)
+            gain is GainModel.Figure -> stringResource(R.string.sell_lot_gain_spoken, date, left, row.spokenPerShare, gainSpoken(gain), state)
 
             else -> stringResource(R.string.sell_lot_spoken, date, left, row.spokenPerShare, state)
         }
@@ -339,7 +339,7 @@ private fun LotPickRow(
             when (gain) {
                 is GainModel.Figure ->
                     Text(
-                        text = gain.text,
+                        text = gainFigures(gain),
                         style = MaterialTheme.typography.bodyMedium,
                         color = gainLossColor(sign(gain)),
                         textAlign = TextAlign.End,

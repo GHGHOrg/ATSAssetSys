@@ -281,7 +281,7 @@ private fun PortfolioRow(
     onOpen: () -> Unit,
 ) {
     val figures = row.figures
-    val base = stringResource(R.string.overall_portfolio_row_spoken, row.name, figures.spokenValue, spoken(figures.gain.spoken))
+    val base = stringResource(R.string.overall_portfolio_row_spoken, row.name, figures.spokenValue, gainSpoken(figures.gain))
     // CR5 (41), AC-67: the row reads its 1-day line after its gain/loss.
     val spoken = daySpoken(if (figures.allAtCost) stringResource(R.string.portfolio_row_at_cost_spoken, base) else base, figures.day)
     Row(
@@ -308,7 +308,8 @@ private fun PortfolioRow(
         Column(horizontalAlignment = Alignment.End) {
             Text(text = figures.value, style = MaterialTheme.typography.bodyLarge, textAlign = TextAlign.End)
             Text(
-                text = if (figures.allAtCost) "${figures.gain.text} ${stringResource(R.string.holdings_at_cost)}" else figures.gain.text,
+                // CR6 (43): with its percentage; all at cost has none (no priced cost, 4.8).
+                text = if (figures.allAtCost) "${gainFigures(figures.gain)} ${stringResource(R.string.holdings_at_cost)}" else gainFigures(figures.gain),
                 style = MaterialTheme.typography.bodyMedium,
                 color = gainLossColor(sign(figures.gain)),
                 textAlign = TextAlign.End,

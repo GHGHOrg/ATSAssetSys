@@ -406,7 +406,7 @@ private fun Header(header: HoldingHeaderModel) {
                     header.spokenValue,
                     shares,
                     header.spokenCost,
-                    spoken(gain.spoken),
+                    gainSpoken(gain),
                     priceSpoken(price),
                 )
 
@@ -419,7 +419,7 @@ private fun Header(header: HoldingHeaderModel) {
                     header.spokenValue,
                     shares,
                     header.spokenCost,
-                    spoken(gain.spoken),
+                    gainSpoken(gain),
                 )
 
             else -> stringResource(R.string.holding_header_spoken, header.ticker, header.portfolio, header.spokenValue, shares, header.spokenCost)
@@ -437,8 +437,9 @@ private fun Header(header: HoldingHeaderModel) {
             Text(text = header.value, style = MaterialTheme.typography.headlineSmall)
             HeaderLine(stringResource(R.string.holding_shares_label), header.shares)
             HeaderLine(stringResource(R.string.portfolio_cost_label), header.cost)
+            // CR6 (43): "+$80.00 (+6.67%)", the percentage wrapping under the dollars where it does not fit (C26).
             when (gain) {
-                is GainModel.Figure -> HeaderLine(stringResource(R.string.portfolio_unrealized_label), gain.text, gainLossColor(sign(gain)))
+                is GainModel.Figure -> HeaderLine(stringResource(R.string.portfolio_unrealized_label), gainFigures(gain), gainLossColor(sign(gain)))
                 GainModel.NoPrice -> HeaderLine(stringResource(R.string.portfolio_unrealized_label), stringResource(R.string.holding_no_price))
             }
             // CR5 (41), wireframe 06 marker 1: the 1-day line, indented and smaller, under the gain/loss.
@@ -641,7 +642,7 @@ private fun LotRow(lot: LotRowModel) {
                     lot.spokenPerShare,
                     lot.spokenCost,
                     lot.spokenValue,
-                    spoken(gain.spoken),
+                    gainSpoken(gain),
                 )
 
             GainModel.NoPrice ->
@@ -673,9 +674,10 @@ private fun LotRow(lot: LotRowModel) {
             when (gain) {
                 is GainModel.Figure -> {
                     // The figure carries its color; "stale" beside it is plain text, so it never rests on color (section 6).
-                    Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                    // CR6 (43): a flow, so with the percentage the figures and "stale" wrap rather than squeeze (C26).
+                    FlowRow(horizontalArrangement = Arrangement.spacedBy(6.dp, Alignment.End)) {
                         Text(
-                            text = gain.text,
+                            text = gainFigures(gain),
                             style = MaterialTheme.typography.bodyMedium,
                             color = gainLossColor(sign(gain)),
                             textAlign = TextAlign.End,
