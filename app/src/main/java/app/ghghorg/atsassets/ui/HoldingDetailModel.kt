@@ -15,6 +15,8 @@ import app.ghghorg.atsassets.core.Reversals
 import app.ghghorg.atsassets.core.SplitRatio
 import app.ghghorg.atsassets.core.Transaction
 import app.ghghorg.atsassets.core.TransactionType
+import app.ghghorg.atsassets.core.UnrealizedGain
+import app.ghghorg.atsassets.core.UnrealizedGains
 import app.ghghorg.atsassets.core.Valuation
 import java.time.Instant
 import java.time.format.DateTimeFormatter
@@ -27,10 +29,14 @@ import java.util.Locale
 
 /** An unrealized gain or loss as shown (section 6): a figure with its sign, or "no price" when valued at cost (4.8). */
 sealed interface GainModel {
-    /** "+$80.00", "−$80.00" or "$0.00"; [spoken]'s sign also gives the color: green, red or none. */
+    /**
+     * "+$80.00", "−$80.00" or "$0.00"; [spoken]'s sign also gives the color: green, red or none. CR6 (43): [percent] is
+     * the gain over its cost, "+6.67%", or null at a cost of $0.00 (4.8); it takes the dollar figure's color (section 6).
+     */
     data class Figure(
         val text: String,
         val spoken: SpokenFigure,
+        val percent: PercentFigure? = null,
     ) : GainModel
 
     data object NoPrice : GainModel
@@ -160,7 +166,7 @@ object HoldingDetail {
             oneShare = shares == "1",
             cost = Money.format(holding.cost),
             spokenCost = digits(Money.format(holding.cost)),
-            gain = if (soldOut) gainOf(Fraction.ZERO) else gainOf(valued.gain),
+            gain = if (soldOut) gainOf(UnrealizedGain(Fraction.ZERO, Fraction.ZERO)) else gainOf(UnrealizedGains.ofHolding(holding, price)),
             price = price?.let { priceLine(it) },
             refreshing = refreshing,
             refreshFailed = refreshFailed,
@@ -191,16 +197,19 @@ object HoldingDetail {
             spokenCost = digits(cost),
             value = value,
             spokenValue = digits(value),
-            gain = gainOf(Valuation.lotGain(lot, price)),
+            gain = gainOf(UnrealizedGains.ofLot(lot, price)),
             stale = price?.stale ?: false,
         )
     }
 
-    /** A gain rounded to cents once (4.10); its sign, and so its color, is the shown figure's: $0.00 has none. */
-    fun gainOf(gain: Fraction?): GainModel {
+    /**
+     * A gain rounded to cents once (4.10); its sign, and so its color, is the shown figure's: $0.00 has none. CR6 (43): with
+     * its percentage over its cost, none at a cost of $0.00 (4.8); null is "no price".
+     */
+    fun gainOf(gain: UnrealizedGain?): GainModel {
         if (gain == null) return GainModel.NoPrice
-        val cents = gain.rounded(2).movePointRight(2).longValueExact()
-        return GainModel.Figure(signedAmount(cents), SpokenFigure.ofAmount(cents))
+        val cents = gain.gain.rounded(2).movePointRight(2).longValueExact()
+        return GainModel.Figure(signedAmount(cents), SpokenFigure.ofAmount(cents), Percent.of(gain.percent))
     }
 
     private fun priceLine(price: Price): PriceLineModel {

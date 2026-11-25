@@ -68,6 +68,16 @@ class HoldingDetailModelTest {
     private val aapl = Holdings.holdings(exampleA, today).single()
     private val lots = Holdings.lotsOf(exampleA, "p1", "AAPL", today)
 
+    private fun pct(
+        text: String,
+        digits: String,
+        sign: FigureSign,
+    ): PercentFigure = PercentFigure(text, SpokenFigure(digits, sign))
+
+    // CR6 (43), AC-72: $80.00 over the cost of $1,200.00 is 6.67%, with the dollar figure's sign.
+    private val gain80 = GainModel.Figure("+$80.00", SpokenFigure("80.00", FigureSign.PLUS), pct("+6.67%", "6.67", FigureSign.PLUS))
+    private val loss80 = GainModel.Figure("−$80.00", SpokenFigure("80.00", FigureSign.MINUS), pct("−6.67%", "6.67", FigureSign.MINUS))
+
     private fun header(
         holding: Holding = aapl,
         price: Price? = price("160"),
@@ -87,7 +97,7 @@ class HoldingDetailModelTest {
                 oneShare = false,
                 cost = "$1,200.00",
                 spokenCost = "1,200.00",
-                gain = GainModel.Figure("+$80.00", SpokenFigure("80.00", FigureSign.PLUS)),
+                gain = gain80,
                 price = PriceLineModel("$160.00", "160.00", "2026-10-29 16:00", stale = false),
                 refreshing = false,
                 refreshFailed = false,
@@ -98,14 +108,14 @@ class HoldingDetailModelTest {
 
     @Test
     fun aLoss_showsAMinusSign_andIsRed() {
-        assertEquals(GainModel.Figure("−$80.00", SpokenFigure("80.00", FigureSign.MINUS)), header(price = price("140")).gain)
+        assertEquals(loss80, header(price = price("140")).gain)
     }
 
     @Test
     fun aStalePrice_keepsItsFigures_andIsMarkedStale() {
         val stale = header(price = price("160", stale = true))
         assertEquals("$1,280.00", stale.value)
-        assertEquals(GainModel.Figure("+$80.00", SpokenFigure("80.00", FigureSign.PLUS)), stale.gain)
+        assertEquals(gain80, stale.gain)
         assertEquals(true, stale.price!!.stale)
     }
 
@@ -129,9 +139,23 @@ class HoldingDetailModelTest {
 
     @Test
     fun aGainThatRoundsToZero_isShownAsZero_withNoColor() {
-        // 1 share at a cost of $1.00 and a price of $1.004: the gain is $0.004, shown as $0.00 (4.10).
+        // 1 share at a cost of $1.00 and a price of $1.004: the gain is $0.004, shown as $0.00 (4.10). CR6 (43): its
+        // percentage is its own rounded value, 0.4% shown "+0.40%"; the line's color follows the dollar figure (section 6).
         val one = Holding("p1", "X", dollars(1), dollars(1))
-        assertEquals(GainModel.Figure("$0.00", SpokenFigure("0.00", FigureSign.NONE)), header(holding = one, price = price("1.004")).gain)
+        assertEquals(
+            GainModel.Figure("$0.00", SpokenFigure("0.00", FigureSign.NONE), pct("+0.40%", "0.40", FigureSign.PLUS)),
+            header(holding = one, price = price("1.004")).gain,
+        )
+    }
+
+    // CR6 (43), AC-72: a percentage that rounds to zero has no sign; the dollar figure keeps its own ("+$0.01 (0.00%)").
+    @Test
+    fun aPercentageThatRoundsToZero_hasNoSign() {
+        val big = Holding("p1", "X", dollars(1), dollars(10_000))
+        assertEquals(
+            GainModel.Figure("+$0.01", SpokenFigure("0.01", FigureSign.PLUS), pct("0.00%", "0.00", FigureSign.NONE)),
+            header(holding = big, price = price("10000.01")).gain,
+        )
     }
 
     @Test
@@ -186,7 +210,7 @@ class HoldingDetailModelTest {
                     spokenCost = "1,200.00",
                     value = "$1,280.00",
                     spokenValue = "1,280.00",
-                    gain = GainModel.Figure("+$80.00", SpokenFigure("80.00", FigureSign.PLUS)),
+                    gain = gain80,
                     stale = false,
                 ),
             ),
