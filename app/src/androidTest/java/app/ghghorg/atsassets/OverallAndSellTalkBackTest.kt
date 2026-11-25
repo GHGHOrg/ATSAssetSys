@@ -50,6 +50,9 @@ class OverallAndSellTalkBackTest {
         vararg args: Any,
     ): String = InstrumentationRegistry.getInstrumentation().targetContext.getString(id, *args)
 
+    // CR6 (43), AC-72: the gain/loss read with its percentage, $80.00 over $1,200.00 (6.67%).
+    private fun gain(sign: Int): String = text(R.string.gain_spoken, text(sign, "80.00"), text(sign, "6.67"))
+
     private fun trade(
         id: String,
         type: TransactionType,
@@ -127,7 +130,7 @@ class OverallAndSellTalkBackTest {
         // CR5 (41), AC-68: net worth, then Investments, then the age line.
         val card = text(R.string.net_worth_investments_spoken, text(R.string.net_worth_spoken, "10,880.00"), "1,280.00")
         val netWorth = text(R.string.net_worth_prices_spoken, card, age)
-        val row = text(R.string.overall_portfolio_row_spoken, "Portfolio P", "1,280.00", text(R.string.spoken_plus, "80.00"))
+        val row = text(R.string.overall_portfolio_row_spoken, "Portfolio P", "1,280.00", gain(R.string.spoken_plus))
         composeRule.onNode(hasContentDescription(netWorth)).assertExists()
         composeRule.onNode(hasContentDescription(row)).assertExists()
         assertEquals("The refresh-failed line shown", false, shown(R.string.price_refresh_failed))
@@ -141,7 +144,7 @@ class OverallAndSellTalkBackTest {
         val age = text(R.string.portfolio_prices_as_of_some_stale_spoken, "2026-10-29 16:00")
         val card = text(R.string.net_worth_investments_spoken, text(R.string.net_worth_spoken, "10,720.00"), "1,120.00")
         val netWorth = text(R.string.net_worth_prices_spoken, card, age)
-        val row = text(R.string.overall_portfolio_row_spoken, "Portfolio P", "1,120.00", text(R.string.spoken_minus, "80.00"))
+        val row = text(R.string.overall_portfolio_row_spoken, "Portfolio P", "1,120.00", gain(R.string.spoken_minus))
         composeRule.onNode(hasContentDescription(netWorth)).assertExists()
         composeRule.onNode(hasContentDescription(row)).assertExists()
         assertEquals("The updating line shown", true, shown(R.string.prices_updating))
@@ -152,7 +155,7 @@ class OverallAndSellTalkBackTest {
     fun theSellLotList_atAFreshPrice_readsTheLotsGainWithItsSign() {
         showSell(state(Screen.SELL, Price(BigDecimal("160"), close)))
         val expected =
-            text(R.string.sell_lot_gain_spoken, "2026-02-01", "8", "150.00", text(R.string.spoken_plus, "80.00"), text(R.string.sell_lot_not_picked))
+            text(R.string.sell_lot_gain_spoken, "2026-02-01", "8", "150.00", gain(R.string.spoken_plus), text(R.string.sell_lot_not_picked))
         composeRule.onNode(hasContentDescription(expected)).assertExists()
         assertEquals("The refresh-failed line shown", false, shown(R.string.price_refresh_failed))
     }
@@ -166,7 +169,7 @@ class OverallAndSellTalkBackTest {
                 "2026-02-01",
                 "8",
                 "150.00",
-                text(R.string.spoken_minus, "80.00"),
+                gain(R.string.spoken_minus),
                 "2026-10-29 16:00",
                 text(R.string.sell_lot_not_picked),
             )
