@@ -90,9 +90,22 @@ Asked one at a time after you approved this file; all settled 2026-11-25.
 - Draft 2026-11-25; approved the same day (your A); decisions 0 to 5 settled the same day (your A each).
 
 ### 13.1 Steps
-- Step 1 (2026-11-25): this file; plan.md (section 2's list, rows 42 in sections 4 and 11, the change log); plan/open-items.md, open item 73's occurrence on #239 (screen-tests run 45525704258, attempt 1, green on the re-run of shard 1, your A). Only documents changed. Full run with --rerun-tasks green in 2m 22s at the first try (spotlessCheck, build, tests, lint): 1,556 unit tests, 0 failures, 1 skipped; lint the same 7 findings (report 10:08:52).
+- Step 1 (2026-11-25): this file; plan.md (section 2's list, rows 42 in sections 4 and 11, the change log); plan/open-items.md, open item 73's occurrence on #239 (screen-tests run 45525704258, attempt 1, green on the re-run of shard 1, your A). Only documents changed. Full run with --rerun-tasks green in 2m 22s at the first try (spotlessCheck, build, tests, lint): 1,556 unit tests, 0 failures, 1 skipped; lint the same 7 findings (report 10:08:52). Committed as af1e21d.
+- Step 2 (2026-11-25): the Deploy review since v1.0.0, by reading (13.2): `git log --first-parent v1.0.0..main` (6 merges: #231, #232, #233, #234, #235, #239); `git diff v1.0.0 main` (75 files; 29 under app/src/main and core/src/main, all 41's); the added lines searched for logging and URLs; AtsDatabase.kt's version and migrations; BackupFile.kt's format version; the build file's and the version catalog's diff; .github, the keep rules, gradle.properties and the wrapper unchanged. No High, Medium or Low finding; four notes.
 
-### 13.2 Deploy review since v1.0.0 (step 2)
+### 13.2 Deploy review since v1.0.0 (step 2, 2026-11-25)
+The Deploy review of everything since the last release (plan/release.md step 1; Ruleset A rule 6): the commits `v1.0.0..main` (#231 to #235, #239), 41's review against its spec refs (41 file, 13.1: no High, Medium or Low finding), against spec.md v8 (C17, C21, C22, section 8, section 9, AC-35, AC-63, AC-64) and plan/release.md. By reading only. No High, Medium or Low finding.
+What held:
+- The app code since v1.0.0 is 41's alone: 29 files under app/src/main and core/src/main (`git diff --stat v1.0.0 main`: 1,014 lines added, 52 removed), reviewed in 41's 13.1 (4.8, 4.10, section 6, section 7 and K4, K3 reading only, spec section 9). No line added there calls `Log.`, `println`, `printStackTrace` or names a URL; the one `http://` added is inside the Apache licence text (res/raw/licence_apache_2_0.txt:4), shown as text, not opened. No new network call (41 13.1: the licence texts are in the APK).
+- Schema: AtsDatabase.kt:607 `version = 15`, the chain AutoMigration(1, 2) to AutoMigration(14, 15) unbroken, so 1.0.0's 14 opens (plan/release.md section 3: two tests from 14, green on #235 and on main; ATS Dev 50 to 51 on the phone). To be marked in the record: "Schema version: 15 (changed from 14)".
+- Backup format: core BackupFile.kt:45 `FORMAT_VERSION = 1`, unchanged; no backup or restore file is among the 29, and none names the previous close. So a 1.1.0 backup holds the same records as a 1.0.0 backup, and the previous close comes back with the next price update (my reading, not run).
+- Release build: no change under .github, app/src/main/keepRules, gradle.properties or gradle/wrapper; app/build.gradle.kts adds versionCode 51, the schemas as androidTest assets, and the `RuntimeGroups` task over `releaseRuntimeClasspath` (a test input); gradle/libs.versions.toml adds `room3-testing`, used only as `androidTestImplementation`. The release's libraries are 1.0.0's. On main e032c53 CI built the release APK and its class check passed (41 13.2: CI run 45461265374).
+- C21: the key and the signing route are unchanged; step 5 checks the certificate.
+Findings (info only, no change):
+1. A rollback after 1.1.0 is installed: 1.0.0 cannot open schema 15, so it is plan/release.md section 4's uninstall, install and restore. Since the backup format and the backup code are unchanged, a backup taken on 1.1.0 should also restore into 1.0.0, which would lose fewer entries than step 6's backup; my reading, not run. Section 4's rule (the backup taken before the install) stays the plan; a newer backup is a second chance, tried only after it.
+2. mapping.txt will differ from 1.0.0's (D796D74D…9436), because the app code changed (section 4). Recorded in step 4, not compared.
+3. 41's notes 2 and 3 stay [UNVERIFIED] (LibTomCrypt and SQLite public domain; Finnhub's `pc` on a split's day); out of scope (section 3). Neither changes what the release installs.
+4. Open item 73 (screen tests) and open item 60 (local build) may need re-runs, unchanged, each with your yes.
 
 ### 13.3 Deploy review of 42 (step 9)
 
