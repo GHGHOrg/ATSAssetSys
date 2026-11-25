@@ -38,8 +38,8 @@ select{font:inherit;font-size:13px;padding:4px 6px;border:1px solid var(--border
 <body>
 <main>
 <h1>Wireframe 1: Overall (view 1)</h1>
-<p class="note">Status: approved; CR5 changes (markers 2 and 4) approved 2026-11-24. Companion to spec.md section 6, view 1. All wording is placeholder (D9, decided in Build). Colors are placeholders; the real ones are chosen in Build for both themes (section 6, Number format and color). Index of all wireframes: README.md in this folder.</p>
-<p class="note">Figures are Example A at an AAPL price of $160. The 1-day figures (CR5) assume a previous close of $158: 8 shares × $2.00 = +$16.00, and +$16.00 ÷ $1,264.00 = +1.27%. Try the dropdown in State A.</p>
+<p class="note">Status: approved; CR5 changes (markers 2 and 4) approved 2026-11-24; CR6 change (marker 4) approved 2026-11-26. Companion to spec.md section 6, view 1. All wording is placeholder (D9, decided in Build). Colors are placeholders; the real ones are chosen in Build for both themes (section 6, Number format and color). Index of all wireframes: README.md in this folder.</p>
+<p class="note">Figures are Example A at an AAPL price of $160. The 1-day figures (CR5) assume a previous close of $158: 8 shares × $2.00 = +$16.00, and +$16.00 ÷ $1,264.00 = +1.27%. The unrealized percentage (CR6) is the gain/loss over cost: +$80.00 ÷ $1,200.00 = +6.67%. Try the dropdown in State A.</p>
 
 <div class="pair">
 <div>
@@ -63,7 +63,7 @@ select{font:inherit;font-size:13px;padding:4px 6px;border:1px solid var(--border
 <div id="rows" style="margin-top:4px"></div></div>
 <div class="bx"><span class="n">4</span>
 <p class="lb" style="margin-bottom:4px">Portfolios</p>
-<p class="row"><span>Portfolio P</span><span>$1,280.00 &nbsp;<span class="good">+$80.00</span> &nbsp;&gt;</span></p>
+<p class="row"><span>Portfolio P</span><span>$1,280.00 &nbsp;<span class="good">+$80.00 (+6.67%)</span> &nbsp;&gt;</span></p>
 <p class="row lb" style="justify-content:flex-end;padding-right:14px">1-day&nbsp;<span class="good">+$16.00 (+1.27%)</span></p></div>
 <p class="lb" style="margin:0;position:relative"><span class="n" style="top:-4px;right:0">5</span>Price refresh failed. Showing last prices.</p>
 <div style="text-align:right;position:relative"><span class="btn" style="font-weight:500">Buy/Sell</span><span class="n" style="top:-10px;right:60px">6</span></div>
@@ -90,7 +90,7 @@ select{font:inherit;font-size:13px;padding:4px 6px;border:1px solid var(--border
 <li>Backup reminder banner. Shown only when due (older than 7 days, or never backed up and the app holds data). The button starts the export. Dismiss hides it until the app is next opened (section 9).</li>
 <li>Net worth figure, with the age of the prices, or an "updating" indicator while a refresh runs. Tapping it opens Net Worth (Total). CR5: under it, first Investments, the sum of all portfolio values (net worth without cash; not colored), then the 1-day gain/loss of net worth in dollars and percent, indented and in a smaller font than the lines above it (4.8; the percent is the day's gain over the day's starting value, value − day gain, with 2 decimals; both colored and signed like a gain/loss; left out when no holding has a day figure). The same card heads Net Worth (Total) (view 2). Labels are placeholders (D9).</li>
 <li>Allocation of net worth, with an "Allocation by" dropdown: Asset type (default), Portfolio, Holding, Sector, Geography. The choice is not saved, so Overall starts on Asset type each time the app is opened or unlocked. Drawn as a donut with a small gap between slices. A slice of 5% or more shows its percentage on the donut. A row in the list shows its percentage only for a slice under 5% (a 0.0% slice has no arc). Each row has a swatch, a name and an amount, and its TalkBack label reads the percentage in full. Cash is its own slice in every option. Asset type always lists cash, stocks and ETFs, even at 0.0%. The other options list only what has value. Tapping the donut or the list opens Net Worth (Total); the dropdown does not. When net worth is $0.00 (for example cash withdrawn to 0 with no holdings), the donut and rows give way to one plain line, because every share of $0.00 is undefined (4.8). Before the opening balance exists, State B shows instead. Placeholder wording (D9).</li>
-<li>Each portfolio with its value and gain/loss (green with a plus sign for a gain, red with a minus sign for a loss). CR5: under them, the portfolio's 1-day gain/loss (4.8), left out when it has none. Tapping a row opens that portfolio's holdings.</li>
+<li>Each portfolio with its value and gain/loss (green with a plus sign for a gain, red with a minus sign for a loss). CR5: under them, the portfolio's 1-day gain/loss (4.8), left out when it has none. CR6: the gain/loss carries its percentage over cost in brackets, 2 decimals, same sign and color (4.8); none for a cost of $0.00, and a "no price" holding is left out of it. Where the two do not fit on one line, the percentage moves to the line under the dollar figure (C26). Tapping a row opens that portfolio's holdings.</li>
 <li>One quiet line, shown only when a price refresh failed. No pop-up.</li>
 <li>Buy/Sell button. It opens the short menu Buy, Sell.</li>
 <li>Guided steps when the app holds no data. Only step 1 is active; steps 2 and 3 are shown but locked.</li>

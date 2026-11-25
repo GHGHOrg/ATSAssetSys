@@ -7,16 +7,16 @@ for both themes (spec.md section 6, Number format and color).
 
 | # | File | Screen | Status |
 |---|------|--------|--------|
-| 1 | 01-overall.html | Overall (view 1), with the empty state | Approved (CR5 changes approved 2026-11-24) |
+| 1 | 01-overall.html | Overall (view 1), with the empty state | Approved (CR5 changes approved 2026-11-24); CR6 changes approved 2026-11-26 |
 | 2 | 02-net-worth.html | Net Worth (Total) (view 2) | Approved (CR5 changes approved 2026-11-24) |
-| 3 | 03-portfolios.html | Portfolios and holdings (view 3) | Approved (CR5 changes approved 2026-11-24) |
+| 3 | 03-portfolios.html | Portfolios and holdings (view 3) | Approved (CR5 changes approved 2026-11-24); CR6 changes approved 2026-11-26 |
 | 4 | 04-allocation.html | Allocation, one portfolio (view 4) | Approved |
 | 5 | 05-realized-gains.html | Realized gains (view 5) | Approved |
-| 6 | 06-holding-detail.html | Holding detail (view 6) | Approved (CR5 changes approved 2026-11-24) |
+| 6 | 06-holding-detail.html | Holding detail (view 6) | Approved (CR5 changes approved 2026-11-24); CR6 changes approved 2026-11-26 |
 | 7 | 07-cash.html | Cash account (view 7) | Approved |
 | 8 | 08-transaction-history.html | Transaction history (view 8) | Approved |
 | 9 | 09-hidden-holdings.html | Hidden holdings (view 9) | Approved |
-| 10a | 10a-buy-sell.html | Buy and Sell entry, review screens, lot picker, blocked-save messages | Approved |
+| 10a | 10a-buy-sell.html | Buy and Sell entry, review screens, lot picker, blocked-save messages | Approved; CR6 changes approved 2026-11-26 |
 | 10b | 10b-split-cash-reversal.html | Cash entry (opening balance first), Split entry, transaction and cash entry detail with Reverse, reversal screen | Approved |
 | 10c | 10c-reverse-reenter.html | Reverse and re-enter (prefilled entry, combined review, blocked pairs) | Approved |
 | 10d | 10d-portfolio-dialogs.html | Portfolio create, rename, delete (summary, typed confirmation, blocked message) | Approved |
