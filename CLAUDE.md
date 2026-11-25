@@ -78,7 +78,7 @@ CI (.github/workflows/ci.yml) runs the style check and then the same three steps
   - The development app shows `x.y.z-dev.n`, n its versionCode (`1.0.0-dev.50`); your app shows `x.y.z`. No `-test` or `-rc` labels.
 
 ## 5. Where things are
-- intent/intent.md (v52, final) and one file per change request (intent/intent-cr-NN-short-name.md; CR1 is intent-cr-01-tiny-remainders.md, CR2 intent-cr-02-screen-models.md, CR3 intent-cr-03-screen-tests.md, CR4 intent-cr-04-release-process.md, CR5 intent-cr-05-day-change-and-screens.md), spec/spec.md (v8, final, one file; acceptance criteria tagged AC-NN, code comments may still say "criterion NN"), spec/wireframes/, plan/plan.md, plan/setup.md, plan/release.md (38b).
+- intent/intent.md (v52, final) and one file per change request (intent/intent-cr-NN-short-name.md; CR1 is intent-cr-01-tiny-remainders.md, CR2 intent-cr-02-screen-models.md, CR3 intent-cr-03-screen-tests.md, CR4 intent-cr-04-release-process.md, CR5 intent-cr-05-day-change-and-screens.md, CR6 intent-cr-06-gain-loss-percent.md), spec/spec.md (v8, final, one file; acceptance criteria tagged AC-NN, code comments may still say "criterion NN"), spec/wireframes/, plan/plan.md, plan/setup.md, plan/release.md (38b).
 - Spec sections: find them by heading, for example "## 4. Business rules".
   Sections 2 (concerns, C-numbers), 3 (domain), 4 (rules), 6 (views), 7 (prices), 8 (backup file), 9 (security), 11 (criteria), 14 (components, K-numbers).
 - Each iteration file in plan/iterations/ lists its own spec sections, criteria and examples.
