@@ -50,9 +50,9 @@ The first release (38c) adds the move of your data from the debug build once: ba
 
 ## 3. Backup format and schema rule
 From spec section 8, "Releases and the format version", and C22:
-- A release that raises the backup format version (today 1) or the database schema version (today 14) says so in its record.
+- A release that raises the backup format version (today 1) or the database schema version (today 15, since 1.1.0; 14 in 0.38.0 and 1.0.0) says so in its record.
 - Before it is installed, a backup is exported with the release already on the phone (step 6), and that backup is kept until the next release, so a rollback can restore it.
-- Room has no destructive fallback, so a release must open every earlier released schema version: the first release that raises the schema above the first release's (14) gets a migration test from 14, and each later one a test from every released version.
+- Room has no destructive fallback, so a release must open every earlier released schema version: the first release that raises the schema above the first release's (14) gets a migration test from 14, and each later one a test from every released version. 1.1.0 (42) was that first raise, to 15, with two tests from 14 (MigrationFrom14Test and MigrationFrom14HelperTest, 41); the next raise needs tests from 14 and from 15.
 - An older release refuses a newer backup format: after a format raise, a rollback can restore only a backup taken before the raise.
 
 ## 4. Rollback
