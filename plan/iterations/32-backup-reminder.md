@@ -1,6 +1,6 @@
 # plan/iterations/32-backup-reminder.md
 
-Stage: Build. Status: approved 2026-11-15 (your A); decisions 1 to 3 settled the same day (section 11). Steps 1 to 6 built on iter-32-backup-reminder (versionCode 42); not merged. The phone check's part A passed 2026-11-15 (13.2). Pull request #190: its first run green, 145 of 145 screen tests; the Deploy review done, four low findings, three fixed (13.3). Part B passed 2026-11-20 on ATS Check through iteration 36 (decision 4, replacing decision 2's date; 13.2); the wording approved the same day (section 12). Done: pull request #190 merged as 0034aa5, main green (13.4).
+Stage: Build. Status: approved 2026-11-15 (your A); decisions 1 to 3 settled the same day (section 11). Steps 1 to 6 built on iter-32-backup-reminder (versionCode 42). The phone check's part A passed 2026-11-15 (13.2). Pull request #190: its first run green, 145 of 145 screen tests; the Deploy review done, four low findings, three fixed (13.3). Part B passed 2026-11-20 on ATS Check through iteration 36 (decision 4, replacing decision 2's date; 13.2); the wording approved the same day (section 12). Done: pull request #190 merged as 0034aa5, main green (13.4).
 Source: plan.md section 4 (row 32); spec section 9 (Backup reminder), section 3 ("app holds data"), section 6 (view 1, the navigation outline), section 14 (K6, K9), D9, C15; wireframe 01 (state A, marker 1); intent "Backup reminder"; the 31 file (the export flow; open item 67).
 
 ## 1. Outcome
