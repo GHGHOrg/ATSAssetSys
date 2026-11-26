@@ -237,7 +237,17 @@ private fun GainRule.checkSell(landscape: Boolean) {
     val shape =
         "node ${node.size.width}x${node.size.height} px at x ${node.positionInRoot.x}, text ${layout.size.width}x${layout.size.height} px, " +
             "${layout.lineCount} lines, width overflow ${layout.didOverflowWidth}, height overflow ${layout.didOverflowHeight}, screen $width px"
-    assertFalse("The lot's figures are cut off: $shape", layout.hasVisualOverflow)
+    // Not hasVisualOverflow: through this semantics action its width flag came back true for a whole, one-line text with
+    // room to spare (pull request #245, run 45751460803, turned: 874 px of 2,992 px). Each line fits the node, the last line
+    // ends at the text's end, nothing is ellipsized, and no line is lost below.
+    val last = layout.lineCount - 1
+    (0..last).forEach { line ->
+        val lineWidth = layout.getLineRight(line) - layout.getLineLeft(line)
+        assertTrue("Line ${line + 1} of the lot's figures is $lineWidth px wide: $shape", lineWidth <= node.size.width + 0.5f)
+    }
+    assertEquals("The lot's figures end early: $shape", layout.layoutInput.text.length, layout.getLineEnd(last))
+    assertFalse("The lot's figures are ellipsized: $shape", layout.isLineEllipsized(last))
+    assertFalse("The lot's figures are cut off below: $shape", layout.didOverflowHeight)
     // The screen's padding (16 dp) and the card's (12 dp) to the right of the row.
     val edge = width - with(density) { 28.dp.toPx() }
     val right = node.positionInRoot.x + node.size.width
