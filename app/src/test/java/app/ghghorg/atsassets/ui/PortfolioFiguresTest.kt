@@ -1,8 +1,10 @@
 package app.ghghorg.atsassets.ui
 
+import app.ghghorg.atsassets.core.AssetType
 import app.ghghorg.atsassets.core.DayChange
 import app.ghghorg.atsassets.core.Fraction
 import app.ghghorg.atsassets.core.Holding
+import app.ghghorg.atsassets.core.Instrument
 import app.ghghorg.atsassets.core.Price
 import app.ghghorg.atsassets.core.Transaction
 import app.ghghorg.atsassets.core.TransactionType
@@ -30,6 +32,16 @@ class PortfolioFiguresTest {
     private val aapl = Holding("p1", "AAPL", dollars(8), dollars(1_200))
     private val msft = Holding("p1", "MSFT", dollars(1), dollars(400))
     private val oldco = Holding("p1", "OLDCO", Fraction.ZERO, Fraction.ZERO)
+
+    private fun pct(
+        text: String,
+        digits: String,
+        sign: FigureSign,
+    ): PercentFigure = PercentFigure(text, SpokenFigure(digits, sign))
+
+    // CR6 (43), AC-72: $80.00 over $1,200.00, and a loss of $80.00 over the priced cost of $1,200.00 (MSFT has no price).
+    private val gain80 = GainModel.Figure("+$80.00", SpokenFigure("80.00", FigureSign.PLUS), pct("+6.67%", "6.67", FigureSign.PLUS))
+    private val loss80 = GainModel.Figure("−$80.00", SpokenFigure("80.00", FigureSign.MINUS), pct("−6.67%", "6.67", FigureSign.MINUS))
 
     private val zero = GainModel.Figure("$0.00", SpokenFigure("0.00", FigureSign.NONE))
 
@@ -60,12 +72,22 @@ class PortfolioFiguresTest {
                 spokenValue = "1,280.00",
                 cost = "$1,200.00",
                 spokenCost = "1,200.00",
-                gain = GainModel.Figure("+$80.00", SpokenFigure("80.00", FigureSign.PLUS)),
+                gain = gain80,
                 allAtCost = false,
                 prices = PricesAsOfModel("2026-10-29 16:00", someStale = false),
             ),
             PortfolioFigures.of(listOf(aapl), mapOf("AAPL" to price("160"))),
         )
+    }
+
+    // CR6 (43), AC-72: a "no price" holding (cost $800.00) is left out of the percentage, its cost as well: P shows
+    // +$80.00 (+6.67%), not +4.00%; its shown cost stays every holding's, $2,000.00.
+    @Test
+    fun aNoPriceHolding_isLeftOutOfThePercentage() {
+        val xyz = Holding("p1", "XYZ", dollars(5), dollars(800))
+        val figures = PortfolioFigures.of(listOf(aapl, xyz), mapOf("AAPL" to price("160")))
+        assertEquals(gain80, figures.gain)
+        assertEquals("$2,000.00", figures.cost)
     }
 
     @Test
@@ -82,7 +104,7 @@ class PortfolioFiguresTest {
         // AAPL 8 × $140 = $1,120.00, a loss of $80.00; MSFT at its cost of $400.00.
         assertEquals("$1,520.00", figures.value)
         assertEquals("$1,600.00", figures.cost)
-        assertEquals(GainModel.Figure("−$80.00", SpokenFigure("80.00", FigureSign.MINUS)), figures.gain)
+        assertEquals(loss80, figures.gain)
         assertEquals(false, figures.allAtCost)
     }
 
@@ -106,7 +128,7 @@ class PortfolioFiguresTest {
                     oneShare = false,
                     value = "$1,280.00",
                     spokenValue = "1,280.00",
-                    gain = GainModel.Figure("+$80.00", SpokenFigure("80.00", FigureSign.PLUS)),
+                    gain = gain80,
                     soldOut = false,
                     staleAsOf = null,
                 ),
@@ -148,6 +170,10 @@ class PortfolioFiguresTest {
                 today = LocalDate.of(2026, 6, 1),
             )
         assertEquals(listOf("$1,500.00", "$700.00", "$0.00"), listOf("p1", "p2", "p3").map { state.portfolioFigures(it).value })
+        // CR6 (43), wiring: with AAPL priced at $160, p1's gain is $600.00 over the priced cost of $1,000.00 (SPY has no
+        // price and is left out of both), p2's −$540.00 over $700.00 (−77.142…%); p3 has no cost and no percentage.
+        val priced = state.copy(instruments = listOf(Instrument("AAPL", AssetType.STOCK, verified = true, price = price("160"))))
+        assertEquals(listOf("+60.00%", "−77.14%", null), listOf("p1", "p2", "p3").map { priced.portfolioFigures(it).gain.percent?.text })
     }
 
     // 16b: the age line is the oldest price used (4.8), in New York to the minute.

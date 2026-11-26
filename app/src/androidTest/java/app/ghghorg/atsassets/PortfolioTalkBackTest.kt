@@ -97,6 +97,10 @@ class PortfolioTalkBackTest {
         priceKeySet = true,
     )
 
+    // CR6 (43): $80.00 over $1,200.00, 6.67%, as TalkBack reads them.
+    private val plus80 get() = text(R.string.spoken_plus, "80.00")
+    private val plus667 get() = text(R.string.spoken_plus, "6.67")
+
     private fun showPortfolio(state: AppState) {
         composeRule.setContent {
             ATSAssetSystemTheme { PortfolioScreen(state, PortfolioScreenActions({}, {}, {}, {}, {}, {})) }
@@ -114,9 +118,10 @@ class PortfolioTalkBackTest {
         val expected =
             listOf(
                 text(R.string.spoken_label_dollars, text(R.string.portfolio_value_label), "1,280.00"),
-                text(R.string.spoken_label_dollars, text(R.string.portfolio_unrealized_label), text(R.string.spoken_plus, "80.00")),
+                // CR6 (43), AC-72: the summary and the row read the gain with its percentage.
+                text(R.string.spoken_label_dollars_percent, text(R.string.portfolio_unrealized_label), plus80, text(R.string.spoken_plus, "6.67")),
                 text(R.string.portfolio_prices_as_of_spoken, "2026-10-29 16:00"),
-                text(R.string.holding_row_gain_spoken, "AAPL", text(R.string.holding_shares, "8"), "1,280.00", text(R.string.spoken_plus, "80.00")),
+                text(R.string.holding_row_gain_spoken, "AAPL", text(R.string.holding_shares, "8"), "1,280.00", text(R.string.gain_spoken, plus80, plus667)),
             )
         expected.forEach { composeRule.onNode(hasContentDescription(it)).assertExists() }
         assertFailedLine(shown = false)
@@ -126,12 +131,20 @@ class PortfolioTalkBackTest {
     fun aPortfolio_atAStalePrice_saysSomeStale_andTheRowsStalePrice_andTheRefreshFailed() {
         showPortfolio(state(Screen.PORTFOLIO, Price(BigDecimal("140"), close, stale = true), refreshFailed = true))
         val minus = text(R.string.spoken_minus, "80.00")
+        val minusPercent = text(R.string.spoken_minus, "6.67")
         val expected =
             listOf(
                 text(R.string.spoken_label_dollars, text(R.string.portfolio_value_label), "1,120.00"),
-                text(R.string.spoken_label_dollars, text(R.string.portfolio_unrealized_label), minus),
+                text(R.string.spoken_label_dollars_percent, text(R.string.portfolio_unrealized_label), minus, minusPercent),
                 text(R.string.portfolio_prices_as_of_some_stale_spoken, "2026-10-29 16:00"),
-                text(R.string.holding_row_gain_stale_spoken, "AAPL", text(R.string.holding_shares, "8"), "1,120.00", minus, "2026-10-29 16:00"),
+                text(
+                    R.string.holding_row_gain_stale_spoken,
+                    "AAPL",
+                    text(R.string.holding_shares, "8"),
+                    "1,120.00",
+                    text(R.string.gain_spoken, minus, minusPercent),
+                    "2026-10-29 16:00",
+                ),
             )
         expected.forEach { composeRule.onNode(hasContentDescription(it)).assertExists() }
         assertFailedLine(shown = true)
@@ -144,7 +157,8 @@ class PortfolioTalkBackTest {
             ATSAssetSystemTheme { PortfoliosScreen(state, {}, {}, {}) }
         }
         val count = InstrumentationRegistry.getInstrumentation().targetContext.resources.getQuantityString(R.plurals.portfolio_holding_count, 1, 1)
-        composeRule.onNode(hasContentDescription(text(R.string.portfolio_row_spoken, "Portfolio P", count, "1,280.00", text(R.string.spoken_plus, "80.00")))).assertExists()
+        val gain = text(R.string.gain_spoken, plus80, plus667)
+        composeRule.onNode(hasContentDescription(text(R.string.portfolio_row_spoken, "Portfolio P", count, "1,280.00", gain))).assertExists()
         assertFailedLine(shown = true)
     }
 }

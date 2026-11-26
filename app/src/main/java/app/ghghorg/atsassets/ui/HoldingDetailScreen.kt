@@ -406,7 +406,7 @@ private fun Header(header: HoldingHeaderModel) {
                     header.spokenValue,
                     shares,
                     header.spokenCost,
-                    spoken(gain.spoken),
+                    gainSpoken(gain),
                     priceSpoken(price),
                 )
 
@@ -419,7 +419,7 @@ private fun Header(header: HoldingHeaderModel) {
                     header.spokenValue,
                     shares,
                     header.spokenCost,
-                    spoken(gain.spoken),
+                    gainSpoken(gain),
                 )
 
             else -> stringResource(R.string.holding_header_spoken, header.ticker, header.portfolio, header.spokenValue, shares, header.spokenCost)
@@ -437,8 +437,9 @@ private fun Header(header: HoldingHeaderModel) {
             Text(text = header.value, style = MaterialTheme.typography.headlineSmall)
             HeaderLine(stringResource(R.string.holding_shares_label), header.shares)
             HeaderLine(stringResource(R.string.portfolio_cost_label), header.cost)
+            // CR6 (43): "+$80.00 (+6.67%)", the percentage wrapping under the dollars where it does not fit (C26).
             when (gain) {
-                is GainModel.Figure -> HeaderLine(stringResource(R.string.portfolio_unrealized_label), gain.text, gainLossColor(sign(gain)))
+                is GainModel.Figure -> HeaderLine(stringResource(R.string.portfolio_unrealized_label), gainFigures(gain), gainLossColor(sign(gain)))
                 GainModel.NoPrice -> HeaderLine(stringResource(R.string.portfolio_unrealized_label), stringResource(R.string.holding_no_price))
             }
             // CR5 (41), wireframe 06 marker 1: the 1-day line, indented and smaller, under the gain/loss.
@@ -624,7 +625,6 @@ private fun SplitRow(
  * $150.00 per share" and "Cost $1,200.00" on the left; its current value on the right, with its unrealized gain/loss in
  * green or red with its sign under it, "stale" beside it when the price is stale, or "no price" (4.8).
  */
-@OptIn(ExperimentalLayoutApi::class)
 @Composable
 private fun LotRow(lot: LotRowModel) {
     val date = lot.date
@@ -641,63 +641,69 @@ private fun LotRow(lot: LotRowModel) {
                     lot.spokenPerShare,
                     lot.spokenCost,
                     lot.spokenValue,
-                    spoken(gain.spoken),
+                    gainSpoken(gain),
                 )
 
             GainModel.NoPrice ->
                 stringResource(R.string.holding_lot_spoken, date, left, lot.spokenPerShare, lot.spokenCost, lot.spokenValue)
         }
-    FlowRow(
+    // CR6 (43): the value and figures stay at the right edge, beside the lot or under it (C26).
+    StartEndRow(
         modifier = Modifier.fillMaxWidth().clearAndSetSemantics { contentDescription = spoken },
-        horizontalArrangement = Arrangement.spacedBy(12.dp),
-        verticalArrangement = Arrangement.spacedBy(2.dp),
-    ) {
-        Column {
-            Text(text = stringResource(R.string.date_with_et, date), style = MaterialTheme.typography.bodyLarge)
-            Text(
-                text = stringResource(R.string.holding_lot_left, left, perShare),
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
-            Text(
-                text = stringResource(R.string.holding_lot_cost, lot.cost),
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
-        }
-        Column(
-            modifier = Modifier.weight(1f),
-            horizontalAlignment = Alignment.End,
-        ) {
-            Text(text = lot.value, style = MaterialTheme.typography.bodyLarge, textAlign = TextAlign.End)
-            when (gain) {
-                is GainModel.Figure -> {
-                    // The figure carries its color; "stale" beside it is plain text, so it never rests on color (section 6).
-                    Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                        Text(
-                            text = gain.text,
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = gainLossColor(sign(gain)),
-                            textAlign = TextAlign.End,
-                        )
-                        if (lot.stale) {
-                            Text(
-                                text = stringResource(R.string.price_stale),
-                                style = MaterialTheme.typography.bodyMedium,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                            )
-                        }
-                    }
-                }
+        start = {
+            Column {
+                Text(text = stringResource(R.string.date_with_et, date), style = MaterialTheme.typography.bodyLarge)
+                Text(
+                    text = stringResource(R.string.holding_lot_left, left, perShare),
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+                Text(
+                    text = stringResource(R.string.holding_lot_cost, lot.cost),
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            }
+        },
+        end = { LotFigures(lot) },
+    )
+}
 
-                GainModel.NoPrice ->
+/** The right part of a lot: its value, and its gain/loss with "stale" beside it, or "no price". */
+@OptIn(ExperimentalLayoutApi::class)
+@Composable
+private fun LotFigures(lot: LotRowModel) {
+    val gain = lot.gain
+    Column(horizontalAlignment = Alignment.End) {
+        Text(text = lot.value, style = MaterialTheme.typography.bodyLarge, textAlign = TextAlign.End)
+        when (gain) {
+            is GainModel.Figure -> {
+                // The figure carries its color; "stale" beside it is plain text, so it never rests on color (section 6).
+                // CR6 (43): a flow, so with the percentage the figures and "stale" wrap rather than squeeze (C26).
+                FlowRow(horizontalArrangement = Arrangement.spacedBy(6.dp, Alignment.End)) {
                     Text(
-                        text = stringResource(R.string.holding_lot_no_price),
+                        text = gainFigures(gain),
                         style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        color = gainLossColor(sign(gain)),
                         textAlign = TextAlign.End,
                     )
+                    if (lot.stale) {
+                        Text(
+                            text = stringResource(R.string.price_stale),
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
+                    }
+                }
             }
+
+            GainModel.NoPrice ->
+                Text(
+                    text = stringResource(R.string.holding_lot_no_price),
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    textAlign = TextAlign.End,
+                )
         }
     }
 }

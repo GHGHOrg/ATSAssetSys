@@ -43,6 +43,9 @@ class HoldingTalkBackTest {
         vararg args: Any,
     ): String = InstrumentationRegistry.getInstrumentation().targetContext.getString(id, *args)
 
+    // CR6 (43), AC-72: the gain/loss read with its percentage, $80.00 over $1,200.00 (6.67%).
+    private fun gain(sign: Int): String = text(R.string.gain_spoken, text(sign, "80.00"), text(sign, "6.67"))
+
     private fun trade(
         id: String,
         type: TransactionType,
@@ -108,11 +111,11 @@ class HoldingTalkBackTest {
                     "1,280.00",
                     text(R.string.holding_shares, "8"),
                     "1,200.00",
-                    text(R.string.spoken_plus, "80.00"),
+                    gain(R.string.spoken_plus),
                     text(R.string.holding_price_spoken, "160.00", "2026-10-29 16:00"),
                 ),
                 // CR5 (41), AC-69: the lot also reads its value.
-                text(R.string.holding_lot_gain_spoken, "2026-02-01", "8", "150.00", "1,200.00", "1,280.00", text(R.string.spoken_plus, "80.00")),
+                text(R.string.holding_lot_gain_spoken, "2026-02-01", "8", "150.00", "1,200.00", "1,280.00", gain(R.string.spoken_plus)),
             )
         expected.forEach { composeRule.onNode(hasContentDescription(it)).assertExists() }
     }
@@ -129,7 +132,7 @@ class HoldingTalkBackTest {
                     "1,120.00",
                     text(R.string.holding_shares, "8"),
                     "1,200.00",
-                    text(R.string.spoken_minus, "80.00"),
+                    gain(R.string.spoken_minus),
                     text(R.string.holding_price_stale_spoken, "140.00", "2026-10-29 16:00"),
                 ),
                 text(
@@ -139,7 +142,7 @@ class HoldingTalkBackTest {
                     "150.00",
                     "1,200.00",
                     "1,120.00",
-                    text(R.string.spoken_minus, "80.00"),
+                    gain(R.string.spoken_minus),
                 ),
             )
         expected.forEach { composeRule.onNode(hasContentDescription(it)).assertExists() }

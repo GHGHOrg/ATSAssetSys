@@ -6,7 +6,7 @@ import app.ghghorg.atsassets.core.LotUnavailable
 import app.ghghorg.atsassets.core.Money
 import app.ghghorg.atsassets.core.Price
 import app.ghghorg.atsassets.core.Quantity
-import app.ghghorg.atsassets.core.Sells
+import app.ghghorg.atsassets.core.UnrealizedGains
 
 /*
  * The sell screen's lot list as it draws it (wireframe 10a markers 12 to 14; CR2, 16c decision 3). Plain Kotlin: the
@@ -43,7 +43,7 @@ object SellLots {
             left = Quantity.format(choice.available),
             perShare = perShare,
             spokenPerShare = perShare.substringAfter('$'),
-            gain = if (pickable) HoldingDetail.gainOf(Sells.choiceGain(choice, toToday, price)) else null,
+            gain = if (pickable) HoldingDetail.gainOf(UnrealizedGains.ofChoice(choice, toToday, price)) else null,
             staleAsOf = price?.takeIf { pickable && it.stale }?.let { HoldingDetail.asOf(it.time) },
             unavailable = choice.unavailable,
         )

@@ -6,8 +6,6 @@ import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.ExperimentalLayoutApi
-import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -220,8 +218,10 @@ private fun SummaryCard(
             SummaryLine(stringResource(R.string.portfolio_cost_label), figures.cost, figures.spokenCost, MaterialTheme.typography.bodyLarge)
             SummaryLine(
                 label = stringResource(R.string.portfolio_unrealized_label),
-                amount = figures.gain.text,
+                // CR6 (43): with its percentage, read in full.
+                amount = gainFigures(figures.gain),
                 spokenAmount = spoken(figures.gain.spoken),
+                spokenPercent = figures.gain.percent?.let { spoken(it.spoken) },
                 amountStyle = MaterialTheme.typography.bodyLarge,
                 atCost = figures.allAtCost,
                 amountColor = gainLossColor(sign(figures.gain)),
@@ -259,8 +259,11 @@ private fun SummaryLine(
     amountStyle: TextStyle,
     atCost: Boolean = false,
     amountColor: Color = Color.Unspecified,
+    spokenPercent: String? = null,
 ) {
-    val base = stringResource(R.string.spoken_label_dollars, label, spokenAmount)
+    val base =
+        spokenPercent?.let { stringResource(R.string.spoken_label_dollars_percent, label, spokenAmount, it) }
+            ?: stringResource(R.string.spoken_label_dollars, label, spokenAmount)
     val spoken = if (atCost) stringResource(R.string.portfolio_row_at_cost_spoken, base) else base
     Column(modifier = Modifier.clearAndSetSemantics { contentDescription = spoken }) {
         Text(
@@ -286,14 +289,12 @@ private fun SummaryLine(
  * under the gain (wireframe 3 marker 6; 16b). One tap target opening Holding detail (iteration 10), read by TalkBack
  * as one button.
  */
-@OptIn(ExperimentalLayoutApi::class)
 @Composable
 private fun HoldingRow(
     holding: PortfolioHoldingRowModel,
     onOpen: () -> Unit,
 ) {
     val shares = stringResource(if (holding.oneShare) R.string.holding_share_one else R.string.holding_shares, holding.shares)
-    val value = holding.value
     val soldOut = holding.soldOut
     val gain = holding.gain
     val staleAsOf = holding.staleAsOf
@@ -302,13 +303,14 @@ private fun HoldingRow(
             soldOut -> stringResource(R.string.holding_row_sold_out_spoken, holding.ticker, shares, holding.spokenValue)
 
             gain is GainModel.Figure && staleAsOf != null ->
-                stringResource(R.string.holding_row_gain_stale_spoken, holding.ticker, shares, holding.spokenValue, spoken(gain.spoken), staleAsOf)
+                stringResource(R.string.holding_row_gain_stale_spoken, holding.ticker, shares, holding.spokenValue, gainSpoken(gain), staleAsOf)
 
-            gain is GainModel.Figure -> stringResource(R.string.holding_row_gain_spoken, holding.ticker, shares, holding.spokenValue, spoken(gain.spoken))
+            gain is GainModel.Figure -> stringResource(R.string.holding_row_gain_spoken, holding.ticker, shares, holding.spokenValue, gainSpoken(gain))
 
             else -> stringResource(R.string.holding_row_spoken, holding.ticker, shares, holding.spokenValue)
         }.let { daySpoken(it, holding.day) }
-    FlowRow(
+    // CR6 (43): the value and figures stay at the right edge, beside the ticker or under it (C26).
+    StartEndRow(
         modifier =
         Modifier
             .fillMaxWidth()
@@ -321,59 +323,62 @@ private fun HoldingRow(
                     true
                 }
             },
-        horizontalArrangement = Arrangement.spacedBy(12.dp),
-        verticalArrangement = Arrangement.spacedBy(2.dp),
-    ) {
-        Column {
-            Text(
-                text = holding.ticker,
-                style = MaterialTheme.typography.bodyLarge,
-                fontWeight = FontWeight.Medium,
-            )
-            Text(
-                text = shares,
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
-        }
-        Column(
-            modifier = Modifier.weight(1f),
-            horizontalAlignment = Alignment.End,
-        ) {
-            Text(
-                text = value,
-                style = MaterialTheme.typography.bodyLarge,
-                textAlign = TextAlign.End,
-            )
-            if (!soldOut) {
-                when (gain) {
-                    is GainModel.Figure ->
-                        Text(
-                            text = gain.text,
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = gainLossColor(sign(gain)),
-                            textAlign = TextAlign.End,
-                        )
-
-                    GainModel.NoPrice ->
-                        Text(
-                            text = stringResource(R.string.holding_no_price),
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                            textAlign = TextAlign.End,
-                        )
-                }
-            }
-            // CR5 (41), wireframe 03 marker 5: the 1-day line under the gain/loss.
-            holding.day?.let { DayRowText(it) }
-            if (staleAsOf != null) {
+        start = {
+            Column {
                 Text(
-                    text = stringResource(R.string.holding_row_stale, staleAsOf),
+                    text = holding.ticker,
+                    style = MaterialTheme.typography.bodyLarge,
+                    fontWeight = FontWeight.Medium,
+                )
+                Text(
+                    text = shares,
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    textAlign = TextAlign.End,
                 )
             }
+        },
+        end = { HoldingFigures(holding) },
+    )
+}
+
+/** The right part of a holding: its value, its gain/loss or "no price, at cost", the 1-day line, "stale, as of". */
+@Composable
+private fun HoldingFigures(holding: PortfolioHoldingRowModel) {
+    val gain = holding.gain
+    Column(horizontalAlignment = Alignment.End) {
+        Text(
+            text = holding.value,
+            style = MaterialTheme.typography.bodyLarge,
+            textAlign = TextAlign.End,
+        )
+        if (!holding.soldOut) {
+            when (gain) {
+                is GainModel.Figure ->
+                    Text(
+                        text = gainFigures(gain),
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = gainLossColor(sign(gain)),
+                        textAlign = TextAlign.End,
+                    )
+
+                GainModel.NoPrice ->
+                    Text(
+                        text = stringResource(R.string.holding_no_price),
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        textAlign = TextAlign.End,
+                    )
+            }
+        }
+        // CR5 (41), wireframe 03 marker 5: the 1-day line under the gain/loss.
+        holding.day?.let { DayRowText(it) }
+        holding.staleAsOf?.let {
+            Text(
+                text = stringResource(R.string.holding_row_stale, it),
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                textAlign = TextAlign.End,
+            )
         }
     }
 }

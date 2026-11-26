@@ -33,6 +33,17 @@ class SellLotsModelTest {
         stale: Boolean = false,
     ): Price = Price(BigDecimal(text), close, stale)
 
+    private fun pct(
+        text: String,
+        digits: String,
+        sign: FigureSign,
+    ): PercentFigure = PercentFigure(text, SpokenFigure(digits, sign))
+
+    // CR6 (43), AC-14: each lot's gain over what its available shares cost (10 × $100.00 = $1,000.00).
+    private val gain600 = GainModel.Figure("+$600.00", SpokenFigure("600.00", FigureSign.PLUS), pct("+60.00%", "60.00", FigureSign.PLUS))
+    private val loss400 = GainModel.Figure("−$400.00", SpokenFigure("400.00", FigureSign.MINUS), pct("−40.00%", "40.00", FigureSign.MINUS))
+    private val gain200 = GainModel.Figure("+$200.00", SpokenFigure("200.00", FigureSign.PLUS), pct("+20.00%", "20.00", FigureSign.PLUS))
+
     // 10 left at $100.00 a share, and a lot bought after the sell date.
     private val lot = LotChoice("b1", LocalDate.of(2026, 1, 2), 2L, dollars(10), dollars(100), unavailable = null)
     private val later = LotChoice("b2", LocalDate.of(2026, 3, 2), 3L, dollars(5), dollars(150), LotUnavailable.BOUGHT_AFTER_SELL_DATE)
@@ -47,7 +58,7 @@ class SellLotsModelTest {
                     left = "10",
                     perShare = "$100.00",
                     spokenPerShare = "100.00",
-                    gain = GainModel.Figure("+$600.00", SpokenFigure("600.00", FigureSign.PLUS)),
+                    gain = gain600,
                     staleAsOf = null,
                     unavailable = null,
                 ),
@@ -60,7 +71,7 @@ class SellLotsModelTest {
     @Test
     fun aStalePrice_carriesItsTime_andNoPrice_hasNoGain() {
         val stale = SellLots.rows(listOf(lot), Fraction.ONE, price("60", stale = true)).single()
-        assertEquals(GainModel.Figure("−$400.00", SpokenFigure("400.00", FigureSign.MINUS)), stale.gain)
+        assertEquals(loss400, stale.gain)
         assertEquals("2026-10-29 16:00", stale.staleAsOf)
         val none = SellLots.rows(listOf(lot), Fraction.ONE, null).single()
         assertEquals(GainModel.NoPrice, none.gain)
@@ -71,7 +82,7 @@ class SellLotsModelTest {
     @Test
     fun theGainIsInTodaysShares() {
         assertEquals(
-            GainModel.Figure("+$200.00", SpokenFigure("200.00", FigureSign.PLUS)),
+            gain200,
             SellLots.rows(listOf(lot), dollars(2), price("60")).single().gain,
         )
     }
@@ -132,7 +143,7 @@ class SellLotsModelTest {
             )
         val row = state(transactions, "20260201").sellLotRows.single()
         assertEquals("10", row.left)
-        assertEquals(GainModel.Figure("+$200.00", SpokenFigure("200.00", FigureSign.PLUS)), row.gain)
+        assertEquals(gain200, row.gain)
     }
 
     // Wiring, Reverse and re-enter of a sell (10c): the lots as after the reversal, so the sold lot is back in full.
@@ -147,6 +158,6 @@ class SellLotsModelTest {
         val replacing = state(transactions, "20260201", replacingId = "s1").sellLotRows.single()
         assertEquals("10", replacing.left)
         // 10 × $60.00 − $1,000.00.
-        assertEquals(GainModel.Figure("−$400.00", SpokenFigure("400.00", FigureSign.MINUS)), replacing.gain)
+        assertEquals(loss400, replacing.gain)
     }
 }

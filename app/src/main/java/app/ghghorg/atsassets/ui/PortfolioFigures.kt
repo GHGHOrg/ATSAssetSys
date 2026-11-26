@@ -7,6 +7,8 @@ import app.ghghorg.atsassets.core.Holding
 import app.ghghorg.atsassets.core.Money
 import app.ghghorg.atsassets.core.Price
 import app.ghghorg.atsassets.core.Quantity
+import app.ghghorg.atsassets.core.UnrealizedGain
+import app.ghghorg.atsassets.core.UnrealizedGains
 import app.ghghorg.atsassets.core.Valuation
 
 /*
@@ -82,7 +84,8 @@ object PortfolioFigures {
         val valued = holdings.map { Valuation.valued(it, prices[it.ticker]) }
         val value = valued.fold(Fraction.ZERO) { sum, it -> sum + it.value }
         val cost = holdings.fold(Fraction.ZERO) { sum, it -> sum + it.cost }
-        val gain = valued.fold(Fraction.ZERO) { sum, it -> sum + (it.gain ?: Fraction.ZERO) }
+        // CR6 (43): the gain and the cost of the holdings that have one; "no price" is left out of both (4.8).
+        val gain = UnrealizedGains.total(holdings.map { UnrealizedGains.ofHolding(it, prices[it.ticker]) })
         val withShares = holdings.filter { it.shares.signum() > 0 }
         return PortfolioFiguresModel(
             value = Money.format(value),
@@ -117,7 +120,12 @@ object PortfolioFigures {
             oneShare = shares == "1",
             value = Money.format(valued.value),
             spokenValue = Money.format(valued.value).substringAfter('$'),
-            gain = if (soldOut) HoldingDetail.gainOf(Fraction.ZERO) else HoldingDetail.gainOf(valued.gain),
+            gain =
+            if (soldOut) {
+                HoldingDetail.gainOf(UnrealizedGain(Fraction.ZERO, Fraction.ZERO))
+            } else {
+                HoldingDetail.gainOf(UnrealizedGains.ofHolding(holding, prices[holding.ticker]))
+            },
             soldOut = soldOut,
             staleAsOf = prices[holding.ticker]?.takeIf { it.stale && !soldOut }?.let { HoldingDetail.asOf(it.time) },
             // Wireframe 03 marker 5: a fully sold holding shows no day line.
