@@ -272,7 +272,6 @@ private fun LotList(
  * sign, at the latest price in today's shares (16c decision 4), with "stale, as of … ET" under it when the price is
  * stale, or "no price" (wireframe 10a markers 12 and 14). TalkBack reads them with the lot.
  */
-@OptIn(ExperimentalLayoutApi::class)
 @Composable
 private fun LotPickRow(
     row: SellLotRowModel,
@@ -295,72 +294,82 @@ private fun LotPickRow(
 
             else -> stringResource(R.string.sell_lot_spoken, date, left, row.spokenPerShare, state)
         }
-    FlowRow(
+    // CR6 (43): the figures stay at the right edge, beside the lot or under it (C26).
+    StartEndRow(
         modifier = Modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.spacedBy(12.dp),
-        verticalArrangement = Arrangement.spacedBy(4.dp),
-    ) {
-        Row(
-            modifier =
-            Modifier
-                .toggleable(value = pick != null, role = Role.Checkbox, onValueChange = { actions.onToggleLot(row.key) })
-                .clearAndSetSemantics { contentDescription = spoken },
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            Checkbox(checked = pick != null, onCheckedChange = null)
-            LotText(date, left, perShare)
-        }
-        Column(
-            modifier = Modifier.weight(1f),
-            horizontalAlignment = Alignment.End,
-        ) {
-            if (pick != null) {
-                val fieldSpoken = stringResource(R.string.sell_pick_spoken, date)
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Text(text = stringResource(R.string.sell_pick_label), style = MaterialTheme.typography.bodyLarge)
-                    OutlinedTextField(
-                        value = pick,
-                        onValueChange = { actions.onPickChange(row.key, it) },
-                        modifier = Modifier.width(140.dp).padding(start = 8.dp).semantics { contentDescription = fieldSpoken },
-                        isError = error != null,
-                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
-                        singleLine = true,
-                    )
-                }
-                pickMessage(error)?.let {
-                    Text(
-                        text = it,
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.error,
-                        textAlign = TextAlign.End,
-                    )
-                }
+        lineGap = 4.dp,
+        start = {
+            Row(
+                modifier =
+                Modifier
+                    .toggleable(value = pick != null, role = Role.Checkbox, onValueChange = { actions.onToggleLot(row.key) })
+                    .clearAndSetSemantics { contentDescription = spoken },
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Checkbox(checked = pick != null, onCheckedChange = null)
+                LotText(date, left, perShare)
             }
-            when (gain) {
-                is GainModel.Figure ->
-                    Text(
-                        text = gainFigures(gain),
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = gainLossColor(sign(gain)),
-                        textAlign = TextAlign.End,
-                    )
+        },
+        end = { LotPickFigures(row, pick, error, actions) },
+    )
+}
 
-                else ->
-                    Text(
-                        text = stringResource(R.string.holding_lot_no_price),
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        textAlign = TextAlign.End,
-                    )
+/** The right part of a lot that passes the lot rules: "Sell:" and its field when picked, the gain/loss, "stale, as of". */
+@Composable
+private fun LotPickFigures(
+    row: SellLotRowModel,
+    pick: String?,
+    error: QuantityError?,
+    actions: SellActions,
+) {
+    val gain = row.gain
+    Column(horizontalAlignment = Alignment.End) {
+        if (pick != null) {
+            val fieldSpoken = stringResource(R.string.sell_pick_spoken, row.date)
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Text(text = stringResource(R.string.sell_pick_label), style = MaterialTheme.typography.bodyLarge)
+                OutlinedTextField(
+                    value = pick,
+                    onValueChange = { actions.onPickChange(row.key, it) },
+                    modifier = Modifier.width(140.dp).padding(start = 8.dp).semantics { contentDescription = fieldSpoken },
+                    isError = error != null,
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
+                    singleLine = true,
+                )
             }
-            if (staleAsOf != null) {
+            pickMessage(error)?.let {
                 Text(
-                    text = stringResource(R.string.holding_row_stale, staleAsOf),
+                    text = it,
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.error,
+                    textAlign = TextAlign.End,
+                )
+            }
+        }
+        when (gain) {
+            is GainModel.Figure ->
+                Text(
+                    text = gainFigures(gain),
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = gainLossColor(sign(gain)),
+                    textAlign = TextAlign.End,
+                )
+
+            else ->
+                Text(
+                    text = stringResource(R.string.holding_lot_no_price),
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     textAlign = TextAlign.End,
                 )
-            }
+        }
+        row.staleAsOf?.let {
+            Text(
+                text = stringResource(R.string.holding_row_stale, it),
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                textAlign = TextAlign.End,
+            )
         }
     }
 }

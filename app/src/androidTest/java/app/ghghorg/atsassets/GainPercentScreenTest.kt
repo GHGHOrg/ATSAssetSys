@@ -14,6 +14,7 @@ import androidx.compose.ui.test.junit4.v2.createAndroidComposeRule
 import androidx.compose.ui.test.onRoot
 import androidx.compose.ui.test.performScrollToNode
 import androidx.compose.ui.text.TextLayoutResult
+import androidx.compose.ui.unit.dp
 import androidx.test.ext.junit.rules.ActivityScenarioRule
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
@@ -54,7 +55,8 @@ import java.time.LocalDate
  * CR6 (43; spec C26, section 6, AC-61 (a) and (d), AC-72): the unrealized gain/loss with its percentage, at the largest
  * font, upright and turned. A large gain, "+$666,660.00 (+66.67%)", so the figures are as long as they get here. Each row,
  * card and header that shows it reads it in full for TalkBack and lies within the screen's width; where the figures' own
- * text is in the tree (the sell lot list), it is not cut off. The wrap itself is seen on the phone (step 6).
+ * text is in the tree (the sell lot list), it is not cut off and ends at the card's right edge. The wrap itself is seen
+ * on the phone (step 6).
  */
 
 @RunWith(AndroidJUnit4::class)
@@ -221,13 +223,23 @@ private fun GainRule.checkPortfolios(landscape: Boolean) {
 private fun GainRule.checkSell(landscape: Boolean) {
     show(landscape) { SellEntryScreen(bigState(Screen.SELL), SellActions({}, {}, {}, {}, {}, {}, { _, _ -> }, {}, {}, {})) }
     assertGainRead("2026-01-02")
-    // The lot's figures are their own text here: shown whole, not cut off, within the screen (C26).
+    // The lot's figures are their own text here: shown whole, not cut off, within the screen, and at the card's right
+    // edge, beside the lot or under it (C26; StartEndRow).
     val figures = hasText(text(R.string.gain_figures, "+$666,660.00", "+66.67%"))
     reach(figures)
     val node = onNode(figures).fetchSemanticsNode()
-    assertWithin(node, onRoot().fetchSemanticsNode().size.width)
+    val width = onRoot().fetchSemanticsNode().size.width
+    assertWithin(node, width)
     val layouts = mutableListOf<TextLayoutResult>()
     node.config.getOrNull(SemanticsActions.GetTextLayoutResult)?.action?.invoke(layouts)
     assertTrue("No text layout for the lot's figures", layouts.isNotEmpty())
-    assertFalse("The lot's figures are cut off", layouts.first().hasVisualOverflow)
+    val layout = layouts.first()
+    val shape =
+        "node ${node.size.width}x${node.size.height} px at x ${node.positionInRoot.x}, text ${layout.size.width}x${layout.size.height} px, " +
+            "${layout.lineCount} lines, width overflow ${layout.didOverflowWidth}, height overflow ${layout.didOverflowHeight}, screen $width px"
+    assertFalse("The lot's figures are cut off: $shape", layout.hasVisualOverflow)
+    // The screen's padding (16 dp) and the card's (12 dp) to the right of the row.
+    val edge = width - with(density) { 28.dp.toPx() }
+    val right = node.positionInRoot.x + node.size.width
+    assertEquals("The lot's figures' right edge, px: $shape", edge, right, 1.5f)
 }
