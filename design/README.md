@@ -16,10 +16,10 @@ Status on 2026-11-26: Plan stage. Nothing here has changed the app yet. A change
 
 | Part | Today | Where |
 | --- | --- | --- |
-| Base colors | The phone's wallpaper colors (Material dynamic color, on). To be replaced by the palette below (D-06, D-07). | Theme.kt |
-| Fallback colors | Android Studio's template purple, unused while dynamic color is on | Color.kt, Theme.kt |
+| Base colors | Since 44a step 4: the palette below, generated from design/tokens/; dynamic color removed (D-06, D-07). Before: the phone's wallpaper colors. | Theme.kt |
+| Fallback colors | Since 44a step 4: none (the template purple removed) | Color.kt, Theme.kt |
 | Own colors | Gain and loss, one pair per theme; the allocation slice colors | Color.kt |
-| Type | Material 3 defaults; only `bodyLarge` is set (16/24, 0.5 tracking), on the system font. To be replaced by Asap (D-12). | Type.kt |
+| Type | Since 44a step 4: Asap and Asap Condensed on the type roles below, each Material style set from one (D-12). Before: Material 3 defaults on the system font. | Type.kt |
 | Shapes, spacing | Material 3 defaults plus values set screen by screen; not inventoried yet | screens |
 
 ## The palette: Midnight gold in navy (D-07, D-08)
@@ -184,7 +184,7 @@ These come from spec.md section 6. The design system follows them and can't chan
 
 ## Token files
 
-In the ATS repository under `design/` (D-21), split by what changes with the mode. A repository of its own follows once this is done. The three token files were made in iteration 44a, step 3 (2026-11-27), and app's unit test TokenFilesTest checks them: light and dark hold the same tokens (D-04), each color's hex matches its components, every reference resolves, and the values spec 6 names are the ones here. The icons and the Figma set are not made yet.
+In the ATS repository under `design/` (D-21), split by what changes with the mode. A repository of its own follows once this is done. The three token files were made in iteration 44a, step 3 (2026-11-27), and app's unit test TokenFilesTest checks them: light and dark hold the same tokens (D-04), each color's hex matches its components, every reference resolves, and the values spec 6 names are the ones here. The icons are in design/icons/ since step 3 (D-47), and the fonts in app/src/main/res/font/ with design/fonts/fonts.json and OFL-asap.txt since step 4. From step 4 the build generates the app's theme from these files (app/build.gradle.kts, DesignTokensKotlin), and ThemeTokensTest checks it. The Figma set is not made yet.
 
 | File | Format | Holds | Figma collection |
 | --- | --- | --- | --- |

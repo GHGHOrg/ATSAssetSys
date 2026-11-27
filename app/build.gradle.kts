@@ -138,6 +138,178 @@ class DesignTokensArgument(
 val designTokens: File = rootProject.file("design/tokens")
 val designIcons: File = rootProject.file("design/icons")
 
+// 44a step 4 (spec K9, design/decisions.md D-22; 44a decision 6): the theme is built from the token files. This task reads
+// design/tokens/*.tokens.json (W3C design tokens, DTCG 2025.10) and writes DesignTokens.kt into the build folder before the
+// app compiles; the theme (ui/theme/) uses it, so a token change reaches the app with no Kotlin edit. ThemeTokensTest
+// compares the generated values with the files.
+abstract class DesignTokensKotlin : DefaultTask() {
+    @get:InputDirectory
+    @get:PathSensitive(PathSensitivity.RELATIVE)
+    abstract val tokens: DirectoryProperty
+
+    @get:OutputDirectory
+    abstract val output: DirectoryProperty
+
+    @TaskAction
+    fun write() {
+        val light = TokenFile.read(tokens.file("color.light.tokens.json").get().asFile)
+        val dark = TokenFile.read(tokens.file("color.dark.tokens.json").get().asFile)
+        val base = TokenFile.read(tokens.file("base.tokens.json").get().asFile)
+        val dir = output.get().asFile.resolve("app/ghghorg/atsassets/ui/theme")
+        dir.deleteRecursively()
+        dir.mkdirs()
+        dir.resolve("DesignTokens.kt").writeText(TokenFile.kotlin(light, dark, base))
+    }
+}
+
+object TokenFile {
+    class Token(
+        val type: String?,
+        val value: Any?,
+    )
+
+    fun read(file: File): Map<String, Token> {
+        val into = linkedMapOf<String, Token>()
+        collect(groovy.json.JsonSlurper().parse(file) as Map<*, *>, "", null, into)
+        return into
+    }
+
+    private fun collect(
+        group: Map<*, *>,
+        prefix: String,
+        inherited: String?,
+        into: MutableMap<String, Token>,
+    ) {
+        val type = group["\$type"] as String? ?: inherited
+        for ((key, child) in group) {
+            key as String
+            if (key.startsWith("$") || child !is Map<*, *>) continue
+            val name = if (prefix.isEmpty()) key else "$prefix.$key"
+            val isToken = child.containsKey("\$value")
+            if (isToken) {
+                into[name] = Token(child["\$type"] as String? ?: type, child["\$value"])
+            } else {
+                collect(child, name, type, into)
+            }
+        }
+    }
+
+    private fun resolve(
+        all: Map<String, Token>,
+        name: String,
+    ): Token {
+        var token = all.getValue(name)
+        while ((token.value as? String)?.startsWith("{") == true) token = all.getValue((token.value as String).trim('{', '}'))
+        return token
+    }
+
+    private fun camel(name: String): String {
+        val parts = name.split('-')
+        return parts.first() + parts.drop(1).joinToString("") { part -> part.replaceFirstChar { it.uppercase() } }
+    }
+
+    private fun argb(color: Map<*, *>): String {
+        val hex = (color["hex"] as String).removePrefix("#").uppercase()
+        val alpha = Math.round(((color["alpha"] as Number?)?.toDouble() ?: 1.0) * 255).toInt()
+        return "0x" + "%02X".format(alpha) + hex
+    }
+
+    private fun px(value: Any?): Int = if (value is Map<*, *>) (value["value"] as Number).toInt() else (value as Number).toInt()
+
+    fun kotlin(
+        light: Map<String, Token>,
+        dark: Map<String, Token>,
+        base: Map<String, Token>,
+    ): String {
+        val colors = light.filter { it.value.type == "color" }.keys.map { it.removePrefix("color.") }
+        val darkColors = dark.filter { it.value.type == "color" }.keys.map { it.removePrefix("color.") }
+        require(darkColors == colors) { "light and dark differ (D-04)" }
+
+        fun argbMap(all: Map<String, Token>) =
+            colors.joinToString(",\n") { "            \"${camel(it)}\" to ${argb(resolve(all, "color.$it").value as Map<*, *>)}" }
+
+        fun shadow(all: Map<String, Token>) =
+            (all.getValue("shadow.card").value as List<*>).joinToString(", ") { layer ->
+                layer as Map<*, *>
+                val color = argb(layer["color"] as Map<*, *>)
+                val sizes = listOf("offsetX", "offsetY", "blur", "spread").joinToString(", ") { px(layer[it]).toString() }
+                "TokenShadowLayer(Color($color), $sizes)"
+            }
+        val roles =
+            base.keys
+                .filter { it.startsWith("type.") }
+                .map { it.split('.')[1] }
+                .distinct()
+        val types =
+            roles.joinToString(",\n") { role ->
+                val family = resolve(base, "type.$role.family").value as String
+                val size = px(base.getValue("type.$role.size").value)
+                val line = px(base.getValue("type.$role.line-height").value)
+                val weight = px(base.getValue("type.$role.weight").value)
+                "            \"${camel(role)}\" to TokenType(\"$family\", $size, $line, $weight)"
+            }
+        val sizeTokens = base.filter { (name, token) -> !name.startsWith("type.") && token.type in setOf("dimension", "number") }
+        val sizes =
+            sizeTokens.entries.joinToString(",\n") { (name, token) ->
+                "            \"${camel(name.replace('.', '-'))}\" to ${px(token.value)}"
+            }
+        return buildString {
+            appendLine("// Generated from design/tokens/ by app/build.gradle.kts (DesignTokensKotlin; 44a step 4). Do not edit:")
+            appendLine("// change the token files (spec K9, design/decisions.md D-22).")
+            appendLine("package app.ghghorg.atsassets.ui.theme")
+            appendLine()
+            appendLine("import androidx.compose.ui.graphics.Color")
+            appendLine()
+            appendLine("internal data class TokenShadowLayer(")
+            appendLine("    val color: Color,")
+            listOf("offsetX", "offsetY", "blur", "spread").forEach { appendLine("    val $it: Int,") }
+            appendLine(")")
+            appendLine()
+            appendLine("internal data class TokenType(val family: String, val size: Int, val lineHeight: Int, val weight: Int)")
+            appendLine()
+            appendLine("internal class TokenPalette(private val argb: Map<String, Long>, val cardShadow: List<TokenShadowLayer>) {")
+            colors.forEach { appendLine("    val ${camel(it)}: Color get() = Color(argb.getValue(\"${camel(it)}\"))") }
+            appendLine("}")
+            appendLine()
+            appendLine("internal object TokenColors {")
+            appendLine("    val lightArgb: Map<String, Long> =")
+            appendLine("        mapOf(")
+            appendLine(argbMap(light) + ",")
+            appendLine("        )")
+            appendLine("    val darkArgb: Map<String, Long> =")
+            appendLine("        mapOf(")
+            appendLine(argbMap(dark) + ",")
+            appendLine("        )")
+            appendLine("    val light = TokenPalette(lightArgb, listOf(${shadow(light)}))")
+            appendLine("    val dark = TokenPalette(darkArgb, listOf(${shadow(dark)}))")
+            appendLine("}")
+            appendLine()
+            appendLine("internal object TokenBase {")
+            appendLine("    val sizes: Map<String, Int> =")
+            appendLine("        mapOf(")
+            appendLine("$sizes,")
+            appendLine("        )")
+            appendLine("    val types: Map<String, TokenType> =")
+            appendLine("        mapOf(")
+            appendLine("$types,")
+            appendLine("        )")
+            appendLine("}")
+        }
+    }
+}
+
+val designTokensKotlin =
+    tasks.register<DesignTokensKotlin>("designTokensKotlin") {
+        tokens.set(designTokens)
+        output.set(layout.buildDirectory.dir("generated/designTokens"))
+    }
+
+androidComponents {
+    onVariants { variant ->
+        variant.sources.kotlin?.addGeneratedSourceDirectory(designTokensKotlin, DesignTokensKotlin::output)
+    }
+}
+
 tasks.withType<Test>().configureEach {
     val groupsFile = runtimeGroups.flatMap { it.output }
     inputs.file(groupsFile).withPropertyName("runtimeGroups").withPathSensitivity(PathSensitivity.NONE)
