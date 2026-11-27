@@ -75,6 +75,20 @@ class IconFilesTest {
         assertEquals(emptySet<String>(), drawn - names)
     }
 
+    // 44a step 5: the app's list of icons (LucideIcon) is the index's, file for file and drawable for drawable.
+    @Test
+    fun theAppsIcons_areTheIndexs() {
+        assertEquals(icons.map { it.getValue("file").jsonPrimitive.content }, LucideIcon.entries.map { it.file })
+        for (icon in LucideIcon.entries) {
+            assertEquals(icon.file, "ic_lucide_" + icon.file.replace('-', '_'), resourceName(icon.res))
+        }
+    }
+
+    private fun resourceName(res: Int): String {
+        val fields = app.ghghorg.atsassets.R.drawable::class.java.fields
+        return fields.first { it.getInt(null) == res }.name
+    }
+
     @Test
     fun lucidesLicence_isKeptWithTheIcons() {
         val licence = File(dir(), "LICENSE-lucide")
