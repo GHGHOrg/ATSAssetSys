@@ -1,0 +1,397 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<title>More and Settings</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Asap:wght@400;500;700&family=Asap+Condensed:wght@400;500;700&display=swap">
+<style>
+/* Layout: a theme switch, then ten phones that wrap, one per frame of wireframe 10f (More, Settings shown whole, the
+   auto-lock, screenshot and price source dialogs, Settings after a change, tab order, a list, a list dialog, the Edit
+   picker). Tokens of the Corporate Design System (D-07 to D-35). 1 CSS px = 1 dp. */
+:root { --page-bg: #F4F6FA; --page-ink: #0A1A36; --page-muted: #4B5D75; --page-line: #CED8E6; --stamp: #8A6D12; --sans: "Asap", sans-serif; --cond: "Asap Condensed", sans-serif; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --page-bg: #070F1F; --page-ink: #E6ECF5; --page-muted: #9DB0C9; --page-line: #1E2F4A; --stamp: #E0BC4A; color-scheme: dark } }
+:root[data-theme="dark"] { --page-bg: #070F1F; --page-ink: #E6ECF5; --page-muted: #9DB0C9; --page-line: #1E2F4A; --stamp: #E0BC4A; color-scheme: dark }
+body { margin: 0; background: var(--page-bg); color: var(--page-ink); font-family: var(--sans); }
+.wrap { max-width: 1760px; margin: 0 auto; padding-block: 28px 56px;
+  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px));
+  display: flex; flex-direction: column; gap: 24px; }
+.stamp { font: 500 14px/20px var(--cond); color: var(--stamp); }
+h1 { font-size: 28px; font-weight: 500; margin: 0; }
+p { margin: 0; line-height: 1.5; max-width: 84ch; color: var(--page-muted); }
+p strong { color: var(--page-ink); font-weight: 500; }
+header { display: flex; flex-direction: column; gap: 10px; }
+.seg { display: inline-flex; border: 1px solid var(--page-line); border-radius: 8px; overflow: hidden; }
+.seg button { font: 500 14px var(--sans); color: var(--page-muted); background: transparent; border: 0; padding: 0 18px; height: 36px; cursor: pointer; }
+.seg button[aria-pressed="true"] { background: var(--page-line); color: var(--page-ink); }
+.seg button:focus-visible { outline: 2px solid var(--page-ink); outline-offset: -3px; }
+.grid { display: flex; flex-wrap: wrap; gap: 28px; align-items: flex-start; }
+.shot { display: flex; flex-direction: column; gap: 10px; width: 411px; max-width: 100%; }
+.cap { display: flex; flex-direction: column; gap: 4px; }
+.cap b { font-size: 17px; font-weight: 500; }
+.cap span { font-size: 14px; line-height: 1.45; color: var(--page-muted); }
+.scroll { overflow-x: auto; max-width: 100%; }
+
+/* ---------- Tokens ---------- */
+.phone {
+  --page: #EBF0F8; --card: #DFE7F6; --float: #DFE7F6; --band: #0A1A36; --on-band: #FFFFFF;
+  --ink: #0A1A36; --muted: #295C85; --divider: #B0C4E8;
+  --gold: #C9A227; --on-gold: #0A1A36; --btn-line: #376A9E; --btn-text: #0E2B47; --field-line: #376A9E; --focus: #0A1A36;
+  --err: #7A541F; --check: #0E2B47;
+  --bar: #0A1A36; --bar-label: #8AABC5; --bar-sel: #E0BC4A; --pill: #1C4F6C; --bar-ind: transparent; --scrim: rgba(10, 26, 54, .50);
+  --shadow: 0 1px 3px rgba(10, 26, 54, .26), 0 4px 12px rgba(10, 26, 54, .16);
+  width: 411px; height: 860px; box-sizing: border-box; background: var(--page); color: var(--ink); border: 1px solid var(--page-line); border-radius: 14px;
+  overflow: hidden; display: flex; flex-direction: column; font-family: var(--sans); position: relative; }
+.phone.tall { height: auto; }
+.phone.dark {
+  --page: #0A1A36; --card: #0E2B47; --float: #153D5A; --band: #0A1A36; --on-band: #E6ECF5;
+  --ink: #E6ECF5; --muted: #B0C4E8; --divider: #1C4F6C;
+  --gold: #E0BC4A; --btn-line: #E0BC4A; --btn-text: #E0BC4A; --field-line: #6291B9; --focus: #E0BC4A;
+  --err: #E2BF8D; --check: #E0BC4A;
+  --bar: #050D1C; --pill: transparent; --bar-ind: #E0BC4A; --scrim: rgba(0, 0, 0, .60);
+  --shadow: 0 1px 3px rgba(0, 0, 0, .62), 0 5px 14px rgba(0, 0, 0, .48); }
+.t22 { font: 500 22px/28px var(--sans); }
+.t16m { font: 500 16px/24px var(--sans); }
+.t16 { font: 400 16px/24px var(--sans); }
+.t14 { font: 400 14px/20px var(--sans); }
+.t14m { font: 500 14px/20px var(--sans); }
+.t12c { font: 400 12px/16px var(--cond); }
+.muted { color: var(--muted); }
+.num { font-variant-numeric: tabular-nums; }
+
+.band { background: var(--band); color: var(--on-band); padding: 10px 12px; display: flex; align-items: center; gap: 4px; flex: none; }
+.band .ico { min-width: 48px; height: 48px; display: inline-flex; align-items: center; justify-content: center; margin: -4px 0; }
+.band .grow { flex: 1; }
+.body { padding: 12px; display: flex; flex-direction: column; gap: 12px; overflow: hidden; flex: 1; min-height: 0; }
+.card { background: var(--card); border-radius: 8px; box-shadow: var(--shadow); }
+.pad { padding: 10px; display: flex; flex-direction: column; gap: 6px; }
+.banner { display: flex; gap: 10px; align-items: flex-start; padding: 10px; }
+.banner .ic { color: var(--btn-text); }
+.ghost { height: 120px; border-radius: 8px; background: var(--card); box-shadow: var(--shadow); }
+/* Section heading over a card (choice 3) */
+.sh { font: 500 14px/20px var(--sans); color: var(--muted); padding: 4px 2px 0; }
+
+/* Rows */
+.r { display: flex; align-items: center; gap: 10px; min-height: 56px; padding: 8px 10px; box-sizing: border-box; }
+.r .grow { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+.r .chev { color: var(--muted); }
+.r.ro { min-height: 36px; padding: 4px 10px; }
+.div { height: 1px; background: var(--divider); margin: 0 10px; }
+
+/* Radio (new, choice 4): 20 circle, 2 outline; selected adds a 10 dot, both in the check color; row 48 */
+.rad { display: flex; align-items: center; gap: 12px; min-height: 48px; }
+.rad .o { width: 20px; height: 20px; border-radius: 50%; border: 2px solid var(--btn-line); box-sizing: border-box; flex: none; display: inline-flex; align-items: center; justify-content: center; }
+.rad.on .o { border-color: var(--check); }
+.rad.on .o::after { content: ""; width: 10px; height: 10px; border-radius: 50%; background: var(--check); }
+.rad .grow { flex: 1; min-width: 0; font: 400 16px/24px var(--sans); }
+
+/* Dialog (D-34) */
+.scrim { position: absolute; inset: 0; background: var(--scrim); }
+.dialog { position: absolute; left: 20px; right: 20px; top: 40px; background: var(--float); border-radius: 8px; box-shadow: var(--shadow); padding: 16px; display: flex; flex-direction: column; gap: 12px; }
+.acts { display: flex; justify-content: flex-end; gap: 8px; flex-wrap: wrap; }
+
+.f { display: flex; flex-direction: column; }
+.field { position: relative; height: 56px; border: 1px solid var(--field-line); border-radius: 8px; box-sizing: border-box;
+  display: flex; align-items: center; gap: 8px; padding: 0 12px; font: 400 16px/24px var(--sans); }
+.field .fl { position: absolute; top: -9px; left: 8px; padding: 0 4px; background: var(--float); font: 400 12px/16px var(--sans); color: var(--muted); white-space: nowrap; }
+.field .v { flex: 1; min-width: 0; white-space: nowrap; }
+.note { font: 400 12px/16px var(--sans); color: var(--muted); padding: 4px 12px 0; }
+.help { font: 500 12px/16px var(--sans); color: var(--err); padding: 4px 12px 0; }
+.field.err { border: 2px solid var(--err); padding: 0 11px; }
+.field.err .fl { color: var(--err); font-weight: 500; }
+
+.btn { height: 40px; padding: 0 20px; border-radius: 8px; display: inline-flex; align-items: center; justify-content: center; font: 500 14px/20px var(--sans); box-sizing: border-box; border: 1px solid transparent; white-space: nowrap; }
+.btn.l { height: 48px; font: 500 16px/24px var(--sans); }
+.btn.s { height: 32px; padding: 0 12px; font: 500 14px/20px var(--cond); }
+.btn.wide { width: 100%; }
+.btn.filled { background: var(--gold); color: var(--on-gold); }
+.btn.out { border-color: var(--btn-line); color: var(--btn-text); }
+.btn.text { color: var(--btn-text); padding: 0 12px; }
+.btn.text.s { padding: 0 8px; }
+.btn.text.l { padding: 0 16px; }
+/* Icon button (choice 8): 48 square, the icon 24 in the button color */
+.ib { width: 48px; height: 48px; display: inline-flex; align-items: center; justify-content: center; color: var(--btn-text); border-radius: 8px; }
+.dis { opacity: .38; }
+.foot { margin-top: auto; display: flex; flex-direction: column; gap: 8px; }
+.warn { display: flex; gap: 8px; align-items: flex-start; }
+.warn .ic { color: var(--btn-text); }
+.blocked { border: 2px solid var(--err); border-radius: 8px; padding: 10px; display: flex; gap: 8px; align-items: flex-start; background: var(--card); }
+.blocked b { font-weight: 500; color: var(--err); }
+
+.bar { display: flex; background: var(--bar); padding: 0 4px; flex: none; }
+.tab { flex: 1; min-height: 56px; display: flex; flex-direction: column; align-items: center; justify-content: center; font: 500 14px/20px var(--cond); color: var(--bar-label); padding: 6px 2px; box-sizing: border-box; }
+.tab span { padding: 4px 10px; border-radius: 8px; }
+.tab::after { content: ""; width: 24px; height: 3px; margin-top: 3px; border-radius: 2px; }
+.tab.on { color: var(--bar-sel); font-weight: 700; }
+.tab.on span { background: var(--pill); }
+.tab.on::after { background: var(--bar-ind); }
+
+.ic { width: 24px; height: 24px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; display: block; flex: none; }
+.ic.s20 { width: 20px; height: 20px; }
+.field .ic.alert, .blocked .ic { color: var(--err); }
+.notes { display: flex; flex-direction: column; gap: 8px; border-top: 1px solid var(--page-line); padding-top: 16px; }
+.notes p { font-size: 14px; }
+.notes ol { margin: 0; padding-left: 22px; color: var(--page-muted); font-size: 14px; line-height: 1.5; display: flex; flex-direction: column; gap: 4px; max-width: 90ch; }
+.notes li strong { color: var(--page-ink); font-weight: 500; }
+/* Bottom bar with icon and text (D-37, amending D-10): 72 tall; light, one pill behind icon and label; dark, gold icon and label over the gold line. */
+.tab.it { min-height: 72px; }
+.tab.it .both { display: flex; flex-direction: column; align-items: center; gap: 2px; padding: 6px 4px 4px; border-radius: 8px; min-width: 84px; box-sizing: border-box; } /* one pill size on every tab (D-37) */
+.tab.it .both svg { width: 24px; height: 24px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; display: block; }
+.tab.it span.t, .tab.it.on span.t { padding: 0; background: none; }</style>
+
+<div class="wrap">
+<header>
+  <span class="stamp">Stage: Plan · drawings for intent-cr-07 · 2026-11-27</span>
+  <h1>More and settings</h1>
+  <p>Wireframe 10f (approved) drawn in the Corporate Design System: the More tab, Settings as one scrolling screen with four sections, its dialogs, tab order, the Sectors list and the Edit picker. <strong>Example A and spec/example-backup.csv; price source names and every text are placeholders</strong> (D9). More is the selected tab except on the Edit picker (Portfolios). Drawn in HTML at 1 px per dp, not rendered by Android.</p>
+  <div><span class="seg" role="group" aria-label="Phone theme"><button type="button" data-mode="light" aria-pressed="true">Light</button><button type="button" data-mode="dark" aria-pressed="false">Dark</button></span></div>
+</header>
+
+<div class="grid">
+
+  <div class="shot"><div class="cap"><b>A. More</b><span>Markers 1 and 2. Lucide's settings icon at the top right of the band (48, labelled "Settings" for TalkBack); the last backup as a read-only row; five rows tappable with a chevron, About last (CR5, spec 6; added after acceptance, the wireframe predates CR5).</span></div>
+    <div class="scroll"><div class="phone">
+      <div class="band"><span class="t22 grow" style="padding-left:8px">More</span><span class="ico" aria-label="Settings"><i class="ic" data-i="settings"></i></span></div>
+      <div class="body">
+        <div class="card"><div class="r ro"><span class="t14 muted" style="flex:1">Last backup</span><span class="t14 num">2026-10-04 JST</span></div></div>
+        <div class="card">
+          <div class="r"><span class="t16 grow">Net Worth (Total)</span><span class="chev"><i class="ic s20" data-i="chevron-right"></i></span></div><div class="div"></div>
+          <div class="r"><span class="t16 grow">Allocation</span><span class="chev"><i class="ic s20" data-i="chevron-right"></i></span></div><div class="div"></div>
+          <div class="r"><span class="t16 grow">Realized gains</span><span class="chev"><i class="ic s20" data-i="chevron-right"></i></span></div><div class="div"></div>
+          <div class="r"><span class="t16 grow">Backup and restore</span><span class="chev"><i class="ic s20" data-i="chevron-right"></i></span></div><div class="div"></div>
+          <div class="r"><span class="t16 grow">About</span><span class="chev"><i class="ic s20" data-i="chevron-right"></i></span></div>
+        </div>
+      </div>
+      <div class="bar"><span class="tab on"><span>More</span></span><span class="tab"><span>Cash</span></span><span class="tab"><span>Portfolios</span></span><span class="tab"><span>Overall</span></span></div>
+    </div></div></div>
+
+  <div class="shot"><div class="cap"><b>B. Settings, shown whole</b><span>Markers 3 to 6. A medium secondary heading over each section's card; each row its name with the current value under it in secondary text, and a chevron.</span></div>
+    <div class="scroll"><div class="phone tall">
+      <div class="band"><span class="ico"><i class="ic" data-i="chevron-left"></i></span><span class="t22">Settings</span></div>
+      <div class="body">
+        <div class="sh">Security</div>
+        <div class="card">
+          <div class="r"><span class="grow"><span class="t16">Auto-lock</span><span class="t14 muted">Every time I leave the app</span></span><span class="chev"><i class="ic s20" data-i="chevron-right"></i></span></div><div class="div"></div>
+          <div class="r"><span class="grow"><span class="t16">Screenshot window</span><span class="t14 muted">Off</span></span><span class="chev"><i class="ic s20" data-i="chevron-right"></i></span></div>
+        </div>
+        <div class="sh">Prices</div>
+        <div class="card">
+          <div class="r"><span class="grow"><span class="t16">Price source</span><span class="t14 muted">Source 1 (default)</span></span><span class="chev"><i class="ic s20" data-i="chevron-right"></i></span></div>
+        </div>
+        <div class="sh">Navigation</div>
+        <div class="card">
+          <div class="r"><span class="grow"><span class="t16">Tab order</span><span class="t14 muted">More, Cash, Portfolios, Overall</span></span><span class="chev"><i class="ic s20" data-i="chevron-right"></i></span></div>
+        </div>
+        <div class="sh">Lists</div>
+        <div class="card">
+          <div class="r"><span class="grow"><span class="t16">Sectors</span><span class="t14 muted">2 values</span></span><span class="chev"><i class="ic s20" data-i="chevron-right"></i></span></div><div class="div"></div>
+          <div class="r"><span class="grow"><span class="t16">Geographies</span><span class="t14 muted">2 values</span></span><span class="chev"><i class="ic s20" data-i="chevron-right"></i></span></div>
+        </div>
+      </div>
+      <div class="bar"><span class="tab on"><span>More</span></span><span class="tab"><span>Cash</span></span><span class="tab"><span>Portfolios</span></span><span class="tab"><span>Overall</span></span></div>
+    </div></div></div>
+
+  <div class="shot"><div class="cap"><b>C. Auto-lock</b><span>Marker 7. The new radio rows, the default tagged in condensed 12; a tap saves at once, so the dialog has Close only.</span></div>
+    <div class="scroll"><div class="phone">
+      <div class="band"><span class="ico"><i class="ic" data-i="chevron-left"></i></span><span class="t22">Settings</span></div>
+      <div class="body"><div class="ghost"></div><div class="ghost"></div></div>
+      <div class="bar"><span class="tab on"><span>More</span></span><span class="tab"><span>Cash</span></span><span class="tab"><span>Portfolios</span></span><span class="tab"><span>Overall</span></span></div>
+      <div class="scrim"></div>
+      <div class="dialog">
+        <span class="t22">Auto-lock</span>
+        <div>
+          <div class="rad on"><span class="o"></span><span class="grow">Every time I leave the app</span><span class="t12c muted">default</span></div>
+          <div class="rad"><span class="o"></span><span class="grow">After 1 minute idle</span></div>
+          <div class="rad"><span class="o"></span><span class="grow">After 5 minutes idle</span></div>
+          <div class="rad"><span class="o"></span><span class="grow">Only when the phone locks or the app restarts</span></div>
+        </div>
+        <div class="t14 muted">Takes effect at once. Saved.</div>
+        <div class="acts"><span class="btn text">Close</span></div>
+      </div>
+    </div></div></div>
+
+  <div class="shot"><div class="cap"><b>D. Screenshot window, off</b><span>Marker 8. The state in medium; the action gold, with how it asks as a note; Close a text button.</span></div>
+    <div class="scroll"><div class="phone">
+      <div class="band"><span class="ico"><i class="ic" data-i="chevron-left"></i></span><span class="t22">Settings</span></div>
+      <div class="body"><div class="ghost"></div><div class="ghost"></div></div>
+      <div class="bar"><span class="tab on"><span>More</span></span><span class="tab"><span>Cash</span></span><span class="tab"><span>Portfolios</span></span><span class="tab"><span>Overall</span></span></div>
+      <div class="scrim"></div>
+      <div class="dialog">
+        <span class="t22">Screenshot window</span>
+        <span class="t16m">Off: screenshots and recording are blocked.</span>
+        <div class="f"><div><span class="btn filled">Allow screenshots for 3 minutes</span></div><div class="note" style="padding-left:0">Asks for your fingerprint or phone PIN each time.</div></div>
+        <div class="acts"><span class="btn text">Close</span></div>
+      </div>
+    </div></div></div>
+
+  <div class="shot"><div class="cap"><b>E. Price source</b><span>Marker 9. The same radio rows; this choice runs a sweep, so it confirms with Use this source (gold) and Cancel.</span></div>
+    <div class="scroll"><div class="phone">
+      <div class="band"><span class="ico"><i class="ic" data-i="chevron-left"></i></span><span class="t22">Settings</span></div>
+      <div class="body"><div class="ghost"></div><div class="ghost"></div></div>
+      <div class="bar"><span class="tab on"><span>More</span></span><span class="tab"><span>Cash</span></span><span class="tab"><span>Portfolios</span></span><span class="tab"><span>Overall</span></span></div>
+      <div class="scrim"></div>
+      <div class="dialog">
+        <span class="t22">Price source</span>
+        <div>
+          <div class="rad"><span class="o"></span><span class="grow">Source 1</span><span class="t12c muted">default</span></div>
+          <div class="rad on"><span class="o"></span><span class="grow">Source 2</span></div>
+        </div>
+        <div class="acts"><span class="btn text">Cancel</span><span class="btn filled">Use this source</span></div>
+      </div>
+    </div></div></div>
+
+  <div class="shot"><div class="cap"><b>F. Settings after a change</b><span>Markers 8 and 10. The source's result as D-33's notice banner (offline: "Prices were not refreshed …", the same way). The screenshot window on: its row shows the time left, D-34's warning line and Turn off.</span></div>
+    <div class="scroll"><div class="phone">
+      <div class="band"><span class="ico"><i class="ic" data-i="chevron-left"></i></span><span class="t22">Settings</span></div>
+      <div class="body">
+        <div class="card banner"><i class="ic s20" data-i="info"></i><div class="t14">Prices updated from Source 2. 2 tickers could not be priced and keep their last price, marked stale: XYZ, ABC.</div></div>
+        <div class="sh">Security</div>
+        <div class="card">
+          <div class="r"><span class="grow"><span class="t16">Auto-lock</span><span class="t14 muted">Every time I leave the app</span></span><span class="chev"><i class="ic s20" data-i="chevron-right"></i></span></div><div class="div"></div>
+          <div class="pad">
+            <span class="t16">Screenshot window</span>
+            <span class="t16m num">On, 2:41 left. Ends when you leave the app.</span>
+            <div class="warn"><i class="ic s20" data-i="triangle-alert"></i><span class="t14m">Anything can capture the screen while it is on.</span></div>
+            <div><span class="btn filled">Turn off</span></div>
+          </div>
+        </div>
+        <div class="sh">Prices</div>
+        <div class="card">
+          <div class="r"><span class="grow"><span class="t16">Price source</span><span class="t14 muted">Source 2</span></span><span class="chev"><i class="ic s20" data-i="chevron-right"></i></span></div>
+        </div>
+      </div>
+      <div class="bar"><span class="tab on"><span>More</span></span><span class="tab"><span>Cash</span></span><span class="tab"><span>Portfolios</span></span><span class="tab"><span>Overall</span></span></div>
+    </div></div></div>
+
+  <div class="shot"><div class="cap"><b>G. Tab order (after moving Overall up)</b><span>Marker 11. Each tab a row with Lucide arrow-up and arrow-down as 48 icon buttons, read as "Move Overall up"; the first's up and the last's down disabled. The bar below follows at once.</span></div>
+    <div class="scroll"><div class="phone">
+      <div class="band"><span class="ico"><i class="ic" data-i="chevron-left"></i></span><span class="t22">Tab order</span></div>
+      <div class="body">
+        <div class="card">
+          <div class="r"><span class="t16 grow">1. More</span><span class="ib dis"><i class="ic" data-i="arrow-up"></i></span><span class="ib"><i class="ic" data-i="arrow-down"></i></span></div><div class="div"></div>
+          <div class="r"><span class="t16 grow">2. Cash</span><span class="ib"><i class="ic" data-i="arrow-up"></i></span><span class="ib"><i class="ic" data-i="arrow-down"></i></span></div><div class="div"></div>
+          <div class="r"><span class="t16 grow">3. Overall</span><span class="ib"><i class="ic" data-i="arrow-up"></i></span><span class="ib"><i class="ic" data-i="arrow-down"></i></span></div><div class="div"></div>
+          <div class="r"><span class="t16 grow">4. Portfolios</span><span class="ib"><i class="ic" data-i="arrow-up"></i></span><span class="ib dis"><i class="ic" data-i="arrow-down"></i></span></div>
+        </div>
+        <div class="t14 muted">Left to right in the bottom bar. Takes effect at once.</div>
+      </div>
+      <div class="bar"><span class="tab on"><span>More</span></span><span class="tab"><span>Cash</span></span><span class="tab"><span>Overall</span></span><span class="tab"><span>Portfolios</span></span></div>
+    </div></div></div>
+
+  <div class="shot"><div class="cap"><b>H. Sectors (Geographies the same), a delete refused</b><span>Markers 12, 13 and 15. Each value with its use and remembered texts in secondary text, Rename and Delete small text buttons under it. A refused delete is D-31's blocked card at the top. Add value the gold foot.</span></div>
+    <div class="scroll"><div class="phone">
+      <div class="band"><span class="ico"><i class="ic" data-i="chevron-left"></i></span><span class="t22">Sectors</span></div>
+      <div class="body">
+        <div class="blocked"><i class="ic s20" data-i="circle-alert"></i><div class="t14"><b>Not deleted.</b> Technology is used by 1 holding (hidden holdings count). Change that holding first.</div></div>
+        <div class="card">
+          <div class="pad">
+            <span class="t16m">Technology</span>
+            <span class="t14 muted">Used by 1 holding. Also matches: Information Technology</span>
+            <div style="display:flex;gap:4px;margin-left:-8px"><span class="btn text s">Rename</span><span class="btn text s">Delete</span></div>
+          </div>
+          <div class="div"></div>
+          <div class="pad">
+            <span class="t16m">Diversified</span>
+            <span class="t14 muted">Used by 0 holdings.</span>
+            <div style="display:flex;gap:4px;margin-left:-8px"><span class="btn text s">Rename</span><span class="btn text s">Delete</span></div>
+          </div>
+        </div>
+        <div class="foot"><span class="btn filled l wide">Add value</span></div>
+      </div>
+      <div class="bar"><span class="tab on"><span>More</span></span><span class="tab"><span>Cash</span></span><span class="tab"><span>Portfolios</span></span><span class="tab"><span>Overall</span></span></div>
+    </div></div></div>
+
+  <div class="shot"><div class="cap"><b>I. Rename a value, refused</b><span>Markers 14 and 15. The catalog's dialog with the Name field; a matching name or remembered text refused on the field (D-34). "Renamed. Source text … still maps …" afterwards is the notice banner.</span></div>
+    <div class="scroll"><div class="phone">
+      <div class="band"><span class="ico"><i class="ic" data-i="chevron-left"></i></span><span class="t22">Sectors</span></div>
+      <div class="body"><div class="ghost"></div></div>
+      <div class="bar"><span class="tab on"><span>More</span></span><span class="tab"><span>Cash</span></span><span class="tab"><span>Portfolios</span></span><span class="tab"><span>Overall</span></span></div>
+      <div class="scrim"></div>
+      <div class="dialog">
+        <span class="t22">Rename Diversified</span>
+        <div class="f"><div class="field err"><span class="fl">Name</span><span class="v">Tech</span><i class="ic s20 alert" data-i="circle-alert"></i></div>
+          <div class="help">Not saved. "Tech" is already a remembered source text for Technology. Case and spaces are ignored.</div></div>
+        <div class="acts"><span class="btn text">Cancel</span><span class="btn filled">Save</span></div>
+      </div>
+    </div></div></div>
+
+  <div class="shot"><div class="cap"><b>J. Edit picker (Holding detail, Classification)</b><span>Markers 16 and 17. A screen of radio rows in a card, the pointer to Settings as secondary text, Save the gold foot. With an empty list: D-32's nothing-to-enter card and no Save.</span></div>
+    <div class="scroll"><div class="phone">
+      <div class="band"><span class="ico"><i class="ic" data-i="chevron-left"></i></span><span class="t22">Sector, AAPL</span></div>
+      <div class="body">
+        <div class="card" style="padding:0 10px">
+          <div class="rad on"><span class="o"></span><span class="grow">Technology</span></div>
+          <div class="rad"><span class="o"></span><span class="grow">Diversified</span></div>
+        </div>
+        <div class="t14 muted">Choose from the list. To add a value, use Settings, Lists.</div>
+        <div class="card pad"><div class="t16m">No sectors yet</div><div class="t14 muted">Add one in Settings, Lists. (Empty list, shown instead of the card above.)</div></div>
+        <div class="foot"><span class="btn filled l wide">Save</span><span class="btn text l wide">Cancel</span></div>
+      </div>
+      <div class="bar"><span class="tab"><span>More</span></span><span class="tab"><span>Cash</span></span><span class="tab on"><span>Portfolios</span></span><span class="tab"><span>Overall</span></span></div>
+    </div></div></div>
+</div>
+
+<div class="notes">
+  <p><strong>Choices made in this drawing, for you to confirm.</strong> Everything else follows D-17 and D-31 to D-35.</p>
+  <ol>
+    <li><strong>Settings opens from Lucide's settings icon</strong> at the right of the More band, 48 to tap, labelled "Settings" for TalkBack (marker 2).</li>
+    <li><strong>On More, the last backup is a read-only dense row</strong> in its own card; the destinations are tappable rows with a chevron (five with About, added to frame A after acceptance as D-36's amendment).</li>
+    <li><strong>Settings sections are a medium 14 secondary heading over a card</strong>; each row shows its name in 16 with the current value under it in secondary 14, so long values ("Every time I leave the app") never squeeze the name.</li>
+    <li><strong>A new radio button</strong>: a 20 circle with a 2 outline, selected adding a 10 dot, both in the check color (navy 9 light, gold dark), rows 48 tall; "default" tagged in Asap Condensed 12. To be added to the Component Catalog.</li>
+    <li><strong>A choice that only saves (auto-lock) applies on tap</strong>, and its dialog has Close only; a choice with side effects (price source) confirms with a gold button and Cancel.</li>
+    <li><strong>The screenshot window's actions are gold</strong> (Allow, Turn off: each the one main action where it shows); while on, its row shows the time left in medium and D-34's warning line.</li>
+    <li><strong>Results on Settings and list screens are D-33's notice banner</strong> (the source sweep, offline, renamed); a refused delete is D-31's blocked card; a refused name is on the field.</li>
+    <li><strong>Tab order uses Lucide arrow-up and arrow-down as 48 icon buttons</strong> with no outline, read by TalkBack as "Move … up/down", disabled (38%) at the ends. A new part: the icon button.</li>
+    <li><strong>On a list screen, Rename and Delete are small text buttons</strong> under each value's lines, not on its first line, so a long value name keeps its room; Add value is the gold foot.</li>
+    <li><strong>The Edit picker is a screen</strong> with radio rows in a card and the entry foot (Save gold, Cancel text); its empty state is the nothing-to-enter card.</li>
+  </ol>
+  <p><strong>Not drawn:</strong> these at 200% font, the Add value dialog (as I without the refusal), the Geographies list, the screenshot window's PIN prompt (the system's). Icons are Lucide at stroke 2, drawn inline from its path data as Claude knows it.</p>
+</div>
+</div>
+
+<script>
+const phones = [...document.querySelectorAll(".phone")];
+let dark = false;
+try { dark = matchMedia("(prefers-color-scheme: dark)").matches; } catch (e) {}
+function render() {
+  for (const p of phones) p.classList.toggle("dark", dark);
+  for (const b of document.querySelectorAll("[data-mode]")) b.setAttribute("aria-pressed", String((b.dataset.mode === "dark") === dark));
+}
+for (const b of document.querySelectorAll("[data-mode]")) b.addEventListener("click", () => { dark = b.dataset.mode === "dark"; render(); });
+render();
+const PATHS = {
+  "chevron-left": '<path d="m15 18-6-6 6-6"/>',
+  "chevron-right": '<path d="m9 18 6-6-6-6"/>',
+  "arrow-up": '<path d="m5 12 7-7 7 7"/><path d="M12 19V5"/>',
+  "arrow-down": '<path d="M12 5v14"/><path d="m19 12-7 7-7-7"/>',
+  "settings": '<path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/><circle cx="12" cy="12" r="3"/>',
+  "info": '<circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/>',
+  "circle-alert": '<circle cx="12" cy="12" r="10"/><path d="M12 8v4"/><path d="M12 16h.01"/>',
+  "triangle-alert": '<path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3"/><path d="M12 9v4"/><path d="M12 17h.01"/>'
+};
+for (const i of document.querySelectorAll("i[data-i]")) {
+  const tmp = document.createElement("span");
+  tmp.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" aria-hidden="true">' + PATHS[i.dataset.i] + '</svg>';
+  const svg = tmp.firstChild;
+  svg.setAttribute("class", i.getAttribute("class"));
+  i.replaceWith(svg);
+}
+</script>
+<script>
+/* Bottom bar icons (D-37): Lucide, inline */
+(function () {
+  const TI = {
+    "Overall": '<path d="M21 12c.552 0 1.005-.449.95-.998a10 10 0 0 0-8.953-8.951c-.55-.055-.998.398-.998.95v8a1 1 0 0 0 1 1z"/><path d="M21.21 15.89A10 10 0 1 1 8 2.83"/>',
+    "Portfolios": '<path d="M16 20V4a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/><rect width="20" height="14" x="2" y="6" rx="2"/>',
+    "Cash": '<path d="M19 7V4a1 1 0 0 0-1-1H5a2 2 0 0 0 0 4h15a1 1 0 0 1 1 1v4h-3a2 2 0 0 0 0 4h3a1 1 0 0 0 1-1v-2a1 1 0 0 0-1-1"/><path d="M3 5v14a2 2 0 0 0 2 2h15a1 1 0 0 0 1-1v-4"/>',
+    "More": '<circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/><circle cx="5" cy="12" r="1"/>'
+  };
+  for (const tab of document.querySelectorAll(".bar .tab")) {
+    const s = tab.querySelector("span");
+    if (!s) continue;
+    const name = s.textContent.trim();
+    if (!TI[name]) continue;
+    tab.classList.add("it");
+    s.className = "both";
+    s.innerHTML = '<svg viewBox="0 0 24 24" aria-hidden="true">' + TI[name] + '</svg><span class="t">' + name + '</span>';
+  }
+})();
+</script>
+</body></html>

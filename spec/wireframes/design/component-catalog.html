@@ -1,0 +1,555 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<title>Component Catalog</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Asap:ital,wght@0,400;0,500;0,700;1,400&family=Asap+Condensed:wght@400;500;700&display=swap">
+<style>
+/* Layout: a header, then one section per component; each section shows a light panel and a dark panel side by side
+   (stacked on a phone). Panels carry the Corporate Design System's tokens (D-07 to D-15); the page chrome follows the viewer's theme. 1 CSS px = 1 dp. */
+:root {
+  --page-bg: #F4F6FA; --page-ink: #0A1A36; --page-muted: #4B5D75; --page-line: #CED8E6;
+  --sans: "Asap", sans-serif; --cond: "Asap Condensed", sans-serif;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --page-bg: #070F1F; --page-ink: #E6ECF5; --page-muted: #9DB0C9; --page-line: #1E2F4A; color-scheme: dark } }
+:root[data-theme="dark"] { --page-bg: #070F1F; --page-ink: #E6ECF5; --page-muted: #9DB0C9; --page-line: #1E2F4A; color-scheme: dark }
+body { margin: 0; background: var(--page-bg); color: var(--page-ink); font-family: var(--sans); }
+.wrap { max-width: 1240px; margin: 0 auto; padding-block: 28px 56px;
+  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px));
+  display: flex; flex-direction: column; gap: 36px; }
+h1 { font-size: 28px; font-weight: 500; margin: 0; }
+h2 { font-size: 20px; font-weight: 500; margin: 0; }
+p { margin: 0; line-height: 1.5; max-width: 74ch; color: var(--page-muted); }
+p strong { color: var(--page-ink); font-weight: 500; }
+header, section { display: flex; flex-direction: column; gap: 10px; }
+.pair { display: flex; flex-wrap: wrap; gap: 16px; align-items: flex-start; margin-top: 4px; }
+.mode { font: 500 13px var(--cond); color: var(--page-muted); margin-bottom: 6px; }
+
+/* ---------- Tokens ---------- */
+.panel {
+  --page: #EBF0F8; --card: #DFE7F6; --float: #DFE7F6; --band: #0A1A36; --on-band: #FFFFFF; --summary: #153D5A;
+  --ink: #0A1A36; --muted: #295C85; --divider: #B0C4E8; --accent: #376A9E;
+  --gold: #C9A227; --on-gold: #0A1A36; --btn-line: #376A9E; --btn-text: #0E2B47;
+  --field-line: #376A9E; --focus: #0A1A36; --chip-on: #0E2B47; --on-chip-on: #FFFFFF;
+  --bar: #0A1A36; --bar-label: #8AABC5; --bar-sel: #E0BC4A; --pill: #1C4F6C; --bar-ind: transparent;
+  --gain: #1B6B1F; --loss: #B3261E; --gain-s: #8FE08A; --loss-s: #FFC2BB; --on-summary-muted: #B0C4E8;
+  --press: rgba(10, 26, 54, .10); --scrim: rgba(10, 26, 54, .50);
+  --shadow: 0 1px 3px rgba(10, 26, 54, .26), 0 4px 12px rgba(10, 26, 54, .16);
+  --radius: 8px; --margin: 12px; --gap: 8px; --inset: 10px;
+  width: 360px; max-width: 100%; box-sizing: border-box; background: var(--page); color: var(--ink);
+  border-radius: 8px; border: 1px solid var(--page-line); padding: var(--margin);
+  display: flex; flex-direction: column; gap: var(--gap); font-family: var(--sans); }
+.panel.dark {
+  --page: #0A1A36; --card: #0E2B47; --float: #153D5A; --band: #0A1A36; --on-band: #E6ECF5; --summary: #1C4F6C;
+  --ink: #E6ECF5; --muted: #B0C4E8; --divider: #1C4F6C; --accent: #E0BC4A;
+  --gold: #E0BC4A; --on-gold: #0A1A36; --btn-line: #E0BC4A; --btn-text: #E0BC4A;
+  --field-line: #6291B9; --focus: #E0BC4A; --chip-on: #E0BC4A; --on-chip-on: #0A1A36;
+  --bar: #050D1C; --bar-label: #8AABC5; --bar-sel: #E0BC4A; --pill: transparent; --bar-ind: #E0BC4A;
+  --gain: #7FD47A; --loss: #FFB4AB;
+  --press: rgba(255, 255, 255, .10); --scrim: rgba(0, 0, 0, .60);
+  --shadow: 0 1px 3px rgba(0, 0, 0, .62), 0 5px 14px rgba(0, 0, 0, .48); }
+.panel .lbl { font: 400 12px/16px var(--cond); color: var(--muted); }
+.num { font-variant-numeric: tabular-nums; }
+.g { color: var(--gain); } .l { color: var(--loss); }
+.row-of { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.stack { display: flex; flex-direction: column; gap: 4px; }
+.pressed { box-shadow: inset 0 0 0 999px var(--press); }
+.dis { opacity: .38; }
+
+/* Buttons */
+.btn { height: 40px; padding: 0 20px; border-radius: var(--radius); display: inline-flex; align-items: center; justify-content: center;
+  font: 500 14px/20px var(--sans); box-sizing: border-box; border: 1px solid transparent; }
+.btn.filled { background: var(--gold); color: var(--on-gold); }
+.btn.out { border-color: var(--btn-line); color: var(--btn-text); }
+.btn.text { color: var(--btn-text); padding: 0 12px; }
+/* Three sizes. M is the default above. S: 32 tall, Asap Condensed 14; L: 48 tall, Asap 16. S keeps a 48 touch area around it. */
+.btn.s { height: 32px; padding: 0 12px; font: 500 14px/20px var(--cond); }
+.btn.l { height: 48px; padding: 0 24px; font: 500 16px/24px var(--sans); }
+.btn.text.s { padding: 0 8px; } .btn.text.l { padding: 0 16px; }
+.btn.wide { width: 100%; }
+.hit { outline: 1px dashed var(--muted); outline-offset: 8px; }
+
+/* Fields */
+.field { position: relative; height: 56px; border: 1px solid var(--field-line); border-radius: var(--radius); box-sizing: border-box;
+  display: flex; align-items: center; gap: 8px; padding: 0 12px; font: 400 16px/24px var(--sans); }
+.field .fl { position: absolute; top: -9px; left: 8px; padding: 0 4px; background: var(--page); font: 400 12px/16px var(--sans); color: var(--muted); }
+.field .ph { color: var(--muted); }
+.field .v { flex: 1; }
+.field.focus { border: 2px solid var(--focus); padding: 0 11px; }
+/* Dense field: 40 tall inside a 48 touch area, Asap 14, padding 8, no floating label: its label sits beside it in the row. */
+.dline { display: flex; align-items: center; justify-content: flex-end; gap: 8px; min-height: 48px; }
+.field.dense { height: 40px; width: 120px; padding: 0 8px; font: 400 14px/20px var(--sans); }
+.field.dense.focus, .field.dense.err { padding: 0 7px; }
+/* Dense date field (one with a calendar): sized to its content, at least 120, never wrapping (D-28). */
+.field.dense:has(.ic20) { width: auto; min-width: 120px; white-space: nowrap; }
+.field.dense .bang { width: 16px; height: 16px; font-size: 11px; line-height: 16px; }
+.dhelp { text-align: right; font: 500 12px/16px var(--sans); color: var(--err); }
+.field.focus .fl { color: var(--ink); font-weight: 500; }
+.caret { display: inline-block; width: 2px; height: 22px; background: var(--focus); vertical-align: middle; margin-left: 1px; }
+.panel { --err: #7A541F; } .panel.dark { --err: #E2BF8D; }
+.field.err { border: 2px solid var(--err); padding: 0 11px; }
+.field.err .fl { color: var(--err); font-weight: 500; }
+.bang { width: 20px; height: 20px; border-radius: 50%; background: var(--err); color: var(--page); font: 700 14px/20px var(--sans); text-align: center; flex: none; }
+.help { display: flex; gap: 6px; align-items: flex-start; font: 400 12px/16px var(--sans); color: var(--muted); padding: 4px 12px 0; }
+.help.err { color: var(--err); font-weight: 500; }
+
+/* Cards and rows */
+.card { background: var(--card); border-radius: var(--radius); box-shadow: var(--shadow); }
+.card.summary { background: var(--summary); color: #FFFFFF; }
+.pad { padding: var(--inset); display: flex; flex-direction: column; gap: 4px; }
+.r { display: flex; align-items: center; gap: 10px; padding: var(--inset); min-height: 48px; box-sizing: border-box; }
+.r .grow { flex: 1; min-width: 0; }
+/* Dense rows: one line, Asap 14 with Asap Condensed 12 for the secondary figure, padding 4 above and below.
+   Tappable: still 48 tall (spec 6). Read-only (.ro): 36 tall. */
+.r.dense { min-height: 48px; padding: 4px var(--inset); gap: 8px; }
+.r.dense.ro { min-height: 36px; }
+.r.dense .f14 { white-space: nowrap; }
+.r.dense .two { display: flex; align-items: baseline; gap: 8px; }
+.r.dense .chev { font-size: 16px; }
+.end { display: flex; flex-direction: column; align-items: flex-end; text-align: right; }
+.div { height: 1px; background: var(--divider); margin: 0 var(--inset); }
+.sw { width: 16px; height: 16px; border-radius: 50%; flex: none; }
+.chev { color: var(--muted); font-size: 18px; }
+.f16 { font: 400 16px/24px var(--sans); } .f14 { font: 400 14px/20px var(--sans); } .f12c { font: 400 12px/16px var(--cond); }
+.f32 { font: 500 32px/40px var(--sans); } .f22 { font: 500 22px/28px var(--sans); } .f16m { font: 500 16px/24px var(--sans); }
+
+/* Checkbox: 18 dp box, corner 4 (8 would read as a radio button), 2 dp outline in button-line; checked fills with navy 9 (light) or gold (dark).
+   The whole row is the touch target, at least 48 tall. */
+.panel { --check: #0E2B47; --on-check: #FFFFFF; } .panel.dark { --check: #E0BC4A; --on-check: #0A1A36; }
+.cb { display: flex; align-items: center; gap: 12px; min-height: 48px; padding: 0 var(--inset); box-sizing: border-box; font: 400 16px/24px var(--sans); }
+.box { width: 18px; height: 18px; border-radius: 4px; border: 2px solid var(--btn-line); box-sizing: border-box; flex: none;
+  display: inline-flex; align-items: center; justify-content: center; font: 700 12px/1 var(--sans); }
+.box.on { background: var(--check); border-color: var(--check); color: var(--on-check); }
+/* Dense checkbox: 16 dp box, corner 4, 1.5 dp outline, label Asap 14, gap 8; the row is still the 48 touch target. */
+.cb.dense { gap: 8px; font: 400 14px/20px var(--sans); }
+.cb.dense .box { width: 16px; height: 16px; border-width: 1.5px; font-size: 11px; }
+
+/* Radio button (D-36): 20 circle, 2 outline in button-line; selected turns the outline to the check color and adds a 10 dot.
+   The whole row is the touch target, 48 tall; "default" in Asap Condensed 12. */
+.rad { display: flex; align-items: center; gap: 12px; min-height: 48px; padding: 0 var(--inset); box-sizing: border-box; font: 400 16px/24px var(--sans); }
+.rad .o { width: 20px; height: 20px; border-radius: 50%; border: 2px solid var(--btn-line); box-sizing: border-box; flex: none; display: inline-flex; align-items: center; justify-content: center; }
+.rad.on .o { border-color: var(--check); }
+.rad.on .o::after { content: ""; width: 10px; height: 10px; border-radius: 50%; background: var(--check); }
+.rad .grow { flex: 1; min-width: 0; }
+
+/* Icon button (D-36): 48 square, a 24 icon in the button color, no outline; pressed and disabled as the other buttons. */
+.ib { width: 48px; height: 48px; display: inline-flex; align-items: center; justify-content: center; color: var(--btn-text); border-radius: var(--radius); }
+
+/* Chips */
+.chip { height: 32px; padding: 0 12px; border-radius: var(--radius); display: inline-flex; align-items: center; gap: 6px; box-sizing: border-box;
+  font: 500 14px/20px var(--cond); border: 1px solid var(--btn-line); color: var(--btn-text); }
+.chip.on { background: var(--chip-on); color: var(--on-chip-on); border-color: var(--chip-on); }
+.chip-hit { padding: 8px 0; }
+
+/* Tabs in a screen */
+.tabs { display: flex; border-bottom: 1px solid var(--divider); }
+.tabs span { flex: 1; min-height: 48px; display: flex; align-items: center; justify-content: center; font: 500 14px/20px var(--cond); color: var(--muted); position: relative; }
+.tabs span.on { color: var(--btn-text); }
+.tabs span.on::after { content: ""; position: absolute; bottom: 0; left: 50%; transform: translateX(-50%); width: 56px; height: 3px; border-radius: 3px 3px 0 0; background: var(--btn-text); }
+
+/* Bottom bar */
+.bar { display: flex; background: var(--bar); border-radius: var(--radius); padding: 0 4px; }
+.tab { flex: 1; min-height: 56px; display: flex; flex-direction: column; align-items: center; justify-content: center; font: 500 14px/20px var(--cond); color: var(--bar-label); padding: 6px 2px; box-sizing: border-box; }
+.tab span { padding: 4px 10px; border-radius: var(--radius); }
+.tab::after { content: ""; width: 24px; height: 3px; margin-top: 3px; border-radius: 2px; }
+.tab.on { color: var(--bar-sel); font-weight: 700; }
+.tab.on span { background: var(--pill); }
+.tab.on::after { background: var(--bar-ind); }
+
+/* Bottom bar with icons: 24 dp line icons in the label color. Icon and text: the pill (light) sits behind the icon, label under it, bar 72 tall.
+   Icon only: bar 56 tall, the pill behind the icon; each tab's name goes to TalkBack only. */
+/* Icons: Lucide (D-19, D-25), 24 dp, Lucide's own stroke of 2 (D-24); the dense date field's calendar is 20. Drawn inline (no outside script). */
+.ic { width: 24px; height: 24px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; display: block; flex: none; }
+.ic20 { width: 20px; height: 20px; color: var(--btn-text); }
+/* A refused field's mark: Lucide's circle-alert in bronze, 20 (16 in a dense field) (D-27). */
+.ic.alert { width: 20px; height: 20px; color: var(--err); }
+.field.dense .ic.alert { width: 16px; height: 16px; }
+.chev .ic20, .x .ic20 { color: var(--muted); }
+.ic16 { width: 16px; height: 16px; }
+.box .ic { width: 14px; height: 14px; stroke-width: 3; color: var(--on-check); }
+.cb.dense .box .ic { width: 12px; height: 12px; }
+.tab.it { min-height: 72px; gap: 2px; }
+.tab.io { min-height: 56px; }
+.tab.it span, .tab.io span { padding: 4px 16px; }
+.tab.it .both { display: flex; flex-direction: column; align-items: center; gap: 2px; padding: 6px 4px 4px; border-radius: 8px; min-width: 84px; box-sizing: border-box; } /* one pill size on every tab (D-37) */
+.tab.it .t { padding: 0; font: 500 14px/20px var(--cond); background: none; }
+.tab.it.on .t { font-weight: 700; }
+.tab.it.on .both { background: var(--pill); }
+
+/* Date picker: a layer inside the window (never a separate window). Month header with arrows, Sunday-first weekday row,
+   day cells 44 wide and 40 tall with radius 8; today outlined, the picked day filled (navy 9 light, gold dark). Typing stays possible. */
+.stage.tall { height: 520px; }
+.dp { position: absolute; left: 12px; right: 12px; top: 24px; background: var(--float); border-radius: var(--radius); box-shadow: var(--shadow); padding: 12px; display: flex; flex-direction: column; gap: 8px; }
+.dp-head { display: flex; align-items: center; justify-content: space-between; }
+.dp-head .arw { min-width: 48px; height: 48px; display: inline-flex; align-items: center; justify-content: center; font-size: 20px; color: var(--btn-text); }
+.dp-grid { display: grid; grid-template-columns: repeat(7, 1fr); row-gap: 8px; justify-items: center; }
+/* Dense picker: day cells 32 with Asap 14 (pitch still 48 each way), month name 14 medium, arrows 32 drawn, padding 8,
+   small buttons, no repeated note (the field keeps it). */
+.stage.dense-st { height: 360px; }
+.dp.dense { padding: 6px; gap: 2px; top: 16px; left: 0; right: 0; }
+.dp.dense .dp-head { height: 48px; }
+.dp.dense .dp-head .arw { min-width: 48px; height: 48px; font-size: 18px; }
+.dp.dense .dp-head .mo { flex: 1; text-align: center; }
+.dp.dense .dp-head .x { min-width: 48px; height: 48px; display: inline-flex; align-items: center; justify-content: center; font-size: 16px; color: var(--muted); }
+.dp.dense .dp-grid { row-gap: 20px; }
+.dp.dense .dp-grid .wd { padding-bottom: 0; font: 500 11px/14px var(--cond); }
+.dp.dense .dp-grid .d { width: 28px; height: 28px; font: 400 14px/20px var(--sans); }
+.stage.tall { height: 560px; }
+.dp-grid .wd { font: 500 12px/16px var(--cond); color: var(--muted); padding-bottom: 4px; }
+.dp-grid .d { width: 40px; height: 40px; border-radius: var(--radius); display: flex; align-items: center; justify-content: center; font: 400 14px/20px var(--sans); font-variant-numeric: tabular-nums; box-sizing: border-box; }
+.dp-grid .d.today { border: 1px solid var(--btn-line); }
+.dp-grid .d.sel { background: var(--chip-on); color: var(--on-chip-on); font-weight: 500; }
+.dp .acts { display: flex; justify-content: flex-end; gap: 8px; }
+.trail { width: 24px; height: 24px; color: var(--btn-text); flex: none; }
+
+/* Entry and review parts (D-31) */
+.field .pre { color: var(--muted); }
+.field.pick .ic { color: var(--btn-text); }
+.ratio { display: flex; align-items: center; gap: 8px; min-height: 48px; }
+.ratio .rf { height: 40px; min-width: 64px; border: 1px solid var(--field-line); border-radius: var(--radius); box-sizing: border-box; display: inline-flex; align-items: center; justify-content: center; padding: 0 8px; font: 400 14px/20px var(--sans); font-variant-numeric: tabular-nums; }
+.kv { display: flex; justify-content: space-between; gap: 12px; padding: 6px 0; font: 400 16px/24px var(--sans); }
+.kv span:first-child { color: var(--muted); }
+.kv span:last-child { text-align: right; font-variant-numeric: tabular-nums; }
+.kv.tot { border-top: 1px solid var(--divider); margin-top: 4px; padding-top: 10px; font-weight: 500; }
+.kv.tot span:first-child { color: var(--ink); }
+.lnk { display: flex; align-items: center; gap: 8px; min-height: 48px; border-top: 1px solid var(--divider); font: 400 16px/24px var(--sans); }
+.lnk .grow { flex: 1; } .lnk .ic { color: var(--muted); }
+.blocked { border: 2px solid var(--err); border-radius: var(--radius); padding: 10px; display: flex; gap: 8px; align-items: flex-start; background: var(--card); font: 400 14px/20px var(--sans); }
+.blocked .ic { color: var(--err); width: 20px; height: 20px; }
+.blocked b { font-weight: 500; color: var(--err); }
+
+/* Band */
+.band { background: var(--band); color: var(--on-band); border-radius: var(--radius); padding: 12px; display: flex; align-items: center; gap: 4px; }
+.band .ico { min-width: 40px; height: 40px; display: inline-flex; align-items: center; justify-content: center; font-size: 20px; }
+
+/* Dialog and menu: drawn as layers inside the window (CLAUDE.md pitfall: no separate window) */
+.stage { position: relative; height: 250px; border-radius: var(--radius); overflow: hidden; background: var(--page); border: 1px dashed var(--divider); }
+.stage .behind { padding: 12px; display: flex; flex-direction: column; gap: 8px; }
+.ghost { height: 44px; border-radius: var(--radius); background: var(--card); }
+.scrim { position: absolute; inset: 0; background: var(--scrim); }
+.dialog { position: absolute; left: 20px; right: 20px; top: 40px; background: var(--float); border-radius: var(--radius); box-shadow: var(--shadow); padding: 16px; display: flex; flex-direction: column; gap: 12px; }
+.dialog .acts { display: flex; justify-content: flex-end; gap: 8px; }
+.menu { position: absolute; right: 12px; top: 12px; width: 196px; background: var(--float); border-radius: var(--radius); box-shadow: var(--shadow); padding: 4px 0; }
+.menu div { min-height: 48px; display: flex; align-items: center; padding: 0 16px; font: 400 16px/24px var(--sans); }
+</style>
+
+<div class="wrap">
+<header>
+  <h1>Component catalog</h1>
+  <p>Each component of the Corporate Design System drawn once with its states, light on the left and dark on the right, from the decided tokens: navy and gold (D-07, D-10), cards with shadow and no border (D-08), Asap and Asap Condensed (D-12) on the figure-led scale (D-13), radius 8 (D-14) and tight spacing (D-15). <strong>Made-up test data; every label is a placeholder</strong>, since wording is decided on the phone (D9). Drawn in HTML at 1 px per dp, not rendered by Android.</p>
+</header>
+
+<template id="t-buttons">
+  <div class="stack"><span class="lbl">Filled (the one main action): enabled, pressed, disabled</span>
+    <div class="row-of"><span class="btn filled">Save</span><span class="btn filled pressed">Save</span><span class="btn filled dis">Save</span></div></div>
+  <div class="stack"><span class="lbl">Outline (other actions)</span>
+    <div class="row-of"><span class="btn out">Buy</span><span class="btn out pressed">Sell</span><span class="btn out dis">Split</span></div></div>
+  <div class="stack"><span class="lbl">Text (dialogs, low emphasis)</span>
+    <div class="row-of"><span class="btn text">Cancel</span><span class="btn text pressed">Cancel</span><span class="btn text dis">Cancel</span></div></div>
+</template>
+
+<template id="t-sizes">
+  <div class="stack"><span class="lbl">Large, 48: the main action at the foot of an entry screen, often full width</span>
+    <div class="row-of"><span class="btn filled l">Save</span><span class="btn out l">Cancel</span></div>
+    <span class="btn filled l wide">Save</span></div>
+  <div class="stack"><span class="lbl">Medium, 40: actions in cards, dialogs and headers (the default)</span>
+    <div class="row-of"><span class="btn filled">Back up now</span><span class="btn out">Dismiss</span><span class="btn text">Cancel</span></div></div>
+  <div class="stack"><span class="lbl">Small, 32: dense places such as a row or a card's corner; Asap Condensed. The dashed line is its 48 touch area.</span>
+    <div class="row-of" style="padding:8px 8px"><span class="btn filled s hit">Add</span><span class="btn out s">Edit</span><span class="btn text s">Show all</span></div></div>
+</template>
+
+<template id="t-fields">
+  <div class="stack"><div class="field"><span class="ph">Amount</span></div><span class="lbl">Empty</span></div>
+  <div class="stack"><div class="field"><span class="fl">Amount</span><span class="v num">1,250.00</span></div><span class="lbl">Filled</span></div>
+  <div class="stack"><div class="field focus"><span class="fl">Amount</span><span class="v num">1,25<span class="caret"></span></span></div><span class="lbl">Focused (typing)</span></div>
+  <div class="stack"><div class="field err"><span class="fl">Amount</span><span class="v num">0.00</span><i class="ic alert" data-lucide="circle-alert"></i></div>
+    <div class="help err"><span>Placeholder: the refusal message for this field.</span></div><span class="lbl">Refused: bronze brown, never red (D-16)</span></div>
+  <div class="stack dis"><div class="field"><span class="fl">Date</span><span class="v num">2026-11-25</span></div><span class="lbl">Disabled</span></div>
+  <span class="lbl" style="margin-top:8px">Dense fields, inside a row (the lot picker's "Sell:"): filled, focused, refused, disabled</span>
+  <div class="card" style="padding:4px 10px">
+    <div class="dline"><span class="f14">Sell:</span><div class="field dense"><span class="v num">10</span></div></div>
+    <div class="dline"><span class="f14">Sell:</span><div class="field dense focus"><span class="v num">2<span class="caret" style="height:18px"></span></span></div></div>
+    <div class="dline"><span class="f14">Sell:</span><div class="field dense err"><span class="v num">25</span><i class="ic alert" data-lucide="circle-alert"></i></div></div>
+    <div class="dhelp">Placeholder: more than this lot holds.</div>
+    <div class="dline dis"><span class="f14">Sell:</span><div class="field dense"><span class="v num">5</span></div></div>
+  </div>
+  <span class="lbl" style="margin-top:8px">Dense pick field (D-30): a choice from a list, not typed; 40 tall, Asap 14, chevron-down 20. It opens its list inside the window, like the ⋮ menu. Closed, and disabled.</span>
+  <div class="card" style="padding:4px 10px">
+    <div class="dline" style="justify-content:flex-start"><span class="f14">Ticker</span><div class="field dense" style="flex:1;width:auto"><span class="v">All tickers</span><i class="ic ic20" data-lucide="chevron-down"></i></div></div>
+    <div class="dline dis" style="justify-content:flex-start"><span class="f14">Ticker</span><div class="field dense" style="flex:1;width:auto"><span class="v">AAPL</span><i class="ic ic20" data-lucide="chevron-down"></i></div></div>
+  </div>
+</template>
+
+<template id="t-rows">
+  <div class="card">
+    <div class="r"><span class="f16 grow">Growth</span>
+      <div class="end"><span class="f16 num">$85,000.00</span><span class="f14 g num">+$5,000.00 (+6.25%)</span><span class="f12c"><span>1-day </span><span class="g num">+$420.00 (+0.50%)</span></span></div><span class="chev"><i class="ic ic20" data-lucide="chevron-right"></i></span></div>
+    <div class="div"></div>
+    <div class="r pressed"><span class="f16 grow">Income</span>
+      <div class="end"><span class="f16 num">$45,000.00</span><span class="f14 l num">−$1,200.00 (−2.60%)</span><span class="f12c"><span>1-day </span><span class="l num">−$135.00 (−0.30%)</span></span></div><span class="chev"><i class="ic ic20" data-lucide="chevron-right"></i></span></div>
+  </div>
+  <span class="lbl">A tappable row, and the same row pressed. Rows inside a card keep their dividers.</span>
+  <div class="card">
+    <div class="r"><span class="sw" style="background:#3949AB"></span><span class="f16 grow">Growth</span><span class="f16 num">$85,000.00</span></div>
+    <div class="r"><span class="sw" style="background:#00696F"></span><span class="f16 grow">Cash</span><span class="f16 num">$21,250.00</span></div>
+  </div>
+  <span class="lbl">Allocation rows: one line, held at 48 tall because they can be tapped (D-15).</span>
+  <div class="card">
+    <div class="r dense"><span class="f14 grow">Growth</span><span class="two"><span class="f14 num">$85,000.00</span><span class="f12c g num">+$5,000.00 (+6.25%)</span></span><span class="chev"><i class="ic ic20" data-lucide="chevron-right"></i></span></div>
+    <div class="div"></div>
+    <div class="r dense pressed"><span class="f14 grow">Income</span><span class="two"><span class="f14 num">$45,000.00</span><span class="f12c l num">−$1,200.00 (−2.60%)</span></span><span class="chev"><i class="ic ic20" data-lucide="chevron-right"></i></span></div>
+    <div class="div"></div>
+    <div class="r dense"><span class="f14 grow">Dividend</span><span class="two"><span class="f14 num">$5,200.00</span><span class="f12c g num">+$56.00 (+1.09%)</span></span><span class="chev"><i class="ic ic20" data-lucide="chevron-right"></i></span></div>
+  </div>
+  <span class="lbl">Dense tappable rows: one line, 14 with the gain in condensed 12, dollars first and the percentage in brackets (spec 6, CR6); still 48 tall; one pressed. Where it doesn't fit, the percentage moves to the line under it (spec 6, C26).</span>
+  <div class="card">
+    <div class="r dense ro"><span class="f12c" style="color:var(--muted)">2026-11-20</span><span class="f14 grow">Buy</span><span class="f14 num">−$1,300.00</span></div>
+    <div class="div"></div>
+    <div class="r dense ro"><span class="f12c" style="color:var(--muted)">2026-11-18</span><span class="f14 grow">Deposit</span><span class="f14 num">+$2,000.00</span></div>
+    <div class="div"></div>
+    <div class="r dense ro"><span class="f12c" style="color:var(--muted)">2026-11-12</span><span class="f14 grow">Dividend</span><span class="f14 num">+$48.20</span></div>
+  </div>
+  <span class="lbl">Dense read-only rows: 36 tall, for lists you read but don't tap. Cash figures stay uncolored (spec 6).</span>
+</template>
+
+<template id="t-checks">
+  <div class="card">
+    <div class="cb"><span class="box"></span><span>Unchecked</span></div>
+    <div class="cb"><span class="box on"><i class="ic" data-lucide="check"></i></span><span>Checked</span></div>
+    <div class="cb pressed"><span class="box on"><i class="ic" data-lucide="check"></i></span><span>Checked, pressed</span></div>
+    <div class="cb dis"><span class="box"></span><span>Unchecked, disabled</span></div>
+    <div class="cb dis"><span class="box on"><i class="ic" data-lucide="check"></i></span><span>Checked, disabled</span></div>
+  </div>
+  <span class="lbl">The row is the touch target, at least 48 tall; the box alone is 18.</span>
+  <div class="card">
+    <div class="cb dense"><span class="box"></span><span>Unchecked</span></div>
+    <div class="cb dense"><span class="box on"><i class="ic" data-lucide="check"></i></span><span>Checked</span></div>
+    <div class="cb dense pressed"><span class="box on"><i class="ic" data-lucide="check"></i></span><span>Checked, pressed</span></div>
+    <div class="cb dense dis"><span class="box"></span><span>Unchecked, disabled</span></div>
+    <div class="cb dense dis"><span class="box on"><i class="ic" data-lucide="check"></i></span><span>Checked, disabled</span></div>
+  </div>
+  <span class="lbl">Dense: a 16 box with a 1.5 outline, label Asap 14, for dense rows and the lot picker. The row stays 48 tall to tap (spec 6).</span>
+</template>
+
+<template id="t-radios">
+  <div class="card">
+    <div class="rad on"><span class="o"></span><span class="grow">Every time I leave the app</span><span class="f12c" style="color:var(--muted)">default</span></div>
+    <div class="rad"><span class="o"></span><span class="grow">After 1 minute idle</span></div>
+    <div class="rad pressed"><span class="o"></span><span class="grow">After 5 minutes idle (pressed)</span></div>
+    <div class="rad dis"><span class="o"></span><span class="grow">Unselected, disabled</span></div>
+    <div class="rad on dis"><span class="o"></span><span class="grow">Selected, disabled</span></div>
+  </div>
+  <span class="lbl">One choice of several. The row is the touch target, at least 48 tall; the circle alone is 20.</span>
+</template>
+
+<template id="t-iconbtn">
+  <div class="card">
+    <div class="r"><span class="f16 grow">1. More</span><span class="ib dis"><i class="ic" data-lucide="arrow-up"></i></span><span class="ib"><i class="ic" data-lucide="arrow-down"></i></span></div>
+    <div class="div"></div>
+    <div class="r"><span class="f16 grow">2. Cash</span><span class="ib pressed"><i class="ic" data-lucide="arrow-up"></i></span><span class="ib"><i class="ic" data-lucide="arrow-down"></i></span></div>
+  </div>
+  <span class="lbl">In a row (tab order): enabled, pressed, disabled at the end of the list. TalkBack reads "Move More down".</span>
+  <div class="band" style="justify-content:space-between"><span class="f22" style="padding-left:8px">More</span><span class="ib" style="color:inherit"><i class="ic" data-lucide="settings"></i></span></div>
+  <span class="lbl">In the title band: the band's own text color, labelled "Settings".</span>
+</template>
+
+<template id="t-chips">
+  <div class="row-of chip-hit"><span class="chip on"><i class="ic ic16" data-lucide="check"></i>All</span><span class="chip">Deposit</span><span class="chip">Withdrawal</span><span class="chip dis">Trade</span></div>
+  <span class="lbl">Filter chips (the Cash list): selected with a check, unselected, disabled. 32 tall, with a 48 touch area.</span>
+</template>
+
+<template id="t-tabs">
+  <div class="tabs"><span class="on">Lots</span><span>Transactions</span><span>Classification</span></div>
+  <span class="lbl">Tabs inside a screen, Asap Condensed.</span>
+</template>
+
+<template id="t-bar">
+  <div class="bar"><span class="tab on"><span>Overall</span></span><span class="tab"><span>Portfolios</span></span><span class="tab"><span>Cash</span></span><span class="tab"><span>More</span></span></div>
+  <span class="lbl">Text only (D-10, replaced for ATS by icon and text, D-37): light, gold label on a swatch 7 pill; dark, gold label and gold line.</span>
+  <div class="bar">
+    <span class="tab it on"><span class="both"><i class="ic" data-lucide="pie-chart"></i><span class="t">Overall</span></span></span>
+    <span class="tab it"><span class="both"><i class="ic" data-lucide="briefcase"></i><span class="t">Portfolios</span></span></span>
+    <span class="tab it"><span class="both"><i class="ic" data-lucide="wallet"></i><span class="t">Cash</span></span></span>
+    <span class="tab it"><span class="both"><i class="ic" data-lucide="more-horizontal"></i><span class="t">More</span></span></span>
+  </div>
+  <span class="lbl">Icon and text: 72 tall. Light: one pill covers the selected icon and its bold gold label. Dark: gold icon and label over the gold line.</span>
+  <div class="bar">
+    <span class="tab io on"><span><i class="ic" data-lucide="pie-chart"></i></span></span>
+    <span class="tab io"><span><i class="ic" data-lucide="briefcase"></i></span></span>
+    <span class="tab io"><span><i class="ic" data-lucide="wallet"></i></span></span>
+    <span class="tab io"><span><i class="ic" data-lucide="more-horizontal"></i></span></span>
+  </div>
+  <span class="lbl">Icon only: 56 tall; each tab's name is read by TalkBack only.</span>
+</template>
+
+<template id="t-cards">
+  <div class="band"><span class="ico"><i class="ic" data-lucide="chevron-left"></i></span><span class="f22">ACME</span></div>
+  <span class="lbl">Title band (light); in dark the title sits on the page.</span>
+  <div class="card summary"><div class="pad">
+    <span class="f14" style="color:var(--on-summary-muted)">Net worth</span>
+    <span class="f32 num">$151,250.00</span>
+    <span class="f12c"><span>1-day gain/loss </span><span class="num" style="color:var(--gain-s)">+$285.00 (+0.22%)</span></span>
+  </div></div>
+  <span class="lbl">Summary card: the one large figure on a screen (D-13).</span>
+  <div class="card"><div class="pad" style="gap:8px">
+    <span class="f16">Placeholder: a reminder's message.</span>
+    <div class="row-of"><span class="btn filled">Back up now</span><span class="btn out">Dismiss</span></div>
+  </div></div>
+  <span class="lbl">Plain card with actions: no border, shadow (D-08).</span>
+</template>
+
+<template id="t-dialog">
+  <div class="stage">
+    <div class="behind"><div class="ghost"></div><div class="ghost"></div><div class="ghost"></div></div>
+    <div class="scrim"></div>
+    <div class="dialog">
+      <span class="f22">Placeholder title</span>
+      <div class="field"><span class="fl">Name</span><span class="v">Growth<span class="caret"></span></span></div>
+      <div class="acts"><span class="btn text">Cancel</span><span class="btn filled">Rename</span></div>
+    </div>
+  </div>
+  <span class="lbl">A dialog, drawn inside the window over a scrim, on the raised surface.</span>
+</template>
+
+<template id="t-datepick">
+  <div class="stack"><div class="field"><span class="fl">Date</span><span class="v num">2026-11-25</span>
+    <i class="ic trail" data-lucide="calendar"></i></div>
+    <div class="help"><span>Enter date in US market time (New York)</span></div>
+    <span class="lbl">The date field gains a calendar icon at its end. Tapping the icon opens the picker; typing digits still works.</span></div>
+  <div class="stage tall">
+    <div class="behind"><div class="ghost"></div><div class="ghost"></div><div class="ghost"></div></div>
+    <div class="scrim"></div>
+    <div class="dp">
+      <div class="help" style="padding:0"><span>US market time (New York)</span></div>
+      <div class="dp-head"><span class="arw"><i class="ic" data-lucide="chevron-left"></i></span><span class="f16m">November 2026</span><span class="arw"><i class="ic" data-lucide="chevron-right"></i></span></div>
+      <div class="dp-grid">
+        <span class="wd">Su</span><span class="wd">Mo</span><span class="wd">Tu</span><span class="wd">We</span><span class="wd">Th</span><span class="wd">Fr</span><span class="wd">Sa</span>
+        <span class="d">1</span><span class="d">2</span><span class="d">3</span><span class="d">4</span><span class="d">5</span><span class="d">6</span><span class="d">7</span>
+        <span class="d">8</span><span class="d">9</span><span class="d">10</span><span class="d">11</span><span class="d">12</span><span class="d">13</span><span class="d">14</span>
+        <span class="d">15</span><span class="d">16</span><span class="d">17</span><span class="d">18</span><span class="d sel">19</span><span class="d">20</span><span class="d">21</span>
+        <span class="d">22</span><span class="d">23</span><span class="d">24</span><span class="d today">25</span><span class="d">26</span><span class="d">27</span><span class="d">28</span>
+        <span class="d">29</span><span class="d">30</span><span class="d"></span><span class="d"></span><span class="d"></span><span class="d"></span><span class="d"></span>
+      </div>
+      <div class="acts"><span class="btn text">Cancel</span><span class="btn filled">Use 2026-11-19</span></div>
+    </div>
+  </div>
+  <span class="lbl">Standard picker, opened from the standard date field. Days 48 apart each way (spec 6).</span>
+  <div class="card" style="padding:4px 10px">
+    <div class="dline"><span class="f14">From:</span><div class="field dense focus"><span class="v num">2026-11-19</span>
+      <i class="ic ic20" data-lucide="calendar"></i></div></div>
+    <div class="dhelp" style="color:var(--muted);font-weight:400">US market time (New York)</div>
+  </div>
+  <span class="lbl">The dense date field: the dense text field (40 tall, Asap 14) with a 20 dp calendar icon, sized to its content: at least 120, never wrapping (D-28); its label beside it, the New York note under it (spec 6 asks for the note at every date input). Its icon opens the dense picker below.</span>
+  <div class="stage dense-st">
+    <div class="behind"><div class="ghost"></div><div class="ghost"></div></div>
+    <div class="scrim"></div>
+    <div class="dp dense">
+      <div class="dp-head"><span class="arw"><i class="ic" data-lucide="chevron-left"></i></span><span class="f14 mo" style="font-weight:500">November 2026</span><span class="arw"><i class="ic" data-lucide="chevron-right"></i></span><span class="x"><i class="ic ic20" data-lucide="x"></i></span></div>
+      <div class="dp-grid">
+        <span class="wd">S</span><span class="wd">M</span><span class="wd">T</span><span class="wd">W</span><span class="wd">T</span><span class="wd">F</span><span class="wd">S</span>
+        <span class="d">1</span><span class="d">2</span><span class="d">3</span><span class="d">4</span><span class="d">5</span><span class="d">6</span><span class="d">7</span>
+        <span class="d">8</span><span class="d">9</span><span class="d">10</span><span class="d">11</span><span class="d">12</span><span class="d">13</span><span class="d">14</span>
+        <span class="d">15</span><span class="d">16</span><span class="d">17</span><span class="d">18</span><span class="d sel">19</span><span class="d">20</span><span class="d">21</span>
+        <span class="d">22</span><span class="d">23</span><span class="d">24</span><span class="d today">25</span><span class="d">26</span><span class="d">27</span><span class="d">28</span>
+        <span class="d">29</span><span class="d">30</span><span class="d"></span><span class="d"></span><span class="d"></span><span class="d"></span><span class="d"></span>
+      </div>
+    </div>
+  </div>
+  <span class="lbl">Dense picker: one 48 dp header row (‹ month › ✕), 28 cells with corner 8, no button row: a tap on a day picks it and closes the picker, a tap on the scrim or ✕ cancels. Edge to edge. Days still 48 apart (spec 6); about 310 dp tall against about 430 for the standard.</span>
+  <span class="lbl">Both: today (25, in New York) outlined, the picked day (19) filled. Past and future dates are both allowed (wireframe 10a: a buy or sell may be backdated or future-dated).</span>
+</template>
+
+<template id="t-entry">
+  <div class="stack"><div class="field pick"><span class="fl">Portfolio</span><span class="v">Portfolio P</span><i class="ic" data-lucide="chevron-down"></i></div><span class="lbl">Standard pick field: 56 tall, a 24 chevron-down; opens its list inside the window.</span></div>
+  <div class="stack"><div class="field"><span class="fl">Amount</span><span class="pre">$</span><span class="v num">500.00</span></div><span class="lbl">Amount field: "$" in the secondary text color, typed without it.</span></div>
+  <div class="stack"><div class="ratio"><span class="rf">2</span><span class="f16">for</span><span class="rf">1</span></div><span class="lbl">Ratio: two small dense fields, at least 64, sized to content.</span></div>
+  <div class="stack"><div class="row-of"><span class="chip on"><i class="ic ic16" data-lucide="check"></i>Deposit</span><span class="chip">Withdrawal</span><span class="chip">Adjustment</span></div><span class="lbl">One-at-a-time choice: the filter chips, one picked.</span></div>
+  <div class="card"><div class="pad">
+    <div class="kv"><span>Type</span><span>Withdrawal</span></div>
+    <div class="kv"><span>Date</span><span>2026-01-10 ET</span></div>
+    <div class="kv tot"><span>Cash effect</span><span>−$300.00</span></div>
+    <div class="lnk"><span class="grow">Cash <span class="num">−$1,500.00</span></span><i class="ic ic20" data-lucide="chevron-right"></i></div>
+  </div></div>
+  <span class="lbl">Review and detail rows: label and value; the result as a total line; a link to another entry as a row with a chevron.</span>
+  <div class="blocked"><i class="ic" data-lucide="circle-alert"></i><span><b>Not saved.</b> Cash would be negative on 2026-01-10 by $100.00.</span></div>
+  <span class="lbl">Blocked save: one card at the top of the form; a field's own rule stays on the field.</span>
+  <div class="stack"><span class="btn filled l wide">Confirm and save</span><span class="btn out l wide">Back to edit</span></div>
+  <span class="lbl">Entry screen foot: the large gold button, Back to edit under it.</span>
+</template>
+
+<template id="t-menu">
+  <div class="stage">
+    <div class="behind"><div class="ghost"></div><div class="ghost"></div><div class="ghost"></div></div>
+    <div class="menu"><div>Rename</div><div class="pressed">Hide</div><div class="dis">Delete</div></div>
+  </div>
+  <span class="lbl">The ⋮ menu, inside the window: items 48 tall; one pressed, one disabled.</span>
+</template>
+
+<section data-t="t-buttons"><h2>Buttons</h2><p>Radius 8, 40 tall with a 48 touch area, Asap 14 medium. Gold fills only the one main action on a screen.</p></section>
+<section data-t="t-sizes"><h2>Button sizes</h2><p>Three sizes, each in filled, outline and text, all radius 8. <strong>Large</strong> 48 tall, Asap 16 medium, padding 24. <strong>Medium</strong> 40 tall, Asap 14 medium, padding 20 (the default). <strong>Small</strong> 32 tall, Asap Condensed 14 medium, padding 12; its touch area is still 48 (spec 6), so small buttons need 8 dp of free space around them. Labels are placeholders (D9).</p></section>
+<section data-t="t-fields"><h2>Text fields</h2><p>Two sizes. <strong>Standard</strong>: outlined, radius 8, 56 tall, Asap 16, its label riding on the outline. <strong>Dense</strong>: 40 tall inside a 48 touch area, Asap 14, padding 8, no label of its own: its label sits beside it in the row, and a refusal's message sits right-aligned under it. Focus thickens the outline to 2 (navy 10 in light, gold in dark); a refusal uses bronze (D-16). Field outlines: 4.94:1 light, 5.17:1 dark.</p></section>
+<section data-t="t-rows"><h2>Rows</h2><p>Two densities. <strong>Standard</strong>: padding 10, body 16, as many lines as the row needs. <strong>Dense</strong>: one line, Asap 14 with Asap Condensed 12 for a secondary figure, padding 4 above and below; 48 tall when tappable, 36 when read-only. Neither goes under 48 when tappable. Pressed adds a 10% layer of ink.</p></section>
+<section data-t="t-checks"><h2>Checkbox</h2><p>Two sizes: standard (18 dp box, 2 dp outline, label Asap 16) and dense (16 dp box, 1.5 dp outline, label Asap 14). Both rows stay at least 48 tall. The box has corner 4, the one exception to radius 8 (D-14): at this size 8 would make it look like a radio button. Unchecked: a 2 dp outline in button-line (4.55:1 on the light card). Checked: filled navy 9 with a white check (light), gold with a navy check (dark). Used by the lot picker; its label sits beside it and the whole row toggles it.</p></section>
+<section data-t="t-radios"><h2>Radio button</h2><p>Added with Settings (D-36). A 20 dp circle with a 2 dp outline in button-line; selected turns the outline to the check color and adds a 10 dp dot (navy 9 in light, gold in dark, as the checkbox). The row is the touch target, at least 48 tall, label Asap 16; the default choice tagged in Asap Condensed 12. A choice that only saves applies on tap; one with side effects confirms with a gold button. TalkBack reads each as selected or not selected.</p></section>
+<section data-t="t-iconbtn"><h2>Icon button</h2><p>Added with tab order (D-36). 48 dp square, a 24 dp Lucide icon in the button color (in the band, the band's text color), no outline, radius 8 for the pressed layer. Always a TalkBack label that names the action, so the meaning never rests on the picture. Disabled at 38%.</p></section>
+<section data-t="t-chips"><h2>Chips</h2><p>Selected: navy 9 with white (14.43:1) in light, gold with navy 10 (9.44:1) in dark.</p></section>
+<section data-t="t-tabs"><h2>Tabs inside a screen</h2></section>
+<section data-t="t-bar"><h2>Bottom bar</h2><p>Three versions: text only (D-10), icon and text (ATS's choice since D-37, amending D-10), icon only. Icons are Lucide (D-19, D-25) at 24 dp with Lucide's own stroke of 2 (D-24), in the label color (navy 2, 7.18:1 on the bar; gold when selected): pie-chart, briefcase, wallet, more-horizontal.</p></section>
+<section data-t="t-cards"><h2>Band and cards</h2></section>
+<section data-t="t-dialog"><h2>Dialog</h2><p>Light: the card tint; dark: navy 8 (#153D5A), so it floats above the page and cards. Dark text on it: 9.57:1, gold 6.21:1.</p></section>
+<section data-t="t-datepick"><h2>Date picker</h2><p>A calendar layer drawn inside the window over a scrim, never Material's own picker window (which takes the window focus and fights the cover screen; CLAUDE.md pitfall). Opened from a calendar icon at the end of the date field; typing stays. The month name and day numbers are Asap, weekday letters Asap Condensed, Sunday first as in the US. Two sizes: standard (day cells 40, a Cancel and a confirm button) and dense (day cells 28, one-letter weekdays, the note left at the field, no buttons: a tap on a day picks and closes, the scrim or ✕ cancels). In both, days sit 48 apart each way, the touch minimum (spec 6), so the dense picker is smaller only around its grid. <strong>They pair with the fields:</strong> the standard date field opens the standard picker, the dense date field opens the dense picker, never crossed. ATS has no picker today: adding one there is a change request. Labels are placeholders (D9).</p></section>
+<section data-t="t-entry"><h2>Entry and review parts</h2><p>Added with the cash entry, split, detail and reversal screens (D-31; Cash Entry and Split page).</p></section>
+<section data-t="t-menu"><h2>Menu</h2></section>
+
+<section>
+  <h2>Notes</h2>
+  <p><strong>Errors in bronze brown (D-16).</strong> A refused field shows a 2 dp outline, Lucide's circle-alert (D-27) and its message in medium weight, all in bronze brown: #7A541F light (5.42:1), #E2BF8D dark (8.29:1). Red stays for losses; the mark and the message carry the meaning with the color.</p>
+  <p><strong>Disabled</strong> is 38% opacity, as Material does; contrast rules don't apply to disabled controls. <strong>Pressed</strong> is a 10% layer of ink in light and of white in dark.</p>
+  <p><strong>Elsewhere:</strong> the lot picker, the lock screen and the keyboard over an entry screen are on the Remaining Screens page. <strong>Icons</strong> are drawn inline from Lucide's path data as Claude knows it, not copied from a release, so a detail may differ slightly (redrawn 2026-11-27: Lucide's library from unpkg did not load in the user's view).</p>
+</section>
+</div>
+
+<script>
+for (const s of document.querySelectorAll("section[data-t]")) {
+  const t = document.getElementById(s.dataset.t);
+  const pair = document.createElement("div");
+  pair.className = "pair";
+  for (const mode of ["light", "dark"]) {
+    const col = document.createElement("div");
+    const m = document.createElement("div");
+    m.className = "mode";
+    m.textContent = mode === "light" ? "Light" : "Dark";
+    const panel = document.createElement("div");
+    panel.className = "panel" + (mode === "dark" ? " dark" : "");
+    panel.append(t.content.cloneNode(true));
+    col.append(m, panel);
+    pair.append(col);
+  }
+  s.append(pair);
+}
+const PATHS = {
+  "chevron-left": '<path d="m15 18-6-6 6-6"/>',
+  "chevron-right": '<path d="m9 18 6-6-6-6"/>',
+  "chevron-down": '<path d="m6 9 6 6 6-6"/>',
+  "x": '<path d="M18 6 6 18"/><path d="m6 6 12 12"/>',
+  "more-horizontal": '<circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/><circle cx="5" cy="12" r="1"/>',
+  "check": '<path d="M20 6 9 17l-5-5"/>',
+  "arrow-up": '<path d="m5 12 7-7 7 7"/><path d="M12 19V5"/>',
+  "arrow-down": '<path d="M12 5v14"/><path d="m19 12-7 7-7-7"/>',
+  "settings": '<path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/><circle cx="12" cy="12" r="3"/>',
+  "circle-alert": '<circle cx="12" cy="12" r="10"/><path d="M12 8v4"/><path d="M12 16h.01"/>',
+  "calendar": '<path d="M8 2v4"/><path d="M16 2v4"/><rect width="18" height="18" x="3" y="4" rx="2"/><path d="M3 10h18"/>',
+  "pie-chart": '<path d="M21 12c.552 0 1.005-.449.95-.998a10 10 0 0 0-8.953-8.951c-.55-.055-.998.398-.998.95v8a1 1 0 0 0 1 1z"/><path d="M21.21 15.89A10 10 0 1 1 8 2.83"/>',
+  "briefcase": '<path d="M16 20V4a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/><rect width="20" height="14" x="2" y="6" rx="2"/>',
+  "wallet": '<path d="M19 7V4a1 1 0 0 0-1-1H5a2 2 0 0 0 0 4h15a1 1 0 0 1 1 1v4h-3a2 2 0 0 0 0 4h3a1 1 0 0 0 1-1v-2a1 1 0 0 0-1-1"/><path d="M3 5v14a2 2 0 0 0 2 2h15a1 1 0 0 0 1-1v-4"/>'
+};
+for (const i of document.querySelectorAll("i[data-lucide]")) {
+  const p = PATHS[i.dataset.lucide];
+  if (!p) continue;
+  const tmp = document.createElement("span");
+  tmp.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" aria-hidden="true">' + p + '</svg>';
+  const svg = tmp.firstChild;
+  svg.setAttribute("class", i.getAttribute("class") || "ic");
+  i.replaceWith(svg);
+}
+</script>
+</body></html>

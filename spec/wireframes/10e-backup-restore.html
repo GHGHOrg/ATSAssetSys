@@ -26,7 +26,7 @@ p,li{font-size:15px}
 .row{display:flex;justify-content:space-between;align-items:center;font-size:13px;padding:3px 0;margin:0}
 .btn{border:1px solid var(--border-strong);border-radius:8px;padding:4px 10px;font-size:12px;background:var(--surface-2);display:inline-block}
 .btn.pri{background:var(--accent-bg);color:var(--accent-text);border-color:var(--accent-line);font-weight:500}
-.btn.off{color:var(--text-muted);border-style:dashed;background:none}
+.btn.off{color:var(--text-muted);border-style:solid;background:none;opacity:.38}
 .fld{border:1px solid var(--border-strong);border-radius:8px;padding:4px 8px;font-size:13px;background:var(--surface-2);min-width:0}
 .bar{display:flex;border:1px solid var(--border-strong);border-radius:8px;overflow:hidden;font-size:12px;margin-top:auto}
 .bar span{flex:1;text-align:center;padding:10px 0;border-right:1px solid var(--border)}
@@ -157,7 +157,7 @@ p,li{font-size:15px}
 <li>Last backup line, as in More (section 9): the export moment in the device's time zone with its abbreviation (C15), or "never backed up".</li>
 <li>Back up now starts the export, the same action as the button on the Overall banner. Android's file screen lets you choose the location (frame B, marker 5).</li>
 <li>Restore from backup file starts the wizard at step 1. The line says it replaces everything and needs internet.</li>
-<li>Offline, Restore is inactive (dashed, not tappable, read by TalkBack as unavailable) and a line says why. The wizard cannot be started (section 8, step 1).</li>
+<li>Offline, Restore is inactive (disabled: 38% with a solid outline (CR7), not tappable, read by TalkBack as unavailable) and a line says why. The wizard cannot be started (section 8, step 1).</li>
 <li>The export writes one file in the format of section 8 to the place you choose. Suggested name backup-YYYY-MM-DD.csv (device time zone, C15).</li>
 <li>Result of an export: plain text. Only a completed export updates the last backup date; a cancelled or failed export says so and changes nothing (G2).</li>
 <li>Step 1: Choose file opens Android's file screen; the file name is shown, and Check file starts step 2. The app reads only the file you pick.</li>
