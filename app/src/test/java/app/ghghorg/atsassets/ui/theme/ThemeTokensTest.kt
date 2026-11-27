@@ -93,7 +93,7 @@ class ThemeTokensTest {
             all.filter { (name, token) -> !name.startsWith("type.") && (token.first == "dimension" || token.first == "number") }
                 .map { (name, token) ->
                     val value = token.second
-                    camel(name.replace('.', '-')) to if (value is JsonObject) value.getValue("value").jsonPrimitive.int else value.jsonPrimitive.int
+                    camel(name.replace('.', '-')) to (if (value is JsonObject) value.getValue("value") else value).jsonPrimitive.double.toFloat()
                 }.toMap()
         assertEquals(sizes, TokenBase.sizes)
     }

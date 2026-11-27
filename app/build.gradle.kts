@@ -216,6 +216,9 @@ object TokenFile {
 
     private fun px(value: Any?): Int = if (value is Map<*, *>) (value["value"] as Number).toInt() else (value as Number).toInt()
 
+    // A size or an opacity as a Kotlin Float literal; a checkbox's dense outline is 1.5 and an opacity 0.38.
+    private fun decimal(value: Any?): String = ((if (value is Map<*, *>) value["value"] else value) as Number).toDouble().toString() + "f"
+
     fun kotlin(
         light: Map<String, Token>,
         dark: Map<String, Token>,
@@ -251,7 +254,7 @@ object TokenFile {
         val sizeTokens = base.filter { (name, token) -> !name.startsWith("type.") && token.type in setOf("dimension", "number") }
         val sizes =
             sizeTokens.entries.joinToString(",\n") { (name, token) ->
-                "            \"${camel(name.replace('.', '-'))}\" to ${px(token.value)}"
+                "            \"${camel(name.replace('.', '-'))}\" to ${decimal(token.value)}"
             }
         return buildString {
             appendLine("// Generated from design/tokens/ by app/build.gradle.kts (DesignTokensKotlin; 44a step 4). Do not edit:")
@@ -285,7 +288,7 @@ object TokenFile {
             appendLine("}")
             appendLine()
             appendLine("internal object TokenBase {")
-            appendLine("    val sizes: Map<String, Int> =")
+            appendLine("    val sizes: Map<String, Float> =")
             appendLine("        mapOf(")
             appendLine("$sizes,")
             appendLine("        )")
