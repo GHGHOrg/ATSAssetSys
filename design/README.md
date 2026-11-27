@@ -1,6 +1,6 @@
 # Corporate Design System
 
-Copied into the ATS repo on 2026-11-28 from the Corporate Design System artifact, version 47 (CR7, C29). From now on this copy leads (D-22): a change starts here.
+Copied into the ATS repo on 2026-11-27 from the Corporate Design System artifact, version 47 (CR7, C29). From now on this copy leads (D-22): a change starts here.
 
 A design system for the apps made here, not for one app alone. Its first app is ATS Asset System, a personal Android asset tracker with one user, and the rules and screens below come from it. It's being set by interview, and this page records the system as it stands. Its source of truth will be token files in the repo (decision D-02). This page is a readable view of them, not the source.
 
