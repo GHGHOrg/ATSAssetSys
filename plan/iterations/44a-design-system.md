@@ -1,6 +1,6 @@
 # plan/iterations/44a-design-system.md
 
-Stage: Build. Status: approved 2026-11-27 (your A); step 1 built. The release is 44b (plan.md row 44b), drafted when 44a is merged.
+Stage: Build. Status: approved 2026-11-27 (your A); step 1 built and committed (0d3b6aa); step 2 built (research, section 10). The release is 44b (plan.md row 44b), drafted when 44a is merged.
 Source: plan.md section 4 (row 44a); intent/intent-cr-07-design-system.md (CR7, final); spec/spec.md v10 (with the date-picker amendment, pull request #250): C27 to C29, section 6 (Visual design, Accessibility, Theme, Number format and color, Date fields with the date picker, every view and entry flow, the navigation outline), section 14 (K9), AC-40, AC-61 (b) and (e), AC-62, AC-70, AC-73; spec/wireframes/design/ (the accepted drawings); design/README.md and design/decisions.md (D-01 to D-46). "My reading" is an interpretation, not a test.
 
 ## 1. Outcome
@@ -62,12 +62,16 @@ None planned.
 - The phone check of step 9.
 
 ## 10. Research
-Step 2 (Asap, Lucide, the SVG conversion).
+Step 2, run 2026-11-27 (your yes): `gh api` read only on github.com, and one web search. Nothing about you or the project was sent.
+1. Asap (google/fonts, ofl/asap and ofl/asapcondensed): Asap ships as two variable files, `Asap[wdth,wght].ttf` (376,764 bytes) and `Asap-Italic[wdth,wght].ttf` (426,484 bytes), with a width axis from 75 to 125 and a weight axis from 100 to 900; version 3.002, from Omnibus-Type/Asap at commit 2de32f2 (2025-05-23); OFL.txt 4,383 bytes. Asap Condensed ships as 16 static files of 106,820 to 120,208 bytes; the six the type scale needs (400, 500 and 700, each with its italic) add up to 688,596 bytes. [UNVERIFIED] whether Asap Condensed looks the same as the variable font at width 75; and that Compose sets a variable font's axes on API 33 (my memory: `FontVariation`, API 26 and up), checked in step 4.
+2. Lucide (lucide-icons/lucide): a release every weekday; the latest is 1.82.0 (published 2026-11-27, today); 1.72.0 was published 2026-11-11. Each release has `lucide-icons-<version>.zip` (1,615,346 bytes for 1.82.0) with the SVGs. The repo's LICENSE: ISC ("Copyright (c) 2026 Lucide Icons and Contributors"), then MIT ("Copyright (c) 2013-present Cole Bemis") for the icons derived from Feather, listed by name; that list includes calendar, check, the chevrons, info, lock, more-horizontal, more-vertical and x.
+3. SVG to vector drawable (one web search, "convert SVG to Android vector drawable command line"): vd-tool (npm; built from Android Studio's own converter), svg2vectordrawable and svg2vdandroid (npm), svg_to_avd (Dart), svg-to-compose (Kotlin, writes Compose code). Node 26.2.0 and npm 11.13.0 are on this PC. None was installed. Sources: https://www.npmjs.com/package/vd-tool, https://github.com/Ashung/svg2vectordrawable, https://www.npmjs.com/package/svg2vdandroid, https://pub.dev/documentation/svg_to_avd/latest/, https://github.com/rafaeltonholo/svg-to-compose/blob/main/README.md.
 
 ## 11. Decisions (Build)
 - 0. Two iterations for CR7, 44a (everything) and 44b (the release) (your B, 2026-11-27).
 - 1. The date picker is built in 44a, after spec v10 was amended (your B, 2026-11-27; pull request #250).
-- Open: step 2's research results; step 4's way of building the theme.
+- Open from step 2: 2. which font files ship (variable Asap with or without the italics; Asap Condensed as its own files or as Asap at width 75); 3. which Lucide release is pinned; 4. how the SVGs become vector drawables (a converter run once, its output kept in the repo, or by hand). Asked one at a time before step 3's icon files and step 4's fonts.
+- Open from step 4: the way of building the theme.
 
 ## 12. Wording to approve (D9)
 In step 7 and step 8: the calendar icon's TalkBack label, the pickers' day and button labels, About's two rows; shown before use.
