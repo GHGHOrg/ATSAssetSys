@@ -1,0 +1,213 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<title>Remaining Screens</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Asap:wght@400;500;700&family=Asap+Condensed:wght@400;500;700&display=swap">
+<style>
+/* Layout: a theme switch, then four phones that wrap: the Sell screen with its lot picker, the same screen at 200% font with
+   the keyboard up, the date field's states, and the lock and cover screens. Phones carry the Corporate Design System's tokens. 1 CSS px = 1 dp. */
+:root { --page-bg: #F4F6FA; --page-ink: #0A1A36; --page-muted: #4B5D75; --page-line: #CED8E6; --sans: "Asap", sans-serif; --cond: "Asap Condensed", sans-serif; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --page-bg: #070F1F; --page-ink: #E6ECF5; --page-muted: #9DB0C9; --page-line: #1E2F4A; color-scheme: dark } }
+:root[data-theme="dark"] { --page-bg: #070F1F; --page-ink: #E6ECF5; --page-muted: #9DB0C9; --page-line: #1E2F4A; color-scheme: dark }
+body { margin: 0; background: var(--page-bg); color: var(--page-ink); font-family: var(--sans); }
+.wrap { max-width: 1760px; margin: 0 auto; padding-block: 28px 56px;
+  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px));
+  display: flex; flex-direction: column; gap: 24px; }
+h1 { font-size: 28px; font-weight: 500; margin: 0; }
+p { margin: 0; line-height: 1.5; max-width: 76ch; color: var(--page-muted); }
+p strong { color: var(--page-ink); font-weight: 500; }
+header { display: flex; flex-direction: column; gap: 10px; }
+.seg { display: inline-flex; border: 1px solid var(--page-line); border-radius: 8px; overflow: hidden; }
+.seg button { font: 500 14px var(--sans); color: var(--page-muted); background: transparent; border: 0; padding: 0 18px; height: 36px; cursor: pointer; }
+.seg button[aria-pressed="true"] { background: var(--page-line); color: var(--page-ink); }
+.seg button:focus-visible { outline: 2px solid var(--page-ink); outline-offset: -3px; }
+.grid { display: flex; flex-wrap: wrap; gap: 28px; align-items: flex-start; }
+.shot { display: flex; flex-direction: column; gap: 10px; width: 411px; max-width: 100%; }
+.cap { display: flex; flex-direction: column; gap: 4px; }
+.cap b { font-size: 17px; font-weight: 500; }
+.cap span { font-size: 14px; line-height: 1.45; color: var(--page-muted); }
+.scroll { overflow-x: auto; max-width: 100%; }
+
+/* ---------- Tokens (D-07 to D-17) ---------- */
+.phone {
+  --page: #EBF0F8; --card: #DFE7F6; --band: #0A1A36; --on-band: #FFFFFF; --ink: #0A1A36; --muted: #295C85; --divider: #B0C4E8;
+  --gold: #C9A227; --on-gold: #0A1A36; --btn-line: #376A9E; --btn-text: #0E2B47; --field-line: #376A9E; --focus: #0A1A36;
+  --chip-on: #0E2B47; --on-chip-on: #FFFFFF; --err: #7A541F; --gain: #1B6B1F; --loss: #B3261E; --check: #0E2B47; --on-check: #FFFFFF;
+  --kbd: #D3D8E0; --kbd-key: #FFFFFF; --kbd-ink: #1B1B1F;
+  --shadow: 0 1px 3px rgba(10, 26, 54, .26), 0 4px 12px rgba(10, 26, 54, .16);
+  --fs: 1;
+  width: 411px; height: 860px; box-sizing: border-box; background: var(--page); color: var(--ink); border: 1px solid var(--page-line); border-radius: 14px;
+  overflow: hidden; display: flex; flex-direction: column; font-family: var(--sans); position: relative; }
+.phone.dark {
+  --page: #0A1A36; --card: #0E2B47; --band: #0A1A36; --on-band: #E6ECF5; --ink: #E6ECF5; --muted: #B0C4E8; --divider: #1C4F6C;
+  --gold: #E0BC4A; --btn-line: #E0BC4A; --btn-text: #E0BC4A; --field-line: #6291B9; --focus: #E0BC4A;
+  --chip-on: #E0BC4A; --on-chip-on: #0A1A36; --err: #E2BF8D; --gain: #7FD47A; --loss: #FFB4AB; --check: #E0BC4A; --on-check: #0A1A36;
+  --kbd: #2B2D31; --kbd-key: #45474C; --kbd-ink: #E6E6E9;
+  --shadow: 0 1px 3px rgba(0, 0, 0, .62), 0 5px 14px rgba(0, 0, 0, .48); }
+.phone.x2 { --fs: 2; }
+.t22 { font: 500 calc(22px * var(--fs))/1.27 var(--sans); }
+.t32 { font: 500 calc(32px * var(--fs))/1.25 var(--sans); }
+.t16m { font: 500 calc(16px * var(--fs))/1.5 var(--sans); }
+.t16 { font: 400 calc(16px * var(--fs))/1.5 var(--sans); }
+.t14 { font: 400 calc(14px * var(--fs))/1.43 var(--sans); }
+.t12 { font: 400 calc(12px * var(--fs))/1.33 var(--sans); }
+.t12c { font: 400 calc(12px * var(--fs))/1.33 var(--cond); }
+.t14c { font: 500 calc(14px * var(--fs))/1.43 var(--cond); }
+.muted { color: var(--muted); }
+.num { font-variant-numeric: tabular-nums; }
+.g { color: var(--gain); } .l { color: var(--loss); }
+
+.band { background: var(--band); color: var(--on-band); padding: 10px 12px; display: flex; align-items: center; gap: 4px; flex: none; }
+.band .ico { min-width: 40px; height: 40px; display: inline-flex; align-items: center; justify-content: center; font-size: 20px; }
+.body { padding: 12px; display: flex; flex-direction: column; gap: 8px; overflow: hidden; flex: 1; min-height: 0; }
+.field { position: relative; min-height: 56px; border: 1px solid var(--field-line); border-radius: 8px; box-sizing: border-box;
+  display: flex; align-items: center; gap: 8px; padding: 0 12px; margin-top: 8px; }
+.field .fl { position: absolute; top: -9px; left: 8px; padding: 0 4px; background: var(--page); font: 400 calc(12px * var(--fs))/16px var(--sans); color: var(--muted); }
+.field .v { flex: 1; }
+.field.focus { border: 2px solid var(--focus); padding: 0 11px; }
+.field.focus .fl { color: var(--ink); font-weight: 500; }
+.field.err { border: 2px solid var(--err); padding: 0 11px; }
+.field.err .fl { color: var(--err); font-weight: 500; }
+.caret { display: inline-block; width: 2px; height: 1.1em; background: var(--focus); vertical-align: middle; margin-left: 1px; }
+.bang { width: 20px; height: 20px; border-radius: 50%; background: var(--err); color: var(--page); font: 700 14px/20px var(--sans); text-align: center; flex: none; }
+.help { font: 500 calc(12px * var(--fs))/1.33 var(--sans); color: var(--err); padding: 4px 12px 0; }
+/* Icons: Lucide (D-19, D-25) at 24 dp, Lucide's own stroke of 2 (D-24), drawn inline; the checkbox's mark is 14 at stroke 3, a chip's check 16. */
+.ic { width: 24px; height: 24px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; display: block; flex: none; }
+.field .ic { color: var(--btn-text); }
+.box .ic { width: 14px; height: 14px; stroke-width: 3; color: var(--on-check); }
+.chip .ic { width: 16px; height: 16px; }
+.field .ic.alert { width: 20px; height: 20px; color: var(--err); }
+.note { padding: 4px 12px 0; }
+.chips { display: flex; flex-wrap: wrap; gap: 8px; }
+.chip { height: 32px; padding: 0 12px; border-radius: 8px; display: inline-flex; align-items: center; gap: 6px; box-sizing: border-box;
+  border: 1px solid var(--btn-line); color: var(--btn-text); }
+.chip.on { background: var(--chip-on); color: var(--on-chip-on); border-color: var(--chip-on); }
+.card { background: var(--card); border-radius: 8px; box-shadow: var(--shadow); }
+.lot { display: flex; gap: 8px; padding: 10px; align-items: flex-start; }
+.lot .left { display: flex; gap: 10px; flex: 1; min-width: 0; min-height: 48px; }
+.box { width: 18px; height: 18px; border-radius: 4px; border: 2px solid var(--btn-line); flex: none; margin-top: 3px; box-sizing: border-box;
+  display: inline-flex; align-items: center; justify-content: center; font: 700 12px/1 var(--sans); }
+.box.on { background: var(--check); border-color: var(--check); color: var(--on-check); }
+.lot .right { display: flex; flex-direction: column; align-items: flex-end; text-align: right; gap: 2px; }
+.sellf { display: flex; align-items: center; gap: 8px; }
+.sellf { min-height: 48px; }
+.sellf .field { width: 120px; min-height: 0; height: 40px; margin-top: 0; padding: 0 8px; }
+.sellf .field .t16 { font-size: calc(14px * var(--fs)); line-height: 1.43; }
+.lot.off { opacity: .55; border: 1px dashed var(--muted); border-radius: 8px; margin: 6px 10px 10px; }
+.div { height: 1px; background: var(--divider); margin: 0 10px; }
+.btn { height: 48px; border-radius: 8px; display: flex; align-items: center; justify-content: center; font: 500 calc(16px * var(--fs))/1.5 var(--sans); box-sizing: border-box; }
+.btn.filled { background: var(--gold); color: var(--on-gold); }
+.btn.m { height: 40px; padding: 0 20px; font: 500 14px/20px var(--sans); display: inline-flex; }
+.kbd { flex: none; height: 300px; background: var(--kbd); display: flex; flex-direction: column; gap: 8px; padding: 10px 6px; box-sizing: border-box; }
+.kbd .krow { display: flex; gap: 6px; flex: 1; }
+.kbd .k { flex: 1; background: var(--kbd-key); border-radius: 6px; color: var(--kbd-ink); display: flex; align-items: center; justify-content: center; font: 400 22px var(--sans); }
+.kbd .tag { font: 400 12px var(--sans); color: var(--kbd-ink); opacity: .7; text-align: center; }
+.room { position: absolute; left: 0; right: 0; height: 0; border-top: 2px dashed var(--err); }
+.center { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 24px; padding: 24px; text-align: center; }
+.split { flex: 1; display: grid; grid-template-rows: 1fr 1fr; }
+.split > div { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 20px; padding: 16px; text-align: center; }
+.split > div + div { border-top: 1px dashed var(--divider); }
+.tag2 { font: 400 12px/16px var(--cond); color: var(--muted); }
+.notes { display: flex; flex-direction: column; gap: 8px; border-top: 1px solid var(--page-line); padding-top: 16px; }
+.notes p { font-size: 14px; }
+</style>
+
+<div class="wrap">
+<header>
+  <h1>Remaining screens</h1>
+  <p>The pieces the catalog left out, drawn in the decided system (D-07 to D-17) from what the app does today: the Sell screen's lot picker (SellScreen.kt, wireframe 10a), an entry screen with the keyboard up at 200% font, the date field, and the lock and cover screens. ATS has no date picker today; D-18 adds one through intent-cr-07, so every date field here carries the calendar icon that opens it, and typing (YYYY-MM-DD) still works. The pickers themselves are in the Component Catalog. Icons are Lucide at its own stroke of 2 (D-19, D-24, D-25). <strong>Made-up test data; every text is a placeholder</strong> (D9), taken from wireframe 10a where it has one. Drawn in HTML at 1 px per dp, not rendered by Android.</p>
+  <div><span class="seg" role="group" aria-label="Phone theme"><button type="button" data-mode="light" aria-pressed="true">Light</button><button type="button" data-mode="dark" aria-pressed="false">Dark</button></span></div>
+</header>
+
+<div class="grid">
+  <div class="shot"><div class="cap"><b>1. Sell: the lot picker</b><span>Lots oldest first. A picked lot shows "Sell:" and a dense field (40 tall, Asap 14, D-17's catalog); a lot that fails the date rule stays in place, greyed with a dashed outline and its reason (wireframe 10a, marker 13). The checkbox is a new small part: 18 dp, corner 4 (8 would make it look like a radio button).</span></div>
+    <div class="scroll"><div class="phone">
+      <div class="band"><span class="ico"><i class="ic" data-lucide="chevron-left"></i></span><span class="t22">Sell</span></div>
+      <div class="body">
+        <div class="t14 muted">Ticker</div>
+        <div class="chips"><span class="chip on t14c"><i class="ic" data-lucide="check"></i>ACME</span><span class="chip t14c">BOLT</span><span class="chip t14c">CRANE</span></div>
+        <div><div class="field"><span class="fl">Date</span><span class="v t16 num">2026-03-01</span><i class="ic" data-lucide="calendar"></i></div>
+          <div class="note t12 muted">Enter date in US market time (New York)</div></div>
+        <div class="field"><span class="fl">Quantity</span><span class="v t16 num">12</span></div>
+        <div class="t16m" style="margin-top:4px">Lots, oldest first</div>
+        <div class="card">
+          <div class="lot"><div class="left"><span class="box on"><i class="ic" data-lucide="check"></i></span><div><div class="t16 num">2026-01-10 ET</div><div class="t14 muted num">10 left, $150.00 per share</div></div></div>
+            <div class="right"><div class="sellf"><span class="t16">Sell:</span><div class="field"><span class="v t16 num">10</span></div></div><span class="t14 g num">+$150.00 (+10.00%)</span></div></div>
+          <div class="div"></div>
+          <div class="lot"><div class="left"><span class="box on"><i class="ic" data-lucide="check"></i></span><div><div class="t16 num">2026-02-01 ET</div><div class="t14 muted num">20 left, $160.00 per share</div></div></div>
+            <div class="right"><div class="sellf"><span class="t16">Sell:</span><div class="field"><span class="v t16 num">2</span></div></div><span class="t14 g num">+$100.00 (+3.13%)</span></div></div>
+          <div class="lot off"><div class="left"><span class="box"></span><div><div class="t16 num">2026-03-15 ET</div><div class="t14 muted num">5 left, $170.00 per share</div><div class="t14 muted">Not available: bought after the sell date</div></div></div></div>
+        </div>
+        <div class="t16 num">Picked 12 of 12 shares</div>
+        <div class="btn filled" style="margin-top:4px">Review</div>
+      </div>
+    </div></div></div>
+
+  <div class="shot"><div class="cap"><b>2. Entry with the keyboard, at 200% font</b><span>The same screen scrolled so the focused Quantity field sits above the keyboard with room to spare (spec 6; CLAUDE.md's keyboard pitfalls). Text doubles; spacing doesn't. The keyboard is the system's, drawn here only as a block of about 300 dp (an estimate; the phone check decides).</span></div>
+    <div class="scroll"><div class="phone x2">
+      <div class="band"><span class="ico"><i class="ic" data-lucide="chevron-left"></i></span><span class="t22">Sell</span></div>
+      <div class="body" style="justify-content:flex-end">
+        <div><div class="field"><span class="fl">Date</span><span class="v t16 num">2026-03-01</span><i class="ic" data-lucide="calendar"></i></div>
+          <div class="note t12 muted">Enter date in US market time (New York)</div></div>
+        <div class="field focus"><span class="fl">Quantity</span><span class="v t16 num">12<span class="caret"></span></span></div>
+        <div class="t16m">Lots, oldest first</div>
+      </div>
+      <div class="kbd"><div class="krow"><span class="k">1</span><span class="k">2</span><span class="k">3</span></div><div class="krow"><span class="k">4</span><span class="k">5</span><span class="k">6</span></div><div class="krow"><span class="k">7</span><span class="k">8</span><span class="k">9</span></div><div class="krow"><span class="k">.</span><span class="k">0</span><span class="k">⌫</span></div><div class="tag">System keyboard (not styled by the app)</div></div>
+    </div></div></div>
+
+  <div class="shot"><div class="cap"><b>3. The date field</b><span>Typed or picked: the standard date field with its calendar icon (it opens the standard picker, D-18) and the New York note under it; then focused while typing; then refused in bronze (D-16) when the text isn't a date, Lucide's circle-alert before the calendar (D-27).</span></div>
+    <div class="scroll"><div class="phone">
+      <div class="band"><span class="ico"><i class="ic" data-lucide="chevron-left"></i></span><span class="t22">Buy</span></div>
+      <div class="body" style="gap:14px">
+        <div class="tag2">Default: today in New York</div>
+        <div><div class="field"><span class="fl">Date</span><span class="v t16 num">2026-11-25</span><i class="ic" data-lucide="calendar"></i></div><div class="note t12 muted">Enter date in US market time (New York)</div></div>
+        <div class="tag2">Typing</div>
+        <div><div class="field focus"><span class="fl">Date</span><span class="v t16 num">2026-11-2<span class="caret"></span></span><i class="ic" data-lucide="calendar"></i></div><div class="note t12 muted">Enter date in US market time (New York)</div></div>
+        <div class="tag2">Refused</div>
+        <div><div class="field err"><span class="fl">Date</span><span class="v t16 num">2026-13-40</span><i class="ic alert" data-lucide="circle-alert"></i><i class="ic" data-lucide="calendar"></i></div><div class="help">Placeholder: not a date; use YYYY-MM-DD.</div></div>
+      </div>
+    </div></div></div>
+
+  <div class="shot"><div class="cap"><b>4. Lock and cover</b><span>Top: the locked screen, the app's name and a large gold Unlock. Bottom: the cover shown whenever the window loses focus, the name only. The fingerprint or PIN prompt that Unlock opens is the system's own and keeps its own look.</span></div>
+    <div class="scroll"><div class="phone">
+      <div class="split">
+        <div><span class="t22" style="font-size:28px">ATS Asset System</span><span class="btn filled" style="width:200px">Unlock</span><span class="tag2">Locked</span></div>
+        <div><span class="t22" style="font-size:28px">ATS Asset System</span><span class="tag2">Cover</span></div>
+      </div>
+    </div></div></div>
+</div>
+
+<div class="notes">
+  <p><strong>New parts these screens need.</strong> A checkbox (18 dp, corner 4, navy 9 or gold when checked), the unavailable-lot outline (dashed, in secondary text color, the lot at 55% opacity), and the dense text field for a field inside a row (the "Sell:" field: 40 tall in a 48 touch area, Asap 14; now in the Component Catalog). They follow the catalog's colors and type.</p>
+  <p><strong>Large button at the foot.</strong> The Sell screen ends in a large, full-width gold button (D-17), here "Review", since wireframe 10a goes to a review before saving.</p>
+  <p><strong>Updated 2026-11-27.</strong> Lucide icons replace the text marks (back arrow, checks), drawn inline from Lucide's path data as Claude knows it, so a detail may differ slightly; the date fields gained the calendar icon from D-18.</p>
+  <p><strong>What can't be shown.</strong> The real keyboard height, Android's gentler growth of large text at 200%, and the system's lock prompt. The phone check decides all three.</p>
+</div>
+</div>
+
+<script>
+const phones = [...document.querySelectorAll(".phone")];
+let dark = false;
+try { dark = matchMedia("(prefers-color-scheme: dark)").matches; } catch (e) {}
+function render() {
+  for (const p of phones) p.classList.toggle("dark", dark);
+  for (const b of document.querySelectorAll("[data-mode]")) b.setAttribute("aria-pressed", String((b.dataset.mode === "dark") === dark));
+}
+for (const b of document.querySelectorAll("[data-mode]")) b.addEventListener("click", () => { dark = b.dataset.mode === "dark"; render(); });
+render();
+const PATHS = {
+  "chevron-left": '<path d="m15 18-6-6 6-6"/>',
+  "check": '<path d="M20 6 9 17l-5-5"/>',
+  "circle-alert": '<circle cx="12" cy="12" r="10"/><path d="M12 8v4"/><path d="M12 16h.01"/>',
+  "calendar": '<path d="M8 2v4"/><path d="M16 2v4"/><rect width="18" height="18" x="3" y="4" rx="2"/><path d="M3 10h18"/>'
+};
+for (const i of document.querySelectorAll("i[data-lucide]")) {
+  const p = PATHS[i.dataset.lucide];
+  if (!p) continue;
+  const tmp = document.createElement("span");
+  tmp.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" aria-hidden="true">' + p + '</svg>';
+  const svg = tmp.firstChild;
+  svg.setAttribute("class", i.getAttribute("class") || "ic");
+  i.replaceWith(svg);
+}
+</script>
+</body></html>

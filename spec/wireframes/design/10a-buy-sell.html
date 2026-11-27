@@ -1,0 +1,356 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<title>Buy and Sell</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Asap:wght@400;500;700&family=Asap+Condensed:wght@400;500;700&display=swap">
+<style>
+/* Layout: a theme switch, then seven phones that wrap, one per frame of wireframe 10a (buy, buy review, sell as one scrolling
+   screen shown whole, lot states with a mismatch, sell review, blocked saves, the Buy/Sell menu and nothing to enter).
+   Phones carry the Corporate Design System's tokens (D-07 to D-31). 1 CSS px = 1 dp. */
+:root { --page-bg: #F4F6FA; --page-ink: #0A1A36; --page-muted: #4B5D75; --page-line: #CED8E6; --stamp: #8A6D12; --sans: "Asap", sans-serif; --cond: "Asap Condensed", sans-serif; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --page-bg: #070F1F; --page-ink: #E6ECF5; --page-muted: #9DB0C9; --page-line: #1E2F4A; --stamp: #E0BC4A; color-scheme: dark } }
+:root[data-theme="dark"] { --page-bg: #070F1F; --page-ink: #E6ECF5; --page-muted: #9DB0C9; --page-line: #1E2F4A; --stamp: #E0BC4A; color-scheme: dark }
+body { margin: 0; background: var(--page-bg); color: var(--page-ink); font-family: var(--sans); }
+.wrap { max-width: 1760px; margin: 0 auto; padding-block: 28px 56px;
+  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px));
+  display: flex; flex-direction: column; gap: 24px; }
+.stamp { font: 500 14px/20px var(--cond); color: var(--stamp); }
+h1 { font-size: 28px; font-weight: 500; margin: 0; }
+p { margin: 0; line-height: 1.5; max-width: 84ch; color: var(--page-muted); }
+p strong { color: var(--page-ink); font-weight: 500; }
+header { display: flex; flex-direction: column; gap: 10px; }
+.seg { display: inline-flex; border: 1px solid var(--page-line); border-radius: 8px; overflow: hidden; }
+.seg button { font: 500 14px var(--sans); color: var(--page-muted); background: transparent; border: 0; padding: 0 18px; height: 36px; cursor: pointer; }
+.seg button[aria-pressed="true"] { background: var(--page-line); color: var(--page-ink); }
+.seg button:focus-visible { outline: 2px solid var(--page-ink); outline-offset: -3px; }
+.grid { display: flex; flex-wrap: wrap; gap: 28px; align-items: flex-start; }
+.shot { display: flex; flex-direction: column; gap: 10px; width: 411px; max-width: 100%; }
+.cap { display: flex; flex-direction: column; gap: 4px; }
+.cap b { font-size: 17px; font-weight: 500; }
+.cap span { font-size: 14px; line-height: 1.45; color: var(--page-muted); }
+.scroll { overflow-x: auto; max-width: 100%; }
+
+/* ---------- Tokens ---------- */
+.phone {
+  --page: #EBF0F8; --card: #DFE7F6; --float: #DFE7F6; --band: #0A1A36; --on-band: #FFFFFF;
+  --ink: #0A1A36; --muted: #295C85; --divider: #B0C4E8;
+  --gold: #C9A227; --on-gold: #0A1A36; --btn-line: #376A9E; --btn-text: #0E2B47; --field-line: #376A9E; --focus: #0A1A36;
+  --chip-on: #0E2B47; --on-chip-on: #FFFFFF; --err: #7A541F; --gain: #1B6B1F; --loss: #B3261E; --check: #0E2B47; --on-check: #FFFFFF;
+  --bar: #0A1A36; --bar-label: #8AABC5; --bar-sel: #E0BC4A; --pill: #1C4F6C; --bar-ind: transparent; --scrim: rgba(10, 26, 54, .50);
+  --shadow: 0 1px 3px rgba(10, 26, 54, .26), 0 4px 12px rgba(10, 26, 54, .16);
+  width: 411px; height: 860px; box-sizing: border-box; background: var(--page); color: var(--ink); border: 1px solid var(--page-line); border-radius: 14px;
+  overflow: hidden; display: flex; flex-direction: column; font-family: var(--sans); position: relative; }
+.phone.tall { height: auto; }
+.phone.dark {
+  --page: #0A1A36; --card: #0E2B47; --float: #153D5A; --band: #0A1A36; --on-band: #E6ECF5;
+  --ink: #E6ECF5; --muted: #B0C4E8; --divider: #1C4F6C;
+  --gold: #E0BC4A; --btn-line: #E0BC4A; --btn-text: #E0BC4A; --field-line: #6291B9; --focus: #E0BC4A;
+  --chip-on: #E0BC4A; --on-chip-on: #0A1A36; --err: #E2BF8D; --gain: #7FD47A; --loss: #FFB4AB; --check: #E0BC4A; --on-check: #0A1A36;
+  --bar: #050D1C; --pill: transparent; --bar-ind: #E0BC4A; --scrim: rgba(0, 0, 0, .60);
+  --shadow: 0 1px 3px rgba(0, 0, 0, .62), 0 5px 14px rgba(0, 0, 0, .48); }
+.t22 { font: 500 22px/28px var(--sans); }
+.t16m { font: 500 16px/24px var(--sans); }
+.t16 { font: 400 16px/24px var(--sans); }
+.t14 { font: 400 14px/20px var(--sans); }
+.t12c { font: 400 12px/16px var(--cond); }
+.muted { color: var(--muted); }
+.num { font-variant-numeric: tabular-nums; }
+.g { color: var(--gain); } .l { color: var(--loss); }
+
+.band { background: var(--band); color: var(--on-band); padding: 10px 12px; display: flex; align-items: center; gap: 4px; flex: none; }
+.band .ico { min-width: 40px; height: 40px; display: inline-flex; align-items: center; justify-content: center; }
+.body { padding: 12px; display: flex; flex-direction: column; gap: 12px; overflow: hidden; flex: 1; min-height: 0; }
+.card { background: var(--card); border-radius: 8px; box-shadow: var(--shadow); }
+.pad { padding: 10px; display: flex; flex-direction: column; gap: 6px; }
+.lbl { font: 400 14px/20px var(--sans); color: var(--muted); }
+
+.f { display: flex; flex-direction: column; }
+.field { position: relative; height: 56px; border: 1px solid var(--field-line); border-radius: 8px; box-sizing: border-box;
+  display: flex; align-items: center; gap: 8px; padding: 0 12px; font: 400 16px/24px var(--sans); }
+.field .fl { position: absolute; top: -9px; left: 8px; padding: 0 4px; background: var(--page); font: 400 12px/16px var(--sans); color: var(--muted); white-space: nowrap; }
+.field .v { flex: 1; min-width: 0; white-space: nowrap; font-variant-numeric: tabular-nums; }
+.field .pre { color: var(--muted); }
+.note { font: 400 12px/16px var(--sans); color: var(--muted); padding: 4px 12px 0; }
+.derived { font: 400 14px/20px var(--sans); color: var(--muted); }
+.two { display: flex; gap: 8px; } .two > * { flex: 1; min-width: 0; }
+
+/* Lots (Remaining Screens; D-18): checkbox, dense Sell field, gain with percentage (CR6) */
+.lot { display: flex; gap: 8px; padding: 10px; align-items: flex-start; }
+.lot .left { display: flex; gap: 10px; flex: 1; min-width: 0; min-height: 48px; }
+.box { width: 18px; height: 18px; border-radius: 4px; border: 2px solid var(--btn-line); flex: none; margin-top: 3px; box-sizing: border-box; display: inline-flex; align-items: center; justify-content: center; }
+.box.on { background: var(--check); border-color: var(--check); color: var(--on-check); }
+.box .ic { width: 14px; height: 14px; stroke-width: 3; }
+.lot .right { display: flex; flex-direction: column; align-items: flex-end; text-align: right; gap: 2px; }
+.sellf { display: flex; align-items: center; gap: 8px; min-height: 48px; }
+.dfield { height: 40px; width: 120px; border: 1px solid var(--field-line); border-radius: 8px; box-sizing: border-box; display: flex; align-items: center; padding: 0 8px; font: 400 14px/20px var(--sans); font-variant-numeric: tabular-nums; }
+.lot.off { opacity: .55; border: 1px dashed var(--muted); border-radius: 8px; margin: 6px 10px 10px; }
+.div { height: 1px; background: var(--divider); margin: 0 10px; }
+.picked { padding: 0 10px 10px; }
+
+.btn { height: 40px; padding: 0 20px; border-radius: 8px; display: inline-flex; align-items: center; justify-content: center; font: 500 14px/20px var(--sans); box-sizing: border-box; border: 1px solid transparent; white-space: nowrap; }
+.btn.l { height: 48px; font: 500 16px/24px var(--sans); }
+.btn.s { height: 32px; padding: 0 12px; font: 500 14px/20px var(--cond); }
+.btn.wide { width: 100%; }
+.btn.filled { background: var(--gold); color: var(--on-gold); }
+.btn.out { border-color: var(--btn-line); color: var(--btn-text); }
+.foot { margin-top: auto; display: flex; flex-direction: column; gap: 8px; }
+.endrow { display: flex; justify-content: flex-end; }
+
+.kv { display: flex; justify-content: space-between; gap: 12px; padding: 6px 0; font: 400 16px/24px var(--sans); }
+.kv span:first-child { color: var(--muted); }
+.kv span:last-child { text-align: right; font-variant-numeric: tabular-nums; }
+.kv.tot { border-top: 1px solid var(--divider); margin-top: 4px; padding-top: 10px; font-weight: 500; }
+.kv.tot span:first-child { color: var(--ink); }
+.sub { font: 500 14px/20px var(--sans); color: var(--muted); padding-top: 6px; }
+
+.blocked { border: 2px solid var(--err); border-radius: 8px; padding: 10px; display: flex; gap: 8px; align-items: flex-start; background: var(--card); }
+.blocked .t14 { color: var(--ink); }
+.blocked b { font-weight: 500; color: var(--err); }
+.help { font: 500 12px/16px var(--sans); color: var(--err); padding: 4px 12px 0; }
+.field.err { border: 2px solid var(--err); padding: 0 11px; }
+.field.err .fl { color: var(--err); font-weight: 500; }
+
+/* Menu inside the window over a scrim (catalog) */
+.scrim { position: absolute; inset: 0; background: var(--scrim); }
+.menu { position: absolute; right: 12px; bottom: 132px; width: 196px; background: var(--float); border-radius: 8px; box-shadow: var(--shadow); padding: 4px 0; }
+.menu div { min-height: 48px; display: flex; align-items: center; padding: 0 16px; font: 400 16px/24px var(--sans); }
+.summary { background: #153D5A; color: #fff; border-radius: 8px; padding: 10px; box-shadow: var(--shadow); }
+.phone.dark .summary { background: #1C4F6C; }
+.ghost { height: 56px; border-radius: 8px; background: var(--card); box-shadow: var(--shadow); }
+
+.bar { display: flex; background: var(--bar); padding: 0 4px; flex: none; }
+.tab { flex: 1; min-height: 56px; display: flex; flex-direction: column; align-items: center; justify-content: center; font: 500 14px/20px var(--cond); color: var(--bar-label); padding: 6px 2px; box-sizing: border-box; }
+.tab span { padding: 4px 10px; border-radius: 8px; }
+.tab::after { content: ""; width: 24px; height: 3px; margin-top: 3px; border-radius: 2px; }
+.tab.on { color: var(--bar-sel); font-weight: 700; }
+.tab.on span { background: var(--pill); }
+.tab.on::after { background: var(--bar-ind); }
+
+.ic { width: 24px; height: 24px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; display: block; flex: none; }
+.ic.s20 { width: 20px; height: 20px; }
+.field .ic { color: var(--btn-text); }
+.field .ic.alert, .blocked .ic { color: var(--err); }
+.notes { display: flex; flex-direction: column; gap: 8px; border-top: 1px solid var(--page-line); padding-top: 16px; }
+.notes p { font-size: 14px; }
+.notes ol { margin: 0; padding-left: 22px; color: var(--page-muted); font-size: 14px; line-height: 1.5; display: flex; flex-direction: column; gap: 4px; max-width: 90ch; }
+.notes li strong { color: var(--page-ink); font-weight: 500; }
+/* Bottom bar with icon and text (D-37, amending D-10): 72 tall; light, one pill behind icon and label; dark, gold icon and label over the gold line. */
+.tab.it { min-height: 72px; }
+.tab.it .both { display: flex; flex-direction: column; align-items: center; gap: 2px; padding: 6px 4px 4px; border-radius: 8px; min-width: 84px; box-sizing: border-box; } /* one pill size on every tab (D-37) */
+.tab.it .both svg { width: 24px; height: 24px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; display: block; }
+.tab.it span.t, .tab.it.on span.t { padding: 0; background: none; }</style>
+
+<div class="wrap">
+<header>
+  <span class="stamp">Stage: Plan · drawings for intent-cr-07 · 2026-11-27</span>
+  <h1>Buy and sell</h1>
+  <p>Wireframe 10a (approved, with CR6's lot percentages) drawn in the Corporate Design System, frame by frame, with the parts of D-31: buy and its review, sell with its lots and its review, lot states, blocked saves, the Buy/Sell menu and the cases with nothing to enter. <strong>Example A at an AAPL price of $160; every text is a placeholder</strong> (D9). Opened from Overall, so Overall is the selected tab. Drawn in HTML at 1 px per dp, not rendered by Android.</p>
+  <div><span class="seg" role="group" aria-label="Phone theme"><button type="button" data-mode="light" aria-pressed="true">Light</button><button type="button" data-mode="dark" aria-pressed="false">Dark</button></span></div>
+</header>
+
+<div class="grid">
+
+  <div class="shot"><div class="cap"><b>A. Buy entry</b><span>Markers 1 to 6. Portfolio picked; ticker typed in capitals; date with its calendar; quantity and total side by side; the price per share worked out under them, not typed; Review always tappable.</span></div>
+    <div class="scroll"><div class="phone">
+      <div class="band"><span class="ico"><i class="ic" data-i="chevron-left"></i></span><span class="t22">Buy</span></div>
+      <div class="body">
+        <div class="field"><span class="fl">Portfolio</span><span class="v">Portfolio P</span><i class="ic" data-i="chevron-down"></i></div>
+        <div class="field"><span class="fl">Ticker</span><span class="v">AAPL</span></div>
+        <div class="f"><div class="field"><span class="fl">Date</span><span class="v">2026-02-01</span><i class="ic" data-i="calendar"></i></div><div class="note">Enter date in US market time (New York)</div></div>
+        <div class="two">
+          <div class="field"><span class="fl">Quantity</span><span class="v">10</span></div>
+          <div class="field"><span class="fl">Total, fees included</span><span class="pre">$</span><span class="v">1,500.00</span></div>
+        </div>
+        <div class="derived num">Price per share: $150.00</div>
+        <div class="foot"><span class="btn filled l wide">Review</span></div>
+      </div>
+      <div class="bar"><span class="tab"><span>More</span></span><span class="tab"><span>Cash</span></span><span class="tab"><span>Portfolios</span></span><span class="tab on"><span>Overall</span></span></div>
+    </div></div></div>
+
+  <div class="shot"><div class="cap"><b>B. Buy review</b><span>Marker 7. The values and the derived price, the cash effect as the total line, signed and uncolored.</span></div>
+    <div class="scroll"><div class="phone">
+      <div class="band"><span class="ico"><i class="ic" data-i="chevron-left"></i></span><span class="t22">Review buy</span></div>
+      <div class="body">
+        <div class="card pad">
+          <div class="kv"><span>Portfolio</span><span>Portfolio P</span></div>
+          <div class="kv"><span>Ticker</span><span>AAPL</span></div>
+          <div class="kv"><span>Date</span><span>2026-02-01 ET</span></div>
+          <div class="kv"><span>Quantity</span><span>10</span></div>
+          <div class="kv"><span>Total amount</span><span>$1,500.00</span></div>
+          <div class="kv"><span>Price per share</span><span>$150.00</span></div>
+          <div class="kv tot"><span>Cash effect</span><span>−$1,500.00</span></div>
+        </div>
+        <div class="t14 muted">Nothing is saved until you confirm.</div>
+        <div class="foot"><span class="btn filled l wide">Confirm and save</span><span class="btn out l wide">Back to edit</span></div>
+      </div>
+      <div class="bar"><span class="tab"><span>More</span></span><span class="tab"><span>Cash</span></span><span class="tab"><span>Portfolios</span></span><span class="tab on"><span>Overall</span></span></div>
+    </div></div></div>
+
+  <div class="shot"><div class="cap"><b>C. Sell entry, one scrolling screen (shown whole)</b><span>Markers 8 to 11. Portfolio and held ticker picked; date; quantity and total (zero allowed); price per share; Sell all as a small outline button; then the lots, oldest first, each gain with its percentage (CR6); "Picked 12 of 12 shares"; Review.</span></div>
+    <div class="scroll"><div class="phone tall">
+      <div class="band"><span class="ico"><i class="ic" data-i="chevron-left"></i></span><span class="t22">Sell</span></div>
+      <div class="body">
+        <div class="two">
+          <div class="field"><span class="fl">Portfolio</span><span class="v">Portfolio P</span><i class="ic" data-i="chevron-down"></i></div>
+          <div class="field"><span class="fl">Ticker (held)</span><span class="v">AAPL</span><i class="ic" data-i="chevron-down"></i></div>
+        </div>
+        <div class="f"><div class="field"><span class="fl">Date</span><span class="v">2026-03-01</span><i class="ic" data-i="calendar"></i></div><div class="note">Enter date in US market time (New York)</div></div>
+        <div class="two">
+          <div class="field"><span class="fl">Quantity</span><span class="v">12</span></div>
+          <div class="field"><span class="fl">Total, zero allowed</span><span class="pre">$</span><span class="v">2,100.00</span></div>
+        </div>
+        <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;min-height:48px"><span class="derived num">Price per share: $175.00</span><span class="btn out s">Sell all</span></div>
+        <div class="t16m">Lots, oldest first</div>
+        <div class="card">
+          <div class="lot"><div class="left"><span class="box on"><i class="ic" data-i="check"></i></span><div><div class="t16 num">2026-01-02 ET</div><div class="t14 muted num">10 left, $100.00 per share</div></div></div>
+            <div class="right"><div class="sellf"><span class="t14">Sell:</span><div class="dfield">10</div></div><span class="t14 g num">+$600.00 (+60.00%)</span></div></div>
+          <div class="div"></div>
+          <div class="lot"><div class="left"><span class="box on"><i class="ic" data-i="check"></i></span><div><div class="t16 num">2026-02-01 ET</div><div class="t14 muted num">10 left, $150.00 per share</div></div></div>
+            <div class="right"><div class="sellf"><span class="t14">Sell:</span><div class="dfield">2</div></div><span class="t14 g num">+$100.00 (+6.67%)</span></div></div>
+          <div class="div"></div>
+          <div class="pad picked"><span class="t16 num" style="padding-top:8px">Picked 12 of 12 shares</span></div>
+        </div>
+        <span class="btn filled l wide">Review</span>
+      </div>
+      <div class="bar"><span class="tab"><span>More</span></span><span class="tab"><span>Cash</span></span><span class="tab"><span>Portfolios</span></span><span class="tab on"><span>Overall</span></span></div>
+    </div></div></div>
+
+  <div class="shot"><div class="cap"><b>D. Lot states and a mismatch</b><span>Markers 12 to 14. A lot with no price says so; a stale price shows its age in condensed 12; a lot that fails the date rule stays in place, dashed and faded with its reason (D-18). Picks short of the quantity: the blocked card, "Not saved yet".</span></div>
+    <div class="scroll"><div class="phone">
+      <div class="band"><span class="ico"><i class="ic" data-i="chevron-left"></i></span><span class="t22">Sell</span></div>
+      <div class="body">
+        <div class="blocked"><i class="ic s20" data-i="circle-alert"></i><div class="t14"><b>Not saved yet.</b> The picked lots add up to 10 shares, but the sell is for 12.</div></div>
+        <div class="t14 muted">Same screen, lots section. Date 2026-03-01, quantity 12.</div>
+        <div class="card">
+          <div class="lot"><div class="left"><span class="box on"><i class="ic" data-i="check"></i></span><div><div class="t16 num">2026-01-02 ET</div><div class="t14 muted num">10 left, $100.00 per share</div></div></div>
+            <div class="right"><div class="sellf"><span class="t14">Sell:</span><div class="dfield">10</div></div><span class="t14 muted">no price</span></div></div>
+          <div class="div"></div>
+          <div class="lot"><div class="left"><span class="box"></span><div><div class="t16 num">2026-02-01 ET</div><div class="t14 muted num">10 left, $150.00 per share</div></div></div>
+            <div class="right"><span class="t14 g num">+$100.00 (+6.67%)</span><span class="t12c muted">stale, 2 days</span></div></div>
+          <div class="lot off"><div class="left"><span class="box"></span><div><div class="t16 num">2026-03-15 ET</div><div class="t14 muted num">5 left, $170.00 per share</div><div class="t14 muted">Not available: bought after the sell date</div></div></div></div>
+          <div class="div"></div>
+          <div class="pad picked"><span class="t16 num" style="padding-top:8px">Picked 10 of 12 shares</span></div>
+        </div>
+        <div class="foot"><span class="btn filled l wide">Review</span></div>
+      </div>
+      <div class="bar"><span class="tab"><span>More</span></span><span class="tab"><span>Cash</span></span><span class="tab"><span>Portfolios</span></span><span class="tab on"><span>Overall</span></span></div>
+    </div></div></div>
+
+  <div class="shot"><div class="cap"><b>E. Sell review (Example A)</b><span>Marker 15. The values, then "Lots used" as a sub-heading with each lot's shares and cost, the cost of lots used, the realized gain in green with its sign, and the cash effect as the total line.</span></div>
+    <div class="scroll"><div class="phone">
+      <div class="band"><span class="ico"><i class="ic" data-i="chevron-left"></i></span><span class="t22">Review sell</span></div>
+      <div class="body">
+        <div class="card pad">
+          <div class="kv"><span>Portfolio</span><span>Portfolio P</span></div>
+          <div class="kv"><span>Ticker</span><span>AAPL</span></div>
+          <div class="kv"><span>Date</span><span>2026-03-01 ET</span></div>
+          <div class="kv"><span>Quantity</span><span>12</span></div>
+          <div class="kv"><span>Total amount</span><span>$2,100.00</span></div>
+          <div class="kv"><span>Price per share</span><span>$175.00</span></div>
+          <div class="sub">Lots used</div>
+          <div class="kv"><span>2026-01-02 ET, 10 shares</span><span>cost $1,000.00</span></div>
+          <div class="kv"><span>2026-02-01 ET, 2 shares</span><span>cost $300.00</span></div>
+          <div class="kv"><span>Cost of lots used</span><span>$1,300.00</span></div>
+          <div class="kv"><span>Realized gain/loss</span><span class="g">+$800.00</span></div>
+          <div class="kv tot"><span>Cash effect</span><span>+$2,100.00</span></div>
+        </div>
+        <div class="t14 muted">Nothing is saved until you confirm.</div>
+        <div class="foot"><span class="btn filled l wide">Confirm and save</span><span class="btn out l wide">Back to edit</span></div>
+      </div>
+      <div class="bar"><span class="tab"><span>More</span></span><span class="tab"><span>Cash</span></span><span class="tab"><span>Portfolios</span></span><span class="tab on"><span>Overall</span></span></div>
+    </div></div></div>
+
+  <div class="shot"><div class="cap"><b>F. Blocked saves</b><span>Marker 16. A rule that stops the save is the blocked card at the top; a field's own rule (quantity, decimals, a zero buy total) shows on the field. Other messages from the wireframe, same card: the ticker not verified offline, not on a US exchange, shares short on a date.</span></div>
+    <div class="scroll"><div class="phone">
+      <div class="band"><span class="ico"><i class="ic" data-i="chevron-left"></i></span><span class="t22">Buy</span></div>
+      <div class="body">
+        <div class="blocked"><i class="ic s20" data-i="circle-alert"></i><div class="t14"><b>Not saved.</b> Cash would be negative on 2026-02-01 by $500.00.</div></div>
+        <div class="field"><span class="fl">Portfolio</span><span class="v">Portfolio P</span><i class="ic" data-i="chevron-down"></i></div>
+        <div class="field"><span class="fl">Ticker</span><span class="v">AAPL</span></div>
+        <div class="f"><div class="field"><span class="fl">Date</span><span class="v">2026-02-01</span><i class="ic" data-i="calendar"></i></div><div class="note">Enter date in US market time (New York)</div></div>
+        <div class="two">
+          <div class="f"><div class="field err"><span class="fl">Quantity</span><span class="v">0</span><i class="ic s20 alert" data-i="circle-alert"></i></div><div class="help">Must be more than 0.</div></div>
+          <div class="f"><div class="field"><span class="fl">Total, fees included</span><span class="pre">$</span><span class="v">8,000.00</span></div></div>
+        </div>
+        <div class="foot"><span class="btn filled l wide">Review</span></div>
+      </div>
+      <div class="bar"><span class="tab"><span>More</span></span><span class="tab"><span>Cash</span></span><span class="tab"><span>Portfolios</span></span><span class="tab on"><span>Overall</span></span></div>
+    </div></div></div>
+
+  <div class="shot"><div class="cap"><b>G. The Buy/Sell menu, and nothing to enter</b><span>Markers 17 and 18. The Buy/Sell button opens the catalog's menu inside the window over a scrim. Below it (separate states, shown together): before the opening balance, before a portfolio, and nothing held to sell.</span></div>
+    <div class="scroll"><div class="phone">
+      <div class="band"><span class="t22">Overall</span></div>
+      <div class="body">
+        <div class="summary"><div class="t14" style="color:#B0C4E8">Net worth</div><div style="font:500 32px/40px var(--sans)" class="num">$9,920.00</div></div>
+        <div class="card pad"><div class="t16m">Set the opening balance first</div><div><span class="btn out">Set opening balance</span></div></div>
+        <div class="card pad"><div class="t16m">Create a portfolio first</div><div><span class="btn out">Create a portfolio</span></div></div>
+        <div class="card pad"><div class="t16m">Nothing to sell yet</div></div>
+        <div class="endrow" style="margin-top:auto"><span class="btn out">Buy/Sell</span></div>
+      </div>
+      <div class="bar"><span class="tab"><span>More</span></span><span class="tab"><span>Cash</span></span><span class="tab"><span>Portfolios</span></span><span class="tab on"><span>Overall</span></span></div>
+      <div class="scrim"></div>
+      <div class="menu"><div>Buy</div><div>Sell</div></div>
+    </div></div></div>
+</div>
+
+<div class="notes">
+  <p><strong>Choices made in this drawing, for you to confirm.</strong> Everything else follows D-17, D-18 and D-31.</p>
+  <ol>
+    <li><strong>The derived price per share is a plain line</strong> under the quantity and total, in secondary text, not a field.</li>
+    <li><strong>Quantity and total sit side by side</strong>, as in the wireframe; the total's label is shortened to "Total, fees included" so it fits on the outline at half width (wording D9).</li>
+    <li><strong>Sell all is a small outline button</strong> (32, with its 48 touch area) on the price line.</li>
+    <li><strong>A stale price's age is condensed 12</strong> under the gain, in secondary text; "no price" replaces the gain in secondary text.</li>
+    <li><strong>The pick mismatch uses the blocked card</strong> with "Not saved yet", at the top of the screen.</li>
+    <li><strong>In the sell review, "Lots used" is a sub-heading</strong> in medium secondary text inside the card; the realized gain is green or red with its sign (spec 6), the only colored figure.</li>
+    <li><strong>The Buy/Sell menu opens above its button</strong>, inside the window over a scrim, as the catalog's ⋮ menu.</li>
+    <li><strong>Nothing to enter</strong> shows as a card with the reason in medium and an outline button where one exists.</li>
+  </ol>
+  <p><strong>Not drawn:</strong> these at 200% font with the keyboard up (Remaining Screens has the Sell screen so), the pick lists open, and the sell review's lots at large fonts. Icons are Lucide at stroke 2, drawn inline from its path data as Claude knows it.</p>
+</div>
+</div>
+
+<script>
+const phones = [...document.querySelectorAll(".phone")];
+let dark = false;
+try { dark = matchMedia("(prefers-color-scheme: dark)").matches; } catch (e) {}
+function render() {
+  for (const p of phones) p.classList.toggle("dark", dark);
+  for (const b of document.querySelectorAll("[data-mode]")) b.setAttribute("aria-pressed", String((b.dataset.mode === "dark") === dark));
+}
+for (const b of document.querySelectorAll("[data-mode]")) b.addEventListener("click", () => { dark = b.dataset.mode === "dark"; render(); });
+render();
+const PATHS = {
+  "chevron-left": '<path d="m15 18-6-6 6-6"/>',
+  "chevron-down": '<path d="m6 9 6 6 6-6"/>',
+  "check": '<path d="M20 6 9 17l-5-5"/>',
+  "calendar": '<path d="M8 2v4"/><path d="M16 2v4"/><rect width="18" height="18" x="3" y="4" rx="2"/><path d="M3 10h18"/>',
+  "circle-alert": '<circle cx="12" cy="12" r="10"/><path d="M12 8v4"/><path d="M12 16h.01"/>'
+};
+for (const i of document.querySelectorAll("i[data-i]")) {
+  const tmp = document.createElement("span");
+  tmp.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" aria-hidden="true">' + PATHS[i.dataset.i] + '</svg>';
+  const svg = tmp.firstChild;
+  svg.setAttribute("class", i.getAttribute("class"));
+  i.replaceWith(svg);
+}
+</script>
+<script>
+/* Bottom bar icons (D-37): Lucide, inline */
+(function () {
+  const TI = {
+    "Overall": '<path d="M21 12c.552 0 1.005-.449.95-.998a10 10 0 0 0-8.953-8.951c-.55-.055-.998.398-.998.95v8a1 1 0 0 0 1 1z"/><path d="M21.21 15.89A10 10 0 1 1 8 2.83"/>',
+    "Portfolios": '<path d="M16 20V4a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/><rect width="20" height="14" x="2" y="6" rx="2"/>',
+    "Cash": '<path d="M19 7V4a1 1 0 0 0-1-1H5a2 2 0 0 0 0 4h15a1 1 0 0 1 1 1v4h-3a2 2 0 0 0 0 4h3a1 1 0 0 0 1-1v-2a1 1 0 0 0-1-1"/><path d="M3 5v14a2 2 0 0 0 2 2h15a1 1 0 0 0 1-1v-4"/>',
+    "More": '<circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/><circle cx="5" cy="12" r="1"/>'
+  };
+  for (const tab of document.querySelectorAll(".bar .tab")) {
+    const s = tab.querySelector("span");
+    if (!s) continue;
+    const name = s.textContent.trim();
+    if (!TI[name]) continue;
+    tab.classList.add("it");
+    s.className = "both";
+    s.innerHTML = '<svg viewBox="0 0 24 24" aria-hidden="true">' + TI[name] + '</svg><span class="t">' + name + '</span>';
+  }
+})();
+</script>
+</body></html>

@@ -1,0 +1,240 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<title>Net Worth Screen</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Asap:wght@400;500;700&family=Asap+Condensed:wght@400;500;700&display=swap">
+<style>
+/* Layout: a theme switch, then three phones that wrap: the top of Net Worth (Total), the same screen scrolled, and
+   net worth of $0.00. Tokens of the Corporate Design System (D-07 to D-38). 1 CSS px = 1 dp. */
+:root { --page-bg: #F4F6FA; --page-ink: #0A1A36; --page-muted: #4B5D75; --page-line: #CED8E6; --stamp: #8A6D12; --sans: "Asap", sans-serif; --cond: "Asap Condensed", sans-serif; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --page-bg: #070F1F; --page-ink: #E6ECF5; --page-muted: #9DB0C9; --page-line: #1E2F4A; --stamp: #E0BC4A; color-scheme: dark } }
+:root[data-theme="dark"] { --page-bg: #070F1F; --page-ink: #E6ECF5; --page-muted: #9DB0C9; --page-line: #1E2F4A; --stamp: #E0BC4A; color-scheme: dark }
+body { margin: 0; background: var(--page-bg); color: var(--page-ink); font-family: var(--sans); }
+.wrap { max-width: 1760px; margin: 0 auto; padding-block: 28px 56px;
+  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px));
+  display: flex; flex-direction: column; gap: 24px; }
+.stamp { font: 500 14px/20px var(--cond); color: var(--stamp); }
+h1 { font-size: 28px; font-weight: 500; margin: 0; }
+p { margin: 0; line-height: 1.5; max-width: 84ch; color: var(--page-muted); }
+p strong { color: var(--page-ink); font-weight: 500; }
+header { display: flex; flex-direction: column; gap: 10px; }
+.seg { display: inline-flex; border: 1px solid var(--page-line); border-radius: 8px; overflow: hidden; }
+.seg button { font: 500 14px var(--sans); color: var(--page-muted); background: transparent; border: 0; padding: 0 18px; height: 36px; cursor: pointer; }
+.seg button[aria-pressed="true"] { background: var(--page-line); color: var(--page-ink); }
+.seg button:focus-visible { outline: 2px solid var(--page-ink); outline-offset: -3px; }
+.grid { display: flex; flex-wrap: wrap; gap: 28px; align-items: flex-start; }
+.shot { display: flex; flex-direction: column; gap: 10px; width: 411px; max-width: 100%; }
+.cap { display: flex; flex-direction: column; gap: 4px; }
+.cap b { font-size: 17px; font-weight: 500; }
+.cap span { font-size: 14px; line-height: 1.45; color: var(--page-muted); }
+.scroll { overflow-x: auto; max-width: 100%; }
+
+/* ---------- Tokens ---------- */
+.phone {
+  --page: #EBF0F8; --card: #DFE7F6; --band: #0A1A36; --on-band: #FFFFFF; --summary: #153D5A;
+  --ink: #0A1A36; --muted: #295C85; --divider: #B0C4E8; --icon: #376A9E;
+  --slice-cash: #00696F; --slice-1: #3949AB; --slice-2: #A04F00; --slice-label: #FFFFFF;
+  --bar: #0A1A36; --bar-label: #8AABC5; --bar-sel: #E0BC4A; --pill: #1C4F6C; --bar-ind: transparent;
+  --shadow: 0 1px 3px rgba(10, 26, 54, .26), 0 4px 12px rgba(10, 26, 54, .16);
+  width: 411px; height: 860px; box-sizing: border-box; background: var(--page); color: var(--ink); border: 1px solid var(--page-line); border-radius: 14px;
+  overflow: hidden; display: flex; flex-direction: column; font-family: var(--sans); position: relative; }
+.phone.tall { height: auto; }
+.phone.dark {
+  --page: #0A1A36; --card: #0E2B47; --band: #0A1A36; --on-band: #E6ECF5; --summary: #1C4F6C;
+  --ink: #E6ECF5; --muted: #B0C4E8; --divider: #1C4F6C; --icon: #E0BC4A;
+  --slice-cash: #4DD0E1; --slice-1: #9FA8DA; --slice-2: #FFB74D; --slice-label: #000000;
+  --bar: #050D1C; --pill: transparent; --bar-ind: #E0BC4A;
+  --shadow: 0 1px 3px rgba(0, 0, 0, .62), 0 5px 14px rgba(0, 0, 0, .48); }
+.t22 { font: 500 22px/28px var(--sans); }
+.t16m { font: 500 16px/24px var(--sans); }
+.t16 { font: 400 16px/24px var(--sans); }
+.t14 { font: 400 14px/20px var(--sans); }
+.muted { color: var(--muted); }
+.num { font-variant-numeric: tabular-nums; }
+
+.band { background: var(--band); color: var(--on-band); padding: 10px 12px; display: flex; align-items: center; gap: 4px; flex: none; min-height: 48px; box-sizing: border-box; }
+.band .ico { min-width: 40px; height: 40px; display: inline-flex; align-items: center; justify-content: center; }
+.body { padding: 12px; display: flex; flex-direction: column; gap: 8px; overflow: hidden; flex: 1; min-height: 0; }
+.card { background: var(--card); border-radius: 8px; box-shadow: var(--shadow); }
+.pad { padding: 10px; display: flex; flex-direction: column; gap: 6px; }
+
+.summary { background: var(--summary); color: #FFFFFF; border-radius: 8px; box-shadow: var(--shadow); padding: 10px; display: flex; flex-direction: column; gap: 2px; }
+.summary .lab { font: 400 14px/20px var(--sans); color: #B0C4E8; }
+.summary .big { font: 500 32px/40px var(--sans); font-variant-numeric: tabular-nums; }
+.summary .line { display: flex; justify-content: space-between; font: 400 16px/24px var(--sans); font-variant-numeric: tabular-nums; }
+.summary .day { display: flex; justify-content: space-between; padding-left: 16px; font: 400 12px/16px var(--cond); font-variant-numeric: tabular-nums; }
+.summary .gs { color: #8FE08A; }
+.summary .age { font: 400 12px/16px var(--cond); color: #B0C4E8; padding-top: 4px; }
+
+.kv { display: flex; justify-content: space-between; gap: 12px; padding: 4px 0; font: 400 16px/24px var(--sans); }
+.kv span:first-child { color: var(--muted); }
+.kv span:last-child { font-variant-numeric: tabular-nums; }
+.kv.tot { border-top: 1px solid var(--divider); margin-top: 4px; padding-top: 8px; font-weight: 500; }
+.kv.tot span:first-child { color: var(--ink); }
+
+.donut { display: flex; justify-content: center; padding: 4px 0; }
+.ar { display: flex; align-items: center; gap: 10px; min-height: 48px; }
+.ar .sw { width: 16px; height: 16px; border-radius: 50%; flex: none; }
+.ar .grow { flex: 1; min-width: 0; }
+
+.bar { display: flex; background: var(--bar); padding: 0 4px; flex: none; }
+.tab { flex: 1; min-height: 56px; display: flex; flex-direction: column; align-items: center; justify-content: center; font: 500 14px/20px var(--cond); color: var(--bar-label); padding: 6px 2px; box-sizing: border-box; }
+.tab span { padding: 4px 10px; border-radius: 8px; }
+.tab::after { content: ""; width: 24px; height: 3px; margin-top: 3px; border-radius: 2px; }
+.tab.on { color: var(--bar-sel); font-weight: 700; }
+.tab.on span { background: var(--pill); }
+.tab.on::after { background: var(--bar-ind); }
+
+.ic { width: 24px; height: 24px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; display: block; flex: none; }
+.notes { display: flex; flex-direction: column; gap: 8px; border-top: 1px solid var(--page-line); padding-top: 16px; }
+.notes p { font-size: 14px; }
+.notes ol { margin: 0; padding-left: 22px; color: var(--page-muted); font-size: 14px; line-height: 1.5; display: flex; flex-direction: column; gap: 4px; max-width: 90ch; }
+.notes li strong { color: var(--page-ink); font-weight: 500; }
+/* Bottom bar with icon and text (D-37) */
+.tab.it { min-height: 72px; }
+.tab.it .both { display: flex; flex-direction: column; align-items: center; gap: 2px; padding: 6px 4px 4px; border-radius: 8px; min-width: 84px; box-sizing: border-box; }
+.tab.it .both svg { width: 24px; height: 24px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; display: block; }
+.tab.it span.t, .tab.it.on span.t { padding: 0; background: none; }
+</style>
+
+<div class="wrap">
+<header>
+  <span class="stamp">Stage: Design (CR7) · drawings for spec/wireframes/design/ · 2026-11-28</span>
+  <h1>Net Worth (Total)</h1>
+  <p>Wireframe 02 (approved, with CR5) drawn in the Corporate Design System: the shared net worth card, the composition, and the five breakdowns stacked, each with Overall's donut and rows (D-38). <strong>Example A at an AAPL price of $160, previous close $158; every text is a placeholder</strong> (D9). Opened from Overall, so Overall is the selected tab. Drawn in HTML at 1 px per dp, not rendered by Android.</p>
+  <div><span class="seg" role="group" aria-label="Phone theme"><button type="button" data-mode="light" aria-pressed="true">Light</button><button type="button" data-mode="dark" aria-pressed="false">Dark</button></span></div>
+</header>
+
+<div class="grid">
+
+  <div class="shot"><div class="cap"><b>A. Top of the screen</b><span>Markers 1 to 3. The summary card without a chevron (it opens nothing here); the composition as label-and-value rows with the total line; then the breakdowns, each a card headed in medium 16.</span></div>
+    <div class="scroll"><div class="phone tall">
+      <div class="band"><span class="ico"><i class="ic" data-i="chevron-left"></i></span><span class="t22">Net Worth (Total)</span></div>
+      <div class="body">
+        <div class="summary">
+          <span class="lab">Net worth</span>
+          <span class="big">$10,880.00</span>
+          <div class="line"><span>Investments</span><span>$1,280.00</span></div>
+          <div class="day"><span>1-day gain/loss</span><span class="gs">+$16.00 (+1.27%)</span></div>
+          <div class="age">Prices updated 2 min ago</div>
+        </div>
+        <div class="card pad">
+          <span class="t16m">Composition</span>
+          <div class="kv"><span>Cash</span><span>$9,600.00</span></div>
+          <div class="kv"><span>Portfolio P</span><span>$1,280.00</span></div>
+          <div class="kv tot"><span>Net worth</span><span>$10,880.00</span></div>
+        </div>
+        <div class="card pad" data-bd="0"><span class="t16m">By asset type</span></div>
+        <div class="card pad" data-bd="1"><span class="t16m">By portfolio</span></div>
+      </div>
+      <div class="bar"><span class="tab"><span>More</span></span><span class="tab"><span>Cash</span></span><span class="tab"><span>Portfolios</span></span><span class="tab on"><span>Overall</span></span></div>
+    </div></div></div>
+
+  <div class="shot"><div class="cap"><b>B. The same screen, scrolled down</b><span>Markers 4 and 5. By holding (one slice per ticker across portfolios, C12), by sector and by geography (an "Unclassified" slice where a holding has none, C14). Cash is its own slice in every one.</span></div>
+    <div class="scroll"><div class="phone tall">
+      <div class="body">
+        <div class="card pad" data-bd="2"><span class="t16m">By holding</span></div>
+        <div class="card pad" data-bd="3"><span class="t16m">By sector</span></div>
+        <div class="card pad" data-bd="4"><span class="t16m">By geography</span></div>
+      </div>
+      <div class="bar"><span class="tab"><span>More</span></span><span class="tab"><span>Cash</span></span><span class="tab"><span>Portfolios</span></span><span class="tab on"><span>Overall</span></span></div>
+    </div></div></div>
+
+  <div class="shot"><div class="cap"><b>C. Net worth of $0.00</b><span>Marker 6. The card with $0.00 and Investments $0.00, no 1-day line; one plain line in a card in place of the composition and the breakdowns.</span></div>
+    <div class="scroll"><div class="phone">
+      <div class="band"><span class="ico"><i class="ic" data-i="chevron-left"></i></span><span class="t22">Net Worth (Total)</span></div>
+      <div class="body">
+        <div class="summary">
+          <span class="lab">Net worth</span>
+          <span class="big">$0.00</span>
+          <div class="line"><span>Investments</span><span>$0.00</span></div>
+        </div>
+        <div class="card pad"><span class="t16 muted">No net worth to show yet.</span></div>
+      </div>
+      <div class="bar"><span class="tab"><span>More</span></span><span class="tab"><span>Cash</span></span><span class="tab"><span>Portfolios</span></span><span class="tab on"><span>Overall</span></span></div>
+    </div></div></div>
+</div>
+
+<div class="notes">
+  <p><strong>Choices made in this drawing, for you to confirm.</strong> Everything else follows D-37 and D-38 (the summary card, the donut and its rows).</p>
+  <ol>
+    <li><strong>The summary card has no chevron here</strong>: on Overall it opens this screen; here it opens nothing.</li>
+    <li><strong>Composition is the review card's label-and-value rows</strong> (D-31) with "Net worth" as the total line, under a medium 16 heading inside the card.</li>
+    <li><strong>Each breakdown is its own card</strong>, headed in medium 16 inside the card ("By asset type"), then Overall's donut and rows. On Overall the dropdown picks one; here all five are stacked, so the heading replaces the dropdown.</li>
+    <li><strong>Rows on this screen are read-only</strong>: 48 tall for the large font, with no chevron, since nothing opens from them.</li>
+    <li><strong>Net worth of $0.00 is one plain line in a card</strong> in secondary 16, in place of everything under the summary card.</li>
+  </ol>
+  <p><strong>Not drawn:</strong> the updating and failed-refresh lines (as on Overall, frame C), 200% font. Icons are Lucide at stroke 2, drawn inline from its path data as Claude knows it.</p>
+</div>
+</div>
+
+<script>
+const phones = [...document.querySelectorAll(".phone")];
+let dark = false;
+try { dark = matchMedia("(prefers-color-scheme: dark)").matches; } catch (e) {}
+function render() {
+  for (const p of phones) p.classList.toggle("dark", dark);
+  for (const b of document.querySelectorAll("[data-mode]")) b.setAttribute("aria-pressed", String((b.dataset.mode === "dark") === dark));
+}
+for (const b of document.querySelectorAll("[data-mode]")) b.addEventListener("click", () => { dark = b.dataset.mode === "dark"; render(); });
+render();
+
+/* Breakdowns: [name, amount, percent, slice] (Example A at $160) */
+const BD = [
+  [["Cash", "$9,600.00", 88.2, "cash"], ["Stocks", "$1,280.00", 11.8, "1"], ["ETFs", "$0.00", 0.0, "2"]],
+  [["Cash", "$9,600.00", 88.2, "cash"], ["Portfolio P", "$1,280.00", 11.8, "1"]],
+  [["Cash", "$9,600.00", 88.2, "cash"], ["AAPL", "$1,280.00", 11.8, "1"]],
+  [["Cash", "$9,600.00", 88.2, "cash"], ["Technology", "$1,280.00", 11.8, "1"]],
+  [["Cash", "$9,600.00", 88.2, "cash"], ["United States", "$1,280.00", 11.8, "1"]]
+];
+function donut(rows) {
+  const R = 60, C = 2 * Math.PI * R, live = rows.filter(r => r[2] > 0), g = live.length > 1 ? 3 : 0;
+  let off = 0, arcs = "", labels = "";
+  for (const r of live) {
+    const L = C * r[2] / 100;
+    arcs += '<circle cx="84" cy="84" r="60" style="stroke:var(--slice-' + r[3] + ')" stroke-dasharray="' + (L - g).toFixed(1) + " " + (C - L + g).toFixed(1) + '" stroke-dashoffset="' + (-(off + g / 2)).toFixed(1) + '"/>';
+    if (r[2] >= 5) {
+      const a = 2 * Math.PI * (off + L / 2) / C;
+      labels += '<text x="' + (84 + R * Math.sin(a)).toFixed(1) + '" y="' + (84 - R * Math.cos(a)).toFixed(1) + '" text-anchor="middle" dominant-baseline="central" style="fill:var(--slice-label);font:500 12px var(--cond)">' + r[2].toFixed(1) + "%</text>";
+    }
+    off += L;
+  }
+  return '<div class="donut"><svg width="168" height="168" viewBox="0 0 168 168" aria-hidden="true"><g transform="rotate(-90 84 84)" fill="none" stroke-width="30">' + arcs + "</g>" + labels + "</svg></div>";
+}
+for (const card of document.querySelectorAll("[data-bd]")) {
+  const rows = BD[+card.dataset.bd];
+  let html = donut(rows) + "<div>";
+  for (const r of rows) html += '<div class="ar"><span class="sw" style="background:var(--slice-' + r[3] + ')"></span><span class="t16 grow">' + r[0] + '</span><span class="t16 num">' + r[1] + (r[2] < 5 ? ' <span class="t14 muted">' + r[2].toFixed(1) + "%</span>" : "") + "</span></div>";
+  card.insertAdjacentHTML("beforeend", html + "</div>");
+}
+
+const PATHS = { "chevron-left": '<path d="m15 18-6-6 6-6"/>' };
+for (const i of document.querySelectorAll("i[data-i]")) {
+  const tmp = document.createElement("span");
+  tmp.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" aria-hidden="true">' + PATHS[i.dataset.i] + '</svg>';
+  const svg = tmp.firstChild;
+  svg.setAttribute("class", i.getAttribute("class"));
+  i.replaceWith(svg);
+}
+</script>
+<script>
+/* Bottom bar icons (D-37): Lucide, inline */
+(function () {
+  const TI = {
+    "Overall": '<path d="M21 12c.552 0 1.005-.449.95-.998a10 10 0 0 0-8.953-8.951c-.55-.055-.998.398-.998.95v8a1 1 0 0 0 1 1z"/><path d="M21.21 15.89A10 10 0 1 1 8 2.83"/>',
+    "Portfolios": '<path d="M16 20V4a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/><rect width="20" height="14" x="2" y="6" rx="2"/>',
+    "Cash": '<path d="M19 7V4a1 1 0 0 0-1-1H5a2 2 0 0 0 0 4h15a1 1 0 0 1 1 1v4h-3a2 2 0 0 0 0 4h3a1 1 0 0 0 1-1v-2a1 1 0 0 0-1-1"/><path d="M3 5v14a2 2 0 0 0 2 2h15a1 1 0 0 0 1-1v-4"/>',
+    "More": '<circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/><circle cx="5" cy="12" r="1"/>'
+  };
+  for (const tab of document.querySelectorAll(".bar .tab")) {
+    const s = tab.querySelector("span");
+    if (!s) continue;
+    const name = s.textContent.trim();
+    if (!TI[name]) continue;
+    tab.classList.add("it");
+    s.className = "both";
+    s.innerHTML = '<svg viewBox="0 0 24 24" aria-hidden="true">' + TI[name] + '</svg><span class="t">' + name + '</span>';
+  }
+})();
+</script>
+
+</body></html>

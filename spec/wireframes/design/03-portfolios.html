@@ -1,0 +1,264 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<title>Portfolios Screens</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Asap:wght@400;500;700&family=Asap+Condensed:wght@400;500;700&display=swap">
+<style>
+/* Layout: a theme switch, then four phones that wrap: the Portfolios tab, one portfolio shown whole, its ⋮ menu open,
+   and no portfolios yet. Tokens of the Corporate Design System (D-07 to D-39). 1 CSS px = 1 dp. */
+:root { --page-bg: #F4F6FA; --page-ink: #0A1A36; --page-muted: #4B5D75; --page-line: #CED8E6; --stamp: #8A6D12; --sans: "Asap", sans-serif; --cond: "Asap Condensed", sans-serif; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --page-bg: #070F1F; --page-ink: #E6ECF5; --page-muted: #9DB0C9; --page-line: #1E2F4A; --stamp: #E0BC4A; color-scheme: dark } }
+:root[data-theme="dark"] { --page-bg: #070F1F; --page-ink: #E6ECF5; --page-muted: #9DB0C9; --page-line: #1E2F4A; --stamp: #E0BC4A; color-scheme: dark }
+body { margin: 0; background: var(--page-bg); color: var(--page-ink); font-family: var(--sans); }
+.wrap { max-width: 1760px; margin: 0 auto; padding-block: 28px 56px;
+  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px));
+  display: flex; flex-direction: column; gap: 24px; }
+.stamp { font: 500 14px/20px var(--cond); color: var(--stamp); }
+h1 { font-size: 28px; font-weight: 500; margin: 0; }
+p { margin: 0; line-height: 1.5; max-width: 84ch; color: var(--page-muted); }
+p strong { color: var(--page-ink); font-weight: 500; }
+header { display: flex; flex-direction: column; gap: 10px; }
+.seg { display: inline-flex; border: 1px solid var(--page-line); border-radius: 8px; overflow: hidden; }
+.seg button { font: 500 14px var(--sans); color: var(--page-muted); background: transparent; border: 0; padding: 0 18px; height: 36px; cursor: pointer; }
+.seg button[aria-pressed="true"] { background: var(--page-line); color: var(--page-ink); }
+.seg button:focus-visible { outline: 2px solid var(--page-ink); outline-offset: -3px; }
+.grid { display: flex; flex-wrap: wrap; gap: 28px; align-items: flex-start; }
+.shot { display: flex; flex-direction: column; gap: 10px; width: 411px; max-width: 100%; }
+.cap { display: flex; flex-direction: column; gap: 4px; }
+.cap b { font-size: 17px; font-weight: 500; }
+.cap span { font-size: 14px; line-height: 1.45; color: var(--page-muted); }
+.scroll { overflow-x: auto; max-width: 100%; }
+
+/* ---------- Tokens ---------- */
+.phone {
+  --page: #EBF0F8; --card: #DFE7F6; --float: #DFE7F6; --band: #0A1A36; --on-band: #FFFFFF; --summary: #153D5A;
+  --ink: #0A1A36; --muted: #295C85; --divider: #B0C4E8;
+  --gold: #C9A227; --on-gold: #0A1A36; --btn-line: #376A9E; --btn-text: #0E2B47;
+  --gain: #1B6B1F; --loss: #B3261E; --scrim: rgba(10, 26, 54, .50);
+  --bar: #0A1A36; --bar-label: #8AABC5; --bar-sel: #E0BC4A; --pill: #1C4F6C; --bar-ind: transparent;
+  --shadow: 0 1px 3px rgba(10, 26, 54, .26), 0 4px 12px rgba(10, 26, 54, .16);
+  width: 411px; height: 860px; box-sizing: border-box; background: var(--page); color: var(--ink); border: 1px solid var(--page-line); border-radius: 14px;
+  overflow: hidden; display: flex; flex-direction: column; font-family: var(--sans); position: relative; }
+.phone.tall { height: auto; }
+.phone.dark {
+  --page: #0A1A36; --card: #0E2B47; --float: #153D5A; --band: #0A1A36; --on-band: #E6ECF5; --summary: #1C4F6C;
+  --ink: #E6ECF5; --muted: #B0C4E8; --divider: #1C4F6C;
+  --gold: #E0BC4A; --btn-line: #E0BC4A; --btn-text: #E0BC4A;
+  --gain: #7FD47A; --loss: #FFB4AB; --scrim: rgba(0, 0, 0, .60);
+  --bar: #050D1C; --pill: transparent; --bar-ind: #E0BC4A;
+  --shadow: 0 1px 3px rgba(0, 0, 0, .62), 0 5px 14px rgba(0, 0, 0, .48); }
+.t22 { font: 500 22px/28px var(--sans); }
+.t16m { font: 500 16px/24px var(--sans); }
+.t16 { font: 400 16px/24px var(--sans); }
+.t14 { font: 400 14px/20px var(--sans); }
+.t12c { font: 400 12px/16px var(--cond); }
+.muted { color: var(--muted); }
+.num { font-variant-numeric: tabular-nums; }
+.g { color: var(--gain); } .l { color: var(--loss); }
+
+.band { background: var(--band); color: var(--on-band); padding: 10px 12px; display: flex; align-items: center; gap: 4px; flex: none; min-height: 48px; box-sizing: border-box; }
+.band .ico { min-width: 40px; height: 40px; display: inline-flex; align-items: center; justify-content: center; }
+.band .grow { flex: 1; }
+.body { padding: 12px; display: flex; flex-direction: column; gap: 8px; overflow: hidden; flex: 1; min-height: 0; }
+.card { background: var(--card); border-radius: 8px; box-shadow: var(--shadow); }
+.pad { padding: 10px; display: flex; flex-direction: column; gap: 6px; }
+
+.summary { background: var(--summary); color: #FFFFFF; border-radius: 8px; box-shadow: var(--shadow); padding: 10px; display: flex; flex-direction: column; gap: 2px; }
+.summary .lab { font: 400 14px/20px var(--sans); color: #B0C4E8; }
+.summary .big { font: 500 32px/40px var(--sans); font-variant-numeric: tabular-nums; }
+.summary .line { display: flex; justify-content: space-between; font: 400 16px/24px var(--sans); font-variant-numeric: tabular-nums; }
+.summary .day { display: flex; justify-content: space-between; padding-left: 16px; font: 400 12px/16px var(--cond); font-variant-numeric: tabular-nums; }
+.summary .gs { color: #8FE08A; }
+.summary .age { font: 400 12px/16px var(--cond); color: #B0C4E8; padding-top: 4px; }
+
+.r { display: flex; align-items: center; gap: 10px; min-height: 64px; padding: 8px 10px; box-sizing: border-box; }
+.r .grow { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+.r .end { display: flex; flex-direction: column; align-items: flex-end; text-align: right; }
+.r .chev { color: var(--muted); }
+.r.link { min-height: 48px; }
+.div { height: 1px; background: var(--divider); margin: 0 10px; }
+.colhead { display: flex; justify-content: space-between; align-items: baseline; padding: 10px 10px 0; }
+.colhead .h { font: 500 14px/20px var(--cond); color: var(--muted); padding-right: 30px; }
+
+.btn { height: 40px; padding: 0 20px; border-radius: 8px; display: inline-flex; align-items: center; justify-content: center; gap: 6px; font: 500 14px/20px var(--sans); box-sizing: border-box; border: 1px solid transparent; white-space: nowrap; }
+.btn.out { border-color: var(--btn-line); color: var(--btn-text); }
+.btn.out .ic { color: var(--btn-text); }
+.row2 { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+
+.scrim { position: absolute; inset: 0; background: var(--scrim); }
+.menu { position: absolute; right: 12px; top: 56px; width: 196px; background: var(--float); border-radius: 8px; box-shadow: var(--shadow); padding: 4px 0; }
+.menu div { min-height: 48px; display: flex; align-items: center; padding: 0 16px; font: 400 16px/24px var(--sans); }
+
+.bar { display: flex; background: var(--bar); padding: 0 4px; flex: none; }
+.tab { flex: 1; min-height: 56px; display: flex; flex-direction: column; align-items: center; justify-content: center; font: 500 14px/20px var(--cond); color: var(--bar-label); padding: 6px 2px; box-sizing: border-box; }
+.tab span { padding: 4px 10px; border-radius: 8px; }
+.tab::after { content: ""; width: 24px; height: 3px; margin-top: 3px; border-radius: 2px; }
+.tab.on { color: var(--bar-sel); font-weight: 700; }
+.tab.on span { background: var(--pill); }
+.tab.on::after { background: var(--bar-ind); }
+
+.ic { width: 24px; height: 24px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; display: block; flex: none; }
+.ic.s20 { width: 20px; height: 20px; }
+.notes { display: flex; flex-direction: column; gap: 8px; border-top: 1px solid var(--page-line); padding-top: 16px; }
+.notes p { font-size: 14px; }
+.notes ol { margin: 0; padding-left: 22px; color: var(--page-muted); font-size: 14px; line-height: 1.5; display: flex; flex-direction: column; gap: 4px; max-width: 90ch; }
+.notes li strong { color: var(--page-ink); font-weight: 500; }
+/* Bottom bar with icon and text (D-37) */
+.tab.it { min-height: 72px; }
+.tab.it .both { display: flex; flex-direction: column; align-items: center; gap: 2px; padding: 6px 4px 4px; border-radius: 8px; min-width: 84px; box-sizing: border-box; }
+.tab.it .both svg { width: 24px; height: 24px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; display: block; }
+.tab.it span.t, .tab.it.on span.t { padding: 0; background: none; }
+</style>
+
+<div class="wrap">
+<header>
+  <span class="stamp">Stage: Design (CR7) · drawings for spec/wireframes/design/ · 2026-11-28</span>
+  <h1>Portfolios and holdings</h1>
+  <p>Wireframe 03 (approved, with CR5 and CR6) drawn in the Corporate Design System: the Portfolios tab, one portfolio's screen with its summary, holdings and links, its ⋮ menu, and the tab with no portfolio. Dialogs are on the Portfolio Dialogs page (D-34). <strong>Example A at an AAPL price of $160, previous close $158; "Retirement" and XYZ are illustrative; every text is a placeholder</strong> (D9). Drawn in HTML at 1 px per dp, not rendered by Android.</p>
+  <div><span class="seg" role="group" aria-label="Phone theme"><button type="button" data-mode="light" aria-pressed="true">Light</button><button type="button" data-mode="dark" aria-pressed="false">Dark</button></span></div>
+</header>
+
+<div class="grid">
+
+  <div class="shot"><div class="cap"><b>A. Portfolios tab</b><span>Markers 1 and 2. One card of tappable rows in creation order: name with its holdings count under it, value, gain with its percentage, the 1-day line, a chevron. New portfolio and Buy/Sell outline; the failed-refresh line as on Overall.</span></div>
+    <div class="scroll"><div class="phone">
+      <div class="band"><span class="t22" style="padding-left:8px">Portfolios</span></div>
+      <div class="body">
+        <div class="card">
+          <div class="r"><span class="grow"><span class="t16">Portfolio P</span><span class="t14 muted">1 holding</span></span>
+            <div class="end"><span class="t16 num">$1,280.00</span><span class="t14 g num">+$80.00 (+6.67%)</span><span class="t12c num"><span class="muted">1-day </span><span class="g">+$16.00 (+1.27%)</span></span></div>
+            <span class="chev"><i class="ic s20" data-i="chevron-right"></i></span></div>
+          <div class="div"></div>
+          <div class="r"><span class="grow"><span class="t16">Retirement</span><span class="t14 muted">no holdings</span></span>
+            <div class="end"><span class="t16 num">$0.00</span></div>
+            <span class="chev"><i class="ic s20" data-i="chevron-right"></i></span></div>
+        </div>
+        <div class="t14 muted">Price refresh failed. Showing last prices.</div>
+        <div class="row2" style="margin-top:auto"><span class="btn out"><i class="ic s20" data-i="plus"></i>New portfolio</span><span class="btn out">Buy/Sell</span></div>
+      </div>
+      <div class="bar"><span class="tab"><span>More</span></span><span class="tab"><span>Cash</span></span><span class="tab on"><span>Portfolios</span></span><span class="tab"><span>Overall</span></span></div>
+    </div></div></div>
+
+  <div class="shot"><div class="cap"><b>B. One portfolio, shown whole</b><span>Markers 4 to 7. The summary card (value 32, cost and unrealized gain/loss in 16, the 1-day line, the price age); the holdings card with its column head; a "no price" row and a stale one (illustrative); the three links as rows with a chevron.</span></div>
+    <div class="scroll"><div class="phone tall">
+      <div class="band"><span class="ico"><i class="ic" data-i="chevron-left"></i></span><span class="t22 grow">Portfolio P</span><span class="ico"><i class="ic" data-i="ellipsis-vertical"></i></span></div>
+      <div class="body">
+        <div class="summary">
+          <span class="lab">Portfolio value</span>
+          <span class="big">$1,280.00</span>
+          <div class="line"><span>Cost</span><span>$1,200.00</span></div>
+          <div class="line"><span>Unrealized gain/loss</span><span class="gs">+$80.00 (+6.67%)</span></div>
+          <div class="day"><span>1-day gain/loss</span><span class="gs">+$16.00 (+1.27%)</span></div>
+          <div class="age">Prices updated 2 min ago</div>
+        </div>
+        <div class="card">
+          <div class="colhead"><span class="t16m">Holdings</span><span class="h">Unrealized gain/loss</span></div>
+          <div class="r"><span class="grow"><span class="t16m">AAPL</span><span class="t14 muted">8 shares</span></span>
+            <div class="end"><span class="t16 num">$1,280.00</span><span class="t14 g num">+$80.00 (+6.67%)</span><span class="t12c num"><span class="muted">1-day </span><span class="g">+$16.00 (+1.27%)</span></span></div>
+            <span class="chev"><i class="ic s20" data-i="chevron-right"></i></span></div>
+          <div class="div"></div>
+          <div class="r"><span class="grow"><span class="t16m">XYZ</span><span class="t14 muted">5 shares</span></span>
+            <div class="end"><span class="t16 num">$500.00</span><span class="t14 muted">no price, at cost</span></div>
+            <span class="chev"><i class="ic s20" data-i="chevron-right"></i></span></div>
+          <div class="div"></div>
+          <div class="r"><span class="grow"><span class="t16m">MSFT</span><span class="t14 muted">2 shares</span></span>
+            <div class="end"><span class="t16 num">$800.00</span><span class="t14 l num">−$20.00 (−2.44%)</span><span class="t12c muted">stale, 2 days</span></div>
+            <span class="chev"><i class="ic s20" data-i="chevron-right"></i></span></div>
+        </div>
+        <div class="card">
+          <div class="r link"><span class="t16" style="flex:1">Allocation</span><span class="chev"><i class="ic s20" data-i="chevron-right"></i></span></div><div class="div"></div>
+          <div class="r link"><span class="t16" style="flex:1">Transaction history</span><span class="chev"><i class="ic s20" data-i="chevron-right"></i></span></div><div class="div"></div>
+          <div class="r link"><span class="t16" style="flex:1">Hidden holdings</span><span class="chev"><i class="ic s20" data-i="chevron-right"></i></span></div>
+        </div>
+        <div style="display:flex;justify-content:flex-end;padding-top:4px"><span class="btn out">Buy/Sell</span></div>
+      </div>
+      <div class="bar"><span class="tab"><span>More</span></span><span class="tab"><span>Cash</span></span><span class="tab on"><span>Portfolios</span></span><span class="tab"><span>Overall</span></span></div>
+    </div></div></div>
+
+  <div class="shot"><div class="cap"><b>C. The ⋮ menu open</b><span>Marker 3. The catalog's menu, inside the window over a scrim, under the ⋮ at the top right: Rename and Delete, 48 tall each. Their dialogs are D-34's.</span></div>
+    <div class="scroll"><div class="phone">
+      <div class="band"><span class="ico"><i class="ic" data-i="chevron-left"></i></span><span class="t22 grow">Portfolio P</span><span class="ico"><i class="ic" data-i="ellipsis-vertical"></i></span></div>
+      <div class="body">
+        <div class="summary">
+          <span class="lab">Portfolio value</span>
+          <span class="big">$1,280.00</span>
+          <div class="line"><span>Cost</span><span>$1,200.00</span></div>
+          <div class="line"><span>Unrealized gain/loss</span><span class="gs">+$80.00 (+6.67%)</span></div>
+        </div>
+      </div>
+      <div class="bar"><span class="tab"><span>More</span></span><span class="tab"><span>Cash</span></span><span class="tab on"><span>Portfolios</span></span><span class="tab"><span>Overall</span></span></div>
+      <div class="scrim"></div>
+      <div class="menu"><div>Rename</div><div>Delete</div></div>
+    </div></div></div>
+
+  <div class="shot"><div class="cap"><b>D. No portfolios yet</b><span>Marker 2. D-32's nothing-to-enter card, with Create a portfolio as its outline button; it opens D-34's create dialog.</span></div>
+    <div class="scroll"><div class="phone">
+      <div class="band"><span class="t22" style="padding-left:8px">Portfolios</span></div>
+      <div class="body">
+        <div class="card pad"><div class="t16m">No portfolios yet</div><div><span class="btn out">Create a portfolio</span></div></div>
+        <div style="display:flex;justify-content:flex-end;margin-top:auto"><span class="btn out">Buy/Sell</span></div>
+      </div>
+      <div class="bar"><span class="tab"><span>More</span></span><span class="tab"><span>Cash</span></span><span class="tab on"><span>Portfolios</span></span><span class="tab"><span>Overall</span></span></div>
+    </div></div></div>
+</div>
+
+<div class="notes">
+  <p><strong>Choices made in this drawing, for you to confirm.</strong> Everything else follows D-30 to D-39.</p>
+  <ol>
+    <li><strong>A portfolio row</strong> is the catalog's tappable row with two lines on the left: the name in 16 and the holdings count in secondary 14; value, gain with its percentage and the 1-day line on the right; a chevron.</li>
+    <li><strong>New portfolio is an outline button with Lucide's plus</strong>, at the bottom left, opposite Buy/Sell; both outline, since neither is the screen's one main action.</li>
+    <li><strong>A portfolio's summary is the summary card</strong>, as net worth's: "Portfolio value" with the 32 figure, then Cost and Unrealized gain/loss as 16 lines, the 1-day line and the price age.</li>
+    <li><strong>The holdings card carries its own heading and column head</strong>: "Holdings" in medium 16 on the left, "Unrealized gain/loss" in Asap Condensed 14 medium, secondary, over the right column.</li>
+    <li><strong>A holding row's ticker is medium 16</strong> (a portfolio name is regular), with its shares in secondary 14 under it.</li>
+    <li><strong>The three links are a card of 48 rows with a chevron</strong> (D-31's links), under the holdings.</li>
+    <li><strong>The ⋮ menu opens under its icon</strong> at the top right, as the catalog's menu over a scrim.</li>
+  </ol>
+  <p><strong>Not drawn:</strong> a fully sold holding at 0 shares, 200% font (C26's percentage on its own line). Icons are Lucide at stroke 2, drawn inline from its path data as Claude knows it.</p>
+</div>
+</div>
+
+<script>
+const phones = [...document.querySelectorAll(".phone")];
+let dark = false;
+try { dark = matchMedia("(prefers-color-scheme: dark)").matches; } catch (e) {}
+function render() {
+  for (const p of phones) p.classList.toggle("dark", dark);
+  for (const b of document.querySelectorAll("[data-mode]")) b.setAttribute("aria-pressed", String((b.dataset.mode === "dark") === dark));
+}
+for (const b of document.querySelectorAll("[data-mode]")) b.addEventListener("click", () => { dark = b.dataset.mode === "dark"; render(); });
+render();
+const PATHS = {
+  "chevron-left": '<path d="m15 18-6-6 6-6"/>',
+  "chevron-right": '<path d="m9 18 6-6-6-6"/>',
+  "ellipsis-vertical": '<circle cx="12" cy="12" r="1"/><circle cx="12" cy="5" r="1"/><circle cx="12" cy="19" r="1"/>',
+  "plus": '<path d="M5 12h14"/><path d="M12 5v14"/>'
+};
+for (const i of document.querySelectorAll("i[data-i]")) {
+  const tmp = document.createElement("span");
+  tmp.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" aria-hidden="true">' + PATHS[i.dataset.i] + '</svg>';
+  const svg = tmp.firstChild;
+  svg.setAttribute("class", i.getAttribute("class"));
+  i.replaceWith(svg);
+}
+</script>
+<script>
+/* Bottom bar icons (D-37): Lucide, inline */
+(function () {
+  const TI = {
+    "Overall": '<path d="M21 12c.552 0 1.005-.449.95-.998a10 10 0 0 0-8.953-8.951c-.55-.055-.998.398-.998.95v8a1 1 0 0 0 1 1z"/><path d="M21.21 15.89A10 10 0 1 1 8 2.83"/>',
+    "Portfolios": '<path d="M16 20V4a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/><rect width="20" height="14" x="2" y="6" rx="2"/>',
+    "Cash": '<path d="M19 7V4a1 1 0 0 0-1-1H5a2 2 0 0 0 0 4h15a1 1 0 0 1 1 1v4h-3a2 2 0 0 0 0 4h3a1 1 0 0 0 1-1v-2a1 1 0 0 0-1-1"/><path d="M3 5v14a2 2 0 0 0 2 2h15a1 1 0 0 0 1-1v-4"/>',
+    "More": '<circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/><circle cx="5" cy="12" r="1"/>'
+  };
+  for (const tab of document.querySelectorAll(".bar .tab")) {
+    const s = tab.querySelector("span");
+    if (!s) continue;
+    const name = s.textContent.trim();
+    if (!TI[name]) continue;
+    tab.classList.add("it");
+    s.className = "both";
+    s.innerHTML = '<svg viewBox="0 0 24 24" aria-hidden="true">' + TI[name] + '</svg><span class="t">' + name + '</span>';
+  }
+})();
+</script>
+
+</body></html>

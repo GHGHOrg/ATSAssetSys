@@ -1,0 +1,382 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<title>Cash Entry and Split</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Asap:wght@400;500;700&family=Asap+Condensed:wght@400;500;700&display=swap">
+<style>
+/* Layout: a theme switch, then ten phones that wrap, one per frame of wireframe 10b (cash entry, opening balance, cash review,
+   split and its review, the two detail screens, the reversal, blocked saves). Phones carry the Corporate Design System's
+   tokens (D-07 to D-30). 1 CSS px = 1 dp. */
+:root { --page-bg: #F4F6FA; --page-ink: #0A1A36; --page-muted: #4B5D75; --page-line: #CED8E6; --stamp: #8A6D12; --sans: "Asap", sans-serif; --cond: "Asap Condensed", sans-serif; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --page-bg: #070F1F; --page-ink: #E6ECF5; --page-muted: #9DB0C9; --page-line: #1E2F4A; --stamp: #E0BC4A; color-scheme: dark } }
+:root[data-theme="dark"] { --page-bg: #070F1F; --page-ink: #E6ECF5; --page-muted: #9DB0C9; --page-line: #1E2F4A; --stamp: #E0BC4A; color-scheme: dark }
+body { margin: 0; background: var(--page-bg); color: var(--page-ink); font-family: var(--sans); }
+.wrap { max-width: 1760px; margin: 0 auto; padding-block: 28px 56px;
+  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px));
+  display: flex; flex-direction: column; gap: 24px; }
+.stamp { font: 500 14px/20px var(--cond); color: var(--stamp); }
+h1 { font-size: 28px; font-weight: 500; margin: 0; }
+p { margin: 0; line-height: 1.5; max-width: 84ch; color: var(--page-muted); }
+p strong { color: var(--page-ink); font-weight: 500; }
+header { display: flex; flex-direction: column; gap: 10px; }
+.seg { display: inline-flex; border: 1px solid var(--page-line); border-radius: 8px; overflow: hidden; }
+.seg button { font: 500 14px var(--sans); color: var(--page-muted); background: transparent; border: 0; padding: 0 18px; height: 36px; cursor: pointer; }
+.seg button[aria-pressed="true"] { background: var(--page-line); color: var(--page-ink); }
+.seg button:focus-visible { outline: 2px solid var(--page-ink); outline-offset: -3px; }
+.grid { display: flex; flex-wrap: wrap; gap: 28px; align-items: flex-start; }
+.shot { display: flex; flex-direction: column; gap: 10px; width: 411px; max-width: 100%; }
+.cap { display: flex; flex-direction: column; gap: 4px; }
+.cap b { font-size: 17px; font-weight: 500; }
+.cap span { font-size: 14px; line-height: 1.45; color: var(--page-muted); }
+.scroll { overflow-x: auto; max-width: 100%; }
+
+/* ---------- Tokens ---------- */
+.phone {
+  --page: #EBF0F8; --card: #DFE7F6; --band: #0A1A36; --on-band: #FFFFFF;
+  --ink: #0A1A36; --muted: #295C85; --divider: #B0C4E8;
+  --gold: #C9A227; --on-gold: #0A1A36; --btn-line: #376A9E; --btn-text: #0E2B47; --field-line: #376A9E; --focus: #0A1A36;
+  --chip-on: #0E2B47; --on-chip-on: #FFFFFF; --err: #7A541F;
+  --bar: #0A1A36; --bar-label: #8AABC5; --bar-sel: #E0BC4A; --pill: #1C4F6C; --bar-ind: transparent;
+  --shadow: 0 1px 3px rgba(10, 26, 54, .26), 0 4px 12px rgba(10, 26, 54, .16);
+  width: 411px; height: 860px; box-sizing: border-box; background: var(--page); color: var(--ink); border: 1px solid var(--page-line); border-radius: 14px;
+  overflow: hidden; display: flex; flex-direction: column; font-family: var(--sans); position: relative; }
+.phone.dark {
+  --page: #0A1A36; --card: #0E2B47; --band: #0A1A36; --on-band: #E6ECF5;
+  --ink: #E6ECF5; --muted: #B0C4E8; --divider: #1C4F6C;
+  --gold: #E0BC4A; --btn-line: #E0BC4A; --btn-text: #E0BC4A; --field-line: #6291B9; --focus: #E0BC4A;
+  --chip-on: #E0BC4A; --on-chip-on: #0A1A36; --err: #E2BF8D;
+  --bar: #050D1C; --pill: transparent; --bar-ind: #E0BC4A;
+  --shadow: 0 1px 3px rgba(0, 0, 0, .62), 0 5px 14px rgba(0, 0, 0, .48); }
+.t22 { font: 500 22px/28px var(--sans); }
+.t16m { font: 500 16px/24px var(--sans); }
+.t16 { font: 400 16px/24px var(--sans); }
+.t14 { font: 400 14px/20px var(--sans); }
+.t14m { font: 500 14px/20px var(--sans); }
+.t12 { font: 400 12px/16px var(--sans); }
+.muted { color: var(--muted); }
+.num { font-variant-numeric: tabular-nums; }
+
+.band { background: var(--band); color: var(--on-band); padding: 10px 12px; display: flex; align-items: center; gap: 4px; flex: none; }
+.band .ico { min-width: 40px; height: 40px; display: inline-flex; align-items: center; justify-content: center; }
+.body { padding: 12px; display: flex; flex-direction: column; gap: 12px; overflow: hidden; flex: 1; min-height: 0; }
+.card { background: var(--card); border-radius: 8px; box-shadow: var(--shadow); }
+.pad { padding: 10px; display: flex; flex-direction: column; gap: 6px; }
+.lbl { font: 400 14px/20px var(--sans); color: var(--muted); }
+
+/* Standard field (D-17): 56 tall, label on the outline; note under it */
+.f { display: flex; flex-direction: column; }
+.field { position: relative; height: 56px; border: 1px solid var(--field-line); border-radius: 8px; box-sizing: border-box;
+  display: flex; align-items: center; gap: 8px; padding: 0 12px; font: 400 16px/24px var(--sans); }
+.field .fl { position: absolute; top: -9px; left: 8px; padding: 0 4px; background: var(--page); font: 400 12px/16px var(--sans); color: var(--muted); }
+.field .v { flex: 1; min-width: 0; white-space: nowrap; font-variant-numeric: tabular-nums; }
+.field .pre { color: var(--muted); }
+.field.err { border: 2px solid var(--err); padding: 0 11px; }
+.field.err .fl { color: var(--err); font-weight: 500; }
+.note { font: 400 12px/16px var(--sans); color: var(--muted); padding: 4px 12px 0; }
+.help { font: 500 12px/16px var(--sans); color: var(--err); padding: 4px 12px 0; }
+.two { display: flex; gap: 8px; } .two > * { flex: 1; min-width: 0; }
+
+/* Ratio: two dense fields sized to content with "for" between */
+.ratio { display: flex; align-items: center; gap: 8px; min-height: 48px; }
+.dfield { height: 40px; min-width: 64px; border: 1px solid var(--field-line); border-radius: 8px; box-sizing: border-box; display: inline-flex; align-items: center; justify-content: center; padding: 0 8px; font: 400 14px/20px var(--sans); }
+
+/* Chips (D-17) used as a one-at-a-time choice */
+.chips { display: flex; flex-wrap: wrap; gap: 8px; padding: 8px 0; }
+.chip { height: 32px; padding: 0 12px; border-radius: 8px; display: inline-flex; align-items: center; gap: 6px; box-sizing: border-box;
+  font: 500 14px/20px var(--cond); border: 1px solid var(--btn-line); color: var(--btn-text); }
+.chip.on { background: var(--chip-on); color: var(--on-chip-on); border-color: var(--chip-on); }
+
+/* Buttons (D-17) */
+.btn { height: 40px; padding: 0 20px; border-radius: 8px; display: inline-flex; align-items: center; justify-content: center; font: 500 14px/20px var(--sans); box-sizing: border-box; border: 1px solid transparent; white-space: nowrap; }
+.btn.l { height: 48px; font: 500 16px/24px var(--sans); }
+.btn.wide { width: 100%; }
+.btn.filled { background: var(--gold); color: var(--on-gold); }
+.btn.out { border-color: var(--btn-line); color: var(--btn-text); }
+.btn.text { color: var(--btn-text); padding: 0 12px; }
+.btns { display: flex; gap: 8px; flex-wrap: wrap; }
+.foot { margin-top: auto; display: flex; flex-direction: column; gap: 8px; }
+
+/* Label/value rows inside a card (detail and review) */
+.kv { display: flex; justify-content: space-between; gap: 12px; padding: 6px 0; font: 400 16px/24px var(--sans); }
+.kv span:first-child { color: var(--muted); }
+.kv span:last-child { text-align: right; font-variant-numeric: tabular-nums; }
+.kv.tot { border-top: 1px solid var(--divider); margin-top: 4px; padding-top: 10px; font-weight: 500; }
+.kv.tot span:first-child { color: var(--ink); }
+.link { display: flex; align-items: center; gap: 8px; min-height: 48px; border-top: 1px solid var(--divider); margin-top: 4px; font: 400 16px/24px var(--sans); }
+.link .grow { flex: 1; }
+.state { font: 400 14px/20px var(--sans); color: var(--muted); }
+
+/* A blocked save: one bronze card at the top, icon, "Not saved" first (D-16, D-27) */
+.blocked { border: 2px solid var(--err); border-radius: 8px; padding: 10px; display: flex; gap: 8px; align-items: flex-start; background: var(--card); }
+.blocked .t14 { color: var(--ink); }
+.blocked b { font-weight: 500; color: var(--err); }
+
+/* Bottom bar, text only (D-10) */
+.bar { display: flex; background: var(--bar); padding: 0 4px; flex: none; }
+.tab { flex: 1; min-height: 56px; display: flex; flex-direction: column; align-items: center; justify-content: center; font: 500 14px/20px var(--cond); color: var(--bar-label); padding: 6px 2px; box-sizing: border-box; }
+.tab span { padding: 4px 10px; border-radius: 8px; }
+.tab::after { content: ""; width: 24px; height: 3px; margin-top: 3px; border-radius: 2px; }
+.tab.on { color: var(--bar-sel); font-weight: 700; }
+.tab.on span { background: var(--pill); }
+.tab.on::after { background: var(--bar-ind); }
+
+/* Icons: Lucide, stroke 2 (D-24), drawn inline */
+.ic { width: 24px; height: 24px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; display: block; flex: none; }
+.ic.s20 { width: 20px; height: 20px; } .ic.s16 { width: 16px; height: 16px; }
+.field .ic { color: var(--btn-text); }
+.field .ic.alert, .blocked .ic { color: var(--err); }
+.link .ic { color: var(--muted); }
+.notes { display: flex; flex-direction: column; gap: 8px; border-top: 1px solid var(--page-line); padding-top: 16px; }
+.notes p { font-size: 14px; }
+.notes ol { margin: 0; padding-left: 22px; color: var(--page-muted); font-size: 14px; line-height: 1.5; display: flex; flex-direction: column; gap: 4px; max-width: 90ch; }
+.notes li strong { color: var(--page-ink); font-weight: 500; }
+/* Bottom bar with icon and text (D-37, amending D-10): 72 tall; light, one pill behind icon and label; dark, gold icon and label over the gold line. */
+.tab.it { min-height: 72px; }
+.tab.it .both { display: flex; flex-direction: column; align-items: center; gap: 2px; padding: 6px 4px 4px; border-radius: 8px; min-width: 84px; box-sizing: border-box; } /* one pill size on every tab (D-37) */
+.tab.it .both svg { width: 24px; height: 24px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; display: block; }
+.tab.it span.t, .tab.it.on span.t { padding: 0; background: none; }</style>
+
+<div class="wrap">
+<header>
+  <span class="stamp">Stage: Plan · drawings for intent-cr-07 · 2026-11-27</span>
+  <h1>Cash entry, split, detail and reverse</h1>
+  <p>Wireframe 10b (approved) drawn in the Corporate Design System, frame by frame: the cash entry (deposit, adjustment, opening balance) and its review, the split entry and its review, the detail screens of a transaction and of a cash entry, the reversal screen, and blocked saves. <strong>Example figures; every text is a placeholder</strong> (D9). Cash and sell figures are never colored. Drawn in HTML at 1 px per dp, not rendered by Android.</p>
+  <div><span class="seg" role="group" aria-label="Phone theme"><button type="button" data-mode="light" aria-pressed="true">Light</button><button type="button" data-mode="dark" aria-pressed="false">Dark</button></span></div>
+</header>
+
+<div class="grid">
+
+  <div class="shot"><div class="cap"><b>A. Cash entry, deposit</b><span>Markers 1 to 5. Type as chips, one at a time; date with its calendar; amount typed positive, the line under it says which way it goes; note optional; Review always tappable.</span></div>
+    <div class="scroll"><div class="phone">
+      <div class="band"><span class="ico"><i class="ic" data-i="chevron-left"></i></span><span class="t22">Cash entry</span></div>
+      <div class="body">
+        <div><div class="lbl">Type</div><div class="chips"><span class="chip on"><i class="ic s16" data-i="check"></i>Deposit</span><span class="chip">Withdrawal</span><span class="chip">Interest/dividend</span><span class="chip">Adjustment</span></div></div>
+        <div class="f"><div class="field"><span class="fl">Date</span><span class="v">2026-04-20</span><i class="ic" data-i="calendar"></i></div><div class="note">Enter date in US market time (New York)</div></div>
+        <div class="f"><div class="field"><span class="fl">Amount</span><span class="pre">$</span><span class="v">500.00</span></div><div class="note">A positive number. It is added to cash.</div></div>
+        <div class="f"><div class="field"><span class="fl">Note (optional)</span><span class="v">Deposit</span></div></div>
+        <div class="foot"><span class="btn filled l wide">Review</span></div>
+      </div>
+      <div class="bar"><span class="tab"><span>More</span></span><span class="tab on"><span>Cash</span></span><span class="tab"><span>Portfolios</span></span><span class="tab"><span>Overall</span></span></div>
+    </div></div></div>
+
+  <div class="shot"><div class="cap"><b>B. Cash entry, adjustment</b><span>Markers 6 and 7. Only an adjustment has a direction, chosen with two chips; the amount is still positive; the note is required.</span></div>
+    <div class="scroll"><div class="phone">
+      <div class="band"><span class="ico"><i class="ic" data-i="chevron-left"></i></span><span class="t22">Cash entry</span></div>
+      <div class="body">
+        <div><div class="lbl">Type</div><div class="chips"><span class="chip">Deposit</span><span class="chip">Withdrawal</span><span class="chip">Interest/dividend</span><span class="chip on"><i class="ic s16" data-i="check"></i>Adjustment</span></div></div>
+        <div class="f"><div class="field"><span class="fl">Date</span><span class="v">2026-04-20</span><i class="ic" data-i="calendar"></i></div><div class="note">Enter date in US market time (New York)</div></div>
+        <div><div class="lbl">Direction</div><div class="chips"><span class="chip on"><i class="ic s16" data-i="check"></i>Deposit (+)</span><span class="chip">Withdrawal (−)</span></div></div>
+        <div class="f"><div class="field"><span class="fl">Amount</span><span class="pre">$</span><span class="v">200.00</span></div></div>
+        <div class="f"><div class="field"><span class="fl">Note (required)</span><span class="v">Match broker balance</span></div></div>
+        <div class="foot"><span class="btn filled l wide">Review</span></div>
+      </div>
+      <div class="bar"><span class="tab"><span>More</span></span><span class="tab on"><span>Cash</span></span><span class="tab"><span>Portfolios</span></span><span class="tab"><span>Overall</span></span></div>
+    </div></div></div>
+
+  <div class="shot"><div class="cap"><b>C. Opening balance (first launch)</b><span>Marker 8. The only type offered until it exists; one line says why. No bottom bar is drawn in the wireframe's frame; here it shows, as section 6 keeps it always visible.</span></div>
+    <div class="scroll"><div class="phone">
+      <div class="band"><span class="ico"><i class="ic" data-i="chevron-left"></i></span><span class="t22">Opening balance</span></div>
+      <div class="body">
+        <div><div class="lbl">Type</div><div class="chips"><span class="chip on"><i class="ic s16" data-i="check"></i>Opening balance</span></div><div class="note" style="padding:0">Set this first. Nothing else can be entered before it.</div></div>
+        <div class="f"><div class="field"><span class="fl">Date</span><span class="v">2026-01-01</span><i class="ic" data-i="calendar"></i></div><div class="note">Enter date in US market time (New York)</div></div>
+        <div class="f"><div class="field"><span class="fl">Amount</span><span class="pre">$</span><span class="v">10,000.00</span></div></div>
+        <div class="f"><div class="field"><span class="fl">Note (optional)</span><span class="v"></span></div></div>
+        <div class="foot"><span class="btn filled l wide">Review</span></div>
+      </div>
+      <div class="bar"><span class="tab"><span>More</span></span><span class="tab"><span>Cash</span></span><span class="tab"><span>Portfolios</span></span><span class="tab on"><span>Overall</span></span></div>
+    </div></div></div>
+
+  <div class="shot"><div class="cap"><b>D. Cash review (withdrawal)</b><span>Marker 9. The values in label and value rows, the cash effect as a total line, signed and uncolored. Confirm and save is the gold button; Back to edit keeps the values.</span></div>
+    <div class="scroll"><div class="phone">
+      <div class="band"><span class="ico"><i class="ic" data-i="chevron-left"></i></span><span class="t22">Review cash entry</span></div>
+      <div class="body">
+        <div class="card pad">
+          <div class="kv"><span>Type</span><span>Withdrawal</span></div>
+          <div class="kv"><span>Date</span><span>2026-01-10 ET</span></div>
+          <div class="kv"><span>Amount</span><span>−$300.00</span></div>
+          <div class="kv"><span>Note</span><span class="muted">none</span></div>
+          <div class="kv tot"><span>Cash effect</span><span>−$300.00</span></div>
+        </div>
+        <div class="t14 muted">Nothing is saved until you confirm.</div>
+        <div class="foot"><span class="btn filled l wide">Confirm and save</span><span class="btn out l wide">Back to edit</span></div>
+      </div>
+      <div class="bar"><span class="tab"><span>More</span></span><span class="tab on"><span>Cash</span></span><span class="tab"><span>Portfolios</span></span><span class="tab"><span>Overall</span></span></div>
+    </div></div></div>
+
+  <div class="shot"><div class="cap"><b>E. Split entry</b><span>Marker 10. Portfolio and ticker picked (standard pick fields), the date, and the ratio as two whole numbers with "for" between. Opened from Holding detail, so Portfolios is the selected tab.</span></div>
+    <div class="scroll"><div class="phone">
+      <div class="band"><span class="ico"><i class="ic" data-i="chevron-left"></i></span><span class="t22">Split</span></div>
+      <div class="body">
+        <div class="two">
+          <div class="field"><span class="fl">Portfolio</span><span class="v">Portfolio P</span><i class="ic" data-i="chevron-down"></i></div>
+          <div class="field"><span class="fl">Ticker</span><span class="v">AAPL</span><i class="ic" data-i="chevron-down"></i></div>
+        </div>
+        <div class="f"><div class="field"><span class="fl">Date</span><span class="v">2026-03-01</span><i class="ic" data-i="calendar"></i></div><div class="note">Enter date in US market time (New York)</div></div>
+        <div><div class="lbl">Split</div>
+          <div class="ratio"><span class="dfield num">2</span><span class="t16">for</span><span class="dfield num">1</span></div>
+          <div class="note" style="padding:0">Whole numbers. 2 for 1 doubles the shares; 1 for 10 is a reverse split.</div></div>
+        <div class="foot"><span class="btn filled l wide">Review</span></div>
+      </div>
+      <div class="bar"><span class="tab"><span>More</span></span><span class="tab"><span>Cash</span></span><span class="tab on"><span>Portfolios</span></span><span class="tab"><span>Overall</span></span></div>
+    </div></div></div>
+
+  <div class="shot"><div class="cap"><b>F. Split review (Example B)</b><span>Marker 11. The shares before and after as the total line, so a wrong ratio shows at once; no cash effect.</span></div>
+    <div class="scroll"><div class="phone">
+      <div class="band"><span class="ico"><i class="ic" data-i="chevron-left"></i></span><span class="t22">Review split</span></div>
+      <div class="body">
+        <div class="card pad">
+          <div class="kv"><span>Portfolio</span><span>Portfolio P</span></div>
+          <div class="kv"><span>Ticker</span><span>AAPL</span></div>
+          <div class="kv"><span>Date</span><span>2026-03-01 ET</span></div>
+          <div class="kv"><span>Split</span><span>2 for 1</span></div>
+          <div class="kv tot"><span>Shares at this point</span><span>10 → 20</span></div>
+          <div class="t14 muted">Total cost does not change. No cash effect.</div>
+        </div>
+        <div class="t14 muted">Nothing is saved until you confirm.</div>
+        <div class="foot"><span class="btn filled l wide">Confirm and save</span><span class="btn out l wide">Back to edit</span></div>
+      </div>
+      <div class="bar"><span class="tab"><span>More</span></span><span class="tab"><span>Cash</span></span><span class="tab on"><span>Portfolios</span></span><span class="tab"><span>Overall</span></span></div>
+    </div></div></div>
+
+  <div class="shot"><div class="cap"><b>G. Transaction detail (a buy)</b><span>Markers 12 to 14. The values, the link to its cash line as a tappable row, the state in plain text, and Reverse and Reverse and re-enter as outline buttons. Already reversed or a reversal: the link replaces the buttons.</span></div>
+    <div class="scroll"><div class="phone">
+      <div class="band"><span class="ico"><i class="ic" data-i="chevron-left"></i></span><span class="t22">Buy AAPL</span></div>
+      <div class="body">
+        <div class="card pad">
+          <div class="kv"><span>Portfolio</span><span>Portfolio P</span></div>
+          <div class="kv"><span>Date</span><span>2026-02-01 ET</span></div>
+          <div class="kv"><span>Quantity, as traded</span><span>10</span></div>
+          <div class="kv"><span>Total amount</span><span>$1,500.00</span></div>
+          <div class="kv"><span>Price per share</span><span>$150.00</span></div>
+          <div class="kv"><span>Lot</span><span>10 left</span></div>
+          <div class="link"><span class="grow">Cash <span class="num">−$1,500.00</span></span><i class="ic s20" data-i="chevron-right"></i></div>
+        </div>
+        <div class="state">Not reversed.</div>
+        <div class="btns"><span class="btn out">Reverse</span><span class="btn out">Reverse and re-enter</span></div>
+        <div class="card pad"><div class="lbl">Other states (format only)</div>
+          <div class="link" style="border-top:0;margin:0"><span class="grow">Reversed on 2026-04-05 ET</span><i class="ic s20" data-i="chevron-right"></i></div>
+          <div class="link" style="margin:0"><span class="grow">Reversal of the buy of 2026-03-20 ET</span><i class="ic s20" data-i="chevron-right"></i></div>
+        </div>
+      </div>
+      <div class="bar"><span class="tab"><span>More</span></span><span class="tab"><span>Cash</span></span><span class="tab on"><span>Portfolios</span></span><span class="tab"><span>Overall</span></span></div>
+    </div></div></div>
+
+  <div class="shot"><div class="cap"><b>H. Cash entry detail (a deposit)</b><span>Marker 15. Type, date, signed amount and note, then the same two buttons. Entries without buttons say why in plain text.</span></div>
+    <div class="scroll"><div class="phone">
+      <div class="band"><span class="ico"><i class="ic" data-i="chevron-left"></i></span><span class="t22">Deposit</span></div>
+      <div class="body">
+        <div class="card pad">
+          <div class="kv"><span>Type</span><span>Deposit</span></div>
+          <div class="kv"><span>Date</span><span>2026-04-20 ET</span></div>
+          <div class="kv"><span>Amount</span><span>+$500.00</span></div>
+          <div class="kv"><span>Note</span><span>Deposit entered by mistake</span></div>
+        </div>
+        <div class="state">Not reversed.</div>
+        <div class="btns"><span class="btn out">Reverse</span><span class="btn out">Reverse and re-enter</span></div>
+        <div class="card pad"><div class="lbl">Entries with no buttons (format only)</div>
+          <div class="state">The opening balance cannot be reversed.</div>
+          <div class="link"><span class="grow">Open the buy or sell to reverse it.</span><i class="ic s20" data-i="chevron-right"></i></div>
+        </div>
+      </div>
+      <div class="bar"><span class="tab"><span>More</span></span><span class="tab on"><span>Cash</span></span><span class="tab"><span>Portfolios</span></span><span class="tab"><span>Overall</span></span></div>
+    </div></div></div>
+
+  <div class="shot"><div class="cap"><b>I. Reversal of a buy after a split (Example F)</b><span>Markers 16 to 19. What is reversed, fixed; the reversal date, defaulting to the original's; the effect as a total line. One screen, Confirm and save, no separate review.</span></div>
+    <div class="scroll"><div class="phone">
+      <div class="band"><span class="ico"><i class="ic" data-i="chevron-left"></i></span><span class="t22">Reverse buy AAPL</span></div>
+      <div class="body">
+        <div class="card pad"><div class="lbl">Reverses</div>
+          <div class="kv"><span>Buy, 2026-01-02 ET</span><span>Portfolio P</span></div>
+          <div class="kv"><span>Quantity as traded</span><span>10</span></div>
+          <div class="kv"><span>Total amount</span><span>$1,000.00</span></div>
+        </div>
+        <div class="f"><div class="field"><span class="fl">Reversal date</span><span class="v">2026-04-01</span><i class="ic" data-i="calendar"></i></div><div class="note">Enter date in US market time (New York). Not earlier than 2026-01-02.</div></div>
+        <div class="card pad">
+          <div class="kv"><span>Shares removed (split applied)</span><span>20</span></div>
+          <div class="kv tot"><span>Cash effect</span><span>+$1,000.00</span></div>
+          <div class="t14 muted">Realized gain/loss: $0.00</div>
+        </div>
+        <div class="foot"><span class="btn filled l wide">Confirm and save</span><span class="btn text l wide">Cancel</span></div>
+      </div>
+      <div class="bar"><span class="tab"><span>More</span></span><span class="tab"><span>Cash</span></span><span class="tab on"><span>Portfolios</span></span><span class="tab"><span>Overall</span></span></div>
+    </div></div></div>
+
+  <div class="shot"><div class="cap"><b>J. Blocked saves</b><span>Marker 20. A rule that stops the save shows as one bronze card at the top, starting "Not saved"; a field's own rule shows on the field (D-16, D-27). Everything typed stays.</span></div>
+    <div class="scroll"><div class="phone">
+      <div class="band"><span class="ico"><i class="ic" data-i="chevron-left"></i></span><span class="t22">Cash entry</span></div>
+      <div class="body">
+        <div class="blocked"><i class="ic s20" data-i="circle-alert"></i><div class="t14"><b>Not saved.</b> Cash would be negative on 2026-01-10 by $100.00.</div></div>
+        <div><div class="lbl">Type</div><div class="chips"><span class="chip">Deposit</span><span class="chip">Withdrawal</span><span class="chip">Interest/dividend</span><span class="chip on"><i class="ic s16" data-i="check"></i>Adjustment</span></div></div>
+        <div class="f"><div class="field"><span class="fl">Date</span><span class="v">2026-01-10</span><i class="ic" data-i="calendar"></i></div><div class="note">Enter date in US market time (New York)</div></div>
+        <div><div class="lbl">Direction</div><div class="chips"><span class="chip">Deposit (+)</span><span class="chip on"><i class="ic s16" data-i="check"></i>Withdrawal (−)</span></div></div>
+        <div class="f"><div class="field"><span class="fl">Amount</span><span class="pre">$</span><span class="v">400.00</span></div></div>
+        <div class="f"><div class="field err"><span class="fl">Note (required)</span><span class="v"></span><i class="ic s20 alert" data-i="circle-alert"></i></div><div class="help">Note: required for an adjustment.</div></div>
+        <div class="foot"><span class="btn filled l wide">Review</span></div>
+      </div>
+      <div class="bar"><span class="tab"><span>More</span></span><span class="tab on"><span>Cash</span></span><span class="tab"><span>Portfolios</span></span><span class="tab"><span>Overall</span></span></div>
+    </div></div></div>
+</div>
+
+<div class="notes">
+  <p><strong>Choices made in this drawing, for you to confirm.</strong></p>
+  <ol>
+    <li><strong>One-at-a-time choices are chips</strong> (type, direction), the catalog's filter chip with its check. The catalog has no radio buttons or segmented control.</li>
+    <li><strong>Review, and Confirm and save, are the large full-width gold button</strong> at the foot, as on the Sell screen (D-17). Back to edit is a large outline button under it; on the reversal, Cancel is a text button.</li>
+    <li><strong>The amount field shows a "$" before the number</strong>, in the secondary text color, and is typed without it.</li>
+    <li><strong>Review and detail values are label-and-value rows</strong> in a card, label in secondary text; the result (cash effect, shares at this point) is a total line under a divider, in medium weight.</li>
+    <li><strong>Links to other entries are tappable rows with a chevron</strong> (the cash line, "Reversed on…", "Reversal of…"), not text links.</li>
+    <li><strong>Portfolio and ticker on the split are standard pick fields</strong>: 56 tall like the text field, with a 24 chevron-down. A new size of D-30's pick field.</li>
+    <li><strong>The split ratio is two small dense fields</strong>, at least 64 wide and sized to their content (as D-28), with "for" between.</li>
+    <li><strong>A blocked save is one card at the top</strong>, 2 dp bronze outline, circle-alert, "Not saved" in medium bronze, the reason in normal text. A field's own rule (note required, amount 0) shows on the field instead, as D-16.</li>
+    <li><strong>The selected tab is where the flow opened</strong>: Cash for cash entries, Portfolios for split, transaction detail and the reversal, Overall for the first-launch opening balance.</li>
+  </ol>
+  <p><strong>Not drawn:</strong> these screens at 200% font with the keyboard up (as Remaining Screens did for Sell), the pick lists open, and the other detail states as full screens. Icons are Lucide at stroke 2, drawn inline from its path data as Claude knows it.</p>
+</div>
+</div>
+
+<script>
+const phones = [...document.querySelectorAll(".phone")];
+let dark = false;
+try { dark = matchMedia("(prefers-color-scheme: dark)").matches; } catch (e) {}
+function render() {
+  for (const p of phones) p.classList.toggle("dark", dark);
+  for (const b of document.querySelectorAll("[data-mode]")) b.setAttribute("aria-pressed", String((b.dataset.mode === "dark") === dark));
+}
+for (const b of document.querySelectorAll("[data-mode]")) b.addEventListener("click", () => { dark = b.dataset.mode === "dark"; render(); });
+render();
+const PATHS = {
+  "chevron-left": '<path d="m15 18-6-6 6-6"/>',
+  "chevron-right": '<path d="m9 18 6-6-6-6"/>',
+  "chevron-down": '<path d="m6 9 6 6 6-6"/>',
+  "check": '<path d="M20 6 9 17l-5-5"/>',
+  "calendar": '<path d="M8 2v4"/><path d="M16 2v4"/><rect width="18" height="18" x="3" y="4" rx="2"/><path d="M3 10h18"/>',
+  "circle-alert": '<circle cx="12" cy="12" r="10"/><path d="M12 8v4"/><path d="M12 16h.01"/>'
+};
+for (const i of document.querySelectorAll("i[data-i]")) {
+  const tmp = document.createElement("span");
+  tmp.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" aria-hidden="true">' + PATHS[i.dataset.i] + '</svg>';
+  const svg = tmp.firstChild;
+  svg.setAttribute("class", i.getAttribute("class"));
+  i.replaceWith(svg);
+}
+</script>
+<script>
+/* Bottom bar icons (D-37): Lucide, inline */
+(function () {
+  const TI = {
+    "Overall": '<path d="M21 12c.552 0 1.005-.449.95-.998a10 10 0 0 0-8.953-8.951c-.55-.055-.998.398-.998.95v8a1 1 0 0 0 1 1z"/><path d="M21.21 15.89A10 10 0 1 1 8 2.83"/>',
+    "Portfolios": '<path d="M16 20V4a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/><rect width="20" height="14" x="2" y="6" rx="2"/>',
+    "Cash": '<path d="M19 7V4a1 1 0 0 0-1-1H5a2 2 0 0 0 0 4h15a1 1 0 0 1 1 1v4h-3a2 2 0 0 0 0 4h3a1 1 0 0 0 1-1v-2a1 1 0 0 0-1-1"/><path d="M3 5v14a2 2 0 0 0 2 2h15a1 1 0 0 0 1-1v-4"/>',
+    "More": '<circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/><circle cx="5" cy="12" r="1"/>'
+  };
+  for (const tab of document.querySelectorAll(".bar .tab")) {
+    const s = tab.querySelector("span");
+    if (!s) continue;
+    const name = s.textContent.trim();
+    if (!TI[name]) continue;
+    tab.classList.add("it");
+    s.className = "both";
+    s.innerHTML = '<svg viewBox="0 0 24 24" aria-hidden="true">' + TI[name] + '</svg><span class="t">' + name + '</span>';
+  }
+})();
+</script>
+</body></html>

@@ -1,0 +1,363 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<title>Backup and Restore</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Asap:wght@400;500;700&family=Asap+Condensed:wght@400;500;700&display=swap">
+<style>
+/* Layout: a theme switch, then nine phones that wrap, one per frame of wireframe 10e (the screen, export result and offline,
+   restore steps 1 to 4, the error report shown whole, step 5 success and failure). Tokens of the Corporate Design System
+   (D-07 to D-34). 1 CSS px = 1 dp. */
+:root { --page-bg: #F4F6FA; --page-ink: #0A1A36; --page-muted: #4B5D75; --page-line: #CED8E6; --stamp: #8A6D12; --sans: "Asap", sans-serif; --cond: "Asap Condensed", sans-serif; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --page-bg: #070F1F; --page-ink: #E6ECF5; --page-muted: #9DB0C9; --page-line: #1E2F4A; --stamp: #E0BC4A; color-scheme: dark } }
+:root[data-theme="dark"] { --page-bg: #070F1F; --page-ink: #E6ECF5; --page-muted: #9DB0C9; --page-line: #1E2F4A; --stamp: #E0BC4A; color-scheme: dark }
+body { margin: 0; background: var(--page-bg); color: var(--page-ink); font-family: var(--sans); }
+.wrap { max-width: 1760px; margin: 0 auto; padding-block: 28px 56px;
+  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px));
+  display: flex; flex-direction: column; gap: 24px; }
+.stamp { font: 500 14px/20px var(--cond); color: var(--stamp); }
+h1 { font-size: 28px; font-weight: 500; margin: 0; }
+p { margin: 0; line-height: 1.5; max-width: 84ch; color: var(--page-muted); }
+p strong { color: var(--page-ink); font-weight: 500; }
+header { display: flex; flex-direction: column; gap: 10px; }
+.seg { display: inline-flex; border: 1px solid var(--page-line); border-radius: 8px; overflow: hidden; }
+.seg button { font: 500 14px var(--sans); color: var(--page-muted); background: transparent; border: 0; padding: 0 18px; height: 36px; cursor: pointer; }
+.seg button[aria-pressed="true"] { background: var(--page-line); color: var(--page-ink); }
+.seg button:focus-visible { outline: 2px solid var(--page-ink); outline-offset: -3px; }
+.grid { display: flex; flex-wrap: wrap; gap: 28px; align-items: flex-start; }
+.shot { display: flex; flex-direction: column; gap: 10px; width: 411px; max-width: 100%; }
+.cap { display: flex; flex-direction: column; gap: 4px; }
+.cap b { font-size: 17px; font-weight: 500; }
+.cap span { font-size: 14px; line-height: 1.45; color: var(--page-muted); }
+.scroll { overflow-x: auto; max-width: 100%; }
+
+/* ---------- Tokens ---------- */
+.phone {
+  --page: #EBF0F8; --card: #DFE7F6; --band: #0A1A36; --on-band: #FFFFFF;
+  --ink: #0A1A36; --muted: #295C85; --divider: #B0C4E8;
+  --gold: #C9A227; --on-gold: #0A1A36; --btn-line: #376A9E; --btn-text: #0E2B47; --field-line: #376A9E; --focus: #0A1A36;
+  --err: #7A541F;
+  --bar: #0A1A36; --bar-label: #8AABC5; --bar-sel: #E0BC4A; --pill: #1C4F6C; --bar-ind: transparent;
+  --shadow: 0 1px 3px rgba(10, 26, 54, .26), 0 4px 12px rgba(10, 26, 54, .16);
+  width: 411px; height: 860px; box-sizing: border-box; background: var(--page); color: var(--ink); border: 1px solid var(--page-line); border-radius: 14px;
+  overflow: hidden; display: flex; flex-direction: column; font-family: var(--sans); position: relative; }
+.phone.tall { height: auto; }
+.phone.dark {
+  --page: #0A1A36; --card: #0E2B47; --band: #0A1A36; --on-band: #E6ECF5;
+  --ink: #E6ECF5; --muted: #B0C4E8; --divider: #1C4F6C;
+  --gold: #E0BC4A; --btn-line: #E0BC4A; --btn-text: #E0BC4A; --field-line: #6291B9; --focus: #E0BC4A;
+  --err: #E2BF8D;
+  --bar: #050D1C; --pill: transparent; --bar-ind: #E0BC4A;
+  --shadow: 0 1px 3px rgba(0, 0, 0, .62), 0 5px 14px rgba(0, 0, 0, .48); }
+.t22 { font: 500 22px/28px var(--sans); }
+.t16m { font: 500 16px/24px var(--sans); }
+.t16 { font: 400 16px/24px var(--sans); }
+.t14 { font: 400 14px/20px var(--sans); }
+.t14m { font: 500 14px/20px var(--sans); }
+.muted { color: var(--muted); }
+.num { font-variant-numeric: tabular-nums; }
+
+.band { background: var(--band); color: var(--on-band); padding: 10px 12px; display: flex; align-items: center; gap: 4px; flex: none; }
+.band .ico { min-width: 40px; height: 40px; display: inline-flex; align-items: center; justify-content: center; }
+.body { padding: 12px; display: flex; flex-direction: column; gap: 12px; overflow: hidden; flex: 1; min-height: 0; }
+.card { background: var(--card); border-radius: 8px; box-shadow: var(--shadow); }
+.pad { padding: 10px; display: flex; flex-direction: column; gap: 6px; }
+.banner { display: flex; gap: 10px; align-items: flex-start; padding: 10px; }
+.banner .ic { color: var(--btn-text); }
+/* Step line (choice 1) */
+.step { font: 500 14px/20px var(--cond); color: var(--muted); }
+
+.f { display: flex; flex-direction: column; }
+.field { position: relative; height: 56px; border: 1px solid var(--field-line); border-radius: 8px; box-sizing: border-box;
+  display: flex; align-items: center; gap: 8px; padding: 0 12px; font: 400 16px/24px var(--sans); }
+.field .fl { position: absolute; top: -9px; left: 8px; padding: 0 4px; background: var(--page); font: 400 12px/16px var(--sans); color: var(--muted); white-space: nowrap; }
+.field .v { flex: 1; min-width: 0; white-space: nowrap; }
+.field.focus { border: 2px solid var(--focus); padding: 0 11px; }
+.field.focus .fl { color: var(--focus); }
+.caret { display: inline-block; width: 2px; height: 20px; background: var(--focus); vertical-align: -4px; margin-left: 1px; }
+.note { font: 400 12px/16px var(--sans); color: var(--muted); padding: 4px 12px 0; }
+
+.btn { height: 40px; padding: 0 20px; border-radius: 8px; display: inline-flex; align-items: center; justify-content: center; font: 500 14px/20px var(--sans); box-sizing: border-box; border: 1px solid transparent; white-space: nowrap; }
+.btn.l { height: 48px; font: 500 16px/24px var(--sans); }
+.btn.wide { width: 100%; }
+.btn.filled { background: var(--gold); color: var(--on-gold); }
+.btn.out { border-color: var(--btn-line); color: var(--btn-text); }
+.btn.text { color: var(--btn-text); padding: 0 12px; }
+.btn.text.l { padding: 0 16px; }
+.dis { opacity: .38; }
+.foot { margin-top: auto; display: flex; flex-direction: column; gap: 8px; }
+.acts { display: flex; gap: 8px; flex-wrap: wrap; }
+
+.kv { display: flex; justify-content: space-between; gap: 12px; padding: 4px 0; font: 400 16px/24px var(--sans); }
+.kv span:first-child { color: var(--muted); }
+.kv span:last-child { text-align: right; font-variant-numeric: tabular-nums; }
+.kv.tot { border-top: 1px solid var(--divider); margin-top: 4px; padding-top: 8px; }
+/* Now / In the file table (choice 7) */
+.tbl { display: grid; grid-template-columns: 1fr 72px 92px; column-gap: 8px; font: 400 16px/24px var(--sans); }
+.tbl > span { padding: 4px 0; font-variant-numeric: tabular-nums; }
+.tbl .h { font: 500 14px/20px var(--cond); color: var(--muted); }
+.tbl .r { text-align: right; }
+.tbl .lab { color: var(--muted); }
+/* Progress rows (choice 5) */
+.prog { display: flex; align-items: center; gap: 10px; min-height: 48px; }
+.prog .ic { color: var(--btn-text); }
+.prog .grow { flex: 1; min-width: 0; }
+.spin { animation: spin 1.1s linear infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }
+@media (prefers-reduced-motion: reduce) { .spin { animation: none; } }
+/* Error report (choice 6) */
+.erow { padding: 8px 0; border-top: 1px solid var(--divider); font: 400 14px/20px var(--sans); }
+.erow:first-child { border-top: 0; }
+.erow b { font-weight: 500; }
+.warn { display: flex; gap: 8px; align-items: flex-start; }
+.warn .ic { color: var(--btn-text); }
+
+.blocked { border: 2px solid var(--err); border-radius: 8px; padding: 10px; display: flex; gap: 8px; align-items: flex-start; background: var(--card); }
+.blocked b { font-weight: 500; color: var(--err); }
+
+.bar { display: flex; background: var(--bar); padding: 0 4px; flex: none; }
+.tab { flex: 1; min-height: 56px; display: flex; flex-direction: column; align-items: center; justify-content: center; font: 500 14px/20px var(--cond); color: var(--bar-label); padding: 6px 2px; box-sizing: border-box; }
+.tab span { padding: 4px 10px; border-radius: 8px; }
+.tab::after { content: ""; width: 24px; height: 3px; margin-top: 3px; border-radius: 2px; }
+.tab.on { color: var(--bar-sel); font-weight: 700; }
+.tab.on span { background: var(--pill); }
+.tab.on::after { background: var(--bar-ind); }
+
+.ic { width: 24px; height: 24px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; display: block; flex: none; }
+.ic.s20 { width: 20px; height: 20px; }
+.blocked .ic { color: var(--err); }
+.notes { display: flex; flex-direction: column; gap: 8px; border-top: 1px solid var(--page-line); padding-top: 16px; }
+.notes p { font-size: 14px; }
+.notes ol { margin: 0; padding-left: 22px; color: var(--page-muted); font-size: 14px; line-height: 1.5; display: flex; flex-direction: column; gap: 4px; max-width: 90ch; }
+.notes li strong { color: var(--page-ink); font-weight: 500; }
+/* Bottom bar with icon and text (D-37, amending D-10): 72 tall; light, one pill behind icon and label; dark, gold icon and label over the gold line. */
+.tab.it { min-height: 72px; }
+.tab.it .both { display: flex; flex-direction: column; align-items: center; gap: 2px; padding: 6px 4px 4px; border-radius: 8px; min-width: 84px; box-sizing: border-box; } /* one pill size on every tab (D-37) */
+.tab.it .both svg { width: 24px; height: 24px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; display: block; }
+.tab.it span.t, .tab.it.on span.t { padding: 0; background: none; }</style>
+
+<div class="wrap">
+<header>
+  <span class="stamp">Stage: Plan · drawings for intent-cr-07 · 2026-11-27</span>
+  <h1>Backup and restore</h1>
+  <p>Wireframe 10e (approved) drawn in the Corporate Design System: the Backup and restore screen, the export's result, and the restore wizard, one screen per step. <strong>Example A is the app now, spec/example-backup.csv the file; every text is a placeholder</strong> (D9). More is the selected tab. Android's file screens are the system's and are not drawn. Drawn in HTML at 1 px per dp, not rendered by Android.</p>
+  <div><span class="seg" role="group" aria-label="Phone theme"><button type="button" data-mode="light" aria-pressed="true">Light</button><button type="button" data-mode="dark" aria-pressed="false">Dark</button></span></div>
+</header>
+
+<div class="grid">
+
+  <div class="shot"><div class="cap"><b>A. Backup and restore</b><span>Markers 1 to 3. Two cards, each with its action: the last backup with Back up now (gold, the screen's main action), and restore with its explanation and an outline button.</span></div>
+    <div class="scroll"><div class="phone">
+      <div class="band"><span class="ico"><i class="ic" data-i="chevron-left"></i></span><span class="t22">Backup and restore</span></div>
+      <div class="body">
+        <div class="card pad">
+          <span class="t14 muted">Last backup</span>
+          <span class="t16m num">2026-10-04 JST</span>
+          <div class="acts" style="padding-top:4px"><span class="btn filled">Back up now</span></div>
+        </div>
+        <div class="card pad">
+          <span class="t16m">Restore</span>
+          <span class="t14">Restore replaces all data and settings in the app with the contents of a backup file. Needs internet.</span>
+          <div class="acts" style="padding-top:4px"><span class="btn out">Restore from backup file</span></div>
+        </div>
+      </div>
+      <div class="bar"><span class="tab on"><span>More</span></span><span class="tab"><span>Cash</span></span><span class="tab"><span>Portfolios</span></span><span class="tab"><span>Overall</span></span></div>
+    </div></div></div>
+
+  <div class="shot"><div class="cap"><b>B. After an export, and offline</b><span>Markers 4 to 6. The export's result is D-33's notice banner at the top ("Backup not saved. The last backup date is unchanged." the same way). Offline, Restore is the disabled button with the reason as a note line.</span></div>
+    <div class="scroll"><div class="phone">
+      <div class="band"><span class="ico"><i class="ic" data-i="chevron-left"></i></span><span class="t22">Backup and restore</span></div>
+      <div class="body">
+        <div class="card banner"><i class="ic s20" data-i="info"></i><div class="t14 num">Backup saved. Last backup: 2026-10-09 JST</div></div>
+        <div class="card pad">
+          <span class="t14 muted">Last backup</span>
+          <span class="t16m num">2026-10-09 JST</span>
+          <div class="acts" style="padding-top:4px"><span class="btn filled">Back up now</span></div>
+        </div>
+        <div class="card pad">
+          <span class="t16m">Restore</span>
+          <span class="t14">Restore replaces all data and settings in the app with the contents of a backup file. Needs internet.</span>
+          <div class="f" style="padding-top:4px"><div class="acts"><span class="btn out dis">Restore from backup file</span></div><div class="note" style="padding-left:0">Restore needs internet. Connect and try again.</div></div>
+        </div>
+      </div>
+      <div class="bar"><span class="tab on"><span>More</span></span><span class="tab"><span>Cash</span></span><span class="tab"><span>Portfolios</span></span><span class="tab"><span>Overall</span></span></div>
+    </div></div></div>
+
+  <div class="shot"><div class="cap"><b>C. Restore, step 1 of 5: pick the file</b><span>Markers 7 and 8. The step line under the band; Choose file an outline button, the picked name as a row; the date help as a note; Check file the large gold foot, Cancel a text button under it.</span></div>
+    <div class="scroll"><div class="phone">
+      <div class="band"><span class="ico"><i class="ic" data-i="chevron-left"></i></span><span class="t22">Restore</span></div>
+      <div class="body">
+        <div class="step">Step 1 of 5 · Nothing is changed until step 5.</div>
+        <div class="card pad">
+          <div class="acts"><span class="btn out">Choose file</span></div>
+          <div class="kv"><span>File</span><span>backup-2026-10-04.csv</span></div>
+          <div class="t14 muted">Dates in the file are YYYY-MM-DD, in US market time (New York).</div>
+        </div>
+        <div class="foot"><span class="btn filled l wide">Check file</span><span class="btn text l wide">Cancel</span></div>
+      </div>
+      <div class="bar"><span class="tab on"><span>More</span></span><span class="tab"><span>Cash</span></span><span class="tab"><span>Portfolios</span></span><span class="tab"><span>Overall</span></span></div>
+    </div></div></div>
+
+  <div class="shot"><div class="cap"><b>D. Step 2 of 5: checking</b><span>Marker 9. Each phase a 48 row: a check when done, Lucide's loader-circle turning while it runs (standing still under reduced motion), and the state in words for TalkBack. Cancel returns to step 1.</span></div>
+    <div class="scroll"><div class="phone">
+      <div class="band"><span class="ico"><i class="ic" data-i="chevron-left"></i></span><span class="t22">Restore</span></div>
+      <div class="body">
+        <div class="step">Step 2 of 5 · Nothing has been changed.</div>
+        <div class="card pad">
+          <div class="prog"><i class="ic" data-i="check"></i><span class="t16 grow">Reading the file and checking the rules</span><span class="t14 muted">done</span></div>
+          <div class="prog"><i class="ic spin" data-i="loader-circle"></i><span class="t16 grow num">Verifying held tickers (2 of 3)</span><span class="t14 muted">running</span></div>
+          <div class="t14 muted">Price source: the one selected now. Needs internet.</div>
+        </div>
+        <div class="foot"><span class="btn text l wide">Cancel</span></div>
+      </div>
+      <div class="bar"><span class="tab on"><span>More</span></span><span class="tab"><span>Cash</span></span><span class="tab"><span>Portfolios</span></span><span class="tab"><span>Overall</span></span></div>
+    </div></div></div>
+
+  <div class="shot"><div class="cap"><b>E. The error report, shown whole</b><span>Markers 10 to 12. D-31's blocked card on top with the count; the errors in a card, one row each, the line and column in medium, plain text. Choose another file the gold foot, Copy report outline.</span></div>
+    <div class="scroll"><div class="phone tall">
+      <div class="band"><span class="ico"><i class="ic" data-i="chevron-left"></i></span><span class="t22">Restore</span></div>
+      <div class="body">
+        <div class="blocked"><i class="ic s20" data-i="circle-alert"></i><div class="t14 num"><b>Not restored. Nothing was changed.</b> 3 errors in 3 lines.</div></div>
+        <div class="card pad">
+          <div class="erow"><b>Line 14, quantity:</b> a quantity of 0 or less is not allowed.</div>
+          <div class="erow"><b>Line 17, lot_picks:</b> depends on line 14.</div>
+          <div class="erow num"><b>Line 21:</b> cash would be negative on 2026-02-10 by $200.00.</div>
+        </div>
+        <div class="t14 muted">A second round, after these are fixed, looks like this:</div>
+        <div class="card pad">
+          <div class="erow"><b>Line 9, ticker XYZ:</b> cannot be verified with the selected price source. Switch the source in Settings and try again.</div>
+        </div>
+        <span class="btn filled l wide">Choose another file</span>
+        <span class="btn out l wide">Copy report</span>
+      </div>
+      <div class="bar"><span class="tab on"><span>More</span></span><span class="tab"><span>Cash</span></span><span class="tab"><span>Portfolios</span></span><span class="tab"><span>Overall</span></span></div>
+    </div></div></div>
+
+  <div class="shot"><div class="cap"><b>F. Step 3 of 5: summary</b><span>Markers 13 to 15. Now and In the file as two right-aligned columns under condensed heads; the balance and holdings after the restore as label-and-value rows under a divider. On a fresh install: no Now column, and Continue reads Restore.</span></div>
+    <div class="scroll"><div class="phone">
+      <div class="band"><span class="ico"><i class="ic" data-i="chevron-left"></i></span><span class="t22">Restore</span></div>
+      <div class="body">
+        <div class="step">Step 3 of 5 · Nothing has been changed.</div>
+        <div class="card pad">
+          <div class="tbl">
+            <span></span><span class="h r">Now</span><span class="h r">In the file</span>
+            <span class="lab">Portfolios</span><span class="r">1</span><span class="r">2</span>
+            <span class="lab">Transactions</span><span class="r">3</span><span class="r">8</span>
+            <span class="lab">Cash entries</span><span class="r">1</span><span class="r">4</span>
+          </div>
+          <div class="kv tot"><span>Cash balance after the restore</span><span>$9,425.00</span></div>
+          <div class="kv"><span>Holdings with shares</span><span>1</span></div>
+        </div>
+        <div class="foot"><span class="btn filled l wide">Continue</span><span class="btn text l wide">Cancel</span></div>
+      </div>
+      <div class="bar"><span class="tab on"><span>More</span></span><span class="tab"><span>Cash</span></span><span class="tab"><span>Portfolios</span></span><span class="tab"><span>Overall</span></span></div>
+    </div></div></div>
+
+  <div class="shot"><div class="cap"><b>G. Step 4 of 5: confirm</b><span>Markers 16 and 17. The optional export as a card with an outline Back up now; the consequence as D-34's warning line; type RESTORE; Replace all data the disabled gold button until it matches.</span></div>
+    <div class="scroll"><div class="phone">
+      <div class="band"><span class="ico"><i class="ic" data-i="chevron-left"></i></span><span class="t22">Restore</span></div>
+      <div class="body">
+        <div class="step">Step 4 of 5 · Nothing has been changed.</div>
+        <div class="card pad">
+          <span class="t16m">Back up what is in the app now</span>
+          <span class="t14 muted">Optional. Recommended: restoring cannot be undone.</span>
+          <div class="acts" style="padding-top:4px"><span class="btn out">Back up now</span></div>
+        </div>
+        <div class="warn"><i class="ic s20" data-i="triangle-alert"></i><span class="t14m">Everything in the app, data and settings, is deleted and replaced by the file. Only a backup restore brings it back.</span></div>
+        <div class="f"><div class="field focus"><span class="fl">Type RESTORE to confirm</span><span class="v"><span class="caret"></span></span></div>
+          <div class="note">Case and spaces are ignored. Replace all data is available when the word matches.</div></div>
+        <div class="foot"><span class="btn filled l wide dis">Replace all data</span><span class="btn text l wide">Cancel</span></div>
+      </div>
+      <div class="bar"><span class="tab on"><span>More</span></span><span class="tab"><span>Cash</span></span><span class="tab"><span>Portfolios</span></span><span class="tab"><span>Overall</span></span></div>
+    </div></div></div>
+
+  <div class="shot"><div class="cap"><b>H. Step 5 of 5: restore complete</b><span>Marker 18. No back arrow: there is no way back into the wizard. The counts as three rows, the notes in secondary text, Go to Overall the gold foot.</span></div>
+    <div class="scroll"><div class="phone">
+      <div class="band"><span class="t22" style="padding-left:8px">Restore</span></div>
+      <div class="body">
+        <div class="card pad">
+          <div class="warn"><i class="ic" data-i="circle-check"></i><span class="t16m">Restore complete</span></div>
+          <div class="kv"><span>Portfolios</span><span>2</span></div>
+          <div class="kv"><span>Transactions</span><span>8</span></div>
+          <div class="kv"><span>Cash entries</span><span>4</span></div>
+          <div class="t14 muted" style="padding-top:4px">Holdings show "no price" until the first price refresh. More shows "never backed up", so the backup reminder shows.</div>
+        </div>
+        <div class="foot"><span class="btn filled l wide">Go to Overall</span></div>
+      </div>
+      <div class="bar"><span class="tab on"><span>More</span></span><span class="tab"><span>Cash</span></span><span class="tab"><span>Portfolios</span></span><span class="tab"><span>Overall</span></span></div>
+    </div></div></div>
+
+  <div class="shot"><div class="cap"><b>I. Step 5: the write failed</b><span>Marker 19. The blocked card, and Close as the one button at the foot.</span></div>
+    <div class="scroll"><div class="phone">
+      <div class="band"><span class="t22" style="padding-left:8px">Restore</span></div>
+      <div class="body">
+        <div class="blocked"><i class="ic s20" data-i="circle-alert"></i><div class="t14"><b>Not restored.</b> Nothing was changed.</div></div>
+        <div class="foot"><span class="btn filled l wide">Close</span></div>
+      </div>
+      <div class="bar"><span class="tab on"><span>More</span></span><span class="tab"><span>Cash</span></span><span class="tab"><span>Portfolios</span></span><span class="tab"><span>Overall</span></span></div>
+    </div></div></div>
+</div>
+
+<div class="notes">
+  <p><strong>Choices made in this drawing, for you to confirm.</strong> Everything else follows D-17, D-31 to D-34.</p>
+  <ol>
+    <li><strong>The wizard's step is a line under the band</strong> in Asap Condensed 14 medium, secondary: "Step 1 of 5 · Nothing is changed until step 5." No progress bar.</li>
+    <li><strong>The Backup and restore screen is two cards, each with its own action</strong>: Back up now gold filled (the screen's main action), Restore from backup file an outline button.</li>
+    <li><strong>Restore offline is the disabled button</strong> (D-34) with the reason as a note line, not the wireframe's dashed outline; a third departure for intent-cr-07 (wireframe 10e, marker 4).</li>
+    <li><strong>An export's result is D-33's notice banner</strong>, both "Backup saved" and "Backup not saved": a cancelled export is not an error, so not bronze.</li>
+    <li><strong>Checking shows each phase as a 48 row</strong>: Lucide check when done, loader-circle turning while it runs (standing still under reduced motion), and the state in words.</li>
+    <li><strong>The error report is the blocked card with the count</strong>, then the errors in a card, one row per error with dividers, its line and column in medium, plain text.</li>
+    <li><strong>Now and In the file are two right-aligned columns</strong> with condensed heads; the after-restore figures are label-and-value rows under a divider.</li>
+    <li><strong>The wizard's foot is the entry screens' foot</strong>: the step's main action large gold, Cancel a large text button under it; Replace all data is gold too, disabled until RESTORE matches (as D-34).</li>
+    <li><strong>Restore complete gets Lucide's circle-check</strong> in the icon color beside its heading (not green: green is gains), the counts as three rows, and no back arrow.</li>
+  </ol>
+  <p><strong>Not drawn:</strong> these at 200% font with the keyboard up (RestoreScreen already measures its room, CLAUDE.md pitfall), a file-level failure (same layout, "File" in place of a line), and step 4 with RESTORE typed. Icons are Lucide at stroke 2, drawn inline from its path data as Claude knows it.</p>
+</div>
+</div>
+
+<script>
+const phones = [...document.querySelectorAll(".phone")];
+let dark = false;
+try { dark = matchMedia("(prefers-color-scheme: dark)").matches; } catch (e) {}
+function render() {
+  for (const p of phones) p.classList.toggle("dark", dark);
+  for (const b of document.querySelectorAll("[data-mode]")) b.setAttribute("aria-pressed", String((b.dataset.mode === "dark") === dark));
+}
+for (const b of document.querySelectorAll("[data-mode]")) b.addEventListener("click", () => { dark = b.dataset.mode === "dark"; render(); });
+render();
+const PATHS = {
+  "chevron-left": '<path d="m15 18-6-6 6-6"/>',
+  "check": '<path d="M20 6 9 17l-5-5"/>',
+  "info": '<circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/>',
+  "circle-alert": '<circle cx="12" cy="12" r="10"/><path d="M12 8v4"/><path d="M12 16h.01"/>',
+  "circle-check": '<circle cx="12" cy="12" r="10"/><path d="m9 12 2 2 4-4"/>',
+  "loader-circle": '<path d="M21 12a9 9 0 1 1-6.219-8.56"/>',
+  "triangle-alert": '<path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3"/><path d="M12 9v4"/><path d="M12 17h.01"/>'
+};
+for (const i of document.querySelectorAll("i[data-i]")) {
+  const tmp = document.createElement("span");
+  tmp.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" aria-hidden="true">' + PATHS[i.dataset.i] + '</svg>';
+  const svg = tmp.firstChild;
+  svg.setAttribute("class", i.getAttribute("class"));
+  i.replaceWith(svg);
+}
+</script>
+<script>
+/* Bottom bar icons (D-37): Lucide, inline */
+(function () {
+  const TI = {
+    "Overall": '<path d="M21 12c.552 0 1.005-.449.95-.998a10 10 0 0 0-8.953-8.951c-.55-.055-.998.398-.998.95v8a1 1 0 0 0 1 1z"/><path d="M21.21 15.89A10 10 0 1 1 8 2.83"/>',
+    "Portfolios": '<path d="M16 20V4a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/><rect width="20" height="14" x="2" y="6" rx="2"/>',
+    "Cash": '<path d="M19 7V4a1 1 0 0 0-1-1H5a2 2 0 0 0 0 4h15a1 1 0 0 1 1 1v4h-3a2 2 0 0 0 0 4h3a1 1 0 0 0 1-1v-2a1 1 0 0 0-1-1"/><path d="M3 5v14a2 2 0 0 0 2 2h15a1 1 0 0 0 1-1v-4"/>',
+    "More": '<circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/><circle cx="5" cy="12" r="1"/>'
+  };
+  for (const tab of document.querySelectorAll(".bar .tab")) {
+    const s = tab.querySelector("span");
+    if (!s) continue;
+    const name = s.textContent.trim();
+    if (!TI[name]) continue;
+    tab.classList.add("it");
+    s.className = "both";
+    s.innerHTML = '<svg viewBox="0 0 24 24" aria-hidden="true">' + TI[name] + '</svg><span class="t">' + name + '</span>';
+  }
+})();
+</script>
+</body></html>

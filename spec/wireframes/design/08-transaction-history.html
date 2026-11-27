@@ -1,0 +1,286 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<title>Transaction History Screen</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Asap:wght@400;500;700&family=Asap+Condensed:wght@400;500;700&display=swap">
+<style>
+/* Layout: a theme switch, then four phones that wrap, one per frame of wireframe 07 (no filter; AAPL and Sell; nothing matches;
+   a reversal line). Phones carry the Corporate Design System's tokens (D-07 to D-27). 1 CSS px = 1 dp. */
+:root { --page-bg: #F4F6FA; --page-ink: #0A1A36; --page-muted: #4B5D75; --page-line: #CED8E6; --stamp: #8A6D12; --sans: "Asap", sans-serif; --cond: "Asap Condensed", sans-serif; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --page-bg: #070F1F; --page-ink: #E6ECF5; --page-muted: #9DB0C9; --page-line: #1E2F4A; --stamp: #E0BC4A; color-scheme: dark } }
+:root[data-theme="dark"] { --page-bg: #070F1F; --page-ink: #E6ECF5; --page-muted: #9DB0C9; --page-line: #1E2F4A; --stamp: #E0BC4A; color-scheme: dark }
+body { margin: 0; background: var(--page-bg); color: var(--page-ink); font-family: var(--sans); }
+.wrap { max-width: 1760px; margin: 0 auto; padding-block: 28px 56px;
+  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px));
+  display: flex; flex-direction: column; gap: 24px; }
+.stamp { font: 500 14px/20px var(--cond); color: var(--stamp); }
+h1 { font-size: 28px; font-weight: 500; margin: 0; }
+p { margin: 0; line-height: 1.5; max-width: 80ch; color: var(--page-muted); }
+p strong { color: var(--page-ink); font-weight: 500; }
+header { display: flex; flex-direction: column; gap: 10px; }
+.seg { display: inline-flex; border: 1px solid var(--page-line); border-radius: 8px; overflow: hidden; }
+.seg button { font: 500 14px var(--sans); color: var(--page-muted); background: transparent; border: 0; padding: 0 18px; height: 36px; cursor: pointer; }
+.seg button[aria-pressed="true"] { background: var(--page-line); color: var(--page-ink); }
+.seg button:focus-visible { outline: 2px solid var(--page-ink); outline-offset: -3px; }
+.grid { display: flex; flex-wrap: wrap; gap: 28px; align-items: flex-start; }
+.shot { display: flex; flex-direction: column; gap: 10px; width: 411px; max-width: 100%; }
+.cap { display: flex; flex-direction: column; gap: 4px; }
+.cap b { font-size: 17px; font-weight: 500; }
+.cap span { font-size: 14px; line-height: 1.45; color: var(--page-muted); }
+.scroll { overflow-x: auto; max-width: 100%; }
+
+/* ---------- Tokens ---------- */
+.phone {
+  --page: #EBF0F8; --card: #DFE7F6; --band: #0A1A36; --on-band: #FFFFFF; --summary: #153D5A; --on-summary-muted: #B0C4E8;
+  --ink: #0A1A36; --muted: #295C85; --divider: #B0C4E8; --accent: #376A9E;
+  --gold: #C9A227; --on-gold: #0A1A36; --btn-line: #376A9E; --btn-text: #0E2B47; --field-line: #376A9E;
+  --chip-on: #0E2B47; --on-chip-on: #FFFFFF;
+  --bar: #0A1A36; --bar-label: #8AABC5; --bar-sel: #E0BC4A; --pill: #1C4F6C; --bar-ind: transparent;
+  --shadow: 0 1px 3px rgba(10, 26, 54, .26), 0 4px 12px rgba(10, 26, 54, .16);
+  width: 411px; height: 892px; box-sizing: border-box; background: var(--page); color: var(--ink); border: 1px solid var(--page-line); border-radius: 14px;
+  overflow: hidden; display: flex; flex-direction: column; font-family: var(--sans); position: relative; }
+.phone.dark {
+  --page: #0A1A36; --card: #0E2B47; --band: #0A1A36; --on-band: #E6ECF5; --summary: #1C4F6C;
+  --ink: #E6ECF5; --muted: #B0C4E8; --divider: #1C4F6C; --accent: #E0BC4A;
+  --gold: #E0BC4A; --btn-line: #E0BC4A; --btn-text: #E0BC4A; --field-line: #6291B9;
+  --chip-on: #E0BC4A; --on-chip-on: #0A1A36;
+  --bar: #050D1C; --pill: transparent; --bar-ind: #E0BC4A;
+  --shadow: 0 1px 3px rgba(0, 0, 0, .62), 0 5px 14px rgba(0, 0, 0, .48); }
+.t22 { font: 500 22px/28px var(--sans); }
+.t32 { font: 500 32px/40px var(--sans); }
+.t16m { font: 500 16px/24px var(--sans); }
+.t16 { font: 400 16px/24px var(--sans); }
+.t14 { font: 400 14px/20px var(--sans); }
+.t12 { font: 400 12px/16px var(--sans); }
+.t12c { font: 400 12px/16px var(--cond); }
+.muted { color: var(--muted); }
+.num { font-variant-numeric: tabular-nums; }
+
+.band { background: var(--band); color: var(--on-band); padding: 14px 12px; flex: none; }
+.body { padding: 12px; display: flex; flex-direction: column; gap: 8px; overflow: hidden; flex: 1; min-height: 0; }
+.card { background: var(--card); border-radius: 8px; box-shadow: var(--shadow); }
+.card.summary { background: var(--summary); color: #FFFFFF; padding: 10px; display: flex; align-items: flex-end; justify-content: space-between; gap: 8px; }
+.card.summary .lbl { color: var(--on-summary-muted); }
+.pad { padding: 10px; display: flex; flex-direction: column; gap: 8px; }
+
+/* Buttons (D-17): medium 40, outline on the summary card in the summary's own colors */
+.btn { height: 40px; padding: 0 20px; border-radius: 8px; display: inline-flex; align-items: center; justify-content: center; gap: 6px; font: 500 14px/20px var(--sans); box-sizing: border-box; border: 1px solid transparent; white-space: nowrap; }
+.btn.out { border-color: var(--btn-line); color: var(--btn-text); }
+.btn.on-summary { border-color: #B0C4E8; color: #FFFFFF; }
+.phone.dark .btn.on-summary { border-color: #E0BC4A; color: #E0BC4A; }
+.btn.s { height: 32px; padding: 0 12px; font: 500 14px/20px var(--cond); }
+.btn.text { color: var(--btn-text); padding: 0 8px; }
+.actions { display: flex; justify-content: flex-end; }
+
+/* Dense date fields (D-18): 40 tall, 120 wide, Asap 14, calendar 20; label beside */
+/* Dense date field sized to its content (option B): at least 120, grows to keep the date and its icon on one line;
+   when the row has no room, To moves under From. --fs stands in for the phone's font size. */
+.dates { display: flex; column-gap: 16px; flex-wrap: wrap; }
+.dline { display: flex; align-items: center; gap: 8px; min-height: 48px; flex: 0 1 auto; }
+.field { border: 1px solid var(--field-line); border-radius: 8px; box-sizing: border-box; display: flex; align-items: center; gap: 4px; }
+.field.dense { min-height: 40px; min-width: 120px; width: auto; white-space: nowrap; padding: 0 8px; font: 400 calc(14px * var(--fs, 1))/1.43 var(--sans); }
+.scale .t14 { font-size: calc(14px * var(--fs)); line-height: 1.43; }
+.scale .note { font-size: calc(12px * var(--fs)); line-height: 1.33; }
+.scale-tag { font: 500 13px/18px var(--cond); color: var(--muted); }
+.field.dense .v { flex: 1; font-variant-numeric: tabular-nums; }
+.field.dense .v.ph { color: var(--muted); }
+.field.pick { height: 40px; padding: 0 8px 0 10px; font: 400 14px/20px var(--sans); flex: 1; }
+.field.pick .v { flex: 1; }
+.note { font: 400 12px/16px var(--sans); color: var(--muted); }
+
+/* Chips (D-17): 32 tall, 48 touch area; unavailable: the catalog's disabled chip, 38% with a solid outline (D-29) */
+.chips { display: flex; flex-wrap: wrap; gap: 8px; padding: 8px 0; }
+.chip { height: 32px; padding: 0 12px; border-radius: 8px; display: inline-flex; align-items: center; gap: 6px; box-sizing: border-box;
+  font: 500 14px/20px var(--cond); border: 1px solid var(--btn-line); color: var(--btn-text); }
+.chip.on { background: var(--chip-on); color: var(--on-chip-on); border-color: var(--chip-on); }
+.chip.off { opacity: .38; }
+
+/* Rows: standard, tappable, at least 48 tall; amounts signed, never colored (spec 6) */
+.r { display: flex; align-items: center; gap: 10px; padding: 10px; min-height: 48px; box-sizing: border-box; }
+.r .grow { flex: 1; min-width: 0; }
+.r .end { display: flex; flex-direction: column; align-items: flex-end; text-align: right; }
+.div { height: 1px; background: var(--divider); margin: 0 10px; }
+.count { padding: 10px 10px 0; }
+.empty { padding: 16px 10px; text-align: center; }
+
+/* Bottom bar, text only (D-10), default order More, Cash, Portfolios, Overall */
+.bar { display: flex; background: var(--bar); padding: 0 4px; flex: none; }
+.tab { flex: 1; min-height: 56px; display: flex; flex-direction: column; align-items: center; justify-content: center; font: 500 14px/20px var(--cond); color: var(--bar-label); padding: 6px 2px; box-sizing: border-box; }
+.tab span { padding: 4px 10px; border-radius: 8px; }
+.tab::after { content: ""; width: 24px; height: 3px; margin-top: 3px; border-radius: 2px; }
+.tab.on { color: var(--bar-sel); font-weight: 700; }
+.tab.on span { background: var(--pill); }
+.tab.on::after { background: var(--bar-ind); }
+
+/* Icons: Lucide, stroke 2 (D-24), drawn inline */
+.ic { width: 24px; height: 24px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; display: block; flex: none; }
+.ic.s20 { width: 20px; height: 20px; }
+.ic.s16 { width: 16px; height: 16px; }
+.field .ic { color: var(--btn-text); }
+.r .ic { color: var(--muted); }
+.notes { display: flex; flex-direction: column; gap: 8px; border-top: 1px solid var(--page-line); padding-top: 16px; }
+.notes p { font-size: 14px; }
+/* Bottom bar with icon and text (D-37, amending D-10): 72 tall; light, one pill behind icon and label; dark, gold icon and label over the gold line. */
+.tab.it { min-height: 72px; }
+.tab.it .both { display: flex; flex-direction: column; align-items: center; gap: 2px; padding: 6px 4px 4px; border-radius: 8px; min-width: 84px; box-sizing: border-box; } /* one pill size on every tab (D-37) */
+.tab.it .both svg { width: 24px; height: 24px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; display: block; }
+.tab.it span.t, .tab.it.on span.t { padding: 0; background: none; }.band .ico { min-width: 40px; height: 40px; display: inline-flex; align-items: center; justify-content: center; }
+.pfline { display: flex; align-items: baseline; gap: 10px; min-height: 32px; }
+.cline { display: flex; align-items: center; justify-content: space-between; gap: 10px; min-height: 48px; margin: -8px 10px 0 22px; color: var(--muted); }</style>
+
+<div class="wrap">
+<header>
+  <span class="stamp">Stage: Design (CR7) · drawings for spec/wireframes/design/ · 2026-11-28</span>
+  <h1>Transaction history</h1>
+  <p>Wireframe 08 (approved) drawn in the Corporate Design System with Cash's filters, chips and rows (D-30): one portfolio's trades, their cash lines, a reversal chain, the Cash chip, and no match. <strong>Frames A, C and D are Example A (Portfolio P); frame B is Portfolio Main of the sample backup file; every text is a placeholder</strong> (D9). Amounts are not colored. Opened from a portfolio, so Portfolios is the selected tab. Drawn in HTML at 1 px per dp, not rendered by Android.</p>
+  <div><span class="seg" role="group" aria-label="Phone theme"><button type="button" data-mode="light" aria-pressed="true">Light</button><button type="button" data-mode="dark" aria-pressed="false">Dark</button></span></div>
+</header>
+
+<div class="grid">
+
+  <div class="shot"><div class="cap"><b>A. No filter (Example A)</b><span>Markers 1 to 3. The portfolio named as a read-only line in the filter card; From, To and Ticker as on Cash; five chips, none ever disabled; each trade a row with its cash effect as a link row under it.</span></div>
+    <div class="scroll"><div class="phone">
+      <div class="band"><span class="ico"><i class="ic" data-i="chevron-left"></i></span><span class="t22">Transaction history</span></div>
+      <div class="body">
+        <div class="card pad">
+          <div class="pfline"><span class="t14 muted">Portfolio</span><span class="t16m">Portfolio P</span></div>
+          <div class="dates">
+            <div class="dline"><span class="t14">From</span><div class="field dense"><span class="v ph">YYYY-MM-DD</span><i class="ic s20" data-i="calendar"></i></div></div>
+            <div class="dline"><span class="t14">To</span><div class="field dense"><span class="v ph">YYYY-MM-DD</span><i class="ic s20" data-i="calendar"></i></div></div>
+          </div>
+          <div class="note">Enter date in US market time (New York)</div>
+          <div class="dline"><span class="t14">Ticker</span><div class="field pick"><span class="v">All tickers</span><i class="ic s20" data-i="chevron-down"></i></div></div>
+          <div class="chips"><span class="chip on"><i class="ic s16" data-i="check"></i>All</span><span class="chip">Buy</span><span class="chip">Sell</span><span class="chip">Split</span><span class="chip">Cash</span></div>
+        </div>
+        <div class="card">
+          <div class="r"><div class="grow"><div class="t16">Sell AAPL</div><div class="t14 muted num">2026-03-01 ET, 12 shares</div></div><span class="t16 num">$2,100.00</span><i class="ic s20" data-i="chevron-right"></i></div>
+          <div class="cline"><span class="t14 num">Cash +$2,100.00</span><i class="ic s20" data-i="chevron-right"></i></div>
+          <div class="div"></div>
+          <div class="r"><div class="grow"><div class="t16">Buy AAPL</div><div class="t14 muted num">2026-02-01 ET, 10 shares</div></div><span class="t16 num">$1,500.00</span><i class="ic s20" data-i="chevron-right"></i></div>
+          <div class="cline"><span class="t14 num">Cash −$1,500.00</span><i class="ic s20" data-i="chevron-right"></i></div>
+          <div class="div"></div>
+          <div class="r"><div class="grow"><div class="t16">Buy AAPL</div><div class="t14 muted num">2026-01-02 ET, 10 shares</div></div><span class="t16 num">$1,000.00</span><i class="ic s20" data-i="chevron-right"></i></div>
+          <div class="cline"><span class="t14 num">Cash −$1,000.00</span><i class="ic s20" data-i="chevron-right"></i></div>
+        </div>
+      </div>
+      <div class="bar"><span class="tab"><span>More</span></span><span class="tab"><span>Cash</span></span><span class="tab on"><span>Portfolios</span></span><span class="tab"><span>Overall</span></span></div>
+    </div></div></div>
+
+  <div class="shot"><div class="cap"><b>B. A reversal chain (sample file, Main, ticker AAPL)</b><span>Marker 4. The reversal names its original; the original carries "Reversed on …" as a link row; a split has no cash line and shows its ratio in place of an amount. Filter card collapsed here to its first line for room (same controls).</span></div>
+    <div class="scroll"><div class="phone">
+      <div class="band"><span class="ico"><i class="ic" data-i="chevron-left"></i></span><span class="t22">Transaction history</span></div>
+      <div class="body">
+        <div class="card pad"><div class="pfline"><span class="t14 muted">Portfolio</span><span class="t16m">Main</span></div><div class="t14 muted">Ticker AAPL, type All (filters as in frame A)</div></div>
+        <div class="card">
+          <div class="r"><div class="grow"><div class="t16">Reversal of the buy of 2026-03-20 ET</div><div class="t14 muted num">2026-04-05 ET, 2 shares as traded</div></div><span class="t16 num">$360.00</span><i class="ic s20" data-i="chevron-right"></i></div>
+          <div class="cline"><span class="t14 num">Cash +$360.00</span><i class="ic s20" data-i="chevron-right"></i></div>
+          <div class="div"></div>
+          <div class="r"><div class="grow"><div class="t16">Split AAPL</div><div class="t14 muted num">2026-04-01 ET</div></div><span class="t16 num">2 for 1</span><i class="ic s20" data-i="chevron-right"></i></div>
+          <div class="div"></div>
+          <div class="r"><div class="grow"><div class="t16">Buy AAPL</div><div class="t14 muted num">2026-03-20 ET, 2 shares</div></div><span class="t16 num">$360.00</span><i class="ic s20" data-i="chevron-right"></i></div>
+          <div class="cline"><span class="t14 num">Reversed on 2026-04-05 ET</span><i class="ic s20" data-i="chevron-right"></i></div>
+          <div class="cline"><span class="t14 num">Cash −$360.00</span><i class="ic s20" data-i="chevron-right"></i></div>
+          <div class="div"></div>
+          <div class="r"><div class="grow"><div class="t16">Sell AAPL</div><div class="t14 muted num">2026-03-01 ET, 12 shares</div></div><span class="t16 num">$2,100.00</span><i class="ic s20" data-i="chevron-right"></i></div>
+          <div class="cline"><span class="t14 num">Cash +$2,100.00</span><i class="ic s20" data-i="chevron-right"></i></div>
+        </div>
+      </div>
+      <div class="bar"><span class="tab"><span>More</span></span><span class="tab"><span>Cash</span></span><span class="tab on"><span>Portfolios</span></span><span class="tab"><span>Overall</span></span></div>
+    </div></div></div>
+
+  <div class="shot"><div class="cap"><b>C. The Cash chip (Example A)</b><span>Markers 5 and 7. One row per trade's cash line, naming buy or sell and the ticker, with its date and signed amount, uncolored; each opens its trade. A reversal's line reads "Reversal of buy AAPL" (sample file).</span></div>
+    <div class="scroll"><div class="phone">
+      <div class="band"><span class="ico"><i class="ic" data-i="chevron-left"></i></span><span class="t22">Transaction history</span></div>
+      <div class="body">
+        <div class="card pad">
+          <div class="pfline"><span class="t14 muted">Portfolio</span><span class="t16m">Portfolio P</span></div>
+          <div class="chips"><span class="chip">All</span><span class="chip">Buy</span><span class="chip">Sell</span><span class="chip">Split</span><span class="chip on"><i class="ic s16" data-i="check"></i>Cash</span></div>
+        </div>
+        <div class="card">
+          <div class="r"><div class="grow"><div class="t16">Cash line, sell AAPL</div><div class="t14 muted num">2026-03-01 ET</div></div><span class="t16 num">+$2,100.00</span><i class="ic s20" data-i="chevron-right"></i></div>
+          <div class="div"></div>
+          <div class="r"><div class="grow"><div class="t16">Cash line, buy AAPL</div><div class="t14 muted num">2026-02-01 ET</div></div><span class="t16 num">−$1,500.00</span><i class="ic s20" data-i="chevron-right"></i></div>
+          <div class="div"></div>
+          <div class="r"><div class="grow"><div class="t16">Cash line, buy AAPL</div><div class="t14 muted num">2026-01-02 ET</div></div><span class="t16 num">−$1,000.00</span><i class="ic s20" data-i="chevron-right"></i></div>
+        </div>
+      </div>
+      <div class="bar"><span class="tab"><span>More</span></span><span class="tab"><span>Cash</span></span><span class="tab on"><span>Portfolios</span></span><span class="tab"><span>Overall</span></span></div>
+    </div></div></div>
+
+  <div class="shot"><div class="cap"><b>D. No match (Apr 1 to Apr 30)</b><span>Marker 6. One plain line in a card in place of the list (as D-39).</span></div>
+    <div class="scroll"><div class="phone">
+      <div class="band"><span class="ico"><i class="ic" data-i="chevron-left"></i></span><span class="t22">Transaction history</span></div>
+      <div class="body">
+        <div class="card pad">
+          <div class="pfline"><span class="t14 muted">Portfolio</span><span class="t16m">Portfolio P</span></div>
+          <div class="dates">
+            <div class="dline"><span class="t14">From</span><div class="field dense"><span class="v">2026-04-01</span><i class="ic s20" data-i="calendar"></i></div></div>
+            <div class="dline"><span class="t14">To</span><div class="field dense"><span class="v">2026-04-30</span><i class="ic s20" data-i="calendar"></i></div></div>
+          </div>
+          <div class="note">Enter date in US market time (New York)</div>
+          <div class="dline"><span class="t14">Ticker</span><div class="field pick"><span class="v">All tickers</span><i class="ic s20" data-i="chevron-down"></i></div></div>
+          <div class="chips"><span class="chip on"><i class="ic s16" data-i="check"></i>All</span><span class="chip">Buy</span><span class="chip">Sell</span><span class="chip">Split</span><span class="chip">Cash</span></div>
+        </div>
+        <div class="card pad"><span class="t16 muted">No transactions match these filters.</span></div>
+      </div>
+      <div class="bar"><span class="tab"><span>More</span></span><span class="tab"><span>Cash</span></span><span class="tab on"><span>Portfolios</span></span><span class="tab"><span>Overall</span></span></div>
+    </div></div></div>
+</div>
+
+<div class="notes">
+  <p><strong>Choices made in this drawing, for you to confirm.</strong> Everything else follows D-30 (Cash's filters, chips and rows) and D-31.</p>
+  <ol>
+    <li><strong>The portfolio is a read-only line</strong> at the top of the filter card ("Portfolio" in secondary 14, the name in medium 16), since there is no chooser.</li>
+    <li><strong>A trade's cash effect is a link row under it</strong>: indented, secondary 14 with its sign, uncolored, and a chevron; it opens the cash line. The original of a reversal gets "Reversed on …" the same way.</li>
+    <li><strong>A row's right side is the amount uncolored</strong>, or a split's ratio ("2 for 1") in its place; rows keep Cash's regular 16 title (not medium, as on Holding detail's Transactions tab).</li>
+    <li><strong>No chip is ever disabled here</strong>: every combination can match (marker 2), unlike Cash's (D-29).</li>
+  </ol>
+  <p><strong>Note for you:</strong> Holding detail's Transactions tab (D-43, 5) titles rows in medium 16; this list and Cash use regular 16. Both are accepted as drawn; if you want one rule, say which and I'll align the other.</p>
+  <p><strong>Not drawn:</strong> the ticker list open, the date picker, 200% font. Icons are Lucide at stroke 2, drawn inline from its path data as Claude knows it.</p>
+</div>
+</div>
+
+<script>
+const phones = [...document.querySelectorAll(".phone")];
+let dark = false;
+try { dark = matchMedia("(prefers-color-scheme: dark)").matches; } catch (e) {}
+function render() {
+  for (const p of phones) p.classList.toggle("dark", dark);
+  for (const b of document.querySelectorAll("[data-mode]")) b.setAttribute("aria-pressed", String((b.dataset.mode === "dark") === dark));
+}
+for (const b of document.querySelectorAll("[data-mode]")) b.addEventListener("click", () => { dark = b.dataset.mode === "dark"; render(); });
+render();
+const PATHS = {
+  "calendar": '<path d="M8 2v4"/><path d="M16 2v4"/><rect width="18" height="18" x="3" y="4" rx="2"/><path d="M3 10h18"/>',
+  "chevron-down": '<path d="m6 9 6 6 6-6"/>',
+  "chevron-right": '<path d="m9 18 6-6-6-6"/>',
+  "check": '<path d="M20 6 9 17l-5-5"/>', "chevron-left": '<path d="m15 18-6-6 6-6"/>'
+};
+for (const i of document.querySelectorAll("i[data-i]")) {
+  const tmp = document.createElement("span");
+  tmp.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" aria-hidden="true">' + PATHS[i.dataset.i] + '</svg>';
+  const svg = tmp.firstChild;
+  svg.setAttribute("class", i.getAttribute("class"));
+  i.replaceWith(svg);
+}
+</script>
+<script>
+/* Bottom bar icons (D-37): Lucide, inline */
+(function () {
+  const TI = {
+    "Overall": '<path d="M21 12c.552 0 1.005-.449.95-.998a10 10 0 0 0-8.953-8.951c-.55-.055-.998.398-.998.95v8a1 1 0 0 0 1 1z"/><path d="M21.21 15.89A10 10 0 1 1 8 2.83"/>',
+    "Portfolios": '<path d="M16 20V4a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/><rect width="20" height="14" x="2" y="6" rx="2"/>',
+    "Cash": '<path d="M19 7V4a1 1 0 0 0-1-1H5a2 2 0 0 0 0 4h15a1 1 0 0 1 1 1v4h-3a2 2 0 0 0 0 4h3a1 1 0 0 0 1-1v-2a1 1 0 0 0-1-1"/><path d="M3 5v14a2 2 0 0 0 2 2h15a1 1 0 0 0 1-1v-4"/>',
+    "More": '<circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/><circle cx="5" cy="12" r="1"/>'
+  };
+  for (const tab of document.querySelectorAll(".bar .tab")) {
+    const s = tab.querySelector("span");
+    if (!s) continue;
+    const name = s.textContent.trim();
+    if (!TI[name]) continue;
+    tab.classList.add("it");
+    s.className = "both";
+    s.innerHTML = '<svg viewBox="0 0 24 24" aria-hidden="true">' + TI[name] + '</svg><span class="t">' + name + '</span>';
+  }
+})();
+</script>
+</body></html>
