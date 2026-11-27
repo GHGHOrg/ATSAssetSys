@@ -26,8 +26,11 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.contentDescription
-import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.disabled
+import androidx.compose.ui.semantics.onClick
+import androidx.compose.ui.semantics.role
 import androidx.compose.ui.text.style.TextAlign
 import app.ghghorg.atsassets.ui.theme.AtsIcon
 import app.ghghorg.atsassets.ui.theme.AtsTheme
@@ -177,7 +180,23 @@ internal fun AtsPickField(
                 .clip(shape)
                 .border(tokenDp("fieldOutline"), colors.fieldLine, shape)
                 .clickable(enabled = enabled, role = Role.DropdownList, onClickLabel = label, onClick = onOpen)
-                .then(if (spoken != null) Modifier.semantics { contentDescription = spoken } else Modifier)
+                // With [spoken], TalkBack reads only that sentence ("Allocation by, Holding"), as one button, and the
+                // field's own texts are not separate nodes (44a step 8 group (a); AllocationChoiceFocusTest).
+                .then(
+                    if (spoken != null) {
+                        Modifier.clearAndSetSemantics {
+                            contentDescription = spoken
+                            role = Role.DropdownList
+                            if (!enabled) disabled()
+                            onClick(label) {
+                                onOpen()
+                                true
+                            }
+                        }
+                    } else {
+                        Modifier
+                    },
+                )
                 .padding(horizontal = tokenDp(if (dense) "fieldDensePadding" else "fieldPadding")),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(tokenDp("fieldDensePadding")),
