@@ -164,6 +164,7 @@ fun CashReversal(
             onValueChange = onDateChange,
             modifier = Modifier.fillMaxWidth(),
             label = { Text(text = stringResource(R.string.reversal_date_label)) },
+            trailingIcon = { CalendarButton(state.reversal.dateText, onDateChange, digitsOnly = false) },
             supportingText = {
                 Column {
                     if (dateError != null) Text(text = dateError)

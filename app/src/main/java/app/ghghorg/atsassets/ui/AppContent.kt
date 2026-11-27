@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
@@ -47,15 +48,18 @@ fun AppContent(
         else -> Box(
             modifier = modifier.fillMaxSize(),
         ) {
+            val picker = rememberDatePickerState()
             val deleteOpen = state.deleteDialog != null || state.deleteBlocked != null
             val dialogOpen = state.portfolioDialog != null || state.renameDialog != null || deleteOpen || state.keyEntry != null
-            // While a dialog is open, TalkBack reads only the dialog, not the screen or the bar under it.
-            val under = if (dialogOpen) Modifier.clearAndSetSemantics { } else Modifier
-            Column(modifier = Modifier.fillMaxSize().then(under)) {
-                Box(modifier = Modifier.weight(1f)) {
-                    BarContent(state, viewModel, screenshots, onBackUpNow, restore)
+            // While a dialog or the date picker is open, TalkBack reads only it, not the screen or the bar under it.
+            val under = if (dialogOpen || picker.value != null) Modifier.clearAndSetSemantics { } else Modifier
+            CompositionLocalProvider(LocalDatePicker provides opener(picker, state.today)) {
+                Column(modifier = Modifier.fillMaxSize().then(under)) {
+                    Box(modifier = Modifier.weight(1f)) {
+                        BarContent(state, viewModel, screenshots, onBackUpNow, restore)
+                    }
+                    BottomBar(state.tabOrder.tabs, state.tab, viewModel::selectTab)
                 }
-                BottomBar(state.tabOrder.tabs, state.tab, viewModel::selectTab)
             }
             PortfolioDialogs(state, viewModel)
             // 29 step 10: the Delete dialog and the blocked message over the bar too, drawn last so their Back comes first.
@@ -78,6 +82,8 @@ fun AppContent(
                     onConfirmClear = viewModel::confirmClearKey,
                 ),
             )
+            // 44a step 7: the date picker over the screen and the bar, drawn last, inside the window.
+            DatePickerLayerHost(picker)
         }
     }
 }

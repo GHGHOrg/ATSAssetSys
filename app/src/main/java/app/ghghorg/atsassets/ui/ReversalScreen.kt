@@ -71,6 +71,7 @@ fun TransactionReversalScreen(
             onValueChange = actions.onDateChange,
             modifier = Modifier.fillMaxWidth(),
             label = { Text(text = stringResource(R.string.reversal_date_label)) },
+            trailingIcon = { CalendarButton(state.transactionReversalDate, actions.onDateChange) },
             supportingText = {
                 Column {
                     dateMessage(refusals.date)?.let { Text(text = it) }

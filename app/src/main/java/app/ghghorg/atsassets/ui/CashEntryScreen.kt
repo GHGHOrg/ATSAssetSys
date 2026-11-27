@@ -118,6 +118,7 @@ fun CashEntryForm(
             onValueChange = onDateChange,
             modifier = Modifier.fillMaxWidth(),
             label = { Text(text = stringResource(R.string.date_label)) },
+            trailingIcon = { CalendarButton(state.form.dateText, onDateChange, digitsOnly = false) },
             supportingText = {
                 Column {
                     if (dateError != null) Text(text = dateError)

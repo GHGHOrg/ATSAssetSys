@@ -112,6 +112,7 @@ fun BuyEntryScreen(
             onValueChange = actions.onDateChange,
             modifier = Modifier.fillMaxWidth(),
             label = { Text(text = stringResource(R.string.date_label)) },
+            trailingIcon = { CalendarButton(form.dateText, actions.onDateChange) },
             supportingText = {
                 Column {
                     dateMessage(refusals.date)?.let { Text(text = it) }

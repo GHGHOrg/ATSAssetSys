@@ -75,6 +75,13 @@
     <string name="amount_label">Amount</string>
     <string name="note_label">Note (optional)</string>
     <string name="date_note">Enter date in US market time (New York)</string>
+    <!-- 44a step 7 (spec 6, Date fields: the date picker; D9, approved 2026-11-28). -->
+    <string name="date_pick_open">Pick a date</string>
+    <string name="date_pick_previous">Previous month</string>
+    <string name="date_pick_next">Next month</string>
+    <string name="date_pick_use">Use %1$s</string>
+    <string name="date_pick_day">%1$s, %2$s</string>
+    <string name="date_pick_today">%1$s, %2$s, today</string>
     <string name="review_button">Review</string>
     <string name="back_button">Back</string>
     <string name="amount_empty">Amount: enter an amount.</string>

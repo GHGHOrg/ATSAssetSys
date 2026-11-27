@@ -325,6 +325,7 @@ internal fun FilterDateField(
         modifier = modifier,
         label = { Text(text = label) },
         placeholder = { Text(text = stringResource(R.string.filter_date_placeholder)) },
+        trailingIcon = { CalendarButton(text, onChange, dense = true) },
         supportingText = error?.let { { Text(text = it) } },
         isError = error != null,
         visualTransformation = DateDigitsTransformation,
