@@ -180,9 +180,9 @@ These come from spec.md section 6. The design system follows them and can't chan
 - `gold` fills the one main action on a screen; `button-line` and `button-text` draw the others. In dark, `band` equals `page`, so no band shows.
 - `error` (bronze brown) marks a refused field only: its 2 dp outline, its `circle-alert` icon (D-27) and its message, in medium weight. Never red, which stays for losses (D-16).
 
-## Token files (decided, not yet made)
+## Token files
 
-In the ATS repository under `design/` (D-21), split by what changes with the mode. A repository of its own follows once this is done.
+In the ATS repository under `design/` (D-21), split by what changes with the mode. A repository of its own follows once this is done. The three token files were made in iteration 44a, step 3 (2026-11-27), and app's unit test TokenFilesTest checks them: light and dark hold the same tokens (D-04), each color's hex matches its components, every reference resolves, and the values spec 6 names are the ones here. The icons and the Figma set are not made yet.
 
 | File | Format | Holds | Figma collection |
 | --- | --- | --- | --- |

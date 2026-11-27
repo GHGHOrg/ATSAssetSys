@@ -126,10 +126,22 @@ val runtimeGroups =
         output.set(layout.buildDirectory.file("licences/runtime-groups.txt"))
     }
 
+// 44a step 3 (CR7, spec K9, AC-61 (e)): the design token files in design/tokens/ are the source of the theme; the unit
+// tests read them from there, and a change to them runs the tests again.
+class DesignTokensArgument(
+    @get:Internal val dir: File,
+) : CommandLineArgumentProvider {
+    override fun asArguments(): List<String> = listOf("-Datsassets.tokens=${dir.absolutePath}")
+}
+
+val designTokens: File = rootProject.file("design/tokens")
+
 tasks.withType<Test>().configureEach {
     val groupsFile = runtimeGroups.flatMap { it.output }
     inputs.file(groupsFile).withPropertyName("runtimeGroups").withPathSensitivity(PathSensitivity.NONE)
     jvmArgumentProviders.add(RuntimeGroupsArgument(groupsFile))
+    inputs.files(fileTree(designTokens)).withPropertyName("designTokens").withPathSensitivity(PathSensitivity.RELATIVE)
+    jvmArgumentProviders.add(DesignTokensArgument(designTokens))
 }
 
 dependencies {

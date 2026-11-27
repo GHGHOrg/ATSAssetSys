@@ -1,6 +1,6 @@
 # plan/iterations/44a-design-system.md
 
-Stage: Build. Status: approved 2026-11-27 (your A); step 1 built and committed (0d3b6aa); step 2 built (research, section 10). The release is 44b (plan.md row 44b), drafted when 44a is merged.
+Stage: Build. Status: approved 2026-11-27 (your A); step 1 built and committed (0d3b6aa); step 2 built (research, section 10); step 3 part 1 built (the three token files and TokenFilesTest, shown red first: 6 of 6 failed on the missing files); step 3 part 2 (the icon files) waits on decisions 3 and 4. The release is 44b (plan.md row 44b), drafted when 44a is merged.
 Source: plan.md section 4 (row 44a); intent/intent-cr-07-design-system.md (CR7, final); spec/spec.md v10 (with the date-picker amendment, pull request #250): C27 to C29, section 6 (Visual design, Accessibility, Theme, Number format and color, Date fields with the date picker, every view and entry flow, the navigation outline), section 14 (K9), AC-40, AC-61 (b) and (e), AC-62, AC-70, AC-73; spec/wireframes/design/ (the accepted drawings); design/README.md and design/decisions.md (D-01 to D-46). "My reading" is an interpretation, not a test.
 
 ## 1. Outcome
