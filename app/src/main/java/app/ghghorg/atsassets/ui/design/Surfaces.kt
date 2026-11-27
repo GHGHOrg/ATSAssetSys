@@ -90,6 +90,7 @@ internal fun AtsTitleBand(
     modifier: Modifier = Modifier,
     onBack: (() -> Unit)? = null,
     backLabel: String? = null,
+    backEnabled: Boolean = true,
     actions: @Composable RowScope.() -> Unit = {},
 ) {
     val colors = AtsTheme.colors
@@ -101,7 +102,7 @@ internal fun AtsTitleBand(
             .padding(horizontal = tokenDp("bandSide")),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        if (onBack != null && backLabel != null) AtsIconButton(LucideIcon.CHEVRON_LEFT, backLabel, onBack, tint = colors.iconBand)
+        if (onBack != null && backLabel != null) AtsIconButton(LucideIcon.CHEVRON_LEFT, backLabel, onBack, enabled = backEnabled, tint = colors.iconBand)
         Text(
             title,
             style = typeStyle("screenTitle"),
@@ -112,6 +113,49 @@ internal fun AtsTitleBand(
                 .semantics { heading() },
         )
         actions()
+    }
+}
+
+/** A section heading over cards: medium 14 in the secondary color, read by TalkBack as a heading (D-36, D-38). */
+@Composable
+internal fun AtsSectionHeading(
+    text: String,
+    modifier: Modifier = Modifier,
+) {
+    Text(
+        text,
+        style = typeStyle("label"),
+        color = AtsTheme.colors.textSecondary,
+        modifier = modifier.padding(top = tokenDp("fieldDensePadding")).semantics { heading() },
+    )
+}
+
+/** A divider between rows inside a card (D-08: rows inside a card keep their dividers). */
+@Composable
+internal fun AtsRowDivider() {
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = tokenDp("spaceInset"))
+            .heightIn(min = tokenDp("buttonOutline"), max = tokenDp("buttonOutline"))
+            .background(AtsTheme.colors.divider),
+    )
+}
+
+/** A screen under its title band: the band, then [content] in a column with the side margin and the gap between cards. */
+@Composable
+internal fun AtsScreen(
+    title: String,
+    modifier: Modifier = Modifier,
+    onBack: (() -> Unit)? = null,
+    backLabel: String? = null,
+    backEnabled: Boolean = true,
+    actions: @Composable RowScope.() -> Unit = {},
+    body: @Composable ColumnScope.() -> Unit,
+) {
+    Column(modifier = modifier.fillMaxSize().background(AtsTheme.colors.page)) {
+        AtsTitleBand(title, onBack = onBack, backLabel = backLabel, backEnabled = backEnabled, actions = actions)
+        body()
     }
 }
 

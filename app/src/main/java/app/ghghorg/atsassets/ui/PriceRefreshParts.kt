@@ -3,10 +3,7 @@ package app.ghghorg.atsassets.ui
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.size
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.runtime.Composable
@@ -21,8 +18,11 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.LiveRegionMode
 import androidx.compose.ui.semantics.liveRegion
 import androidx.compose.ui.semantics.semantics
-import androidx.compose.ui.unit.dp
 import app.ghghorg.atsassets.R
+import app.ghghorg.atsassets.ui.design.TurningLoader
+import app.ghghorg.atsassets.ui.theme.AtsTheme
+import app.ghghorg.atsassets.ui.theme.tokenDp
+import app.ghghorg.atsassets.ui.theme.typeStyle
 
 // The price refresh's parts shared by every screen that shows prices: Holding detail (16a), the Portfolios list and a
 // portfolio's screen (16b).
@@ -62,26 +62,26 @@ internal fun PriceRefreshLines(
     refreshing: Boolean,
     failed: Boolean,
     noKey: Boolean = false,
+    onSummary: Boolean = false,
 ) {
+    // 44a step 8 (D-38): updating is Lucide's loader-circle beside the line; a failed refresh one quiet line in
+    // secondary 14, with no icon. On the summary card, in its own label color.
+    val quiet = if (onSummary) AtsTheme.colors.onSummaryMuted else AtsTheme.colors.textSecondary
     if (refreshing) {
         Row(
             verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(8.dp),
+            horizontalArrangement = Arrangement.spacedBy(tokenDp("fieldDensePadding")),
             modifier = Modifier.semantics(mergeDescendants = true) { liveRegion = LiveRegionMode.Polite },
         ) {
-            CircularProgressIndicator(modifier = Modifier.size(16.dp), strokeWidth = 2.dp)
-            Text(
-                text = stringResource(R.string.prices_updating),
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
+            TurningLoader(quiet, size = tokenDp("chipCheckSize"))
+            Text(text = stringResource(R.string.prices_updating), style = typeStyle("small"), color = quiet)
         }
     }
     if (failed) {
         Text(
             text = stringResource(if (noKey) R.string.price_refresh_no_key else R.string.price_refresh_failed),
-            style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            style = typeStyle("small"),
+            color = quiet,
             modifier = Modifier.semantics { liveRegion = LiveRegionMode.Polite },
         )
     }

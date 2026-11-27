@@ -26,6 +26,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextAlign
 import app.ghghorg.atsassets.ui.theme.AtsIcon
 import app.ghghorg.atsassets.ui.theme.AtsTheme
@@ -159,6 +161,7 @@ internal fun AtsPickField(
     modifier: Modifier = Modifier,
     dense: Boolean = false,
     enabled: Boolean = true,
+    spoken: String? = null,
 ) {
     val colors = AtsTheme.colors
     val shape = RoundedCornerShape(tokenDp("radiusDefault"))
@@ -174,6 +177,7 @@ internal fun AtsPickField(
                 .clip(shape)
                 .border(tokenDp("fieldOutline"), colors.fieldLine, shape)
                 .clickable(enabled = enabled, role = Role.DropdownList, onClickLabel = label, onClick = onOpen)
+                .then(if (spoken != null) Modifier.semantics { contentDescription = spoken } else Modifier)
                 .padding(horizontal = tokenDp(if (dense) "fieldDensePadding" else "fieldPadding")),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(tokenDp("fieldDensePadding")),

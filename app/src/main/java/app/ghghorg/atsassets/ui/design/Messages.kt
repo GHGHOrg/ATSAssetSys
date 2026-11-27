@@ -128,14 +128,23 @@ internal fun AtsProgressRow(
         if (done) {
             AtsIcon(LucideIcon.CHECK, tint = colors.iconAction)
         } else {
-            val turn by rememberInfiniteTransition(label = "loader").animateFloat(
-                initialValue = 0f,
-                targetValue = 360f,
-                animationSpec = infiniteRepeatable(tween(durationMillis = 1000, easing = LinearEasing), RepeatMode.Restart),
-                label = "loader turn",
-            )
-            AtsIcon(LucideIcon.LOADER_CIRCLE, tint = colors.iconAction, modifier = Modifier.rotate(turn))
+            TurningLoader(colors.iconAction)
         }
         Text(text, style = typeStyle("body"), color = colors.text)
     }
+}
+
+/** Lucide's loader-circle turning, for something that runs (a step, a price refresh; D-35). */
+@Composable
+internal fun TurningLoader(
+    tint: androidx.compose.ui.graphics.Color,
+    size: androidx.compose.ui.unit.Dp = tokenDp("iconSize"),
+) {
+    val turn by rememberInfiniteTransition(label = "loader").animateFloat(
+        initialValue = 0f,
+        targetValue = 360f,
+        animationSpec = infiniteRepeatable(tween(durationMillis = 1000, easing = LinearEasing), RepeatMode.Restart),
+        label = "loader turn",
+    )
+    AtsIcon(LucideIcon.LOADER_CIRCLE, tint = tint, size = size, modifier = Modifier.rotate(turn))
 }
