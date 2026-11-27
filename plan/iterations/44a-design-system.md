@@ -1,6 +1,6 @@
 # plan/iterations/44a-design-system.md
 
-Stage: Build. Status: approved 2026-11-27 (your A); step 1 built and committed (0d3b6aa); step 2 built (research, section 10); step 3 part 1 built (the three token files and TokenFilesTest, shown red first: 6 of 6 failed on the missing files); step 3 part 2 (the icon files) waits on decisions 3 and 4. The release is 44b (plan.md row 44b), drafted when 44a is merged.
+Stage: Build. Status: approved 2026-11-27 (your A); step 1 built and committed (0d3b6aa); step 2 built (research, section 10); step 3 part 1 built (the three token files and TokenFilesTest, shown red first: 6 of 6 failed on the missing files); step 3 part 2 built (Lucide 1.72.0's 24 icons, LICENSE-lucide, icons.json, the 24 vector drawables, IconFilesTest shown red first: 5 of 5 failed on the missing files; D-47). The release is 44b (plan.md row 44b), drafted when 44a is merged.
 Source: plan.md section 4 (row 44a); intent/intent-cr-07-design-system.md (CR7, final); spec/spec.md v10 (with the date-picker amendment, pull request #250): C27 to C29, section 6 (Visual design, Accessibility, Theme, Number format and color, Date fields with the date picker, every view and entry flow, the navigation outline), section 14 (K9), AC-40, AC-61 (b) and (e), AC-62, AC-70, AC-73; spec/wireframes/design/ (the accepted drawings); design/README.md and design/decisions.md (D-01 to D-46). "My reading" is an interpretation, not a test.
 
 ## 1. Outcome
@@ -70,7 +70,10 @@ Step 2, run 2026-11-27 (your yes): `gh api` read only on github.com, and one web
 ## 11. Decisions (Build)
 - 0. Two iterations for CR7, 44a (everything) and 44b (the release) (your B, 2026-11-27).
 - 1. The date picker is built in 44a, after spec v10 was amended (your B, 2026-11-27; pull request #250).
-- Open from step 2: 2. which font files ship (variable Asap with or without the italics; Asap Condensed as its own files or as Asap at width 75); 3. which Lucide release is pinned; 4. how the SVGs become vector drawables (a converter run once, its output kept in the repo, or by hand). Asked one at a time before step 3's icon files and step 4's fonts.
+- 3. Lucide 1.72.0 (2026-11-11) is pinned, not 1.82.0 (published the day of step 2): the icons used are the same in both, and 1.72.0 had 16 days of use first (your A, 2026-11-27).
+- 4. The SVGs become vector drawables through vd-tool (npm; Android Studio's own converter), run once with npx; its XML is kept in res/drawable/ and a unit test checks that every icon in icons.json has its SVG and its drawable (your A, 2026-11-27). The design system does not name a Lucide version (D-24, D-26): the drawings' icons were drawn from memory, so the release file wins where a path differs (AC-73); D-47 records the pin.
+- 5. The 24 drawables stay in step 3; lint's 24 UnusedResources notices (one per icon, until a screen draws it) are listed in each step's report and in CLAUDE.md's lint line, not silenced, and fall to 0 by step 8 (your A, 2026-11-27).
+- Open from step 2: 2. which font files ship (variable Asap with or without the italics; Asap Condensed as its own files or as Asap at width 75). Asked before step 4's fonts.
 - Open from step 4: the way of building the theme.
 
 ## 12. Wording to approve (D9)

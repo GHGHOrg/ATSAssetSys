@@ -1,0 +1,32 @@
+{
+  "lucide": "1.72.0",
+  "source": "https://github.com/lucide-icons/lucide/releases/tag/1.72.0, lucide-icons-1.72.0.zip (sha256 402d838c5ecbd9d395c3824568317335440018d2ce581a828fffe16abcca1eb3, as GitHub lists it)",
+  "converter": "Android Studio build 262.9437.185.2621.16467767, sdk-common.jar, Svg2Vector.parseSvgToXml, run once on 2026-11-27 (44a decision 4); its output is kept as written except android:strokeColor=\"currentColor\" set to #FF000000, which the theme's icon color tints",
+  "licence": "LICENSE-lucide: ISC, and MIT for the icons derived from Feather (the file lists them)",
+  "icons": [
+    { "file": "chart-pie", "drawingName": "pie-chart", "drawable": "ic_lucide_chart_pie", "use": "Overall tab (D-37)" },
+    { "file": "briefcase", "drawingName": "briefcase", "drawable": "ic_lucide_briefcase", "use": "Portfolios tab (D-37)" },
+    { "file": "wallet", "drawingName": "wallet", "drawable": "ic_lucide_wallet", "use": "Cash tab (D-37)" },
+    { "file": "ellipsis", "drawingName": "more-horizontal", "drawable": "ic_lucide_ellipsis", "use": "More tab (D-37)" },
+    { "file": "chevron-left", "drawingName": "chevron-left", "drawable": "ic_lucide_chevron_left", "use": "Back, on the title band; the date picker's previous month" },
+    { "file": "chevron-right", "drawingName": "chevron-right", "drawable": "ic_lucide_chevron_right", "use": "A row that opens another screen; the date picker's next month" },
+    { "file": "chevron-down", "drawingName": "chevron-down", "drawable": "ic_lucide_chevron_down", "use": "A pick field; a row that opens in place, closed" },
+    { "file": "chevron-up", "drawingName": "chevron-up", "drawable": "ic_lucide_chevron_up", "use": "A row that opens in place, open" },
+    { "file": "ellipsis-vertical", "drawingName": "ellipsis-vertical", "drawable": "ic_lucide_ellipsis_vertical", "use": "The portfolio's menu" },
+    { "file": "plus", "drawingName": "plus", "drawable": "ic_lucide_plus", "use": "New portfolio" },
+    { "file": "x", "drawingName": "x", "drawable": "ic_lucide_x", "use": "Closes the dense date picker" },
+    { "file": "calendar", "drawingName": "calendar", "drawable": "ic_lucide_calendar", "use": "A date field; opens the date picker" },
+    { "file": "check", "drawingName": "check", "drawable": "ic_lucide_check", "use": "A selected chip, a checkbox, a finished step" },
+    { "file": "circle-exclamation-point", "drawingName": "circle-alert", "drawable": "ic_lucide_circle_exclamation_point", "use": "A refused field; the blocked card (D-27)" },
+    { "file": "circle-check", "drawingName": "circle-check", "drawable": "ic_lucide_circle_check", "use": "The done heading (D-35)" },
+    { "file": "triangle-exclamation-point", "drawingName": "triangle-alert", "drawable": "ic_lucide_triangle_exclamation_point", "use": "The warning line (D-34)" },
+    { "file": "info", "drawingName": "info", "drawable": "ic_lucide_info", "use": "The notice banner (D-33)" },
+    { "file": "loader-circle", "drawingName": "loader-circle", "drawable": "ic_lucide_loader_circle", "use": "A step running; prices updating (D-35)" },
+    { "file": "lock", "drawingName": "lock", "drawable": "ic_lucide_lock", "use": "The lock screen" },
+    { "file": "eye", "drawingName": "eye", "drawable": "ic_lucide_eye", "use": "Unhide (D-45)" },
+    { "file": "eye-off", "drawingName": "eye-off", "drawable": "ic_lucide_eye_off", "use": "Hide (D-43)" },
+    { "file": "settings", "drawingName": "settings", "drawable": "ic_lucide_settings", "use": "Settings, on More's band (D-36)" },
+    { "file": "arrow-up", "drawingName": "arrow-up", "drawable": "ic_lucide_arrow_up", "use": "Moves a tab up (D-36)" },
+    { "file": "arrow-down", "drawingName": "arrow-down", "drawable": "ic_lucide_arrow_down", "use": "Moves a tab down (D-36)" }
+  ]
+}

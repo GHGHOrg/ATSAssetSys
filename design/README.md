@@ -153,10 +153,12 @@ Screens drawn in the system: [Cash Screens](https://claude.ai/artifact/PrbnvN521
 
 | Use | Icon |
 | --- | --- |
-| Overall, Portfolios, Cash, More | pie-chart, briefcase, wallet, more-horizontal |
+| Overall, Portfolios, Cash, More | pie-chart, briefcase, wallet, more-horizontal (in Lucide 1.72.0: chart-pie, briefcase, wallet, ellipsis) |
 | Date field | calendar |
-| Back, menu | chevron-left, more-vertical |
+| Back, menu | chevron-left, ellipsis-vertical |
 | Check, lock, refresh, settings | check, lock, refresh-cw, settings |
+
+ATS pins Lucide 1.72.0 and uses 24 icons; design/icons/icons.json lists each with its file in that release, the name the drawings use and where it is used (D-47).
 
 These are first picks; an app may choose other Lucide icons. Renders: [Icon Set Options](https://claude.ai/artifact/LWrVaF66trqGnYyCS8vbQB) (D).
 

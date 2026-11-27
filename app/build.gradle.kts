@@ -130,18 +130,21 @@ val runtimeGroups =
 // tests read them from there, and a change to them runs the tests again.
 class DesignTokensArgument(
     @get:Internal val dir: File,
+    @get:Internal val icons: File,
 ) : CommandLineArgumentProvider {
-    override fun asArguments(): List<String> = listOf("-Datsassets.tokens=${dir.absolutePath}")
+    override fun asArguments(): List<String> = listOf("-Datsassets.tokens=${dir.absolutePath}", "-Datsassets.icons=${icons.absolutePath}")
 }
 
 val designTokens: File = rootProject.file("design/tokens")
+val designIcons: File = rootProject.file("design/icons")
 
 tasks.withType<Test>().configureEach {
     val groupsFile = runtimeGroups.flatMap { it.output }
     inputs.file(groupsFile).withPropertyName("runtimeGroups").withPathSensitivity(PathSensitivity.NONE)
     jvmArgumentProviders.add(RuntimeGroupsArgument(groupsFile))
     inputs.files(fileTree(designTokens)).withPropertyName("designTokens").withPathSensitivity(PathSensitivity.RELATIVE)
-    jvmArgumentProviders.add(DesignTokensArgument(designTokens))
+    inputs.files(fileTree(designIcons)).withPropertyName("designIcons").withPathSensitivity(PathSensitivity.RELATIVE)
+    jvmArgumentProviders.add(DesignTokensArgument(designTokens, designIcons))
 }
 
 dependencies {
