@@ -31,7 +31,8 @@ import app.ghghorg.atsassets.ui.theme.typeStyle
 
 /**
  * The foot of an entry or review (D-31 (2)): [primary] the large full-width gold button (Review, Confirm and save), then
- * [secondary] a large full-width outline button under it (Back to edit) when given.
+ * [secondary] a large full-width outline button under it (Back to edit) when given, or a text button with
+ * [secondaryText] (the reversal's Cancel; D-31 (2)).
  */
 @Composable
 internal fun AtsEntryFoot(
@@ -40,10 +41,14 @@ internal fun AtsEntryFoot(
     enabled: Boolean = true,
     secondary: String? = null,
     onSecondary: () -> Unit = {},
+    secondaryText: Boolean = false,
 ) {
     Column(modifier = Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(tokenDp("spaceGap"))) {
         AtsButton(primary, onPrimary, kind = ButtonKind.FILLED, size = ButtonSize.LARGE, enabled = enabled, fillWidth = true)
-        if (secondary != null) AtsButton(secondary, onSecondary, size = ButtonSize.LARGE, enabled = enabled, fillWidth = true)
+        if (secondary != null) {
+            val kind = if (secondaryText) ButtonKind.TEXT else ButtonKind.OUTLINE
+            AtsButton(secondary, onSecondary, kind = kind, size = ButtonSize.LARGE, enabled = enabled, fillWidth = true)
+        }
     }
 }
 

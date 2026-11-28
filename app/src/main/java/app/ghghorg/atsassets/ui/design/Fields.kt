@@ -65,6 +65,7 @@ internal fun AtsTextField(
     keyboardActions: KeyboardActions = KeyboardActions.Default,
     placeholder: String? = null,
     visualTransformation: VisualTransformation = VisualTransformation.None,
+    singleLine: Boolean = true,
 ) {
     val colors = AtsTheme.colors
     val refused = refusal != null
@@ -75,7 +76,7 @@ internal fun AtsTextField(
             label = { Text(label) },
             placeholder = placeholder?.let { { Text(it, style = typeStyle("body"), color = colors.textSecondary) } },
             enabled = enabled,
-            singleLine = true,
+            singleLine = singleLine,
             isError = refused,
             textStyle = typeStyle("body"),
             prefix = prefix?.let { { Text(it, color = colors.textSecondary) } },

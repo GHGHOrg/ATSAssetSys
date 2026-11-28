@@ -23,7 +23,6 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.input.KeyboardType
 import app.ghghorg.atsassets.R
 import app.ghghorg.atsassets.core.AmountResult
-import app.ghghorg.atsassets.core.CashEntry
 import app.ghghorg.atsassets.core.CashEntryRefusal
 import app.ghghorg.atsassets.core.CashType
 import app.ghghorg.atsassets.core.Fraction
@@ -381,12 +380,11 @@ internal fun SplitReplacingBanner(original: Transaction) {
 
 /** The banner over a replacing cash entry (14b wording 1): its type, date and signed amount, as on the Cash tab. */
 @Composable
-internal fun CashReplacingBanner(original: CashEntry) {
+internal fun CashReplacingBanner(original: CashEntryShown) {
     val type = cashTypeLower(original.type)
-    val date = original.date.toString()
     BannerCard(
-        stringResource(R.string.replacing_banner_cash, type, date, signedAmount(original.amountCents)),
-        stringResource(R.string.replacing_banner_cash_spoken, type, date, spokenSigned(original.amountCents)),
+        stringResource(R.string.replacing_banner_cash, type, original.date, signedAmount(original.amountCents)),
+        stringResource(R.string.replacing_banner_cash_spoken, type, original.date, spokenSigned(original.amountCents)),
     )
 }
 

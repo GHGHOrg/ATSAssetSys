@@ -1277,6 +1277,20 @@ data class AppState(
     val detailTradeTransaction: Transaction?
         get() = detailEntry?.transactionId?.let { id -> transactions.firstOrNull { it.id == id } }
 
+    /** 44a step 8 group (d) part 2: the cash entry form as it is drawn (wireframes 10b and 10c; CR2, open item 48). */
+    val cashFormModel: CashFormModel
+        get() = CashForms.of(form, replacedCashEntry)
+
+    /** The cash review as it is drawn (wireframe 10b frame D; CR2, open item 48). */
+    val cashReviewModel: CashReviewModel
+        get() = CashReviews.of(form)
+
+    /** The shown cash entry's detail as it is drawn (wireframe 10b frame H; CR2, open item 48); null with none shown. */
+    val cashDetailModel: CashDetailModel?
+        get() = detailEntry?.let {
+            CashDetails.of(it, detailReversedBy, detailReverses, detailTradeTransaction, transactions, portfolios, reverseOffered, detailReenterOffered)
+        }
+
     val shownTransaction: Transaction? get() = transactionId?.let { id -> transactions.firstOrNull { it.id == id } }
 
     /** The shown transaction's trade line; none for a split (4.5). */

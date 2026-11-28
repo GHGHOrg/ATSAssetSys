@@ -821,6 +821,24 @@ class AppViewModelTest {
         assertEquals(null, state.detailReverses)
     }
 
+    // 44a step 8 group (d) part 2, CR2's wiring test (open item 48): the detail, the form and the review draw from the
+    // state's models, which follow the entry shown and the text typed.
+    @Test
+    fun theDetailFormAndReview_drawFromTheStatesModels() {
+        val vm = withDeposit()
+        vm.openDetail("d2")
+        val detail = vm.state.value.cashDetailModel!!
+        assertEquals(CashDetailTitle.Entry(CashType.DEPOSIT), detail.title)
+        assertEquals(CashEntryShown(CashType.DEPOSIT, "2026-01-05", 50_000L), detail.entry)
+        assertEquals(CashDetailStatus.NotReversed, detail.status)
+        assertTrue(detail.reverseOffered)
+        vm.closeDetail()
+        vm.openForm()
+        assertEquals(CashFormTitle.ENTRY, vm.state.value.cashFormModel.title)
+        vm.fill(date = "2026-01-06", amount = "300.00", note = "")
+        assertEquals(CashReviews.of(vm.state.value.form), vm.state.value.cashReviewModel)
+    }
+
     @Test
     fun theOpeningBalanceDetailDoesNotOfferReverse() {
         val vm = withDeposit()

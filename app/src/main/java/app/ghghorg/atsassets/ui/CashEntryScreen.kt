@@ -5,43 +5,35 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.selection.selectableGroup
 import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.Button
-import androidx.compose.material3.FilterChip
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedCard
-import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.contentDescription
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import app.ghghorg.atsassets.R
 import app.ghghorg.atsassets.core.AmountError
-import app.ghghorg.atsassets.core.AmountResult
 import app.ghghorg.atsassets.core.CashDirection
 import app.ghghorg.atsassets.core.CashEntryRefusal
 import app.ghghorg.atsassets.core.CashType
-import app.ghghorg.atsassets.core.MarketDate
 import app.ghghorg.atsassets.core.Money
+import app.ghghorg.atsassets.ui.design.AtsChip
+import app.ghghorg.atsassets.ui.design.AtsEntryFoot
+import app.ghghorg.atsassets.ui.design.AtsReviewCard
 import app.ghghorg.atsassets.ui.design.AtsRowDivider
+import app.ghghorg.atsassets.ui.design.AtsScreen
+import app.ghghorg.atsassets.ui.design.AtsTextField
 import app.ghghorg.atsassets.ui.theme.AtsTheme
+import app.ghghorg.atsassets.ui.theme.LucideIcon
 import app.ghghorg.atsassets.ui.theme.tokenDp
 import app.ghghorg.atsassets.ui.theme.typeStyle
 
@@ -65,166 +57,131 @@ fun CashEntryForm(
     BackHandler(onBack = onBack)
     // The messages come only from their model (CR2): the screen picks the approved string for each.
     val shown = state.cashFormMessages
+    val model = state.cashFormModel
+    val originals = model.originals
     val type = state.form.type
-    val opening = type == CashType.OPENING_BALANCE
     val adjustment = type == CashType.ADJUSTMENT
-    val dateError = dateMessage(shown.date)
-    val amountError = amountMessage(shown.amount)
-    val noteError = noteMessage(shown.note == NoteMessage.LINE_BREAK, shown.note == NoteMessage.REQUIRED)
-    // A cash entry replaced by Reverse and re-enter (14b; wording 1): its values, for the banner and the hints.
-    val original = state.replacedCashEntry
-    Column(
-        modifier = modifier.fillMaxSize().imePadding().verticalScroll(rememberScrollState()).padding(16.dp),
-        verticalArrangement = Arrangement.spacedBy(12.dp),
-    ) {
-        TextButton(onClick = onBack) {
-            Text(text = stringResource(R.string.back_button))
+    val messages =
+        shown.below.mapNotNull { message ->
+            when (message) {
+                is CashFormMessage.Save -> saveMessage(message.refusal)
+
+                is CashFormMessage.Cash ->
+                    if (message.replacing) {
+                        replacingMessage(cashMessage(message.refusal, replacing = true))
+                    } else {
+                        cashMessage(message.refusal)
+                    }
+
+                is CashFormMessage.Replace -> replaceRuleMessage(state, message.refusal)
+            }
         }
-        Text(
-            text =
-            stringResource(
-                when {
-                    original != null -> R.string.cash_replacing_title
-                    opening -> R.string.opening_balance
-                    else -> R.string.cash_entry_button
-                },
-            ),
-            style = MaterialTheme.typography.titleLarge,
-        )
-        original?.let { CashReplacingBanner(it) }
-        OutlinedCard(modifier = Modifier.fillMaxWidth()) {
-            Column(modifier = Modifier.padding(12.dp)) {
-                Text(
-                    text = stringResource(R.string.type_label),
-                    style = MaterialTheme.typography.bodyMedium,
-                )
-                if (opening) {
-                    Text(
-                        text = stringResource(R.string.opening_balance),
-                        style = MaterialTheme.typography.bodyLarge,
-                        fontWeight = FontWeight.Medium,
-                    )
-                    Text(
-                        text = stringResource(R.string.opening_balance_hint),
-                        style = MaterialTheme.typography.bodyMedium,
-                    )
+    AtsScreen(
+        title =
+        stringResource(
+            when (model.title) {
+                CashFormTitle.REPLACING -> R.string.cash_replacing_title
+                CashFormTitle.OPENING -> R.string.opening_balance
+                CashFormTitle.ENTRY -> R.string.cash_entry_button
+            },
+        ),
+        modifier = modifier,
+        onBack = onBack,
+        backLabel = stringResource(R.string.back_button),
+    ) {
+        EntryColumn {
+            model.banner?.let { CashReplacingBanner(it) }
+            // A rule that stops the save is the blocked card at the top; a field's own rule stays on it (10b frame J).
+            messages.forEach { Message(it) }
+            ChoiceGroup(stringResource(R.string.type_label)) {
+                if (model.title == CashFormTitle.OPENING) {
+                    // The only type offered until it exists, and one line saying why (10b frame C).
+                    AtsChip(stringResource(R.string.opening_balance), selected = true, onClick = {})
                 } else {
                     TypeChips(type, onTypeChange)
                 }
-                if (original != null && type != original.type) {
-                    val shown = cashTypeLabel(original.type)
-                    OriginalHint(shown, stringResource(R.string.original_hint_spoken, shown))
-                }
             }
-        }
-        OutlinedTextField(
-            value = state.form.dateText,
-            onValueChange = onDateChange,
-            modifier = Modifier.fillMaxWidth(),
-            label = { Text(text = stringResource(R.string.date_label)) },
-            trailingIcon = { CalendarButton(state.form.dateText, onDateChange, digitsOnly = false) },
-            supportingText = {
-                Column {
-                    if (dateError != null) Text(text = dateError)
-                    Text(text = stringResource(R.string.date_note))
-                    if (original != null && MarketDate.parse(state.form.dateText.trim()) != original.date) {
-                        val shown = original.date.toString()
-                        OriginalHint(shown, stringResource(R.string.original_hint_spoken, shown))
-                    }
-                }
-            },
-            isError = shown.date != null,
-            singleLine = true,
-        )
-        if (adjustment) {
-            // Adjustment only: the direction sets the sign (wireframe 10b, marker 6; 04 decision 2).
+            if (model.title == CashFormTitle.OPENING) {
+                Text(text = stringResource(R.string.opening_balance_hint), style = typeStyle("note"), color = AtsTheme.colors.textSecondary)
+            }
+            originals.type?.let { was ->
+                val label = cashTypeLabel(was)
+                OriginalHint(label, stringResource(R.string.original_hint_spoken, label))
+            }
             Column {
-                Text(
-                    text = stringResource(R.string.direction_label),
-                    style = MaterialTheme.typography.bodyMedium,
+                AtsTextField(
+                    value = state.form.dateText,
+                    onValueChange = onDateChange,
+                    label = stringResource(R.string.date_label),
+                    modifier = Modifier.fillMaxWidth(),
+                    refusal = dateMessage(shown.date),
+                    note = stringResource(R.string.date_note),
+                    trailing = LucideIcon.CALENDAR,
+                    trailingLabel = stringResource(R.string.date_pick_open),
+                    onTrailing = datePickerOpener(state.form.dateText, onDateChange, dense = false, digitsOnly = false),
                 )
-                DirectionChips(state.form.direction, onDirectionChange)
-                if (original?.type == CashType.ADJUSTMENT) {
-                    val was = if (original.amountCents < 0L) CashDirection.OUT else CashDirection.IN
-                    if (state.form.direction != was) {
-                        val shown = stringResource(if (was == CashDirection.OUT) R.string.direction_out else R.string.direction_in)
-                        OriginalHint(shown, stringResource(R.string.original_hint_spoken, shown))
-                    }
+                OriginalLine(originals.date)
+            }
+            if (adjustment) {
+                // Adjustment only: the direction sets the sign (wireframe 10b, marker 6; 04 decision 2).
+                ChoiceGroup(stringResource(R.string.direction_label)) {
+                    DirectionChips(state.form.direction, onDirectionChange)
+                }
+                originals.direction?.let { was ->
+                    val label = stringResource(if (was == CashDirection.OUT) R.string.direction_out else R.string.direction_in)
+                    OriginalHint(label, stringResource(R.string.original_hint_spoken, label))
                 }
             }
-        }
-        OutlinedTextField(
-            value = state.form.amountText,
-            onValueChange = onAmountChange,
-            modifier = Modifier.fillMaxWidth(),
-            label = { Text(text = stringResource(R.string.amount_label)) },
-            supportingText = {
-                Column {
-                    if (amountError != null) Text(text = amountError)
-                    amountLine(type)?.let { Text(text = it) }
-                    if (original != null) {
-                        val cents = (Money.parseCents(state.form.amountText) as? AmountResult.Cents)?.value
-                        if (cents != Math.absExact(original.amountCents)) {
-                            val shown = Money.format(Math.absExact(original.amountCents))
-                            OriginalHint(shown, stringResource(R.string.original_hint_dollars_spoken, shown.substringAfter('$')))
-                        }
-                    }
-                }
-            },
-            isError = shown.amount != null,
-            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
-            singleLine = true,
-        )
-        OutlinedTextField(
-            value = state.form.noteText,
-            onValueChange = onNoteChange,
-            modifier = Modifier.fillMaxWidth(),
-            label = { Text(text = stringResource(if (adjustment) R.string.note_label_required else R.string.note_label)) },
-            supportingText = {
-                Column {
-                    if (noteError != null) Text(text = noteError)
-                    if (original != null && state.form.noteText != original.note) {
-                        val shown = original.note.ifEmpty { stringResource(R.string.note_none) }
-                        OriginalHint(shown, stringResource(R.string.original_hint_spoken, shown))
-                    }
-                }
-            },
-            isError = noteError != null,
-            keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
-        )
-        val messages =
-            shown.below.mapNotNull { message ->
-                when (message) {
-                    is CashFormMessage.Save -> saveMessage(message.refusal)
-
-                    is CashFormMessage.Cash ->
-                        if (message.replacing) {
-                            replacingMessage(cashMessage(message.refusal, replacing = true))
-                        } else {
-                            cashMessage(message.refusal)
-                        }
-
-                    is CashFormMessage.Replace -> replaceRuleMessage(state, message.refusal)
+            Column {
+                AtsTextField(
+                    value = state.form.amountText,
+                    onValueChange = onAmountChange,
+                    label = stringResource(R.string.amount_label),
+                    modifier = Modifier.fillMaxWidth(),
+                    refusal = amountMessage(shown.amount),
+                    note = amountLine(type),
+                    prefix = "$",
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
+                )
+                OriginalLine(originals.amount)
+            }
+            Column {
+                AtsTextField(
+                    value = state.form.noteText,
+                    onValueChange = onNoteChange,
+                    label = stringResource(if (adjustment) R.string.note_label_required else R.string.note_label),
+                    modifier = Modifier.fillMaxWidth(),
+                    refusal = noteMessage(shown.note == NoteMessage.LINE_BREAK, shown.note == NoteMessage.REQUIRED),
+                    keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
+                    singleLine = false,
+                )
+                originals.note?.let { was ->
+                    val label = was.ifEmpty { stringResource(R.string.note_none) }
+                    OriginalHint(label, stringResource(R.string.original_hint_spoken, label))
                 }
             }
-        messages.forEach { message ->
-            Text(
-                text = message,
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.error,
-            )
-        }
-        Button(
-            onClick = onReview,
-            modifier = Modifier.align(Alignment.End),
-        ) {
-            Text(text = stringResource(R.string.review_button))
+            AtsEntryFoot(stringResource(R.string.review_button), onReview)
         }
     }
 }
 
-/** The review screen (wireframe 10b, frame D). Nothing is saved until Confirm and save. */
-@OptIn(ExperimentalLayoutApi::class)
+/** A one-at-a-time choice (D-31 (1)): its label in secondary 14 over the catalog's chips. */
+@Composable
+private fun ChoiceGroup(
+    label: String,
+    chips: @Composable () -> Unit,
+) {
+    Column {
+        Text(text = label, style = typeStyle("small"), color = AtsTheme.colors.textSecondary)
+        chips()
+    }
+}
+
+/**
+ * The review screen (wireframe 10b, frame D), drawn from its model (CR2, open item 48): the values as label-and-value
+ * rows, the cash effect as the total line, signed and uncolored, "Nothing is saved until you confirm." and the foot.
+ * Nothing is saved until Confirm and save.
+ */
 @Composable
 fun CashEntryReview(
     state: AppState,
@@ -233,71 +190,43 @@ fun CashEntryReview(
     modifier: Modifier = Modifier,
 ) {
     BackHandler(enabled = !state.saving, onBack = onBack)
-    val type = state.form.type
-    val dateText = MarketDate.parse(state.form.dateText)?.toString() ?: state.form.dateText.trim()
-    val cents = (Money.parseCents(state.form.amountText) as? AmountResult.Cents)?.value
-    // The amount is typed positive; the sign comes from the type, or the direction on an adjustment (frame D).
-    val outgoing =
-        type == CashType.WITHDRAWAL || (type == CashType.ADJUSTMENT && state.form.direction == CashDirection.OUT)
-    val signed = cents?.let { signedAmount(if (outgoing) -it else it) }.orEmpty()
-    val note = state.form.noteText
-    Column(
-        modifier = modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(16.dp),
-        verticalArrangement = Arrangement.spacedBy(12.dp),
+    val model = state.cashReviewModel
+    val signed = model.cashCents?.let { signedAmount(it) }.orEmpty()
+    AtsScreen(
+        title = stringResource(R.string.review_title),
+        modifier = modifier,
+        onBack = onBack,
+        backLabel = stringResource(R.string.back_button),
+        backEnabled = !state.saving,
     ) {
-        Text(
-            text = stringResource(R.string.review_title),
-            style = MaterialTheme.typography.titleLarge,
-        )
-        OutlinedCard(modifier = Modifier.fillMaxWidth()) {
-            Column(
-                modifier = Modifier.padding(12.dp),
-                verticalArrangement = Arrangement.spacedBy(6.dp),
-            ) {
-                ReviewRow(stringResource(R.string.type_label), cashTypeLabel(type))
-                ReviewRow(stringResource(R.string.date_label), stringResource(R.string.date_with_et, dateText))
+        EntryColumn {
+            saveMessage(state.refusals.save)?.let { Message(it) }
+            AtsReviewCard {
+                ReviewRow(stringResource(R.string.type_label), cashTypeLabel(model.type))
+                ReviewRow(stringResource(R.string.date_label), stringResource(R.string.date_with_et, model.date))
                 ReviewRow(stringResource(R.string.amount_label), signed)
-                if (note.isEmpty()) {
-                    ReviewRow(
-                        stringResource(R.string.note_row_label),
-                        stringResource(R.string.note_none),
-                        muted = true,
-                        alignStart = true,
-                    )
-                } else {
-                    ReviewRow(stringResource(R.string.note_row_label), note, alignStart = true)
-                }
+                NoteRow(model.note)
                 ReviewRow(stringResource(R.string.cash_effect_label), signed, bold = true)
             }
-        }
-        Text(
-            text = stringResource(R.string.review_hint),
-            style = MaterialTheme.typography.bodyMedium,
-        )
-        saveMessage(state.refusals.save)?.let { message ->
-            Text(
-                text = message,
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.error,
+            ReviewHint()
+            AtsEntryFoot(
+                primary = stringResource(R.string.confirm_button),
+                onPrimary = onConfirm,
+                enabled = !state.saving,
+                secondary = stringResource(R.string.back_to_edit_button),
+                onSecondary = onBack,
             )
         }
-        FlowRow(
-            horizontalArrangement = Arrangement.spacedBy(8.dp),
-            verticalArrangement = Arrangement.spacedBy(8.dp),
-        ) {
-            Button(
-                onClick = onConfirm,
-                enabled = !state.saving,
-            ) {
-                Text(text = stringResource(R.string.confirm_button))
-            }
-            TextButton(
-                onClick = onBack,
-                enabled = !state.saving,
-            ) {
-                Text(text = stringResource(R.string.back_to_edit_button))
-            }
-        }
+    }
+}
+
+/** The note as a review or detail row under its label, or "none" in the secondary color (10b frames D and H). */
+@Composable
+internal fun NoteRow(note: String) {
+    if (note.isEmpty()) {
+        ReviewRow(stringResource(R.string.note_row_label), stringResource(R.string.note_none), muted = true, alignStart = true)
+    } else {
+        ReviewRow(stringResource(R.string.note_row_label), note, alignStart = true)
     }
 }
 
@@ -342,7 +271,7 @@ internal fun ReviewRow(
     }
 }
 
-/** The four entry types, one at a time (wireframe 10b, frame A; Interest/dividend and Adjustment from 04). */
+/** The four entry types, one at a time, as the catalog's chips (wireframe 10b, frame A; D-31 (1); 04). */
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
 private fun TypeChips(
@@ -350,38 +279,24 @@ private fun TypeChips(
     onTypeChange: (CashType) -> Unit,
 ) {
     val types = listOf(CashType.DEPOSIT, CashType.WITHDRAWAL, CashType.INTEREST_DIVIDEND, CashType.ADJUSTMENT)
-    FlowRow(
-        modifier = Modifier.selectableGroup(),
-        horizontalArrangement = Arrangement.spacedBy(8.dp),
-    ) {
+    FlowRow(modifier = Modifier.selectableGroup(), horizontalArrangement = Arrangement.spacedBy(tokenDp("fieldDensePadding"))) {
         for (type in types) {
-            FilterChip(
-                selected = type == selected,
-                onClick = { onTypeChange(type) },
-                label = { Text(text = cashTypeLabel(type)) },
-            )
+            AtsChip(cashTypeLabel(type), selected = type == selected, onClick = { onTypeChange(type) })
         }
     }
 }
 
-/** An adjustment's direction, one at a time (wireframe 10b, frame B). */
+/** An adjustment's direction, one at a time, as the catalog's chips (wireframe 10b, frame B). */
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
 private fun DirectionChips(
     selected: CashDirection,
     onDirectionChange: (CashDirection) -> Unit,
 ) {
-    FlowRow(
-        modifier = Modifier.selectableGroup(),
-        horizontalArrangement = Arrangement.spacedBy(8.dp),
-    ) {
+    FlowRow(modifier = Modifier.selectableGroup(), horizontalArrangement = Arrangement.spacedBy(tokenDp("fieldDensePadding"))) {
         for (direction in listOf(CashDirection.IN, CashDirection.OUT)) {
             val label = if (direction == CashDirection.IN) R.string.direction_in else R.string.direction_out
-            FilterChip(
-                selected = direction == selected,
-                onClick = { onDirectionChange(direction) },
-                label = { Text(text = stringResource(label)) },
-            )
+            AtsChip(stringResource(label), selected = direction == selected, onClick = { onDirectionChange(direction) })
         }
     }
 }

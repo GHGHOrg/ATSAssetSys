@@ -186,8 +186,15 @@ internal fun spoken(figure: SpokenFigure): String = when (figure.sign) {
 
 /** A trade line's title (09 wording 3, 11 wording 4, 13b wording 5), the same strings as transaction detail's. */
 @Composable
-private fun tradeTitle(row: CashRowModel.Trade): String = stringResource(
-    when (row.title) {
+private fun tradeTitle(row: CashRowModel.Trade): String = tradeTitleText(row.title, row.ticker)
+
+/** "Buy AAPL", "Reversal of sell AAPL": a trade's title from its model (also the cash entry detail's, part 2). */
+@Composable
+internal fun tradeTitleText(
+    title: TradeTitle,
+    ticker: String,
+): String = stringResource(
+    when (title) {
         TradeTitle.BUY -> R.string.trade_buy_title
         TradeTitle.SELL -> R.string.trade_sell_title
         TradeTitle.SPLIT -> R.string.transaction_split_title
@@ -195,7 +202,7 @@ private fun tradeTitle(row: CashRowModel.Trade): String = stringResource(
         TradeTitle.REVERSAL_OF_SELL -> R.string.reversal_of_sell_title
         TradeTitle.REVERSAL_OF_SPLIT -> R.string.reversal_of_split_title
     },
-    row.ticker,
+    ticker,
 )
 
 /**
