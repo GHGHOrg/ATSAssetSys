@@ -226,7 +226,7 @@ internal class AtsMenuItem(
 
 /**
  * A menu inside the window, at the top end of the screen, over a scrim that closes it (D-34). [title], when given, is
- * the pane title TalkBack announces as the menu opens (the ⋮ menu's "Portfolio menu").
+ * the pane title TalkBack announces as the menu opens (the ⋮ menu's "Portfolio menu"), on the menu's own node.
  */
 @Composable
 internal fun AtsMenu(
@@ -242,7 +242,10 @@ internal fun AtsMenu(
                 .align(Alignment.TopEnd)
                 .padding(tokenDp("spaceMargin"))
                 .width(tokenDp("layerMenuWidth"))
-                .then(if (title != null) Modifier.semantics { paneTitle = title } else Modifier)
+                // A node of its own: the scrim is a click target that merges its children, and a pane title cannot be
+                // merged into it (run 46098085734: "merge function called on unmergeable property PaneTitle"). The items
+                // stay buttons of their own.
+                .then(if (title != null) Modifier.semantics(mergeDescendants = true) { paneTitle = title } else Modifier)
                 .cardShadow()
                 .clip(shape)
                 .background(colors.float),
