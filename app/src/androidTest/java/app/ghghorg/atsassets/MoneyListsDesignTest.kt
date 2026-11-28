@@ -28,7 +28,6 @@ import app.ghghorg.atsassets.ui.TransactionHistoryActions
 import app.ghghorg.atsassets.ui.TransactionHistoryScreen
 import app.ghghorg.atsassets.ui.theme.ATSAssetSystemTheme
 import app.ghghorg.atsassets.ui.theme.Asap
-import app.ghghorg.atsassets.ui.theme.AsapCondensed
 import app.ghghorg.atsassets.ui.theme.TokenColors
 import app.ghghorg.atsassets.ui.theme.TokenPalette
 import org.junit.Assert.assertEquals
@@ -44,7 +43,7 @@ import java.time.LocalDate
  * 08-transaction-history, D-28 to D-31, D-38): Cash under its band with the balance as the summary card and Cash entry in
  * its own outline colors, in light and dark, the dense dates' calendars, the Ticker pick field, the selected chip's check
  * and the rows' chevrons; Transaction history under its band with Back and the same filters; Realized gains' total as the
- * summary card in its gain color, the column head in Asap Condensed 14 medium and a holding's chevron-down. Data: Example
+ * summary card in its gain color, "By holding" as a heading in medium 16 and a holding's chevron-down. Data: Example
  * A, 10 AAPL bought for $1,000.00 and sold for $1,800.00 after an opening of $10,000.00.
  */
 @RunWith(AndroidJUnit4::class)
@@ -151,7 +150,7 @@ class MoneyListsDesignTest {
     }
 
     @Test
-    fun realizedGains_totalIsTheSummaryCardInItsGainColor_andTheColumnHeadIsCondensed() {
+    fun realizedGains_totalIsTheSummaryCardInItsGainColor_andTheHoldingsHaveTheirHeading() {
         val actions = RealizedGainsActions({}, {}, {}, {}, { _, _ -> }, {})
         composeRule.setContent { ATSAssetSystemTheme { RealizedGainsScreen(state(Screen.REALIZED_GAINS).realizedGainsScreen, actions) } }
         composeRule.waitForIdle()
@@ -161,10 +160,12 @@ class MoneyListsDesignTest {
         val styles = figures.fetchSemanticsNodes().indices.map { figures[it].laidOutStyle() }
         val total = checkNotNull(styles.singleOrNull { it.fontSize == 32.sp }) { "One total in 32 among ${styles.map { it.fontSize }}" }
         assertTrue("Total ${describe(total.color)}", sameColor(total.color, TokenColors.light.gainOnSummary, tolerance = 0))
-        val head = composeRule.onNode(hasText(string(R.string.gains_column)), useUnmergedTree = true).laidOutStyle()
-        assertEquals(AsapCondensed, head.fontFamily)
-        assertEquals(14.sp, head.fontSize)
-        assertEquals(FontWeight.W500, head.fontWeight)
+        // The column head "Realized gain/loss" is hidden from TalkBack (as since 26), so it has no text node to read; its type
+        // role is checked on a portfolio's screen (HoldingsDesignTest). The card's heading is read as one.
+        val heading = composeRule.onNode(isHeading() and hasText(string(R.string.gains_by_holding)), useUnmergedTree = true).laidOutStyle()
+        assertEquals(Asap, heading.fontFamily)
+        assertEquals(16.sp, heading.fontSize)
+        assertEquals(FontWeight.W500, heading.fontWeight)
         assertTrue("AAPL's chevron-down and both calendars: ${icons()}", icons().containsAll(listOf("chevron-left", "chevron-down", "calendar")))
     }
 }
