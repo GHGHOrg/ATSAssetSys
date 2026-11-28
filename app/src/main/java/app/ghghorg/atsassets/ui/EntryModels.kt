@@ -277,10 +277,7 @@ object SellReview {
         portfolios: List<Portfolio>,
         pricePerShare: Fraction?,
     ): SellReviewModel {
-        // Parts beside a total are shown by largest remainder, so they add up to it (4.10).
-        val costs = Money.partsInCents(pieces.map { it.cost })
-        val proceeds = Money.partsInCents(pieces.map { it.proceeds })
-        val gains = Money.partsInCents(pieces.map { it.gain })
+        val sold = SoldPieces.of(pieces)
         return SellReviewModel(
             portfolio = portfolios.firstOrNull { it.id == sell.portfolioId }?.name.orEmpty(),
             ticker = sell.ticker,
@@ -288,6 +285,28 @@ object SellReview {
             quantity = Quantity.format(sell.quantity),
             total = Money.format(sell.totalCents),
             pricePerShare = pricePerShare?.let { Money.formatPerShare(it) },
+            pieces = sold.pieces,
+            cost = sold.cost,
+            realizedCents = sold.realizedCents,
+            cashCents = sell.totalCents,
+        )
+    }
+}
+
+/** A sell's lots used, the cost of the lots used and the realized gain/loss in cents (sell review; transaction detail, 13a decision 1). */
+data class SoldPiecesModel(
+    val pieces: List<SoldPieceModel>,
+    val cost: String,
+    val realizedCents: Long,
+)
+
+object SoldPieces {
+    fun of(pieces: List<SoldPiece>): SoldPiecesModel {
+        // Parts beside a total are shown by largest remainder, so they add up to it (4.10).
+        val costs = Money.partsInCents(pieces.map { it.cost })
+        val proceeds = Money.partsInCents(pieces.map { it.proceeds })
+        val gains = Money.partsInCents(pieces.map { it.gain })
+        return SoldPiecesModel(
             pieces =
             pieces.mapIndexed { index, piece ->
                 SoldPieceModel(
@@ -300,7 +319,6 @@ object SellReview {
             },
             cost = Money.format(costs.sum()),
             realizedCents = gains.sum(),
-            cashCents = sell.totalCents,
         )
     }
 }

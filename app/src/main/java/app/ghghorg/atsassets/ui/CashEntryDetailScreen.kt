@@ -81,17 +81,17 @@ fun CashEntryDetail(
                 is CashDetailStatus.TradeLine -> {
                     if (status.hint) StatusLine(stringResource(R.string.trade_line_reverse_hint))
                     val trade = tradeTitleText(status.title, status.ticker)
-                    LinkRow(stringResource(R.string.transaction_link, trade, status.date), stringResource(R.string.transaction_link_spoken, trade, status.date), onOpenTransaction)
+                    DetailLinkRow(stringResource(R.string.transaction_link, trade, status.date), stringResource(R.string.transaction_link_spoken, trade, status.date), onOpenTransaction)
                 }
 
                 is CashDetailStatus.ReversedBy -> {
                     val text = stringResource(R.string.detail_reversed_on, status.date)
-                    LinkRow(text, text) { onOpenEntry(status.id) }
+                    DetailLinkRow(text, text) { onOpenEntry(status.id) }
                 }
 
                 is CashDetailStatus.Reverses -> {
                     val text = stringResource(R.string.detail_reverses, cashTypeLabel(status.type), status.date)
-                    LinkRow(text, text) { onOpenEntry(status.id) }
+                    DetailLinkRow(text, text) { onOpenEntry(status.id) }
                 }
 
                 CashDetailStatus.NotReversed -> StatusLine(stringResource(R.string.detail_not_reversed))
@@ -182,7 +182,7 @@ fun CashReversal(
 
 /** A plain status line in secondary 14 (10b frame H: "Not reversed.", why there is no button). */
 @Composable
-private fun StatusLine(text: String) {
+internal fun StatusLine(text: String) {
     Text(text = text, style = typeStyle("small"), color = AtsTheme.colors.textSecondary)
 }
 
@@ -191,33 +191,42 @@ private fun StatusLine(text: String) {
  * card with a chevron (D-31 (5)), read by TalkBack as [spoken] and a button.
  */
 @Composable
-private fun LinkRow(
+internal fun DetailLinkRow(
     text: String,
     spoken: String,
     onOpen: () -> Unit,
 ) {
+    AtsCard(padded = false) { DetailLinkLine(text, spoken, onOpen, Modifier.padding(horizontal = tokenDp("spaceInset"))) }
+}
+
+/** The link's row alone, for inside a card that already has its padding (a transaction's cash line, 10b frame G). */
+@Composable
+internal fun DetailLinkLine(
+    text: String,
+    spoken: String,
+    onOpen: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
     val colors = AtsTheme.colors
-    AtsCard(padded = false) {
-        Row(
-            modifier =
-            Modifier
-                .fillMaxWidth()
-                .heightIn(min = tokenDp("spaceTouch"))
-                .clickable(role = Role.Button, onClick = onOpen)
-                .clearAndSetSemantics {
-                    contentDescription = spoken
-                    role = Role.Button
-                    onClick {
-                        onOpen()
-                        true
-                    }
-                }.padding(horizontal = tokenDp("spaceInset")),
-            horizontalArrangement = Arrangement.spacedBy(tokenDp("spaceInset")),
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            Text(text = text, style = typeStyle("body"), color = colors.text, modifier = Modifier.weight(1f))
-            AtsIcon(LucideIcon.CHEVRON_RIGHT, tint = colors.iconChevron, size = tokenDp("fieldMarkSize"))
-        }
+    Row(
+        modifier =
+        Modifier
+            .fillMaxWidth()
+            .heightIn(min = tokenDp("spaceTouch"))
+            .clickable(role = Role.Button, onClick = onOpen)
+            .clearAndSetSemantics {
+                contentDescription = spoken
+                role = Role.Button
+                onClick {
+                    onOpen()
+                    true
+                }
+            }.then(modifier),
+        horizontalArrangement = Arrangement.spacedBy(tokenDp("spaceInset")),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Text(text = text, style = typeStyle("body"), color = colors.text, modifier = Modifier.weight(1f))
+        AtsIcon(LucideIcon.CHEVRON_RIGHT, tint = colors.iconChevron, size = tokenDp("fieldMarkSize"))
     }
 }
 

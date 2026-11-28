@@ -130,6 +130,21 @@ class ReversalFlowTest {
         assertEquals(ReversalEffect.OfBuy(shares(20), 150_000L), vm.state.value.transactionReversalEffect)
     }
 
+    // 44a step 8 group (d) part 3, CR2's wiring test (open item 48): the detail and the reversal screen draw from the
+    // state's models, the effect following the typed date.
+    @Test
+    fun theDetailAndTheReversalScreen_drawFromTheStatesModels() {
+        val vm = onTransaction("b2")
+        val detail = vm.state.value.transactionDetail!!
+        assertEquals(TradeTitle.BUY, detail.title)
+        assertEquals(TransactionStatusModel.NotReversed(reverseOffered = true, reenterOffered = true), detail.status)
+        assertEquals(-150_000L, detail.cashCents)
+        vm.openTransactionReversal()
+        assertEquals(ReversalEffectModel.OfBuy("10", 150_000L), vm.state.value.reversalScreen?.effect)
+        vm.onTransactionReversalDateChange("20260501")
+        assertEquals(ReversalEffectModel.OfBuy("20", 150_000L), vm.state.value.reversalScreen?.effect)
+    }
+
     @Test
     fun confirm_savesTheReversalWithItsCashLine_andReturnsToTheOriginal_nowReversed() {
         val store = store()

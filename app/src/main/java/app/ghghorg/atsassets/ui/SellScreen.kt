@@ -38,7 +38,6 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.withStyle
 import app.ghghorg.atsassets.R
-import app.ghghorg.atsassets.core.Fraction
 import app.ghghorg.atsassets.core.LotUnavailable
 import app.ghghorg.atsassets.core.Money
 import app.ghghorg.atsassets.core.Quantity
@@ -127,7 +126,9 @@ fun SellEntryScreen(
                 messages.forEach { Message(it) }
                 Row(horizontalArrangement = Arrangement.spacedBy(tokenDp("spaceGap"))) {
                     PortfolioPick(model.portfolio, model.originals.portfolio, Modifier.weight(1f)) { picking = SellPicking.PORTFOLIO }
-                    TickerPick(model, Modifier.weight(1f)) { picking = SellPicking.TICKER }
+                    TickerPick(stringResource(R.string.sell_ticker_label), model.ticker, model.tickers, model.originals.ticker, Modifier.weight(1f)) {
+                        picking = SellPicking.TICKER
+                    }
                 }
                 if (model.tickers.isEmpty()) {
                     Text(text = stringResource(R.string.sell_nothing_held_in, model.portfolio.orEmpty()), style = typeStyle("body"), color = AtsTheme.colors.text)
@@ -163,16 +164,7 @@ fun SellEntryScreen(
                 PortfolioChoice(model.portfolios, model.portfolioId, onChoose = { actions.onPortfolioChange(it) }, onClose = { picking = SellPicking.NONE })
 
             SellPicking.TICKER ->
-                ChoiceLayer<String?>(
-                    title = stringResource(R.string.sell_ticker_label),
-                    options = model.tickers.map { it to it },
-                    selected = model.ticker,
-                    onChoose = { ticker ->
-                        ticker?.let(actions.onTickerChange)
-                        picking = SellPicking.NONE
-                    },
-                    onClose = { picking = SellPicking.NONE },
-                )
+                TickerChoice(stringResource(R.string.sell_ticker_label), model.tickers, model.ticker, actions.onTickerChange) { picking = SellPicking.NONE }
 
             SellPicking.NONE -> Unit
         }
@@ -180,27 +172,52 @@ fun SellEntryScreen(
 }
 
 /**
- * The held ticker as the standard pick field (wireframe 10a marker 8): read as "Ticker, AAPL"; a tap opens the tickers the
- * portfolio holds, in ticker order (11 decision 1). The original under it while replacing and it differs.
+ * A ticker as the standard pick field (wireframe 10a marker 8; 10b frame E): [label] on its outline, read as "Ticker,
+ * AAPL"; a tap opens [tickers] in ticker order (11 decision 1; 12 decision 1), and with none it cannot be tapped. The
+ * [original] under it while replacing and it differs.
  */
 @Composable
-private fun TickerPick(
-    model: SellEntryModel,
+internal fun TickerPick(
+    label: String,
+    ticker: String?,
+    tickers: List<String>,
+    original: OriginalValue?,
     modifier: Modifier,
     onOpen: () -> Unit,
 ) {
     Column(modifier = modifier) {
-        val shown = model.ticker.orEmpty()
+        val shown = ticker.orEmpty()
         AtsPickField(
-            stringResource(R.string.sell_ticker_label),
+            label,
             shown,
             onOpen,
             modifier = Modifier.fillMaxWidth(),
-            enabled = model.tickers.isNotEmpty(),
+            enabled = tickers.isNotEmpty(),
             spoken = stringResource(R.string.history_ticker_spoken, shown),
         )
-        OriginalLine(model.originals.ticker)
+        OriginalLine(original)
     }
+}
+
+/** A ticker's list (D-30, D-31): the shared choice layer inside the window, one ticker per radio row. */
+@Composable
+internal fun TickerChoice(
+    title: String,
+    tickers: List<String>,
+    selected: String?,
+    onChoose: (String) -> Unit,
+    onClose: () -> Unit,
+) {
+    ChoiceLayer<String?>(
+        title = title,
+        options = tickers.map { it to it },
+        selected = selected,
+        onChoose = { ticker ->
+            ticker?.let(onChoose)
+            onClose()
+        },
+        onClose = onClose,
+    )
 }
 
 /**
@@ -475,23 +492,11 @@ fun SellReviewScreen(
     }
 }
 
-/** One lot used on the sell review, from its model (11 wording 3, option A). */
+/** One lot used on the sell review and a sell's detail, from its model (11 wording 3, option A; 13a decision 1). */
 @Composable
-private fun SoldPieceRows(piece: SoldPieceModel) {
+internal fun SoldPieceRows(piece: SoldPieceModel) {
     val shares = stringResource(if (piece.shares.one) R.string.holding_share_one else R.string.holding_shares, piece.shares.shown)
     PieceLines(piece.date, shares, piece.cost, piece.proceeds, piece.gainCents)
-}
-
-/** One lot used (11 wording 3, option A), for transaction detail: from the piece's exact figures, by largest remainder. */
-@Composable
-internal fun PieceRows(
-    date: String,
-    quantity: Fraction,
-    costCents: Long,
-    proceedsCents: Long,
-    gainCents: Long,
-) {
-    PieceLines(date, sharesText(quantity), Money.format(costCents), Money.format(proceedsCents), gainCents)
 }
 
 /**

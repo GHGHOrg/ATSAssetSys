@@ -37,6 +37,7 @@ import androidx.compose.ui.semantics.text
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.unit.Dp
 import app.ghghorg.atsassets.ui.theme.AtsIcon
 import app.ghghorg.atsassets.ui.theme.AtsTheme
 import app.ghghorg.atsassets.ui.theme.LucideIcon
@@ -129,6 +130,7 @@ internal fun AtsDenseField(
     label: String? = null,
     placeholder: String? = null,
     visualTransformation: VisualTransformation = VisualTransformation.None,
+    minWidth: Dp = tokenDp("fieldDenseWidth"),
 ) {
     val colors = AtsTheme.colors
     val source = remember { MutableInteractionSource() }
@@ -156,7 +158,7 @@ internal fun AtsDenseField(
                 decorationBox = { inner ->
                     Row(
                         modifier = Modifier
-                            .widthIn(min = tokenDp("fieldDenseWidth"))
+                            .widthIn(min = minWidth)
                             .heightIn(min = tokenDp("fieldDenseHeight"))
                             .border(width, line, RoundedCornerShape(tokenDp("radiusDefault")))
                             .padding(horizontal = tokenDp("fieldDensePadding")),
@@ -277,7 +279,8 @@ private fun FieldLines(
     val colors = AtsTheme.colors
     val align = if (dense) TextAlign.End else TextAlign.Start
     val inset = if (dense) Modifier else Modifier.padding(horizontal = tokenDp("fieldPadding"))
-    if (refusal != null) {
+    // An empty refusal shows the refused look only; its words are on a line shared with another field (a split ratio).
+    if (!refusal.isNullOrEmpty()) {
         Text(refusal, style = typeStyle("message"), color = colors.error, textAlign = align, modifier = inset)
     }
     if (note != null) {

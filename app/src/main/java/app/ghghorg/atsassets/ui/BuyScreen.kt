@@ -5,20 +5,15 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
-import androidx.compose.foundation.layout.ExperimentalLayoutApi
-import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.selection.selectableGroup
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.FilterChip
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -37,12 +32,10 @@ import androidx.compose.ui.semantics.liveRegion
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.input.KeyboardType
-import androidx.compose.ui.unit.dp
 import app.ghghorg.atsassets.R
 import app.ghghorg.atsassets.core.AmountError
 import app.ghghorg.atsassets.core.BuyRefusal
 import app.ghghorg.atsassets.core.Money
-import app.ghghorg.atsassets.core.Portfolio
 import app.ghghorg.atsassets.core.QuantityError
 import app.ghghorg.atsassets.core.TickerRefusal
 import app.ghghorg.atsassets.prices.CheckRefusal
@@ -344,65 +337,6 @@ internal fun TitleRow(
             modifier = Modifier.semantics { heading() },
         )
     }
-}
-
-/** One chip per portfolio, in creation order, one selected (09 decision 11: no dropdown window). Shared with Sell. */
-@OptIn(ExperimentalLayoutApi::class)
-@Composable
-internal fun PortfolioChips(
-    portfolios: List<Portfolio>,
-    selectedId: String?,
-    onChange: (String) -> Unit,
-) {
-    Column {
-        Text(
-            text = stringResource(R.string.buy_portfolio_label),
-            style = MaterialTheme.typography.bodyMedium,
-        )
-        FlowRow(
-            modifier = Modifier.selectableGroup(),
-            horizontalArrangement = Arrangement.spacedBy(8.dp),
-        ) {
-            for (portfolio in portfolios) {
-                FilterChip(
-                    selected = portfolio.id == selectedId,
-                    onClick = { onChange(portfolio.id) },
-                    label = { Text(text = portfolio.name) },
-                )
-            }
-        }
-    }
-}
-
-// [hint], when given, shows under the error: the original value while an entry is replaced (14a).
-@Composable
-internal fun NumberField(
-    value: String,
-    onChange: (String) -> Unit,
-    label: String,
-    error: String?,
-    hint: (@Composable () -> Unit)? = null,
-) {
-    OutlinedTextField(
-        value = value,
-        onValueChange = onChange,
-        modifier = Modifier.fillMaxWidth(),
-        label = { Text(text = label) },
-        supportingText =
-        if (error != null || hint != null) {
-            {
-                Column {
-                    error?.let { Text(text = it) }
-                    hint?.invoke()
-                }
-            }
-        } else {
-            null
-        },
-        isError = error != null,
-        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
-        singleLine = true,
-    )
 }
 
 /** "Label, 150.00 dollars" for TalkBack, from a shown dollar figure such as "$150.00". */

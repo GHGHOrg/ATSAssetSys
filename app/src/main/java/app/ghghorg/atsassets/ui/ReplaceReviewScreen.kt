@@ -369,12 +369,11 @@ internal fun ReplacingBanner(model: ReplacingBannerModel) {
 
 /** The banner over a replacing split (14b wording 1): its date, ratio and ticker. */
 @Composable
-internal fun SplitReplacingBanner(original: Transaction) {
-    val date = original.date.toString()
-    val ratio = original.split?.let { ratioText(it) }.orEmpty()
+internal fun SplitReplacingBanner(model: SplitBannerModel) {
+    val ratio = model.ratio?.let { ratioText(it) }.orEmpty()
     BannerCard(
-        stringResource(R.string.replacing_banner_split, date, ratio, original.ticker),
-        stringResource(R.string.replacing_banner_split_spoken, date, ratio, original.ticker),
+        stringResource(R.string.replacing_banner_split, model.date, ratio, model.ticker),
+        stringResource(R.string.replacing_banner_split_spoken, model.date, ratio, model.ticker),
     )
 }
 

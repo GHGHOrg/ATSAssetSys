@@ -1277,6 +1277,41 @@ data class AppState(
     val detailTradeTransaction: Transaction?
         get() = detailEntry?.transactionId?.let { id -> transactions.firstOrNull { it.id == id } }
 
+    /** 44a step 8 group (d) part 3: the split entry as it is drawn (wireframes 10b and 10c; CR2, open item 48). */
+    val splitEntry: SplitEntryModel
+        get() = SplitEntry.of(splitForm, portfolios, splitTickers, replacedTransaction?.takeIf { it.type == TransactionType.SPLIT })
+
+    /** The split review as it is drawn (wireframe 10b frame F; CR2, open item 48); null with nothing to review. */
+    val splitReviewModel: SplitReviewModel?
+        get() {
+            val split = splitReview?.transaction ?: return null
+            val effect = splitEffect ?: return null
+            return SplitReview.of(split, effect, portfolios)
+        }
+
+    /** The shown transaction's detail as it is drawn (wireframe 10b frame G; CR2, open item 48); null with none shown. */
+    val transactionDetail: TransactionDetailModel?
+        get() = shownTransaction?.let {
+            TransactionDetails.of(
+                transaction = it,
+                transactions = transactions,
+                portfolios = portfolios,
+                lot = transactionLot,
+                pieces = transactionPieces,
+                splitEffect = transactionSplitEffect,
+                shownEffect = transactionShownEffect,
+                cashCents = transactionCashLine?.amountCents,
+                original = transactionOriginal,
+                reversal = transactionReversal,
+                reverseOffered = transactionReverseOffered,
+                reenterOffered = transactionReenterOffered,
+            )
+        }
+
+    /** The reversal screen as it is drawn (wireframe 10b frame I; CR2, open item 48); null with no transaction shown. */
+    val reversalScreen: ReversalScreenModel?
+        get() = shownTransaction?.let { ReversalScreens.of(it, portfolios, transactionReversalEffect) }
+
     /** 44a step 8 group (d) part 2: the cash entry form as it is drawn (wireframes 10b and 10c; CR2, open item 48). */
     val cashFormModel: CashFormModel
         get() = CashForms.of(form, replacedCashEntry)
