@@ -854,6 +854,12 @@ data class AppState(
         .sortedBy { it.ticker }
         .map { HiddenRow(it.ticker, Hiding.lastTransactionDate(transactions, portfolioId, it.ticker)) }
 
+    /** 44a step 8 group (b): Hidden holdings of the shown portfolio as the screen draws it (view 9; CR2, open item 48). */
+    val hiddenHoldings: HiddenHoldingsModel?
+        get() = shownPortfolio?.let {
+            HiddenHoldingsView.of(it.name, hiddenRows(it.id), saveFailed = hideRefusal == SaveRefusal.SAVE_FAILED, saving = saving)
+        }
+
     /** The holding shown on HOLDING, as of today. */
     val shownHolding: Holding?
         get() = holdings.firstOrNull { it.portfolioId == portfolioId && it.ticker == holdingTicker }

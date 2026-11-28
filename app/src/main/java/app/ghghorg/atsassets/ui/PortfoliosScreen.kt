@@ -10,15 +10,13 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.Button
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedButton
-import androidx.compose.material3.OutlinedCard
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -39,18 +37,30 @@ import androidx.compose.ui.semantics.onClick
 import androidx.compose.ui.semantics.paneTitle
 import androidx.compose.ui.semantics.role
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import app.ghghorg.atsassets.R
 import app.ghghorg.atsassets.core.Holding
 import app.ghghorg.atsassets.core.Portfolio
 import app.ghghorg.atsassets.core.PortfolioRefusal
+import app.ghghorg.atsassets.ui.design.AtsButton
+import app.ghghorg.atsassets.ui.design.AtsCard
+import app.ghghorg.atsassets.ui.design.AtsRowDivider
+import app.ghghorg.atsassets.ui.design.AtsScreen
+import app.ghghorg.atsassets.ui.design.ButtonKind
+import app.ghghorg.atsassets.ui.theme.AtsIcon
+import app.ghghorg.atsassets.ui.theme.AtsTheme
+import app.ghghorg.atsassets.ui.theme.LucideIcon
 import app.ghghorg.atsassets.ui.theme.gainLossColor
+import app.ghghorg.atsassets.ui.theme.tokenDp
+import app.ghghorg.atsassets.ui.theme.typeStyle
 
 /**
- * Portfolios (view 3, wireframe 3 frame A): the rows in the order they were created, each opening its portfolio
- * (08 decision 3), and New portfolio. Before the opening balance exists, New portfolio asks for it instead of
- * opening the dialog (4.2). Under the list, "Updating prices" and the refresh-failed line (marker 1; 16b); pulling
- * down refreshes the prices (16b decision 2).
+ * Portfolios (view 3, wireframe 3 frame A), in the design system (44a step 8 group (b); drawing
+ * spec/wireframes/design/03-portfolios.html frames A and D): under the title band, one card of rows in the order they
+ * were created, each opening its portfolio (08 decision 3), then "Updating prices" and the refresh-failed line (marker 1;
+ * 16b), then New portfolio as an outline button with Lucide's plus. Before the opening balance exists, New portfolio asks
+ * for it instead of opening the dialog (4.2). Pulling down refreshes the prices (16b decision 2).
  */
 @Composable
 fun PortfoliosScreen(
@@ -61,57 +71,58 @@ fun PortfoliosScreen(
     modifier: Modifier = Modifier,
     onRefresh: () -> Unit = {},
 ) {
-    PricePullToRefresh(state.refreshing, onRefresh, modifier.fillMaxSize()) {
-        Column(
-            modifier = Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(12.dp),
-        ) {
-            Text(
-                text = stringResource(R.string.tab_portfolios),
-                style = MaterialTheme.typography.titleLarge,
-            )
-            if (state.portfolios.isEmpty()) {
-                NoPortfoliosYet(onNewPortfolio)
-            } else {
-                state.portfolios.forEach { portfolio ->
-                    PortfolioRow(portfolio, state.holdingsOf(portfolio.id), state.portfolioFigures(portfolio.id)) { onOpenPortfolio(portfolio.id) }
+    AtsScreen(stringResource(R.string.tab_portfolios), modifier) {
+        PricePullToRefresh(state.refreshing, onRefresh, Modifier.weight(1f).fillMaxWidth()) {
+            Column(
+                modifier = Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(tokenDp("spaceMargin")),
+                verticalArrangement = Arrangement.spacedBy(tokenDp("spaceGap")),
+            ) {
+                if (state.portfolios.isEmpty()) {
+                    NoPortfoliosYet(onNewPortfolio)
+                } else {
+                    AtsCard(padded = false) {
+                        state.portfolios.forEachIndexed { index, portfolio ->
+                            if (index > 0) AtsRowDivider()
+                            PortfolioRow(portfolio, state.holdingsOf(portfolio.id), state.portfolioFigures(portfolio.id)) { onOpenPortfolio(portfolio.id) }
+                        }
+                    }
                 }
-                OutlinedButton(onClick = onNewPortfolio) {
-                    Text(text = stringResource(R.string.new_portfolio))
-                }
-            }
-            PriceRefreshLines(state.priceRefresh.refreshing, state.priceRefresh.failed, state.priceRefresh.noKey)
-            if (state.portfolioNeedsOpeningBalance) {
-                Text(
-                    text = stringResource(R.string.opening_balance_first),
-                    style = MaterialTheme.typography.bodyLarge,
-                    modifier = Modifier.semantics { liveRegion = LiveRegionMode.Polite },
-                )
-                Button(onClick = onSetOpeningBalance) {
-                    Text(text = stringResource(R.string.guided_set_opening_balance))
+                PriceRefreshLines(state.priceRefresh.refreshing, state.priceRefresh.failed, state.priceRefresh.noKey)
+                if (state.portfolios.isNotEmpty()) AtsButton(stringResource(R.string.new_portfolio), onNewPortfolio, icon = LucideIcon.PLUS)
+                if (state.portfolioNeedsOpeningBalance) {
+                    AtsCard {
+                        Text(
+                            text = stringResource(R.string.opening_balance_first),
+                            style = typeStyle("body"),
+                            color = AtsTheme.colors.text,
+                            modifier = Modifier.semantics { liveRegion = LiveRegionMode.Polite },
+                        )
+                        AtsButton(stringResource(R.string.guided_set_opening_balance), onSetOpeningBalance, kind = ButtonKind.FILLED)
+                    }
                 }
             }
         }
     }
 }
 
-/** "No portfolios yet" with a Create a portfolio button (wireframe 3; Overall, 07 decision 2). */
+/**
+ * "No portfolios yet" with Create a portfolio (wireframe 3; Overall, 07 decision 2): D-32's nothing-to-enter card, the
+ * line in medium 16 and the button outline (drawing 03 frame D).
+ */
 @Composable
 internal fun NoPortfoliosYet(onCreate: () -> Unit) {
-    Text(
-        text = stringResource(R.string.no_portfolios_yet),
-        style = MaterialTheme.typography.bodyLarge,
-    )
-    Button(onClick = onCreate) {
-        Text(text = stringResource(R.string.create_portfolio))
+    AtsCard {
+        Text(text = stringResource(R.string.no_portfolios_yet), style = typeStyle("sectionHeading"), color = AtsTheme.colors.text)
+        AtsButton(stringResource(R.string.create_portfolio), onCreate)
     }
 }
 
 // Wireframe 3 marker 1, drawn from its model (CR2, 16a decision 1): name, number of holdings, the value with each
 // holding at its latest price or at cost (4.8), and the gain/loss in green or red with its sign, with "(all holdings at
 // cost)" while no holding with shares has a price (wording 4). No age line on a row (view 3); a portfolio's screen has
-// it. The whole row is one tap target without ">", read by TalkBack as one button with the figures (08 decision 3,
-// wording 5).
+// it. The whole row is one tap target, read by TalkBack as one button with the figures (08 decision 3, wording 5). In
+// the design system (drawing 03 frame A, note 1): the name in 16 with the count in secondary 14 under it, the figures on
+// the right, and a chevron.
 @Composable
 private fun PortfolioRow(
     portfolio: Portfolio,
@@ -139,45 +150,42 @@ private fun PortfolioRow(
             // CR5 (41), AC-67: then its 1-day line.
             daySpoken(if (atCost) stringResource(R.string.portfolio_row_at_cost_spoken, base) else base, figures.day)
         }
-    OutlinedCard(modifier = Modifier.fillMaxWidth()) {
-        Column(
-            modifier =
-            Modifier
-                .fillMaxWidth()
-                .clickable(role = Role.Button, onClick = onOpen)
-                .clearAndSetSemantics {
-                    contentDescription = spoken
-                    role = Role.Button
-                    onClick {
-                        onOpen()
-                        true
-                    }
-                }.padding(12.dp),
-            verticalArrangement = Arrangement.spacedBy(2.dp),
-        ) {
-            Text(
-                text = portfolio.name,
-                style = MaterialTheme.typography.titleMedium,
-            )
-            Text(
-                text = count,
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
-            Text(
-                text = value,
-                style = MaterialTheme.typography.bodyLarge,
-            )
+    val colors = AtsTheme.colors
+    Row(
+        modifier =
+        Modifier
+            .fillMaxWidth()
+            .heightIn(min = tokenDp("spaceTouch"))
+            .clickable(role = Role.Button, onClick = onOpen)
+            .clearAndSetSemantics {
+                contentDescription = spoken
+                role = Role.Button
+                onClick {
+                    onOpen()
+                    true
+                }
+            }.padding(tokenDp("spaceInset")),
+        horizontalArrangement = Arrangement.spacedBy(tokenDp("spaceInset")),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Column(modifier = Modifier.weight(1f)) {
+            Text(text = portfolio.name, style = typeStyle("body"), color = colors.text)
+            Text(text = count, style = typeStyle("small"), color = colors.textSecondary)
+        }
+        Column(horizontalAlignment = Alignment.End) {
+            Text(text = value, style = typeStyle("body"), color = colors.text, textAlign = TextAlign.End)
             if (holdings.isNotEmpty()) {
                 Text(
                     text = if (atCost) "$gain ${stringResource(R.string.holdings_at_cost)}" else gain,
-                    style = MaterialTheme.typography.bodyMedium,
+                    style = typeStyle("small"),
                     color = gainLossColor(sign(figures.gain)),
+                    textAlign = TextAlign.End,
                 )
                 // CR5 (41), wireframe 03 marker 1: the 1-day line under the gain/loss.
                 figures.day?.let { DayRowText(it) }
             }
         }
+        AtsIcon(LucideIcon.CHEVRON_RIGHT, tint = colors.iconChevron, size = tokenDp("fieldMarkSize"))
     }
 }
 

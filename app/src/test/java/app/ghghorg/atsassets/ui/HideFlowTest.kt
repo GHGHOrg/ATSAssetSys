@@ -160,6 +160,24 @@ class HideFlowTest {
         assertEquals(Screen.PORTFOLIO, vm.state.value.screen)
     }
 
+    // 44a step 8 group (b), CR2's wiring test (open item 48): the screen draws from the state's model, which follows Unhide.
+    @Test
+    fun hiddenHoldings_drawsFromTheStatesModel_whichFollowsUnhide() {
+        val vm = onPortfolio(store(hidden = listOf(ko, aapl)))
+        vm.openHiddenHoldings()
+        assertEquals(
+            HiddenHoldingsModel(
+                portfolioName = "Main",
+                rows = listOf(HiddenHoldingRowModel("AAPL", "0", "2026-01-03"), HiddenHoldingRowModel("KO", "0", "2026-02-10")),
+                saveFailed = false,
+                canAct = true,
+            ),
+            vm.state.value.hiddenHoldings,
+        )
+        vm.unhide("AAPL")
+        assertEquals(listOf(HiddenHoldingRowModel("KO", "0", "2026-02-10")), vm.state.value.hiddenHoldings?.rows)
+    }
+
     @Test
     fun unhide_returnsTheHoldingToTheListAtZeroShares() {
         val store = store(hidden = listOf(aapl))

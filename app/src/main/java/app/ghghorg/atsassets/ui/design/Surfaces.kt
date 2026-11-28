@@ -27,6 +27,7 @@ import androidx.compose.ui.draw.dropShadow
 import androidx.compose.ui.graphics.shadow.Shadow
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.heading
+import androidx.compose.ui.semantics.paneTitle
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.DpOffset
 import androidx.compose.ui.unit.dp
@@ -223,11 +224,15 @@ internal class AtsMenuItem(
     val enabled: Boolean = true,
 )
 
-/** A menu inside the window, at the top end of the screen, over a scrim that closes it (D-34). */
+/**
+ * A menu inside the window, at the top end of the screen, over a scrim that closes it (D-34). [title], when given, is
+ * the pane title TalkBack announces as the menu opens (the ⋮ menu's "Portfolio menu").
+ */
 @Composable
 internal fun AtsMenu(
     items: List<AtsMenuItem>,
     onDismiss: () -> Unit,
+    title: String? = null,
 ) {
     val colors = AtsTheme.colors
     val shape = RoundedCornerShape(tokenDp("radiusDefault"))
@@ -237,6 +242,7 @@ internal fun AtsMenu(
                 .align(Alignment.TopEnd)
                 .padding(tokenDp("spaceMargin"))
                 .width(tokenDp("layerMenuWidth"))
+                .then(if (title != null) Modifier.semantics { paneTitle = title } else Modifier)
                 .cardShadow()
                 .clip(shape)
                 .background(colors.float),
