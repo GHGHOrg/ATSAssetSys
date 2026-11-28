@@ -1,40 +1,34 @@
 package app.ghghorg.atsassets.ui
 
 import androidx.activity.compose.BackHandler
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.Button
-import androidx.compose.material3.HorizontalDivider
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedButton
-import androidx.compose.material3.OutlinedCard
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.semantics.LiveRegionMode
-import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.clearAndSetSemantics
-import androidx.compose.ui.semantics.contentDescription
-import androidx.compose.ui.semantics.heading
-import androidx.compose.ui.semantics.liveRegion
-import androidx.compose.ui.semantics.onClick
-import androidx.compose.ui.semantics.role
-import androidx.compose.ui.semantics.semantics
-import androidx.compose.ui.unit.dp
 import app.ghghorg.atsassets.R
 import app.ghghorg.atsassets.core.AutoLock
 import app.ghghorg.atsassets.core.ClassList
+import app.ghghorg.atsassets.ui.design.AtsBlockedMessage
+import app.ghghorg.atsassets.ui.design.AtsButton
+import app.ghghorg.atsassets.ui.design.AtsCard
+import app.ghghorg.atsassets.ui.design.AtsLinkRow
+import app.ghghorg.atsassets.ui.design.AtsRowDivider
+import app.ghghorg.atsassets.ui.design.AtsScreen
+import app.ghghorg.atsassets.ui.design.AtsSectionHeading
+import app.ghghorg.atsassets.ui.design.AtsWarningLine
+import app.ghghorg.atsassets.ui.design.ButtonKind
+import app.ghghorg.atsassets.ui.theme.AtsTheme
+import app.ghghorg.atsassets.ui.theme.tokenDp
+import app.ghghorg.atsassets.ui.theme.typeStyle
 
 /** Settings' callbacks, passed together. Allow and Turn off are MainActivity's, which owns the screenshot window (21). */
 class SettingsActions(
@@ -53,12 +47,13 @@ class SettingsActions(
 )
 
 /**
- * Settings (section 6, wireframe 10f frame B; iterations 20 and 21), drawn from its model (CR2): "<" and the title,
- * then the Security section (marker 3) with Auto-lock and its current choice, which opens the choice of four in the
- * shared choice layer with the default marked and "Takes effect at once. Saved." (frame C, marker 7), and the Screenshot
- * window with "Off" or its time left, which opens its layer (marker 8); the Navigation section with the Tab order and
- * the order in force, which opens the Tab order screen (marker 5, 22). Only what is built shows: the other sections
- * follow with their iterations. Back returns to More.
+ * Settings (section 6, wireframe 10f frame B; iterations 20 and 21), drawn from its model (CR2), in the design system (44a
+ * step 8 group (e); drawing spec/wireframes/design/10f-more-settings.html frames B to D): under the title band, a medium
+ * secondary heading over each section's card (note 3), each row its name with its current value under it and a chevron.
+ * Security (marker 3): Auto-lock and its current choice, which opens the choice of four as radio rows with the default
+ * marked, "Takes effect at once. Saved." and Close (frame C, marker 7); the Screenshot window with "Off" or its time left,
+ * which opens its layer (marker 8). Prices (30), Navigation with the Tab order (marker 5, 22), Lists with each list's
+ * number of values (25). A failed save as the blocked card. Back returns to More.
  */
 @Composable
 fun SettingsScreen(
@@ -68,84 +63,73 @@ fun SettingsScreen(
 ) {
     BackHandler(enabled = !state.saving, onBack = actions.onBack)
     val model = state.settings
+    val enabled = !state.saving
     Box(modifier = modifier.fillMaxSize()) {
         // While a layer is open, TalkBack reads only the layer.
         val under = if (state.autoLockChoiceOpen || state.screenshotLayerOpen) Modifier.clearAndSetSemantics { } else Modifier
-        Column(
-            modifier = Modifier.fillMaxSize().then(under).verticalScroll(rememberScrollState()).padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(12.dp),
+        AtsScreen(
+            title = stringResource(R.string.settings_title),
+            modifier = under,
+            onBack = actions.onBack,
+            backLabel = stringResource(R.string.back_button),
+            backEnabled = enabled,
         ) {
-            TitleRow(stringResource(R.string.settings_title), actions.onBack, enabled = !state.saving)
-            Text(
-                text = stringResource(R.string.settings_security),
-                style = MaterialTheme.typography.titleMedium,
-                modifier = Modifier.semantics { heading() },
-            )
-            OutlinedCard(modifier = Modifier.fillMaxWidth()) {
-                val value = autoLockLabel(model.autoLock)
-                SettingRow(
-                    name = stringResource(R.string.settings_auto_lock),
-                    value = value,
-                    spoken = stringResource(R.string.settings_auto_lock_spoken, value),
-                    onOpen = actions.onOpenChoice,
-                    enabled = !state.saving,
-                )
-                HorizontalDivider(modifier = Modifier.padding(horizontal = 12.dp))
-                val left = model.screenshotLeft
-                val shown = if (left == null) stringResource(R.string.screenshot_off) else stringResource(R.string.screenshot_on_row, left.text)
-                SettingRow(
-                    name = stringResource(R.string.settings_screenshot),
-                    value = shown,
-                    spoken = stringResource(R.string.settings_screenshot_spoken, screenshotSpoken(left)),
-                    onOpen = actions.onOpenScreenshots,
-                    enabled = !state.saving,
-                )
-            }
-            // 30: the Prices section (marker 4) with the one price source and its key's state (marker 9).
-            model.priceSource?.let { PricesSection(it, actions.onOpenPriceSource, enabled = !state.saving) }
-            Text(
-                text = stringResource(R.string.settings_navigation),
-                style = MaterialTheme.typography.titleMedium,
-                modifier = Modifier.semantics { heading() },
-            )
-            OutlinedCard(modifier = Modifier.fillMaxWidth()) {
-                val order = model.tabOrder.map { stringResource(it.labelRes) }
-                val value = stringResource(R.string.tab_order_value, *order.toTypedArray())
-                SettingRow(
-                    name = stringResource(R.string.settings_tab_order),
-                    value = value,
-                    spoken = stringResource(R.string.settings_tab_order_spoken, value),
-                    onOpen = actions.onOpenTabOrder,
-                    enabled = !state.saving,
-                )
-            }
-            // 25: the Lists section (marker 6), each list with its number of values; each opens its list screen (frame F).
-            Text(
-                text = stringResource(R.string.settings_lists),
-                style = MaterialTheme.typography.titleMedium,
-                modifier = Modifier.semantics { heading() },
-            )
-            OutlinedCard(modifier = Modifier.fillMaxWidth()) {
-                model.lists.forEachIndexed { index, row ->
-                    if (index > 0) HorizontalDivider(modifier = Modifier.padding(horizontal = 12.dp))
-                    val name = stringResource(if (row.list == ClassList.SECTOR) R.string.settings_sectors else R.string.settings_geographies)
-                    val value = pluralStringResource(R.plurals.settings_list_values, row.values, row.values)
-                    SettingRow(
-                        name = name,
+            Column(
+                modifier = Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(tokenDp("spaceMargin")),
+                verticalArrangement = Arrangement.spacedBy(tokenDp("spaceGap")),
+            ) {
+                if (model.notSaved) AtsBlockedMessage(stringResource(R.string.save_failed), prefix = null)
+                AtsSectionHeading(stringResource(R.string.settings_security))
+                AtsCard(padded = false) {
+                    val value = autoLockLabel(model.autoLock)
+                    AtsLinkRow(
+                        name = stringResource(R.string.settings_auto_lock),
+                        onOpen = actions.onOpenChoice,
                         value = value,
-                        spoken = stringResource(R.string.settings_list_spoken, name, value),
-                        onOpen = { actions.onOpenList(row.list) },
-                        enabled = !state.saving,
+                        spoken = stringResource(R.string.settings_auto_lock_spoken, value),
+                        enabled = enabled,
+                    )
+                    AtsRowDivider()
+                    val left = model.screenshotLeft
+                    val shown = if (left == null) stringResource(R.string.screenshot_off) else stringResource(R.string.screenshot_on_row, left.text)
+                    AtsLinkRow(
+                        name = stringResource(R.string.settings_screenshot),
+                        onOpen = actions.onOpenScreenshots,
+                        value = shown,
+                        spoken = stringResource(R.string.settings_screenshot_spoken, screenshotSpoken(left)),
+                        enabled = enabled,
                     )
                 }
-            }
-            if (model.notSaved) {
-                Text(
-                    text = stringResource(R.string.save_failed),
-                    style = MaterialTheme.typography.bodyLarge,
-                    color = MaterialTheme.colorScheme.error,
-                    modifier = Modifier.semantics { liveRegion = LiveRegionMode.Polite },
-                )
+                // 30: the Prices section (marker 4) with the one price source and its key's state (marker 9).
+                model.priceSource?.let { PricesSection(it, actions.onOpenPriceSource, enabled) }
+                AtsSectionHeading(stringResource(R.string.settings_navigation))
+                AtsCard(padded = false) {
+                    val order = model.tabOrder.map { stringResource(it.labelRes) }
+                    val value = stringResource(R.string.tab_order_value, *order.toTypedArray())
+                    AtsLinkRow(
+                        name = stringResource(R.string.settings_tab_order),
+                        onOpen = actions.onOpenTabOrder,
+                        value = value,
+                        spoken = stringResource(R.string.settings_tab_order_spoken, value),
+                        enabled = enabled,
+                    )
+                }
+                // 25: the Lists section (marker 6), each list with its number of values; each opens its list screen (frame F).
+                AtsSectionHeading(stringResource(R.string.settings_lists))
+                AtsCard(padded = false) {
+                    model.lists.forEachIndexed { index, row ->
+                        if (index > 0) AtsRowDivider()
+                        val name = stringResource(if (row.list == ClassList.SECTOR) R.string.settings_sectors else R.string.settings_geographies)
+                        val value = pluralStringResource(R.plurals.settings_list_values, row.values, row.values)
+                        AtsLinkRow(
+                            name = name,
+                            onOpen = { actions.onOpenList(row.list) },
+                            value = value,
+                            spoken = stringResource(R.string.settings_list_spoken, name, value),
+                            enabled = enabled,
+                        )
+                    }
+                }
             }
         }
         if (state.autoLockChoiceOpen) {
@@ -160,6 +144,7 @@ fun SettingsScreen(
                 onChoose = actions.onChoose,
                 onClose = actions.onCloseChoice,
                 note = stringResource(R.string.auto_lock_note),
+                closeButton = true,
             )
         }
         if (state.screenshotLayerOpen) {
@@ -179,12 +164,8 @@ private fun PricesSection(
     onOpen: () -> Unit,
     enabled: Boolean,
 ) {
-    Text(
-        text = stringResource(R.string.settings_prices),
-        style = MaterialTheme.typography.titleMedium,
-        modifier = Modifier.semantics { heading() },
-    )
-    OutlinedCard(modifier = Modifier.fillMaxWidth()) {
+    AtsSectionHeading(stringResource(R.string.settings_prices))
+    AtsCard(padded = false) {
         val value =
             when {
                 !row.keySet -> stringResource(R.string.price_source_no_key, row.source)
@@ -193,11 +174,11 @@ private fun PricesSection(
             }
         val spokenValue =
             if (row.keySet && row.keyEnding.isNotEmpty()) stringResource(R.string.price_source_key_ending, row.source, row.spokenEnding) else value
-        SettingRow(
+        AtsLinkRow(
             name = stringResource(R.string.settings_price_source),
+            onOpen = onOpen,
             value = value,
             spoken = stringResource(R.string.settings_price_source_spoken, spokenValue),
-            onOpen = onOpen,
             enabled = enabled,
         )
     }
@@ -213,42 +194,33 @@ private fun screenshotSpoken(left: ScreenshotTimeLeft?): String {
 }
 
 /**
- * The Screenshot window's layer (wireframe 10f frame C, marker 8), drawn in the window. Off: the blocked line,
- * "Allow screenshots for 3 minutes" and the check line. On: the time left with "Ends when you leave the app.", the line
- * that anything can capture the screen, and Turn off. The fingerprint or PIN prompt is the system's own window.
+ * The Screenshot window's layer (wireframe 10f frames D and F, marker 8), drawn in the window. Off: the state in medium,
+ * "Allow screenshots for 3 minutes" gold with how it asks as a note. On: the time left with "Ends when you leave the app."
+ * in medium, D-34's warning line that anything can capture the screen, and Turn off gold. Close a text button (note 6).
+ * The fingerprint or PIN prompt is the system's own window.
  */
 @Composable
 private fun ScreenshotLayer(
     left: ScreenshotTimeLeft?,
     actions: SettingsActions,
 ) {
+    val colors = AtsTheme.colors
     LayerCard(title = stringResource(R.string.settings_screenshot), onClose = actions.onCloseScreenshots) {
         Column(
-            modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
-            verticalArrangement = Arrangement.spacedBy(12.dp),
+            modifier = Modifier.padding(horizontal = tokenDp("layerDialogPadding"), vertical = tokenDp("fieldDensePadding")),
+            verticalArrangement = Arrangement.spacedBy(tokenDp("layerDialogGap")),
         ) {
             if (left == null) {
-                Text(text = stringResource(R.string.screenshot_off_line), style = MaterialTheme.typography.bodyLarge)
-                Button(onClick = actions.onAllowScreenshots) {
-                    Text(text = stringResource(R.string.screenshot_allow))
-                }
-                Text(
-                    text = stringResource(R.string.screenshot_allow_note),
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                )
+                Text(text = stringResource(R.string.screenshot_off_line), style = typeStyle("button"), color = colors.text)
+                AtsButton(stringResource(R.string.screenshot_allow), actions.onAllowScreenshots, kind = ButtonKind.FILLED)
+                Text(text = stringResource(R.string.screenshot_allow_note), style = typeStyle("note"), color = colors.textSecondary)
             } else {
-                Text(text = stringResource(R.string.screenshot_on_line, left.text), style = MaterialTheme.typography.bodyLarge)
-                Text(
-                    text = stringResource(R.string.screenshot_on_warning),
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                )
-                OutlinedButton(onClick = actions.onTurnOffScreenshots) {
-                    Text(text = stringResource(R.string.screenshot_turn_off))
-                }
+                Text(text = stringResource(R.string.screenshot_on_line, left.text), style = typeStyle("button"), color = colors.text)
+                AtsWarningLine(stringResource(R.string.screenshot_on_warning))
+                AtsButton(stringResource(R.string.screenshot_turn_off), actions.onTurnOffScreenshots, kind = ButtonKind.FILLED)
             }
         }
+        LayerClose(actions.onCloseScreenshots)
     }
 }
 
@@ -262,41 +234,3 @@ private fun autoLockLabel(choice: AutoLock): String = stringResource(
         AutoLock.PHONE_LOCK_OR_RESTART -> R.string.auto_lock_phone_lock
     },
 )
-
-/**
- * One setting: its name, its current value under it and ">", read by TalkBack as [spoken] and a button. The value sits
- * under the name, not beside it, so a long choice fits at the largest font.
- */
-@Composable
-private fun SettingRow(
-    name: String,
-    value: String,
-    spoken: String,
-    onOpen: () -> Unit,
-    enabled: Boolean,
-) {
-    Row(
-        modifier =
-        Modifier
-            .fillMaxWidth()
-            .clickable(enabled = enabled, role = Role.Button, onClick = onOpen)
-            .clearAndSetSemantics {
-                contentDescription = spoken
-                role = Role.Button
-                if (enabled) {
-                    onClick {
-                        onOpen()
-                        true
-                    }
-                }
-            }.padding(12.dp),
-        horizontalArrangement = Arrangement.spacedBy(12.dp),
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
-            Text(text = name, style = MaterialTheme.typography.bodyLarge)
-            Text(text = value, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
-        }
-        Text(text = ">", style = MaterialTheme.typography.bodyLarge)
-    }
-}

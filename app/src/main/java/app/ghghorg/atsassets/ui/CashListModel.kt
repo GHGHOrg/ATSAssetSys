@@ -197,8 +197,9 @@ object CashList {
         )
     }
 
-    // As transactionTitle on transaction detail: a reversal is titled after its original, if that is there.
-    private fun titleOf(
+    // A reversal is titled after its original, if that is there. Also the title of the cash entry detail of a trade line
+    // and of transaction detail (44a step 8 group (d) parts 2 and 3).
+    internal fun titleOf(
         trade: Transaction,
         byId: Map<String, Transaction>,
     ): TradeTitle {

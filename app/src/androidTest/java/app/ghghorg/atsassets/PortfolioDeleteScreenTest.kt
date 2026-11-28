@@ -49,6 +49,7 @@ import app.ghghorg.atsassets.ui.PortfolioScreen
 import app.ghghorg.atsassets.ui.PortfolioScreenActions
 import app.ghghorg.atsassets.ui.Screen
 import app.ghghorg.atsassets.ui.theme.ATSAssetSystemTheme
+import app.ghghorg.atsassets.ui.theme.tokenDp
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Assert.fail
@@ -271,7 +272,7 @@ class PortfolioDeleteKeyboardTest {
  * the window's bottom, took the bar's height as well as the keyboard's. On the real MainActivity: the dialog opened in
  * portrait, then turned (as on the phone), the field tapped; it must show, fully above the keyboard, and the dialog must
  * reach down to the keyboard: at this font it is taller than its room, so it fills the room, and its bottom lies its own
- * margin (24 dp) above the keyboard's top, give or take 4 dp. The emulator's keyboard is lower than the phone's, so the
+ * margin (24 dp until 44a, the catalog's layer.dialog-side since) above the keyboard's top, give or take 4 dp. The emulator's keyboard is lower than the phone's, so the
  * field alone still fitted there (red run 43480636956); the room is short by the bar's height on any screen.
  */
 @RunWith(AndroidJUnit4::class)
@@ -315,7 +316,8 @@ class PortfolioDeleteKeyboardLandscapeTest {
             }
         if (!settled) fail("The dialog's bounds did not settle 10 s after the keyboard opened; last read $last")
         val dialogBottom = last.bottom
-        val (margin, tolerance) = with(composeRule.density) { 24.dp.toPx() to 4.dp.toPx() }
+        // The dialog's own margin: Material's 24 dp until 44a, the catalog's layer.dialog-side since (step 8 group (e)).
+        val (margin, tolerance) = with(composeRule.density) { tokenDp("layerDialogSide").toPx() to 4.dp.toPx() }
         val gap = keyboardTop - dialogBottom
         assertTrue(
             "The dialog ends at $dialogBottom px, $gap px above the keyboard's top at $keyboardTop px; expected its margin, $margin px",

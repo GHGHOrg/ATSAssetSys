@@ -231,6 +231,19 @@ class BuyFlowTest {
         assertEquals(Fraction.of(BigInteger.valueOf(1_000), BigInteger.valueOf(3)), vm.state.value.buyPricePerShare)
     }
 
+    // 44a step 8 group (d) part 1, CR2's wiring test (open item 48): the entry and its review draw from the state's models.
+    @Test
+    fun theEntryAndItsReview_drawFromTheStatesModels() {
+        val vm = started(storeWithCash())
+        vm.chooseBuy()
+        vm.fillBuy(quantity = "10", total = "1500.00")
+        val state = vm.state.value
+        assertEquals("$150.00", state.buyEntry.pricePerShare)
+        assertEquals(state.portfolios.map { PickOption(it.id, it.name) }, state.buyEntry.portfolios)
+        assertEquals(BuyReview.of(state.buyForm, state.portfolios, state.buyPricePerShare), state.buyReviewModel)
+        assertEquals(-150_000L, state.buyReviewModel.cashCents)
+    }
+
     @Test
     fun review_showsEveryFieldRefusalTogether_keepsTheText_andAsksNoSource() {
         val source = FakeSource()

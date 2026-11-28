@@ -1,0 +1,346 @@
+package app.ghghorg.atsassets.ui.design
+
+import android.graphics.BlurMaskFilter
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.gestures.detectTapGestures
+import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxScope
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ColumnScope
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.RowScope
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.consumeWindowInsets
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.imePadding
+import androidx.compose.foundation.layout.navigationBars
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.drawWithCache
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.drawscope.drawIntoCanvas
+import androidx.compose.ui.graphics.nativeCanvas
+import androidx.compose.ui.graphics.toArgb
+import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.heading
+import androidx.compose.ui.semantics.paneTitle
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.unit.dp
+import app.ghghorg.atsassets.ui.theme.AtsIcon
+import app.ghghorg.atsassets.ui.theme.AtsTheme
+import app.ghghorg.atsassets.ui.theme.LucideIcon
+import app.ghghorg.atsassets.ui.theme.tokenDp
+import app.ghghorg.atsassets.ui.theme.typeStyle
+
+// 44a step 6 (spec 6, Visual design (1), (3) and (7); D-08, D-34): cards, the title band, and the layers drawn inside the
+// window (dialogs and menus over a scrim, never a separate window; CLAUDE.md pitfall).
+
+internal enum class CardKind { PLAIN, SUMMARY }
+
+/**
+ * The card's two-layer shadow from the tokens (D-08); cards have no border. Each layer is a rounded rectangle in its color,
+ * moved by its offset, grown by its spread and softened by a blur filter, drawn under the card. Not Compose's dropShadow:
+ * that draws the shadow into one bitmap the size of the card, and a long card (Transaction history with many transactions,
+ * about 37,000 px) passed Android's 100 MB bitmap limit and crashed the app (44a step 9 phone check; TallCardShadowTest).
+ */
+@Composable
+internal fun Modifier.cardShadow(): Modifier {
+    val layers = AtsTheme.colors.cardShadow
+    val corner = tokenDp("radiusDefault")
+    return drawWithCache {
+        val paints =
+            layers.map { layer ->
+                val blur = layer.blur.dp.toPx()
+                android.graphics.Paint().apply {
+                    isAntiAlias = true
+                    color = layer.color.toArgb()
+                    if (blur > 0f) maskFilter = BlurMaskFilter(blur, BlurMaskFilter.Blur.NORMAL)
+                }
+            }
+        val radius = corner.toPx()
+        onDrawBehind {
+            drawIntoCanvas { canvas ->
+                layers.forEachIndexed { index, layer ->
+                    val spread = layer.spread.dp.toPx()
+                    val dx = layer.offsetX.dp.toPx()
+                    val dy = layer.offsetY.dp.toPx()
+                    canvas.nativeCanvas.drawRoundRect(
+                        dx - spread,
+                        dy - spread,
+                        size.width + dx + spread,
+                        size.height + dy + spread,
+                        radius + spread,
+                        radius + spread,
+                        paints[index],
+                    )
+                }
+            }
+        }
+    }
+}
+
+/** A card: the card color (or the summary card's), radius 8, the shadow, padding 10 inside (D-08, D-15). */
+@Composable
+internal fun AtsCard(
+    modifier: Modifier = Modifier,
+    kind: CardKind = CardKind.PLAIN,
+    padded: Boolean = true,
+    content: @Composable ColumnScope.() -> Unit,
+) {
+    val colors = AtsTheme.colors
+    val shape = RoundedCornerShape(tokenDp("radiusDefault"))
+    Column(
+        modifier = modifier
+            .fillMaxWidth()
+            .cardShadow()
+            .clip(shape)
+            .background(if (kind == CardKind.SUMMARY) colors.summary else colors.card)
+            .then(if (padded) Modifier.padding(tokenDp("spaceInset")) else Modifier),
+        verticalArrangement = Arrangement.spacedBy(tokenDp("cardGap")),
+        content = content,
+    )
+}
+
+/**
+ * The title band (D-08): in light the band color with a white title, in dark the title on the page. A back arrow when
+ * [onBack] is given, read by TalkBack as [backLabel]; [actions] at the end (the ⋮ menu, Settings).
+ */
+@Composable
+internal fun AtsTitleBand(
+    title: String,
+    modifier: Modifier = Modifier,
+    onBack: (() -> Unit)? = null,
+    backLabel: String? = null,
+    backEnabled: Boolean = true,
+    actions: @Composable RowScope.() -> Unit = {},
+) {
+    val colors = AtsTheme.colors
+    Row(
+        modifier = modifier
+            .fillMaxWidth()
+            .background(colors.band)
+            .heightIn(min = tokenDp("bandHeight"))
+            .padding(horizontal = tokenDp("bandSide")),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        if (onBack != null && backLabel != null) AtsIconButton(LucideIcon.CHEVRON_LEFT, backLabel, onBack, enabled = backEnabled, tint = colors.iconBand)
+        Text(
+            title,
+            style = typeStyle("screenTitle"),
+            color = colors.onBand,
+            modifier = Modifier
+                .weight(1f)
+                .padding(start = if (onBack == null) tokenDp("spaceMargin") else 0.dp)
+                .semantics { heading() },
+        )
+        actions()
+    }
+}
+
+/** A section heading over cards: medium 14 in the secondary color, read by TalkBack as a heading (D-36, D-38). */
+@Composable
+internal fun AtsSectionHeading(
+    text: String,
+    modifier: Modifier = Modifier,
+) {
+    Text(
+        text,
+        style = typeStyle("label"),
+        color = AtsTheme.colors.textSecondary,
+        modifier = modifier.padding(top = tokenDp("fieldDensePadding")).semantics { heading() },
+    )
+}
+
+/** A divider between rows inside a card (D-08: rows inside a card keep their dividers). */
+@Composable
+internal fun AtsRowDivider() {
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = tokenDp("spaceInset"))
+            .heightIn(min = tokenDp("buttonOutline"), max = tokenDp("buttonOutline"))
+            .background(AtsTheme.colors.divider),
+    )
+}
+
+/** A screen under its title band: the band, then [content] in a column with the side margin and the gap between cards. */
+@Composable
+internal fun AtsScreen(
+    title: String,
+    modifier: Modifier = Modifier,
+    onBack: (() -> Unit)? = null,
+    backLabel: String? = null,
+    backEnabled: Boolean = true,
+    actions: @Composable RowScope.() -> Unit = {},
+    body: @Composable ColumnScope.() -> Unit,
+) {
+    Column(modifier = modifier.fillMaxSize().background(AtsTheme.colors.page)) {
+        AtsTitleBand(title, onBack = onBack, backLabel = backLabel, backEnabled = backEnabled, actions = actions)
+        body()
+    }
+}
+
+/**
+ * The scrim behind a layer; a tap on it calls [onDismiss] when given. Without [onDismiss] it only takes every tap, with no
+ * semantics of its own, so a dialog's pane title is not merged into a click target (run 46098085734's crash, AtsMenu).
+ */
+@Composable
+internal fun AtsScrim(
+    onDismiss: (() -> Unit)?,
+    content: @Composable BoxScope.() -> Unit,
+) {
+    val source = remember { MutableInteractionSource() }
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(AtsTheme.colors.scrim)
+            .then(
+                if (onDismiss != null) {
+                    Modifier.clickable(interactionSource = source, indication = null, role = Role.Button, onClick = onDismiss)
+                } else {
+                    Modifier.pointerInput(Unit) { detectTapGestures { } }
+                },
+            ),
+        content = content,
+    )
+}
+
+/**
+ * A dialog inside the window over a scrim (D-34; 10d): the title in 22 as a heading, then [content], then [actions] at the
+ * bottom right (Cancel a text button, the one main action filled gold, medium 40). A tap outside does nothing, so typed text
+ * is not lost; the caller handles Back. [title] is the pane title TalkBack announces. The caller draws it in AppContent over
+ * the bar: the navigation strip is consumed before the keyboard's padding, and the dialog keeps its side margin on every
+ * edge, scrolling inside when taller than its room (CLAUDE.md pitfalls; 29 step 10).
+ */
+@Composable
+internal fun AtsDialog(
+    title: String,
+    modifier: Modifier = Modifier,
+    actions: @Composable RowScope.() -> Unit,
+    content: @Composable ColumnScope.() -> Unit,
+) {
+    val colors = AtsTheme.colors
+    val shape = RoundedCornerShape(tokenDp("radiusDefault"))
+    AtsScrim(onDismiss = null) {
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .consumeWindowInsets(WindowInsets.navigationBars)
+                .imePadding()
+                .padding(tokenDp("layerDialogSide")),
+            contentAlignment = Alignment.Center,
+        ) {
+            Column(
+                modifier = modifier
+                    .fillMaxWidth()
+                    .semantics { paneTitle = title }
+                    .cardShadow()
+                    .clip(shape)
+                    .background(colors.float)
+                    .verticalScroll(rememberScrollState())
+                    .padding(tokenDp("layerDialogPadding")),
+                verticalArrangement = Arrangement.spacedBy(tokenDp("layerDialogGap")),
+            ) {
+                Text(title, style = typeStyle("screenTitle"), color = colors.text, modifier = Modifier.semantics { heading() })
+                content()
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(tokenDp("fieldDensePadding"), Alignment.End),
+                    verticalAlignment = Alignment.CenterVertically,
+                    content = actions,
+                )
+            }
+        }
+    }
+}
+
+/**
+ * A label-and-value row on a dialog or in a card (10d marker 6): the label in secondary 16, the value at the end in tabular
+ * figures. [total] draws the divider over it and sets both in medium (the cash balance after; 10d note 4).
+ */
+@Composable
+internal fun AtsValueRow(
+    label: String,
+    value: String,
+    valueColor: Color = AtsTheme.colors.text,
+    total: Boolean = false,
+) {
+    val colors = AtsTheme.colors
+    if (total) AtsRowDivider()
+    // Read by TalkBack as one: "Portfolios, 2" (AC-61 (d)).
+    Row(
+        modifier = Modifier.fillMaxWidth().semantics(mergeDescendants = true) {}.padding(vertical = tokenDp("cardGap")),
+        horizontalArrangement = Arrangement.spacedBy(tokenDp("rowControlGap")),
+    ) {
+        val weight = if (total) typeStyle("sectionHeading").fontWeight else null
+        Text(label, style = typeStyle("body"), fontWeight = weight, color = if (total) colors.text else colors.textSecondary, modifier = Modifier.weight(1f))
+        Text(value, style = typeStyle("body"), fontWeight = weight, color = valueColor, textAlign = TextAlign.End)
+    }
+}
+
+/** One item of a menu drawn inside the window (the ⋮ menu): 48 tall, Asap 16 (D-34). */
+internal class AtsMenuItem(
+    val text: String,
+    val onClick: () -> Unit,
+    val enabled: Boolean = true,
+)
+
+/**
+ * A menu inside the window, at the top end of the screen, over a scrim that closes it (D-34). [title], when given, is
+ * the pane title TalkBack announces as the menu opens (the ⋮ menu's "Portfolio menu"), on the menu's own node.
+ */
+@Composable
+internal fun AtsMenu(
+    items: List<AtsMenuItem>,
+    onDismiss: () -> Unit,
+    title: String? = null,
+) {
+    val colors = AtsTheme.colors
+    val shape = RoundedCornerShape(tokenDp("radiusDefault"))
+    AtsScrim(onDismiss) {
+        Column(
+            modifier = Modifier
+                .align(Alignment.TopEnd)
+                .padding(tokenDp("spaceMargin"))
+                .width(tokenDp("layerMenuWidth"))
+                // A node of its own: the scrim is a click target that merges its children, and a pane title cannot be
+                // merged into it (run 46098085734: "merge function called on unmergeable property PaneTitle"). The items
+                // stay buttons of their own.
+                .then(if (title != null) Modifier.semantics(mergeDescendants = true) { paneTitle = title } else Modifier)
+                .cardShadow()
+                .clip(shape)
+                .background(colors.float),
+        ) {
+            for (item in items) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .heightIn(min = tokenDp("spaceTouch"))
+                        .clickable(enabled = item.enabled, role = Role.Button, onClick = item.onClick)
+                        .unavailable(item.enabled)
+                        .padding(horizontal = tokenDp("layerMenuItemPadding")),
+                    contentAlignment = Alignment.CenterStart,
+                ) {
+                    Text(item.text, style = typeStyle("body"), color = colors.text)
+                }
+            }
+        }
+    }
+}

@@ -19,12 +19,11 @@ import androidx.biometric.BiometricManager
 import androidx.biometric.BiometricManager.Authenticators.BIOMETRIC_STRONG
 import androidx.biometric.BiometricManager.Authenticators.DEVICE_CREDENTIAL
 import androidx.biometric.BiometricPrompt
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.Button
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -34,7 +33,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat
 import androidx.fragment.app.FragmentActivity
 import androidx.lifecycle.ViewModel
@@ -56,7 +54,13 @@ import app.ghghorg.atsassets.ui.AppContent
 import app.ghghorg.atsassets.ui.AppViewModel
 import app.ghghorg.atsassets.ui.RestoreControls
 import app.ghghorg.atsassets.ui.ScreenshotControls
+import app.ghghorg.atsassets.ui.design.AtsButton
+import app.ghghorg.atsassets.ui.design.ButtonKind
+import app.ghghorg.atsassets.ui.design.ButtonSize
 import app.ghghorg.atsassets.ui.theme.ATSAssetSystemTheme
+import app.ghghorg.atsassets.ui.theme.AtsTheme
+import app.ghghorg.atsassets.ui.theme.tokenDp
+import app.ghghorg.atsassets.ui.theme.typeStyle
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
@@ -411,50 +415,51 @@ class MainActivity : FragmentActivity() {
     }
 }
 
+/**
+ * The locked screen (44a step 8 group (e); drawing spec/wireframes/design/remaining-screens.html frame 4): on the page
+ * color, the app's name in 22 and Unlock the large gold button. The fingerprint or PIN prompt it opens is the system's.
+ */
 @Composable
 fun LockedScreen(onUnlock: () -> Unit, modifier: Modifier = Modifier) {
-    Column(
-        modifier = modifier.fillMaxSize().padding(24.dp),
-        verticalArrangement = Arrangement.Center,
-        horizontalAlignment = Alignment.CenterHorizontally,
-    ) {
-        Text(
-            text = stringResource(R.string.app_name),
-            style = MaterialTheme.typography.headlineMedium,
+    LockPage(modifier) {
+        Text(text = stringResource(R.string.app_name), style = typeStyle("screenTitle"), color = AtsTheme.colors.text)
+        AtsButton(
+            stringResource(R.string.unlock_button),
+            onUnlock,
+            modifier = Modifier.padding(top = tokenDp("layerDialogSide")),
+            kind = ButtonKind.FILLED,
+            size = ButtonSize.LARGE,
         )
-        Button(
-            onClick = onUnlock,
-            modifier = Modifier.padding(top = 24.dp),
-        ) {
-            Text(text = stringResource(R.string.unlock_button))
-        }
     }
 }
 
+/** The cover shown whenever the window loses focus (drawing frame 4): the app's name only, on the page color. */
 @Composable
 fun CoverScreen(modifier: Modifier = Modifier) {
-    Column(
-        modifier = modifier.fillMaxSize().padding(24.dp),
-        verticalArrangement = Arrangement.Center,
-        horizontalAlignment = Alignment.CenterHorizontally,
-    ) {
-        Text(
-            text = stringResource(R.string.app_name),
-            style = MaterialTheme.typography.headlineMedium,
-        )
+    LockPage(modifier) {
+        Text(text = stringResource(R.string.app_name), style = typeStyle("screenTitle"), color = AtsTheme.colors.text)
     }
 }
 
+/** No screen lock on the phone: the line saying to set one up, on the page color. */
 @Composable
 fun NoScreenLockScreen(modifier: Modifier = Modifier) {
+    LockPage(modifier) {
+        Text(text = stringResource(R.string.no_screen_lock_message), style = typeStyle("body"), color = AtsTheme.colors.text)
+    }
+}
+
+// The lock, cover and no-lock screens' page: the page color, its content centered with the screen's margin.
+@Composable
+private fun LockPage(
+    modifier: Modifier,
+    content: @Composable () -> Unit,
+) {
     Column(
-        modifier = modifier.fillMaxSize().padding(24.dp),
+        modifier = modifier.fillMaxSize().background(AtsTheme.colors.page).padding(tokenDp("layerDialogSide")),
         verticalArrangement = Arrangement.Center,
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
-        Text(
-            text = stringResource(R.string.no_screen_lock_message),
-            style = MaterialTheme.typography.bodyLarge,
-        )
+        content()
     }
 }

@@ -22,10 +22,17 @@ class AboutModelTest {
         )
     }
 
+    // 44a step 8 group (e) (C27): the font and the icons are rows with their own licences, beside SQLCipher's.
     @Test
-    fun sqlCipher_carriesItsOwnLicence_andTheOthersApache() {
+    fun sqlCipher_theFont_andTheIcons_carryTheirOwnLicences_andTheOthersApache() {
         val model = About.of("1.1.0", emptySet())
-        assertEquals(Licence.SQLCIPHER, model.rows.single { it.name == "SQLCipher for Android" }.licence)
-        assertEquals(setOf(Licence.APACHE_2_0), model.rows.filter { it.name != "SQLCipher for Android" }.map { it.licence }.toSet())
+        val own =
+            mapOf(
+                "SQLCipher for Android" to Licence.SQLCIPHER,
+                "Asap and Asap Condensed (fonts)" to Licence.OFL_1_1,
+                "Lucide (icons)" to Licence.ISC_MIT,
+            )
+        for ((name, licence) in own) assertEquals(name, licence, model.rows.single { it.name == name }.licence)
+        assertEquals(setOf(Licence.APACHE_2_0), model.rows.filter { it.name !in own }.map { it.licence }.toSet())
     }
 }

@@ -1,38 +1,31 @@
 package app.ghghorg.atsassets.ui
 
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.HorizontalDivider
-import androidx.compose.material3.IconButton
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedCard
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.semantics.Role
-import androidx.compose.ui.semantics.clearAndSetSemantics
-import androidx.compose.ui.semantics.contentDescription
-import androidx.compose.ui.semantics.onClick
-import androidx.compose.ui.semantics.role
-import androidx.compose.ui.semantics.semantics
-import androidx.compose.ui.unit.dp
 import app.ghghorg.atsassets.R
+import app.ghghorg.atsassets.ui.design.AtsCard
+import app.ghghorg.atsassets.ui.design.AtsIconButton
+import app.ghghorg.atsassets.ui.design.AtsLinkRow
+import app.ghghorg.atsassets.ui.design.AtsRowDivider
+import app.ghghorg.atsassets.ui.design.AtsScreen
+import app.ghghorg.atsassets.ui.theme.AtsTheme
+import app.ghghorg.atsassets.ui.theme.LucideIcon
+import app.ghghorg.atsassets.ui.theme.tokenDp
 
 /**
- * More (section 6, wireframe 10f), drawn from its model (CR2, 17): the title with the gear at the top right that opens
- * Settings (marker 2; 20), the last backup line (marker 1: information only; 31), the line of an interrupted backup (31
- * decision 7), then the five entries, each a row that opens its screen (17 decision 1: Net Worth (Total); 19 decision 1:
- * Allocation; 26: Realized gains; 31: Backup and restore; CR5, 41: About).
+ * More (section 6, wireframe 10f), drawn from its model (CR2, 17), in the design system (44a step 8 group (e); drawing
+ * spec/wireframes/design/10f-more-settings.html frame A): the title band with Lucide's settings icon at its end, 48 to tap
+ * and read as "Settings", which opens Settings (marker 2; 20); the last backup line in its own card (marker 1: information
+ * only; 31) with the line of an interrupted backup (31 decision 7); then the five entries in one card, each a row with a
+ * chevron that opens its screen (17 decision 1: Net Worth (Total); 19 decision 1: Allocation; 26: Realized gains; 31:
+ * Backup and restore; CR5, 41: About).
  */
 @Composable
 fun MoreScreen(
@@ -45,75 +38,33 @@ fun MoreScreen(
     onOpenBackup: () -> Unit = {},
     onOpenAbout: () -> Unit = {},
 ) {
-    Column(
-        modifier = modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(16.dp),
-        verticalArrangement = Arrangement.spacedBy(12.dp),
+    AtsScreen(
+        title = stringResource(R.string.tab_more),
+        modifier = modifier,
+        actions = {
+            AtsIconButton(LucideIcon.SETTINGS, stringResource(R.string.settings_title), onOpenSettings, tint = AtsTheme.colors.iconBand)
+        },
     ) {
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            Text(
-                text = stringResource(R.string.tab_more),
-                style = MaterialTheme.typography.titleLarge,
-                modifier = Modifier.weight(1f),
-            )
-            SettingsGear(onOpenSettings)
-        }
-        LastBackupLine(model.lastBackup)
-        if (model.backupInterrupted) BackupInterruptedLine()
-        OutlinedCard(modifier = Modifier.fillMaxWidth()) {
-            Column(modifier = Modifier.padding(vertical = 4.dp)) {
+        Column(
+            modifier = Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(tokenDp("spaceMargin")),
+            verticalArrangement = Arrangement.spacedBy(tokenDp("spaceGap")),
+        ) {
+            AtsCard {
+                LastBackupLine(model.lastBackup)
+                if (model.backupInterrupted) BackupInterruptedLine()
+            }
+            AtsCard(padded = false) {
                 model.entries.forEachIndexed { index, entry ->
-                    if (index > 0) HorizontalDivider(modifier = Modifier.padding(horizontal = 12.dp))
+                    if (index > 0) AtsRowDivider()
                     when (entry) {
-                        MoreEntry.NET_WORTH -> EntryRow(stringResource(R.string.net_worth_title), onOpenNetWorth)
-                        MoreEntry.ALLOCATION -> EntryRow(stringResource(R.string.allocation_title), onOpenAllocation)
-                        MoreEntry.REALIZED_GAINS -> EntryRow(stringResource(R.string.realized_gains_title), onOpenRealizedGains)
-                        MoreEntry.BACKUP -> EntryRow(stringResource(R.string.backup_title), onOpenBackup)
-                        MoreEntry.ABOUT -> EntryRow(stringResource(R.string.about_title), onOpenAbout)
+                        MoreEntry.NET_WORTH -> AtsLinkRow(stringResource(R.string.net_worth_title), onOpenNetWorth)
+                        MoreEntry.ALLOCATION -> AtsLinkRow(stringResource(R.string.allocation_title), onOpenAllocation)
+                        MoreEntry.REALIZED_GAINS -> AtsLinkRow(stringResource(R.string.realized_gains_title), onOpenRealizedGains)
+                        MoreEntry.BACKUP -> AtsLinkRow(stringResource(R.string.backup_title), onOpenBackup)
+                        MoreEntry.ABOUT -> AtsLinkRow(stringResource(R.string.about_title), onOpenAbout)
                     }
                 }
             }
         }
-    }
-}
-
-/**
- * The gear (marker 2): read by TalkBack as "Settings" and a button, at least 48 dp. The gear is a text sign in its plain
- * (not emoji) form, so no icon library is added.
- */
-@Composable
-private fun SettingsGear(onOpen: () -> Unit) {
-    val label = stringResource(R.string.settings_title)
-    IconButton(onClick = onOpen, modifier = Modifier.size(48.dp).semantics { contentDescription = label }) {
-        Text(text = GEAR, style = MaterialTheme.typography.titleLarge, modifier = Modifier.clearAndSetSemantics { })
-    }
-}
-
-// U+2699 GEAR with U+FE0E, the text presentation selector.
-private const val GEAR = "⚙︎"
-
-/** One entry: its name and ">", read by TalkBack as one button. */
-@Composable
-private fun EntryRow(
-    name: String,
-    onOpen: () -> Unit,
-) {
-    Row(
-        modifier =
-        Modifier
-            .fillMaxWidth()
-            .clickable(role = Role.Button, onClick = onOpen)
-            .clearAndSetSemantics {
-                contentDescription = name
-                role = Role.Button
-                onClick {
-                    onOpen()
-                    true
-                }
-            }.padding(12.dp),
-        horizontalArrangement = Arrangement.spacedBy(12.dp),
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        Text(text = name, style = MaterialTheme.typography.bodyLarge, modifier = Modifier.weight(1f))
-        Text(text = ">", style = MaterialTheme.typography.bodyLarge)
     }
 }

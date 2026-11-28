@@ -1,23 +1,27 @@
 package app.ghghorg.atsassets.ui
 
 import androidx.activity.compose.BackHandler
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.clearAndSetSemantics
-import androidx.compose.ui.unit.dp
 import app.ghghorg.atsassets.R
 import app.ghghorg.atsassets.core.Tab
+import app.ghghorg.atsassets.ui.theme.AtsTheme
+import app.ghghorg.atsassets.ui.theme.tokenDp
+import app.ghghorg.atsassets.ui.theme.typeStyle
 
 /**
  * Shows the screen the ViewModel names. Only the unlocked branch of MainActivity calls this. [screenshots] are
@@ -47,15 +51,18 @@ fun AppContent(
         else -> Box(
             modifier = modifier.fillMaxSize(),
         ) {
+            val picker = rememberDatePickerState()
             val deleteOpen = state.deleteDialog != null || state.deleteBlocked != null
             val dialogOpen = state.portfolioDialog != null || state.renameDialog != null || deleteOpen || state.keyEntry != null
-            // While a dialog is open, TalkBack reads only the dialog, not the screen or the bar under it.
-            val under = if (dialogOpen) Modifier.clearAndSetSemantics { } else Modifier
-            Column(modifier = Modifier.fillMaxSize().then(under)) {
-                Box(modifier = Modifier.weight(1f)) {
-                    BarContent(state, viewModel, screenshots, onBackUpNow, restore)
+            // While a dialog or the date picker is open, TalkBack reads only it, not the screen or the bar under it.
+            val under = if (dialogOpen || picker.value != null) Modifier.clearAndSetSemantics { } else Modifier
+            CompositionLocalProvider(LocalDatePicker provides opener(picker, state.today)) {
+                Column(modifier = Modifier.fillMaxSize().then(under)) {
+                    Box(modifier = Modifier.weight(1f)) {
+                        BarContent(state, viewModel, screenshots, onBackUpNow, restore)
+                    }
+                    BottomBar(state.tabOrder.tabs, state.tab, viewModel::selectTab)
                 }
-                BottomBar(state.tabOrder.tabs, state.tab, viewModel::selectTab)
             }
             PortfolioDialogs(state, viewModel)
             // 29 step 10: the Delete dialog and the blocked message over the bar too, drawn last so their Back comes first.
@@ -78,6 +85,8 @@ fun AppContent(
                     onConfirmClear = viewModel::confirmClearKey,
                 ),
             )
+            // 44a step 7: the date picker over the screen and the bar, drawn last, inside the window.
+            DatePickerLayerHost(picker)
         }
     }
 }
@@ -454,10 +463,13 @@ private fun TabContent(
             Box(modifier = Modifier.weight(1f)) {
                 TabScreen(state, viewModel, onBackUpNow)
             }
-            BuySellButton(
-                onOpen = viewModel::openBuySellMenu,
-                modifier = Modifier.align(Alignment.End).padding(horizontal = 16.dp, vertical = 8.dp),
-            )
+            // 44a step 8 group (d) part 1: under the tab's content, on the page's own color (drawing 10a frame G).
+            Box(modifier = Modifier.fillMaxWidth().background(AtsTheme.colors.page), contentAlignment = Alignment.CenterEnd) {
+                BuySellButton(
+                    onOpen = viewModel::openBuySellMenu,
+                    modifier = Modifier.padding(horizontal = tokenDp("spaceMargin"), vertical = tokenDp("spaceGap")),
+                )
+            }
         }
         if (state.allocationMenuOpen) {
             AllocationChoiceLayer(state.allocationBy, viewModel::chooseAllocation, viewModel::closeAllocationMenu)
@@ -538,26 +550,20 @@ private fun TabScreen(
     }
 }
 
+// A screen of one message (loading, data that cannot be read), as the lock screens (44a step 8 group (e)): on the page
+// color, the title in 22 and the body in 16, with the dialog's margin.
 @Composable
 private fun MessageScreen(
     title: String,
     body: String?,
     modifier: Modifier = Modifier,
 ) {
+    val colors = AtsTheme.colors
     Column(
-        modifier = modifier.fillMaxSize().padding(24.dp),
-        verticalArrangement = Arrangement.Center,
+        modifier = modifier.fillMaxSize().background(colors.page).padding(tokenDp("layerDialogSide")),
+        verticalArrangement = Arrangement.spacedBy(tokenDp("spaceGap"), Alignment.CenterVertically),
     ) {
-        Text(
-            text = title,
-            style = MaterialTheme.typography.headlineSmall,
-        )
-        body?.let {
-            Text(
-                text = it,
-                style = MaterialTheme.typography.bodyLarge,
-                modifier = Modifier.padding(top = 12.dp),
-            )
-        }
+        Text(text = title, style = typeStyle("screenTitle"), color = colors.text)
+        body?.let { Text(text = it, style = typeStyle("body"), color = colors.text) }
     }
 }

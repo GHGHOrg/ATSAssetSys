@@ -60,6 +60,7 @@ import app.ghghorg.atsassets.ui.RestoreWizard
 import app.ghghorg.atsassets.ui.Restores
 import app.ghghorg.atsassets.ui.TickerError
 import app.ghghorg.atsassets.ui.theme.ATSAssetSystemTheme
+import app.ghghorg.atsassets.ui.theme.tokenDp
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Rule
@@ -542,7 +543,8 @@ class RestoreLargestFontLandscapeTest {
     @Test
     fun step1_everyPart_canBeReached() {
         show(RestoreWizard(fileName = "backup-2026-10-04.csv"))
-        composeRule.onNode(isHeading() and hasText(string(R.string.restore_title))).performScrollTo().assertIsDisplayed()
+        // The title is in the band, which stays in place over the scrolling step (44a): shown, with nothing to scroll.
+        composeRule.onNode(isHeading() and hasText(string(R.string.restore_title))).assertIsDisplayed()
         composeRule.onNode(button(R.string.restore_choose_file)).performScrollTo().assertIsDisplayed().performClick()
         composeRule.onNode(button(R.string.restore_check_file)).performScrollTo().assertIsDisplayed().performClick()
         composeRule.onNodeWithText(string(R.string.date_note)).performScrollTo().assertIsDisplayed()
@@ -650,8 +652,9 @@ class RestoreKeyboardTest {
         val replace = button(R.string.restore_replace)
         composeRule.onNode(replace).performScrollTo().assertIsEnabled()
         // Phone check 12 (decision 4): the screen's room ends at the keyboard's top, not the bar's height above it. Scrolled
-        // to its end, its last row (Replace all data and Cancel) ends the screen's 16 dp padding above the keyboard's top,
-        // give or take 4 dp. On the emulator the field fits either way; on the phone, with its higher keyboard, it did not.
+        // to its end, its last button (Cancel, under Replace all data since 44a) ends the screen's padding (16 dp until 44a,
+        // the token space.margin since) above the keyboard's top, give or take 4 dp. On the emulator the field fits either
+        // way; on the phone, with its higher keyboard, it did not.
         val screen = composeRule.onNode(hasScrollAction() and hasAnyDescendant(wordField))
         screen.performSemanticsAction(SemanticsActions.ScrollBy) { it(0f, 100_000f) }
         val top = composeRule.keyboardTop()
@@ -659,7 +662,7 @@ class RestoreKeyboardTest {
         val lastRow = listOf(replace, button(R.string.cancel_button))
         val bottom = lastRow.maxOf { composeRule.onNode(it).fetchSemanticsNode().boundsInWindow.bottom }
         assertTrue("Replace all data ends at $bottom px, below the keyboard's top at $top px", bottom <= top)
-        val padding = with(composeRule.density) { 16.dp.toPx() }
+        val padding = with(composeRule.density) { tokenDp("spaceMargin").toPx() }
         val slack = with(composeRule.density) { 4.dp.toPx() }
         assertTrue(
             "Scrolled to its end, the screen ends at $bottom px, ${top - bottom} px above the keyboard's top at $top px; " +

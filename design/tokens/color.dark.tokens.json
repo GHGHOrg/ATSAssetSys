@@ -1,0 +1,63 @@
+{
+  "$description": "Corporate Design System, dark colors for ATS (CR7; spec 6, Visual design). W3C design tokens, DTCG 2025.10. design/README.md explains each role.",
+  "color": {
+    "$type": "color",
+    "page": { "$value": { "colorSpace": "srgb", "components": [0.0392, 0.102, 0.2118], "hex": "#0A1A36" }, "$description": "The screen behind the cards." },
+    "card": { "$value": { "colorSpace": "srgb", "components": [0.0549, 0.1686, 0.2784], "hex": "#0E2B47" }, "$description": "A card." },
+    "float": { "$value": { "colorSpace": "srgb", "components": [0.0824, 0.2392, 0.3529], "hex": "#153D5A" }, "$description": "A dialog, menu or date picker over a scrim." },
+    "band": { "$value": { "colorSpace": "srgb", "components": [0.0392, 0.102, 0.2118], "hex": "#0A1A36" }, "$description": "The title band; in dark it equals the page, so no band shows." },
+    "on-band": { "$value": { "colorSpace": "srgb", "components": [0.902, 0.9255, 0.9608], "hex": "#E6ECF5" }, "$description": "The title on the band." },
+    "summary": { "$value": { "colorSpace": "srgb", "components": [0.1098, 0.3098, 0.4235], "hex": "#1C4F6C" }, "$description": "The summary card with the big figure." },
+    "on-summary": { "$value": { "colorSpace": "srgb", "components": [1.0, 1.0, 1.0], "hex": "#FFFFFF" }, "$description": "Figures on the summary card." },
+    "on-summary-muted": { "$value": { "colorSpace": "srgb", "components": [0.6902, 0.7686, 0.9098], "hex": "#B0C4E8" }, "$description": "Labels on the summary card." },
+    "text": { "$value": { "colorSpace": "srgb", "components": [0.902, 0.9255, 0.9608], "hex": "#E6ECF5" }, "$description": "Main text." },
+    "text-secondary": { "$value": { "colorSpace": "srgb", "components": [0.6902, 0.7686, 0.9098], "hex": "#B0C4E8" }, "$description": "Secondary text." },
+    "divider": { "$value": { "colorSpace": "srgb", "components": [0.1098, 0.3098, 0.4235], "hex": "#1C4F6C" }, "$description": "Lines between rows in a card." },
+    "accent": { "$value": { "colorSpace": "srgb", "components": [0.8784, 0.7373, 0.2902], "hex": "#E0BC4A" }, "$description": "Swatch 5 in light, gold in dark." },
+    "gold": { "$value": { "colorSpace": "srgb", "components": [0.8784, 0.7373, 0.2902], "hex": "#E0BC4A" }, "$description": "The one main action on a screen." },
+    "on-gold": { "$value": { "colorSpace": "srgb", "components": [0.0392, 0.102, 0.2118], "hex": "#0A1A36" }, "$description": "Text on the gold button." },
+    "button-line": { "$value": { "colorSpace": "srgb", "components": [0.8784, 0.7373, 0.2902], "hex": "#E0BC4A" }, "$description": "An outline button's line." },
+    "button-text": { "$value": { "colorSpace": "srgb", "components": [0.8784, 0.7373, 0.2902], "hex": "#E0BC4A" }, "$description": "An outline or text button's text." },
+    "field-line": { "$value": { "colorSpace": "srgb", "components": [0.3843, 0.5686, 0.7255], "hex": "#6291B9" }, "$description": "A text field's outline." },
+    "focus": { "$value": { "colorSpace": "srgb", "components": [0.8784, 0.7373, 0.2902], "hex": "#E0BC4A" }, "$description": "A focused field's 2 dp outline." },
+    "chip-on": { "$value": { "colorSpace": "srgb", "components": [0.8784, 0.7373, 0.2902], "hex": "#E0BC4A" }, "$description": "A selected chip; the picked day." },
+    "on-chip-on": { "$value": { "colorSpace": "srgb", "components": [0.0392, 0.102, 0.2118], "hex": "#0A1A36" }, "$description": "Text on a selected chip." },
+    "check": { "$value": { "colorSpace": "srgb", "components": [0.8784, 0.7373, 0.2902], "hex": "#E0BC4A" }, "$description": "A checked checkbox, a selected radio button." },
+    "on-check": { "$value": { "colorSpace": "srgb", "components": [0.0392, 0.102, 0.2118], "hex": "#0A1A36" }, "$description": "The check mark." },
+    "bar": { "$value": { "colorSpace": "srgb", "components": [0.0196, 0.051, 0.1098], "hex": "#050D1C" }, "$description": "The bottom bar." },
+    "bar-label": { "$value": { "colorSpace": "srgb", "components": [0.5412, 0.6706, 0.7725], "hex": "#8AABC5" }, "$description": "A tab's icon and name." },
+    "bar-selected": { "$value": { "colorSpace": "srgb", "components": [0.8784, 0.7373, 0.2902], "hex": "#E0BC4A" }, "$description": "The selected tab's icon and name, bold." },
+    "bar-pill": { "$value": { "colorSpace": "srgb", "components": [0.0, 0.0, 0.0], "alpha": 0.0, "hex": "#000000" }, "$description": "The selected tab's pill in light (1.96 to 1 against the bar, C28); none in dark." },
+    "bar-line": { "$value": { "colorSpace": "srgb", "components": [0.8784, 0.7373, 0.2902], "hex": "#E0BC4A" }, "$description": "The selected tab's line in dark; none in light." },
+    "gain": { "$value": { "colorSpace": "srgb", "components": [0.498, 0.8314, 0.4784], "hex": "#7FD47A" }, "$description": "A gain, with its plus sign." },
+    "loss": { "$value": { "colorSpace": "srgb", "components": [1.0, 0.7059, 0.6706], "hex": "#FFB4AB" }, "$description": "A loss, with its minus sign." },
+    "gain-on-summary": { "$value": { "colorSpace": "srgb", "components": [0.5608, 0.8784, 0.5412], "hex": "#8FE08A" }, "$description": "A gain on the summary card." },
+    "loss-on-summary": { "$value": { "colorSpace": "srgb", "components": [1.0, 0.7608, 0.7333], "hex": "#FFC2BB" }, "$description": "A loss on the summary card." },
+    "error": { "$value": { "colorSpace": "srgb", "components": [0.8863, 0.749, 0.5529], "hex": "#E2BF8D" }, "$description": "A refused field: its outline, circle-alert and message; never red (D-16)." },
+    "press": { "$value": { "colorSpace": "srgb", "components": [1.0, 1.0, 1.0], "alpha": 0.1, "hex": "#FFFFFF" }, "$description": "The layer over a pressed control." },
+    "scrim": { "$value": { "colorSpace": "srgb", "components": [0.0, 0.0, 0.0], "alpha": 0.6, "hex": "#000000" }, "$description": "Behind a dialog, menu or date picker." },
+    "slice-cash": { "$value": { "colorSpace": "srgb", "components": [0.302, 0.8157, 0.8824], "hex": "#4DD0E1" }, "$description": "Cash's slice in every breakdown." },
+    "slice-1": { "$value": { "colorSpace": "srgb", "components": [0.6235, 0.6588, 0.8549], "hex": "#9FA8DA" } },
+    "slice-2": { "$value": { "colorSpace": "srgb", "components": [1.0, 0.7176, 0.302], "hex": "#FFB74D" } },
+    "slice-3": { "$value": { "colorSpace": "srgb", "components": [0.8078, 0.5765, 0.8471], "hex": "#CE93D8" } },
+    "slice-4": { "$value": { "colorSpace": "srgb", "components": [0.5059, 0.8314, 0.9804], "hex": "#81D4FA" } },
+    "slice-5": { "$value": { "colorSpace": "srgb", "components": [0.7373, 0.6667, 0.6431], "hex": "#BCAAA4" } },
+    "slice-6": { "$value": { "colorSpace": "srgb", "components": [0.8627, 0.9059, 0.4588], "hex": "#DCE775" } },
+    "slice-label": { "$value": { "colorSpace": "srgb", "components": [0.0, 0.0, 0.0], "hex": "#000000" }, "$description": "A percentage drawn on a slice." },
+    "icon-action": { "$value": "{color.button-text}", "$description": "Action and field icons (D-46)." },
+    "icon-chevron": { "$value": "{color.text-secondary}", "$description": "Chevrons that show where a row leads or open it in place (D-46)." },
+    "icon-band": { "$value": "{color.on-band}", "$description": "Icons on the title band (D-46)." },
+    "button-on-summary-line": { "$value": "{color.gold}", "$description": "An outline button's line on the summary card (Cash entry; drawing 07)." },
+    "button-on-summary-text": { "$value": "{color.gold}", "$description": "An outline button's text on the summary card (Cash entry; drawing 07)." }
+  },
+  "shadow": {
+    "card": {
+      "$type": "shadow",
+      "$description": "Lifts a card; cards have no border (D-08).",
+      "$value": [
+        { "color": { "colorSpace": "srgb", "components": [0.0, 0.0, 0.0], "alpha": 0.62, "hex": "#000000" }, "offsetX": { "value": 0, "unit": "px" }, "offsetY": { "value": 1, "unit": "px" }, "blur": { "value": 3, "unit": "px" }, "spread": { "value": 0, "unit": "px" } },
+        { "color": { "colorSpace": "srgb", "components": [0.0, 0.0, 0.0], "alpha": 0.48, "hex": "#000000" }, "offsetX": { "value": 0, "unit": "px" }, "offsetY": { "value": 5, "unit": "px" }, "blur": { "value": 14, "unit": "px" }, "spread": { "value": 0, "unit": "px" } }
+      ]
+    }
+  }
+}

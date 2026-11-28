@@ -826,8 +826,8 @@ data class AppState(
     /** 29: the Delete dialog as the screen draws it (CR2), while it is open. */
     val deleteDialogModel: DeleteDialogModel? get() = deleteDialog?.let { PortfolioDeletions.dialog(it, saving) }
 
-    /** 29: the blocked message as the screen draws it (CR2), while it is shown. */
-    val deleteBlockedModel: DeleteBlockedModel? get() = PortfolioDeletions.blocked(deleteBlocked)
+    /** 29: the blocked message as the screen draws it (CR2), while it is shown, titled with the shown portfolio (44a). */
+    val deleteBlockedModel: DeleteBlockedModel? get() = PortfolioDeletions.blocked(deleteBlocked, shownPortfolio?.name.orEmpty())
 
     /** 30 decision 3: the last refresh failed and no key is saved, so the refresh line names the missing key. */
     val refreshNoKey: Boolean get() = refreshFailed && !priceKeySet
@@ -853,6 +853,12 @@ data class AppState(
         .filter { it.portfolioId == portfolioId }
         .sortedBy { it.ticker }
         .map { HiddenRow(it.ticker, Hiding.lastTransactionDate(transactions, portfolioId, it.ticker)) }
+
+    /** 44a step 8 group (b): Hidden holdings of the shown portfolio as the screen draws it (view 9; CR2, open item 48). */
+    val hiddenHoldings: HiddenHoldingsModel?
+        get() = shownPortfolio?.let {
+            HiddenHoldingsView.of(it.name, hiddenRows(it.id), saveFailed = hideRefusal == SaveRefusal.SAVE_FAILED, saving = saving)
+        }
 
     /** The holding shown on HOLDING, as of today. */
     val shownHolding: Holding?
@@ -1191,6 +1197,22 @@ data class AppState(
     val sellPieces: List<SoldPiece>
         get() = sellReview?.let { Sells.pieces(transactions + it.transaction, it.transaction) }.orEmpty()
 
+    /** 44a step 8 group (d) part 1: Buy entry as the screen draws it (wireframes 10a and 10c; CR2, open item 48). */
+    val buyEntry: BuyEntryModel
+        get() = BuyEntry.of(buyForm, portfolios, replacedTransaction, buyPricePerShare)
+
+    /** Buy review as the screen draws it (wireframe 10a frame B; CR2, open item 48). */
+    val buyReviewModel: BuyReviewModel
+        get() = BuyReview.of(buyForm, portfolios, buyPricePerShare)
+
+    /** Sell entry as the screen draws it, the lot rows apart (wireframes 10a and 10c; CR2, open item 48). */
+    val sellEntry: SellEntryModel
+        get() = SellEntry.of(sellForm, portfolios, sellTickers, replacedTransaction, sellPricePerShare, sellPicked, replaceStartingPicks)
+
+    /** Sell review as the screen draws it (wireframe 10a frame E; CR2, open item 48); null with nothing to review. */
+    val sellReviewModel: SellReviewModel?
+        get() = sellReview?.let { SellReview.of(it.transaction, sellPieces, portfolios, sellPricePerShare) }
+
     /** The tickers with a buy in the split's portfolio, in ticker order (section 6, 12 decision 1). */
     val splitTickers: List<String> get() = splitForm.portfolioId?.let { Splits.tickers(transactions, it) }.orEmpty()
 
@@ -1254,6 +1276,55 @@ data class AppState(
     /** The buy or sell of the shown trade line (wireframe 10b frame H: its detail links to it). */
     val detailTradeTransaction: Transaction?
         get() = detailEntry?.transactionId?.let { id -> transactions.firstOrNull { it.id == id } }
+
+    /** 44a step 8 group (d) part 3: the split entry as it is drawn (wireframes 10b and 10c; CR2, open item 48). */
+    val splitEntry: SplitEntryModel
+        get() = SplitEntry.of(splitForm, portfolios, splitTickers, replacedTransaction?.takeIf { it.type == TransactionType.SPLIT })
+
+    /** The split review as it is drawn (wireframe 10b frame F; CR2, open item 48); null with nothing to review. */
+    val splitReviewModel: SplitReviewModel?
+        get() {
+            val split = splitReview?.transaction ?: return null
+            val effect = splitEffect ?: return null
+            return SplitReview.of(split, effect, portfolios)
+        }
+
+    /** The shown transaction's detail as it is drawn (wireframe 10b frame G; CR2, open item 48); null with none shown. */
+    val transactionDetail: TransactionDetailModel?
+        get() = shownTransaction?.let {
+            TransactionDetails.of(
+                transaction = it,
+                transactions = transactions,
+                portfolios = portfolios,
+                lot = transactionLot,
+                pieces = transactionPieces,
+                splitEffect = transactionSplitEffect,
+                shownEffect = transactionShownEffect,
+                cashCents = transactionCashLine?.amountCents,
+                original = transactionOriginal,
+                reversal = transactionReversal,
+                reverseOffered = transactionReverseOffered,
+                reenterOffered = transactionReenterOffered,
+            )
+        }
+
+    /** The reversal screen as it is drawn (wireframe 10b frame I; CR2, open item 48); null with no transaction shown. */
+    val reversalScreen: ReversalScreenModel?
+        get() = shownTransaction?.let { ReversalScreens.of(it, portfolios, transactionReversalEffect) }
+
+    /** 44a step 8 group (d) part 2: the cash entry form as it is drawn (wireframes 10b and 10c; CR2, open item 48). */
+    val cashFormModel: CashFormModel
+        get() = CashForms.of(form, replacedCashEntry)
+
+    /** The cash review as it is drawn (wireframe 10b frame D; CR2, open item 48). */
+    val cashReviewModel: CashReviewModel
+        get() = CashReviews.of(form)
+
+    /** The shown cash entry's detail as it is drawn (wireframe 10b frame H; CR2, open item 48); null with none shown. */
+    val cashDetailModel: CashDetailModel?
+        get() = detailEntry?.let {
+            CashDetails.of(it, detailReversedBy, detailReverses, detailTradeTransaction, transactions, portfolios, reverseOffered, detailReenterOffered)
+        }
 
     val shownTransaction: Transaction? get() = transactionId?.let { id -> transactions.firstOrNull { it.id == id } }
 

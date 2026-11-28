@@ -2,7 +2,7 @@
 
 Companion to spec/spec.md section 6, Visual design. Each file is a page of the Corporate Design System,
 drawn in its colors, type, shapes, spacing and Lucide icons, light and dark, and accepted one at a time
-(the decision in the table). The files were copied on 2026-11-28 from the pages as accepted and are
+(the decision in the table). The files were copied on 2026-11-27 from the pages as accepted and are
 frozen: a file here is not edited again unless a change request reopens it (C29). The decisions
 (D-numbers) are recorded in design/decisions.md, and the system as a whole in design/README.md.
 

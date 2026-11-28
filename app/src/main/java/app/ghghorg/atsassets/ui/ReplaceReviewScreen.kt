@@ -3,37 +3,26 @@ package app.ghghorg.atsassets.ui
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.ExperimentalLayoutApi
-import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.Button
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedCard
-import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.contentDescription
-import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.input.KeyboardType
-import androidx.compose.ui.unit.dp
 import app.ghghorg.atsassets.R
 import app.ghghorg.atsassets.core.AmountResult
-import app.ghghorg.atsassets.core.CashEntry
 import app.ghghorg.atsassets.core.CashEntryRefusal
 import app.ghghorg.atsassets.core.CashType
 import app.ghghorg.atsassets.core.Fraction
@@ -41,13 +30,22 @@ import app.ghghorg.atsassets.core.Money
 import app.ghghorg.atsassets.core.Quantity
 import app.ghghorg.atsassets.core.QuantityResult
 import app.ghghorg.atsassets.core.ReentryRefusal
-import app.ghghorg.atsassets.core.ReversalEffect
 import app.ghghorg.atsassets.core.ReversalRefusal
 import app.ghghorg.atsassets.core.Transaction
 import app.ghghorg.atsassets.core.TransactionType
-import app.ghghorg.atsassets.core.Transactions
+import app.ghghorg.atsassets.ui.design.AtsButton
+import app.ghghorg.atsassets.ui.design.AtsCard
+import app.ghghorg.atsassets.ui.design.AtsEntryFoot
+import app.ghghorg.atsassets.ui.design.AtsNoticeBanner
+import app.ghghorg.atsassets.ui.design.AtsPartHeading
+import app.ghghorg.atsassets.ui.design.AtsScreen
+import app.ghghorg.atsassets.ui.design.AtsTextField
+import app.ghghorg.atsassets.ui.design.ButtonSize
+import app.ghghorg.atsassets.ui.theme.AtsTheme
+import app.ghghorg.atsassets.ui.theme.LucideIcon
 import app.ghghorg.atsassets.ui.theme.gainLossColor
-import java.time.LocalDate
+import app.ghghorg.atsassets.ui.theme.tokenDp
+import app.ghghorg.atsassets.ui.theme.typeStyle
 
 /** The combined review's callbacks, passed together. */
 class ReplaceReviewActions(
@@ -61,7 +59,9 @@ class ReplaceReviewActions(
  * Reverse and re-enter's combined review (wireframe 10c frames B and D; iteration 14a): part 1, the reversal, with its
  * date and Change (decision 4) and what it does at that date; part 2, the new buy or sell as on its own review; the
  * combined cash effect, signed and without color. Confirm and save both is the only way to save. A refusal about the
- * reversal date shows under part 1 (decision 3); the whole screen scrolls as one (criterion 39).
+ * reversal date shows under part 1 (decision 3); the whole screen scrolls as one (criterion 39). In the design system (44a
+ * step 8 group (d) part 1; drawing spec/wireframes/design/10c-reverse-reenter.html, D-31, D-32): two cards each ending in
+ * its cash effect, the combined cash effect a third card, a refusal as the blocked card, the foot's large buttons.
  */
 @Composable
 fun ReplaceReviewScreen(
@@ -72,63 +72,60 @@ fun ReplaceReviewScreen(
     BackHandler(enabled = !state.saving, onBack = actions.onBack)
     // Drawn only from the review's model (CR2): the screen picks the approved string and puts the values in.
     val model = state.replaceReviewModel
-    Column(
-        modifier = modifier.fillMaxSize().imePadding().verticalScroll(rememberScrollState()).padding(16.dp),
-        verticalArrangement = Arrangement.spacedBy(12.dp),
+    AtsScreen(
+        title = stringResource(R.string.replace_review_title),
+        modifier = modifier,
+        onBack = actions.onBack,
+        backLabel = stringResource(R.string.back_button),
+        backEnabled = !state.saving,
     ) {
-        TitleRow(stringResource(R.string.replace_review_title), actions.onBack, enabled = !state.saving)
-        model?.let { review ->
-            PartCard {
-                when (val reverses = review.reverses) {
-                    // A cash entry's reversal (14b; frame E): an Adjustment of the opposite amount with its fixed note.
-                    is ReversedEntry.Cash ->
-                        ReversalPart(state, cashTypeLabel(reverses.type), cashTypeLower(reverses.type), reverses.date, actions) {
-                            review.partOne?.let { PartOneEffect(it) }
-                        }
+        Column(
+            modifier = Modifier.fillMaxSize().imePadding().verticalScroll(rememberScrollState()).padding(tokenDp("spaceMargin")),
+            verticalArrangement = Arrangement.spacedBy(tokenDp("spaceGap")),
+        ) {
+            saveMessage(state.replaceRefusals.save)?.let { Message(it) }
+            model?.let { review ->
+                AtsCard {
+                    when (val reverses = review.reverses) {
+                        // A cash entry's reversal (14b; frame E): an Adjustment of the opposite amount with its fixed note.
+                        is ReversedEntry.Cash ->
+                            ReversalPart(state, cashTypeLabel(reverses.type), cashTypeLower(reverses.type), reverses.date, actions) {
+                                review.partOne?.let { PartOneEffect(it) }
+                            }
 
-                    is ReversedEntry.Trade ->
-                        ReversalPart(state, entryTypeLabel(reverses.type), transactionTypeLower(reverses.type), reverses.date, actions) {
-                            review.partOne?.let { PartOneEffect(it) }
-                        }
+                        is ReversedEntry.Trade ->
+                            ReversalPart(state, entryTypeLabel(reverses.type), transactionTypeLower(reverses.type), reverses.date, actions) {
+                                review.partOne?.let { PartOneEffect(it) }
+                            }
+                    }
+                }
+                when (val part = review.partTwo) {
+                    is ReplacementPartModel.Buy -> AtsCard { BuyReplacementPart(part) }
+                    is ReplacementPartModel.Sell -> AtsCard { SellReplacementPart(part) }
+                    is ReplacementPartModel.Split -> AtsCard { SplitReplacementPart(part) }
+                    is ReplacementPartModel.Cash -> AtsCard { CashReplacementPart(part) }
+                    null -> Unit
                 }
             }
-            when (val part = review.partTwo) {
-                is ReplacementPartModel.Buy -> PartCard { BuyReplacementPart(part) }
-                is ReplacementPartModel.Sell -> PartCard { SellReplacementPart(part) }
-                is ReplacementPartModel.Split -> PartCard { SplitReplacementPart(part) }
-                is ReplacementPartModel.Cash -> PartCard { CashReplacementPart(part) }
-                null -> Unit
-            }
-        }
-        model?.combinedCents?.let { cents ->
-            OutlinedCard(modifier = Modifier.fillMaxWidth()) {
-                Column(modifier = Modifier.padding(12.dp)) {
+            // The combined cash effect, a third card with one total line, signed and uncolored (10c note 4).
+            model?.combinedCents?.let { cents ->
+                AtsCard {
                     ReviewRow(
                         stringResource(R.string.replace_combined_effect),
                         signedAmount(cents),
-                        bold = true,
                         spoken = stringResource(R.string.replace_combined_effect_spoken, spokenSigned(cents)),
+                        emphasis = true,
                     )
                 }
             }
-        }
-        Text(
-            text = stringResource(R.string.replace_both_or_neither),
-            style = MaterialTheme.typography.bodyMedium,
-        )
-        saveMessage(state.replaceRefusals.save)?.let { Message(it) }
-        ReplaceButtons(state.saving, actions)
-    }
-}
-
-@Composable
-private fun PartCard(content: @Composable () -> Unit) {
-    OutlinedCard(modifier = Modifier.fillMaxWidth()) {
-        Column(
-            modifier = Modifier.padding(12.dp),
-            verticalArrangement = Arrangement.spacedBy(6.dp),
-        ) {
-            content()
+            Text(text = stringResource(R.string.replace_both_or_neither), style = typeStyle("small"), color = AtsTheme.colors.textSecondary)
+            AtsEntryFoot(
+                primary = stringResource(R.string.replace_confirm_button),
+                onPrimary = actions.onConfirm,
+                enabled = !state.saving,
+                secondary = stringResource(R.string.back_to_edit_button),
+                onSecondary = actions.onBack,
+            )
         }
     }
 }
@@ -146,7 +143,7 @@ private fun ReversalPart(
     actions: ReplaceReviewActions,
     effect: @Composable () -> Unit,
 ) {
-    PartHeading(stringResource(R.string.replace_part_reversal))
+    AtsPartHeading(stringResource(R.string.replace_part_reversal))
     ReviewRow(
         stringResource(R.string.reversal_reverses_label),
         stringResource(R.string.transaction_link, kind, date),
@@ -160,22 +157,18 @@ private fun ReversalPart(
             else -> null
         }
     if (state.replaceDateEditing) {
-        OutlinedTextField(
+        AtsTextField(
             value = state.replaceReversalDate,
             onValueChange = actions.onDateChange,
+            label = stringResource(R.string.reversal_date_label),
             modifier = Modifier.fillMaxWidth(),
-            label = { Text(text = stringResource(R.string.reversal_date_label)) },
-            supportingText = {
-                Column {
-                    dateMessage(refusals.date)?.let { Text(text = it) }
-                    beforeOriginal?.let { Text(text = stringResource(R.string.reversal_before_original, it.toString())) }
-                    Text(text = stringResource(R.string.reversal_date_note, date))
-                }
-            },
-            isError = refusals.date != null || beforeOriginal != null,
-            visualTransformation = DateDigitsTransformation,
+            refusal = dateMessage(refusals.date) ?: beforeOriginal?.let { stringResource(R.string.reversal_before_original, it.toString()) },
+            note = stringResource(R.string.reversal_date_note, date),
+            trailing = LucideIcon.CALENDAR,
+            trailingLabel = stringResource(R.string.date_pick_open),
+            onTrailing = datePickerOpener(state.replaceReversalDate, actions.onDateChange, dense = false),
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-            singleLine = true,
+            visualTransformation = DateDigitsTransformation,
         )
     } else {
         ReversalDateRow(state.replaceReversalDate, state.saving, actions.onChangeDate)
@@ -184,7 +177,7 @@ private fun ReversalPart(
     if (beforeOriginal == null) replaceRuleMessage(state, refusals.rule)?.let { Message(it) }
 }
 
-/** The new entry's heading row: "Buy MA in Main" (or Sell, Split) with its date (10c marker 6). */
+/** The new entry's heading row: "Buy MA, Main" (or Sell, Split) with its date (10c marker 6). */
 @Composable
 private fun NewEntryRow(
     type: TransactionType,
@@ -203,7 +196,7 @@ private fun NewEntryRow(
 /** Part 2 for a split (10c marker 11): the new split, its ratio, and the shares at its place before and after. */
 @Composable
 private fun SplitReplacementPart(part: ReplacementPartModel.Split) {
-    PartHeading(stringResource(R.string.replace_part_replacement))
+    AtsPartHeading(stringResource(R.string.replace_part_replacement))
     NewEntryRow(TransactionType.SPLIT, part.ticker, part.portfolio, part.date)
     part.ratio?.let { ReviewRow(stringResource(R.string.split_button), ratioText(it)) }
     if (part.before != null && part.after != null) {
@@ -215,7 +208,7 @@ private fun SplitReplacementPart(part: ReplacementPartModel.Split) {
 /** Part 2 for a cash entry (frame E): its type, date and signed amount, its note, and its cash effect. */
 @Composable
 private fun CashReplacementPart(part: ReplacementPartModel.Cash) {
-    PartHeading(stringResource(R.string.replace_part_replacement))
+    AtsPartHeading(stringResource(R.string.replace_part_replacement))
     val kind = cashTypeLabel(part.type)
     ReviewRow(
         stringResource(R.string.transaction_link, kind, part.date),
@@ -230,7 +223,7 @@ private fun CashReplacementPart(part: ReplacementPartModel.Cash) {
     CashEffectRow(part.amountCents)
 }
 
-/** "Reversal date 2026-01-02 ET" with Change beside it (10c marker 5). */
+/** "Reversal date 2026-01-02 ET" with Change, a small outline button, beside it; the row is 48 tall (10c note 5). */
 @Composable
 private fun ReversalDateRow(
     digits: String,
@@ -239,7 +232,7 @@ private fun ReversalDateRow(
 ) {
     val shown = DateDigits.toDate(digits)?.toString() ?: DateDigits.format(digits)
     val changeSpoken = stringResource(R.string.change_reversal_date_spoken)
-    Row(verticalAlignment = Alignment.CenterVertically) {
+    Row(modifier = Modifier.heightIn(min = tokenDp("spaceTouch")), verticalAlignment = Alignment.CenterVertically) {
         Column(modifier = Modifier.weight(1f)) {
             ReviewRow(
                 stringResource(R.string.reversal_date_label),
@@ -247,16 +240,20 @@ private fun ReversalDateRow(
                 spoken = stringResource(R.string.replace_reversal_date_spoken, shown),
             )
         }
-        TextButton(onClick = onChange, enabled = !saving, modifier = Modifier.semantics { contentDescription = changeSpoken }) {
-            Text(text = stringResource(R.string.change_button))
-        }
+        AtsButton(
+            stringResource(R.string.change_button),
+            onChange,
+            modifier = Modifier.padding(start = tokenDp("fieldDensePadding")).semantics { contentDescription = changeSpoken },
+            size = ButtonSize.SMALL,
+            enabled = !saving,
+        )
     }
 }
 
 /**
  * Part 1's effect (10c frames B, D, E): the shares removed and the cash for a buy; the lots put back, the gain removed
- * and the cash for a sell; the ratio applied and the shares for a split, with no cash; the Adjustment, its fixed note
- * (14b decision 1) and the opposite amount for a cash entry.
+ * (uncolored, 10c note 6) and the cash for a sell; the ratio applied and the shares for a split, with no cash; the
+ * Adjustment, its fixed note (14b decision 1) under its label, and the opposite amount for a cash entry.
  */
 @Composable
 private fun PartOneEffect(part: ReversalPartModel) {
@@ -288,11 +285,7 @@ private fun PartOneEffect(part: ReversalPartModel) {
             ReviewRow(stringResource(R.string.reversal_ratio_applied), ratioText(part.inverse))
             ReviewRow(stringResource(R.string.split_shares_at_point), part.before)
             ReviewRow(stringResource(R.string.reversal_shares_after), part.after, bold = true)
-            Text(
-                text = stringResource(R.string.split_no_cash),
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
+            Text(text = stringResource(R.string.split_no_cash), style = typeStyle("small"), color = AtsTheme.colors.textSecondary)
         }
 
         is ReversalPartModel.OfCash -> {
@@ -306,7 +299,7 @@ private fun PartOneEffect(part: ReversalPartModel) {
 /** Part 2 for a buy (10c marker 6): as on its own review, with its exact shares and price (CR1), and its cash effect. */
 @Composable
 private fun BuyReplacementPart(part: ReplacementPartModel.Buy) {
-    PartHeading(stringResource(R.string.replace_part_replacement))
+    AtsPartHeading(stringResource(R.string.replace_part_replacement))
     NewEntryRow(TransactionType.BUY, part.ticker, part.portfolio, part.date)
     ReviewRow(stringResource(R.string.buy_quantity_label), part.quantity)
     val total = stringResource(R.string.buy_total_row)
@@ -319,7 +312,7 @@ private fun BuyReplacementPart(part: ReplacementPartModel.Buy) {
 /** Part 2 for a sell (10c marker 10): as on its own review, with the lots used, their cost and the realized gain. */
 @Composable
 private fun SellReplacementPart(part: ReplacementPartModel.Sell) {
-    PartHeading(stringResource(R.string.replace_part_replacement))
+    AtsPartHeading(stringResource(R.string.replace_part_replacement))
     NewEntryRow(TransactionType.SELL, part.ticker, part.portfolio, part.date)
     ReviewRow(
         stringResource(R.string.replace_quantity_total),
@@ -336,34 +329,6 @@ private fun SellReplacementPart(part: ReplacementPartModel.Sell) {
         color = gainLossColor(part.realizedCents.compareTo(0L)),
     )
     CashEffectRow(part.cashCents)
-}
-
-@Composable
-private fun PartHeading(text: String) {
-    Text(
-        text = text,
-        style = MaterialTheme.typography.titleSmall,
-        modifier = Modifier.semantics { heading() },
-    )
-}
-
-@OptIn(ExperimentalLayoutApi::class)
-@Composable
-private fun ReplaceButtons(
-    saving: Boolean,
-    actions: ReplaceReviewActions,
-) {
-    FlowRow(
-        horizontalArrangement = Arrangement.spacedBy(8.dp),
-        verticalArrangement = Arrangement.spacedBy(8.dp),
-    ) {
-        Button(onClick = actions.onConfirm, enabled = !saving) {
-            Text(text = stringResource(R.string.replace_confirm_button))
-        }
-        TextButton(onClick = actions.onBack, enabled = !saving) {
-            Text(text = stringResource(R.string.back_to_edit_button))
-        }
-    }
 }
 
 /** "Buy", "Sell" or "Split", capitalized, as in the review's rows. */
@@ -391,38 +356,34 @@ private fun joinedShares(
 }
 
 /**
- * The banner over a replacing buy or sell (10c marker 1): what is replaced, and that nothing changes until confirmed.
- * Read by TalkBack as one sentence (wording 3).
+ * The banner over a replacing buy or sell (10c marker 1), drawn from its model: what is replaced, and that nothing
+ * changes until confirmed, as the catalog's notice card with Lucide's info (10c note 1). Read by TalkBack as one sentence
+ * (wording 3).
  */
 @Composable
-internal fun ReplacingBanner(original: Transaction) {
-    val type = transactionTypeLower(original.type)
-    val date = original.date.toString()
-    val quantity = Quantity.format(original.boughtQuantity)
-    val total = Money.format(original.totalCents)
-    val spoken = stringResource(R.string.replacing_banner_spoken, type, date, quantity, original.ticker, total.substringAfter('$'))
-    BannerCard(stringResource(R.string.replacing_banner, type, date, quantity, original.ticker, total), spoken)
+internal fun ReplacingBanner(model: ReplacingBannerModel) {
+    val type = transactionTypeLower(model.type)
+    val spoken = stringResource(R.string.replacing_banner_spoken, type, model.date, model.quantity, model.ticker, model.total.substringAfter('$'))
+    BannerCard(stringResource(R.string.replacing_banner, type, model.date, model.quantity, model.ticker, model.total), spoken)
 }
 
 /** The banner over a replacing split (14b wording 1): its date, ratio and ticker. */
 @Composable
-internal fun SplitReplacingBanner(original: Transaction) {
-    val date = original.date.toString()
-    val ratio = original.split?.let { ratioText(it) }.orEmpty()
+internal fun SplitReplacingBanner(model: SplitBannerModel) {
+    val ratio = model.ratio?.let { ratioText(it) }.orEmpty()
     BannerCard(
-        stringResource(R.string.replacing_banner_split, date, ratio, original.ticker),
-        stringResource(R.string.replacing_banner_split_spoken, date, ratio, original.ticker),
+        stringResource(R.string.replacing_banner_split, model.date, ratio, model.ticker),
+        stringResource(R.string.replacing_banner_split_spoken, model.date, ratio, model.ticker),
     )
 }
 
 /** The banner over a replacing cash entry (14b wording 1): its type, date and signed amount, as on the Cash tab. */
 @Composable
-internal fun CashReplacingBanner(original: CashEntry) {
+internal fun CashReplacingBanner(original: CashEntryShown) {
     val type = cashTypeLower(original.type)
-    val date = original.date.toString()
     BannerCard(
-        stringResource(R.string.replacing_banner_cash, type, date, signedAmount(original.amountCents)),
-        stringResource(R.string.replacing_banner_cash_spoken, type, date, spokenSigned(original.amountCents)),
+        stringResource(R.string.replacing_banner_cash, type, original.date, signedAmount(original.amountCents)),
+        stringResource(R.string.replacing_banner_cash_spoken, type, original.date, spokenSigned(original.amountCents)),
     )
 }
 
@@ -431,23 +392,10 @@ private fun BannerCard(
     text: String,
     spoken: String,
 ) {
-    Card(
-        modifier = Modifier.fillMaxWidth().clearAndSetSemantics { contentDescription = spoken },
-        colors =
-        CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.primaryContainer,
-            contentColor = MaterialTheme.colorScheme.onPrimaryContainer,
-        ),
-    ) {
-        Text(
-            text = text,
-            style = MaterialTheme.typography.bodyMedium,
-            modifier = Modifier.padding(12.dp),
-        )
-    }
+    AtsNoticeBanner(text, modifier = Modifier.clearAndSetSemantics { contentDescription = spoken })
 }
 
-/** "Original: 10" under a changed field (10c marker 2); [spoken] is what TalkBack reads (wording 3). */
+/** "Original: 10" under a changed field, as the field's note line (10c note 2); [spoken] is what TalkBack reads (wording 3). */
 @Composable
 internal fun OriginalHint(
     shown: String,
@@ -455,13 +403,26 @@ internal fun OriginalHint(
 ) {
     Text(
         text = stringResource(R.string.original_hint, shown),
-        style = MaterialTheme.typography.bodyMedium,
-        color = MaterialTheme.colorScheme.onSurfaceVariant,
-        modifier = Modifier.clearAndSetSemantics { contentDescription = spoken },
+        style = typeStyle("note"),
+        color = AtsTheme.colors.textSecondary,
+        modifier = Modifier.padding(horizontal = tokenDp("fieldPadding")).clearAndSetSemantics { contentDescription = spoken },
     )
 }
 
-/** "Original: Main" under the portfolio chips while the portfolio differs from the replaced entry's. */
+/** The model's "Original: …" under a changed field, when it differs (10c marker 2); nothing otherwise. */
+@Composable
+internal fun OriginalLine(value: OriginalValue?) {
+    if (value == null) return
+    val spoken =
+        if (value.dollars) {
+            stringResource(R.string.original_hint_dollars_spoken, value.shown.substringAfter('$'))
+        } else {
+            stringResource(R.string.original_hint_spoken, value.shown)
+        }
+    OriginalHint(value.shown, spoken)
+}
+
+/** "Original: Main" under the portfolio while it differs from the replaced entry's (Split; the cash form). */
 @Composable
 internal fun PortfolioHint(
     state: AppState,

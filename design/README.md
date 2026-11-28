@@ -1,6 +1,6 @@
 # Corporate Design System
 
-Copied into the ATS repo on 2026-11-28 from the Corporate Design System artifact, version 47 (CR7, C29). From now on this copy leads (D-22): a change starts here.
+Copied into the ATS repo on 2026-11-27 from the Corporate Design System artifact, version 47 (CR7, C29). From now on this copy leads (D-22): a change starts here.
 
 A design system for the apps made here, not for one app alone. Its first app is ATS Asset System, a personal Android asset tracker with one user, and the rules and screens below come from it. It's being set by interview, and this page records the system as it stands. Its source of truth will be token files in the repo (decision D-02). This page is a readable view of them, not the source.
 
@@ -16,10 +16,10 @@ Status on 2026-11-26: Plan stage. Nothing here has changed the app yet. A change
 
 | Part | Today | Where |
 | --- | --- | --- |
-| Base colors | The phone's wallpaper colors (Material dynamic color, on). To be replaced by the palette below (D-06, D-07). | Theme.kt |
-| Fallback colors | Android Studio's template purple, unused while dynamic color is on | Color.kt, Theme.kt |
+| Base colors | Since 44a step 4: the palette below, generated from design/tokens/; dynamic color removed (D-06, D-07). Before: the phone's wallpaper colors. | Theme.kt |
+| Fallback colors | Since 44a step 4: none (the template purple removed) | Color.kt, Theme.kt |
 | Own colors | Gain and loss, one pair per theme; the allocation slice colors | Color.kt |
-| Type | Material 3 defaults; only `bodyLarge` is set (16/24, 0.5 tracking), on the system font. To be replaced by Asap (D-12). | Type.kt |
+| Type | Since 44a step 4: Asap and Asap Condensed on the type roles below, each Material style set from one (D-12). Before: Material 3 defaults on the system font. | Type.kt |
 | Shapes, spacing | Material 3 defaults plus values set screen by screen; not inventoried yet | screens |
 
 ## The palette: Midnight gold in navy (D-07, D-08)
@@ -153,10 +153,12 @@ Screens drawn in the system: [Cash Screens](https://claude.ai/artifact/PrbnvN521
 
 | Use | Icon |
 | --- | --- |
-| Overall, Portfolios, Cash, More | pie-chart, briefcase, wallet, more-horizontal |
+| Overall, Portfolios, Cash, More | pie-chart, briefcase, wallet, more-horizontal (in Lucide 1.72.0: chart-pie, briefcase, wallet, ellipsis) |
 | Date field | calendar |
-| Back, menu | chevron-left, more-vertical |
+| Back, menu | chevron-left, ellipsis-vertical |
 | Check, lock, refresh, settings | check, lock, refresh-cw, settings |
+
+ATS pins Lucide 1.72.0 and uses 24 icons; design/icons/icons.json lists each with its file in that release, the name the drawings use and where it is used (D-47).
 
 These are first picks; an app may choose other Lucide icons. Renders: [Icon Set Options](https://claude.ai/artifact/LWrVaF66trqGnYyCS8vbQB) (D).
 
@@ -180,9 +182,9 @@ These come from spec.md section 6. The design system follows them and can't chan
 - `gold` fills the one main action on a screen; `button-line` and `button-text` draw the others. In dark, `band` equals `page`, so no band shows.
 - `error` (bronze brown) marks a refused field only: its 2 dp outline, its `circle-alert` icon (D-27) and its message, in medium weight. Never red, which stays for losses (D-16).
 
-## Token files (decided, not yet made)
+## Token files
 
-In the ATS repository under `design/` (D-21), split by what changes with the mode. A repository of its own follows once this is done.
+In the ATS repository under `design/` (D-21), split by what changes with the mode. A repository of its own follows once this is done. The three token files were made in iteration 44a, step 3 (2026-11-27), and app's unit test TokenFilesTest checks them: light and dark hold the same tokens (D-04), each color's hex matches its components, every reference resolves, and the values spec 6 names are the ones here. The icons are in design/icons/ since step 3 (D-47), and the fonts in app/src/main/res/font/ with design/fonts/fonts.json and OFL-asap.txt since step 4. From step 4 the build generates the app's theme from these files (app/build.gradle.kts, DesignTokensKotlin), and ThemeTokensTest checks it. The Figma set is not made yet.
 
 | File | Format | Holds | Figma collection |
 | --- | --- | --- | --- |

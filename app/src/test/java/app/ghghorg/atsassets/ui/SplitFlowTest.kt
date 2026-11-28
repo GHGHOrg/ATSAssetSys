@@ -137,6 +137,20 @@ class SplitFlowTest {
         assertEquals(SplitRefusals(), state.splitRefusals)
     }
 
+    // 44a step 8 group (d) part 3, CR2's wiring test (open item 48): the entry and its review draw from the state's models.
+    @Test
+    fun theEntryAndItsReview_drawFromTheStatesModels() {
+        val vm = onHolding()
+        assertEquals(listOf("AAPL", "SPY"), vm.state.value.splitEntry.tickers)
+        assertEquals("AAPL", vm.state.value.splitEntry.ticker)
+        assertNull(vm.state.value.splitReviewModel)
+        vm.ratio("2", "1")
+        vm.reviewSplit()
+        val review = vm.state.value.splitReviewModel!!
+        assertEquals("20", review.before)
+        assertEquals("40", review.after)
+    }
+
     @Test
     fun theChips_offerTheTickersWithABuy_andAnotherPortfolio_choosesItsFirst() {
         val vm = onHolding()

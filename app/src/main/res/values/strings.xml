@@ -75,6 +75,13 @@
     <string name="amount_label">Amount</string>
     <string name="note_label">Note (optional)</string>
     <string name="date_note">Enter date in US market time (New York)</string>
+    <!-- 44a step 7 (spec 6, Date fields: the date picker; D9, approved 2026-11-28). -->
+    <string name="date_pick_open">Pick a date</string>
+    <string name="date_pick_previous">Previous month</string>
+    <string name="date_pick_next">Next month</string>
+    <string name="date_pick_use">Use %1$s</string>
+    <string name="date_pick_day">%1$s, %2$s</string>
+    <string name="date_pick_today">%1$s, %2$s, today</string>
     <string name="review_button">Review</string>
     <string name="back_button">Back</string>
     <string name="amount_empty">Amount: enter an amount.</string>
@@ -129,7 +136,7 @@
     <string name="buy_portfolio_label">Portfolio</string>
     <string name="buy_ticker_label">Ticker</string>
     <string name="buy_quantity_label">Quantity</string>
-    <string name="buy_total_label">Total amount, fees included</string>
+    <string name="buy_total_label">Total, fees included</string>
     <string name="buy_total_row">Total amount</string>
     <string name="buy_price_per_share">Price per share: %1$s</string>
     <string name="buy_price_per_share_label">Price per share</string>
@@ -190,7 +197,7 @@
     <!-- Iteration 11: sell (wording approved 2026-10-31, 11 file section 11). -->
     <string name="sell_ticker_label">Ticker (held)</string>
     <string name="sell_nothing_held_in">%1$s holds no shares to sell.</string>
-    <string name="sell_total_label">Total amount, zero allowed</string>
+    <string name="sell_total_label">Total, zero allowed</string>
     <string name="sell_all_button">Sell all</string>
     <string name="sell_all_spoken">Sell all, picks every available lot</string>
     <string name="sell_lots_heading">Lots, oldest first</string>
@@ -452,8 +459,6 @@
     <string name="tab_order_value">%1$s, %2$s, %3$s, %4$s</string>
     <string name="tab_order_row">%1$d. %2$s</string>
     <string name="tab_order_row_spoken">%1$s, position %2$d of %3$d</string>
-    <string name="tab_order_up">Up</string>
-    <string name="tab_order_down">Down</string>
     <string name="tab_order_up_spoken">Move %1$s up</string>
     <string name="tab_order_down_spoken">Move %1$s down</string>
     <string name="tab_order_note">Left to right in the bottom bar. Takes effect at once.</string>
@@ -598,10 +603,14 @@
     <!-- Iteration 29: Delete a portfolio (proposed from wireframe 10d's placeholders and spec 4.7, 29 file section 12; approved on the phone 2026-11-14, the blocked messages as written, open item 61). Name, Cancel and "Not saved" are the existing strings. -->
     <string name="portfolio_delete_button">Delete</string>
     <string name="delete_title">Delete %1$s?</string>
-    <string name="delete_transactions">Transactions: %1$d</string>
-    <string name="delete_trade_lines">Trade cash lines: %1$d</string>
-    <string name="delete_realized">Realized gains: %1$s</string>
-    <string name="delete_cash">Cash balance: %1$s now, %2$s after</string>
+    <!-- 44a step 8 group (e) (drawing 10d frames D to G, D9 approved 2026-11-28, your A): the summary as label-and-value rows, the blocked dialog's title, and the blocked message's own first words for its bronze head. -->
+    <string name="delete_transactions_label">Transactions removed</string>
+    <string name="delete_trade_lines_label">Trade cash lines removed</string>
+    <string name="delete_realized_label">Realized gains removed</string>
+    <string name="delete_cash_now_label">Cash balance now</string>
+    <string name="delete_cash_after_label">Cash balance after</string>
+    <string name="delete_blocked_title">Can\'t delete %1$s</string>
+    <string name="delete_blocked_prefix">Not deleted.</string>
     <string name="delete_summary_spoken">Transactions %1$d, trade cash lines %2$d, realized gains %3$s dollars, cash balance %4$s dollars now, %5$s dollars after</string>
     <string name="delete_history_line">Past net worth is recalculated as if this portfolio never existed.</string>
     <string name="delete_warning">This cannot be undone in the app. The only way back is restoring a backup.</string>
@@ -824,13 +833,14 @@
     <string name="about_version">Version %1$s</string>
     <string name="about_card_spoken">%1$s, %2$s</string>
     <string name="about_licences">Open-source licences</string>
-    <string name="about_licence_closed">%1$s ▾</string>
-    <string name="about_licence_open">%1$s ▴</string>
     <string name="about_row_spoken">%1$s, %2$s licence</string>
     <string name="about_row_closed">collapsed</string>
     <string name="about_row_open">expanded</string>
     <string name="licence_apache_2_0">Apache 2.0</string>
     <string name="licence_sqlcipher">BSD-style</string>
+    <!-- 44a step 8 group (e) (C27; drawing 09-11 frame C, D9 approved 2026-11-28, your A): the font's and the icons' licence names. -->
+    <string name="licence_ofl_1_1">SIL OFL 1.1</string>
+    <string name="licence_isc_mit">ISC, MIT</string>
     <!-- Iteration 41 (CR5): the 1-day line (spec section 6; approved on the phone 2026-11-25, 41 file section 12). %1$s of the spoken forms is the card's or row's own sentence; the figures are read with spoken_plus or spoken_minus. -->
     <string name="day_label">1-day gain/loss</string>
     <string name="day_figures">%1$s (%2$s)</string>

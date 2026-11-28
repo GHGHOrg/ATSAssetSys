@@ -1,0 +1,15 @@
+{
+  "source": "https://github.com/google/fonts at commit 5026800714d07231937d92eb4cceabf06e05d74e, ofl/asap and ofl/asapcondensed (Asap 3.002, Omnibus-Type/Asap at 2de32f2)",
+  "licence": "OFL-asap.txt, SIL Open Font License 1.1 (C27)",
+  "copied": "2026-11-27, 44a step 4 (decision 2: all of D-12); each file byte for byte, renamed for Android (lowercase), its git blob equal to the one GitHub lists",
+  "fonts": [
+    { "file": "Asap[wdth,wght].ttf", "resource": "asap_variable", "family": "Asap", "style": "normal", "gitBlob": "ce62af3f988e4419c397e2c5cca1cc0f74554add" },
+    { "file": "Asap-Italic[wdth,wght].ttf", "resource": "asap_italic_variable", "family": "Asap", "style": "italic", "gitBlob": "d16b3180a12f95b54fead94b0b656035ca001600" },
+    { "file": "AsapCondensed-Regular.ttf", "resource": "asap_condensed_regular", "family": "Asap Condensed", "style": "normal 400", "gitBlob": "3d97f0df87b0c024770d55680a5ae6e4174a6285" },
+    { "file": "AsapCondensed-Italic.ttf", "resource": "asap_condensed_italic", "family": "Asap Condensed", "style": "italic 400", "gitBlob": "1152d52c6a089306189e7f85d3e9fcc87aae952c" },
+    { "file": "AsapCondensed-Medium.ttf", "resource": "asap_condensed_medium", "family": "Asap Condensed", "style": "normal 500", "gitBlob": "257c609bfdf36d97dc00ce92c0fdaf60793ac3f2" },
+    { "file": "AsapCondensed-MediumItalic.ttf", "resource": "asap_condensed_medium_italic", "family": "Asap Condensed", "style": "italic 500", "gitBlob": "043edd84ac79d9f01d057a8ec870ad9e13fdb9d5" },
+    { "file": "AsapCondensed-Bold.ttf", "resource": "asap_condensed_bold", "family": "Asap Condensed", "style": "normal 700", "gitBlob": "e42b298e10328d08071380b5596698f24bdaad95" },
+    { "file": "AsapCondensed-BoldItalic.ttf", "resource": "asap_condensed_bold_italic", "family": "Asap Condensed", "style": "italic 700", "gitBlob": "7b770c4a3b3e2236bc0a6530c7d6c11275a8b8d9" }
+  ]
+}
