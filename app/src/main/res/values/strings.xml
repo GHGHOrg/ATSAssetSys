@@ -459,8 +459,6 @@
     <string name="tab_order_value">%1$s, %2$s, %3$s, %4$s</string>
     <string name="tab_order_row">%1$d. %2$s</string>
     <string name="tab_order_row_spoken">%1$s, position %2$d of %3$d</string>
-    <string name="tab_order_up">Up</string>
-    <string name="tab_order_down">Down</string>
     <string name="tab_order_up_spoken">Move %1$s up</string>
     <string name="tab_order_down_spoken">Move %1$s down</string>
     <string name="tab_order_note">Left to right in the bottom bar. Takes effect at once.</string>

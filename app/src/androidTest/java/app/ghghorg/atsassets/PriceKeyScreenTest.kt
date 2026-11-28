@@ -41,6 +41,7 @@ import app.ghghorg.atsassets.ui.Screen
 import app.ghghorg.atsassets.ui.SettingsActions
 import app.ghghorg.atsassets.ui.SettingsScreen
 import app.ghghorg.atsassets.ui.theme.ATSAssetSystemTheme
+import app.ghghorg.atsassets.ui.theme.tokenDp
 import org.junit.Assert.assertTrue
 import org.junit.Assert.fail
 import org.junit.Rule
@@ -324,7 +325,8 @@ class PriceKeyKeyboardLandscapeTest {
         composeRule.waitForIdle()
         val pane = SemanticsMatcher.keyIsDefined(SemanticsProperties.PaneTitle)
         val paneBottom = composeRule.onNode(pane).fetchSemanticsNode().boundsInWindow.bottom
-        val (margin, tolerance) = with(composeRule.density) { 24.dp.toPx() to 4.dp.toPx() }
+        // The dialog's own margin: Material's 24 dp until 44a, the catalog's layer.dialog-side since (step 8 group (e)).
+        val (margin, tolerance) = with(composeRule.density) { tokenDp("layerDialogSide").toPx() to 4.dp.toPx() }
         val gap = keyboardTop - paneBottom
         assertTrue(
             "The key entry ends at $paneBottom px, $gap px above the keyboard's top at $keyboardTop px; expected its margin, $margin px",

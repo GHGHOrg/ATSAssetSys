@@ -1,22 +1,11 @@
 package app.ghghorg.atsassets.ui
 
 import androidx.activity.compose.BackHandler
-import androidx.compose.foundation.background
-import androidx.compose.foundation.gestures.detectTapGestures
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.WindowInsets
-import androidx.compose.foundation.layout.consumeWindowInsets
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.imePadding
-import androidx.compose.foundation.layout.navigationBars
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.contentDescription
@@ -137,29 +126,6 @@ internal fun DeleteBlockedLayer(
         AtsBlockedMessage(message, prefix = stringResource(R.string.delete_blocked_prefix))
     }
 }
-
-// The dimmed layer under the price key entry's dialog (30): it takes every tap, so a tap outside does nothing, and it gives
-// way to the keyboard (the app draws edge to edge; 08 phone check 9a). It ends where MainActivity's Scaffold padding ends,
-// above the navigation strip, so that strip is consumed first and the room ends at the keyboard's top (29 step 10). The
-// portfolio dialogs use AtsDialog since 44a step 8 group (e); the key entry moves to it with Settings.
-@Composable
-internal fun DialogScrim(content: @Composable () -> Unit) {
-    Box(
-        modifier =
-        Modifier
-            .fillMaxSize()
-            .background(MaterialTheme.colorScheme.scrim.copy(alpha = DELETE_SCRIM_ALPHA))
-            .pointerInput(Unit) { detectTapGestures { } }
-            .consumeWindowInsets(WindowInsets.navigationBars)
-            .imePadding(),
-        contentAlignment = Alignment.Center,
-    ) {
-        content()
-    }
-}
-
-// The dim behind the key entry, as Material's own dialogs use.
-private const val DELETE_SCRIM_ALPHA = 0.32f
 
 // A figure's sign as a number, for its color (section 6).
 private val FigureSign.signum: Int

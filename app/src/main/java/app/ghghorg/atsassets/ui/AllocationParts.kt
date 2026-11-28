@@ -47,11 +47,13 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.min
 import app.ghghorg.atsassets.R
 import app.ghghorg.atsassets.core.AssetType
+import app.ghghorg.atsassets.ui.design.AtsButton
 import app.ghghorg.atsassets.ui.design.AtsCard
 import app.ghghorg.atsassets.ui.design.AtsPickField
 import app.ghghorg.atsassets.ui.design.AtsRadioGroup
 import app.ghghorg.atsassets.ui.design.AtsRadioRow
 import app.ghghorg.atsassets.ui.design.AtsSectionHeading
+import app.ghghorg.atsassets.ui.design.ButtonKind
 import app.ghghorg.atsassets.ui.design.cardShadow
 import app.ghghorg.atsassets.ui.theme.AtsTheme
 import app.ghghorg.atsassets.ui.theme.sliceColor
@@ -279,7 +281,8 @@ internal fun AllocationChoiceLayer(
  * A choice layer (view 1, view 4; 18 and 19; Settings' Auto-lock, 20), drawn inside the activity window: a layer that
  * closes on a tap outside or Back, and a card titled [title] with [options] (a value and its label) as radio rows, the
  * [selected] one selected (D-36), and an optional [note] under them, scrolling when taller than the space (defect 18-6).
- * No DropdownMenu or Popup: a separate window would take MainActivity's focus (CLAUDE.md, 07).
+ * With [closeButton], Close as a text button at the end (a choice that saves on tap, as Auto-lock; 10f frame C). No
+ * DropdownMenu or Popup: a separate window would take MainActivity's focus (CLAUDE.md, 07).
  */
 @Composable
 internal fun <T> ChoiceLayer(
@@ -289,6 +292,7 @@ internal fun <T> ChoiceLayer(
     onChoose: (T) -> Unit,
     onClose: () -> Unit,
     note: String? = null,
+    closeButton: Boolean = false,
 ) {
     LayerCard(title, onClose) {
         AtsRadioGroup {
@@ -302,6 +306,18 @@ internal fun <T> ChoiceLayer(
                 modifier = Modifier.padding(horizontal = tokenDp("spaceInset"), vertical = tokenDp("fieldDensePadding")),
             )
         }
+        if (closeButton) LayerClose(onClose)
+    }
+}
+
+/** A layer's Close, a text button at the end under its content (10f frames C and D). */
+@Composable
+internal fun LayerClose(onClose: () -> Unit) {
+    Row(
+        modifier = Modifier.fillMaxWidth().padding(horizontal = tokenDp("layerDialogPadding")),
+        horizontalArrangement = Arrangement.End,
+    ) {
+        AtsButton(stringResource(R.string.close_button), onClose, kind = ButtonKind.TEXT)
     }
 }
 
