@@ -19,8 +19,8 @@ android {
         targetSdk = 37
         // 38a decisions 2 and 2d: MAJOR.MINOR.PATCH; the first release (38c) is 0.38.0, the first productive one (40)
         // 1.0.0. versionCode rises with every build that is installed.
-        versionCode = 55
-        versionName = "1.2.0"
+        versionCode = 56
+        versionName = "1.3.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
 
@@ -44,7 +44,7 @@ android {
         // 10 minutes for the backup reminder (BackupDueDebugTest).
         debug {
             applicationIdSuffix = ".debug"
-            // 38a decision 2a: the development app shows x.y.z-dev.n, n its versionCode (1.2.0-dev.53).
+            // 38a decision 2a: the development app shows x.y.z-dev.n, n its versionCode (1.3.0-dev.56).
             versionNameSuffix = "-dev.${defaultConfig.versionCode}"
             buildConfigField("long", "BACKUP_DUE_AFTER_MINUTES", "10L")
         }
