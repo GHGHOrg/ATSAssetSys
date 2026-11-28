@@ -37,7 +37,8 @@ import app.ghghorg.atsassets.ui.theme.typeStyle
 // main action on a screen; the others are outline or text buttons. A button that cannot be tapped yet is drawn at 38% and
 // keeps its solid outline; TalkBack reads it as unavailable, and the screen says why on a line of its own.
 
-internal enum class ButtonKind { FILLED, OUTLINE, TEXT }
+/** [OUTLINE_ON_SUMMARY]: an outline button on the summary card, in its own line and text colors (Cash entry; drawing 07). */
+internal enum class ButtonKind { FILLED, OUTLINE, TEXT, OUTLINE_ON_SUMMARY }
 
 internal enum class ButtonSize { LARGE, MEDIUM, SMALL }
 
@@ -81,9 +82,17 @@ internal fun AtsButton(
 ) {
     val colors = AtsTheme.colors
     val shape = RoundedCornerShape(tokenDp("radiusDefault"))
-    val ink = if (kind == ButtonKind.FILLED) colors.onGold else colors.buttonText
+    val ink = when (kind) {
+        ButtonKind.FILLED -> colors.onGold
+        ButtonKind.OUTLINE_ON_SUMMARY -> colors.buttonOnSummaryText
+        else -> colors.buttonText
+    }
     val fill = if (kind == ButtonKind.FILLED) colors.gold else Color.Transparent
-    val border = if (kind == ButtonKind.OUTLINE) BorderStroke(tokenDp("buttonOutline"), colors.buttonLine) else null
+    val border = when (kind) {
+        ButtonKind.OUTLINE -> BorderStroke(tokenDp("buttonOutline"), colors.buttonLine)
+        ButtonKind.OUTLINE_ON_SUMMARY -> BorderStroke(tokenDp("buttonOutline"), colors.buttonOnSummaryLine)
+        else -> null
+    }
     // The touch area is at least 48 dp tall, also around a small button (D-17).
     Box(
         modifier = modifier

@@ -10,14 +10,11 @@ import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.selection.selectableGroup
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.FilterChip
-import androidx.compose.material3.HorizontalDivider
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedCard
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.key
@@ -29,13 +26,19 @@ import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.onClick
 import androidx.compose.ui.semantics.role
-import androidx.compose.ui.semantics.semantics
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.unit.dp
 import app.ghghorg.atsassets.R
 import app.ghghorg.atsassets.core.HistoryChip
 import app.ghghorg.atsassets.core.SplitRatio
+import app.ghghorg.atsassets.ui.design.AtsCard
+import app.ghghorg.atsassets.ui.design.AtsChip
+import app.ghghorg.atsassets.ui.design.AtsRowDivider
+import app.ghghorg.atsassets.ui.design.AtsScreen
+import app.ghghorg.atsassets.ui.theme.AtsIcon
+import app.ghghorg.atsassets.ui.theme.AtsTheme
+import app.ghghorg.atsassets.ui.theme.LucideIcon
+import app.ghghorg.atsassets.ui.theme.tokenDp
+import app.ghghorg.atsassets.ui.theme.typeStyle
 
 /** Transaction history's callbacks, passed together. */
 class TransactionHistoryActions(
@@ -51,11 +54,13 @@ class TransactionHistoryActions(
 )
 
 /**
- * Transaction history (view 8, wireframe 08; 27), drawn from its model (CR2): "<" and the title; the portfolio named at
- * the top, From and To with the date note, the Ticker field and the type chips (markers 1 and 2); the rows, newest first,
- * each opening its transaction, with its cash-effect line and its "Reversed on" link (markers 3 and 4); under Cash the
- * cash lines (markers 5 and 7); with no match one plain line (marker 6). One scrolling screen; the Ticker menu is drawn
- * in the activity window (decision 3), and Back closes it first.
+ * Transaction history (view 8, wireframe 08; 27), drawn from its model (CR2): the title band with Back; the portfolio
+ * named at the top, From and To with the date note, the Ticker field and the type chips (markers 1 and 2); the rows, newest
+ * first, each opening its transaction, with its cash-effect line and its "Reversed on" link (markers 3 and 4); under Cash
+ * the cash lines (markers 5 and 7); with no match one plain line (marker 6). One scrolling screen; the Ticker menu is
+ * drawn in the activity window (decision 3), and Back closes it first. In the design system (44a step 8 group (c);
+ * drawing spec/wireframes/design/08-transaction-history.html; D-30, D-31): Cash's filters, chips and rows; a row's links
+ * as indented rows with chevrons.
  */
 @Composable
 fun TransactionHistoryScreen(
@@ -67,20 +72,26 @@ fun TransactionHistoryScreen(
     Box(modifier = modifier.fillMaxSize()) {
         // While the menu is open, TalkBack reads only the menu.
         val under = if (model.menuOpen) Modifier.clearAndSetSemantics { } else Modifier
-        Column(
-            modifier = Modifier.fillMaxSize().then(under).verticalScroll(rememberScrollState()).padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(12.dp),
+        AtsScreen(
+            title = stringResource(R.string.history_title),
+            modifier = Modifier.fillMaxSize().then(under),
+            onBack = actions.onBack,
+            backLabel = stringResource(R.string.back_button),
         ) {
-            TitleRow(stringResource(R.string.history_title), actions.onBack)
-            FiltersCard(model, actions)
-            if (model.rows.isEmpty()) {
-                Text(text = stringResource(R.string.history_none), style = MaterialTheme.typography.bodyLarge)
-            } else {
-                OutlinedCard(modifier = Modifier.fillMaxWidth()) {
-                    model.rows.forEachIndexed { index, row ->
-                        key(row.key) {
-                            if (index > 0) HorizontalDivider(modifier = Modifier.padding(horizontal = 12.dp))
-                            HistoryRowView(row, actions)
+            Column(
+                modifier = Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(tokenDp("spaceMargin")),
+                verticalArrangement = Arrangement.spacedBy(tokenDp("spaceGap")),
+            ) {
+                FiltersCard(model, actions)
+                if (model.rows.isEmpty()) {
+                    PlainLineCard(stringResource(R.string.history_none))
+                } else {
+                    AtsCard(padded = false) {
+                        model.rows.forEachIndexed { index, row ->
+                            key(row.key) {
+                                if (index > 0) AtsRowDivider()
+                                HistoryRowView(row, actions)
+                            }
                         }
                     }
                 }
@@ -90,54 +101,31 @@ fun TransactionHistoryScreen(
     }
 }
 
-/** The portfolio, From and To with the date note, the Ticker field and the chips (markers 1 and 2). */
+/** The portfolio as a read-only line, From and To with the date note, the Ticker field and the chips (markers 1 and 2). */
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
 private fun FiltersCard(
     model: TransactionHistoryModel,
     actions: TransactionHistoryActions,
 ) {
-    OutlinedCard(modifier = Modifier.fillMaxWidth()) {
-        Column(modifier = Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-            val portfolio = stringResource(R.string.allocation_portfolio_spoken, model.portfolioName)
-            Column(modifier = Modifier.clearAndSetSemantics { contentDescription = portfolio }) {
-                Text(
-                    text = stringResource(R.string.history_portfolio_label),
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                )
-                Text(text = model.portfolioName, style = MaterialTheme.typography.titleMedium)
-            }
-            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                FilterDateField(
-                    label = stringResource(R.string.filter_from),
-                    text = model.fromText,
-                    error = dateMessage(model.fromRefusal),
-                    onChange = actions.onFromChange,
-                    modifier = Modifier.weight(1f),
-                )
-                FilterDateField(
-                    label = stringResource(R.string.filter_to),
-                    text = model.toText,
-                    error = dateMessage(model.toRefusal),
-                    onChange = actions.onToChange,
-                    modifier = Modifier.weight(1f),
-                )
-            }
-            Text(
-                text = stringResource(R.string.date_note),
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
-            TickerField(model.ticker, actions.onOpenTickerMenu)
-            FlowRow(modifier = Modifier.selectableGroup(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                for (chip in HistoryChip.entries) {
-                    FilterChip(
-                        selected = model.chip == chip,
-                        onClick = { actions.onChip(chip) },
-                        label = { Text(text = chipLabel(chip)) },
-                    )
-                }
+    val colors = AtsTheme.colors
+    AtsCard {
+        val portfolio = stringResource(R.string.allocation_portfolio_spoken, model.portfolioName)
+        // Drawing 08 note 1: "Portfolio" in secondary 14, the name in medium 16, since there is no chooser.
+        FlowRow(
+            modifier = Modifier.fillMaxWidth().clearAndSetSemantics { contentDescription = portfolio },
+            horizontalArrangement = Arrangement.spacedBy(tokenDp("spaceInset")),
+            itemVerticalAlignment = Alignment.CenterVertically,
+        ) {
+            Text(text = stringResource(R.string.history_portfolio_label), style = typeStyle("small"), color = colors.textSecondary)
+            Text(text = model.portfolioName, style = typeStyle("sectionHeading"), color = colors.text)
+        }
+        DenseDateFields(model.fromText, model.toText, dateMessage(model.fromRefusal), dateMessage(model.toRefusal), actions.onFromChange, actions.onToChange)
+        TickerField(model.ticker, actions.onOpenTickerMenu)
+        // No chip is ever disabled here: every combination can match (marker 2; drawing 08 note 4).
+        FlowRow(modifier = Modifier.selectableGroup(), horizontalArrangement = Arrangement.spacedBy(tokenDp("fieldDensePadding"))) {
+            for (chip in HistoryChip.entries) {
+                AtsChip(chipLabel(chip), selected = model.chip == chip, onClick = { actions.onChip(chip) })
             }
         }
     }
@@ -274,7 +262,11 @@ private fun CashLineRow(
     MainLine(title, stringResource(R.string.history_date, row.date), row.amount, spokenRow) { actions.onOpenTransaction(row.transactionId) }
 }
 
-/** A row's own button: title and line on the left, the amount and ">" on the right; read by TalkBack as [spoken]. */
+/**
+ * A row's own button (drawing 08 note 3): the title in regular 16 and the line in secondary 14 on the left, the amount
+ * uncolored (or a split's ratio) in 16 on the right, and a chevron; read by TalkBack as [spoken]. At the largest font the
+ * amount moves under the title (C26).
+ */
 @Composable
 private fun MainLine(
     title: String,
@@ -283,10 +275,12 @@ private fun MainLine(
     spoken: String,
     onOpen: () -> Unit,
 ) {
+    val colors = AtsTheme.colors
     Row(
         modifier =
         Modifier
             .fillMaxWidth()
+            .heightIn(min = tokenDp("spaceTouch"))
             .clickable(role = Role.Button, onClick = onOpen)
             .clearAndSetSemantics {
                 contentDescription = spoken
@@ -295,53 +289,60 @@ private fun MainLine(
                     onOpen()
                     true
                 }
-            }.padding(12.dp),
-        horizontalArrangement = Arrangement.spacedBy(12.dp),
+            }.padding(tokenDp("spaceInset")),
+        horizontalArrangement = Arrangement.spacedBy(tokenDp("spaceInset")),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        Column(modifier = Modifier.weight(1f)) {
-            Text(text = title, style = MaterialTheme.typography.bodyLarge, fontWeight = FontWeight.Medium)
-            Text(text = line, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
-        }
-        Column(horizontalAlignment = Alignment.End) {
-            Text(text = amount, style = MaterialTheme.typography.bodyLarge, textAlign = TextAlign.End)
-            Text(text = ">", style = MaterialTheme.typography.bodyLarge)
-        }
+        StartEndRow(
+            modifier = Modifier.weight(1f),
+            start = {
+                Column {
+                    Text(text = title, style = typeStyle("body"), color = colors.text)
+                    Text(text = line, style = typeStyle("small"), color = colors.textSecondary)
+                }
+            },
+            end = { Text(text = amount, style = typeStyle("body"), color = colors.text, textAlign = TextAlign.End) },
+        )
+        AtsIcon(LucideIcon.CHEVRON_RIGHT, tint = colors.iconChevron, size = tokenDp("fieldMarkSize"))
     }
 }
 
-/** "Reversed on 2026-04-05 ET >" under the original (marker 4): a button opening the reversal. */
+/** "Reversed on 2026-04-05 ET" under the original (marker 4): a link row opening the reversal. */
 @Composable
 private fun ReversedOnLine(
     reversedOn: HistoryReversedOn,
     actions: TransactionHistoryActions,
 ) {
     val spoken = stringResource(R.string.history_reversed_on_spoken, reversedOn.date)
-    LinkLine(stringResource(R.string.detail_reversed_on, reversedOn.date) + " >", spoken) { actions.onOpenTransaction(reversedOn.reversalId) }
+    LinkLine(stringResource(R.string.detail_reversed_on, reversedOn.date), spoken) { actions.onOpenTransaction(reversedOn.reversalId) }
 }
 
-/** "Cash −$1,500.00 >" under a buy, sell or reversal (marker 3): signed, no color; a button opening the trade's line. */
+/** "Cash −$1,500.00" under a buy, sell or reversal (marker 3): signed, no color; a link row opening the trade's line. */
 @Composable
 private fun CashEffectLine(
     cash: HistoryCashEffect,
     actions: TransactionHistoryActions,
 ) {
     val spoken = stringResource(R.string.history_cash_effect_spoken, spoken(cash.spoken))
-    LinkLine(stringResource(R.string.history_cash_effect, cash.text) + " >", spoken) { actions.onOpenCashLine(cash.transactionId) }
+    LinkLine(stringResource(R.string.history_cash_effect, cash.text), spoken) { actions.onOpenCashLine(cash.transactionId) }
 }
 
+/**
+ * A link row under a row (drawing 08 note 2): indented, in secondary 14 with its sign and no color, and a chevron, 48
+ * tall; read by TalkBack as [spoken].
+ */
 @Composable
 private fun LinkLine(
     text: String,
     spoken: String,
     onOpen: () -> Unit,
 ) {
-    Text(
-        text = text,
-        style = MaterialTheme.typography.bodyMedium,
+    val colors = AtsTheme.colors
+    Row(
         modifier =
         Modifier
             .fillMaxWidth()
+            .heightIn(min = tokenDp("spaceTouch"))
             .clickable(role = Role.Button, onClick = onOpen)
             .clearAndSetSemantics {
                 contentDescription = spoken
@@ -350,6 +351,11 @@ private fun LinkLine(
                     onOpen()
                     true
                 }
-            }.padding(start = 28.dp, end = 12.dp, top = 6.dp, bottom = 10.dp),
-    )
+            }.padding(start = tokenDp("spaceInset") + tokenDp("spaceMargin"), end = tokenDp("spaceInset")),
+        horizontalArrangement = Arrangement.spacedBy(tokenDp("spaceInset")),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Text(text = text, style = typeStyle("small"), color = colors.textSecondary, modifier = Modifier.weight(1f))
+        AtsIcon(LucideIcon.CHEVRON_RIGHT, tint = colors.iconChevron, size = tokenDp("fieldMarkSize"))
+    }
 }

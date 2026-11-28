@@ -34,7 +34,11 @@ import app.ghghorg.atsassets.ui.theme.typeStyle
 // 44a step 6 (spec 6, Visual design; D-17, D-18, D-29 to D-31, D-36): chips, checkboxes, radio buttons and the tabs inside
 // a screen. Each row or chip is its own touch target, at least 48 dp; a choice that cannot be made yet is drawn at 38%.
 
-/** A filter chip, or one choice of several (D-31): selected shows a check and the selected colors (D-17). */
+/**
+ * A filter chip, or one choice of several (D-31): selected shows a check and the selected colors (D-17). Selectable with
+ * the checkbox role, as Material's filter chip was, so TalkBack and the screen tests read it as before (44a step 8 group
+ * (c); CashTickerScreenTest, TransactionHistoryScreenTest).
+ */
 @Composable
 internal fun AtsChip(
     text: String,
@@ -49,7 +53,7 @@ internal fun AtsChip(
     Box(
         modifier = modifier
             .heightIn(min = tokenDp("spaceTouch"))
-            .toggleable(value = selected, enabled = enabled, role = Role.Checkbox, onValueChange = { onClick() }),
+            .selectable(selected = selected, enabled = enabled, role = Role.Checkbox, onClick = onClick),
         contentAlignment = Alignment.Center,
     ) {
         Row(

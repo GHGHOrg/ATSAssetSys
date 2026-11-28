@@ -80,6 +80,17 @@ internal fun CalendarButton(
     dense: Boolean = false,
     digitsOnly: Boolean = true,
 ) {
+    AtsIconButton(LucideIcon.CALENDAR, stringResource(R.string.date_pick_open), datePickerOpener(text, onPicked, dense, digitsOnly))
+}
+
+/** What a field's calendar icon calls: opens the picker on the field's date (44a step 8 group (c): the dense fields' own icon). */
+@Composable
+internal fun datePickerOpener(
+    text: String,
+    onPicked: (String) -> Unit,
+    dense: Boolean,
+    digitsOnly: Boolean = true,
+): () -> Unit {
     val open = LocalDatePicker.current
-    AtsIconButton(LucideIcon.CALENDAR, stringResource(R.string.date_pick_open), { open(DatePickerRequest(text, dense, digitsOnly, onPicked)) })
+    return { open(DatePickerRequest(text, dense, digitsOnly, onPicked)) }
 }

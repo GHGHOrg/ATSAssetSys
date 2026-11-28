@@ -46,7 +46,9 @@
     "slice-label": { "$value": { "colorSpace": "srgb", "components": [0.0, 0.0, 0.0], "hex": "#000000" }, "$description": "A percentage drawn on a slice." },
     "icon-action": { "$value": "{color.button-text}", "$description": "Action and field icons (D-46)." },
     "icon-chevron": { "$value": "{color.text-secondary}", "$description": "Chevrons that show where a row leads or open it in place (D-46)." },
-    "icon-band": { "$value": "{color.on-band}", "$description": "Icons on the title band (D-46)." }
+    "icon-band": { "$value": "{color.on-band}", "$description": "Icons on the title band (D-46)." },
+    "button-on-summary-line": { "$value": "{color.gold}", "$description": "An outline button's line on the summary card (Cash entry; drawing 07)." },
+    "button-on-summary-text": { "$value": "{color.gold}", "$description": "An outline button's text on the summary card (Cash entry; drawing 07)." }
   },
   "shadow": {
     "card": {

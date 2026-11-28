@@ -10,6 +10,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
@@ -31,6 +32,10 @@ import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.disabled
 import androidx.compose.ui.semantics.onClick
 import androidx.compose.ui.semantics.role
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.text
+import androidx.compose.ui.text.AnnotatedString
+import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.text.style.TextAlign
 import app.ghghorg.atsassets.ui.theme.AtsIcon
 import app.ghghorg.atsassets.ui.theme.AtsTheme
@@ -58,6 +63,8 @@ internal fun AtsTextField(
     enabled: Boolean = true,
     keyboardOptions: KeyboardOptions = KeyboardOptions.Default,
     keyboardActions: KeyboardActions = KeyboardActions.Default,
+    placeholder: String? = null,
+    visualTransformation: VisualTransformation = VisualTransformation.None,
 ) {
     val colors = AtsTheme.colors
     val refused = refusal != null
@@ -66,12 +73,14 @@ internal fun AtsTextField(
             value = value,
             onValueChange = onValueChange,
             label = { Text(label) },
+            placeholder = placeholder?.let { { Text(it, style = typeStyle("body"), color = colors.textSecondary) } },
             enabled = enabled,
             singleLine = true,
             isError = refused,
             textStyle = typeStyle("body"),
             prefix = prefix?.let { { Text(it, color = colors.textSecondary) } },
             trailingIcon = fieldMarks(refused, trailing, trailingLabel, onTrailing, dense = false),
+            visualTransformation = visualTransformation,
             keyboardOptions = keyboardOptions,
             keyboardActions = keyboardActions,
             shape = RoundedCornerShape(tokenDp("radiusDefault")),
@@ -100,7 +109,10 @@ internal fun AtsTextField(
     }
 }
 
-/** The dense text field: 40 tall inside a 48 touch area, Asap 14, at least 120 wide; its label sits beside it (D-18, D-28). */
+/**
+ * The dense text field: 40 tall inside a 48 touch area, Asap 14, at least 120 wide; its label sits beside it (D-18, D-28).
+ * [label], when given, is the field's own name for TalkBack and the screen tests, as a standard field's label is.
+ */
 @Composable
 internal fun AtsDenseField(
     value: String,
@@ -113,6 +125,9 @@ internal fun AtsDenseField(
     onTrailing: (() -> Unit)? = null,
     enabled: Boolean = true,
     keyboardOptions: KeyboardOptions = KeyboardOptions.Default,
+    label: String? = null,
+    placeholder: String? = null,
+    visualTransformation: VisualTransformation = VisualTransformation.None,
 ) {
     val colors = AtsTheme.colors
     val source = remember { MutableInteractionSource() }
@@ -129,12 +144,14 @@ internal fun AtsDenseField(
             BasicTextField(
                 value = value,
                 onValueChange = onValueChange,
+                modifier = if (label != null) Modifier.semantics { text = AnnotatedString(label) } else Modifier,
                 enabled = enabled,
                 singleLine = true,
                 textStyle = typeStyle("small").copy(color = colors.text),
                 cursorBrush = SolidColor(if (refused) colors.error else colors.focus),
                 interactionSource = source,
                 keyboardOptions = keyboardOptions,
+                visualTransformation = visualTransformation,
                 decorationBox = { inner ->
                     Row(
                         modifier = Modifier
@@ -145,7 +162,12 @@ internal fun AtsDenseField(
                         verticalAlignment = Alignment.CenterVertically,
                         horizontalArrangement = Arrangement.spacedBy(tokenDp("fieldDensePadding")),
                     ) {
-                        Box(modifier = Modifier.weight(1f, fill = false)) { inner() }
+                        Box(modifier = Modifier.weight(1f, fill = false)) {
+                            if (value.isEmpty() && placeholder != null) {
+                                Text(placeholder, style = typeStyle("small"), color = colors.textSecondary, maxLines = 1)
+                            }
+                            inner()
+                        }
                         fieldMarks(refused, trailing, trailingLabel, onTrailing, dense = true)?.invoke()
                     }
                 },
@@ -223,7 +245,19 @@ private fun fieldMarks(
                 AtsIcon(LucideIcon.CIRCLE_EXCLAMATION_POINT, tint = colors.error, size = tokenDp(if (dense) "fieldDenseMarkSize" else "fieldMarkSize"))
             }
             if (trailing != null) {
-                if (onTrailing != null && trailingLabel != null) {
+                if (onTrailing != null && trailingLabel != null && dense) {
+                    // Inside the 40 dense field the icon keeps its 20 dp; Compose widens a tap target smaller than 48
+                    // dp to 48 when hit-testing, so the field keeps its height (D-18).
+                    Box(
+                        modifier = Modifier
+                            .size(tokenDp("fieldMarkSize"))
+                            .clickable(role = Role.Button, onClick = onTrailing)
+                            .semantics { contentDescription = trailingLabel },
+                        contentAlignment = Alignment.Center,
+                    ) {
+                        AtsIcon(trailing, tint = colors.iconAction, size = tokenDp("fieldMarkSize"))
+                    }
+                } else if (onTrailing != null && trailingLabel != null) {
                     AtsIconButton(trailing, trailingLabel, onTrailing)
                 } else {
                     AtsIcon(trailing, tint = colors.iconAction, size = tokenDp(if (dense) "fieldMarkSize" else "iconSize"))
