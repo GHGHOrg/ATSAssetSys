@@ -1,10 +1,12 @@
 package app.ghghorg.atsassets.ui
 
 import androidx.activity.compose.BackHandler
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -19,6 +21,8 @@ import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.unit.dp
 import app.ghghorg.atsassets.R
 import app.ghghorg.atsassets.core.Tab
+import app.ghghorg.atsassets.ui.theme.AtsTheme
+import app.ghghorg.atsassets.ui.theme.tokenDp
 
 /**
  * Shows the screen the ViewModel names. Only the unlocked branch of MainActivity calls this. [screenshots] are
@@ -460,10 +464,13 @@ private fun TabContent(
             Box(modifier = Modifier.weight(1f)) {
                 TabScreen(state, viewModel, onBackUpNow)
             }
-            BuySellButton(
-                onOpen = viewModel::openBuySellMenu,
-                modifier = Modifier.align(Alignment.End).padding(horizontal = 16.dp, vertical = 8.dp),
-            )
+            // 44a step 8 group (d) part 1: under the tab's content, on the page's own color (drawing 10a frame G).
+            Box(modifier = Modifier.fillMaxWidth().background(AtsTheme.colors.page), contentAlignment = Alignment.CenterEnd) {
+                BuySellButton(
+                    onOpen = viewModel::openBuySellMenu,
+                    modifier = Modifier.padding(horizontal = tokenDp("spaceMargin"), vertical = tokenDp("spaceGap")),
+                )
+            }
         }
         if (state.allocationMenuOpen) {
             AllocationChoiceLayer(state.allocationBy, viewModel::chooseAllocation, viewModel::closeAllocationMenu)

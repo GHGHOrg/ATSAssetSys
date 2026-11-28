@@ -2,7 +2,9 @@ package app.ghghorg.atsassets.ui
 
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
@@ -10,20 +12,20 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.selection.selectableGroup
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.Button
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedCard
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
@@ -38,16 +40,22 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import app.ghghorg.atsassets.R
 import app.ghghorg.atsassets.core.AmountError
-import app.ghghorg.atsassets.core.AmountResult
 import app.ghghorg.atsassets.core.BuyRefusal
 import app.ghghorg.atsassets.core.Money
 import app.ghghorg.atsassets.core.Portfolio
-import app.ghghorg.atsassets.core.Quantity
 import app.ghghorg.atsassets.core.QuantityError
-import app.ghghorg.atsassets.core.QuantityResult
-import app.ghghorg.atsassets.core.TickerCheck
 import app.ghghorg.atsassets.core.TickerRefusal
 import app.ghghorg.atsassets.prices.CheckRefusal
+import app.ghghorg.atsassets.ui.design.AtsEntryFoot
+import app.ghghorg.atsassets.ui.design.AtsPickField
+import app.ghghorg.atsassets.ui.design.AtsProgressRow
+import app.ghghorg.atsassets.ui.design.AtsReviewCard
+import app.ghghorg.atsassets.ui.design.AtsScreen
+import app.ghghorg.atsassets.ui.design.AtsTextField
+import app.ghghorg.atsassets.ui.theme.AtsTheme
+import app.ghghorg.atsassets.ui.theme.LucideIcon
+import app.ghghorg.atsassets.ui.theme.tokenDp
+import app.ghghorg.atsassets.ui.theme.typeStyle
 
 /** The buy entry's callbacks, passed together. */
 class BuyActions(
@@ -61,11 +69,13 @@ class BuyActions(
 )
 
 /**
- * Buy entry (wireframe 10a frame A; 09 decisions 10 and 11): the portfolio as chips (no dropdown window), the ticker
- * in capitals, the date as digits like the Cash filters, quantity and total on a number keyboard, and the price per
- * share as the fields change. The refusals of the fields, of K1 and of the ticker check show here; the typed text
- * lives in the ViewModel. While a buy is replaced (14a), the title says so, a banner names the original, a changed field
- * shows the original value beneath it, and refusals say nothing was changed (wireframe 10c frame A; wording 1 and 2).
+ * Buy entry (wireframe 10a frame A; 09 decision 10), drawn from its model (CR2, open item 48) in the design system (44a
+ * step 8 group (d) part 1; drawings 10a and 10c, D-30, D-31): under the title band, a refusal that stops the save as the
+ * blocked card at the top (frame F); the portfolio as the standard pick field, its list inside the window (D-31 (6)); the
+ * ticker in capitals; the date as digits with its calendar; quantity and total side by side, the total with "$" before it;
+ * the price per share as a plain line; Review the large gold button at the foot. A field's own rule stays on the field.
+ * The typed text lives in the ViewModel. While a buy is replaced (14a), the title says so, the banner names the original,
+ * a changed field shows the original under it, and refusals say nothing was changed (wireframe 10c frame A).
  */
 @Composable
 fun BuyEntryScreen(
@@ -74,127 +84,80 @@ fun BuyEntryScreen(
     modifier: Modifier = Modifier,
 ) {
     BackHandler(enabled = !state.checking, onBack = actions.onBack)
+    val model = state.buyEntry
     val form = state.buyForm
     val refusals = state.buyRefusals
-    val ticker = TickerCheck.normalize(form.tickerText).orEmpty()
-    val original = state.replacedTransaction
-    val tickerChanged = original != null && ticker != original.ticker
-    Column(
-        modifier = modifier.fillMaxSize().imePadding().verticalScroll(rememberScrollState()).padding(16.dp),
-        verticalArrangement = Arrangement.spacedBy(12.dp),
-    ) {
-        TitleRow(stringResource(if (original != null) R.string.buy_replacing_title else R.string.buy_button), actions.onBack)
-        original?.let { ReplacingBanner(it) }
-        PortfolioChips(state.portfolios, form.portfolioId, actions.onPortfolioChange)
-        PortfolioHint(state, form.portfolioId)
-        OutlinedTextField(
-            value = form.tickerText,
-            onValueChange = actions.onTickerChange,
-            modifier = Modifier.fillMaxWidth(),
-            label = { Text(text = stringResource(R.string.buy_ticker_label)) },
-            supportingText =
-            if (refusals.tickerEmpty || tickerChanged) {
-                {
-                    Column {
-                        if (refusals.tickerEmpty) Text(text = stringResource(R.string.buy_ticker_empty))
-                        TickerHint(original, ticker)
-                    }
-                }
-            } else {
-                null
-            },
-            isError = refusals.tickerEmpty,
-            keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.Characters, autoCorrectEnabled = false),
-            singleLine = true,
-        )
-        OutlinedTextField(
-            value = form.dateText,
-            onValueChange = actions.onDateChange,
-            modifier = Modifier.fillMaxWidth(),
-            label = { Text(text = stringResource(R.string.date_label)) },
-            trailingIcon = { CalendarButton(form.dateText, actions.onDateChange) },
-            supportingText = {
-                Column {
-                    dateMessage(refusals.date)?.let { Text(text = it) }
-                    Text(text = stringResource(R.string.date_note))
-                    DateHint(original, form.dateText)
-                }
-            },
-            isError = refusals.date != null,
-            visualTransformation = DateDigitsTransformation,
-            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-            singleLine = true,
-        )
-        NumberField(
-            value = form.quantityText,
-            onChange = actions.onQuantityChange,
-            label = stringResource(R.string.buy_quantity_label),
-            error = quantityMessage(refusals.quantity),
-            hint = { QuantityHint(original, form.quantityText) },
-        )
-        NumberField(
-            value = form.totalText,
-            onChange = actions.onTotalChange,
-            label = stringResource(R.string.buy_total_label),
-            error = totalMessage(refusals.total),
-            hint = { TotalHint(original, form.totalText, Money::parseCents) },
-        )
-        state.buyPricePerShare?.let { price ->
-            val shown = Money.formatPerShare(price)
-            val spoken = spokenLabel(stringResource(R.string.buy_price_per_share_label), shown)
-            Text(
-                text = stringResource(R.string.buy_price_per_share, shown),
-                style = MaterialTheme.typography.bodyLarge,
-                modifier = Modifier.clearAndSetSemantics { contentDescription = spoken },
+    val replacing = model.replacing
+    var picking by rememberSaveable { mutableStateOf(false) }
+    val messages =
+        if (replacing) {
+            listOfNotNull(
+                saveMessage(refusals.save),
+                replacingMessage(ruleMessage(refusals.rule, replacing = true)),
+                replacingMessage(checkMessage(refusals.check, model.ticker)),
+                replaceRuleMessage(state, state.replaceRefusals.rule),
             )
+        } else {
+            listOfNotNull(saveMessage(refusals.save), ruleMessage(refusals.rule), checkMessage(refusals.check, model.ticker))
         }
-        val messages =
-            if (original != null) {
-                listOfNotNull(
-                    saveMessage(refusals.save),
-                    replacingMessage(ruleMessage(refusals.rule, replacing = true)),
-                    replacingMessage(checkMessage(refusals.check, ticker)),
-                    replaceRuleMessage(state, state.replaceRefusals.rule),
-                )
-            } else {
-                listOfNotNull(saveMessage(refusals.save), ruleMessage(refusals.rule), checkMessage(refusals.check, ticker))
-            }
-        messages.forEach { message ->
-            Text(
-                text = message,
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.error,
-                modifier = Modifier.semantics { liveRegion = LiveRegionMode.Polite },
-            )
-        }
-        if (state.checking) {
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
-                modifier = Modifier.semantics(mergeDescendants = true) { liveRegion = LiveRegionMode.Polite },
-            ) {
-                CircularProgressIndicator(modifier = Modifier.size(20.dp), strokeWidth = 2.dp)
-                Text(
-                    text = stringResource(R.string.buy_checking, ticker),
-                    style = MaterialTheme.typography.bodyMedium,
-                )
-            }
-        }
-        Button(
-            onClick = actions.onReview,
-            enabled = !state.checking,
-            modifier = Modifier.align(Alignment.End),
+    Box(modifier = modifier.fillMaxSize()) {
+        val under = if (picking) Modifier.clearAndSetSemantics { } else Modifier
+        AtsScreen(
+            title = stringResource(if (replacing) R.string.buy_replacing_title else R.string.buy_button),
+            modifier = Modifier.fillMaxSize().then(under),
+            onBack = actions.onBack,
+            backLabel = stringResource(R.string.back_button),
+            backEnabled = !state.checking,
         ) {
-            Text(text = stringResource(R.string.review_button))
+            EntryColumn {
+                model.banner?.let { ReplacingBanner(it) }
+                messages.forEach { Message(it) }
+                PortfolioPick(model.portfolio, model.originals.portfolio) { picking = true }
+                Column {
+                    AtsTextField(
+                        value = form.tickerText,
+                        onValueChange = actions.onTickerChange,
+                        label = stringResource(R.string.buy_ticker_label),
+                        modifier = Modifier.fillMaxWidth(),
+                        refusal = if (refusals.tickerEmpty) stringResource(R.string.buy_ticker_empty) else null,
+                        keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.Characters, autoCorrectEnabled = false),
+                    )
+                    OriginalLine(model.originals.ticker)
+                }
+                EntryDateField(form.dateText, dateMessage(refusals.date), actions.onDateChange, model.originals.date)
+                QuantityAndTotal(
+                    quantity = form.quantityText,
+                    onQuantity = actions.onQuantityChange,
+                    quantityError = quantityMessage(refusals.quantity),
+                    total = form.totalText,
+                    onTotal = actions.onTotalChange,
+                    totalLabel = stringResource(R.string.buy_total_label),
+                    totalError = totalMessage(refusals.total),
+                    originals = model.originals,
+                )
+                model.pricePerShare?.let { PricePerShareLine(it) }
+                if (state.checking) {
+                    AtsProgressRow(
+                        stringResource(R.string.buy_checking, model.ticker),
+                        done = false,
+                        modifier = Modifier.semantics(mergeDescendants = true) { liveRegion = LiveRegionMode.Polite },
+                    )
+                }
+                AtsEntryFoot(stringResource(R.string.review_button), actions.onReview, enabled = !state.checking)
+            }
+        }
+        if (picking) {
+            PortfolioChoice(model.portfolios, model.portfolioId, onChoose = { actions.onPortfolioChange(it) }, onClose = { picking = false })
         }
     }
 }
 
 /**
- * Buy review (wireframe 10a frame B): the entered values, the price per share and the cash effect with its sign and
- * no color. Nothing is saved until Confirm and save (criterion 30).
+ * Buy review (wireframe 10a frame B), drawn from its model (CR2, open item 48): the entered values and the price per share
+ * as label-and-value rows in a card, the cash effect as the total line with its sign and no color (D-31 (4)); "Nothing is
+ * saved until you confirm." and the foot's Confirm and save and Back to edit (D-31 (2)). Nothing is saved until Confirm
+ * and save (criterion 30).
  */
-@OptIn(ExperimentalLayoutApi::class)
 @Composable
 fun BuyReviewScreen(
     state: AppState,
@@ -203,68 +166,164 @@ fun BuyReviewScreen(
     modifier: Modifier = Modifier,
 ) {
     BackHandler(enabled = !state.saving, onBack = onBack)
-    val form = state.buyForm
-    val portfolio = state.portfolios.firstOrNull { it.id == form.portfolioId }?.name.orEmpty()
-    val date = DateDigits.toDate(form.dateText)?.toString() ?: DateDigits.format(form.dateText)
-    val quantity = (Quantity.parse(form.quantityText) as? QuantityResult.Exact)?.value
-    val cents = (Money.parseCents(form.totalText) as? AmountResult.Cents)?.value
-    Column(
-        modifier = modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(16.dp),
-        verticalArrangement = Arrangement.spacedBy(12.dp),
+    val model = state.buyReviewModel
+    AtsScreen(
+        title = stringResource(R.string.buy_review_title),
+        modifier = modifier,
+        onBack = onBack,
+        backLabel = stringResource(R.string.back_button),
+        backEnabled = !state.saving,
     ) {
-        TitleRow(stringResource(R.string.buy_review_title), onBack, enabled = !state.saving)
-        OutlinedCard(modifier = Modifier.fillMaxWidth()) {
-            Column(
-                modifier = Modifier.padding(12.dp),
-                verticalArrangement = Arrangement.spacedBy(6.dp),
-            ) {
-                ReviewRow(stringResource(R.string.buy_portfolio_label), portfolio)
-                ReviewRow(stringResource(R.string.buy_ticker_label), TickerCheck.normalize(form.tickerText).orEmpty())
-                ReviewRow(stringResource(R.string.date_label), stringResource(R.string.date_with_et, date))
-                ReviewRow(stringResource(R.string.buy_quantity_label), quantity?.let { Quantity.format(it) }.orEmpty())
-                if (cents != null) {
-                    val total = stringResource(R.string.buy_total_row)
-                    ReviewRow(total, Money.format(cents), spoken = spokenLabel(total, Money.format(cents)))
-                    state.buyPricePerShare?.let { price ->
-                        val label = stringResource(R.string.buy_price_per_share_label)
-                        val shown = Money.formatPerShare(price)
-                        ReviewRow(label, shown, spoken = spokenLabel(label, shown))
-                    }
-                    val effect = stringResource(R.string.cash_effect_label)
-                    ReviewRow(effect, signedAmount(-cents), bold = true, spoken = "$effect, ${spokenDollars(-cents)} dollars")
+        EntryColumn {
+            listOfNotNull(saveMessage(state.buyRefusals.save), ruleMessage(state.buyRefusals.rule)).forEach { Message(it) }
+            AtsReviewCard {
+                ReviewRow(stringResource(R.string.buy_portfolio_label), model.portfolio)
+                ReviewRow(stringResource(R.string.buy_ticker_label), model.ticker)
+                ReviewRow(stringResource(R.string.date_label), stringResource(R.string.date_with_et, model.date))
+                ReviewRow(stringResource(R.string.buy_quantity_label), model.quantity)
+                model.total?.let { total ->
+                    val label = stringResource(R.string.buy_total_row)
+                    ReviewRow(label, total, spoken = spokenLabel(label, total))
                 }
+                model.pricePerShare?.let { price ->
+                    val label = stringResource(R.string.buy_price_per_share_label)
+                    ReviewRow(label, price, spoken = spokenLabel(label, price))
+                }
+                model.cashCents?.let { CashEffectRow(it) }
             }
-        }
-        Text(
-            text = stringResource(R.string.review_hint),
-            style = MaterialTheme.typography.bodyMedium,
-        )
-        listOfNotNull(saveMessage(state.buyRefusals.save), ruleMessage(state.buyRefusals.rule)).forEach { message ->
-            Text(
-                text = message,
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.error,
-                modifier = Modifier.semantics { liveRegion = LiveRegionMode.Polite },
+            ReviewHint()
+            AtsEntryFoot(
+                primary = stringResource(R.string.confirm_button),
+                onPrimary = onConfirm,
+                enabled = !state.saving,
+                secondary = stringResource(R.string.back_to_edit_button),
+                onSecondary = onBack,
             )
         }
-        FlowRow(
-            horizontalArrangement = Arrangement.spacedBy(8.dp),
-            verticalArrangement = Arrangement.spacedBy(8.dp),
-        ) {
-            Button(
-                onClick = onConfirm,
-                enabled = !state.saving,
-            ) {
-                Text(text = stringResource(R.string.confirm_button))
-            }
-            TextButton(
-                onClick = onBack,
-                enabled = !state.saving,
-            ) {
-                Text(text = stringResource(R.string.back_to_edit_button))
-            }
+    }
+}
+
+/** An entry or review's scrolling column under its band: the side margin, the gap between parts, room for the keyboard. */
+@Composable
+internal fun EntryColumn(content: @Composable ColumnScope.() -> Unit) {
+    Column(
+        modifier = Modifier.fillMaxSize().imePadding().verticalScroll(rememberScrollState()).padding(tokenDp("spaceMargin")),
+        verticalArrangement = Arrangement.spacedBy(tokenDp("spaceGap")),
+        content = content,
+    )
+}
+
+/** "Nothing is saved until you confirm." under a review card, in secondary 14 (10a frames B and E). */
+@Composable
+internal fun ReviewHint() {
+    Text(text = stringResource(R.string.review_hint), style = typeStyle("small"), color = AtsTheme.colors.textSecondary)
+}
+
+/**
+ * The portfolio as the standard pick field (D-31 (6)): its name, read by TalkBack as "Portfolio, Main"; a tap opens its
+ * list inside the window. The original's name under it while replacing and it differs (10c marker 2).
+ */
+@Composable
+internal fun PortfolioPick(
+    name: String?,
+    original: OriginalValue?,
+    modifier: Modifier = Modifier,
+    onOpen: () -> Unit,
+) {
+    Column(modifier = modifier) {
+        val label = stringResource(R.string.buy_portfolio_label)
+        AtsPickField(label, name.orEmpty(), onOpen, modifier = Modifier.fillMaxWidth(), spoken = stringResource(R.string.allocation_portfolio_spoken, name.orEmpty()))
+        OriginalLine(original)
+    }
+}
+
+/** The portfolio's list (D-30, D-31): the shared choice layer inside the window, one portfolio per radio row. */
+@Composable
+internal fun PortfolioChoice(
+    portfolios: List<PickOption>,
+    selected: String?,
+    onChoose: (String) -> Unit,
+    onClose: () -> Unit,
+) {
+    ChoiceLayer<String?>(
+        title = stringResource(R.string.buy_portfolio_label),
+        options = portfolios.map { it.id to it.label },
+        selected = selected,
+        onChoose = { id ->
+            id?.let(onChoose)
+            onClose()
+        },
+        onClose = onClose,
+    )
+}
+
+/** The entry's date (D-28): digits on a number keyboard, the calendar, the New York note, and the original under it. */
+@Composable
+internal fun EntryDateField(
+    text: String,
+    error: String?,
+    onChange: (String) -> Unit,
+    original: OriginalValue?,
+) {
+    Column {
+        AtsTextField(
+            value = text,
+            onValueChange = onChange,
+            label = stringResource(R.string.date_label),
+            modifier = Modifier.fillMaxWidth(),
+            refusal = error,
+            note = stringResource(R.string.date_note),
+            trailing = LucideIcon.CALENDAR,
+            trailingLabel = stringResource(R.string.date_pick_open),
+            onTrailing = datePickerOpener(text, onChange, dense = false),
+            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+            visualTransformation = DateDigitsTransformation,
+        )
+        OriginalLine(original)
+    }
+}
+
+/**
+ * Quantity and total side by side (10a note 2), each with its own refusal and its original under it; the total with "$"
+ * before the number in the secondary color, typed without it (D-31 (3)).
+ */
+@Composable
+internal fun QuantityAndTotal(
+    quantity: String,
+    onQuantity: (String) -> Unit,
+    quantityError: String?,
+    total: String,
+    onTotal: (String) -> Unit,
+    totalLabel: String,
+    totalError: String?,
+    originals: OriginalHints,
+) {
+    val decimal = KeyboardOptions(keyboardType = KeyboardType.Decimal)
+    Row(horizontalArrangement = Arrangement.spacedBy(tokenDp("spaceGap"))) {
+        Column(modifier = Modifier.weight(1f)) {
+            AtsTextField(quantity, onQuantity, stringResource(R.string.buy_quantity_label), refusal = quantityError, keyboardOptions = decimal)
+            OriginalLine(originals.quantity)
+        }
+        Column(modifier = Modifier.weight(1f)) {
+            AtsTextField(total, onTotal, totalLabel, refusal = totalError, prefix = "$", keyboardOptions = decimal)
+            OriginalLine(originals.total)
         }
     }
+}
+
+/** "Price per share: $150.00" (10a note 1): a plain line in secondary 14, not a field; read as dollars. */
+@Composable
+internal fun PricePerShareLine(
+    shown: String,
+    modifier: Modifier = Modifier,
+) {
+    val spoken = spokenLabel(stringResource(R.string.buy_price_per_share_label), shown)
+    Text(
+        text = stringResource(R.string.buy_price_per_share, shown),
+        style = typeStyle("small"),
+        color = AtsTheme.colors.textSecondary,
+        modifier = modifier.clearAndSetSemantics { contentDescription = spoken },
+    )
 }
 
 /** "<" and the title, as on a portfolio's screen; TalkBack reads "<" as Back. Shared with Sell (11). */

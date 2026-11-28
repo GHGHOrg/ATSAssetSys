@@ -225,6 +225,22 @@ class SellFlowTest {
         assertEquals(emptyList<Pair<Transaction, CashEntry>>(), store.savedSells)
     }
 
+    // 44a step 8 group (d) part 1, CR2's wiring test (open item 48): the entry and its review draw from the state's models.
+    @Test
+    fun exampleA_theEntryAndItsReview_drawFromTheStatesModels() {
+        val vm = onSell()
+        vm.fillExampleA()
+        assertEquals("12", vm.state.value.sellEntry.picked.picked.shown)
+        assertEquals("$175.00", vm.state.value.sellEntry.pricePerShare)
+        assertEquals(null, vm.state.value.sellReviewModel)
+        vm.reviewSell()
+        val review = vm.state.value.sellReviewModel!!
+        assertEquals(listOf("$1,000.00", "$300.00"), review.pieces.map { it.cost })
+        assertEquals("$1,300.00", review.cost)
+        assertEquals(80_000L, review.realizedCents)
+        assertEquals(210_000L, review.cashCents)
+    }
+
     @Test
     fun review_showsEveryRefusalTogether_andKeepsTheText() {
         val vm = onSell()

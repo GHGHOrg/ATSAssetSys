@@ -40,6 +40,10 @@ import app.ghghorg.atsassets.core.CashEntryRefusal
 import app.ghghorg.atsassets.core.CashType
 import app.ghghorg.atsassets.core.MarketDate
 import app.ghghorg.atsassets.core.Money
+import app.ghghorg.atsassets.ui.design.AtsRowDivider
+import app.ghghorg.atsassets.ui.theme.AtsTheme
+import app.ghghorg.atsassets.ui.theme.tokenDp
+import app.ghghorg.atsassets.ui.theme.typeStyle
 
 /**
  * The cash entry form (wireframe 10b): the opening balance until it exists (frame C), then a deposit,
@@ -297,8 +301,13 @@ fun CashEntryReview(
     }
 }
 
-// [spoken], when given, is what TalkBack reads for the whole row, such as "Cash effect, minus 1,500.00 dollars" (09).
-@OptIn(ExperimentalLayoutApi::class)
+/**
+ * A review or detail row (D-31 (4); 44a step 8 group (d)): the label in secondary 16 on the left, the value in 16 at the
+ * right edge, beside it or under it (C26). [bold]: the result's total line, under a divider, in medium with the label in
+ * the text color. [alignStart]: a long value under its label, full width (10c note 7). [spoken], when given, is what
+ * TalkBack reads for the whole row, such as "Cash effect, minus 1,500.00 dollars" (09). [emphasis]: the total line alone in
+ * its card, in medium with no divider (the combined cash effect; 10c note 4).
+ */
 @Composable
 internal fun ReviewRow(
     label: String,
@@ -308,27 +317,28 @@ internal fun ReviewRow(
     alignStart: Boolean = false,
     spoken: String? = null,
     color: Color? = null,
+    emphasis: Boolean = false,
 ) {
-    val valueColor =
-        color ?: if (muted) MaterialTheme.colorScheme.onSurfaceVariant else MaterialTheme.colorScheme.onSurface
+    val colors = AtsTheme.colors
+    val valueColor = color ?: if (muted) colors.textSecondary else colors.text
+    val strong = bold || emphasis
+    val style = if (strong) typeStyle("sectionHeading") else typeStyle("body")
     val reading = if (spoken == null) Modifier else Modifier.clearAndSetSemantics { contentDescription = spoken }
-    FlowRow(
-        modifier = Modifier.fillMaxWidth().then(reading),
-        horizontalArrangement = Arrangement.spacedBy(12.dp),
-        verticalArrangement = Arrangement.spacedBy(2.dp),
-    ) {
-        Text(
-            text = label,
-            style = MaterialTheme.typography.bodyLarge,
-        )
-        Text(
-            text = value,
-            modifier = Modifier.weight(1f),
-            style = MaterialTheme.typography.bodyLarge,
-            color = valueColor,
-            fontWeight = if (bold) FontWeight.Medium else FontWeight.Normal,
-            textAlign = if (alignStart) TextAlign.Start else TextAlign.End,
-        )
+    Column(modifier = Modifier.fillMaxWidth()) {
+        if (bold) AtsRowDivider()
+        val rowModifier = Modifier.fillMaxWidth().then(reading).padding(top = if (bold) tokenDp("cardGap") else 0.dp)
+        if (alignStart) {
+            Column(modifier = rowModifier) {
+                Text(text = label, style = typeStyle("body"), color = colors.textSecondary)
+                Text(text = value, style = style, color = valueColor)
+            }
+        } else {
+            StartEndRow(
+                modifier = rowModifier,
+                start = { Text(text = label, style = style, color = if (strong) colors.text else colors.textSecondary) },
+                end = { Text(text = value, style = style, color = valueColor, textAlign = TextAlign.End) },
+            )
+        }
     }
 }
 

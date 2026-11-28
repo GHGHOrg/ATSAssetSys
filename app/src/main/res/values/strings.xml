@@ -136,7 +136,7 @@
     <string name="buy_portfolio_label">Portfolio</string>
     <string name="buy_ticker_label">Ticker</string>
     <string name="buy_quantity_label">Quantity</string>
-    <string name="buy_total_label">Total amount, fees included</string>
+    <string name="buy_total_label">Total, fees included</string>
     <string name="buy_total_row">Total amount</string>
     <string name="buy_price_per_share">Price per share: %1$s</string>
     <string name="buy_price_per_share_label">Price per share</string>
@@ -197,7 +197,7 @@
     <!-- Iteration 11: sell (wording approved 2026-10-31, 11 file section 11). -->
     <string name="sell_ticker_label">Ticker (held)</string>
     <string name="sell_nothing_held_in">%1$s holds no shares to sell.</string>
-    <string name="sell_total_label">Total amount, zero allowed</string>
+    <string name="sell_total_label">Total, zero allowed</string>
     <string name="sell_all_button">Sell all</string>
     <string name="sell_all_spoken">Sell all, picks every available lot</string>
     <string name="sell_lots_heading">Lots, oldest first</string>

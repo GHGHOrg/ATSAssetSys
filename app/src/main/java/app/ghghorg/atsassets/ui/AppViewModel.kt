@@ -1197,6 +1197,22 @@ data class AppState(
     val sellPieces: List<SoldPiece>
         get() = sellReview?.let { Sells.pieces(transactions + it.transaction, it.transaction) }.orEmpty()
 
+    /** 44a step 8 group (d) part 1: Buy entry as the screen draws it (wireframes 10a and 10c; CR2, open item 48). */
+    val buyEntry: BuyEntryModel
+        get() = BuyEntry.of(buyForm, portfolios, replacedTransaction, buyPricePerShare)
+
+    /** Buy review as the screen draws it (wireframe 10a frame B; CR2, open item 48). */
+    val buyReviewModel: BuyReviewModel
+        get() = BuyReview.of(buyForm, portfolios, buyPricePerShare)
+
+    /** Sell entry as the screen draws it, the lot rows apart (wireframes 10a and 10c; CR2, open item 48). */
+    val sellEntry: SellEntryModel
+        get() = SellEntry.of(sellForm, portfolios, sellTickers, replacedTransaction, sellPricePerShare, sellPicked, replaceStartingPicks)
+
+    /** Sell review as the screen draws it (wireframe 10a frame E; CR2, open item 48); null with nothing to review. */
+    val sellReviewModel: SellReviewModel?
+        get() = sellReview?.let { SellReview.of(it.transaction, sellPieces, portfolios, sellPricePerShare) }
+
     /** The tickers with a buy in the split's portfolio, in ticker order (section 6, 12 decision 1). */
     val splitTickers: List<String> get() = splitForm.portfolioId?.let { Splits.tickers(transactions, it) }.orEmpty()
 

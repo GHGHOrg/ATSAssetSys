@@ -84,9 +84,6 @@ internal fun AtsCheckRow(
     dense: Boolean = false,
 ) {
     val colors = AtsTheme.colors
-    val box = tokenDp(if (dense) "checkboxDenseSize" else "checkboxSize")
-    val outline = tokenDp(if (dense) "checkboxDenseOutline" else "checkboxOutline")
-    val shape = RoundedCornerShape(tokenDp("radiusCheckbox"))
     Row(
         modifier = modifier
             .fillMaxWidth()
@@ -97,17 +94,31 @@ internal fun AtsCheckRow(
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(tokenDp(if (dense) "fieldDensePadding" else "rowControlGap")),
     ) {
-        Box(
-            modifier = Modifier
-                .size(box)
-                .clip(shape)
-                .background(if (checked) colors.check else Color.Transparent)
-                .border(outline, if (checked) colors.check else colors.buttonLine, shape),
-            contentAlignment = Alignment.Center,
-        ) {
-            if (checked) AtsIcon(LucideIcon.CHECK, tint = colors.onCheck, size = tokenDp("checkboxMarkSize"))
-        }
+        AtsCheckBox(checked, dense)
         Text(text, style = typeStyle(if (dense) "small" else "body"), color = colors.text)
+    }
+}
+
+/**
+ * The checkbox square alone (D-18): 18 with a 2 outline, or 16 with 1.5 when [dense]; checked, filled with the check
+ * color and Lucide's check. Its row carries the toggle and what TalkBack reads (a lot on the sell screen; 44a step 8 (d)).
+ */
+@Composable
+internal fun AtsCheckBox(
+    checked: Boolean,
+    dense: Boolean = false,
+) {
+    val colors = AtsTheme.colors
+    val shape = RoundedCornerShape(tokenDp("radiusCheckbox"))
+    Box(
+        modifier = Modifier
+            .size(tokenDp(if (dense) "checkboxDenseSize" else "checkboxSize"))
+            .clip(shape)
+            .background(if (checked) colors.check else Color.Transparent)
+            .border(tokenDp(if (dense) "checkboxDenseOutline" else "checkboxOutline"), if (checked) colors.check else colors.buttonLine, shape),
+        contentAlignment = Alignment.Center,
+    ) {
+        if (checked) AtsIcon(LucideIcon.CHECK, tint = colors.onCheck, size = tokenDp("checkboxMarkSize"))
     }
 }
 

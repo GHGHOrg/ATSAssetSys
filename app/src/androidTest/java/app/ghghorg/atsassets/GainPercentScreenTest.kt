@@ -14,7 +14,6 @@ import androidx.compose.ui.test.junit4.v2.createAndroidComposeRule
 import androidx.compose.ui.test.onRoot
 import androidx.compose.ui.test.performScrollToNode
 import androidx.compose.ui.text.TextLayoutResult
-import androidx.compose.ui.unit.dp
 import androidx.test.ext.junit.rules.ActivityScenarioRule
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
@@ -40,6 +39,7 @@ import app.ghghorg.atsassets.ui.SellActions
 import app.ghghorg.atsassets.ui.SellEntryScreen
 import app.ghghorg.atsassets.ui.SellForm
 import app.ghghorg.atsassets.ui.theme.ATSAssetSystemTheme
+import app.ghghorg.atsassets.ui.theme.tokenDp
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
@@ -248,8 +248,9 @@ private fun GainRule.checkSell(landscape: Boolean) {
     assertEquals("The lot's figures end early: $shape", layout.layoutInput.text.length, layout.getLineEnd(last))
     assertFalse("The lot's figures are ellipsized: $shape", layout.isLineEllipsized(last))
     assertFalse("The lot's figures are cut off below: $shape", layout.didOverflowHeight)
-    // The screen's padding (16 dp) and the card's (12 dp) to the right of the row.
-    val edge = width - with(density) { 28.dp.toPx() }
+    // The screen's side margin and the row's inset to the right of the figures, from the tokens (44a step 8 group (d):
+    // 12 and 10 dp; before the design system 16 and 12).
+    val edge = width - with(density) { (tokenDp("spaceMargin") + tokenDp("spaceInset")).toPx() }
     val right = node.positionInRoot.x + node.size.width
     assertEquals("The lot's figures' right edge, px: $shape", edge, right, 1.5f)
 }

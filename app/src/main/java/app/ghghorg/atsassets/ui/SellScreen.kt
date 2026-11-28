@@ -2,31 +2,21 @@ package app.ghghorg.atsassets.ui
 
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.ExperimentalLayoutApi
-import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.imePadding
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.selection.selectableGroup
 import androidx.compose.foundation.selection.toggleable
 import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.Button
-import androidx.compose.material3.Checkbox
-import androidx.compose.material3.FilterChip
-import androidx.compose.material3.HorizontalDivider
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedButton
-import androidx.compose.material3.OutlinedCard
-import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
@@ -47,7 +37,6 @@ import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.withStyle
-import androidx.compose.ui.unit.dp
 import app.ghghorg.atsassets.R
 import app.ghghorg.atsassets.core.Fraction
 import app.ghghorg.atsassets.core.LotUnavailable
@@ -56,7 +45,23 @@ import app.ghghorg.atsassets.core.Quantity
 import app.ghghorg.atsassets.core.QuantityError
 import app.ghghorg.atsassets.core.QuantityResult
 import app.ghghorg.atsassets.core.SellRefusal
+import app.ghghorg.atsassets.ui.design.AtsBlockedMessage
+import app.ghghorg.atsassets.ui.design.AtsButton
+import app.ghghorg.atsassets.ui.design.AtsCard
+import app.ghghorg.atsassets.ui.design.AtsCheckBox
+import app.ghghorg.atsassets.ui.design.AtsDenseField
+import app.ghghorg.atsassets.ui.design.AtsEntryFoot
+import app.ghghorg.atsassets.ui.design.AtsPickField
+import app.ghghorg.atsassets.ui.design.AtsReviewCard
+import app.ghghorg.atsassets.ui.design.AtsReviewSubheading
+import app.ghghorg.atsassets.ui.design.AtsRowDivider
+import app.ghghorg.atsassets.ui.design.AtsScreen
+import app.ghghorg.atsassets.ui.design.ButtonSize
+import app.ghghorg.atsassets.ui.theme.AtsTheme
 import app.ghghorg.atsassets.ui.theme.gainLossColor
+import app.ghghorg.atsassets.ui.theme.tokenDp
+import app.ghghorg.atsassets.ui.theme.tokenNumber
+import app.ghghorg.atsassets.ui.theme.typeStyle
 import java.math.BigDecimal
 
 /** The sell entry's callbacks, passed together. */
@@ -73,13 +78,18 @@ class SellActions(
     val onBack: () -> Unit,
 )
 
+// Which pick list is open over the sell screen.
+private enum class SellPicking { NONE, PORTFOLIO, TICKER }
+
 /**
- * Sell entry (wireframe 10a frames C and D; iteration 11): one scrolling screen with the portfolio and ticker chips
- * (decision 1), the date as digits, quantity and total (zero allowed), the price per share, Sell all, then the lot list
- * oldest first, the "Picked X of Y shares" line and Review. The whole screen scrolls as one, so nothing is hidden at
- * the largest font (criterion 39). While a sell is replaced (14a), the title says so, a banner names the original, a
- * changed field shows the original value, the lots are as after the reversal, and refusals say nothing was changed
- * (wireframe 10c frame C; wording 1 and 2).
+ * Sell entry (wireframe 10a frames C and D; iteration 11), drawn from its model (CR2, open item 48; the lot rows from
+ * theirs, 16c) in the design system (44a step 8 group (d) part 1; drawings 10a and 10c): one scrolling screen under its
+ * band with a refusal as the blocked card at the top, the portfolio and the held ticker as standard pick fields side by
+ * side (their lists inside the window), the date, quantity and total (zero allowed), the price per share with Sell all as a
+ * small outline button, then the lot list oldest first, the "Picked X of Y shares" line and Review at the foot. The whole
+ * screen scrolls as one, so nothing is hidden at the largest font (criterion 39). While a sell is replaced (14a), the
+ * title says so, the banner names the original, a changed field shows the original under it, the lots are as after the
+ * reversal, and refusals say nothing was changed (wireframe 10c frame C).
  */
 @Composable
 fun SellEntryScreen(
@@ -88,70 +98,13 @@ fun SellEntryScreen(
     modifier: Modifier = Modifier,
 ) {
     BackHandler(enabled = !state.saving, onBack = actions.onBack)
+    val model = state.sellEntry
     val form = state.sellForm
     val refusals = state.sellRefusals
-    val original = state.replacedTransaction
-    Column(
-        modifier = modifier.fillMaxSize().imePadding().verticalScroll(rememberScrollState()).padding(16.dp),
-        verticalArrangement = Arrangement.spacedBy(12.dp),
-    ) {
-        TitleRow(stringResource(if (original != null) R.string.sell_replacing_title else R.string.sell_button), actions.onBack)
-        original?.let { ReplacingBanner(it) }
-        PortfolioChips(state.portfolios, form.portfolioId, actions.onPortfolioChange)
-        PortfolioHint(state, form.portfolioId)
-        TickerChips(state, actions.onTickerChange)
-        TickerHint(original, form.ticker)
-        OutlinedTextField(
-            value = form.dateText,
-            onValueChange = actions.onDateChange,
-            modifier = Modifier.fillMaxWidth(),
-            label = { Text(text = stringResource(R.string.date_label)) },
-            trailingIcon = { CalendarButton(form.dateText, actions.onDateChange) },
-            supportingText = {
-                Column {
-                    dateMessage(refusals.date)?.let { Text(text = it) }
-                    Text(text = stringResource(R.string.date_note))
-                    DateHint(original, form.dateText)
-                }
-            },
-            isError = refusals.date != null,
-            visualTransformation = DateDigitsTransformation,
-            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-            singleLine = true,
-        )
-        NumberField(
-            value = form.quantityText,
-            onChange = actions.onQuantityChange,
-            label = stringResource(R.string.buy_quantity_label),
-            error = quantityMessage(refusals.quantity),
-            hint = { QuantityHint(original, form.quantityText) },
-        )
-        NumberField(
-            value = form.totalText,
-            onChange = actions.onTotalChange,
-            label = stringResource(R.string.sell_total_label),
-            error = totalMessage(refusals.total),
-            hint = { TotalHint(original, form.totalText, ::sellTotal) },
-        )
-        state.sellPricePerShare?.let { price ->
-            val shown = Money.formatPerShare(price)
-            val spoken = spokenLabel(stringResource(R.string.buy_price_per_share_label), shown)
-            Text(
-                text = stringResource(R.string.buy_price_per_share, shown),
-                style = MaterialTheme.typography.bodyLarge,
-                modifier = Modifier.clearAndSetSemantics { contentDescription = spoken },
-            )
-        }
-        val sellAllSpoken = stringResource(R.string.sell_all_spoken)
-        OutlinedButton(
-            onClick = actions.onSellAll,
-            modifier = Modifier.semantics { contentDescription = sellAllSpoken },
-        ) {
-            Text(text = stringResource(R.string.sell_all_button))
-        }
-        LotList(state, actions)
-        val messages =
-            if (original != null) {
+    var picking by rememberSaveable { mutableStateOf(SellPicking.NONE) }
+    val messages =
+        listOfNotNull(if (refusals.tickerMissing) stringResource(R.string.sell_choose_ticker) else null) +
+            if (model.replacing) {
                 listOfNotNull(
                     saveMessage(refusals.save),
                     replacingMessage(sellRuleMessage(state, refusals.rule, replacing = true)),
@@ -160,118 +113,161 @@ fun SellEntryScreen(
             } else {
                 listOfNotNull(saveMessage(refusals.save), sellRuleMessage(state, refusals.rule))
             }
-        if (refusals.tickerMissing) Message(stringResource(R.string.sell_choose_ticker))
-        messages.forEach { Message(it) }
-        Button(
-            onClick = actions.onReview,
-            enabled = !state.saving,
-            modifier = Modifier.align(Alignment.End),
+    Box(modifier = modifier.fillMaxSize()) {
+        val under = if (picking != SellPicking.NONE) Modifier.clearAndSetSemantics { } else Modifier
+        AtsScreen(
+            title = stringResource(if (model.replacing) R.string.sell_replacing_title else R.string.sell_button),
+            modifier = Modifier.fillMaxSize().then(under),
+            onBack = actions.onBack,
+            backLabel = stringResource(R.string.back_button),
+            backEnabled = !state.saving,
         ) {
-            Text(text = stringResource(R.string.review_button))
-        }
-    }
-}
-
-/** One chip per ticker held in the chosen portfolio, in ticker order (11 decision 1); a line when there is none. */
-@OptIn(ExperimentalLayoutApi::class)
-@Composable
-private fun TickerChips(
-    state: AppState,
-    onChange: (String) -> Unit,
-) {
-    Column {
-        Text(
-            text = stringResource(R.string.sell_ticker_label),
-            style = MaterialTheme.typography.bodyMedium,
-        )
-        val tickers = state.sellTickers
-        if (tickers.isEmpty()) {
-            val name = state.portfolios.firstOrNull { it.id == state.sellForm.portfolioId }?.name.orEmpty()
-            Text(
-                text = stringResource(R.string.sell_nothing_held_in, name),
-                style = MaterialTheme.typography.bodyLarge,
-            )
-        } else {
-            FlowRow(
-                modifier = Modifier.selectableGroup(),
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
-            ) {
-                for (ticker in tickers) {
-                    FilterChip(
-                        selected = ticker == state.sellForm.ticker,
-                        onClick = { onChange(ticker) },
-                        label = { Text(text = ticker) },
+            EntryColumn {
+                model.banner?.let { ReplacingBanner(it) }
+                messages.forEach { Message(it) }
+                Row(horizontalArrangement = Arrangement.spacedBy(tokenDp("spaceGap"))) {
+                    PortfolioPick(model.portfolio, model.originals.portfolio, Modifier.weight(1f)) { picking = SellPicking.PORTFOLIO }
+                    TickerPick(model, Modifier.weight(1f)) { picking = SellPicking.TICKER }
+                }
+                if (model.tickers.isEmpty()) {
+                    Text(text = stringResource(R.string.sell_nothing_held_in, model.portfolio.orEmpty()), style = typeStyle("body"), color = AtsTheme.colors.text)
+                }
+                EntryDateField(form.dateText, dateMessage(refusals.date), actions.onDateChange, model.originals.date)
+                QuantityAndTotal(
+                    quantity = form.quantityText,
+                    onQuantity = actions.onQuantityChange,
+                    quantityError = quantityMessage(refusals.quantity),
+                    total = form.totalText,
+                    onTotal = actions.onTotalChange,
+                    totalLabel = stringResource(R.string.sell_total_label),
+                    totalError = totalMessage(refusals.total),
+                    originals = model.originals,
+                )
+                // The price per share and Sell all, a small outline button, on one line (10a note 3).
+                Row(modifier = Modifier.fillMaxWidth().heightIn(min = tokenDp("spaceTouch")), verticalAlignment = Alignment.CenterVertically) {
+                    Box(modifier = Modifier.weight(1f)) { model.pricePerShare?.let { PricePerShareLine(it) } }
+                    val sellAllSpoken = stringResource(R.string.sell_all_spoken)
+                    AtsButton(
+                        stringResource(R.string.sell_all_button),
+                        actions.onSellAll,
+                        modifier = Modifier.semantics { contentDescription = sellAllSpoken },
+                        size = ButtonSize.SMALL,
                     )
                 }
+                LotList(state, model.picked, actions)
+                AtsEntryFoot(stringResource(R.string.review_button), actions.onReview, enabled = !state.saving)
             }
+        }
+        when (picking) {
+            SellPicking.PORTFOLIO ->
+                PortfolioChoice(model.portfolios, model.portfolioId, onChoose = { actions.onPortfolioChange(it) }, onClose = { picking = SellPicking.NONE })
+
+            SellPicking.TICKER ->
+                ChoiceLayer<String?>(
+                    title = stringResource(R.string.sell_ticker_label),
+                    options = model.tickers.map { it to it },
+                    selected = model.ticker,
+                    onChoose = { ticker ->
+                        ticker?.let(actions.onTickerChange)
+                        picking = SellPicking.NONE
+                    },
+                    onClose = { picking = SellPicking.NONE },
+                )
+
+            SellPicking.NONE -> Unit
         }
     }
 }
 
 /**
- * The lot list (wireframe 10a markers 10 to 14), drawn from its model (CR2, 16c decision 3): "Lots, oldest first", the
- * "updating" and refresh-failed lines once it shows prices (section 6, states (2) and (3); 16c), one row per lot, then
- * "Picked X of Y shares" and, after a date change dropped picks, the line saying so.
+ * The held ticker as the standard pick field (wireframe 10a marker 8): read as "Ticker, AAPL"; a tap opens the tickers the
+ * portfolio holds, in ticker order (11 decision 1). The original under it while replacing and it differs.
+ */
+@Composable
+private fun TickerPick(
+    model: SellEntryModel,
+    modifier: Modifier,
+    onOpen: () -> Unit,
+) {
+    Column(modifier = modifier) {
+        val shown = model.ticker.orEmpty()
+        AtsPickField(
+            stringResource(R.string.sell_ticker_label),
+            shown,
+            onOpen,
+            modifier = Modifier.fillMaxWidth(),
+            enabled = model.tickers.isNotEmpty(),
+            spoken = stringResource(R.string.history_ticker_spoken, shown),
+        )
+        OriginalLine(model.originals.ticker)
+    }
+}
+
+/**
+ * The lot list (wireframe 10a markers 10 to 14), drawn from its model (CR2, 16c decision 3): "Lots, oldest first" in
+ * medium 16, the "updating" and refresh-failed lines once it shows prices (section 6, states (2) and (3); 16c), one row per
+ * lot in a card, then "Picked X of Y shares" in the card and, after a date change dropped picks, the line saying so.
  */
 @Composable
 private fun LotList(
     state: AppState,
+    picked: PickedLineModel,
     actions: SellActions,
 ) {
+    val colors = AtsTheme.colors
     val rows = state.sellLotRows
     val replacing = state.replacingId != null
     Text(
         text = stringResource(if (replacing) R.string.replace_lots_heading else R.string.sell_lots_heading),
-        style = MaterialTheme.typography.titleMedium,
+        style = typeStyle("sectionHeading"),
+        color = colors.text,
         modifier = Modifier.semantics { heading() },
     )
-    if (rows.isNotEmpty()) {
-        PriceRefreshLines(state.priceRefresh.refreshing, state.priceRefresh.failed, state.priceRefresh.noKey)
-        OutlinedCard(modifier = Modifier.fillMaxWidth()) {
-            Column(modifier = Modifier.padding(12.dp)) {
-                rows.forEachIndexed { index, row ->
-                    if (index > 0) HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
-                    if (row.unavailable == null) {
-                        LotPickRow(
-                            row = row,
-                            pick = state.sellForm.picks[row.key],
-                            error = state.sellRefusals.picks[row.key],
-                            actions = actions,
-                        )
-                    } else {
-                        UnavailableLotRow(row)
-                    }
-                }
+    if (rows.isNotEmpty()) PriceRefreshLines(state.priceRefresh.refreshing, state.priceRefresh.failed, state.priceRefresh.noKey)
+    AtsCard(padded = false) {
+        rows.forEachIndexed { index, row ->
+            if (row.unavailable == null) {
+                if (index > 0) AtsRowDivider()
+                LotPickRow(row, state.sellForm.picks[row.key], state.sellRefusals.picks[row.key], actions)
+            } else {
+                UnavailableLotRow(row)
             }
         }
+        if (rows.isNotEmpty()) AtsRowDivider()
+        PickedLine(picked)
     }
-    val quantity = (Quantity.parse(state.sellForm.quantityText) as? QuantityResult.Exact)?.value
-    val picked =
-        if (quantity == null) {
-            stringResource(R.string.sell_picked, sharesText(state.sellPicked))
-        } else {
-            stringResource(R.string.sell_picked_of, Quantity.format(state.sellPicked), sharesText(quantity))
-        }
-    // While the picks are still the replaced sell's own, the line says so (10c marker 9).
-    val originals = replacing && state.sellForm.picks.isNotEmpty() && state.sellForm.picks == state.replaceStartingPicks
-    Text(
-        text = if (originals) picked + " " + stringResource(R.string.replace_original_picks) else picked,
-        style = MaterialTheme.typography.bodyLarge,
-    )
     if (state.sellPicksDropped) {
         Text(
             text = stringResource(R.string.sell_picks_dropped),
-            style = MaterialTheme.typography.bodyMedium,
+            style = typeStyle("small"),
+            color = colors.text,
             modifier = Modifier.semantics { liveRegion = LiveRegionMode.Polite },
         )
     }
 }
 
+/** "Picked 12 of 12 shares", with "(the original's picks)" while they are (10c marker 9). */
+@Composable
+private fun PickedLine(model: PickedLineModel) {
+    val pickedShares = stringResource(if (model.picked.one) R.string.holding_share_one else R.string.holding_shares, model.picked.shown)
+    val line =
+        model.of?.let { of ->
+            stringResource(R.string.sell_picked_of, model.picked.shown, stringResource(if (of.one) R.string.holding_share_one else R.string.holding_shares, of.shown))
+        } ?: stringResource(R.string.sell_picked, pickedShares)
+    Text(
+        text = if (model.originals) line + " " + stringResource(R.string.replace_original_picks) else line,
+        style = typeStyle("body"),
+        color = AtsTheme.colors.text,
+        modifier = Modifier.padding(tokenDp("spaceInset")),
+    )
+}
+
 /**
- * A lot that passes the lot rules (11 wording 1): a tap on the left part picks or unpicks it; a picked lot shows
- * "Sell:" and its quantity field, prefilled with the full remainder. Its unrealized gain/loss in green or red with its
- * sign, at the latest price in today's shares (16c decision 4), with "stale, as of … ET" under it when the price is
- * stale, or "no price" (wireframe 10a markers 12 and 14). TalkBack reads them with the lot.
+ * A lot that passes the lot rules (11 wording 1; drawing 10a frame C): the catalog's checkbox, the date in 16 and "10
+ * left, $100.00 per share" in secondary 14; a tap on that part picks or unpicks it. A picked lot shows "Sell:" and its
+ * dense quantity field, prefilled with the full remainder. Its unrealized gain/loss in 14 in green or red with its sign,
+ * at the latest price in today's shares (16c decision 4), with "stale, as of … ET" in condensed 12 under it, or "no price"
+ * (wireframe 10a markers 12 and 14; 10a note 4). TalkBack reads them with the lot.
  */
 @Composable
 private fun LotPickRow(
@@ -280,35 +276,33 @@ private fun LotPickRow(
     error: QuantityError?,
     actions: SellActions,
 ) {
-    val date = row.date
-    val left = row.left
-    val perShare = row.perShare
     val gain = row.gain
     val staleAsOf = row.staleAsOf
     val state = stringResource(if (pick != null) R.string.sell_lot_picked else R.string.sell_lot_not_picked)
     val spoken =
         when {
             gain is GainModel.Figure && staleAsOf != null ->
-                stringResource(R.string.sell_lot_gain_stale_spoken, date, left, row.spokenPerShare, gainSpoken(gain), staleAsOf, state)
+                stringResource(R.string.sell_lot_gain_stale_spoken, row.date, row.left, row.spokenPerShare, gainSpoken(gain), staleAsOf, state)
 
-            gain is GainModel.Figure -> stringResource(R.string.sell_lot_gain_spoken, date, left, row.spokenPerShare, gainSpoken(gain), state)
+            gain is GainModel.Figure -> stringResource(R.string.sell_lot_gain_spoken, row.date, row.left, row.spokenPerShare, gainSpoken(gain), state)
 
-            else -> stringResource(R.string.sell_lot_spoken, date, left, row.spokenPerShare, state)
+            else -> stringResource(R.string.sell_lot_spoken, row.date, row.left, row.spokenPerShare, state)
         }
     // CR6 (43): the figures stay at the right edge, beside the lot or under it (C26).
     StartEndRow(
-        modifier = Modifier.fillMaxWidth(),
-        lineGap = 4.dp,
+        modifier = Modifier.fillMaxWidth().padding(tokenDp("spaceInset")),
+        lineGap = tokenDp("cardGap"),
         start = {
             Row(
                 modifier =
                 Modifier
+                    .heightIn(min = tokenDp("spaceTouch"))
                     .toggleable(value = pick != null, role = Role.Checkbox, onValueChange = { actions.onToggleLot(row.key) })
                     .clearAndSetSemantics { contentDescription = spoken },
-                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(tokenDp("spaceInset")),
             ) {
-                Checkbox(checked = pick != null, onCheckedChange = null)
-                LotText(date, left, perShare)
+                Box(modifier = Modifier.padding(top = tokenDp("cardGap"))) { AtsCheckBox(pick != null) }
+                LotText(row.date, row.left, row.perShare)
             }
         },
         end = { LotPickFigures(row, pick, error, actions) },
@@ -323,94 +317,78 @@ private fun LotPickFigures(
     error: QuantityError?,
     actions: SellActions,
 ) {
+    val colors = AtsTheme.colors
     val gain = row.gain
     Column(horizontalAlignment = Alignment.End) {
         if (pick != null) {
-            val fieldSpoken = stringResource(R.string.sell_pick_spoken, row.date)
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Text(text = stringResource(R.string.sell_pick_label), style = MaterialTheme.typography.bodyLarge)
-                OutlinedTextField(
+            Row(verticalAlignment = Alignment.Top, horizontalArrangement = Arrangement.spacedBy(tokenDp("fieldDensePadding"))) {
+                Box(modifier = Modifier.heightIn(min = tokenDp("spaceTouch")).clearAndSetSemantics { }, contentAlignment = Alignment.CenterStart) {
+                    Text(text = stringResource(R.string.sell_pick_label), style = typeStyle("small"), color = colors.text)
+                }
+                AtsDenseField(
                     value = pick,
                     onValueChange = { actions.onPickChange(row.key, it) },
-                    modifier = Modifier.width(140.dp).padding(start = 8.dp).semantics { contentDescription = fieldSpoken },
-                    isError = error != null,
+                    refusal = pickMessage(error),
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
-                    singleLine = true,
-                )
-            }
-            pickMessage(error)?.let {
-                Text(
-                    text = it,
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.error,
-                    textAlign = TextAlign.End,
+                    label = stringResource(R.string.sell_pick_spoken, row.date),
                 )
             }
         }
         when (gain) {
             is GainModel.Figure ->
-                Text(
-                    text = gainFigures(gain),
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = gainLossColor(sign(gain)),
-                    textAlign = TextAlign.End,
-                )
+                Text(text = gainFigures(gain), style = typeStyle("small"), color = gainLossColor(sign(gain)), textAlign = TextAlign.End)
 
             else ->
-                Text(
-                    text = stringResource(R.string.holding_lot_no_price),
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    textAlign = TextAlign.End,
-                )
+                Text(text = stringResource(R.string.holding_lot_no_price), style = typeStyle("small"), color = colors.textSecondary, textAlign = TextAlign.End)
         }
         row.staleAsOf?.let {
-            Text(
-                text = stringResource(R.string.holding_row_stale, it),
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                textAlign = TextAlign.End,
-            )
+            Text(text = stringResource(R.string.holding_row_stale, it), style = typeStyle("oneDay"), color = colors.textSecondary, textAlign = TextAlign.End)
         }
     }
 }
 
 /**
- * A lot that fails the lot rules for the date (wireframe 10a marker 13): greyed out with a dashed outline, its reason in
- * text, and no way to pick it. It keeps its place in the order.
+ * A lot that fails the lot rules for the date (wireframe 10a marker 13; D-18): it keeps its place in the order, inside a
+ * dashed outline, faded to the unavailable lot's opacity, with its reason in text and no way to pick it.
  */
 @Composable
 private fun UnavailableLotRow(row: SellLotRowModel) {
-    val date = row.date
-    val left = row.left
-    val perShare = row.perShare
+    val colors = AtsTheme.colors
     val reason =
         stringResource(
             if (row.unavailable == LotUnavailable.BOUGHT_AFTER_SELL_DATE) R.string.sell_lot_bought_after else R.string.sell_lot_entered_after,
         )
-    val spoken = stringResource(R.string.sell_lot_unavailable_spoken, date, left, row.spokenPerShare, reason)
-    val outline = MaterialTheme.colorScheme.outline
+    val spoken = stringResource(R.string.sell_lot_unavailable_spoken, row.date, row.left, row.spokenPerShare, reason)
+    val outline = colors.textSecondary
+    val radius = tokenDp("radiusDefault")
+    val width = tokenDp("buttonOutline")
+    val dash = tokenDp("chipPadding")
+    val gap = tokenDp("cardGap")
     Column(
         modifier =
         Modifier
             .fillMaxWidth()
+            .padding(tokenDp("spaceInset"))
             .drawBehind {
                 drawRoundRect(
                     color = outline,
-                    cornerRadius = CornerRadius(8.dp.toPx()),
-                    style = Stroke(width = 1.dp.toPx(), pathEffect = PathEffect.dashPathEffect(floatArrayOf(8.dp.toPx(), 4.dp.toPx()))),
+                    cornerRadius = CornerRadius(radius.toPx()),
+                    style = Stroke(width = width.toPx(), pathEffect = PathEffect.dashPathEffect(floatArrayOf(dash.toPx(), gap.toPx()))),
                 )
             }.clearAndSetSemantics { contentDescription = spoken }
-            .padding(8.dp),
+            .padding(tokenDp("spaceInset")),
     ) {
+        // Faded to the unavailable lot's own opacity (4.4).
         Row(
-            modifier = Modifier.alpha(0.6f),
-            verticalAlignment = Alignment.CenterVertically,
+            modifier = Modifier.alpha(tokenNumber("opacityUnavailableLot")),
+            horizontalArrangement = Arrangement.spacedBy(tokenDp("spaceInset")),
         ) {
-            Checkbox(checked = false, onCheckedChange = null, enabled = false)
-            LotText(date, left, perShare)
+            Box(modifier = Modifier.padding(top = tokenDp("cardGap"))) { AtsCheckBox(false) }
+            Column {
+                LotText(row.date, row.left, row.perShare)
+                Text(text = reason, style = typeStyle("small"), color = colors.textSecondary)
+            }
         }
-        Text(text = reason, style = MaterialTheme.typography.bodyMedium)
     }
 }
 
@@ -421,33 +399,29 @@ private fun LotText(
     perShare: String,
 ) {
     Column {
-        Text(text = stringResource(R.string.date_with_et, date), style = MaterialTheme.typography.bodyLarge)
-        Text(
-            text = stringResource(R.string.holding_lot_left, left, perShare),
-            style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-        )
+        Text(text = stringResource(R.string.date_with_et, date), style = typeStyle("body"), color = AtsTheme.colors.text)
+        Text(text = stringResource(R.string.holding_lot_left, left, perShare), style = typeStyle("small"), color = AtsTheme.colors.textSecondary)
     }
 }
 
-/** A refusal: plain text with "Not saved", read by TalkBack when it appears (wireframe 10a marker 16). */
+/**
+ * A refusal that stops the save (wireframe 10a marker 16): the catalog's blocked card with "Not saved." (or "Not saved.
+ * Nothing was changed." while replacing) in medium bronze, read by TalkBack when it appears (D-31 (8)).
+ */
 @Composable
 internal fun Message(text: String) {
-    Text(
-        text = text,
-        style = MaterialTheme.typography.bodyMedium,
-        color = MaterialTheme.colorScheme.error,
-        modifier = Modifier.semantics { liveRegion = LiveRegionMode.Polite },
-    )
+    val replacing = stringResource(R.string.replace_not_saved)
+    val plain = stringResource(R.string.not_saved)
+    AtsBlockedMessage(text, prefix = if (text.startsWith(replacing)) replacing else plain)
 }
 
 /**
- * Sell review (wireframe 10a frame E; 11 wording 3): the entered values and the price per share, then each lot used
- * with its shares and cost, and its proceeds and gain on a second line; the cost of lots used, the realized gain/loss
- * in color with its sign, and the cash effect with its sign and no color. Parts beside a total are shown by largest
+ * Sell review (wireframe 10a frame E; 11 wording 3), drawn from its model (CR2, open item 48): the entered values and the
+ * price per share, then "Lots used" as a sub-heading with each lot used, its shares and cost, and its proceeds and gain on
+ * a second line; the cost of lots used, the realized gain/loss in color with its sign (the one colored figure), and the
+ * cash effect as the total line with its sign and no color (10a note 6). Parts beside a total are shown by largest
  * remainder (4.10). Nothing is saved until Confirm and save (criterion 30).
  */
-@OptIn(ExperimentalLayoutApi::class)
 @Composable
 fun SellReviewScreen(
     state: AppState,
@@ -456,84 +430,59 @@ fun SellReviewScreen(
     modifier: Modifier = Modifier,
 ) {
     BackHandler(enabled = !state.saving, onBack = onBack)
-    val review = state.sellReview ?: return
-    val sell = review.transaction
-    val pieces = state.sellPieces
-    val portfolio = state.portfolios.firstOrNull { it.id == sell.portfolioId }?.name.orEmpty()
-    val costs = Money.partsInCents(pieces.map { it.cost })
-    val proceeds = Money.partsInCents(pieces.map { it.proceeds })
-    val gains = Money.partsInCents(pieces.map { it.gain })
-    val realized = gains.sum()
-    Column(
-        modifier = modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(16.dp),
-        verticalArrangement = Arrangement.spacedBy(12.dp),
+    val model = state.sellReviewModel ?: return
+    AtsScreen(
+        title = stringResource(R.string.sell_review_title),
+        modifier = modifier,
+        onBack = onBack,
+        backLabel = stringResource(R.string.back_button),
+        backEnabled = !state.saving,
     ) {
-        TitleRow(stringResource(R.string.sell_review_title), onBack, enabled = !state.saving)
-        OutlinedCard(modifier = Modifier.fillMaxWidth()) {
-            Column(
-                modifier = Modifier.padding(12.dp),
-                verticalArrangement = Arrangement.spacedBy(6.dp),
-            ) {
-                ReviewRow(stringResource(R.string.buy_portfolio_label), portfolio)
-                ReviewRow(stringResource(R.string.buy_ticker_label), sell.ticker)
-                ReviewRow(stringResource(R.string.date_label), stringResource(R.string.date_with_et, sell.date.toString()))
-                ReviewRow(stringResource(R.string.buy_quantity_label), Quantity.format(sell.quantity))
+        EntryColumn {
+            listOfNotNull(saveMessage(state.sellRefusals.save), sellRuleMessage(state, state.sellRefusals.rule)).forEach { Message(it) }
+            AtsReviewCard {
+                ReviewRow(stringResource(R.string.buy_portfolio_label), model.portfolio)
+                ReviewRow(stringResource(R.string.buy_ticker_label), model.ticker)
+                ReviewRow(stringResource(R.string.date_label), stringResource(R.string.date_with_et, model.date))
+                ReviewRow(stringResource(R.string.buy_quantity_label), model.quantity)
                 val total = stringResource(R.string.buy_total_row)
-                ReviewRow(total, Money.format(sell.totalCents), spoken = spokenLabel(total, Money.format(sell.totalCents)))
-                state.sellPricePerShare?.let { price ->
+                ReviewRow(total, model.total, spoken = spokenLabel(total, model.total))
+                model.pricePerShare?.let { price ->
                     val label = stringResource(R.string.buy_price_per_share_label)
-                    val shown = Money.formatPerShare(price)
-                    ReviewRow(label, shown, spoken = spokenLabel(label, shown))
+                    ReviewRow(label, price, spoken = spokenLabel(label, price))
                 }
-                Text(
-                    text = stringResource(R.string.sell_lots_used),
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    modifier = Modifier.padding(top = 4.dp),
-                )
-                pieces.forEachIndexed { index, piece ->
-                    PieceRows(piece.buyDate.toString(), piece.quantity, costs[index], proceeds[index], gains[index])
-                }
+                AtsReviewSubheading(stringResource(R.string.sell_lots_used))
+                model.pieces.forEach { SoldPieceRows(it) }
                 val costLabel = stringResource(R.string.sell_cost_of_lots)
-                val costShown = Money.format(costs.sum())
-                ReviewRow(costLabel, costShown, spoken = spokenLabel(costLabel, costShown))
+                ReviewRow(costLabel, model.cost, spoken = spokenLabel(costLabel, model.cost))
                 ReviewRow(
                     stringResource(R.string.sell_realized_label),
-                    signedAmount(realized),
-                    spoken = stringResource(R.string.sell_realized_spoken, spokenSigned(realized)),
-                    color = gainLossColor(realized.compareTo(0L)),
+                    signedAmount(model.realizedCents),
+                    spoken = stringResource(R.string.sell_realized_spoken, spokenSigned(model.realizedCents)),
+                    color = gainLossColor(model.realizedCents.compareTo(0L)),
                 )
-                val effect = stringResource(R.string.cash_effect_label)
-                ReviewRow(effect, signedAmount(sell.totalCents), bold = true, spoken = "$effect, ${spokenSigned(sell.totalCents)} dollars")
+                CashEffectRow(model.cashCents)
             }
-        }
-        Text(
-            text = stringResource(R.string.review_hint),
-            style = MaterialTheme.typography.bodyMedium,
-        )
-        listOfNotNull(saveMessage(state.sellRefusals.save), sellRuleMessage(state, state.sellRefusals.rule)).forEach { Message(it) }
-        FlowRow(
-            horizontalArrangement = Arrangement.spacedBy(8.dp),
-            verticalArrangement = Arrangement.spacedBy(8.dp),
-        ) {
-            Button(
-                onClick = onConfirm,
+            ReviewHint()
+            AtsEntryFoot(
+                primary = stringResource(R.string.confirm_button),
+                onPrimary = onConfirm,
                 enabled = !state.saving,
-            ) {
-                Text(text = stringResource(R.string.confirm_button))
-            }
-            TextButton(
-                onClick = onBack,
-                enabled = !state.saving,
-            ) {
-                Text(text = stringResource(R.string.back_to_edit_button))
-            }
+                secondary = stringResource(R.string.back_to_edit_button),
+                onSecondary = onBack,
+            )
         }
     }
 }
 
-/** One lot used (11 wording 3, option A): the lot and its cost, then its proceeds and its gain in color with its sign. */
-@OptIn(ExperimentalLayoutApi::class)
+/** One lot used on the sell review, from its model (11 wording 3, option A). */
+@Composable
+private fun SoldPieceRows(piece: SoldPieceModel) {
+    val shares = stringResource(if (piece.shares.one) R.string.holding_share_one else R.string.holding_shares, piece.shares.shown)
+    PieceLines(piece.date, shares, piece.cost, piece.proceeds, piece.gainCents)
+}
+
+/** One lot used (11 wording 3, option A), for transaction detail: from the piece's exact figures, by largest remainder. */
 @Composable
 internal fun PieceRows(
     date: String,
@@ -542,35 +491,32 @@ internal fun PieceRows(
     proceedsCents: Long,
     gainCents: Long,
 ) {
-    val shares = sharesText(quantity)
-    val spoken =
-        stringResource(
-            R.string.sell_piece_spoken,
-            date,
-            shares,
-            Money.format(costCents).substringAfter('$'),
-            Money.format(proceedsCents).substringAfter('$'),
-            spokenSigned(gainCents),
-        )
+    PieceLines(date, sharesText(quantity), Money.format(costCents), Money.format(proceedsCents), gainCents)
+}
+
+/**
+ * The lot and its cost as a label-and-value row, then its proceeds and its gain in color with its sign in secondary 14
+ * under it (D-31 (4)); read by TalkBack as one sentence.
+ */
+@Composable
+private fun PieceLines(
+    date: String,
+    shares: String,
+    cost: String,
+    proceeds: String,
+    gainCents: Long,
+) {
+    val colors = AtsTheme.colors
+    val spoken = stringResource(R.string.sell_piece_spoken, date, shares, cost.substringAfter('$'), proceeds.substringAfter('$'), spokenSigned(gainCents))
     val gain = signedAmount(gainCents)
-    val second = stringResource(R.string.sell_piece_proceeds, Money.format(proceedsCents), gain)
+    val second = stringResource(R.string.sell_piece_proceeds, proceeds, gain)
     val gainColor = gainLossColor(gainCents.compareTo(0L))
     Column(modifier = Modifier.fillMaxWidth().clearAndSetSemantics { contentDescription = spoken }) {
-        FlowRow(
+        StartEndRow(
             modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(12.dp),
-        ) {
-            Text(
-                text = stringResource(R.string.sell_piece_lot, stringResource(R.string.date_with_et, date), shares),
-                style = MaterialTheme.typography.bodyLarge,
-            )
-            Text(
-                text = stringResource(R.string.sell_piece_cost, Money.format(costCents)),
-                modifier = Modifier.weight(1f),
-                style = MaterialTheme.typography.bodyLarge,
-                textAlign = TextAlign.End,
-            )
-        }
+            start = { Text(text = stringResource(R.string.sell_piece_lot, stringResource(R.string.date_with_et, date), shares), style = typeStyle("body"), color = colors.textSecondary) },
+            end = { Text(text = stringResource(R.string.sell_piece_cost, cost), style = typeStyle("body"), color = colors.text, textAlign = TextAlign.End) },
+        )
         val start = second.lastIndexOf(gain)
         Text(
             text =
@@ -579,8 +525,9 @@ internal fun PieceRows(
                 withStyle(SpanStyle(color = gainColor)) { append(gain) }
                 append(second.substring(start + gain.length))
             },
-            modifier = Modifier.padding(start = 16.dp),
-            style = MaterialTheme.typography.bodyMedium,
+            modifier = Modifier.padding(start = tokenDp("spaceMargin")),
+            style = typeStyle("small"),
+            color = colors.textSecondary,
         )
     }
 }
