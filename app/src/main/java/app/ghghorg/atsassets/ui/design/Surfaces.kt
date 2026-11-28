@@ -1,5 +1,6 @@
 package app.ghghorg.atsassets.ui.design
 
+import android.graphics.BlurMaskFilter
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -30,16 +31,17 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.dropShadow
+import androidx.compose.ui.draw.drawWithCache
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.shadow.Shadow
+import androidx.compose.ui.graphics.drawscope.drawIntoCanvas
+import androidx.compose.ui.graphics.nativeCanvas
+import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.paneTitle
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.unit.DpOffset
 import androidx.compose.ui.unit.dp
 import app.ghghorg.atsassets.ui.theme.AtsIcon
 import app.ghghorg.atsassets.ui.theme.AtsTheme
@@ -52,20 +54,45 @@ import app.ghghorg.atsassets.ui.theme.typeStyle
 
 internal enum class CardKind { PLAIN, SUMMARY }
 
-/** The card's two-layer shadow from the tokens (D-08); cards have no border. */
+/**
+ * The card's two-layer shadow from the tokens (D-08); cards have no border. Each layer is a rounded rectangle in its color,
+ * moved by its offset, grown by its spread and softened by a blur filter, drawn under the card. Not Compose's dropShadow:
+ * that draws the shadow into one bitmap the size of the card, and a long card (Transaction history with many transactions,
+ * about 37,000 px) passed Android's 100 MB bitmap limit and crashed the app (44a step 9 phone check; TallCardShadowTest).
+ */
 @Composable
 internal fun Modifier.cardShadow(): Modifier {
-    val shape = RoundedCornerShape(tokenDp("radiusDefault"))
-    return AtsTheme.colors.cardShadow.fold(this) { modifier, layer ->
-        modifier.dropShadow(
-            shape,
-            Shadow(
-                radius = layer.blur.dp,
-                color = layer.color,
-                spread = layer.spread.dp,
-                offset = DpOffset(layer.offsetX.dp, layer.offsetY.dp),
-            ),
-        )
+    val layers = AtsTheme.colors.cardShadow
+    val corner = tokenDp("radiusDefault")
+    return drawWithCache {
+        val paints =
+            layers.map { layer ->
+                val blur = layer.blur.dp.toPx()
+                android.graphics.Paint().apply {
+                    isAntiAlias = true
+                    color = layer.color.toArgb()
+                    if (blur > 0f) maskFilter = BlurMaskFilter(blur, BlurMaskFilter.Blur.NORMAL)
+                }
+            }
+        val radius = corner.toPx()
+        onDrawBehind {
+            drawIntoCanvas { canvas ->
+                layers.forEachIndexed { index, layer ->
+                    val spread = layer.spread.dp.toPx()
+                    val dx = layer.offsetX.dp.toPx()
+                    val dy = layer.offsetY.dp.toPx()
+                    canvas.nativeCanvas.drawRoundRect(
+                        dx - spread,
+                        dy - spread,
+                        size.width + dx + spread,
+                        size.height + dy + spread,
+                        radius + spread,
+                        radius + spread,
+                        paints[index],
+                    )
+                }
+            }
+        }
     }
 }
 
