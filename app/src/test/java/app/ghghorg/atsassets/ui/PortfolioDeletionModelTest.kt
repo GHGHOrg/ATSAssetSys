@@ -67,19 +67,19 @@ class PortfolioDeletionModelTest {
     // Example E (AC-55): the date, $200.00 and the day before as the example.
     @Test
     fun exampleE_theBlockedMessage() {
-        val model = PortfolioDeletions.blocked(DeletionCheck.Blocked(LocalDate.parse("2026-02-10"), 20_000L))
-        assertEquals(DeleteBlockedModel(false, "2026-02-10", "$200.00", "2026-02-09"), model)
+        val model = PortfolioDeletions.blocked(DeletionCheck.Blocked(LocalDate.parse("2026-02-10"), 20_000L), "Portfolio Q")
+        assertEquals(DeleteBlockedModel(false, "2026-02-10", "$200.00", "2026-02-09", "Portfolio Q"), model)
     }
 
     @Test
     fun theOpeningDateCase_hasNoExample() {
-        val model = PortfolioDeletions.blocked(DeletionCheck.CannotDelete(LocalDate.parse("2026-01-01"), 30_000L))
-        assertEquals(DeleteBlockedModel(true, "2026-01-01", "$300.00", null), model)
+        val model = PortfolioDeletions.blocked(DeletionCheck.CannotDelete(LocalDate.parse("2026-01-01"), 30_000L), "Portfolio Q")
+        assertEquals(DeleteBlockedModel(true, "2026-01-01", "$300.00", null, "Portfolio Q"), model)
     }
 
     @Test
     fun noMessage_withoutABlockedCheck() {
-        assertNull(PortfolioDeletions.blocked(null))
-        assertNull(PortfolioDeletions.blocked(DeletionCheck.NotFound))
+        assertNull(PortfolioDeletions.blocked(null, "Portfolio Q"))
+        assertNull(PortfolioDeletions.blocked(DeletionCheck.NotFound, "Portfolio Q"))
     }
 }

@@ -1,52 +1,41 @@
 package app.ghghorg.atsassets.ui
 
 import androidx.activity.compose.BackHandler
-import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
-import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.LiveRegionMode
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.contentDescription
-import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.liveRegion
 import androidx.compose.ui.semantics.onClick
-import androidx.compose.ui.semantics.paneTitle
 import androidx.compose.ui.semantics.role
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.unit.dp
 import app.ghghorg.atsassets.R
 import app.ghghorg.atsassets.core.Holding
 import app.ghghorg.atsassets.core.Portfolio
 import app.ghghorg.atsassets.core.PortfolioRefusal
 import app.ghghorg.atsassets.ui.design.AtsButton
 import app.ghghorg.atsassets.ui.design.AtsCard
+import app.ghghorg.atsassets.ui.design.AtsDialog
 import app.ghghorg.atsassets.ui.design.AtsRowDivider
 import app.ghghorg.atsassets.ui.design.AtsScreen
+import app.ghghorg.atsassets.ui.design.AtsTextField
 import app.ghghorg.atsassets.ui.design.ButtonKind
 import app.ghghorg.atsassets.ui.theme.AtsIcon
 import app.ghghorg.atsassets.ui.theme.AtsTheme
@@ -197,12 +186,12 @@ internal class PortfolioNameWording(
 )
 
 /**
- * The New portfolio and Rename portfolio dialog (wireframe 10d frames A to C): one Name field, the helper line, the
- * first refusal under the field, Cancel and the confirm button. The confirm button is always tappable. Drawn inside
- * the activity's window over a dimmed layer, not as a separate dialog window: a separate window takes the focus, and
- * MainActivity covers the app whenever its window loses focus (defect found in 07 phone check 2). The layer takes
- * every tap, so a tap outside the card does nothing and the typed text is not lost by accident; Back closes it like
- * Cancel.
+ * The New portfolio and Rename portfolio dialog (wireframe 10d frames A to C; 44a step 8 group (e), drawing
+ * spec/wireframes/design/10d-portfolio-dialogs.html): the catalog's dialog with one Name field, the helper as its note
+ * line, a refusal on the field in place of the note (all three on the field, the duplicate included; 10d note 3), Cancel a
+ * text button and the confirm button gold. The confirm button is always tappable. Drawn inside the activity's window, not
+ * as a separate window: a separate window takes the focus, and MainActivity covers the app whenever its window loses
+ * focus (07 phone check 2). A tap outside does nothing, so the typed text is not lost; Back closes it like Cancel.
  */
 @Composable
 internal fun PortfolioNameDialog(
@@ -215,68 +204,25 @@ internal fun PortfolioNameDialog(
 ) {
     BackHandler(enabled = !saving, onBack = onCancel)
     val error = portfolioMessage(dialog)
-    val title = wording.title
-    Box(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(MaterialTheme.colorScheme.scrim.copy(alpha = SCRIM_ALPHA))
-            .pointerInput(Unit) { detectTapGestures { } }
-            // The app draws edge to edge, so the window does not shrink for the keyboard: the card is centred in
-            // the space above it and scrolls there (defect found in 08 phone check 9a).
-            .imePadding(),
-        contentAlignment = Alignment.Center,
+    AtsDialog(
+        title = wording.title,
+        actions = {
+            AtsButton(stringResource(R.string.cancel_button), onCancel, kind = ButtonKind.TEXT, enabled = !saving)
+            AtsButton(wording.confirm, onConfirm, kind = ButtonKind.FILLED, enabled = !saving)
+        },
     ) {
-        Surface(
-            modifier = Modifier.padding(24.dp).widthIn(max = 560.dp).semantics { paneTitle = title },
-            shape = MaterialTheme.shapes.extraLarge,
-            color = MaterialTheme.colorScheme.surfaceContainerHigh,
-        ) {
-            Column(
-                modifier = Modifier.verticalScroll(rememberScrollState()).padding(24.dp),
-                verticalArrangement = Arrangement.spacedBy(16.dp),
-            ) {
-                Text(
-                    text = title,
-                    style = MaterialTheme.typography.headlineSmall,
-                    modifier = Modifier.semantics { heading() },
-                )
-                OutlinedTextField(
-                    value = dialog.nameText,
-                    onValueChange = onNameChange,
-                    modifier = Modifier.fillMaxWidth(),
-                    label = { Text(text = stringResource(R.string.portfolio_name_label)) },
-                    supportingText = {
-                        Column {
-                            if (error != null) {
-                                Text(
-                                    text = error,
-                                    modifier = Modifier.semantics { liveRegion = LiveRegionMode.Polite },
-                                )
-                            }
-                            Text(text = wording.helper)
-                        }
-                    },
-                    isError = error != null,
-                    singleLine = true,
-                )
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp, Alignment.End),
-                ) {
-                    TextButton(onClick = onCancel, enabled = !saving) {
-                        Text(text = stringResource(R.string.cancel_button))
-                    }
-                    TextButton(onClick = onConfirm, enabled = !saving) {
-                        Text(text = wording.confirm)
-                    }
-                }
-            }
-        }
+        AtsTextField(
+            value = dialog.nameText,
+            onValueChange = onNameChange,
+            label = stringResource(R.string.portfolio_name_label),
+            modifier = Modifier.fillMaxWidth(),
+            refusal = error,
+            note = if (error == null) wording.helper else null,
+            raised = true,
+            announce = true,
+        )
     }
 }
-
-// The dim behind the dialog, as Material's own dialogs use.
-private const val SCRIM_ALPHA = 0.32f
 
 @Composable
 private fun portfolioMessage(dialog: PortfolioDialog): String? {

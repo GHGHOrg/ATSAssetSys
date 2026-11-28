@@ -29,13 +29,14 @@ data class DeleteDialogModel(
 /**
  * The blocked message (frame F; 4.7): the first date as YYYY-MM-DD, the largest shortfall, and for a deletion that can
  * be fixed the day before the first date as the example (Example E: "for example Feb 9"); [cannotDelete] when the
- * first date is the opening balance's.
+ * first date is the opening balance's. [name] is the portfolio's, for the dialog's title (10d frames F and G; 44a).
  */
 data class DeleteBlockedModel(
     val cannotDelete: Boolean,
     val date: String,
     val shortfall: String,
     val exampleDate: String?,
+    val name: String,
 )
 
 /** Builds the two models from the state (29). */
@@ -64,10 +65,13 @@ object PortfolioDeletions {
         )
     }
 
-    /** The message for a blocked check, null for anything else. */
-    fun blocked(check: DeletionCheck?): DeleteBlockedModel? = when (check) {
-        is DeletionCheck.Blocked -> message(false, check.firstDate, check.largestShortfallCents)
-        is DeletionCheck.CannotDelete -> message(true, check.firstDate, check.largestShortfallCents)
+    /** The message for a blocked check of the portfolio named [name], null for anything else. */
+    fun blocked(
+        check: DeletionCheck?,
+        name: String,
+    ): DeleteBlockedModel? = when (check) {
+        is DeletionCheck.Blocked -> message(false, check.firstDate, check.largestShortfallCents, name)
+        is DeletionCheck.CannotDelete -> message(true, check.firstDate, check.largestShortfallCents, name)
         else -> null
     }
 
@@ -75,10 +79,12 @@ object PortfolioDeletions {
         cannotDelete: Boolean,
         date: LocalDate,
         shortfallCents: Long,
+        name: String,
     ) = DeleteBlockedModel(
         cannotDelete = cannotDelete,
         date = date.toString(),
         shortfall = Money.format(shortfallCents),
         exampleDate = if (cannotDelete) null else date.minusDays(1).toString(),
+        name = name,
     )
 }

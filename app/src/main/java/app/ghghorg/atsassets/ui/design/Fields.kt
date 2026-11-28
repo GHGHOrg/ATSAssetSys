@@ -26,10 +26,12 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.SolidColor
+import androidx.compose.ui.semantics.LiveRegionMode
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.disabled
+import androidx.compose.ui.semantics.liveRegion
 import androidx.compose.ui.semantics.onClick
 import androidx.compose.ui.semantics.role
 import androidx.compose.ui.semantics.semantics
@@ -67,9 +69,13 @@ internal fun AtsTextField(
     placeholder: String? = null,
     visualTransformation: VisualTransformation = VisualTransformation.None,
     singleLine: Boolean = true,
+    raised: Boolean = false,
+    announce: Boolean = false,
 ) {
     val colors = AtsTheme.colors
     val refused = refusal != null
+    // [raised]: on a dialog's raised surface, the field shows that surface, as its label does (10d).
+    val container = if (raised) colors.float else colors.page
     Column(modifier = modifier.unavailable(enabled)) {
         OutlinedTextField(
             value = value,
@@ -101,13 +107,13 @@ internal fun AtsTextField(
                 errorTextColor = colors.text,
                 cursorColor = colors.focus,
                 errorCursorColor = colors.error,
-                focusedContainerColor = colors.page,
-                unfocusedContainerColor = colors.page,
-                disabledContainerColor = colors.page,
-                errorContainerColor = colors.page,
+                focusedContainerColor = container,
+                unfocusedContainerColor = container,
+                disabledContainerColor = container,
+                errorContainerColor = container,
             ),
         )
-        FieldLines(refusal, note, dense = false)
+        FieldLines(refusal, note, dense = false, announce = announce)
     }
 }
 
@@ -275,13 +281,16 @@ private fun FieldLines(
     refusal: String?,
     note: String?,
     dense: Boolean,
+    announce: Boolean = false,
 ) {
     val colors = AtsTheme.colors
     val align = if (dense) TextAlign.End else TextAlign.Start
     val inset = if (dense) Modifier else Modifier.padding(horizontal = tokenDp("fieldPadding"))
     // An empty refusal shows the refused look only; its words are on a line shared with another field (a split ratio).
     if (!refusal.isNullOrEmpty()) {
-        Text(refusal, style = typeStyle("message"), color = colors.error, textAlign = align, modifier = inset)
+        // [announce]: a refusal that appears on a tap (a dialog's Create) is read when it appears.
+        val spoken = if (announce) Modifier.semantics { liveRegion = LiveRegionMode.Polite } else Modifier
+        Text(refusal, style = typeStyle("message"), color = colors.error, textAlign = align, modifier = inset.then(spoken))
     }
     if (note != null) {
         Text(note, style = typeStyle("note"), color = colors.textSecondary, textAlign = align, modifier = inset)

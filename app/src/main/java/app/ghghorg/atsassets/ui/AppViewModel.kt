@@ -826,8 +826,8 @@ data class AppState(
     /** 29: the Delete dialog as the screen draws it (CR2), while it is open. */
     val deleteDialogModel: DeleteDialogModel? get() = deleteDialog?.let { PortfolioDeletions.dialog(it, saving) }
 
-    /** 29: the blocked message as the screen draws it (CR2), while it is shown. */
-    val deleteBlockedModel: DeleteBlockedModel? get() = PortfolioDeletions.blocked(deleteBlocked)
+    /** 29: the blocked message as the screen draws it (CR2), while it is shown, titled with the shown portfolio (44a). */
+    val deleteBlockedModel: DeleteBlockedModel? get() = PortfolioDeletions.blocked(deleteBlocked, shownPortfolio?.name.orEmpty())
 
     /** 30 decision 3: the last refresh failed and no key is saved, so the refresh line names the missing key. */
     val refreshNoKey: Boolean get() = refreshFailed && !priceKeySet

@@ -3,27 +3,16 @@ package app.ghghorg.atsassets.ui
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.background
 import androidx.compose.foundation.gestures.detectTapGestures
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.consumeWindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.navigationBars
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.widthIn
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedButton
-import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -37,17 +26,20 @@ import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.drawscope.translate
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.semantics.LiveRegionMode
 import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.contentDescription
-import androidx.compose.ui.semantics.heading
-import androidx.compose.ui.semantics.liveRegion
-import androidx.compose.ui.semantics.paneTitle
-import androidx.compose.ui.semantics.semantics
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import app.ghghorg.atsassets.R
+import app.ghghorg.atsassets.ui.design.AtsBlockedMessage
+import app.ghghorg.atsassets.ui.design.AtsButton
+import app.ghghorg.atsassets.ui.design.AtsDialog
+import app.ghghorg.atsassets.ui.design.AtsTextField
+import app.ghghorg.atsassets.ui.design.AtsValueRow
+import app.ghghorg.atsassets.ui.design.AtsWarningLine
+import app.ghghorg.atsassets.ui.design.ButtonKind
+import app.ghghorg.atsassets.ui.theme.AtsTheme
 import app.ghghorg.atsassets.ui.theme.gainLossColor
+import app.ghghorg.atsassets.ui.theme.typeStyle
 
 /** The Delete dialog's callbacks, passed together (29). */
 class DeleteDialogActions(
@@ -72,11 +64,12 @@ internal fun PortfolioDeleteLayers(
 }
 
 /**
- * The Delete dialog (wireframe 10d frames D and E; 29), drawn from its model (CR2) inside the activity window over a
- * dimmed layer, as PortfolioNameDialog (CLAUDE.md: a separate window loops with the cover screen), with imePadding so
- * the field stays above the keyboard. The title names the portfolio; the summary is read by TalkBack as one sentence
- * with its figures; then the line about past net worth, the warning, the prompt and the Name field. Delete portfolio is
- * inactive, with a dashed outline and one line saying why, until the name is typed; Cancel and Back close it.
+ * The Delete dialog (wireframe 10d frames D and E; 29), drawn from its model (CR2) as the catalog's dialog (44a step 8
+ * group (e); drawing spec/wireframes/design/10d-portfolio-dialogs.html): the title names the portfolio; the summary as
+ * label-and-value rows, the cash balance now and after as two rows, the after as the total line (10d note 4), read by
+ * TalkBack as one sentence with its figures; the line about past net worth; the warning with triangle-alert, not bronze
+ * (note 5); the prompt and the Name field, whose note says why Delete portfolio waits until the name is typed. Delete
+ * portfolio is the gold filled button, the catalog's disabled one until then (note 7); Cancel and Back close it.
  */
 @Composable
 internal fun DeleteDialogLayer(
@@ -84,7 +77,7 @@ internal fun DeleteDialogLayer(
     actions: DeleteDialogActions,
 ) {
     BackHandler(enabled = !model.saving, onBack = actions.onCancel)
-    val title = stringResource(R.string.delete_title, model.name)
+    val colors = AtsTheme.colors
     val summary =
         stringResource(
             R.string.delete_summary_spoken,
@@ -94,83 +87,45 @@ internal fun DeleteDialogLayer(
             spoken(model.spokenBalanceNow),
             spoken(model.spokenBalanceAfter),
         )
-    DialogScrim {
-        Surface(
-            modifier = Modifier.padding(24.dp).widthIn(max = 560.dp).semantics { paneTitle = title },
-            shape = MaterialTheme.shapes.extraLarge,
-            color = MaterialTheme.colorScheme.surfaceContainerHigh,
-        ) {
-            Column(
-                modifier = Modifier.verticalScroll(rememberScrollState()).padding(24.dp),
-                verticalArrangement = Arrangement.spacedBy(12.dp),
-            ) {
-                Text(text = title, style = MaterialTheme.typography.headlineSmall, modifier = Modifier.semantics { heading() })
-                Column(modifier = Modifier.clearAndSetSemantics { contentDescription = summary }) {
-                    Text(text = stringResource(R.string.delete_transactions, model.transactionCount), style = MaterialTheme.typography.bodyLarge)
-                    Text(text = stringResource(R.string.delete_trade_lines, model.tradeLineCount), style = MaterialTheme.typography.bodyLarge)
-                    Text(
-                        text = stringResource(R.string.delete_realized, model.realizedGain),
-                        style = MaterialTheme.typography.bodyLarge,
-                        color = gainLossColor(model.spokenRealizedGain.sign.signum),
-                    )
-                    Text(
-                        text = stringResource(R.string.delete_cash, model.balanceNow, model.balanceAfter),
-                        style = MaterialTheme.typography.bodyLarge,
-                    )
-                }
-                Text(
-                    text = stringResource(R.string.delete_history_line),
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                )
-                Text(text = stringResource(R.string.delete_warning), style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.Medium)
-                Text(text = stringResource(R.string.delete_type_prompt), style = MaterialTheme.typography.bodyMedium)
-                OutlinedTextField(
-                    value = model.typedName,
-                    onValueChange = actions.onNameChange,
-                    modifier = Modifier.fillMaxWidth(),
-                    label = { Text(text = stringResource(R.string.portfolio_name_label)) },
-                    supportingText =
-                    if (model.saveFailed) {
-                        { Text(text = stringResource(R.string.save_failed), modifier = Modifier.semantics { liveRegion = LiveRegionMode.Polite }) }
-                    } else {
-                        null
-                    },
-                    isError = model.saveFailed,
-                    enabled = !model.saving,
-                    singleLine = true,
-                )
-                if (!model.deleteEnabled && !model.saving) {
-                    Text(
-                        text = stringResource(R.string.delete_not_matching),
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    )
-                }
-                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp, Alignment.End)) {
-                    TextButton(onClick = actions.onCancel, enabled = !model.saving) {
-                        Text(text = stringResource(R.string.cancel_button))
-                    }
-                    val shape = ButtonDefaults.outlinedShape
-                    val dashed = MaterialTheme.colorScheme.outline
-                    OutlinedButton(
-                        onClick = actions.onConfirm,
-                        enabled = model.deleteEnabled,
-                        shape = shape,
-                        border = if (model.deleteEnabled) ButtonDefaults.outlinedButtonBorder(enabled = true) else null,
-                        modifier = if (model.deleteEnabled) Modifier else Modifier.dashedOutline(shape, dashed),
-                    ) {
-                        Text(text = stringResource(R.string.delete_confirm_button))
-                    }
-                }
-            }
+    AtsDialog(
+        title = stringResource(R.string.delete_title, model.name),
+        actions = {
+            AtsButton(stringResource(R.string.cancel_button), actions.onCancel, kind = ButtonKind.TEXT, enabled = !model.saving)
+            AtsButton(stringResource(R.string.delete_confirm_button), actions.onConfirm, kind = ButtonKind.FILLED, enabled = model.deleteEnabled)
+        },
+    ) {
+        Column(modifier = Modifier.fillMaxWidth().clearAndSetSemantics { contentDescription = summary }) {
+            AtsValueRow(stringResource(R.string.delete_transactions_label), model.transactionCount.toString())
+            AtsValueRow(stringResource(R.string.delete_trade_lines_label), model.tradeLineCount.toString())
+            AtsValueRow(
+                stringResource(R.string.delete_realized_label),
+                model.realizedGain,
+                valueColor = gainLossColor(model.spokenRealizedGain.sign.signum),
+            )
+            AtsValueRow(stringResource(R.string.delete_cash_now_label), model.balanceNow)
+            AtsValueRow(stringResource(R.string.delete_cash_after_label), model.balanceAfter, total = true)
         }
+        Text(stringResource(R.string.delete_history_line), style = typeStyle("small"), color = colors.textSecondary)
+        AtsWarningLine(stringResource(R.string.delete_warning))
+        Text(stringResource(R.string.delete_type_prompt), style = typeStyle("small"), color = colors.text)
+        AtsTextField(
+            value = model.typedName,
+            onValueChange = actions.onNameChange,
+            label = stringResource(R.string.portfolio_name_label),
+            modifier = Modifier.fillMaxWidth(),
+            refusal = if (model.saveFailed) stringResource(R.string.save_failed) else null,
+            note = if (!model.deleteEnabled && !model.saving && !model.saveFailed) stringResource(R.string.delete_not_matching) else null,
+            enabled = !model.saving,
+            raised = true,
+            announce = true,
+        )
     }
 }
 
 /**
- * The blocked message (wireframe 10d frame F and the opening-date case; 4.7), drawn in the window over a dimmed layer:
- * plain text starting "Not deleted", read by TalkBack when it appears, and Close, the only button; Back closes it too.
+ * The blocked message (wireframe 10d frames F and G; 4.7) as the catalog's dialog: titled "Can't delete" and the
+ * portfolio's name, D-31's blocked card inside with the message as one text, read when it appears, its "Not deleted."
+ * in medium bronze; Close the one button, gold. The Delete dialog never opens then. Back closes it too.
  */
 @Composable
 internal fun DeleteBlockedLayer(
@@ -184,33 +139,18 @@ internal fun DeleteBlockedLayer(
         } else {
             stringResource(R.string.delete_blocked, model.date, model.shortfall, model.exampleDate.orEmpty())
         }
-    DialogScrim {
-        Surface(
-            modifier = Modifier.padding(24.dp).widthIn(max = 560.dp).semantics { paneTitle = message },
-            shape = MaterialTheme.shapes.extraLarge,
-            color = MaterialTheme.colorScheme.surfaceContainerHigh,
-        ) {
-            Column(
-                modifier = Modifier.verticalScroll(rememberScrollState()).padding(24.dp),
-                verticalArrangement = Arrangement.spacedBy(16.dp),
-            ) {
-                Text(
-                    text = message,
-                    style = MaterialTheme.typography.bodyLarge,
-                    modifier = Modifier.semantics { liveRegion = LiveRegionMode.Polite },
-                )
-                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
-                    TextButton(onClick = onClose) { Text(text = stringResource(R.string.close_button)) }
-                }
-            }
-        }
+    AtsDialog(
+        title = stringResource(R.string.delete_blocked_title, model.name),
+        actions = { AtsButton(stringResource(R.string.close_button), onClose, kind = ButtonKind.FILLED) },
+    ) {
+        AtsBlockedMessage(message, prefix = stringResource(R.string.delete_blocked_prefix))
     }
 }
 
-// The dimmed layer under a dialog in the window: it takes every tap, so a tap outside does nothing, and it gives way
-// to the keyboard (the app draws edge to edge; 08 phone check 9a). It ends where MainActivity's Scaffold padding ends,
-// above the navigation strip, so that strip is consumed first and the room ends at the keyboard's top (29 step 10).
-// Shared with the key entry (30), which AppContent draws over the bar in the same way.
+// The dimmed layer under the price key entry's dialog (30): it takes every tap, so a tap outside does nothing, and it gives
+// way to the keyboard (the app draws edge to edge; 08 phone check 9a). It ends where MainActivity's Scaffold padding ends,
+// above the navigation strip, so that strip is consumed first and the room ends at the keyboard's top (29 step 10). The
+// portfolio dialogs use AtsDialog since 44a step 8 group (e); the key entry moves to it with Settings.
 @Composable
 internal fun DialogScrim(content: @Composable () -> Unit) {
     Box(
@@ -227,12 +167,12 @@ internal fun DialogScrim(content: @Composable () -> Unit) {
     }
 }
 
-// The dim behind the dialog, as Material's own dialogs and PortfolioNameDialog use.
+// The dim behind the key entry, as Material's own dialogs use.
 private const val DELETE_SCRIM_ALPHA = 0.32f
 
 /**
- * An inactive control's dashed outline in [color], drawn on its own [shape] (wireframe 07 marker 3 and 10d marker 11;
- * 28 decision 3): Cash's disabled chips and the inactive Delete portfolio.
+ * An inactive control's dashed outline in [color], drawn on its own [shape] (wireframe 07 marker 3; 28 decision 3): Backup's
+ * inactive Restore. The design system shows an inactive control at 38% instead (D-29, 10d note 7).
  */
 internal fun Modifier.dashedOutline(
     shape: Shape,

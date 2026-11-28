@@ -326,6 +326,8 @@ class PortfolioDeleteFlowTest {
         val blocked = onMenu(exampleE(), "p2")
         blocked.openDelete()
         assertEquals("2026-02-09", blocked.state.value.deleteBlockedModel?.exampleDate)
+        // 44a step 8 group (e): the blocked dialog's title names the portfolio shown.
+        assertEquals("Portfolio Q", blocked.state.value.deleteBlockedModel?.name)
         assertNull(blocked.state.value.deleteDialogModel)
     }
 

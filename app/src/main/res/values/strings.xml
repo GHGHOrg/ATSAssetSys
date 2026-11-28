@@ -605,10 +605,14 @@
     <!-- Iteration 29: Delete a portfolio (proposed from wireframe 10d's placeholders and spec 4.7, 29 file section 12; approved on the phone 2026-11-14, the blocked messages as written, open item 61). Name, Cancel and "Not saved" are the existing strings. -->
     <string name="portfolio_delete_button">Delete</string>
     <string name="delete_title">Delete %1$s?</string>
-    <string name="delete_transactions">Transactions: %1$d</string>
-    <string name="delete_trade_lines">Trade cash lines: %1$d</string>
-    <string name="delete_realized">Realized gains: %1$s</string>
-    <string name="delete_cash">Cash balance: %1$s now, %2$s after</string>
+    <!-- 44a step 8 group (e) (drawing 10d frames D to G, D9 proposed, not yet approved): the summary as label-and-value rows, the blocked dialog's title, and the blocked message's own first words for its bronze head. -->
+    <string name="delete_transactions_label">Transactions removed</string>
+    <string name="delete_trade_lines_label">Trade cash lines removed</string>
+    <string name="delete_realized_label">Realized gains removed</string>
+    <string name="delete_cash_now_label">Cash balance now</string>
+    <string name="delete_cash_after_label">Cash balance after</string>
+    <string name="delete_blocked_title">Can\'t delete %1$s</string>
+    <string name="delete_blocked_prefix">Not deleted.</string>
     <string name="delete_summary_spoken">Transactions %1$d, trade cash lines %2$d, realized gains %3$s dollars, cash balance %4$s dollars now, %5$s dollars after</string>
     <string name="delete_history_line">Past net worth is recalculated as if this portfolio never existed.</string>
     <string name="delete_warning">This cannot be undone in the app. The only way back is restoring a backup.</string>

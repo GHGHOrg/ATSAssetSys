@@ -3,6 +3,7 @@ package app.ghghorg.atsassets.ui.design
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -11,12 +12,18 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.RowScope
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.consumeWindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.imePadding
+import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
@@ -24,11 +31,14 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.dropShadow
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.shadow.Shadow
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.paneTitle
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.DpOffset
 import androidx.compose.ui.unit.dp
 import app.ghghorg.atsassets.ui.theme.AtsIcon
@@ -160,7 +170,10 @@ internal fun AtsScreen(
     }
 }
 
-/** The scrim behind a layer; a tap on it calls [onDismiss] when given. */
+/**
+ * The scrim behind a layer; a tap on it calls [onDismiss] when given. Without [onDismiss] it only takes every tap, with no
+ * semantics of its own, so a dialog's pane title is not merged into a click target (run 46098085734's crash, AtsMenu).
+ */
 @Composable
 internal fun AtsScrim(
     onDismiss: (() -> Unit)?,
@@ -175,7 +188,7 @@ internal fun AtsScrim(
                 if (onDismiss != null) {
                     Modifier.clickable(interactionSource = source, indication = null, role = Role.Button, onClick = onDismiss)
                 } else {
-                    Modifier.clickable(interactionSource = source, indication = null, onClick = {})
+                    Modifier.pointerInput(Unit) { detectTapGestures { } }
                 },
             ),
         content = content,
@@ -183,37 +196,74 @@ internal fun AtsScrim(
 }
 
 /**
- * A dialog inside the window over a scrim (D-34): the title in 22, then [content], then [actions] at the bottom right (Cancel
- * a text button, the one main action filled gold). The caller draws it in AppContent over the bar and pads it for the
- * keyboard (CLAUDE.md pitfalls).
+ * A dialog inside the window over a scrim (D-34; 10d): the title in 22 as a heading, then [content], then [actions] at the
+ * bottom right (Cancel a text button, the one main action filled gold, medium 40). A tap outside does nothing, so typed text
+ * is not lost; the caller handles Back. [title] is the pane title TalkBack announces. The caller draws it in AppContent over
+ * the bar: the navigation strip is consumed before the keyboard's padding, and the dialog keeps its side margin on every
+ * edge, scrolling inside when taller than its room (CLAUDE.md pitfalls; 29 step 10).
  */
 @Composable
 internal fun AtsDialog(
     title: String,
     modifier: Modifier = Modifier,
-    onDismiss: (() -> Unit)? = null,
     actions: @Composable RowScope.() -> Unit,
     content: @Composable ColumnScope.() -> Unit,
 ) {
     val colors = AtsTheme.colors
     val shape = RoundedCornerShape(tokenDp("radiusDefault"))
-    AtsScrim(onDismiss) {
-        Column(
-            modifier = modifier
-                .align(Alignment.Center)
-                .padding(horizontal = tokenDp("layerDialogSide"))
-                .fillMaxWidth()
-                .cardShadow()
-                .clip(shape)
-                .background(colors.float)
-                .clickable(interactionSource = remember { MutableInteractionSource() }, indication = null, onClick = {})
-                .padding(tokenDp("layerDialogPadding")),
-            verticalArrangement = Arrangement.spacedBy(tokenDp("layerDialogGap")),
+    AtsScrim(onDismiss = null) {
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .consumeWindowInsets(WindowInsets.navigationBars)
+                .imePadding()
+                .padding(tokenDp("layerDialogSide")),
+            contentAlignment = Alignment.Center,
         ) {
-            Text(title, style = typeStyle("screenTitle"), color = colors.text, modifier = Modifier.semantics { heading() })
-            content()
-            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(tokenDp("fieldDensePadding"), Alignment.End), content = actions)
+            Column(
+                modifier = modifier
+                    .fillMaxWidth()
+                    .semantics { paneTitle = title }
+                    .cardShadow()
+                    .clip(shape)
+                    .background(colors.float)
+                    .verticalScroll(rememberScrollState())
+                    .padding(tokenDp("layerDialogPadding")),
+                verticalArrangement = Arrangement.spacedBy(tokenDp("layerDialogGap")),
+            ) {
+                Text(title, style = typeStyle("screenTitle"), color = colors.text, modifier = Modifier.semantics { heading() })
+                content()
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(tokenDp("fieldDensePadding"), Alignment.End),
+                    verticalAlignment = Alignment.CenterVertically,
+                    content = actions,
+                )
+            }
         }
+    }
+}
+
+/**
+ * A label-and-value row on a dialog or in a card (10d marker 6): the label in secondary 16, the value at the end in tabular
+ * figures. [total] draws the divider over it and sets both in medium (the cash balance after; 10d note 4).
+ */
+@Composable
+internal fun AtsValueRow(
+    label: String,
+    value: String,
+    valueColor: Color = AtsTheme.colors.text,
+    total: Boolean = false,
+) {
+    val colors = AtsTheme.colors
+    if (total) AtsRowDivider()
+    Row(
+        modifier = Modifier.fillMaxWidth().padding(vertical = tokenDp("cardGap")),
+        horizontalArrangement = Arrangement.spacedBy(tokenDp("rowControlGap")),
+    ) {
+        val weight = if (total) typeStyle("sectionHeading").fontWeight else null
+        Text(label, style = typeStyle("body"), fontWeight = weight, color = if (total) colors.text else colors.textSecondary, modifier = Modifier.weight(1f))
+        Text(value, style = typeStyle("body"), fontWeight = weight, color = valueColor, textAlign = TextAlign.End)
     }
 }
 
