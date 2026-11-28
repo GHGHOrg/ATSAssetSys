@@ -196,7 +196,8 @@ class BackupLargestFontLandscapeTest {
                 }
             }
         }
-        composeRule.onNode(isHeading() and hasText(string(R.string.backup_title))).performScrollTo().assertIsDisplayed()
+        // The title is in the band, which stays in place over the scrolling cards (44a): shown, with nothing to scroll.
+        composeRule.onNode(isHeading() and hasText(string(R.string.backup_title))).assertIsDisplayed()
         composeRule.onNodeWithText(backupText(R.string.last_backup_on, SHOWN_DATE, SHOWN_ZONE)).performScrollTo().assertIsDisplayed()
         composeRule.onNodeWithText(string(R.string.backup_interrupted)).performScrollTo().assertIsDisplayed()
         composeRule.onNode(button(R.string.backup_now)).performScrollTo().assertIsDisplayed().performClick()

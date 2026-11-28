@@ -16,19 +16,10 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.drawBehind
-import androidx.compose.ui.geometry.Size
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.PathEffect
-import androidx.compose.ui.graphics.Shape
-import androidx.compose.ui.graphics.drawOutline
-import androidx.compose.ui.graphics.drawscope.Stroke
-import androidx.compose.ui.graphics.drawscope.translate
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.contentDescription
-import androidx.compose.ui.unit.dp
 import app.ghghorg.atsassets.R
 import app.ghghorg.atsassets.ui.design.AtsBlockedMessage
 import app.ghghorg.atsassets.ui.design.AtsButton
@@ -169,22 +160,6 @@ internal fun DialogScrim(content: @Composable () -> Unit) {
 
 // The dim behind the key entry, as Material's own dialogs use.
 private const val DELETE_SCRIM_ALPHA = 0.32f
-
-/**
- * An inactive control's dashed outline in [color], drawn on its own [shape] (wireframe 07 marker 3; 28 decision 3): Backup's
- * inactive Restore. The design system shows an inactive control at 38% instead (D-29, 10d note 7).
- */
-internal fun Modifier.dashedOutline(
-    shape: Shape,
-    color: Color,
-): Modifier = drawBehind {
-    val width = 1.dp.toPx()
-    val dash = 4.dp.toPx()
-    val outline = shape.createOutline(Size(size.width - width, size.height - width), layoutDirection, this)
-    translate(width / 2, width / 2) {
-        drawOutline(outline, color, style = Stroke(width, pathEffect = PathEffect.dashPathEffect(floatArrayOf(dash, dash))))
-    }
-}
 
 // A figure's sign as a number, for its color (section 6).
 private val FigureSign.signum: Int

@@ -158,9 +158,10 @@ internal fun PlainLineCard(text: String) {
 
 /**
  * One row's slice of a card (15d): the card's fill, with the top rounded corners only on the first row and the bottom
- * ones only on the last. The card's shadow is not drawn here: a shadow per slice would show a seam at each row.
+ * ones only on the last. The card's shadow is not drawn here: a shadow per slice would show a seam at each row. Also the
+ * restore report's error rows (44a step 8 group (e)).
  */
-private fun Modifier.cardSlice(
+internal fun Modifier.cardSlice(
     top: Boolean,
     bottom: Boolean,
     shape: Shape,

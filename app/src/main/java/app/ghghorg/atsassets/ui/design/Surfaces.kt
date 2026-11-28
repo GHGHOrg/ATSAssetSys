@@ -257,8 +257,9 @@ internal fun AtsValueRow(
 ) {
     val colors = AtsTheme.colors
     if (total) AtsRowDivider()
+    // Read by TalkBack as one: "Portfolios, 2" (AC-61 (d)).
     Row(
-        modifier = Modifier.fillMaxWidth().padding(vertical = tokenDp("cardGap")),
+        modifier = Modifier.fillMaxWidth().semantics(mergeDescendants = true) {}.padding(vertical = tokenDp("cardGap")),
         horizontalArrangement = Arrangement.spacedBy(tokenDp("rowControlGap")),
     ) {
         val weight = if (total) typeStyle("sectionHeading").fontWeight else null
