@@ -8,7 +8,6 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
@@ -18,11 +17,11 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.clearAndSetSemantics
-import androidx.compose.ui.unit.dp
 import app.ghghorg.atsassets.R
 import app.ghghorg.atsassets.core.Tab
 import app.ghghorg.atsassets.ui.theme.AtsTheme
 import app.ghghorg.atsassets.ui.theme.tokenDp
+import app.ghghorg.atsassets.ui.theme.typeStyle
 
 /**
  * Shows the screen the ViewModel names. Only the unlocked branch of MainActivity calls this. [screenshots] are
@@ -551,26 +550,20 @@ private fun TabScreen(
     }
 }
 
+// A screen of one message (loading, data that cannot be read), as the lock screens (44a step 8 group (e)): on the page
+// color, the title in 22 and the body in 16, with the dialog's margin.
 @Composable
 private fun MessageScreen(
     title: String,
     body: String?,
     modifier: Modifier = Modifier,
 ) {
+    val colors = AtsTheme.colors
     Column(
-        modifier = modifier.fillMaxSize().padding(24.dp),
-        verticalArrangement = Arrangement.Center,
+        modifier = modifier.fillMaxSize().background(colors.page).padding(tokenDp("layerDialogSide")),
+        verticalArrangement = Arrangement.spacedBy(tokenDp("spaceGap"), Alignment.CenterVertically),
     ) {
-        Text(
-            text = title,
-            style = MaterialTheme.typography.headlineSmall,
-        )
-        body?.let {
-            Text(
-                text = it,
-                style = MaterialTheme.typography.bodyLarge,
-                modifier = Modifier.padding(top = 12.dp),
-            )
-        }
+        Text(text = title, style = typeStyle("screenTitle"), color = colors.text)
+        body?.let { Text(text = it, style = typeStyle("body"), color = colors.text) }
     }
 }

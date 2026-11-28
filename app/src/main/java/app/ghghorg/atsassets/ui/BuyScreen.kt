@@ -319,26 +319,6 @@ internal fun PricePerShareLine(
     )
 }
 
-/** "<" and the title, as on a portfolio's screen; TalkBack reads "<" as Back. Shared with Sell (11). */
-@Composable
-internal fun TitleRow(
-    title: String,
-    onBack: () -> Unit,
-    enabled: Boolean = true,
-) {
-    val back = stringResource(R.string.back_button)
-    Row(verticalAlignment = Alignment.CenterVertically) {
-        TextButton(onClick = onBack, enabled = enabled, modifier = Modifier.semantics { contentDescription = back }) {
-            Text(text = "<", style = MaterialTheme.typography.titleLarge)
-        }
-        Text(
-            text = title,
-            style = MaterialTheme.typography.titleLarge,
-            modifier = Modifier.semantics { heading() },
-        )
-    }
-}
-
 /** "Label, 150.00 dollars" for TalkBack, from a shown dollar figure such as "$150.00". */
 @Composable
 internal fun spokenLabel(

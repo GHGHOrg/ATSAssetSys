@@ -11,9 +11,18 @@ package app.ghghorg.atsassets.ui
 enum class Licence {
     APACHE_2_0,
     SQLCIPHER,
+
+    /** Asap and Asap Condensed (C27; design/fonts/OFL-asap.txt). */
+    OFL_1_1,
+
+    /** Lucide: ISC, with MIT for the parts from Feather (C27; design/icons/LICENSE-lucide). */
+    ISC_MIT,
 }
 
-/** One row of About: a library project, the Maven groups it ships under, and its licence. */
+/**
+ * One row of About: a library project, the Maven groups it ships under, and its licence. The font and the icons ship in
+ * the app's own resources, not as a Maven library, so their rows have no group (C27).
+ */
 data class LibraryLicence(
     val name: String,
     val groups: Set<String>,
@@ -53,6 +62,7 @@ object Licences {
             LibraryLicence("AndroidX VersionedParcelable", setOf("androidx.versionedparcelable"), Licence.APACHE_2_0),
             LibraryLicence("AndroidX ViewPager", setOf("androidx.viewpager"), Licence.APACHE_2_0),
             LibraryLicence("AndroidX Window", setOf("androidx.window"), Licence.APACHE_2_0),
+            LibraryLicence("Asap and Asap Condensed (fonts)", emptySet(), Licence.OFL_1_1),
             LibraryLicence("Guava ListenableFuture", setOf("com.google.guava"), Licence.APACHE_2_0),
             LibraryLicence("JetBrains Java Annotations", setOf("org.jetbrains"), Licence.APACHE_2_0),
             LibraryLicence(
@@ -70,6 +80,7 @@ object Licences {
             LibraryLicence("JSpecify", setOf("org.jspecify"), Licence.APACHE_2_0),
             LibraryLicence("Kotlin standard library", setOf("org.jetbrains.kotlin"), Licence.APACHE_2_0),
             LibraryLicence("kotlinx.coroutines and kotlinx.serialization", setOf("org.jetbrains.kotlinx"), Licence.APACHE_2_0),
+            LibraryLicence("Lucide (icons)", emptySet(), Licence.ISC_MIT),
             LibraryLicence("SQLCipher for Android", setOf("net.zetetic"), Licence.SQLCIPHER),
         )
 }

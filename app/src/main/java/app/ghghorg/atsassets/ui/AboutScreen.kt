@@ -1,18 +1,17 @@
 package app.ghghorg.atsassets.ui
 
 import androidx.activity.compose.BackHandler
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.HorizontalDivider
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedCard
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
@@ -23,14 +22,19 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.contentDescription
-import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.onClick
 import androidx.compose.ui.semantics.role
-import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.stateDescription
-import androidx.compose.ui.text.font.FontFamily
-import androidx.compose.ui.unit.dp
 import app.ghghorg.atsassets.R
+import app.ghghorg.atsassets.ui.design.AtsCard
+import app.ghghorg.atsassets.ui.design.AtsRowDivider
+import app.ghghorg.atsassets.ui.design.AtsScreen
+import app.ghghorg.atsassets.ui.design.AtsSectionHeading
+import app.ghghorg.atsassets.ui.theme.AtsIcon
+import app.ghghorg.atsassets.ui.theme.AtsTheme
+import app.ghghorg.atsassets.ui.theme.LucideIcon
+import app.ghghorg.atsassets.ui.theme.tokenDp
+import app.ghghorg.atsassets.ui.theme.typeStyle
 
 /** About's callbacks, passed together. */
 class AboutActions(
@@ -39,10 +43,13 @@ class AboutActions(
 )
 
 /**
- * About (CR5, 41; spec section 6, More and Settings entry; wireframe 11), drawn from its model (CR2): "<" and the title,
- * the app's name as the phone shows it and its version (marker 2), then "Open-source licences": one row per library with
- * its licence's name, each opening in place to show the licence's text (marker 3). Drawn in the activity's window, not as
- * a pop-up, so MainActivity keeps its focus (CLAUDE.md section 6). One scrolling screen; Back returns to More.
+ * About (CR5, 41; spec section 6, More and Settings entry; wireframe 11), drawn from its model (CR2), in the design system
+ * (44a step 8 group (e); drawing spec/wireframes/design/09-11-hidden-holdings-about.html frames C and D): under the title
+ * band, a plain card with the app's name as the phone shows it in 22 and its version in secondary 14 (marker 2; note 2),
+ * then "Open-source licences" over one card with a 48 row per library, the font and the icons among them (C27): its name,
+ * its licence's name in secondary 14 at the end, and a chevron-down that turns up when open; open, the licence's text in
+ * a block under its row, Asap 14 on the page color, keeping its own line breaks (marker 3; note 4). Drawn in the
+ * activity's window, not as a pop-up, so MainActivity keeps its focus (CLAUDE.md section 6). Back returns to More.
  */
 @Composable
 fun AboutScreen(
@@ -51,35 +58,28 @@ fun AboutScreen(
     modifier: Modifier = Modifier,
 ) {
     BackHandler(onBack = actions.onBack)
-    Column(
-        modifier = modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(16.dp),
-        verticalArrangement = Arrangement.spacedBy(12.dp),
+    val colors = AtsTheme.colors
+    AtsScreen(
+        title = stringResource(R.string.about_title),
+        modifier = modifier,
+        onBack = actions.onBack,
+        backLabel = stringResource(R.string.back_button),
     ) {
-        TitleRow(stringResource(R.string.about_title), actions.onBack)
-        val name = stringResource(R.string.app_name)
-        val version = stringResource(R.string.about_version, model.version)
-        val spoken = stringResource(R.string.about_card_spoken, name, version)
-        OutlinedCard(modifier = Modifier.fillMaxWidth()) {
-            Column(
-                modifier =
-                Modifier
-                    .fillMaxWidth()
-                    .padding(12.dp)
-                    .clearAndSetSemantics { contentDescription = spoken },
-            ) {
-                Text(text = name, style = MaterialTheme.typography.titleLarge)
-                Text(text = version, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        Column(
+            modifier = Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(tokenDp("spaceMargin")),
+            verticalArrangement = Arrangement.spacedBy(tokenDp("spaceGap")),
+        ) {
+            val name = stringResource(R.string.app_name)
+            val version = stringResource(R.string.about_version, model.version)
+            val spoken = stringResource(R.string.about_card_spoken, name, version)
+            AtsCard(modifier = Modifier.clearAndSetSemantics { contentDescription = spoken }) {
+                Text(text = name, style = typeStyle("screenTitle"), color = colors.text)
+                Text(text = version, style = typeStyle("small"), color = colors.textSecondary)
             }
-        }
-        Text(
-            text = stringResource(R.string.about_licences),
-            style = MaterialTheme.typography.titleMedium,
-            modifier = Modifier.semantics { heading() },
-        )
-        OutlinedCard(modifier = Modifier.fillMaxWidth()) {
-            Column(modifier = Modifier.padding(vertical = 4.dp)) {
+            AtsSectionHeading(stringResource(R.string.about_licences))
+            AtsCard(padded = false) {
                 model.rows.forEachIndexed { index, row ->
-                    if (index > 0) HorizontalDivider(modifier = Modifier.padding(horizontal = 12.dp))
+                    if (index > 0) AtsRowDivider()
                     LicenceRow(row) { actions.onToggle(row.name) }
                 }
             }
@@ -87,12 +87,13 @@ fun AboutScreen(
     }
 }
 
-/** One library: its name and its licence's name with ▾ or ▴; open, the licence's text under it. One button for TalkBack. */
+/** One library: its name, its licence's name and a chevron; open, the licence's text under it. One button for TalkBack. */
 @Composable
 private fun LicenceRow(
     row: AboutRowModel,
     onToggle: () -> Unit,
 ) {
+    val colors = AtsTheme.colors
     val licenceName = stringResource(licenceName(row.licence))
     val state = stringResource(if (row.open) R.string.about_row_open else R.string.about_row_closed)
     val spoken = stringResource(R.string.about_row_spoken, row.name, licenceName)
@@ -101,6 +102,7 @@ private fun LicenceRow(
             modifier =
             Modifier
                 .fillMaxWidth()
+                .heightIn(min = tokenDp("spaceTouch"))
                 .clickable(role = Role.Button, onClick = onToggle)
                 .clearAndSetSemantics {
                     contentDescription = spoken
@@ -110,16 +112,13 @@ private fun LicenceRow(
                         onToggle()
                         true
                     }
-                }.padding(12.dp),
-            horizontalArrangement = Arrangement.spacedBy(12.dp),
+                }.padding(horizontal = tokenDp("spaceInset"), vertical = tokenDp("fieldDensePadding")),
+            horizontalArrangement = Arrangement.spacedBy(tokenDp("rowControlGap")),
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            Text(text = row.name, style = MaterialTheme.typography.bodyLarge, modifier = Modifier.weight(1f))
-            Text(
-                text = stringResource(if (row.open) R.string.about_licence_open else R.string.about_licence_closed, licenceName),
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
+            Text(text = row.name, style = typeStyle("body"), color = colors.text, modifier = Modifier.weight(1f))
+            Text(text = licenceName, style = typeStyle("small"), color = colors.textSecondary)
+            AtsIcon(if (row.open) LucideIcon.CHEVRON_UP else LucideIcon.CHEVRON_DOWN, tint = colors.iconChevron, size = tokenDp("fieldMarkSize"))
         }
         if (row.open) {
             val resources = LocalResources.current
@@ -127,9 +126,13 @@ private fun LicenceRow(
             val text = remember(id) { resources.openRawResource(id).bufferedReader().use { it.readText() } }
             Text(
                 text = text,
-                style = MaterialTheme.typography.bodySmall,
-                fontFamily = FontFamily.Monospace,
-                modifier = Modifier.fillMaxWidth().padding(start = 12.dp, end = 12.dp, bottom = 12.dp),
+                style = typeStyle("small"),
+                color = colors.text,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(start = tokenDp("spaceInset"), end = tokenDp("spaceInset"), bottom = tokenDp("spaceInset"))
+                    .background(colors.page)
+                    .padding(tokenDp("spaceInset")),
             )
         }
     }
@@ -138,9 +141,13 @@ private fun LicenceRow(
 private fun licenceName(licence: Licence): Int = when (licence) {
     Licence.APACHE_2_0 -> R.string.licence_apache_2_0
     Licence.SQLCIPHER -> R.string.licence_sqlcipher
+    Licence.OFL_1_1 -> R.string.licence_ofl_1_1
+    Licence.ISC_MIT -> R.string.licence_isc_mit
 }
 
 private fun licenceText(licence: Licence): Int = when (licence) {
     Licence.APACHE_2_0 -> R.raw.licence_apache_2_0
     Licence.SQLCIPHER -> R.raw.licence_sqlcipher
+    Licence.OFL_1_1 -> R.raw.licence_ofl_1_1
+    Licence.ISC_MIT -> R.raw.licence_isc_mit
 }
